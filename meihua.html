@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>梅花易數｜免費線上起卦體驗</title>
+<meta name="description" content="免費梅花易數線上起卦體驗，以基礎兩數起卦方式產生本卦、動爻與變卦，適合快速認識梅花易數。">
+<style>
+    :root{
+      --bg:#030408;--fg:#f5f8fc;--dim:#98a5ba;--sub:#536079;
+      --accent:#60e7c8;--accent-rgb:96,231,200;--gold:#ffbe3b;--cyan:#00f3ff;
+      --border:rgba(255,255,255,.10);
+      --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+      --mono:"SF Mono","Fira Code","Courier New",monospace;
+    }
+    *{box-sizing:border-box}
+    html{background:var(--bg);scroll-behavior:smooth}
+    body{
+      margin:0;min-height:100vh;overflow-x:hidden;color:var(--fg);font-family:var(--sans);
+      background:
+        radial-gradient(circle 900px at 10% -8%,rgba(var(--accent-rgb),.10),transparent 58%),
+        radial-gradient(circle 760px at 94% 3%,rgba(0,243,255,.055),transparent 58%),
+        #030408;
+    }
+    body::before{
+      content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.34;
+      background-image:
+        radial-gradient(circle at 15% 22%,rgba(255,255,255,.65) 0 1px,transparent 1.6px),
+        radial-gradient(circle at 71% 16%,rgba(var(--accent-rgb),.72) 0 1px,transparent 1.7px),
+        radial-gradient(circle at 84% 67%,rgba(0,243,255,.55) 0 1px,transparent 1.6px),
+        radial-gradient(circle at 32% 78%,rgba(255,190,59,.52) 0 1px,transparent 1.7px);
+      background-size:210px 210px,270px 270px,320px 320px,250px 250px;
+    }
+    .topbar{
+      position:sticky;top:0;z-index:50;width:min(1460px,calc(100% - 28px));margin:0 auto;
+      padding:13px 0 9px;backdrop-filter:blur(14px)
+    }
+    .topbar-row{display:flex;justify-content:space-between;align-items:center;gap:14px}
+    .home-link,.status-chip{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;
+      border:1px solid rgba(var(--accent-rgb),.27);background:rgba(8,10,18,.68);
+      color:color-mix(in srgb,var(--accent) 72%,white 20%);text-decoration:none;
+      font-family:var(--mono);font-size:.68rem;letter-spacing:.08em
+    }
+    .status-chip i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+    .tool-nav{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+    .tool-nav a{
+      padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.07);
+      background:rgba(255,255,255,.022);color:#657188;text-decoration:none;font-size:.64rem;
+      transition:.2s
+    }
+    .tool-nav a:hover,.tool-nav a.active{
+      color:#eaf1f8;border-color:rgba(var(--accent-rgb),.30);background:rgba(var(--accent-rgb),.07)
+    }
+    .page{width:min(1320px,calc(100% - 28px));margin:0 auto;padding:26px 0 72px}
+    .stage{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:26px;align-items:end;margin-bottom:24px}
+    .kicker{color:var(--accent);font-family:var(--mono);font-size:.70rem;letter-spacing:.20em;margin-bottom:10px}
+    h1{
+      margin:0 0 9px;font-size:clamp(2rem,4vw,3.8rem);line-height:1.08;letter-spacing:-.035em;
+      background:linear-gradient(135deg,#fff 18%,#d9e0ea 50%,var(--accent) 82%,#00f3ff);
+      -webkit-background-clip:text;background-clip:text;color:transparent
+    }
+    .stage-desc{max-width:800px;color:#98a5b8;font-size:.94rem;line-height:1.78}
+    .engine-chip{
+      justify-self:end;display:inline-flex;align-items:center;gap:8px;padding:8px 13px;
+      border:1px solid rgba(var(--accent-rgb),.25);border-radius:999px;background:rgba(8,10,18,.62);
+      color:#9faabd;font-family:var(--mono);font-size:.66rem;letter-spacing:.10em;white-space:nowrap
+    }
+    .engine-chip i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+    .core{
+      position:relative;overflow:hidden;padding:22px;border-radius:28px;
+      border:1px solid rgba(var(--accent-rgb),.18);
+      background:
+        radial-gradient(circle 720px at 8% -8%,rgba(var(--accent-rgb),.085),transparent 52%),
+        radial-gradient(circle 600px at 92% 8%,rgba(0,243,255,.035),transparent 54%),
+        linear-gradient(145deg,rgba(10,13,23,.96),rgba(5,7,14,.95));
+      box-shadow:0 34px 90px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.032)
+    }
+    .tool-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:5px 3px 18px}
+    .tool-head h2{margin:0 0 4px;font-size:clamp(1.35rem,2vw,1.9rem)}
+    .tool-sub{color:#7d899c;font-size:.76rem}
+    .tool-mark{font-family:var(--mono);font-size:.64rem;color:rgba(0,243,255,.70);letter-spacing:.12em;white-space:nowrap}
+    .controls{
+      display:grid;grid-template-columns:minmax(250px,1fr) minmax(180px,.45fr) minmax(180px,.45fr) auto;
+      gap:10px;align-items:end;padding:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,.08);
+      border-radius:17px;background:rgba(12,15,27,.74)
+    }
+    .field label{display:block;margin-bottom:6px;color:#78859a;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em}
+    .field input{
+      width:100%;min-height:42px;padding:8px 11px;border-radius:9px;border:1px solid rgba(var(--accent-rgb),.20);
+      outline:none;background:#0d111b;color:#edf2f8;font:inherit;font-size:.86rem;color-scheme:dark
+    }
+    button{
+      min-height:42px;padding:8px 18px;border-radius:9px;font:inherit;cursor:pointer;
+      transition:transform .2s,box-shadow .2s,border-color .2s
+    }
+    .primary{
+      border:1px solid rgba(var(--accent-rgb),.66);background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 78%,white 15%),color-mix(in srgb,var(--accent) 65%,black 20%));
+      color:#07100e;font-weight:850;letter-spacing:.08em;box-shadow:0 9px 25px rgba(var(--accent-rgb),.12)
+    }
+    .primary:hover{transform:translateY(-2px);box-shadow:0 13px 32px rgba(var(--accent-rgb),.18)}
+    .ghost{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.025);color:#a9b3c2}
+    .result-shell{
+      min-height:410px;border:1px solid rgba(255,255,255,.07);border-radius:21px;
+      background:radial-gradient(circle 420px at 50% 46%,rgba(var(--accent-rgb),.045),transparent 68%),rgba(5,8,15,.55);
+      padding:22px
+    }
+    .empty{min-height:360px;display:grid;place-items:center;text-align:center;color:#657186}
+    .empty-orbit{
+      width:88px;height:88px;margin:0 auto 16px;border-radius:50%;position:relative;
+      border:1px solid rgba(var(--accent-rgb),.27);box-shadow:0 0 42px rgba(var(--accent-rgb),.10)
+    }
+    .empty-orbit::before,.empty-orbit::after{
+      content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      border-radius:50%;border:1px solid rgba(0,243,255,.17)
+    }
+    .empty-orbit::before{width:62px;height:38px;animation:spin 10s linear infinite}
+    .empty-orbit::after{width:38px;height:62px;border-color:rgba(var(--accent-rgb),.25);animation:spin 14s linear infinite reverse}
+    @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+    .empty h3{margin:0 0 7px;color:#c5cbd4;font-size:.98rem}
+    .empty p{margin:0;max-width:580px;font-size:.76rem;line-height:1.68}
+    .hex-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .hex-card{
+      border:1px solid rgba(255,255,255,.075);border-radius:17px;background:rgba(10,13,22,.72);padding:18px;
+      transition:transform .24s,border-color .24s
+    }
+    .hex-card:hover{transform:translateY(-3px);border-color:rgba(var(--accent-rgb),.28)}
+    .hex-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
+    .hex-title h3{margin:0;font-size:1.25rem}
+    .hex-no{color:var(--accent);font-family:var(--mono);font-size:.68rem;letter-spacing:.10em}
+    .hex-lines{display:flex;flex-direction:column-reverse;gap:7px;width:150px;margin:12px auto 18px}
+    .yao{height:10px;position:relative}
+    .yao.yang::before{content:"";position:absolute;inset:0;border-radius:3px;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 65%,white 20%));box-shadow:0 0 10px rgba(var(--accent-rgb),.10)}
+    .yao.yin::before,.yao.yin::after{content:"";position:absolute;top:0;bottom:0;width:42%;border-radius:3px;background:rgba(191,204,220,.72)}
+    .yao.yin::before{left:0}.yao.yin::after{right:0}
+    .yao.moving{filter:brightness(1.3);box-shadow:0 0 0 1px rgba(255,190,59,.25)}
+    .hex-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .hex-meta div{padding:8px;border-radius:9px;background:rgba(255,255,255,.025);color:#6f7b8f;font-size:.64rem}
+    .hex-meta span{display:block;margin-top:3px;color:#b8c1ce;font-size:.74rem;font-weight:700}
+    .hex-summary{margin:0;color:#8d99aa;font-size:.78rem;line-height:1.7}
+    .moving-note{
+      margin-top:12px;padding:10px 12px;border-left:2px solid var(--gold);border-radius:0 8px 8px 0;
+      background:rgba(255,190,59,.035);color:#8c96a6;font-size:.72rem;line-height:1.6
+    }
+    .notice{
+      margin-top:14px;padding:11px 13px;border:1px solid rgba(var(--accent-rgb),.09);border-left:2px solid rgba(var(--accent-rgb),.50);
+      border-radius:9px;background:rgba(var(--accent-rgb),.025);color:#718095;font-size:.68rem;line-height:1.7
+    }
+    footer{padding:18px 0 0;text-align:center;color:#445064;font-family:var(--mono);font-size:.61rem;letter-spacing:.07em}
+    @media(max-width:900px){
+      .stage{grid-template-columns:1fr}.engine-chip{justify-self:start}
+      .controls{grid-template-columns:1fr 1fr}.controls .field:first-child{grid-column:1/-1}
+      .hex-pair{grid-template-columns:1fr}.tool-head{flex-direction:column;align-items:flex-start}.tool-mark{white-space:normal}
+    }
+    @media(max-width:560px){
+      .controls{grid-template-columns:1fr}.controls .field:first-child{grid-column:auto}
+      .status-chip{display:none}.page{width:min(100% - 20px,1320px)}
+    }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-row">
+    <a class="home-link" href="index.html">← 返回首頁</a>
+    <div class="status-chip"><i></i><span>梅花易數 // BASIC CORE</span></div>
+  </div>
+  <nav class="tool-nav"><a href="index.html" class="">首頁</a><a href="qimen.html" class="">奇門</a><a href="tarot.html" class="">塔羅</a><a href="bazi.html" class="">八字</a><a href="ziwei.html" class="">紫微</a><a href="meihua.html" class="active">梅花</a><a href="liuyao.html" class="">六爻</a><a href="yijing.html" class="">易經64卦</a></nav>
+</div>
+
+<main class="page">
+  <header class="stage">
+    <div>
+      <div class="kicker">MEIHUA CORE // NUMBER DIVINATION</div>
+      <h1>梅花易數</h1>
+      <p class="stage-desc">輸入兩個數字即可快速起卦，產生本卦、動爻與變卦。這一版刻意做成容易理解的免費體驗，不加入複雜流派判讀。</p>
+    </div>
+    <div class="engine-chip"><i></i><span>FREE EXPERIENCE READY</span></div>
+  </header>
+
+  <section class="core">
+    <div class="tool-head">
+      <div>
+        <h2>梅花易數基礎起卦</h2>
+        <div class="tool-sub">免費體驗版 · 先讓使用者快速理解這種占卜工具的基本運作方式</div>
+      </div>
+      <div class="tool-mark">NUMBER → TRIGRAM → MOVING LINE → CHANGED HEXAGRAM</div>
+    </div>
+
+    
+<div class="controls">
+  <div class="field">
+    <label for="question">想問的事情（可留白，不會儲存）</label>
+    <input id="question" type="text" maxlength="120" placeholder="例如：這份工作現在適不適合繼續？">
+  </div>
+  <div class="field">
+    <label for="numA">第一個數字</label>
+    <input id="numA" type="number" min="1" value="17">
+  </div>
+  <div class="field">
+    <label for="numB">第二個數字</label>
+    <input id="numB" type="number" min="1" value="29">
+  </div>
+  <button class="primary" id="castBtn" type="button">兩數起卦</button>
+  <button class="ghost" id="randomBtn" type="button">隨機兩數</button>
+</div>
+
+
+    <div class="result-shell" id="resultShell">
+      <div class="empty" id="emptyState">
+        <div>
+          <div class="empty-orbit"></div>
+          <h3>結果尚未產生</h3>
+          <p>輸入或選擇條件後開始體驗。這裡刻意保留基礎版本，重點是快速理解工具，而不是取代完整專業解盤。</p>
+        </div>
+      </div>
+      <div id="result" style="display:none"></div>
+    </div>
+
+    <div class="notice">✦ 梅花易數起卦法有多種流派與取數方式。本頁採簡化的兩數起卦法，目的在於免費體驗與理解卦象結構，不作為專業斷卦的唯一依據。</div>
+    <footer>meihua-core.js · basic two-number method · local browser calculation</footer>
+  </section>
+</main>
+
+<script src="meihua-core.js"></script>
+<script>
+function esc(s=''){
+  return String(s).replace(/[&<>"']/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  })[ch]);
+}
+function linesHTML(lines, movingLine=0){
+  return `<div class="hex-lines">${lines.map((yang,i)=>`<div class="yao ${yang?'yang':'yin'} ${movingLine===i+1?'moving':''}"></div>`).join('')}</div>`;
+}
+function cardHTML(h, lines, label, movingLine=0){
+  return `
+    <article class="hex-card">
+      <div class="hex-title">
+        <div><div class="hex-no">${label}</div><h3>第 ${h.number} 卦・${esc(h.name)}</h3></div>
+        <div class="hex-no">${esc(h.upperMeta?.symbol||'')} ${esc(h.lowerMeta?.symbol||'')}</div>
+      </div>
+      ${linesHTML(lines,movingLine)}
+      <div class="hex-meta">
+        <div>上卦<span>${esc(h.upper)}・${esc(h.upperMeta?.image||'')}・${esc(h.upperMeta?.element||'')}</span></div>
+        <div>下卦<span>${esc(h.lower)}・${esc(h.lowerMeta?.image||'')}・${esc(h.lowerMeta?.element||'')}</span></div>
+      </div>
+      <p class="hex-summary">${esc(h.summary||'')}</p>
+    </article>`;
+}
+
+(() => {
+  const a=document.getElementById('numA'), b=document.getElementById('numB');
+  const empty=document.getElementById('emptyState'), result=document.getElementById('result');
+
+  function render(data){
+    empty.style.display='none'; result.style.display='block';
+    result.innerHTML = `
+      <div class="hex-pair">
+        ${cardHTML(data.original,data.lines,'本卦',data.movingLine)}
+        ${cardHTML(data.changed,data.changedLines,'變卦')}
+      </div>
+      <div class="moving-note">
+        動爻：第 ${data.movingLine} 爻（由下往上數）。本頁採「基礎兩數起卦」體驗法：第一數取上卦、第二數取下卦，兩數合計取動爻。
+      </div>`;
+  }
+
+  document.getElementById('castBtn').addEventListener('click',()=>{
+    try{ render(MeihuaCore.castByNumbers(a.value,b.value)); }catch(e){ alert(e.message||e); }
+  });
+  document.getElementById('randomBtn').addEventListener('click',()=>{
+    const nums=MeihuaCore.randomNumbers(); a.value=nums[0]; b.value=nums[1];
+    render(MeihuaCore.castByNumbers(a.value,b.value));
+  });
+})();
+</script>
+</body>
+</html>
