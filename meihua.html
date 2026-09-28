@@ -1,186 +1,235 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>梅花易數｜免費線上起卦體驗</title>
-<meta name="description" content="免費梅花易數線上起卦體驗，以基礎兩數起卦方式產生本卦、動爻與變卦，適合快速認識梅花易數。">
-<style>
-    :root{
-      --bg:#030408;--fg:#f5f8fc;--dim:#98a5ba;--sub:#536079;
-      --accent:#60e7c8;--accent-rgb:96,231,200;--gold:#ffbe3b;--cyan:#00f3ff;
-      --border:rgba(255,255,255,.10);
-      --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
-      --mono:"SF Mono","Fira Code","Courier New",monospace;
-    }
-    *{box-sizing:border-box}
-    html{background:var(--bg);scroll-behavior:smooth}
-    body{
-      margin:0;min-height:100vh;overflow-x:hidden;color:var(--fg);font-family:var(--sans);
-      background:
-        radial-gradient(circle 900px at 10% -8%,rgba(var(--accent-rgb),.10),transparent 58%),
-        radial-gradient(circle 760px at 94% 3%,rgba(0,243,255,.055),transparent 58%),
-        #030408;
-    }
-    body::before{
-      content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.34;
-      background-image:
-        radial-gradient(circle at 15% 22%,rgba(255,255,255,.65) 0 1px,transparent 1.6px),
-        radial-gradient(circle at 71% 16%,rgba(var(--accent-rgb),.72) 0 1px,transparent 1.7px),
-        radial-gradient(circle at 84% 67%,rgba(0,243,255,.55) 0 1px,transparent 1.6px),
-        radial-gradient(circle at 32% 78%,rgba(255,190,59,.52) 0 1px,transparent 1.7px);
-      background-size:210px 210px,270px 270px,320px 320px,250px 250px;
-    }
-    .topbar{
-      position:sticky;top:0;z-index:50;width:min(1460px,calc(100% - 28px));margin:0 auto;
-      padding:13px 0 9px;backdrop-filter:blur(14px)
-    }
-    .topbar-row{display:flex;justify-content:space-between;align-items:center;gap:14px}
-    .home-link,.status-chip{
-      display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;
-      border:1px solid rgba(var(--accent-rgb),.27);background:rgba(8,10,18,.68);
-      color:color-mix(in srgb,var(--accent) 72%,white 20%);text-decoration:none;
-      font-family:var(--mono);font-size:.68rem;letter-spacing:.08em
-    }
-    .status-chip i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
-    .tool-nav{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
-    .tool-nav a{
-      padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.07);
-      background:rgba(255,255,255,.022);color:#657188;text-decoration:none;font-size:.64rem;
-      transition:.2s
-    }
-    .tool-nav a:hover,.tool-nav a.active{
-      color:#eaf1f8;border-color:rgba(var(--accent-rgb),.30);background:rgba(var(--accent-rgb),.07)
-    }
-    .page{width:min(1320px,calc(100% - 28px));margin:0 auto;padding:26px 0 72px}
-    .stage{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:26px;align-items:end;margin-bottom:24px}
-    .kicker{color:var(--accent);font-family:var(--mono);font-size:.70rem;letter-spacing:.20em;margin-bottom:10px}
-    h1{
-      margin:0 0 9px;font-size:clamp(2rem,4vw,3.8rem);line-height:1.08;letter-spacing:-.035em;
-      background:linear-gradient(135deg,#fff 18%,#d9e0ea 50%,var(--accent) 82%,#00f3ff);
-      -webkit-background-clip:text;background-clip:text;color:transparent
-    }
-    .stage-desc{max-width:800px;color:#98a5b8;font-size:.94rem;line-height:1.78}
-    .engine-chip{
-      justify-self:end;display:inline-flex;align-items:center;gap:8px;padding:8px 13px;
-      border:1px solid rgba(var(--accent-rgb),.25);border-radius:999px;background:rgba(8,10,18,.62);
-      color:#9faabd;font-family:var(--mono);font-size:.66rem;letter-spacing:.10em;white-space:nowrap
-    }
-    .engine-chip i{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
-    .core{
-      position:relative;overflow:hidden;padding:22px;border-radius:28px;
-      border:1px solid rgba(var(--accent-rgb),.18);
-      background:
-        radial-gradient(circle 720px at 8% -8%,rgba(var(--accent-rgb),.085),transparent 52%),
-        radial-gradient(circle 600px at 92% 8%,rgba(0,243,255,.035),transparent 54%),
-        linear-gradient(145deg,rgba(10,13,23,.96),rgba(5,7,14,.95));
-      box-shadow:0 34px 90px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.032)
-    }
-    .tool-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:5px 3px 18px}
-    .tool-head h2{margin:0 0 4px;font-size:clamp(1.35rem,2vw,1.9rem)}
-    .tool-sub{color:#7d899c;font-size:.76rem}
-    .tool-mark{font-family:var(--mono);font-size:.64rem;color:rgba(0,243,255,.70);letter-spacing:.12em;white-space:nowrap}
-    .controls{
-      display:grid;grid-template-columns:minmax(250px,1fr) minmax(180px,.45fr) minmax(180px,.45fr) auto;
-      gap:10px;align-items:end;padding:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,.08);
-      border-radius:17px;background:rgba(12,15,27,.74)
-    }
-    .field label{display:block;margin-bottom:6px;color:#78859a;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em}
-    .field input{
-      width:100%;min-height:42px;padding:8px 11px;border-radius:9px;border:1px solid rgba(var(--accent-rgb),.20);
-      outline:none;background:#0d111b;color:#edf2f8;font:inherit;font-size:.86rem;color-scheme:dark
-    }
-    button{
-      min-height:42px;padding:8px 18px;border-radius:9px;font:inherit;cursor:pointer;
-      transition:transform .2s,box-shadow .2s,border-color .2s
-    }
-    .primary{
-      border:1px solid rgba(var(--accent-rgb),.66);background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 78%,white 15%),color-mix(in srgb,var(--accent) 65%,black 20%));
-      color:#07100e;font-weight:850;letter-spacing:.08em;box-shadow:0 9px 25px rgba(var(--accent-rgb),.12)
-    }
-    .primary:hover{transform:translateY(-2px);box-shadow:0 13px 32px rgba(var(--accent-rgb),.18)}
-    .ghost{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.025);color:#a9b3c2}
-    .result-shell{
-      min-height:410px;border:1px solid rgba(255,255,255,.07);border-radius:21px;
-      background:radial-gradient(circle 420px at 50% 46%,rgba(var(--accent-rgb),.045),transparent 68%),rgba(5,8,15,.55);
-      padding:22px
-    }
-    .empty{min-height:360px;display:grid;place-items:center;text-align:center;color:#657186}
-    .empty-orbit{
-      width:88px;height:88px;margin:0 auto 16px;border-radius:50%;position:relative;
-      border:1px solid rgba(var(--accent-rgb),.27);box-shadow:0 0 42px rgba(var(--accent-rgb),.10)
-    }
-    .empty-orbit::before,.empty-orbit::after{
-      content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-      border-radius:50%;border:1px solid rgba(0,243,255,.17)
-    }
-    .empty-orbit::before{width:62px;height:38px;animation:spin 10s linear infinite}
-    .empty-orbit::after{width:38px;height:62px;border-color:rgba(var(--accent-rgb),.25);animation:spin 14s linear infinite reverse}
-    @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
-    .empty h3{margin:0 0 7px;color:#c5cbd4;font-size:.98rem}
-    .empty p{margin:0;max-width:580px;font-size:.76rem;line-height:1.68}
-    .hex-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .hex-card{
-      border:1px solid rgba(255,255,255,.075);border-radius:17px;background:rgba(10,13,22,.72);padding:18px;
-      transition:transform .24s,border-color .24s
-    }
-    .hex-card:hover{transform:translateY(-3px);border-color:rgba(var(--accent-rgb),.28)}
-    .hex-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
-    .hex-title h3{margin:0;font-size:1.25rem}
-    .hex-no{color:var(--accent);font-family:var(--mono);font-size:.68rem;letter-spacing:.10em}
-    .hex-lines{display:flex;flex-direction:column-reverse;gap:7px;width:150px;margin:12px auto 18px}
-    .yao{height:10px;position:relative}
-    .yao.yang::before{content:"";position:absolute;inset:0;border-radius:3px;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 65%,white 20%));box-shadow:0 0 10px rgba(var(--accent-rgb),.10)}
-    .yao.yin::before,.yao.yin::after{content:"";position:absolute;top:0;bottom:0;width:42%;border-radius:3px;background:rgba(191,204,220,.72)}
-    .yao.yin::before{left:0}.yao.yin::after{right:0}
-    .yao.moving{filter:brightness(1.3);box-shadow:0 0 0 1px rgba(255,190,59,.25)}
-    .hex-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-    .hex-meta div{padding:8px;border-radius:9px;background:rgba(255,255,255,.025);color:#6f7b8f;font-size:.64rem}
-    .hex-meta span{display:block;margin-top:3px;color:#b8c1ce;font-size:.74rem;font-weight:700}
-    .hex-summary{margin:0;color:#8d99aa;font-size:.78rem;line-height:1.7}
-    .moving-note{
-      margin-top:12px;padding:10px 12px;border-left:2px solid var(--gold);border-radius:0 8px 8px 0;
-      background:rgba(255,190,59,.035);color:#8c96a6;font-size:.72rem;line-height:1.6
-    }
-    .notice{
-      margin-top:14px;padding:11px 13px;border:1px solid rgba(var(--accent-rgb),.09);border-left:2px solid rgba(var(--accent-rgb),.50);
-      border-radius:9px;background:rgba(var(--accent-rgb),.025);color:#718095;font-size:.68rem;line-height:1.7
-    }
-    footer{padding:18px 0 0;text-align:center;color:#445064;font-family:var(--mono);font-size:.61rem;letter-spacing:.07em}
-    @media(max-width:900px){
-      .stage{grid-template-columns:1fr}.engine-chip{justify-self:start}
-      .controls{grid-template-columns:1fr 1fr}.controls .field:first-child{grid-column:1/-1}
-      .hex-pair{grid-template-columns:1fr}.tool-head{flex-direction:column;align-items:flex-start}.tool-mark{white-space:normal}
-    }
-    @media(max-width:560px){
-      .controls{grid-template-columns:1fr}.controls .field:first-child{grid-column:auto}
-      .status-chip{display:none}.page{width:min(100% - 20px,1320px)}
-    }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>梅花易數｜免費線上起卦・兩數起卦與變卦</title>
+  <meta name="description" content="免費線上梅花易數起卦工具，採基礎兩數起卦方式產生本卦、動爻與變卦，並整理八卦、動爻、變卦與梅花易數常見問題。">
+  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+  <link rel="canonical" href="https://twkang1234.github.io/free-online-divination/meihua.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="梅花易數｜免費線上起卦・兩數起卦與變卦">
+  <meta property="og:description" content="免費線上梅花易數起卦工具，採基礎兩數起卦方式產生本卦、動爻與變卦，並整理八卦、動爻、變卦與梅花易數常見問題。">
+  <meta property="og:url" content="https://twkang1234.github.io/free-online-divination/meihua.html">
+  <meta property="og:site_name" content="免費線上占卜">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="梅花易數｜免費線上起卦・兩數起卦與變卦">
+  <meta name="twitter:description" content="免費線上梅花易數起卦工具，採基礎兩數起卦方式產生本卦、動爻與變卦，並整理八卦、動爻、變卦與梅花易數常見問題。">
+  <meta name="theme-color" content="#030706">
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://twkang1234.github.io/free-online-divination/#website","url":"https://twkang1234.github.io/free-online-divination/","name":"免費線上占卜","inLanguage":"zh-Hant"},{"@type":"WebPage","@id":"https://twkang1234.github.io/free-online-divination/meihua.html#webpage","url":"https://twkang1234.github.io/free-online-divination/meihua.html","name":"梅花易數｜免費線上起卦・兩數起卦與變卦","description":"免費線上梅花易數起卦工具，採基礎兩數起卦方式產生本卦、動爻與變卦，並整理八卦、動爻、變卦與梅花易數常見問題。","inLanguage":"zh-Hant","isPartOf":{"@id":"https://twkang1234.github.io/free-online-divination/#website"},"about":[{"@type":"Thing","name":"梅花易數"},{"@type":"Thing","name":"兩數起卦"},{"@type":"Thing","name":"本卦與變卦"}]},{"@type":"BreadcrumbList","@id":"https://twkang1234.github.io/free-online-divination/meihua.html#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"免費線上占卜","item":"https://twkang1234.github.io/free-online-divination/"},{"@type":"ListItem","position":2,"name":"梅花易數","item":"https://twkang1234.github.io/free-online-divination/meihua.html"}]}]}</script>
+  <style>
+:root{
+  --bg:#030706;--text:#f3fbf7;--dim:#9bb4aa;--muted:#667b72;
+  --jade:#60e7c8;--jade2:#2eb495;--cyan:#68e8ef;--gold:#e4bd62;--line:rgba(255,255,255,.075);
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --mono:"SF Mono","Fira Code","Courier New",monospace;
+}
+*{box-sizing:border-box}html{background:var(--bg);scroll-behavior:smooth}
+body{margin:0;min-height:100vh;overflow-x:hidden;color:var(--text);font-family:var(--sans);line-height:1.7;
+  background:radial-gradient(circle 900px at 8% -10%,rgba(96,231,200,.10),transparent 58%),
+  radial-gradient(circle 800px at 94% 2%,rgba(104,232,239,.05),transparent 58%),
+  radial-gradient(circle 700px at 50% 100%,rgba(228,189,98,.03),transparent 60%),#030706}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.28;
+  background-image:radial-gradient(circle at 15% 22%,rgba(255,255,255,.62) 0 1px,transparent 1.6px),
+  radial-gradient(circle at 71% 16%,rgba(96,231,200,.72) 0 1px,transparent 1.7px),
+  radial-gradient(circle at 84% 67%,rgba(104,232,239,.55) 0 1px,transparent 1.6px),
+  radial-gradient(circle at 32% 78%,rgba(228,189,98,.46) 0 1px,transparent 1.7px);
+  background-size:210px 210px,270px 270px,320px 320px,250px 250px}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+  linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.012) 1px,transparent 1px);
+  background-size:64px 64px;mask-image:radial-gradient(circle at center,#000 10%,transparent 82%)}
+button,a{font:inherit}button{cursor:pointer}
+
+.page-topbar{position:sticky;top:0;z-index:80;display:flex;justify-content:space-between;align-items:center;gap:18px;
+  width:min(1460px,calc(100% - 32px));margin:0 auto;padding:14px 0 10px;backdrop-filter:blur(16px)}
+.topbar-left,.topbar-right{display:flex;align-items:center;gap:12px;min-width:0}
+.back-home{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border:1px solid rgba(96,231,200,.26);border-radius:999px;
+  background:rgba(6,30,25,.62);color:#9df0dc;text-decoration:none;font-size:.72rem;font-weight:760;white-space:nowrap}
+.back-home:hover{border-color:rgba(96,231,200,.58);background:rgba(96,231,200,.08);transform:translateY(-1px)}
+.tool-switcher{display:flex;align-items:center;gap:2px;padding:3px;border:1px solid rgba(255,255,255,.055);border-radius:999px;background:rgba(4,8,7,.65);overflow:hidden}
+.tool-switcher a{padding:6px 10px;border-radius:999px;color:#6f7f78;text-decoration:none;font-size:.70rem;white-space:nowrap}
+.tool-switcher a:hover{color:#d7ebe3}.tool-switcher a.active{background:rgba(96,231,200,.10);color:#9ee8d6}
+.page-status{color:#6c7b75;font-family:var(--mono);font-size:.62rem;letter-spacing:.13em;white-space:nowrap}
+.listing-open,.resource-apply-btn{min-height:36px;padding:7px 13px;border:1px solid rgba(96,231,200,.28);border-radius:999px;background:rgba(11,49,41,.50);color:#a3ebd9;font-weight:800;font-size:.70rem}
+.listing-open:hover,.resource-apply-btn:hover{border-color:rgba(96,231,200,.58);background:rgba(96,231,200,.09)}
+
+.meihua-hero{position:relative;isolation:isolate;min-height:calc(100vh - 64px);width:min(1460px,calc(100% - 40px));margin:0 auto;
+  display:grid;grid-template-columns:minmax(0,.9fr) minmax(500px,1.1fr);gap:58px;align-items:center;padding:70px 0 76px;overflow:hidden}
+.hero-copy{position:relative;z-index:3;max-width:760px}
+.hero-kicker,.seo-kicker,.quiet-kicker,.stage-kicker{display:inline-flex;align-items:center;gap:10px;color:#69d9c0;font-family:var(--mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase}
+.hero-kicker::before,.seo-kicker::before,.quiet-kicker::before,.stage-kicker::before{content:"";width:32px;height:1px;background:linear-gradient(90deg,var(--jade2),var(--jade));box-shadow:0 0 14px rgba(96,231,200,.42)}
+.meihua-hero h1{margin:18px 0 12px;font-size:clamp(4.5rem,9.4vw,9rem);line-height:.86;letter-spacing:-.065em;
+  background:linear-gradient(145deg,#fff 12%,#dcf5ec 46%,#60e7c8 72%,#68e8ef);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-tagline{margin-top:24px;color:#d5eee5;font-size:clamp(1.12rem,2vw,1.75rem);font-weight:760;letter-spacing:.06em}
+.hero-desc{max-width:700px;margin:18px 0 0;color:#90a79e;font-size:.94rem;line-height:1.9}
+.hero-actions{display:flex;flex-wrap:wrap;gap:11px;margin-top:30px}
+.hero-primary,.hero-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:820;font-size:.78rem;transition:.22s}
+.hero-primary{border:1px solid rgba(96,231,200,.50);background:linear-gradient(180deg,#85efd7,#2eb495);color:#06130f;box-shadow:0 12px 40px rgba(96,231,200,.13)}
+.hero-secondary{border:1px solid rgba(104,232,239,.18);background:rgba(104,232,239,.035);color:#b9e3e3}
+.hero-primary:hover,.hero-secondary:hover{transform:translateY(-2px)}
+
+.hero-visual{position:relative;min-height:640px;display:grid;place-items:center;perspective:1400px}
+.cosmic-ring{position:absolute;width:min(610px,94%);aspect-ratio:1;border-radius:50%;border:1px solid rgba(96,231,200,.13);
+  box-shadow:0 0 0 58px rgba(96,231,200,.018),0 0 0 116px rgba(104,232,239,.010);animation:ringSpin 34s linear infinite}
+.cosmic-ring::before,.cosmic-ring::after{content:"";position:absolute;inset:13%;border-radius:50%;border:1px dashed rgba(104,232,239,.10)}
+.cosmic-ring::after{inset:31%;border-style:solid;border-color:rgba(228,189,98,.10)}@keyframes ringSpin{to{transform:rotate(360deg)}}
+.hero-oracle{position:relative;width:500px;height:500px;display:grid;place-items:center}
+.trigram-wheel{position:absolute;inset:0;border-radius:50%;animation:wheelSpin 38s linear infinite}
+@keyframes wheelSpin{to{transform:rotate(-360deg)}}
+.trigram-node{position:absolute;left:50%;top:50%;width:94px;height:94px;margin:-47px;border:1px solid rgba(96,231,200,.18);border-radius:18px;
+  background:linear-gradient(145deg,rgba(13,34,29,.88),rgba(6,12,11,.92));display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 18px 45px rgba(0,0,0,.28);transform:rotate(var(--a)) translateY(-205px) rotate(calc(-1 * var(--a)))}
+.trigram-node b{font-size:1.8rem;color:#a4efdD}.trigram-node span{margin-top:4px;color:#728b81;font-family:var(--mono);font-size:.55rem;letter-spacing:.10em}
+.hex-core{position:relative;z-index:3;width:230px;height:310px;border:1px solid rgba(96,231,200,.28);border-radius:26px;
+  background:radial-gradient(circle at 50% 22%,rgba(96,231,200,.12),transparent 34%),linear-gradient(180deg,rgba(12,28,24,.95),rgba(5,10,9,.96));
+  box-shadow:0 34px 80px rgba(0,0,0,.42),0 0 70px rgba(96,231,200,.12);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hex-core small{color:#6f8a80;font-family:var(--mono);font-size:.60rem;letter-spacing:.14em}
+.hex-lines-v{width:120px;display:flex;flex-direction:column;gap:11px;margin:20px 0}
+.hex-line{height:10px;border-radius:4px;background:linear-gradient(90deg,#60e7c8,#9bf3df);box-shadow:0 0 12px rgba(96,231,200,.13)}
+.hex-line.yin{background:linear-gradient(90deg,#60e7c8 0 42%,transparent 42% 58%,#60e7c8 58% 100%)}
+.hex-core strong{font-size:1.55rem;color:#e4f8f1}.hex-core em{margin-top:6px;color:#8a9f97;font-family:var(--mono);font-size:.56rem;font-style:normal;letter-spacing:.09em}
+.meihua-star{position:absolute;width:3px;height:3px;border-radius:50%;background:#e8fff8;opacity:.12;animation:twinkle var(--dur,4s) ease-in-out infinite}@keyframes twinkle{50%{opacity:.88;transform:scale(1.8)}}
+
+.quiet-section{width:min(1120px,calc(100% - 40px));margin:0 auto;padding:110px 0 104px;text-align:center}
+.quiet-section h2,.seo-section h2{margin:14px 0 18px;font-size:clamp(2.2rem,5vw,4.3rem);line-height:1.08;letter-spacing:-.045em}
+.quiet-lead{max-width:800px;margin:0 auto;color:#91a69e;font-size:.92rem;line-height:1.9}
+.quiet-rules{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:38px 0 28px}
+.quiet-rule{min-height:185px;padding:23px;border:1px solid rgba(96,231,200,.12);border-radius:20px;text-align:left;background:linear-gradient(145deg,rgba(10,25,21,.75),rgba(7,9,9,.78))}
+.quiet-rule i{display:block;color:#5fae9b;font-family:var(--mono);font-size:.60rem;letter-spacing:.12em;font-style:normal}.quiet-rule b{display:block;margin:17px 0 8px;color:#e9f6f1;font-size:1rem}.quiet-rule span{display:block;color:#849a91;font-size:.77rem;line-height:1.75}
+.begin-meihua{min-height:48px;padding:10px 22px;border:1px solid rgba(96,231,200,.45);border-radius:999px;background:linear-gradient(180deg,#84ecd5,#2cab90);color:#06130f;font-weight:850}
+
+#worldSecond{display:none;max-width:1460px;margin:0 auto;padding:100px 28px 82px}
+#worldSecond.is-open{display:block;animation:stageIn .48s ease both}@keyframes stageIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+.stage-header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;max-width:1320px;margin:0 auto 28px}
+.stage-title{margin:12px 0 9px;font-size:clamp(2.15rem,4vw,4rem);line-height:1.06;letter-spacing:-.04em;background:linear-gradient(135deg,#fff,#d9efe7 58%,#60e7c8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stage-desc{max-width:800px;color:#8fa59c;font-size:.91rem;line-height:1.85}
+.engine-chip{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid rgba(96,231,200,.22);border-radius:999px;background:rgba(8,30,25,.56);color:#98b7ac;font-family:var(--mono);font-size:.64rem;letter-spacing:.12em}
+.engine-chip i{width:7px;height:7px;border-radius:50%;background:var(--jade);box-shadow:0 0 12px var(--jade)}
+
+.core{position:relative;overflow:hidden;max-width:1320px;margin:0 auto;padding:22px;border-radius:28px;border:1px solid rgba(96,231,200,.18);
+  background:radial-gradient(circle 720px at 8% -8%,rgba(96,231,200,.085),transparent 52%),radial-gradient(circle 600px at 92% 8%,rgba(0,243,255,.035),transparent 54%),linear-gradient(145deg,rgba(10,13,23,.96),rgba(5,7,14,.95));box-shadow:0 34px 90px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.032)}
+.tool-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:5px 3px 18px}.tool-head h3{margin:0 0 4px;font-size:clamp(1.35rem,2vw,1.9rem)}.tool-sub{color:#7d899c;font-size:.76rem}.tool-mark{font-family:var(--mono);font-size:.64rem;color:rgba(0,243,255,.70);letter-spacing:.12em;white-space:nowrap}
+.controls{display:grid;grid-template-columns:minmax(250px,1fr) minmax(180px,.45fr) minmax(180px,.45fr) auto auto;gap:10px;align-items:end;padding:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,.08);border-radius:17px;background:rgba(12,15,27,.74)}
+.field label{display:block;margin-bottom:6px;color:#78859a;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em}.field input{width:100%;min-height:42px;padding:8px 11px;border-radius:9px;border:1px solid rgba(96,231,200,.20);outline:none;background:#0d111b;color:#edf2f8;font:inherit;font-size:.86rem;color-scheme:dark}
+.core button{min-height:42px;padding:8px 18px;border-radius:9px;font:inherit;cursor:pointer;transition:.2s}.primary{border:1px solid rgba(96,231,200,.66);background:linear-gradient(180deg,#86ecd6,#2fb093);color:#07100e;font-weight:850;letter-spacing:.08em;box-shadow:0 9px 25px rgba(96,231,200,.12)}.primary:hover{transform:translateY(-2px);box-shadow:0 13px 32px rgba(96,231,200,.18)}.ghost{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.025);color:#a9b3c2}
+.result-shell{min-height:410px;border:1px solid rgba(255,255,255,.07);border-radius:21px;background:radial-gradient(circle 420px at 50% 46%,rgba(96,231,200,.045),transparent 68%),rgba(5,8,15,.55);padding:22px}
+.empty{min-height:360px;display:grid;place-items:center;text-align:center;color:#657186}.empty-orbit{width:88px;height:88px;margin:0 auto 16px;border-radius:50%;position:relative;border:1px solid rgba(96,231,200,.27);box-shadow:0 0 42px rgba(96,231,200,.10)}
+.empty-orbit::before,.empty-orbit::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;border:1px solid rgba(0,243,255,.17)}.empty-orbit::before{width:62px;height:38px;animation:spin 10s linear infinite}.empty-orbit::after{width:38px;height:62px;border-color:rgba(96,231,200,.25);animation:spin 14s linear infinite reverse}@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.empty h3{margin:0 0 7px;color:#c5cbd4;font-size:.98rem}.empty p{margin:0;max-width:580px;font-size:.76rem;line-height:1.68}
+.hex-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}.hex-card{border:1px solid rgba(255,255,255,.075);border-radius:17px;background:rgba(10,13,22,.72);padding:18px;transition:.24s}.hex-card:hover{transform:translateY(-3px);border-color:rgba(96,231,200,.28)}
+.hex-title{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.hex-title h3{margin:0;font-size:1.25rem}.hex-no{color:var(--jade);font-family:var(--mono);font-size:.68rem;letter-spacing:.10em}.hex-lines{display:flex;flex-direction:column-reverse;gap:7px;width:150px;margin:12px auto 18px}.yao{height:10px;position:relative}.yao.yang::before{content:"";position:absolute;inset:0;border-radius:3px;background:linear-gradient(90deg,#60e7c8,#a0f2df);box-shadow:0 0 10px rgba(96,231,200,.10)}.yao.yin::before,.yao.yin::after{content:"";position:absolute;top:0;bottom:0;width:42%;border-radius:3px;background:rgba(191,204,220,.72)}.yao.yin::before{left:0}.yao.yin::after{right:0}.yao.moving{filter:brightness(1.3);box-shadow:0 0 0 1px rgba(255,190,59,.25)}
+.hex-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}.hex-meta div{padding:8px;border-radius:9px;background:rgba(255,255,255,.025);color:#6f7b8f;font-size:.64rem}.hex-meta span{display:block;margin-top:3px;color:#b8c1ce;font-size:.74rem;font-weight:700}.hex-summary{margin:0;color:#8d99aa;font-size:.78rem;line-height:1.7}.moving-note{margin-top:12px;padding:10px 12px;border-left:2px solid var(--gold);border-radius:0 8px 8px 0;background:rgba(255,190,59,.035);color:#8c96a6;font-size:.72rem;line-height:1.6}.notice{margin-top:14px;padding:11px 13px;border:1px solid rgba(96,231,200,.09);border-left:2px solid rgba(96,231,200,.50);border-radius:9px;background:rgba(96,231,200,.025);color:#718095;font-size:.68rem;line-height:1.7}.core footer{padding:18px 0 0;text-align:center;color:#445064;font-family:var(--mono);font-size:.61rem;letter-spacing:.07em}
+
+.meihua-seo{width:min(1120px,calc(100% - 40px));margin:0 auto;padding:40px 0 90px}.seo-section{padding:82px 0;border-top:1px solid rgba(255,255,255,.055)}.seo-section:first-child{border-top:0}
+.seo-copy{max-width:940px;color:#91a49d;font-size:.88rem;line-height:1.95}.seo-copy p{margin:0 0 16px}.seo-copy strong{color:#d2eee4}
+.theory-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}.theory-strip span{border:1px solid rgba(96,231,200,.13);border-radius:999px;background:rgba(96,231,200,.028);color:#90ad9f;font-size:.66rem;padding:6px 10px}
+.topic-grid,.compare-grid,.pros-cons,.flow-grid{display:grid;gap:14px;margin-top:28px}.topic-grid{grid-template-columns:repeat(2,1fr)}.flow-grid{grid-template-columns:repeat(3,1fr)}
+.topic-card,.compare-card,.pc,.flow-card{padding:24px;border:1px solid rgba(255,255,255,.07);border-radius:20px;background:linear-gradient(145deg,rgba(10,21,18,.76),rgba(7,8,10,.80))}
+.topic-no,.label,.flow-no{color:#5f9f8f;font-family:var(--mono);font-size:.60rem;letter-spacing:.12em}.topic-card h3,.compare-card h3,.pc h3,.flow-card h3{margin:12px 0 8px;color:#ecf6f2;font-size:1.08rem}.topic-card p,.compare-card p,.pc li,.flow-card p{color:#879d94;font-size:.78rem;line-height:1.75}
+.compare-grid{grid-template-columns:repeat(3,1fr)}.compare-card.meihua{border-color:rgba(96,231,200,.25);background:linear-gradient(145deg,rgba(12,31,26,.72),rgba(8,11,10,.82))}.pros-cons{grid-template-columns:repeat(2,1fr)}.pc ul{padding-left:18px;margin:12px 0 0}.pc li+li{margin-top:9px}
+
+.faq-head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:22px;margin:12px 0 22px}.faq-intro{margin:0;max-width:820px;color:#879b93;font-size:.77rem;line-height:1.75}.faq-all-open{flex:0 0 auto;min-height:40px;padding:9px 15px;border:1px solid rgba(96,231,200,.25);border-radius:999px;background:rgba(96,231,200,.04);color:#a3e5d4;font-size:.69rem;font-weight:800;white-space:nowrap}
+.faq-list{display:grid;gap:9px}.faq-list details{border:1px solid rgba(255,255,255,.075);border-radius:15px;background:rgba(6,9,8,.72);overflow:hidden}.faq-list details[open]{border-color:rgba(96,231,200,.18);background:rgba(8,18,15,.78)}.faq-list summary{position:relative;list-style:none;padding:17px 48px 17px 18px;color:#e8f3ef;font-weight:780;font-size:.84rem;cursor:pointer}.faq-list summary::-webkit-details-marker{display:none}.faq-list summary::after{content:"+";position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#6ca99b;font-family:var(--mono);font-size:1rem}.faq-list details[open] summary::after{content:"−";color:#75d9c2}.faq-brief{padding:0 18px 17px}.faq-brief p{margin:0;max-width:940px;color:#879b93;font-size:.77rem;line-height:1.75}.standard-notice{margin-top:28px;padding:15px 17px;border:1px solid rgba(96,231,200,.11);border-left:2px solid rgba(96,231,200,.50);border-radius:12px;background:rgba(96,231,200,.025);color:#71847c;font-size:.70rem;line-height:1.75}
+
+.resource-section{margin-top:74px;padding-top:72px;border-top:1px solid rgba(255,255,255,.055)}.resource-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px}.resource-head h2{margin-bottom:0}.resource-intro{margin-top:22px}
+.resource-basic-listing{margin-top:24px;padding:22px 24px;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);color:#879b93;font-size:.78rem;line-height:1.8}.resource-basic-listing p{margin:7px 0}.resource-basic-listing strong{color:#afdccc}.resource-note{margin-top:12px;color:#5d6b66;font-size:.66rem}
+
+.faq-world,.listing-world{position:fixed;inset:0;z-index:320;overflow-y:auto;opacity:0;visibility:hidden;pointer-events:none;background:radial-gradient(circle 900px at 12% -5%,rgba(96,231,200,.08),transparent 58%),radial-gradient(circle 760px at 88% 12%,rgba(104,232,239,.03),transparent 62%),#050807;color:var(--text);transition:opacity .28s ease,visibility .28s ease}
+.faq-world.is-active,.listing-world.is-active{opacity:1;visibility:visible;pointer-events:auto}.faq-world-topbar,.listing-topbar{position:sticky;top:0;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:13px max(18px,calc((100vw - 1060px)/2));border-bottom:1px solid rgba(255,255,255,.05);background:rgba(5,8,7,.90);backdrop-filter:blur(18px)}
+.faq-world-back,.listing-back{padding:8px 13px;border:1px solid rgba(96,231,200,.23);border-radius:999px;background:rgba(9,40,33,.45);color:#a4e6d5;font-size:.70rem}.faq-world-label,.listing-world-label{color:#5f716a;font-family:var(--mono);font-size:.59rem;letter-spacing:.13em}
+.faq-world-inner,.listing-inner{width:min(1000px,calc(100% - 36px));margin:0 auto;padding:68px 0 52px}.faq-world-hero,.listing-hero{max-width:850px;margin-bottom:30px}.faq-world-hero h2,.listing-hero h2{margin:11px 0 14px;color:#eff8f4;font-size:clamp(2.15rem,4.7vw,3.8rem);line-height:1.05;letter-spacing:-.04em}.faq-world-hero p,.listing-hero p{margin:0;color:#83968f;font-size:.82rem;line-height:1.8}
+.faq-detail-stack{display:grid;gap:18px}.faq-detail-article{display:block;padding:clamp(24px,4vw,42px);border:1px solid rgba(96,231,200,.12);border-radius:22px;background:radial-gradient(circle 480px at 0% 0%,rgba(96,231,200,.045),transparent 68%),linear-gradient(145deg,rgba(9,21,18,.84),rgba(7,9,9,.90))}.faq-detail-no{margin-bottom:12px;color:#5cad99;font-family:var(--mono);font-size:.62rem;letter-spacing:.14em}.faq-detail-article h3{margin:0 0 24px;color:#edf7f3;font-size:clamp(1.4rem,3vw,2.2rem);line-height:1.22}.faq-detail-article p{margin:0 0 17px;color:#8da098;font-size:.84rem;line-height:1.95}.faq-world-end,.listing-end{margin-top:28px;text-align:center}
+.listing-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.listing-panel{padding:25px;border:1px solid rgba(255,255,255,.075);border-radius:20px;background:rgba(8,13,11,.74)}.listing-step{color:#5cad99;font-family:var(--mono);font-size:.64rem;letter-spacing:.12em}.listing-panel h3{margin:11px 0 10px;font-size:1.02rem}.listing-panel p,.listing-panel li{color:#879a92;font-size:.76rem;line-height:1.75}.listing-panel ul{padding-left:18px}
+.site-info-box{margin-top:15px;padding:16px;border:1px solid rgba(96,231,200,.12);border-radius:14px;background:rgba(96,231,200,.028)}.site-info-box b{color:#a9dccb}.site-info-box p{margin:7px 0}.site-info-box a,.listing-email-box a,.resource-basic-listing a{color:#8fd7c5;word-break:break-all}.copy-site-info{margin-top:13px;min-height:38px;padding:8px 13px;border:1px solid rgba(96,231,200,.24);border-radius:999px;background:rgba(96,231,200,.05);color:#9fdccc;font-weight:760;font-size:.69rem}
+.listing-contact-panel{margin-top:14px;padding:25px;border:1px solid rgba(96,231,200,.11);border-radius:20px;background:linear-gradient(145deg,rgba(9,25,20,.72),rgba(8,9,9,.80));display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center}.listing-contact-panel h3{margin:10px 0 8px}.listing-contact-panel p{margin:0;color:#879a92;font-size:.76rem;line-height:1.75}.listing-email-box{display:flex;flex-direction:column;gap:3px;text-align:right}.listing-email-box a{font-size:1rem;font-weight:800}.listing-email-box span{color:#64736d;font-size:.66rem}
+body.overlay-open{overflow:hidden}.page-footer{width:min(1120px,calc(100% - 40px));margin:0 auto;padding:28px 0 46px;border-top:1px solid rgba(255,255,255,.05);text-align:center;color:#4d5b55;font-family:var(--mono);font-size:.62rem;line-height:1.9}.page-footer a{color:#697972;text-decoration:none}.page-footer a:hover{color:#9edacb}
+
+@media(max-width:1100px){.meihua-hero{grid-template-columns:1fr;min-height:auto;padding-top:64px}.hero-copy{max-width:900px}.hero-visual{min-height:580px}.controls{grid-template-columns:1fr 1fr}.controls .field:first-child{grid-column:1/-1}.flow-grid{grid-template-columns:1fr}.compare-grid{grid-template-columns:1fr}.pros-cons{grid-template-columns:1fr}}
+@media(max-width:850px){.tool-switcher{display:none}.page-status{display:none}.quiet-rules,.listing-grid{grid-template-columns:1fr}.topic-grid{grid-template-columns:1fr}.stage-header{grid-template-columns:1fr}.engine-chip{justify-self:start}.core{padding:14px;border-radius:22px}.tool-head{align-items:flex-start;flex-direction:column}.tool-mark{white-space:normal}.controls{grid-template-columns:1fr}.hex-pair{grid-template-columns:1fr}.listing-contact-panel{grid-template-columns:1fr}.listing-email-box{text-align:left}}
+@media(max-width:700px){.page-topbar{width:min(100% - 24px,1460px)}.meihua-hero,.meihua-seo,.quiet-section{width:min(100% - 24px,1120px)}.meihua-hero h1{font-size:clamp(4rem,20vw,6.1rem)}.hero-visual{min-height:480px}.hero-oracle{transform:scale(.78)}#worldSecond{padding:72px 12px 60px}.faq-head-row{align-items:flex-start;flex-direction:column}.resource-head{align-items:flex-start;flex-direction:column}.faq-world-label,.listing-world-label{display:none}}
+@media(max-width:470px){.hero-visual{min-height:410px}.hero-oracle{transform:scale(.64)}.quiet-section{padding-top:78px}.seo-section{padding:64px 0}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
-<div class="topbar">
-  <div class="topbar-row">
-    <a class="home-link" href="index.html">← 返回首頁</a>
-    <div class="status-chip"><i></i><span>梅花易數 // BASIC CORE</span></div>
-  </div>
-  <nav class="tool-nav"><a href="index.html" class="">首頁</a><a href="qimen.html" class="">奇門</a><a href="tarot.html" class="">塔羅</a><a href="bazi.html" class="">八字</a><a href="ziwei.html" class="">紫微</a><a href="meihua.html" class="active">梅花</a><a href="liuyao.html" class="">六爻</a><a href="yijing.html" class="">易經64卦</a></nav>
-</div>
-
-<main class="page">
-  <header class="stage">
-    <div>
-      <div class="kicker">MEIHUA CORE // NUMBER DIVINATION</div>
-      <h1>梅花易數</h1>
-      <p class="stage-desc">輸入兩個數字即可快速起卦，產生本卦、動爻與變卦。這一版刻意做成容易理解的免費體驗，不加入複雜流派判讀。</p>
+  <header class="page-topbar">
+    <div class="topbar-left">
+      <a class="back-home" href="index.html">← 免費線上占卜</a>
+      <nav class="tool-switcher" aria-label="其他免費占卜工具">
+        <a href="qimen.html">奇門</a><a href="tarot.html">塔羅</a><a href="bazi.html">八字</a><a href="ziwei.html">紫微</a><a class="active" href="meihua.html">梅花</a><a href="liuyao.html">六爻</a><a href="yijing.html">易經64卦</a>
+      </nav>
     </div>
-    <div class="engine-chip"><i></i><span>FREE EXPERIENCE READY</span></div>
+    <div class="topbar-right">
+      <div class="page-status">APPLY TO BE LISTED</div>
+      <button class="listing-open" id="openListing" type="button">申請刊登</button>
+    </div>
   </header>
 
-  <section class="core">
+  <section class="meihua-hero" id="top">
+    <div class="hero-copy">
+      <div class="hero-kicker">MEIHUA YISHU · NUMBER DIVINATION · HEXAGRAM</div>
+      <h1>梅花易數</h1>
+      <div class="hero-tagline">取數起卦・看本卦・辨動爻・觀變化</div>
+      <p class="hero-desc">梅花易數有多種取數與起卦方法。本頁保留最容易理解的兩數起卦體驗，從兩個數字產生本卦、動爻與變卦，讓使用者快速看懂卦象如何由原始狀態產生變化。</p>
+      <div class="hero-actions">
+        <a class="hero-primary" href="#prepare">開始起卦 ↓</a>
+        <a class="hero-secondary" href="#about-meihua">先了解梅花易數</a>
+      </div>
+    </div>
+
+    <div class="hero-visual" id="meihuaHeroVisual" aria-label="梅花易數八卦與卦象概念主視覺">
+      <div class="cosmic-ring"></div>
+      <div class="hero-oracle">
+        <div class="trigram-wheel">
+          <div class="trigram-node" style="--a:0deg"><b>乾</b><span>HEAVEN</span></div>
+          <div class="trigram-node" style="--a:45deg"><b>兌</b><span>LAKE</span></div>
+          <div class="trigram-node" style="--a:90deg"><b>離</b><span>FIRE</span></div>
+          <div class="trigram-node" style="--a:135deg"><b>震</b><span>THUNDER</span></div>
+          <div class="trigram-node" style="--a:180deg"><b>巽</b><span>WIND</span></div>
+          <div class="trigram-node" style="--a:225deg"><b>坎</b><span>WATER</span></div>
+          <div class="trigram-node" style="--a:270deg"><b>艮</b><span>MOUNTAIN</span></div>
+          <div class="trigram-node" style="--a:315deg"><b>坤</b><span>EARTH</span></div>
+        </div>
+        <div class="hex-core">
+          <small>ORIGINAL → MOVING → CHANGED</small>
+          <div class="hex-lines-v">
+            <div class="hex-line"></div><div class="hex-line yin"></div><div class="hex-line"></div>
+            <div class="hex-line yin"></div><div class="hex-line"></div><div class="hex-line yin"></div>
+          </div>
+          <strong>本卦 · 動爻 · 變卦</strong>
+          <em>NUMBER → TRIGRAM → CHANGE</em>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="quiet-section" id="prepare">
+    <div class="quiet-kicker">BEFORE THE CAST · FOCUS THE QUESTION</div>
+    <h2>起卦之前，先把問題聚焦</h2>
+    <p class="quiet-lead">這個版本是基礎兩數起卦體驗。先想清楚自己真正想問的事情，再輸入兩個數字，會比一次混入很多主題更容易理解本卦與變卦的關係。</p>
+    <div class="quiet-rules">
+      <article class="quiet-rule"><i>01 / ONE QUESTION</i><b>一次先問一件事</b><span>把工作、感情、合作等問題分開處理，讓這次起卦有清楚焦點。</span></article>
+      <article class="quiet-rule"><i>02 / TWO NUMBERS</i><b>準備兩個數字</b><span>可以使用當下想到的兩個正整數，也可以直接使用工具的隨機兩數功能。</span></article>
+      <article class="quiet-rule"><i>03 / BASIC METHOD</i><b>這是基礎體驗法</b><span>本頁採簡化兩數起卦，目的在理解本卦、動爻與變卦，不代表所有梅花易數流派都使用完全相同規則。</span></article>
+    </div>
+    <button class="begin-meihua" id="beginMeihua" type="button">我已想好問題，開始起卦</button>
+  </section>
+
+  <section id="worldSecond" aria-hidden="true">
+    <header class="stage-header">
+      <div>
+        <div class="stage-kicker">FREE ONLINE MEIHUA CASTING</div>
+        <h2 class="stage-title">免費線上梅花易數起卦</h2>
+        <p class="stage-desc">輸入想問的事情與兩個數字，或直接使用隨機兩數，產生本卦、動爻與變卦。這個版本維持簡化兩數起卦，重點放在快速理解卦象結構。</p>
+      </div>
+      <div class="engine-chip"><i></i><span>BASIC CORE READY</span></div>
+    </header>
+<section class="core">
     <div class="tool-head">
       <div>
-        <h2>梅花易數基礎起卦</h2>
+        <h3>梅花易數基礎起卦</h3>
         <div class="tool-sub">免費體驗版 · 先讓使用者快速理解這種占卜工具的基本運作方式</div>
       </div>
       <div class="tool-mark">NUMBER → TRIGRAM → MOVING LINE → CHANGED HEXAGRAM</div>
@@ -219,7 +268,221 @@
     <div class="notice">✦ 梅花易數起卦法有多種流派與取數方式。本頁採簡化的兩數起卦法，目的在於免費體驗與理解卦象結構，不作為專業斷卦的唯一依據。</div>
     <footer>meihua-core.js · basic two-number method · local browser calculation</footer>
   </section>
-</main>
+  </section>
+
+  <main class="meihua-seo">
+    <section class="seo-section" id="about-meihua">
+      <div class="seo-kicker">WHAT IS MEIHUA YISHU?</div>
+      <h2>什麼是梅花易數？</h2>
+      <div class="seo-copy">
+        <p><strong>梅花易數</strong>是一種以卦象理解事件變化的傳統占卜方法。起卦方式很多，本頁為了讓使用者快速理解，採用最簡單的兩數起卦體驗。</p>
+        <p>這個工具會把兩個數字轉換成<strong>上卦、下卦、動爻、本卦與變卦</strong>，讓使用者直接看到卦象如何從原始狀態產生變化。</p>
+        <p>本頁刻意保留基礎版本，不加入複雜流派判讀。重點是先理解「取數 → 起卦 → 動爻 → 變卦」這條最基本的流程。</p>
+      </div>
+      <div class="theory-strip"><span>兩數起卦</span><span>上卦</span><span>下卦</span><span>本卦</span><span>動爻</span><span>變卦</span><span>八卦</span><span>六爻</span></div>
+    </section>
+
+    <section class="seo-section" id="meihua-flow">
+      <div class="seo-kicker">NUMBER → TRIGRAM → CHANGE</div>
+      <h2>兩數起卦怎麼運作？</h2>
+      <div class="flow-grid">
+        <article class="flow-card"><div class="flow-no">01 / NUMBERS</div><h3>輸入兩個數字</h3><p>本頁以第一個數字取上卦、第二個數字取下卦，建立最初的卦象。</p></article>
+        <article class="flow-card"><div class="flow-no">02 / MOVING LINE</div><h3>取得動爻</h3><p>兩數合計後取動爻，用來標出六爻中發生變化的位置。</p></article>
+        <article class="flow-card"><div class="flow-no">03 / CHANGED HEXAGRAM</div><h3>形成變卦</h3><p>動爻發生陰陽變化後，形成新的卦象，方便直接比較本卦與變卦。</p></article>
+      </div>
+    </section>
+
+    <section class="seo-section" id="meihua-topics">
+      <div class="seo-kicker">WHAT CAN IT BE USED FOR?</div>
+      <h2>梅花易數適合怎麼問？</h2>
+      <div class="topic-grid">
+        <article class="topic-card"><div class="topic-no">01 / WORK</div><h3>工作與選擇</h3><p>適合把一個正在考慮的工作、合作或方向放進來，先用卦象快速理解目前狀態與變化。</p></article>
+        <article class="topic-card"><div class="topic-no">02 / RELATIONSHIP</div><h3>關係與互動</h3><p>可以聚焦在一段關係目前怎麼走、是否有變化，避免一次問太多人物與主題。</p></article>
+        <article class="topic-card"><div class="topic-no">03 / DEVELOPMENT</div><h3>事情發展</h3><p>當一件事情已經在進行中，可以用本卦與變卦的結構，先理解原始狀態與可能變化。</p></article>
+        <article class="topic-card"><div class="topic-no">04 / QUICK CAST</div><h3>快速取象</h3><p>梅花易數最大的特色之一就是起卦方式簡潔，適合想先快速獲得一個卦象作為思考入口的情況。</p></article>
+      </div>
+    </section>
+
+    <section class="seo-section" id="meihua-compare">
+      <div class="seo-kicker">MEIHUA · LIUYAO · QIMEN</div>
+      <h2>梅花易數和六爻、奇門有什麼不同？</h2>
+      <div class="compare-grid">
+        <article class="compare-card meihua"><div class="label">MEIHUA / QUICK IMAGE</div><h3>梅花易數</h3><p>強調快速取數與卦象變化，本頁用兩數起卦呈現本卦、動爻與變卦。</p></article>
+        <article class="compare-card"><div class="label">LIUYAO / HEXAGRAM DETAIL</div><h3>六爻</h3><p>同樣以卦象處理具體事件，但完整六爻會納入更多爻位與進階判讀資料。</p></article>
+        <article class="compare-card"><div class="label">QIMEN / SITUATION & STRATEGY</div><h3>奇門遁甲</h3><p>會把人物、時機、方向與整體局勢放進九宮盤中，適合需要更多策略資訊的問題。</p></article>
+      </div>
+    </section>
+
+    <section class="seo-section" id="meihua-pros-cons">
+      <div class="seo-kicker">STRENGTHS & LIMITS</div>
+      <h2>梅花易數的優點與限制</h2>
+      <div class="pros-cons">
+        <article class="pc"><h3>適合它的地方</h3><ul><li>起卦方式可以很簡潔，適合快速理解一件事情。</li><li>本卦、動爻、變卦的結構直觀，容易看見「原始狀態 → 變化」的關係。</li><li>適合做為入門卦象工具，先熟悉八卦與六爻基本概念。</li></ul></article>
+        <article class="pc"><h3>需要注意的地方</h3><ul><li>梅花易數本身有多種取數與起卦方式，不同規則可能產生不同結果。</li><li>本頁採簡化兩數起卦，不等於完整專業斷卦。</li><li>若問題很複雜，單靠基礎卦象可能不足以涵蓋全部細節。</li></ul></article>
+      </div>
+    </section>
+
+    <section class="seo-section" id="meihua-faq">
+      <div class="seo-kicker">MEIHUA · FAQ</div>
+      <h2>梅花易數常見問題</h2>
+      <div class="faq-head-row">
+        <p class="faq-intro">主頁先保留簡短答案，方便快速瀏覽；如果想一次完整了解兩數起卦、本卦、動爻、變卦與不同工具差異，可以進入完整問答頁依序閱讀。</p>
+        <button class="faq-all-open" id="openFaqWorld" type="button">查看完整問答 →</button>
+      </div>
+      <div class="faq-list">
+        <details>
+          <summary>梅花易數適合問什麼？</summary>
+          <div class="faq-brief"><p>適合針對眼前正在發生的單一事件快速起卦，例如工作選擇、合作發展、關係互動或近期局勢。重點是問題要聚焦，不要一次混入太多主題。</p></div>
+        </details>
+        <details>
+          <summary>梅花易數一定要用數字起卦嗎？</summary>
+          <div class="faq-brief"><p>不一定。梅花易數有多種取數與起卦方式；本頁為了讓使用者容易理解，採用簡化的兩數起卦體驗法。</p></div>
+        </details>
+        <details>
+          <summary>兩個數字要怎麼選？</summary>
+          <div class="faq-brief"><p>可以使用自己當下想到的兩個正整數，也可以使用工具提供的隨機兩數。這個版本的重點是理解本卦、動爻與變卦如何產生。</p></div>
+        </details>
+        <details>
+          <summary>本卦、動爻、變卦分別代表什麼？</summary>
+          <div class="faq-brief"><p>本卦是起卦後得到的原始卦象；動爻指出其中發生變化的位置；變卦則是動爻改變後形成的新卦象。</p></div>
+        </details>
+        <details>
+          <summary>同一個問題可以一直重複起卦嗎？</summary>
+          <div class="faq-brief"><p>不建議因為不喜歡結果就短時間反覆重起。若事件條件、人物態度或自己的行動真的出現變化，再重新起卦會比較有意義。</p></div>
+        </details>
+        <details>
+          <summary>為什麼不同梅花易數工具可能算出不同結果？</summary>
+          <div class="faq-brief"><p>梅花易數存在不同取數、起卦與判讀方式。若工具採用的起卦規則不同，得到的卦象自然可能不同。</p></div>
+        </details>
+        <details>
+          <summary>梅花易數和六爻有什麼差別？</summary>
+          <div class="faq-brief"><p>兩者都能用卦象處理具體事件，但起卦方法與後續判讀系統不同。本頁梅花易數採簡化兩數起卦，重點放在本卦、動爻與變卦。</p></div>
+        </details>
+        <details>
+          <summary>梅花易數和奇門遁甲有什麼差別？</summary>
+          <div class="faq-brief"><p>梅花易數更偏向快速取象與看事件變化；奇門遁甲則會同時看九宮、人物、時機、方向與整體局勢，兩者適合的分析深度與角度不同。</p></div>
+        </details>
+        <details>
+          <summary>這個工具可以代替完整專業解卦嗎？</summary>
+          <div class="faq-brief"><p>不行。本頁刻意保留基礎兩數起卦體驗，主要協助理解卦象結構，不加入完整流派判讀，因此不能取代專業斷卦。</p></div>
+        </details>
+      </div>
+
+      <div class="standard-notice">本工具目前採簡化兩數起卦方式，產生本卦、動爻與變卦。梅花易數存在多種取數與起卦方法，本工具主要提供入門體驗，不作為專業斷卦的唯一依據。</div>
+
+      <section class="resource-section" id="meihua-resources" aria-labelledby="resourceTitle">
+        <div class="resource-head">
+          <div><div class="seo-kicker">TEACHERS & ADVANCED RESOURCES</div><h2 id="resourceTitle">推薦梅花易數老師與資源</h2></div>
+          <button class="resource-apply-btn" id="openListingInline" type="button">申請刊登 →</button>
+        </div>
+        <div class="seo-copy resource-intro">
+          <p>如果您希望進一步了解梅花易數的取數、起卦與完整卦象判讀，可以參考真人老師與相關資源。<br>
+          本區整理提供梅花易數諮詢、解卦、教學與相關服務的網站，方便依需求進一步了解與聯繫。</p>
+        </div>
+        <div class="resource-basic-listing">
+          <p><strong>資源刊登：</strong>目前開放梅花易數老師、命理諮詢師、教學平台與相關服務網站申請刊登。</p>
+          <p><strong>適合類型：</strong>真人梅花易數解卦、八卦教學、起卦方法與具實際內容的梅花易數資源網站。</p>
+        </div>
+        <p class="resource-note">本區僅整理相關資源資訊；各服務內容、價格與聯繫方式，以服務提供者網站公告為準。</p>
+      </section>
+    </section>
+  </main>
+
+  <footer class="page-footer">
+    <div><a href="index.html">免費線上占卜</a> · <a href="qimen.html">奇門</a> · <a href="tarot.html">塔羅</a> · <a href="bazi.html">八字</a> · <a href="ziwei.html">紫微斗數</a> · <a href="liuyao.html">六爻</a> · <a href="yijing.html">易經64卦</a></div>
+    <div style="margin-top:10px">© Free Online Divination · Meihua Yishu</div>
+  </footer>
+
+  <section class="faq-world" id="faqWorld" aria-hidden="true" aria-labelledby="faqWorldTitle">
+    <div class="faq-world-topbar"><button class="faq-world-back" id="closeFaqWorld" type="button">← 返回常見問題</button><div class="faq-world-label">MEIHUA · IN-DEPTH FAQ</div></div>
+    <div class="faq-world-inner">
+      <header class="faq-world-hero"><div class="seo-kicker">COMPLETE Q&A</div><h2 id="faqWorldTitle">梅花易數｜完整問答</h2><p>以下將主頁的九個常見問題完整展開，從兩數起卦、本卦、動爻、變卦到不同工具差異，依序一次看完。</p></header>
+      <div class="faq-detail-stack">
+        <article class="faq-detail-article">
+          <div class="faq-detail-no">01</div>
+          <h3>梅花易數適合問什麼？</h3>
+          <p>梅花易數比較適合針對一件具體、正在發生或即將面臨的事情起卦。比起一次問很多人生主題，聚焦在單一事件會更容易理解卦象。<br><br>
+例如可以把問題放在工作選擇、合作發展、關係互動、近期計畫或其他具體事情上。這類問題都符合本頁「快速理解一件事情目前怎麼走」的使用方向。<br><br>
+如果問題太大、太籠統，例如一次把感情、工作、財務全部混在一起，卦象就比較難對應到單一焦點。</p>
+        </article>
+        <article class="faq-detail-article">
+          <div class="faq-detail-no">02</div>
+          <h3>梅花易數一定要用數字起卦嗎？</h3>
+          <p>不一定。梅花易數本身存在多種取數與起卦方式，並不是只有「輸入兩個數字」這一種。<br><br>
+本頁之所以採用兩數起卦，是為了讓使用者能快速看懂一個最基礎的流程：第一數取上卦、第二數取下卦，兩數合計再取動爻，最後產生本卦與變卦。<br><br>
+因此，這是一個入門與體驗版本，不代表所有梅花易數流派都只用同一種方法。</p>
+        </article>
+        <article class="faq-detail-article">
+          <div class="faq-detail-no">03</div>
+          <h3>兩個數字要怎麼選？</h3>
+          <p>可以使用自己當下想到的兩個正整數，也可以直接使用工具提供的「隨機兩數」。<br><br>
+本頁不要求特定數字來源，因為這個版本的目的不是重建所有流派細節，而是讓使用者理解數字如何被轉換成上卦、下卦與動爻。<br><br>
+如果你想讓操作更有一致性，可以先把問題想清楚，再使用當下最先想到的兩個數字完成起卦。</p>
+        </article>
+        <article class="faq-detail-article">
+          <div class="faq-detail-no">04</div>
+          <h3>本卦、動爻、變卦分別代表什麼？</h3>
+          <p>本卦是起卦後最初形成的卦象，也就是這次起卦的原始結構。<br><br>
+動爻指出六爻之中哪一爻發生變化；當這一爻由陰變陽或由陽變陰之後，就會形成新的卦象，也就是變卦。<br><br>
+本頁會把本卦與變卦並列顯示，並標出動爻位置，讓使用者可以直接看見「原始狀態 → 發生變化 → 新卦象」這個基本結構。</p>
+        </article>
+        <article class="faq-detail-article">
+          <div class="faq-detail-no">05</div>
+          <h3>同一個問題可以一直重複起卦嗎？</h3>
+          <p>不建議因為不喜歡第一次結果，就在短時間內一直重起。這樣很容易從理解卦象，變成一直尋找自己想看到的答案。<br><br>
+如果事情本身沒有新的變化，原本的卦已經足夠拿來思考當下狀態。比較適合重新起卦的時機，是事件條件、人物態度、外在環境或自己的行動真的出現變化。<br><br>
+重點不是永遠不能再問，而是新的起卦最好對應新的局勢。</p>
+        </article>
+        <article class="faq-detail-article">
+          <div class="faq-detail-no">06</div>
+          <h3>為什麼不同梅花易數工具可能算出不同結果？</h3>
+          <p>最常見的原因，是不同工具使用的取數與起卦規則不同。梅花易數本身有多種起卦方式，有些會用時間、有些會用數字，也可能採用不同的取數邏輯。<br><br>
+本頁明確採用「基礎兩數起卦」體驗法，因此只要其他網站不是用完全相同的規則，得到的卦象就可能不同。<br><br>
+所以比較工具時，應先確認它採用哪一套起卦方式，而不是只看最後卦名是否一致。</p>
+        </article>
+        <article class="faq-detail-article">
+          <div class="faq-detail-no">07</div>
+          <h3>梅花易數和六爻有什麼差別？</h3>
+          <p>兩者都能以卦象處理具體事情，但操作與後續判讀系統不同。<br><br>
+本頁梅花易數採兩數起卦，直接產生本卦、動爻與變卦，整體流程較簡潔；六爻則通常會建立更完整的爻位資料與進階判讀結構。<br><br>
+因此，如果只是想快速理解卦象變化，梅花易數的簡化起卦方式很直觀；若要做更細緻的六爻判讀，則需要更多盤面資訊。</p>
+        </article>
+        <article class="faq-detail-article">
+          <div class="faq-detail-no">08</div>
+          <h3>梅花易數和奇門遁甲有什麼差別？</h3>
+          <p>梅花易數更偏向快速取象、看事件目前狀態與變化方向；奇門遁甲則會把九宮、人物、時機、方向與整體局勢放在同一張盤裡觀察。<br><br>
+兩者都可以拿來處理具體事件，但切入角度不同。梅花易數的優勢是簡潔、快速；奇門遁甲則適合需要更多人物、位置與策略資訊的問題。<br><br>
+使用哪一種工具，應該看你希望得到的是快速卦象，還是更完整的局勢分析。</p>
+        </article>
+        <article class="faq-detail-article">
+          <div class="faq-detail-no">09</div>
+          <h3>這個工具可以代替完整專業解卦嗎？</h3>
+          <p>不能。本頁刻意保留基礎版本，重點是讓使用者理解兩數起卦、本卦、動爻與變卦的基本運作方式。<br><br>
+梅花易數的完整判讀還可能涉及更多流派方法與取象方式，而這些內容並沒有全部放進這個免費體驗工具裡。<br><br>
+因此，這個頁面比較適合入門、理解與自行觀察，不應把簡化結果當成完整專業斷卦的替代品。</p>
+        </article>
+      </div>
+      <div class="faq-world-end"><button class="faq-world-back" id="closeFaqWorldBottom" type="button">← 返回梅花易數常見問題</button></div>
+    </div>
+  </section>
+
+  <section class="listing-world" id="listingWorld" aria-hidden="true" aria-labelledby="listingTitle">
+    <div class="listing-topbar"><button class="listing-back" id="closeListing" type="button">← 返回梅花頁</button><div class="listing-world-label">APPLY TO BE LISTED</div></div>
+    <div class="listing-inner">
+      <header class="listing-hero"><div class="seo-kicker">APPLY TO BE LISTED</div><h2 id="listingTitle">申請刊登老師與進階資源</h2><p>如果您提供命理、占卜、教學或相關諮詢服務，並希望出現在本站對應工具頁面的「老師與進階資源」區域，請先在您的網站刊登本站資訊，再把實際刊登頁面網址寄給管理員審查。審查通過後，再提供您的老師／品牌資料，由本站安排刊登。</p></header>
+      <div class="listing-grid">
+        <section class="listing-panel"><span class="listing-step">01</span><h3>先在您的網站刊登本站資訊</h3><p>如果希望申請刊登，請先在您自己的網站中放置本站資訊與可正常點擊的連結。刊登位置應與命理、占卜、老師推薦、相關資源或工具內容具有實際關聯。</p>
+          <div class="site-info-box" id="ourListingInfo"><b>本站建議刊登資料</b><p><strong>網站名稱：</strong>免費線上占卜</p><p><strong>頁面名稱：</strong>免費線上占卜｜塔羅・奇門・八字・紫微斗數・易經占卜</p><p><strong>網址：</strong><a href="https://twkang1234.github.io/free-online-divination/index.html" target="_blank" rel="noopener">https://twkang1234.github.io/free-online-divination/index.html</a></p><p><strong>建議介紹：</strong>免費線上占卜工具網站，提供奇門遁甲、塔羅、八字、紫微斗數、梅花易數、六爻與易經 64 卦等工具，並整理各類占卜工具介紹，以及感情、工作、事業與生活選擇等相關內容。</p><p><strong>建議連結文字：</strong>免費線上占卜 ／ 免費線上占卜工具</p></div>
+          <button class="copy-site-info" id="copySiteInfo" type="button">複製本站刊登資料</button>
+        </section>
+        <section class="listing-panel"><span class="listing-step">02</span><h3>完成後，把實際刊登網址寄給管理員審查</h3><p>完成本站資訊刊登後，請把實際頁面網址寄給管理員。管理員會確認網站是否可正常開啟、本站連結是否存在，以及刊登位置與網站內容是否具有合理關聯。</p><ul><li>您的官方網站網址</li><li>已刊登本站資訊的實際頁面網址</li><li>本站資訊在該頁面中的大致位置</li><li>老師／品牌名稱</li><li>希望申請刊登的工具分類</li></ul></section>
+        <section class="listing-panel"><span class="listing-step">03</span><h3>審核通過後，再提供您的刊登資料</h3><p>當管理員確認您已完成本站資訊刊登，且網站與刊登位置符合條件後，再請提供下列資料。</p><ul><li>老師／品牌名稱</li><li>主要命理工具</li><li>擅長項目</li><li>服務方式</li><li>服務特色（建議約 50～100 字）</li><li>適合對象</li><li>官方網站</li><li>聯繫方式</li><li>希望刊登的工具頁面</li></ul></section>
+        <section class="listing-panel"><span class="listing-step">04</span><h3>管理員確認後，本站再完成刊登</h3><p>資料確認完成後，本站會依對應工具頁版面建立老師／品牌的資源介紹。</p><ul><li>本站採「相關資源互惠刊登」方式。</li><li>申請者需先完成本站資訊刊登，本站才進行後續審核。</li><li>網站內容需與命理、占卜、教學或相關服務有實際關聯。</li><li>不接受違法、欺騙、保證結果、誇大療效或不適合本站的服務內容。</li><li>若日後本站資訊遭移除、連結失效或網站內容出現重大變更，本站可調整或移除對應資源。</li><li>本站保留是否接受申請、文字整理與刊登位置調整權利。</li></ul></section>
+      </div>
+      <section class="listing-contact-panel"><div><div class="seo-kicker">APPLICATION EMAIL</div><h3>聯繫管理員</h3><p>請先完成本站資訊刊登，再把「已刊登頁面網址」寄到以下信箱供管理員審查。審核通過後，再補上完整老師／品牌資料。</p></div><div class="listing-email-box"><a href="mailto:ezgocpu@gmail.com?subject=%E3%80%90%E8%B3%87%E6%BA%90%E5%88%8A%E7%99%BB%E7%94%B3%E8%AB%8B%E3%80%91%E6%A2%85%E8%8A%B1%E6%98%93%E6%95%B8">ezgocpu@gmail.com</a><span>寄信申請 →</span></div></section>
+      <div class="listing-end"><button class="listing-back" id="closeListingBottom" type="button">← 返回梅花頁</button></div>
+    </div>
+  </section>
 
 <script src="meihua-core.js"></script>
 <script>
@@ -272,5 +535,51 @@ function cardHTML(h, lines, label, movingLine=0){
   });
 })();
 </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const worldSecond=document.getElementById('worldSecond');
+      document.getElementById('beginMeihua')?.addEventListener('click',()=>{
+        worldSecond?.classList.add('is-open');
+        worldSecond?.setAttribute('aria-hidden','false');
+        setTimeout(()=>worldSecond?.scrollIntoView({behavior:'smooth',block:'start'}),40);
+      });
+
+      const hero=document.getElementById('meihuaHeroVisual');
+      if(hero){
+        for(let i=0;i<30;i++){const s=document.createElement('i');s.className='meihua-star';s.style.left=(4+Math.random()*92)+'%';s.style.top=(3+Math.random()*92)+'%';s.style.setProperty('--dur',(2.8+Math.random()*4.5)+'s');s.style.animationDelay=(-Math.random()*5)+'s';hero.appendChild(s);}
+      }
+
+      const faqWorld=document.getElementById('faqWorld');
+      const listingWorld=document.getElementById('listingWorld');
+      const setOverlay=()=>document.body.classList.toggle('overlay-open',faqWorld?.classList.contains('is-active')||listingWorld?.classList.contains('is-active'));
+      const openFaq=()=>{faqWorld?.classList.add('is-active');faqWorld?.setAttribute('aria-hidden','false');if(faqWorld)faqWorld.scrollTop=0;history.replaceState(null,'','#faq-full');setOverlay();};
+      const closeFaq=()=>{faqWorld?.classList.remove('is-active');faqWorld?.setAttribute('aria-hidden','true');history.replaceState(null,'',location.pathname+location.search+'#meihua-faq');setOverlay();};
+      document.getElementById('openFaqWorld')?.addEventListener('click',openFaq);
+      document.getElementById('closeFaqWorld')?.addEventListener('click',closeFaq);
+      document.getElementById('closeFaqWorldBottom')?.addEventListener('click',closeFaq);
+
+      const openListing=()=>{listingWorld?.classList.add('is-active');listingWorld?.setAttribute('aria-hidden','false');if(listingWorld)listingWorld.scrollTop=0;history.replaceState(null,'','#apply-listing');setOverlay();};
+      const closeListing=()=>{listingWorld?.classList.remove('is-active');listingWorld?.setAttribute('aria-hidden','true');history.replaceState(null,'',location.pathname+location.search);setOverlay();};
+      document.getElementById('openListing')?.addEventListener('click',openListing);
+      document.getElementById('openListingInline')?.addEventListener('click',openListing);
+      document.getElementById('closeListing')?.addEventListener('click',closeListing);
+      document.getElementById('closeListingBottom')?.addEventListener('click',closeListing);
+
+      const copyBtn=document.getElementById('copySiteInfo');
+      copyBtn?.addEventListener('click',async()=>{
+        const text=`網站名稱：免費線上占卜
+頁面名稱：免費線上占卜｜塔羅・奇門・八字・紫微斗數・易經占卜
+網址：https://twkang1234.github.io/free-online-divination/index.html
+建議介紹：免費線上占卜工具網站，提供奇門遁甲、塔羅、八字、紫微斗數、梅花易數、六爻與易經 64 卦等工具，並整理各類占卜工具介紹，以及感情、工作、事業與生活選擇等相關內容。
+建議連結文字：免費線上占卜 ／ 免費線上占卜工具`;
+        try{await navigator.clipboard.writeText(text);const old=copyBtn.textContent;copyBtn.textContent='已複製';setTimeout(()=>copyBtn.textContent=old,1600)}catch(e){copyBtn.textContent='請手動複製上方資料'}
+      });
+
+      document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(faqWorld?.classList.contains('is-active'))closeFaq();if(listingWorld?.classList.contains('is-active'))closeListing();}});
+      if(location.hash==='#faq-full')openFaq();
+      if(location.hash==='#apply-listing')openListing();
+    });
+  </script>
 </body>
 </html>
