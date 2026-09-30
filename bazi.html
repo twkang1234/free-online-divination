@@ -346,7 +346,20 @@
     @media(max-width:860px){.fortune-summary-grid,.three-year-compare{grid-template-columns:1fr}.fortune-detail .fortune-detail-grid{grid-template-columns:1fr}}
 
   </style>
-</head>
+<style>
+.report-hero{display:block}.report-hero>.report-identity{margin-bottom:20px}#report-overview,.report-section{scroll-margin-top:90px}
+.overview-life-grid,.period-domains{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}
+.life-card,.period-domain{border:1px solid rgba(223,190,111,.22);border-radius:14px;padding:18px;background:rgba(255,255,255,.025);min-width:0}
+.life-card h4,.period-domain h4{margin:0 0 10px;color:#e6c986;font-size:16px}.life-card p,.period-domain p,.reading-card p{line-height:1.85;font-size:14px;overflow-wrap:anywhere}
+.life-card small,.period-domain small,.reading-basis{display:block;color:#aca694;font-size:12px;line-height:1.7;margin-top:12px}.period-domain strong{display:block;font-size:16px;color:#ece2c8;margin:8px 0}
+.method-details{margin-top:18px;border-top:1px solid rgba(223,190,111,.16);padding-top:12px}.method-details>summary{cursor:pointer;color:#c6b484;font-size:13px}.method-details .score-grid{margin-top:14px}
+.section-takeaway{padding:16px 18px;background:rgba(223,190,111,.06);border-left:3px solid #b99852;margin:18px 0;line-height:1.9;font-size:14px}.section-takeaway b{color:#e6c986}
+.period-range,.period-context{line-height:1.8;font-size:13px;margin:10px 0;color:#c1b8a5}.month-card .period-mini{font-size:11px;line-height:1.5;white-space:normal}.fortune-detail-item{line-height:1.9}
+.reading-card h4{margin-bottom:10px}.reading-card p+p{margin-top:12px}.reading-card .reading-basis{font-size:12px}.section-prompt-preview,.prompt-preview{white-space:pre-wrap;overflow-wrap:anywhere}
+.report-year-select,#monthCarryBtn{background:rgba(223,190,111,.08);color:#e6c986;border:1px solid rgba(223,190,111,.28);padding:9px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px;margin-top:10px}
+@media(max-width:760px){.overview-life-grid,.period-domains{grid-template-columns:1fr}.life-card,.period-domain{padding:16px}.period-range{overflow-wrap:anywhere}}
+@media print{.method-details,.period-domains,.overview-life-grid{break-inside:auto}.life-card,.period-domain,.reading-card{break-inside:avoid}.decode-content{display:block!important}.period-domain p,.life-card p,.reading-basis{color:#222!important}}
+</style></head>
 <body>
   <header class="page-topbar">
     <div class="topbar-left">
@@ -481,14 +494,14 @@
               <div class="tag-row" id="summaryTags"></div>
             </div>
           </div>
-          <div class="score-grid" id="scoreGrid"></div>
+          <div class="overview-life-grid" id="overviewLife"></div><details class="method-details"><summary>查看結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">加權方式：每個天干 1 份，地支按藏干比例分配；月支乘 1.35，其餘支乘 1.05。十神占比不計日干本身；支持度另看同類、生扶、通根與月支。此處未完整判定格局、調候與喜用神。</p><p class="micro-note">歲運比較：支持較足時，以食傷、財星與官殺作為發揮方向；支持較少時，以比劫與印星作為承接方向。原局已集中的主題與沖刑害破增加負擔；合只代表連結，不一律加分。分項說明另外看十神主題及日支、月柱互動。</p></details>
         </section>
 
         <details class="report-section" id="report-pillars" open>
           <summary><span><b>01</b> 四柱命盤</span><small>FOUR PILLARS · HIDDEN STEMS · TEN GODS</small></summary>
           <div class="report-body">
             <div class="pillars" id="pillars"></div>
-            <div class="meta" id="meta"></div>
+            <div class="meta" id="meta"></div><div class="section-takeaway" id="pillarTakeaway"></div>
           </div>
         </details>
 
@@ -510,7 +523,7 @@
                 <p class="micro-note">加入藏干與月支輕量季節權重，用於網站視覺化；不同流派權重並非完全一致。</p>
               </section>
             </div>
-            <div class="analysis-grid two compact-top">
+            <div class="section-takeaway" id="elementTakeaway"></div><div class="analysis-grid two compact-top">
               <section class="panel">
                 <div class="panel-title"><h3>陰陽比例</h3><span>YIN / YANG</span></div>
                 <div class="yin-yang-box" id="yinYangBox"></div>
@@ -592,7 +605,7 @@
           <div class="report-body">
             <div class="time-explain">
               <strong>先看一生的「十年級別」變化</strong>
-              <span>本站不打 97 分、33 分，而是把八步大運放在同一張命盤裡做相對比較：哪幾步比較能補足原局、哪幾步變動與壓力較多。</span>
+              <span>比較所列八步大運的發揮方向與調整負擔。點選任一時段，分開看事業、財務、感情與判讀依據；排名靠前仍可能有壓力。</span>
             </div>
             <div class="fortune-summary-grid" id="luckSummary"></div>
             <div class="luck-header">
@@ -630,7 +643,7 @@
             <div class="fortune-summary-grid" id="monthSummary"></div>
             <div class="month-flow-grid" id="monthFlowGrid"></div>
             <div class="detail-console fortune-detail" id="monthDetail"><span>點選月份查看：這個月較有利的主題、要注意什麼，以及干支／十神依據。</span></div>
-            <p class="micro-note">流月仍以節氣換月為準；目前卡片沿用代表日期整理，月初交節附近請以實際節氣時間為準。以下「較順／需留意」是本站依原局強弱、十神補入與合沖負擔做的相對比較，不是精密分數或絕對吉凶。</p>
+            <p class="micro-note">流月以節氣交接時刻換月，卡片標示實際起訖；「1 月」表示從該年小寒起的一段，國曆年初交節前仍屬前一流月。節氣時間依曆法核心的 UTC+8 時間顯示。相對評語採本站支持方向與互動規則，並未完整判定喜用神。</p>
           </div>
         </details>
 
@@ -643,7 +656,7 @@
         </details>
 
         <section class="ai-unlock-zone" id="ai-prompt-zone">
-          <div class="ai-unlock-head"><span class="report-eyebrow">FULL CHART · UNIVERSAL AI PROMPT</span><h3>把整張命盤整理成一份萬用 AI 提示詞</h3><p>每個分區都有自己的「一鍵 AI 提示詞」；不需要先想問題、也不用填任何欄位。當你看過足夠多的分區，這裡會自動整理成整張命盤的完整資料包。提示詞只會顯示在你的瀏覽器，不會自動把出生資料傳給任何 AI。</p></div>
+          <div class="ai-unlock-head"><span class="report-eyebrow">FULL CHART · UNIVERSAL AI PROMPT</span><h3>把整張命盤整理成一份萬用 AI 提示詞</h3><p>每個分區都有自己的「一鍵 AI 提示詞」；不需要先想問題、也不用填任何欄位。命盤建立後，這裡就能整理完整資料包，讓 AI 接著解釋如何調整與應用。提示詞只會顯示在你的瀏覽器，不會自動把出生資料傳給任何 AI。</p></div>
           <div class="unlock-status"><div><strong id="unlockTitle">完整提示詞正在整理</strong><span id="unlockDesc">先從你有興趣的分區繼續展開白話解讀；網站會依你已讀的內容逐步整理。</span></div><span class="unlock-badge" id="unlockBadge">整理中</span></div>
           <div class="ai-generator" id="aiGenerator">
             <div class="prompt-actions"><button type="button" class="primary" id="generatePromptBtn">一鍵產生並複製完整提示詞</button><a href="https://chatgpt.com/" target="_blank" rel="noopener">開啟 ChatGPT ↗</a><a href="https://gemini.google.com/" target="_blank" rel="noopener">開啟 Gemini ↗</a><a href="https://claude.ai/" target="_blank" rel="noopener">開啟 Claude ↗</a></div>
@@ -691,7 +704,7 @@
         <article class="topic-card"><div class="topic-no">07 / INTERPRETATION</div><h3>命盤結構解讀</h3><p>把五行、十神與干支互動轉成較容易閱讀的文字，從性格、行動方式、工作、財務、人際與關係等角度整理。</p></article>
         <article class="topic-card"><div class="topic-no">08 / INTERACTIVE</div><h3>互動式八字報告</h3><p>可展開或收合章節、切換大運與流年、查看十神詞典、複製摘要、儲存在本機，並可列印或另存 PDF。</p></article>
         <article class="topic-card"><div class="topic-no">09 / DEEP TEN GODS</div><h3>十神作用機制</h3><p>前一區回答「哪些力量最常出現」，這一區專門回答「它們怎麼接力、哪裡卡住、哪一端需要補上」，避免重複解釋同一組百分比。</p></article>
-        <article class="topic-card"><div class="topic-no">10 / AI PROMPT</div><h3>AI 深度解盤提示詞</h3><p>深入探索命盤後可解鎖提示詞產生器，把本頁已計算的命盤資料整理成完整 AI 解盤包，再帶到自己習慣的 AI 繼續追問。</p></article>
+        <article class="topic-card"><div class="topic-no">10 / AI PROMPT</div><h3>AI 深度解盤提示詞</h3><p>命盤建立後即可使用提示詞產生器，把本頁已計算的命盤資料整理成完整 AI 解盤包，再帶到自己習慣的 AI 繼續追問。</p></article>
       </div>
     </section>
 
@@ -941,7 +954,7 @@
 
 <!-- 曆法核心：MIT 授權 lunar-javascript 1.7.7 -->
   <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
-  <script src="bazi-core.js"></script>
+  <script src="bazi-core.js?v=2.1.0"></script>
 
   <script>
     (() => {
@@ -953,6 +966,7 @@
       const emptyState = $('emptyState');
       const results = $('results');
       let lastData = null;
+      let selectedPeriods = {};
 
       const labels = {year:['年柱','YEAR'],month:['月柱','MONTH'],day:['日柱','DAY MASTER'],time:['時柱','HOUR']};
       const elOrder=['木','火','土','金','水'];
@@ -987,13 +1001,14 @@
       const exploration={seen:new Set(),actions:new Set(),explored:new Set(),unlocked:false,prompt:''};
       const milestoneMap=Object.fromEntries(sectionDefinitions.map(x=>[x.id,x.key]));
       function trackAction(key){exploration.actions.add(key);updateExploration();}
-      function explorationScore(){const base=10;const sectionPart=Math.round((exploration.explored.size/sectionDefinitions.length)*86);return Math.min(100,base+sectionPart);}
+      function explorationScore(){return Math.min(100,10+Math.round(exploration.explored.size/sectionDefinitions.length*90));}
       function setMilestone(name,done=true){const el=document.querySelector(`#exploreMilestones [data-m="${name}"]`);if(el&&done)el.classList.add('done');}
       function markSectionExplored(key){if(!sectionMap[key])return;exploration.explored.add(key);setMilestone(key);updateExploration();}
       function updateExploration(){
+        $('exploreHint').textContent='閱讀進度只記錄你展開過的白話解讀；完整提示詞已可使用。';
         const score=explorationScore();
         $('explorePercent').textContent=`${score}%`;$('exploreFill').style.width=`${score}%`;
-        const canUnlock=exploration.explored.size>=Math.ceil(sectionDefinitions.length*.6);
+        const canUnlock=!!lastData;
         if(canUnlock&&!exploration.unlocked)unlockAiPrompt();
         if(!exploration.unlocked){
           $('exploreHint').textContent='從你有興趣的分區繼續展開白話解讀；讀過的內容越多，這張命盤會逐步整理完整。';
@@ -1015,7 +1030,7 @@
         document.querySelectorAll('#results .report-section,#report-overview,#ai-prompt-zone,#qimen-bridge').forEach(el=>reportObserver.observe(el));
       }
       function unlockAiPrompt(){
-        exploration.unlocked=true;setMilestone('ai');document.querySelector('#exploreMilestones [data-m="ai"]')?.classList.add('unlock');$('aiGenerator').classList.add('show');$('unlockBadge').textContent='READY';$('unlockBadge').classList.add('ready');$('unlockTitle').textContent='完整命盤 AI 提示詞已準備好';$('unlockDesc').textContent='你已經看過足夠多的命盤結構。按一下就會自動整理並複製完整資料包，不需要另外輸入問題。';
+        exploration.unlocked=true;setMilestone('ai');document.querySelector('#exploreMilestones [data-m="ai"]')?.classList.add('unlock');$('aiGenerator').classList.add('show');$('unlockBadge').textContent='READY';$('unlockBadge').classList.add('ready');$('unlockTitle').textContent='完整命盤 AI 提示詞已準備好';$('unlockDesc').textContent='命盤已建立，隨時可以帶著完整資料追問如何調整或應用。閱讀進度不影響提示詞使用。';
       }
 
       const comboSpecial={
@@ -1051,73 +1066,22 @@
         const dict=BaziCore.TEN_GOD_TEXT||{};return{title:`${a} × ${b}`,text:`${a}偏向「${dict[a]||'一組命盤主題'}」，${b}偏向「${dict[b]||'另一組命盤主題'}」。兩者同時較突出時，重點不是分開背定義，而是觀察兩種需求在工作、關係與壓力情境下如何彼此支持或拉扯。`};
       }
       function renderDeepTenGods(data){
-        const ps=data.tenGodDistribution?.percentages||{};
-        const gps=data.tenGodDistribution?.groupPercentages||{};
-        const top=tenGodOrder.map(t=>[t,Number(ps[t])||0]).sort((a,b)=>b[1]-a[1]).slice(0,3);
-        const groupSorted=Object.entries(gps).sort((a,b)=>b[1]-a[1]);
-        const highG=groupSorted[0]||['—',0], lowG=groupSorted[groupSorted.length-1]||['—',0];
-        const main=top[0]||['—',0], second=top[1]||['—',0], third=top[2]||['—',0];
-        const prof=godProfile[main[0]]||{};
-
-        const concentration=Math.round(top.reduce((s,x)=>s+x[1],0)*10)/10;
-
-        const gaps=[
-          {a:'吸收／理解',av:Number(gps['印星'])||0,b:'表達／輸出',bv:Number(gps['食傷'])||0},
-          {a:'自己掌握',av:Number(gps['比劫'])||0,b:'規範／責任',bv:Number(gps['官殺'])||0},
-          {a:'表達／輸出',av:Number(gps['食傷'])||0,b:'成果／資源',bv:Number(gps['財星'])||0}
-        ].map(x=>({...x,d:Math.abs(x.av-x.bv)})).sort((a,b)=>b.d-a.d);
-        const big=gaps[0];
-
-        let gapText='';
-        if(big.av>big.bv){
-          gapText=`<b>${big.a} ${big.av}%</b> 明顯高於 <b>${big.b} ${big.bv}%</b>。白話來說，前一段通常比較自然，後一段比較需要刻意推動。`;
-        }else{
-          gapText=`<b>${big.b} ${big.bv}%</b> 明顯高於 <b>${big.a} ${big.av}%</b>。白話來說，後一段較容易被外界推動，前一段反而需要補足。`;
-        }
-
-        const action={
-          '比肩':'先確認自己的立場，再決定要不要接受別人的方法',
-          '劫財':'對競爭、資源與主導權反應較快，最後傾向自己掌握',
-          '食神':'傾向把能力穩定做熟，再自然地輸出',
-          '傷官':'容易先看到問題與不合理之處，再用自己的方式改進',
-          '偏財':'容易先注意外部機會、人脈與資源，再靈活調整',
-          '正財':'傾向先算清楚成本、責任與成果，再穩定累積',
-          '七殺':'遇到壓力、挑戰或時限時，反而容易被逼出專注與決斷',
-          '正官':'會先在意規則、責任與標準，再按角色把事情做好',
-          '偏印':'遇到陌生或複雜問題時，容易先研究、拆解、找規律，再形成自己的方法',
-          '正印':'傾向先吸收、整理、建立完整理解，再穩定運用'
-        };
-
-        const comboParts=top.map(([g,v])=>`<b>${g} ${v}%</b>：${action[g]||godPlain[g]||g}`).join('；');
-
-        $('deepLifeLead').innerHTML=
-          `<strong>這張盤的十神不是平均分散，而是明顯集中在少數幾股力量。</strong>`+
-          `前三大十神是 <b>${esc(main[0])} ${main[1]}%</b>、<b>${esc(second[0])} ${second[1]}%</b>、<b>${esc(third[0])} ${third[1]}%</b>，合計約 <b>${concentration}%</b>。`+
-          `所以下面的白話解讀，重點不是把十種十神全部念一遍，而是看這三股力量如何一起塑造你的思考與做事方式。`;
-
+        const ps=data.tenGodDistribution.percentages,gp=data.tenGodDistribution.groupPercentages;
+        const top=tenGodOrder.map(t=>[t,Number(ps[t])||0]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,3);
+        const main=top[0],prof=godProfile[main[0]]||{},concentration=Math.round(top.reduce((s,x)=>s+x[1],0)*10)/10;
+        const groups=Object.entries(gp).sort((a,b)=>b[1]-a[1]),gap=groups[0][1]-groups.at(-1)[1];
+        $('deepLifeLead').innerHTML=`<strong>${concentration>=65?'力量較集中，先看主要十神如何配合。':'力量較分散，以下是閱讀起點，不是唯一主導。'}</strong>占比較高的 ${top.length} 項為 ${top.map(([t,v])=>`<b>${esc(t)} ${v}%</b>`).join('、')}，合計約 ${concentration}%。`;
+        const combination=top.map(([t,v])=>`<b>${esc(t)} ${v}%：</b>${esc(godProfile[t]?.action||godPlain[t])}`).join('<br><br>');
+        const gapText=gap<12?'五大群組的占比落差不大，不需要硬找一個明顯弱項；可以從工作、相處與學習情境觀察不同反應。':`較多的是 ${groups[0][0]} ${groups[0][1]}%，較少的是 ${groups.at(-1)[0]} ${groups.at(-1)[1]}%。生活中較常先使用「${groupPlain[groups[0][0]].verb}」這種方式；「${groupPlain[groups.at(-1)[0]].verb}」則未必是第一反應。`;
         $('deepLifeGrid').innerHTML=[
-          [
-            `01 / ${esc(main[0])}為什麼最重要`,
-            `${esc(main[0])} ${main[1]}% 到底代表什麼？`,
-            `${prof.mind||godPlain[main[0]]||''} ${prof.action||action[main[0]]||''} <br><br><b>優勢：</b>${prof.strength||'這套能力容易成為慣用強項。'}<br><b>偏高時：</b>${prof.watch||'容易過度依賴同一種方式處理事情。'}`
-          ],
-          [
-            '02 / 前三大十神放在一起',
-            '這三股力量會怎麼一起運作？',
-            `${comboParts}。<br><br>真正值得看的不是名稱本身，而是你遇到事情時，這幾種反應常會連在一起出現。`
-          ],
-          [
-            '03 / 最大結構落差',
-            '你最自然與比較不自然的部分在哪？',
-            `${gapText} 這種落差比單純看「最高十神」更能解釋：為什麼某些事你很自然就會做，另一些事即使知道重要，也比較需要環境或後天刻意推動。`
-          ],
-          [
-            '04 / 五大群組',
-            '整體力量集中在哪一類？',
-            `最高群組是 <b>${esc(highG[0])} ${highG[1]}%</b>，最低是 <b>${esc(lowG[0])} ${lowG[1]}%</b>。高群組代表比較常用、比較自然的處理方式；低群組只是「不一定是第一反應」，不代表沒有能力或某方面一定不好。`
-          ]
-        ].map(([k,t,p])=>`<article class="answer-card"><small>${k}</small><h4>${t}</h4><p>${p}</p></article>`).join('');
+          ['先看主要特徵',`${main[0]}代表什麼？`,`${esc(prof.mind||'')} ${esc(prof.action||'')}`],
+          ['放進生活情境','哪裡有優勢，哪裡容易卡住？',`<b>較能發揮：</b>${esc(prof.strength||data.reading.good)}<br><br><b>容易卡住：</b>${esc(prof.watch||data.reading.stuck)}`],
+          ['一起理解','這些傾向如何同時出現？',combination],
+          ['看力量落差','為什麼有些事比較自然？',`${esc(gapText)}<br><br>${esc(data.reading.learning)}`]
+        ].map(([k,t,p])=>`<article class="answer-card"><small>${esc(k)}</small><h4>${esc(t)}</h4><p>${p}</p></article>`).join('');
       }
+
+
       const SHENSHA_INFO={
         '天乙貴人':['貴人／助力','傳統上常用來觀察協助、解圍與外部支持的象徵。'],
         '太極貴人':['貴人／思辨','常被用來觀察理解力、思辨與對抽象事物的興趣。'],
@@ -1269,16 +1233,18 @@
             </article>`).join('')
           : '<div class="shensha-empty">目前未辨識到常用神煞；請以四柱、五行、十神與干支互動為主要判讀基礎。</div>';
       }
-      function formatBasic(data){return `性別：${data.gender===1?'男':'女'}\n公曆：${data.solarText}\n農曆：${data.lunarText}\n四柱：${data.pillars.map(p=>p.ganZhi).join(' / ')}\n日主：${data.dayMaster}${data.dayMasterElement}（${data.dayMasterYinYang}）`;}
+      function formatBasic(data){return `晚子時規則：${data.sect===1?"23:00 起算次日":"23:00 後仍算當日"}\n時間基準：輸入民用時間；未校正真太陽時；節氣時間採 UTC+8；未提供出生地\n性別：${data.gender===1?'男':'女'}\n公曆：${data.solarText}\n農曆：${data.lunarText}\n四柱：${data.pillars.map(p=>p.ganZhi).join(' / ')}\n日主：${data.dayMaster}${data.dayMasterElement}（${data.dayMasterYinYang}）`;}
       function formatPillars(data){return (data.pillars||[]).map(p=>`${labels[p.key]?.[0]||p.key}：${p.ganZhi}｜天干十神 ${p.shiShenGan||'日主'}｜藏干 ${(p.hideGan||[]).join('、')||'—'}｜地支十神 ${(p.shiShenZhi||[]).join('、')||'—'}｜納音 ${p.naYin||'—'}｜十二長生 ${p.diShi||'—'}｜旬空 ${p.xunKong||'—'}`).join('\n');}
       function formatElements(data){const wp=data.weightedFiveElements?.percentages||{},y=data.yinYang||{};return `表層五行：${elOrder.map(e=>`${e} ${data.fiveElements?.[e]||0}`).join('｜')}\n加權五行：${elOrder.map(e=>`${e} ${wp[e]||0}%`).join('｜')}\n陰陽：陽 ${y.yang||0}/8｜陰 ${y.yin||0}/8\n網站日主支持度：${data.scores?.support||0}/100（規則式視覺化指標）`;}
       function formatTenGods(data){const ps=data.tenGodDistribution?.percentages||{},gp=data.tenGodDistribution?.groupPercentages||{};const top=tenGodOrder.map(t=>[t,Number(ps[t])||0]).sort((a,b)=>b[1]-a[1]).slice(0,3);return `十神：${tenGodOrder.map(t=>`${t} ${ps[t]||0}%`).join('｜')}\n前三大：${top.map(x=>`${x[0]} ${x[1]}%`).join('、')}\n五大群組：${Object.entries(gp).map(([k,v])=>`${k} ${v}%`).join('｜')}`;}
       function formatRelations(data){return (data.relations||[]).map(r=>`${r.type}：${r.label}${r.positions?`（${r.positions}）`:''}`).join('\n')||'未辨識到明顯常見合沖刑害';}
       function formatShensha(data){const hs=data._shensha||computeShensha(data);return hs.length?hs.map(x=>`${x.name}｜${x.positions.join('、')}｜${x.basis.join('；')}`).join('\n'):'未辨識到本站收錄的常用神煞';}
-      function currentLuckOf(data){const cy=new Date().getFullYear();return (data.daYun?.cycles||[]).find(c=>cy>=c.startYear&&cy<=c.endYear);}
+      function currentLuckOf(data){return BaziCore.currentLuck(data);}
       function formatLuck(data){const c=currentLuckOf(data);const all=(data.daYun?.cycles||[]).map(x=>`${x.ganZhi}：${x.startAge}～${x.endAge}歲（${x.startYear}～${x.endYear}）｜${x.tenGodGan||'—'}／${x.tenGodZhi||'—'}｜互動 ${(x.interactions||[]).join('、')||'無明顯常見項'}`).join('\n');return `${c?`目前：${c.ganZhi}大運｜${c.startAge}～${c.endAge}歲｜${c.tenGodGan||'—'}／${c.tenGodZhi||'—'}｜互動 ${(c.interactions||[]).join('、')||'無明顯常見項'}\n\n`:''}${all}`;}
-      function formatYears(data){return (data.yearFlows||[]).map(y=>`${y.year} ${y.ganZhi}｜${y.tenGodGan||'—'}／${y.tenGodZhi||'—'}｜互動 ${(y.interactions||[]).join('、')||'無明顯常見項'}`).join('\n');}
-      function formatMonths(data){return (data.monthFlows||[]).map(m=>`${data.monthFlowYear} 年 ${m.month} 月 ${m.ganZhi}｜${m.tenGodGan||'—'}／${m.tenGodZhi||'—'}｜互動 ${(m.interactions||[]).join('、')||'無明顯常見項'}`).join('\n');}
+      function formatYears(data){return (data.yearFlows||[]).map(y=>periodPromptLine(data,y)).join('\n');}
+      function formatMonths(data){return (data.monthFlows||[]).map(m=>periodPromptLine(data,m)).join('\n');}
+
+
       function decodeCard(label,text){return `<article class="decode-card"><small>${esc(label)}</small><p>${text}</p></article>`;}
       const elementPlain={
         '木':{core:'延伸、規劃、成長與轉向',verb:'尋找方向與可能性'},
@@ -1509,7 +1475,55 @@
         const act={'官殺':'外部要求／責任','印星':'理解／方法','比劫':'自己的判斷','食傷':'表達／輸出','財星':'成果／交換'};
         return {nodes,text:nodes.map(n=>act[n]||n).join(' → ')};
       }
+      function quickTakeaway(key,data){
+        if(key==='pillars')return `<b>先看懂三件事：</b>日干「${esc(data.dayMaster)}」是比較中心；月支「${esc(data.pillars[1].zhi)}」提供出生季節背景；藏干是地支裡的內含成分，後面的五行與十神占比會把它算進去。<br>「${esc(data.pillars[1].shiShenGan)}」等十神，是其他天干相對於日主的角色名稱。`;
+        const wp=data.weightedFiveElements.percentages,sorted=elOrder.map(e=>[e,wp[e]]).sort((a,b)=>b[1]-a[1]);
+        const hidden=elOrder.filter(e=>!data.fiveElements[e]&&wp[e]>0);
+        return `<b>這張盤先看什麼：</b>${esc(sorted[0][0])} ${sorted[0][1]}%、${esc(sorted[1][0])} ${sorted[1][1]}% 較多；${esc(sorted[4][0])} ${sorted[4][1]}% 較少。${hidden.length?`表面看不到的 ${esc(hidden.join('、'))} 仍存在於藏干，不能當成完全沒有。`:''}<br>占比用來看結構集中在哪裡；生活表現要連到日主與十神一起解釋。`;
+      }
+      function revisedExplanation(key,data){
+        const r=data.reading,gp=data.tenGodDistribution.groupPercentages,ps=data.tenGodDistribution.percentages;
+        const top=Object.entries(ps).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+        if(key==='pillars')return decodeCard('四柱各看哪個生活面向','年柱看家族與早年背景；月柱看成長、工作與社會環境；日干是自己，日支常用來觀察核心生活與伴侶位置；時柱看後續發展、子女與較晚形成的能力。柱位是觀察角度，不是固定年齡的有效期限。')+decodeCard('這張盤的主軸',`${esc(data.dayMaster)}是日主。月柱為 ${esc(data.pillars[1].ganZhi)}，月干的 ${esc(data.pillars[1].shiShenGan)} 與日主形成關係。全盤最突出的十神為 ${esc(top[0][0])} ${top[0][1]}%，生活解讀會優先看它如何配合其他位置。`)+decodeCard('藏干、十神與其他欄位','藏干是地支內含的天干；支十神就是這些藏干相對於日主的角色。納音是干支組合的傳統分類；十二長生描述日干在各支的階段象徵；旬空是各柱所屬旬的空支。它們不能代替整體五行與十神判讀。')+decodeCard('從四柱連到生活',`${esc(r.title)}。${esc(r.good)} 往下看十神與結構解讀，可看到這個傾向在哪些情境有優勢，又在哪裡容易卡住。`);
+        if(key==='elements'){
+          const wp=data.weightedFiveElements.percentages,els=elOrder.map(e=>[e,wp[e]]).sort((a,b)=>b[1]-a[1]);
+          const leading=els[0][0],god=top[0][0],prof=godProfile[god];
+          return decodeCard('表層與加權為什麼不同',`表層數量把八個字各算一次；加權則拆開地支藏干，並給月支較多權重。因此「${esc(leading)} ${els[0][1]}%」表示這套分配下它較多，不是你的能力或性格有這個百分比。`)+decodeCard('較多的五行，在這張盤扮演什麼角色',`${esc(leading)}是原局加權較多的五行。要解釋生活表現，再以日主 ${esc(data.dayMaster)} 為中心看十神：目前 ${esc(god)} 最突出，${esc(prof?.mind||r.title)} ${esc(prof?.strength||r.good)}`)+decodeCard('較少不等於沒有能力',`${esc(els[4][0])}占比 ${els[4][1]}%，表示這類成分較少。是否有利不能只看缺多少；例如印星與食傷的落差，才能進一步解釋吸收和表達的差異：${esc(r.learning)}`)+decodeCard('陰陽比例怎麼用',`表層為陽 ${data.yinYang.yang}/8、陰 ${data.yinYang.yin}/8。它描述八個字的陰陽組成，可作反應節奏的輔助線索；實際行動方式先看十神與生活經驗，避免直接把陽多判成外向、陰多判成內向。`);
+        }
+        if(key==='tengods'){
+          const p=godProfile[top[0][0]],secondary=top[1];
+          return decodeCard('生活情境：遇到一件不熟悉的事',`${esc(p?.action||r.title)} 優勢在${esc(p?.strength||r.good)}。${secondary?`第二項 ${esc(secondary[0])} ${secondary[1]}% 又帶入「${esc(godProfile[secondary[0]]?.action||godPlain[secondary[0]])}」，兩者會一起影響處理方式。`:''}`)+decodeCard('遇到什麼情境比較容易卡住',`${esc(p?.watch||r.stuck)} ${esc(r.learning)}`)+decodeCard('百分比要怎麼讀',`十神以日主為中心分類，日干本身不計入這份占比，所以它和五行占比的分母不同。${esc(top[0][0])} ${top[0][1]}% 代表在本站權重下相對突出，並非你只有這種性格；比例相近時應一起讀，不要只看第一名。`);
+        }
+        if(key==='reading')return decodeCard('這份解讀怎麼連起來','先以日主建立比較中心，再看十神的主要傾向與群組落差，最後用干支互動確認哪些生活領域被牽動。前面的六張卡分別呈現表現、卡點與依據。')+decodeCard('想知道如何調整或應用','下方提示詞會附上完整本命資料，請 AI 針對你最在意的工作、感情或生活情境，接著提出具體調整方法。你也可以補充現在遇到的問題，讓討論更貼近實際。');
+        if(['luck','years','months'].includes(key)){
+          const item=selectedPeriods[key];if(!item)return decodeCard('先選一段時間','點選上方卡片，即可查看該時段的三個生活領域。');
+          const a=timeAssessment(data,item);
+          return decodeCard('目前選取的時段',`${esc(periodName(item))}｜${esc(a.label)}。${esc(a.reasons.join(' '))}`)+decodeCard('三個領域可以不同步',a.domains.map(x=>`<b>${esc(x.name)}：${esc(x.label)}</b>。${esc(x.text)}`).join('<br><br>'))+decodeCard('接著可以問 AI 什麼','本區提示詞會帶入你現在選取的時段、本命、大運與流年背景。可以請 AI 進一步解釋如何安排工作、處理相處磨合，或理解為什麼整體評語和某個領域的感受不同。');
+        }
+        if(key==='shensha'){
+          const hits=data._shensha||computeShensha(data),repeat=hits.filter(x=>x.positions.length>1);
+          const hua=hits.find(x=>x.name==='華蓋');
+          return decodeCard('先看會重複出現的主題',repeat.length?repeat.map(x=>`<b>${esc(x.name)}</b> 在 ${esc(x.positions.join('、'))} 出現：${esc(x.meaning)}`).join('<br><br>'):'這張盤沒有跨柱重複的神煞，先從四柱與十神的主要特徵閱讀。')+decodeCard('與十神一起讀，才有個人特色',hua&&gp['印星']>=25?`華蓋常連到研究與獨立興趣，這張盤又有印星 ${gp['印星']}%。兩者象徵呼應，可以留意「願意自己深入鑽研，但別人不一定跟得上興趣」的生活情境。`:`原局十神以 ${esc(top[0][0])} 最突出。神煞用來補充該傾向是否在不同位置呼應；沒有呼應的項目不需要硬套成個人事件。`)+decodeCard('柱位的意思','年、月、日、時柱分別提供家族、社會環境、自身與關係、後續發展等觀察角度。神煞數量不代表好壞，也不限定只在某個年齡生效。');
+        }
+        return '';
+      }
+      function promptContext(data){
+        return `【完整本命與判讀背景】\n${formatPillars(data)}\n${formatElements(data)}\n${formatTenGods(data)}\n${formatRelations(data)}\n\n【網站解讀】\n${data.reading.rows.map(x=>`${x.title}：${x.text}\n卡點：${x.stuck}\n依據：${x.basis}`).join('\n')}\n\n【採用規則】\n${BaziCore.METHOD_NOTE}\n天干各 1；藏干按比例分配，月支乘 1.35、其他支乘 1.05；十神分布不計日干。歲運依日主支持方向、群組集中及沖刑害破作相對比較，合不直接當吉。節氣採 UTC+8，沒有出生地或時區校正。\n${formatLuck(data)}`;
+      }
+      function periodPromptLine(data,item){
+        const a=timeAssessment(data,item);
+        return `${periodName(item)}｜${item.tenGodGan}／${item.tenGodZhi}｜${a.label}\n起訖：${item.startSolar||'—'} 至 ${item.endSolar||'—'}（不含終點）\n背景：${a.contextText}\n比較依據：${a.reasons.join(' ')}\n互動：${a.relations.map(r=>r.label+'（'+r.position+'）').join('、')||'未見收錄的直接互動'}\n${a.domains.map(x=>x.name+'：'+x.label+'；'+x.text+'；依據：'+x.basis).join('\n')}`;
+      }
+      function selectedPeriodPrompt(data,key){return selectedPeriods[key]?`【使用者目前選取的時段，優先深入分析】\n${periodPromptLine(data,selectedPeriods[key])}`:'';}
+      function refreshSelectedDecode(key,data){
+        const box=document.querySelector(`.section-decode[data-section="${key}"]`);
+        if(box?.querySelector('.decode-content.show'))box.querySelector('.decode-summary-grid').innerHTML=sectionExplanation(key,data);
+        // A preview from a previous time selection must not look like the current prompt.
+        const preview=box?.querySelector('.section-prompt-preview');if(preview){preview.textContent='';preview.classList.remove('show');}
+      }
+
       function sectionExplanation(key,data){
+        const revised=revisedExplanation(key,data);if(revised)return revised;
         const wp=data.weightedFiveElements?.percentages||{},ps=data.tenGodDistribution?.percentages||{},gp=data.tenGodDistribution?.groupPercentages||{};
         const elSorted=elOrder.map(e=>[e,Number(wp[e])||0]).sort((a,b)=>b[1]-a[1]);
         const tgSorted=tenGodOrder.map(t=>[t,Number(ps[t])||0]).sort((a,b)=>b[1]-a[1]);
@@ -1528,7 +1542,7 @@
           return decodeCard('這一區先讓你知道什麼',`四柱不是四種不同人格，而是同一張命盤的四個位置。<b>日柱天干 ${safe(data.dayMaster)}</b> 是「自己」的比較中心；<b>月柱 ${safe(getP('month').ganZhi||'—')}</b> 和出生季節關係最密切，通常是後面判五行旺衰的重要背景。`)
             +decodeCard('四個位置跟你有什麼關係',`<b>年柱</b>先看早年、家庭與外部背景；<b>月柱</b>看成長環境、社會規範與工作背景；<b>日柱</b>看自己、核心關係與伴侶位置；<b>時柱</b>看後續發展、子女、晚年與較晚形成的能力。這四個位置會在後面的神煞與干支互動再次用到。`)
             +decodeCard('這張盤目前最醒目的底色',`以本站加權資料來看，五行以 <b>${safe(hiE[0])}</b> 最明顯，十神群組以 <b>${safe(hiG[0])}</b> 最明顯。換成白話，就是後面閱讀時，優先留意「${safe(elementPlain[hiE[0]]?.core||hiE[0])}」以及「${safe(groupPlain[hiG[0]]?.core||hiG[0])}」是否反覆出現在不同區域。`)
-            +decodeCard('這一區做不到什麼',`四柱本身只是骨架，不能單靠「丙辰、戊戌、庚戌、辛巳」直接判性格好壞。真正個人化的部分，要把四柱放進五行、十神、合沖與大運一起看。${rels.length?`你的原局另有 <b>${rels.length}</b> 組可見干支互動，所以後面「哪些位置被反覆碰動」會比單看八個字更有意義。`:''}`);
+            +decodeCard('這一區做不到什麼',`四柱本身只是骨架，不能單靠「${safe(data.pillars.map(p=>p.ganZhi).join("、"))}」直接判性格好壞。真正個人化的部分，要把四柱放進五行、十神、合沖與大運一起看。${rels.length?`你的原局另有 <b>${rels.length}</b> 組可見干支互動，所以後面「哪些位置被反覆碰動」會比單看八個字更有意義。`:''}`);
         }
 
         if(key==='elements'){
@@ -1560,7 +1574,7 @@
             +decodeCard(`${safe(topTen[0])} ${topTen[1]}% 到底代表什麼`,`${safe(main.mind||godPlain[topTen[0]])} ${safe(main.action||'')} 這比一句「${safe(godPlain[topTen[0]]||topTen[0])}」更重要，因為它描述的是你碰到事情時最自然的思考與反應路徑。`)
             +decodeCard(`這個主導十神的優勢`,`${safe(main.strength||'這一類能力較容易累積成慣用強項。')} 因為比例高，它不只是「命盤有這顆」，而是比較容易反覆出現在學習、工作、決策或人際處理方式裡。`)
             +decodeCard(`偏高時最容易卡在哪裡`,`${safe(main.watch||'偏重時容易過度依賴同一種方式處理事情。')} 所以高比例本身不是「越高越好」，而是代表這套模式既可能成為強項，也可能形成慣性。`)
-            +decodeCard('第二、第三名補了什麼',`<b>${safe(secondTen[0])}</b> 帶來「${safe(second.mind||godPlain[secondTen[0]])}」；<b>${safe(thirdTen[0])}</b> 帶來「${safe(third.mind||godPlain[thirdTen[0]])}」。這一區先回答「你有哪些強烈傾向」；下一區才專門分析它們彼此如何接力，避免重複。`)
+            +decodeCard('第二、第三名補了什麼',`<b>${safe(secondTen[0])}</b> 帶來「${safe(second.mind||godPlain[secondTen[0]])}」；<b>${safe(thirdTen[0])}</b> 帶來「${safe(third.mind||godPlain[thirdTen[0]])}」。這一區先回答「你有哪些強烈傾向」；本區的白話整合會分析它們如何配合，避免重複。`)
             +decodeCard('五大群組再看一眼',`群組最高為 <b>${safe(hiG[0])} ${hiG[1]}%</b>（${groupPercentLabel(hiG[1])}），最低為 <b>${safe(loG[0])} ${loG[1]}%</b>。高群組代表比較自然、常用的處理方式；低群組代表不一定是第一反應，不能直接解讀成不好、沒能力或某種人生結果。`);
         }
 
@@ -1699,7 +1713,7 @@
           return decodeCard('先給你最像「人的」總結',`這張盤最明顯的主軸，是 <b>${safe(hiG[0])}</b> 與 <b>${safe(secG[0])}</b> 同時較突出：${safe(pair)}。再加上單一十神以 <b>${safe(topTen[0])}</b> 最明顯，因此思考與做事方式會更偏向「${safe(mainGod.action||godPlain[topTen[0]])}」。`)
             +decodeCard('你的優勢通常從哪裡來',`${safe(mainGod.strength||groupPlain[hiG[0]]?.core)}。五行方面又以 <b>${safe(hiE[0])}</b> 最明顯，所以這些能力比較容易透過「${safe(elementPlain[hiE[0]]?.verb)}」被實際運用。`)
             +decodeCard('最容易出現的盲點',`${safe(mainGod.watch||'高比例力量也容易形成慣性。')} 另外相對較少的 <b>${safe(loG[0])}</b> 表示「${safe(groupPlain[loG[0]]?.core)}」通常不是第一反應，需要環境、經驗或後天刻意補上。`)
-            +decodeCard('網站目前能說到哪裡',`網站可以把五行、十神、干支與大運整理成高機率的結構傾向，但不應假裝能靠規則自動判完所有細節。若你要追問工作、感情、財務或某一段人生，下面的一鍵 AI 提示詞會把完整命盤資料一起帶走，讓 AI 繼續深挖。`);
+            +decodeCard('網站目前能說到哪裡',`網站可以把五行、十神、干支與大運整理成規則式的結構傾向，但不應假裝能靠規則自動判完所有細節。若你要追問工作、感情、財務或某一段人生，下面的一鍵 AI 提示詞會把完整命盤資料一起帶走，讓 AI 繼續深挖。`);
         }
 
         if(key==='luck'){
@@ -1758,20 +1772,24 @@
 4. 不要把比例、單一神煞或單一合沖直接當成吉凶、財富、婚姻成敗或事件機率。
 5. ${def.instruction}
 6. 資料不足就直接說，不要補造格局、喜用神、真太陽時或出生地。
-7. 使用者沒有另外提出問題，因此請你直接完整分析本區，最後列出 3 個最值得繼續追問的方向。
+7. 網站已提供特徵與卡點，請進一步提出可實行的調整方法，每項連到命盤依據與生活情境；先詢問會影響建議的現況，不要假定使用者的職業、收入或感情狀態。最後列出 3 個追問方向。
 
 【基本資料】
 ${formatBasic(data)}
 
+${promptContext(data)}
+
 ${sectionDataText(key,data)}
 
-請使用繁體中文，先給「一句話核心結論」，再分成「可能怎麼表現在本人身上」「優勢與容易卡住」「判讀依據」「值得繼續追問」四部分。`;
+${selectedPeriodPrompt(data,key)}
+
+請使用繁體中文，先給「一句話核心結論」，再分成「可能怎麼表現在本人身上」「優勢與容易卡住」「判讀依據」「如何調整與生活應用」「值得繼續追問」五部分。`;
       }
       function initSectionDecodeUI(){
         sectionDefinitions.forEach(def=>{
           const section=$(def.id);const body=section?.querySelector('.report-body');if(!body||body.querySelector('.section-decode'))return;
           const box=document.createElement('div');box.className='section-decode';box.dataset.section=def.key;
-          box.innerHTML=`<div class="decode-bar"><div class="decode-copy"><strong>想知道這些數字、符號對你可能代表什麼？</strong><span>點開後直接看「這代表什麼、可能怎麼表現在本人身上、優勢與限制，以及和其他區域怎麼連起來」。</span></div><button type="button" class="decode-open">看懂這一區</button></div><div class="decode-content"><div class="decode-summary-grid"></div><div class="section-ai-box"><div><div><strong>還想再深入？不用輸入任何問題</strong><span class="section-ai-note">按一下就會自動把本區命盤資料、判讀原則與分析要求整理成完整提示詞並複製；到任何 AI 直接貼上即可。</span></div></div><div class="section-prompt-actions"><button type="button" data-act="copy">一鍵複製「${esc(def.title)}」AI 提示詞</button><a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT ↗</a><a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini ↗</a><a href="https://claude.ai/" target="_blank" rel="noopener">Claude ↗</a></div><pre class="section-prompt-preview"></pre></div></div>`;
+          box.innerHTML=`<div class="decode-bar"><div class="decode-copy"><strong>想知道這些數字、符號對你可能代表什麼？</strong><span>點開後直接看「這代表什麼、可能怎麼表現在本人身上、優勢與限制，以及和其他區域怎麼連起來」。</span></div><button type="button" class="decode-open">看懂這一區</button></div><div class="decode-content"><div class="decode-summary-grid"></div><div class="section-ai-box"><div><div><strong>想知道如何調整？帶著這張命盤問 AI</strong><span class="section-ai-note">提示詞會帶入完整本命、本區依據與你選取的時段，請 AI 接著說明改善方法與生活應用；貼上後也能補充自己的情況。</span></div></div><div class="section-prompt-actions"><button type="button" data-act="copy">一鍵複製「${esc(def.title)}」AI 提示詞</button><a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT ↗</a><a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini ↗</a><a href="https://claude.ai/" target="_blank" rel="noopener">Claude ↗</a></div><pre class="section-prompt-preview"></pre></div></div>`;
           body.appendChild(box);
           const open=box.querySelector('.decode-open'),content=box.querySelector('.decode-content'),summary=box.querySelector('.decode-summary-grid'),preview=box.querySelector('.section-prompt-preview');
           open.addEventListener('click',()=>{const show=!content.classList.contains('show');if(show){summary.innerHTML=lastData?sectionExplanation(def.key,lastData):'';content.classList.add('show');open.classList.add('active');open.textContent='已展開白話解讀';markSectionExplored(def.key);trackAction(`decode-${def.key}`);}else{content.classList.remove('show');open.classList.remove('active');open.textContent='看懂這一區';}});
@@ -1817,6 +1835,14 @@ ${formatLuck(data)}
 【未來十年流年】
 ${formatYears(data)}
 
+【今年節氣流月】
+${formatMonths(data)}
+
+【網站規則與目前解讀】
+${promptContext(data)}
+
+請接著提出可實行的調整方法，每項說明適用情境；如需現況才能判斷，先詢問職涯、目標或關係狀態，不要自行假設。
+
 使用者沒有另外輸入問題，請直接做完整綜合分析；分析完後，再列出 5 個「如果想繼續追問，可以直接問 AI 的問題」。
 
 請使用繁體中文，先給「核心結論摘要」，再分段深入分析，最後列出最值得持續觀察的 3～5 個重點。`;
@@ -1826,6 +1852,7 @@ ${formatYears(data)}
         const items=[['公曆',data.solarText],['農曆',data.lunarText],['日主',`${data.dayMaster}${data.dayMasterElement?'・'+data.dayMasterElement:''}${data.dayMasterYinYang?'・'+data.dayMasterYinYang:''}`],['前一節',data.jie?.prev?`${data.jie.prev.name} ${data.jie.prev.solar}`:'—'],['下一節',data.jie?.next?`${data.jie.next.name} ${data.jie.next.solar}`:'—']];
         $('meta').innerHTML=items.map(([k,v])=>`<div>${esc(k)}<span>${esc(v||'—')}</span></div>`).join('');
         $('meta').classList.add('show');
+        $('pillarTakeaway').innerHTML=quickTakeaway('pillars',data);
       }
 
       function renderPillars(data){
@@ -1849,6 +1876,7 @@ ${formatYears(data)}
       }
 
       function renderElements(data){
+        $('elementTakeaway').innerHTML=quickTakeaway('elements',data);
         const max=Math.max(1,...elOrder.map(e=>data.fiveElements[e]||0));
         $('elementBars').innerHTML=elOrder.map(e=>{const count=data.fiveElements[e]||0;const width=count===0?0:Math.max(8,Math.round(count/max*100));return `<div class="element-row"><span>${e}</span><div class="bar"><div class="fill" style="width:${width}%"></div></div><b>${count}</b></div>`;}).join('');
 
@@ -1872,13 +1900,17 @@ ${formatYears(data)}
       }
 
       function renderOverview(data){
-        $('identitySeal').textContent=data.dayMaster||'命';
-        $('reportTitle').textContent=`${data.dayMaster}${data.dayMasterElement}日主 · ${data.highlights?.profile?.image||'命盤'}結構報告`;
-        $('reportSummary').textContent=data.highlights?.summary||'';
-        $('summaryTags').innerHTML=[`${data.dayMasterYinYang}${data.dayMasterElement}`,`五行突出：${data.highlights?.dominantElement||'—'}`,`十神主題：${data.highlights?.dominantGroup||'—'}`,`日主支持：${supportText(data.scores?.support)}`,`${data.relations?.length||0} 組干支互動`].map(x=>`<span>${esc(x)}</span>`).join('');
-        const cards=[['五行平衡度',data.scores?.balance||0,'五行分布越平均分數越高'],['日主支持度',data.scores?.support||0,'規則式結構指標'],['十神多樣度',data.scores?.diversity||0,'十神類型的分散程度'],['干支互動度',data.scores?.activity||0,'合沖刑害等可見程度']];
+        const r=data.reading,top=Object.entries(data.tenGodDistribution.percentages).sort((a,b)=>b[1]-a[1])[0],profile=godProfile[top[0]];
+        $('identitySeal').textContent=data.dayMaster;
+        $('reportTitle').textContent=`${data.dayMaster}${data.dayMasterElement}日主 · 你的命盤重點`;
+        $('reportSummary').textContent=r.summary;
+        $('summaryTags').innerHTML=[`${data.dayMasterYinYang}${data.dayMasterElement}`,`主要十神：${top[0]}`,`五行較多：${data.highlights.dominantElement}`,`支持方向：${supportText(data.scores.support)}`].map(x=>`<span>${esc(x)}</span>`).join('');
+        $('overviewLife').innerHTML=[['主要特點',profile?.mind||r.title,`${top[0]} ${top[1]}%`],['較能發揮的地方',profile?.strength||r.good,`十神主題：${data.highlights.dominantGroup}`],['容易卡住的情境',r.stuck,'往下看工作、財務與感情中的具體表現']].map(([t,p,b])=>`<article class="life-card"><h4>${esc(t)}</h4><p>${esc(p)}</p><small>${esc(b)}</small></article>`).join('');
+        const cards=[['五行分布均衡',data.scores.balance,'描述分布；不代表命運優劣'],['日主支持度',data.scores.support,'同類、生扶、通根的網站指標'],['十神出現廣度',data.scores.diversity,'達到網站權重門檻的類型比例'],['干支互動量',data.scores.activity,'描述互動數量；不是吉凶分數']];
         $('scoreGrid').innerHTML=cards.map(([k,v,n])=>`<div class="score-card"><small>${esc(k)}</small><div class="score-line"><b>${v}</b><span>${esc(n)}</span></div><div class="mini-track"><i style="width:${pct(v)}%"></i></div></div>`).join('');
       }
+
+
       function supportText(v){v=Number(v)||0;return v>=63?'偏強傾向':v>=54?'稍強傾向':v>=47?'中和附近':v>=38?'稍弱傾向':'偏弱傾向';}
 
       function renderTenGods(data){
@@ -1985,12 +2017,14 @@ ${formatYears(data)}
         }
       }
       function renderReading(data){
-        const h=data.highlights||{};
-        $('readingLead').innerHTML=`<b>${esc(data.dayMaster)}${esc(data.dayMasterElement)}日主</b> · ${esc(h.profile?.image||'日主象徵')}<br>${esc(h.summary||'')}`;
-        const cards=[['PERSONALITY','性格與行動',h.personality],['CAREER','工作與職涯',h.career],['FINANCE','資源與財星',h.finance],['RELATIONSHIP','關係與伴侶',h.relationship],['LEARNING','學習與輸出',h.learning],['RELATIONS','原局互動',h.relationText]];
-        $('readingGrid').innerHTML=cards.map(([k,t,p])=>`<article class="reading-card"><small>${k}</small><h4>${esc(t)}</h4><p>${esc(p||'—')}</p></article>`).join('');
-        $('methodNote').textContent=h.note||'';
+        const r=data.reading,top=Object.entries(data.tenGodDistribution.percentages).sort((a,b)=>b[1]-a[1])[0],p=godProfile[top[0]];
+        $('readingLead').innerHTML=`<b>把命盤放進生活裡看</b><br>先看哪些情境較能發揮，再看什麼時候容易卡住。每項後方都列出這張盤的判讀依據。`;
+        const rows=r.rows.map(x=>({...x}));
+        rows[0].text=`${p?.mind||r.title} ${p?.action||''}`;rows[0].stuck=p?.watch||r.stuck;
+        $('readingGrid').innerHTML=rows.map(x=>`<article class="reading-card"><h4>${esc(x.title)}</h4><p>${esc(x.text)}</p><p><b>容易卡住：</b>${esc(x.stuck)}</p><small class="reading-basis">依據：${esc(x.basis)}</small></article>`).join('');
+        $('methodNote').textContent=BaziCore.METHOD_NOTE;
       }
+
 
       function interactionTags(items){return (items&&items.length)?`<div class="detail-tags">${items.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`:'<div class="detail-tags"><span>未見明顯常見合沖刑害</span></div>';}
 
@@ -2046,221 +2080,87 @@ ${formatYears(data)}
         });
         return[...new Set(out)];
       }
-      function timeBuildYear(data,year){
-        const existing=(data.yearFlows||[]).find(x=>Number(x.year)===Number(year));
-        if(existing)return existing;
-        const gz=timeYearGanZhi(year),mainGan=TIME_MAIN_GAN[gz.zhi];
-        return{
-          year,ganZhi:gz.ganZhi,gan:gz.gan,zhi:gz.zhi,
-          tenGodGan:timeTenGod(data.dayMaster,gz.gan),
-          tenGodZhi:timeTenGod(data.dayMaster,mainGan),
-          interactions:timeDirectInteractions(data,gz.gan,gz.zhi)
-        };
+      function timeBuildYear(data,year){return (data.yearFlows||[]).find(x=>x.year===year)||BaziCore.getYearFlow(year,data.dayMaster,data.pillars);}
+      function timeAssessment(data,item){return BaziCore.assessment(data,item);}
+      function timeAssessList(data,items){return (items||[]).filter(x=>x.gan&&x.zhi).map((item,index)=>({item,index,a:timeAssessment(data,item)}));}
+      function timeThemeText(a){return a.goodThemes.join('；')||'延續原有生活主題';}
+      function timeWatchText(data,a){return [a.interactionWatch,...a.watchThemes.slice(0,1)].filter(Boolean).join(' ');}
+      function timeBadge(a){return `<span class="fortune-badge">${esc(a.label)}</span>`;}
+      function periodName(item){return item.kind==='luck'?`${item.ganZhi}大運 ${item.startYear}～${item.endYear}`:item.kind==='month'?`${item.year} 年 ${item.month} 月節氣段 · ${item.ganZhi}`:`${item.year} · ${item.ganZhi}`;}
+      function shortDate(value){return value?value.slice(5,10).replace('-','/'):'—';}
+      function rankEntries(data,items){
+        const list=timeAssessList(data,items).sort((a,b)=>b.a.score-a.a.score||a.index-b.index);
+        list.forEach((x,i)=>x.rank=i&&Math.abs(x.a.score-list[i-1].a.score)<1e-9?list[i-1].rank:i+1);
+        return list;
       }
-      function timeInteractionStats(items){
-        const arr=items||[];let strain=0,help=0;
-        arr.forEach(x=>{
-          const t=String(x);
-          if(/沖|刑|害|破/.test(t))strain++;
-          if(/合/.test(t))help++;
-        });
-        return{strain,help};
+      function summaryCard(title,entry,body){if(!entry)return '';return `<article class="fortune-summary-card ${entry.a.cls}"><small>${esc(title)}</small><b>${esc(periodName(entry.item))}</b>${timeBadge(entry.a)}<p>${esc(body||timeThemeText(entry.a))}</p></article>`;}
+      function periodDetail(data,item,rank){
+        const a=timeAssessment(data,item);
+        const isMonth=item.kind==='month',isYear=item.kind==='year';
+        const cross=(data.daYun?.cycles||[]).filter(c=>c.startSolar>item.startSolar&&c.startSolar<item.endSolar);
+        let context=a.contextText;
+        if(isYear||isMonth)context+=`；${isYear?'以當年 7/1':'以本段 15 日'}作歲運背景比較。`;
+        if(cross.length)context+=` 本段在 ${cross.map(c=>c.startSolar.slice(0,10)+' 轉入 '+c.ganZhi+'大運').join('、')}，交運前後需分開看。`;
+        if(item.kind==='luck')context+='；每段卡片的歲數沿用曆法庫的虛歲標示，交運以以下時間為準。';
+        const endLabel=isMonth?`${item.startJie} → ${item.endJie}`:isYear?'立春 → 次年立春':'交運 → 下一步交運';
+        const child=item.kind==='luck'&&item.endAge<18;
+        const domains=a.domains.map(x=>child&&x.name==='事業'?{...x,name:'學習與任務',text:x.text.replaceAll('客戶','學習任務').replaceAll('工作','課業與活動').replaceAll('收入','資源')} : child&&x.name==='感情'?{...x,name:'人際與相處',text:'此段處於成長階段，以家人、同學與同儕相處為主。'+x.text.replaceAll('有伴者看磨合，單身者看建立關係時的節奏差異。','')} : x);
+        return `<strong>${esc(periodName(item))}｜${esc(a.label)}</strong>
+          <p class="period-range">${esc(endLabel)}：${esc(item.startSolar||'日期未取得')} 至 ${esc(item.endSolar||'日期未取得')}（不含終點）</p>
+          <p class="period-context">${esc(context)}</p>
+          ${rank?`<p class="period-context">在此組比較中相對第 ${rank}；同分並列。排名與評語分開看，靠前仍可能需要調整。</p>`:''}
+          <div class="period-domains">${domains.map(x=>`<article class="period-domain"><h4>${esc(x.name)}</h4><strong>${esc(x.label)}</strong><p>${esc(x.text)}</p><small>依據：${esc(x.basis)}</small></article>`).join('')}</div>
+          <div class="fortune-detail-grid"><div class="fortune-detail-item"><b>為什麼是這個評語</b><br>${esc(a.reasons.join(' '))}</div><div class="fortune-detail-item"><b>實際命理線索</b><br>${esc(item.tenGodGan)}＋${esc(item.tenGodZhi)}<br>${esc(a.relations.map(r=>`${r.label}（${r.position}）`).join('、')||'未見本規則收錄的直接互動')}</div></div>`;
       }
-      function timeBalanceBoost(p){
-        p=Number(p)||0;
-        if(p<6)return 2.25;
-        if(p<12)return 1.75;
-        if(p<20)return 1.05;
-        if(p<30)return .45;
-        if(p<38)return 0;
-        return -.55;
-      }
-      function timeAssessment(data,item){
-        const gp=data.tenGodDistribution?.groupPercentages||{};
-        const gods=[item?.tenGodGan,item?.tenGodZhi].filter(x=>tenGodOrder.includes(x));
-        const groups=gods.map(timeGodGroup).filter(Boolean);
-        let score=0;
-        groups.forEach((g,i)=>score+=timeBalanceBoost(gp[g])*(i?0.9:1));
-        const stats=timeInteractionStats(item?.interactions||[]);
-        score-=stats.strain*.8;
-        score+=Math.min(stats.help,2)*.12;
-
-        const uniq=[...new Set(groups)];
-        if(uniq.includes('食傷')&&uniq.includes('財星'))score+=.45;
-        if(uniq.includes('官殺')&&uniq.includes('印星'))score+=.20;
-
-        let label='平穩',cls='fortune-steady';
-        if(score>=2.35&&stats.strain<=1){label='較順';cls='fortune-best';}
-        else if(score>=1.10&&stats.strain<=1){label='偏順';cls='fortune-good';}
-        else if(score>=1.10&&stats.strain>=2){label='有利有壓力';cls='fortune-mixed';}
-        else if(score>=.05&&stats.strain<=1){label='平穩';cls='fortune-steady';}
-        else if(score>=-.95){label='變動較大';cls='fortune-mixed';}
-        else{label='需留意';cls='fortune-watch';}
-
-        const goodThemes=uniq.map(g=>TIME_GROUP_INFO[g]?.good).filter(Boolean);
-        const watchThemes=uniq.map(g=>TIME_GROUP_INFO[g]?.watch).filter(Boolean);
-        let interactionWatch='';
-        if(stats.strain>=2)interactionWatch='合沖刑害較集中，計畫、合作、角色或生活安排較容易需要調整。';
-        else if(stats.strain===1)interactionWatch='有一組較明顯的沖／害／破／刑，順勢中仍要保留調整空間。';
-        else if(stats.help)interactionWatch='可見「合」的牽引，合作或兩個生活領域較容易彼此帶動，但有合不等於一定合化。';
-
-        return{score,label,cls,groups:uniq,gods,goodThemes,watchThemes,stats,interactionWatch};
-      }
-      function timeAssessList(data,items){
-        return(items||[]).map((item,index)=>({item,index,a:timeAssessment(data,item)}));
-      }
-      function timeThemeText(a){
-        return a.goodThemes.length?[...new Set(a.goodThemes)].join('；'):'以原有能力延續為主';
-      }
-      function timeWatchText(data,a){
-        const gp=data.tenGodDistribution?.groupPercentages||{};
-        const reinforced=a.groups.filter(g=>(Number(gp[g])||0)>=35);
-        const parts=[];
-        if(a.interactionWatch)parts.push(a.interactionWatch);
-        if(reinforced.length)parts.push(`原局本來就強的 ${reinforced.join('、')} 再被放大，優點會更明顯，也要避免過度使用同一套模式。`);
-        if(!parts.length&&a.watchThemes.length)parts.push([...new Set(a.watchThemes)].join('；'));
-        return parts.join(' ')||'整體變化不算劇烈，重點在持續累積。';
-      }
-      function timeBadge(a){return`<span class="fortune-badge">${esc(a.label)}</span>`;}
       function renderLuck(data){
-        const y=data.daYun||{};
-        if(y.error){$('luckMeta').textContent=`大運計算錯誤：${y.error}`;$('luckGrid').innerHTML='';return;}
-        const cycles=y.cycles||[];
+        const y=data.daYun||{},cycles=y.cycles||[];
+        if(y.error||!cycles.length){$('luckMeta').textContent=y.error||'目前沒有大運資料';$('luckGrid').innerHTML='';$('luckSummary').innerHTML='';$('luckDetail').textContent='大運資料尚未取得，請重新排盤。';return;}
         const startAgeText=[[y.startYears,'年'],[y.startMonths,'月'],[y.startDays,'日'],[y.startHours,'時']].filter(([v])=>v).map(([v,u])=>`${v}${u}`).join('');
-        $('luckMeta').innerHTML=`${y.forward?'順排':'逆排'} ｜ 起運約 ${esc(startAgeText||'0歲')}<br>${esc(y.startSolar||'')}`;
-
-        const currentYear=new Date().getFullYear();
-        const assessed=timeAssessList(data,cycles).sort((a,b)=>b.a.score-a.a.score);
-        const rankMap=new Map(assessed.map((x,i)=>[x.index,i+1]));
-        const best=assessed.slice(0,2);
-        const currentIndex=cycles.findIndex(c=>currentYear>=c.startYear&&currentYear<=c.endYear);
-        const current=currentIndex>=0?{item:cycles[currentIndex],index:currentIndex,a:timeAssessment(data,cycles[currentIndex])}:null;
-
-        $('luckSummary').innerHTML=[
-          best[0]?['一生相對較順',`${best[0].item.ganZhi}｜${best[0].item.startYear}～${best[0].item.endYear}`,`八步中相對第 1；較有利：${timeThemeText(best[0].a)}`,best[0].a.cls] : null,
-          best[1]?['另一段較順期',`${best[1].item.ganZhi}｜${best[1].item.startYear}～${best[1].item.endYear}`,`八步中相對第 2；較有利：${timeThemeText(best[1].a)}`,best[1].a.cls] : null,
-          current?['目前正在走',`${current.item.ganZhi}｜${current.item.startYear}～${current.item.endYear}`,`${current.a.label}；較有利：${timeThemeText(current.a)}`,current.a.cls] : null
-        ].filter(Boolean).map(([k,t,p,cls])=>`<article class="fortune-summary-card ${cls}"><small>${k}</small><b>${t}</b>${timeBadge({label:cls==='fortune-best'?'較順':cls==='fortune-good'?'偏順':cls==='fortune-mixed'?'變動／有壓力':cls==='fortune-watch'?'需留意':'平穩'})}<p>${p}</p></article>`).join('');
-
-        $('luckGrid').innerHTML=cycles.map((c,i)=>{
-          const a=timeAssessment(data,c),rank=rankMap.get(i)||i+1;
-          return`<button type="button" class="luck-card ${a.cls} ${currentYear>=c.startYear&&currentYear<=c.endYear?'is-current':''}" data-i="${i}">
-            <small>第 ${i+1} 大運 · 相對第 ${rank}/8</small>
-            <b>${esc(c.ganZhi)}</b>
-            <span>${c.startAge}～${c.endAge}歲</span>
-            <span>${c.startYear}～${c.endYear}</span>
-            ${timeBadge(a)}
-            <div class="tg-mini">${esc(c.tenGodGan||'—')} · ${esc(c.tenGodZhi||'—')}</div>
-          </button>`;
-        }).join('');
-
-        [...$('luckGrid').querySelectorAll('.luck-card')].forEach(btn=>btn.addEventListener('click',()=>selectLuck(data,Number(btn.dataset.i),btn,rankMap)));
-        if(cycles.length){
-          const idx=currentIndex>=0?currentIndex:0;
-          selectLuck(data,idx,$('luckGrid').querySelector(`[data-i="${idx}"]`),rankMap);
-        }
+        $('luckMeta').textContent=`${y.forward?'順排':'逆排'}｜出生後約 ${startAgeText||'0歲'}起運｜${y.startSolar}`;
+        const list=rankEntries(data,cycles),rankMap=new Map(list.map(x=>[x.index,x.rank]));
+        const current=BaziCore.currentLuck(data),ci=cycles.indexOf(current),cur=ci>=0?list.find(x=>x.index===ci):null;
+        $('luckSummary').innerHTML=summaryCard('相對排名靠前',list[0])+summaryCard('另一段相對靠前',list[1])+(cur?summaryCard('目前正在走',cur):'<article class="fortune-summary-card fortune-steady"><small>目前大運</small><b>目前不在所列八步範圍</b><p>可能尚未起運或已超出範圍；下方仍可逐步比較。</p></article>');
+        $('luckGrid').innerHTML=cycles.map((c,i)=>{const a=timeAssessment(data,c);return `<button type="button" class="luck-card ${a.cls} ${ci===i?'is-current':''}" data-i="${i}" aria-pressed="false"><small>第 ${i+1} 大運 · 相對第 ${rankMap.get(i)}/${cycles.length}</small><b>${esc(c.ganZhi)}</b><span>${c.startAge}～${c.endAge} 虛歲</span><span>${c.startYear}～${c.endYear}</span>${timeBadge(a)}<div class="tg-mini">${esc(c.tenGodGan)} · ${esc(c.tenGodZhi)}</div></button>`;}).join('');
+        $('luckGrid').querySelectorAll('.luck-card').forEach(btn=>btn.addEventListener('click',()=>selectLuck(data,Number(btn.dataset.i),btn,rankMap)));
+        selectLuck(data,ci>=0?ci:0,null,rankMap);
       }
+      function setActive(id,selector,i){$(id).querySelectorAll(selector).forEach((b,k)=>{b.classList.toggle('active',Number(b.dataset.i)===i);b.setAttribute('aria-pressed',String(Number(b.dataset.i)===i));});}
       function selectLuck(data,i,btn,rankMap){
-        $('luckGrid').querySelectorAll('.luck-card').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');
-        const c=data.daYun.cycles[i];if(!c)return;trackAction(`luck-${i}`);
-        const a=timeAssessment(data,c),rank=rankMap?.get(i)||'—';
-        $('luckDetail').innerHTML=`<strong>${esc(c.ganZhi)}大運｜${c.startYear}～${c.endYear}｜${a.label}</strong>
-          <div class="fortune-detail-grid">
-            <div class="fortune-detail-item"><b>相對位置</b><br>八步大運約第 <b>${rank}/8</b>。這是同一張命盤內的相對比較，不是絕對分數。</div>
-            <div class="fortune-detail-item"><b>這十年好在哪</b><br>${esc(timeThemeText(a))}</div>
-            <div class="fortune-detail-item"><b>需要注意</b><br>${esc(timeWatchText(data,a))}</div>
-            <div class="fortune-detail-item"><b>命理依據</b><br>${esc(c.tenGodGan||'—')}＋${esc(c.tenGodZhi||'—')}；${(c.interactions||[]).length?esc((c.interactions||[]).join('、')):'未見明顯常見合沖刑害'}</div>
-          </div>`;
+        const item=data.daYun.cycles[i];if(!item)return;setActive('luckGrid','.luck-card',i);selectedPeriods.luck=item;
+        $('luckDetail').innerHTML=periodDetail(data,item,rankMap?.get(i));refreshSelectedDecode('luck',data);trackAction(`luck-${i}`);
       }
-
       function renderYearFlows(data){
-        const flows=data.yearFlows||[];
-        const currentYear=new Date().getFullYear();
-        const prev=timeBuildYear(data,currentYear-1),cur=timeBuildYear(data,currentYear),next=timeBuildYear(data,currentYear+1);
-        const recent=[['去年',prev],['今年',cur],['明年',next]];
-
-        $('threeYearCompare').innerHTML=recent.map(([tag,f])=>{
-          const a=timeAssessment(data,f);
-          return`<article class="year-compare-card ${a.cls} ${tag==='今年'?'is-current':''}">
-            <small>${tag}</small><h4>${f.year} · ${esc(f.ganZhi)}</h4>${timeBadge(a)}
-            <p><b>較有利：</b>${esc(timeThemeText(a))}<br><b>留意：</b>${esc(timeWatchText(data,a))}</p>
-          </article>`;
-        }).join('');
-
-        const assessed=timeAssessList(data,flows).sort((a,b)=>b.a.score-a.a.score);
-        const best=assessed.slice(0,2),watch=[...assessed].sort((a,b)=>a.a.score-b.a.score).slice(0,2);
-        $('yearFlowIntro').textContent=`${flows.length?`${flows[0].year}～${flows[flows.length-1].year}`:'未來十年'}：先看相對較順與較需留意的年份，再逐年點開。`;
-        $('yearSummary').innerHTML=[
-          best[0]?['相對較順',`${best[0].item.year} ${best[0].item.ganZhi}`,timeThemeText(best[0].a),best[0].a.cls]:null,
-          best[1]?['另一個較順年',`${best[1].item.year} ${best[1].item.ganZhi}`,timeThemeText(best[1].a),best[1].a.cls]:null,
-          watch[0]?['較需留意',`${watch[0].item.year} ${watch[0].item.ganZhi}`,timeWatchText(data,watch[0].a),watch[0].a.cls]:null
-        ].filter(Boolean).map(([k,t,p,cls])=>`<article class="fortune-summary-card ${cls}"><small>${k}</small><b>${t}</b>${timeBadge({label:k.includes('留意')?'需留意':'較順'})}<p>${esc(p)}</p></article>`).join('');
-
-        $('yearFlowGrid').innerHTML=flows.map((f,i)=>{
-          const a=timeAssessment(data,f);
-          return`<button type="button" class="flow-card ${a.cls}" data-i="${i}">
-            <small>${f.year}</small><b>${esc(f.ganZhi)}</b>${timeBadge(a)}
-            <span>${esc(f.tenGodGan||'—')} · ${esc(f.tenGodZhi||'—')}</span>
-            <span>${esc(timeThemeText(a).split('；')[0])}</span>
-          </button>`;
-        }).join('');
-        [...$('yearFlowGrid').querySelectorAll('.flow-card')].forEach(btn=>btn.addEventListener('click',()=>selectYear(data,Number(btn.dataset.i),btn)));
-        if(flows.length){
-          const ci=Math.max(0,flows.findIndex(x=>Number(x.year)===currentYear));
-          selectYear(data,ci,$('yearFlowGrid').querySelector(`[data-i="${ci}"]`));
-        }
+        const cy=new Date().getFullYear(),flows=data.yearFlows||[],list=rankEntries(data,flows);
+        $('threeYearCompare').innerHTML=[['去年',cy-1],['今年',cy],['明年',cy+1]].map(([tag,year])=>{const f=timeBuildYear(data,year),a=timeAssessment(data,f);return `<article class="year-compare-card ${a.cls}"><small>${tag}（立春起）</small><h4>${year} · ${esc(f.ganZhi)}</h4>${timeBadge(a)}<p>${a.domains.map(x=>`<b>${esc(x.name)}：</b>${esc(x.label)}`).join('<br>')}</p><button type="button" class="report-year-select" data-year="${year}">看這一年的解讀</button></article>`;}).join('');
+        $('threeYearCompare').querySelectorAll('[data-year]').forEach(btn=>btn.addEventListener('click',()=>selectYearItem(data,timeBuildYear(data,Number(btn.dataset.year)))));
+        $('yearFlowIntro').textContent=`${flows[0]?.year||cy}～${flows.at(-1)?.year||cy}：每年各有發揮與壓力。以下按同一規則比較；立春前仍屬前一流年。`;
+        $('yearSummary').innerHTML=summaryCard('相對排名靠前',list[0])+summaryCard('另一年相對靠前',list[1])+summaryCard('相對調整負擔較多',list.at(-1),list.at(-1)?timeWatchText(data,list.at(-1).a):'');
+        $('yearFlowGrid').innerHTML=flows.map((f,i)=>{const a=timeAssessment(data,f);return `<button type="button" class="flow-card ${a.cls}" data-i="${i}" aria-pressed="false"><small>${f.year}</small><b>${esc(f.ganZhi)}</b>${timeBadge(a)}<span>${esc(f.tenGodGan)} · ${esc(f.tenGodZhi)}</span><span>${esc(a.goodThemes[0]||'生活主題')}</span></button>`;}).join('');
+        $('yearFlowGrid').querySelectorAll('.flow-card').forEach(btn=>btn.addEventListener('click',()=>selectYear(data,Number(btn.dataset.i))));
+        if(flows.length)selectYear(data,Math.max(0,flows.findIndex(f=>f.year===cy)));
       }
-      function selectYear(data,i,btn){
-        $('yearFlowGrid').querySelectorAll('.flow-card').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');
-        const f=data.yearFlows[i];if(!f)return;trackAction(`year-${i}`);
-        const a=timeAssessment(data,f);
-        $('yearDetail').innerHTML=`<strong>${f.year} · ${esc(f.ganZhi)}｜${a.label}</strong>
-          <div class="fortune-detail-grid">
-            <div class="fortune-detail-item"><b>這一年較有利</b><br>${esc(timeThemeText(a))}</div>
-            <div class="fortune-detail-item"><b>要注意</b><br>${esc(timeWatchText(data,a))}</div>
-            <div class="fortune-detail-item"><b>十神主題</b><br>${esc(f.tenGodGan||'—')}＋${esc(f.tenGodZhi||'—')}</div>
-            <div class="fortune-detail-item"><b>與原局互動</b><br>${(f.interactions||[]).length?esc((f.interactions||[]).join('、')):'未見明顯常見合沖刑害'}</div>
-          </div>`;
+      function selectYearItem(data,item){
+        const index=data.yearFlows.findIndex(x=>x.year===item.year);setActive('yearFlowGrid','.flow-card',index);selectedPeriods.years=item;
+        $('yearDetail').innerHTML=periodDetail(data,item);refreshSelectedDecode('years',data);trackAction(`year-${item.year}`);
       }
-
+      function selectYear(data,i){const item=data.yearFlows[i];if(item)selectYearItem(data,item);}
       function renderMonthFlows(data){
-        const flows=data.monthFlows||[];
-        const assessed=timeAssessList(data,flows).sort((a,b)=>b.a.score-a.a.score);
-        const best=assessed.slice(0,3),watch=[...assessed].sort((a,b)=>a.a.score-b.a.score).slice(0,2);
-        $('monthFlowIntro').textContent=`${data.monthFlowYear} 年：先看相對較順的月份與較需留意的月份，再點月份看細節。`;
-
-        $('monthSummary').innerHTML=[
-          best.length?['較值得把握',best.map(x=>`${x.item.month}月`).join('、'),best.map(x=>timeThemeText(x.a).split('；')[0]).filter((v,i,a)=>a.indexOf(v)===i).join('；'),'fortune-best']:null,
-          watch.length?['較需留意',watch.map(x=>`${x.item.month}月`).join('、'),watch.map(x=>timeWatchText(data,x.a)).filter((v,i,a)=>a.indexOf(v)===i).slice(0,2).join('；'),'fortune-watch']:null,
-          ['閱讀方式','其餘月份','落在偏順、平穩或有利有壓力之間；點卡片直接看當月主題。','fortune-steady']
-        ].filter(Boolean).map(([k,t,p,cls])=>`<article class="fortune-summary-card ${cls}"><small>${k}</small><b>${t}</b><p>${esc(p)}</p></article>`).join('');
-
-        $('monthFlowGrid').innerHTML=flows.map((f,i)=>{
-          const a=timeAssessment(data,f);
-          return`<button type="button" class="month-card ${a.cls}" data-i="${i}">
-            <small>${f.month} 月</small><b>${esc(f.ganZhi)}</b>${timeBadge(a)}
-            <span>${esc(f.tenGodGan||'—')} · ${esc(f.tenGodZhi||'—')}</span>
-          </button>`;
-        }).join('');
-        [...$('monthFlowGrid').querySelectorAll('.month-card')].forEach(btn=>btn.addEventListener('click',()=>selectMonth(data,Number(btn.dataset.i),btn)));
-        if(flows.length){
-          const cm=new Date().getMonth()+1;
-          const mi=Math.max(0,flows.findIndex(x=>Number(x.month)===cm));
-          selectMonth(data,mi,$('monthFlowGrid').querySelector(`[data-i="${mi}"]`));
-        }
+        const flows=data.monthFlows||[],list=rankEntries(data,flows),watch=[...list].reverse().slice(0,2);
+        $('monthFlowIntro').textContent=`${data.monthFlowYear} 年的十二個節氣月：月份是索引，實際以卡片上的節氣起訖為準。`;
+        const best=list.slice(0,3);
+        $('monthSummary').innerHTML=`<article class="fortune-summary-card fortune-steady"><small>相對排名靠前</small><b>${best.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、')}</b><p>這是同組比較，三段不一定都屬於「較順」。點卡片看各領域差異。</p></article><article class="fortune-summary-card fortune-steady"><small>相對調整負擔較多</small><b>${watch.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、')}</b><p>較需要協調的時間，也可能有能發揮的領域。</p></article><article class="fortune-summary-card fortune-steady"><small>國曆年初交節前</small><b>仍屬前一節氣月</b>${data.monthCarry?'<button type="button" id="monthCarryBtn">查看年初交節前</button>':''}</article>`;
+        $('monthFlowGrid').innerHTML=flows.map((f,i)=>{const a=timeAssessment(data,f);return `<button type="button" class="month-card ${a.cls}" data-i="${i}" aria-pressed="false"><small>${f.month} 月節氣段</small><b>${esc(f.ganZhi)}</b>${timeBadge(a)}<span>${esc(f.tenGodGan)} · ${esc(f.tenGodZhi)}</span><span class="period-mini">${esc(f.startJie)} ${shortDate(f.startSolar)}<br>至 ${esc(f.endJie)} ${shortDate(f.endSolar)}</span></button>`;}).join('');
+        $('monthFlowGrid').querySelectorAll('.month-card').forEach(btn=>btn.addEventListener('click',()=>selectMonth(data,Number(btn.dataset.i))));
+        $('monthCarryBtn')?.addEventListener('click',()=>selectMonthItem(data,data.monthCarry,-1));
+        const now=nowValue().replace('T',' ')+':00',index=flows.findIndex(f=>now>=f.startSolar&&now<f.endSolar);
+        if(index>=0)selectMonth(data,index);else if(data.monthCarry&&now>=data.monthCarry.startSolar&&now<data.monthCarry.endSolar)selectMonthItem(data,data.monthCarry,-1);else if(flows.length)selectMonth(data,0);
       }
-      function selectMonth(data,i,btn){
-        $('monthFlowGrid').querySelectorAll('.month-card').forEach(x=>x.classList.remove('active'));btn?.classList.add('active');
-        const f=data.monthFlows[i];if(!f)return;trackAction(`month-${i}`);
-        const a=timeAssessment(data,f);
-        $('monthDetail').innerHTML=`<strong>${data.monthFlowYear} 年 ${f.month} 月 · ${esc(f.ganZhi)}｜${a.label}</strong>
-          <div class="fortune-detail-grid">
-            <div class="fortune-detail-item"><b>這個月較有利</b><br>${esc(timeThemeText(a))}</div>
-            <div class="fortune-detail-item"><b>要注意</b><br>${esc(timeWatchText(data,a))}</div>
-            <div class="fortune-detail-item"><b>十神主題</b><br>${esc(f.tenGodGan||'—')}＋${esc(f.tenGodZhi||'—')}</div>
-            <div class="fortune-detail-item"><b>與原局互動</b><br>${(f.interactions||[]).length?esc((f.interactions||[]).join('、')):'未見明顯常見合沖刑害'}</div>
-          </div>`;
+      function selectMonthItem(data,item,index){
+        selectedPeriods.months=item;setActive('monthFlowGrid','.month-card',index);
+        $('monthDetail').innerHTML=periodDetail(data,item);refreshSelectedDecode('months',data);trackAction(`month-${item.year}-${item.month}`);
       }
+      function selectMonth(data,i){const item=data.monthFlows[i];if(item)selectMonthItem(data,item,i);}
+
 
       function renderGlossary(data){
         const dict=BaziCore.TEN_GOD_TEXT||{};
@@ -2276,7 +2176,14 @@ ${formatYears(data)}
         document.querySelectorAll('.report-section').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)trackAction(`section-${d.id}`);}));
         $('expandAllBtn')?.addEventListener('click',()=>{document.querySelectorAll('.report-section').forEach(d=>d.open=true);trackAction('expand-all');});
         $('collapseAllBtn')?.addEventListener('click',()=>{document.querySelectorAll('.report-section').forEach(d=>d.open=false);trackAction('collapse-all');});
-        $('printReportBtn')?.addEventListener('click',()=>window.print());
+        $('printReportBtn')?.addEventListener('click',()=>{
+          if(!lastData)return;
+          const states=[...document.querySelectorAll('.report-section')].map(el=>[el,el.open]);
+          document.querySelectorAll('.section-decode').forEach(box=>{const grid=box.querySelector('.decode-summary-grid');if(grid)grid.innerHTML=sectionExplanation(box.dataset.section,lastData);});
+          states.forEach(([el])=>el.open=true);
+          window.addEventListener('afterprint',()=>states.forEach(([el,open])=>el.open=open),{once:true});
+          window.print();
+        });
         $('saveChartBtn')?.addEventListener('click',()=>{
           try{localStorage.setItem('divinationhub-bazi-last',JSON.stringify({datetime:birthTime.value,gender:gender.value,sect:sect.value}));toast('已儲存在此瀏覽器');}catch(_){toast('瀏覽器禁止本機儲存');}
         });
@@ -2298,8 +2205,11 @@ ${formatYears(data)}
 
       function cast(){
         try{
+          if(!birthTime.value||!birthTime.checkValidity())throw new Error('請填寫有效的出生日期與時間');
+          if(birthTime.value>nowValue())throw new Error('出生時間不能晚於現在');
           const data=BaziCore.cast({datetime:birthTime.value,gender:gender.value,sect:sect.value});
           lastData=data;
+          selectedPeriods={};
           renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);renderMonthFlows(data);renderGlossary(data);initSectionDecodeUI();resetExploration();
           emptyState.style.display='none';results.classList.add('show');
           setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
