@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<!-- Interpretation revision 2.3; compatible with BaziCore 2.1.0 -->
+<!-- Interpretation revision 2.4; requires BaziCore 2.4.0 -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -363,6 +363,8 @@
 /* Each original shensha card is independently expandable, initially collapsed. */
 .shensha-inline{padding:0!important;min-width:0;align-self:start}.shensha-inline>summary{display:block;cursor:pointer;padding:12px;list-style:none}.shensha-inline>summary::-webkit-details-marker{display:none}.shensha-inline>summary:focus-visible{outline:2px solid #e9bd58;outline-offset:-3px;border-radius:12px}.shensha-inline .stage-shensha-meaning{display:block;margin-top:6px}.shensha-inline-hint{display:block;margin-top:6px;color:#bfa664;font-size:11px}.shensha-inline:not([open]) .when-open,.shensha-inline[open] .when-closed{display:none}.shensha-inline[open]>summary{border-bottom:1px solid rgba(233,189,88,.2)}.shensha-inline-body{padding:0 12px 14px;font-size:13px;line-height:1.85;overflow-wrap:anywhere}.shensha-inline-body p{margin:12px 0;color:#b6bec9}.shensha-inline-body p>b{display:block;color:#dec57e;margin-bottom:4px}.shensha-inline-body .shensha-inline-tone{color:#e6c974}.shensha-inline-basis{font-size:11px}.shensha-inline-close{border:1px solid #857143;border-radius:7px;padding:8px 12px;background:transparent;color:#dec57e;cursor:pointer}.shensha-prompt-only>.decode-content{display:block!important}.shensha-pillar-grid.integrated{align-items:start}.shensha-pillar-grid.integrated .shensha-pillar{min-height:0}.stage-shensha-list{align-content:start}
 @media print{.shensha-inline-hint,.shensha-inline-close{display:none!important}.shensha-inline-body p{color:#222}}
+
+.exact-time-toggle{display:flex!important;gap:8px;align-items:center;margin-top:10px;font-size:12px!important}.exact-time-toggle input{width:auto!important}.birth-time-note,#birthTimeNotice{font-size:12px;line-height:1.65;color:#b4ab97}#birthSlot{margin:6px 0 0;width:100%}#exactBirthTime[hidden]{display:none!important}.annual-compact h3{font-size:18px;line-height:1.6}.annual-domains,.annual-tags{display:flex;flex-wrap:wrap;gap:10px}.annual-tags span{border:1px solid #80714b;border-radius:6px;padding:4px 8px;font-size:12px}.annual-compact{line-height:1.8}.annual-compact small{display:block;font-size:11px;color:#a2acb9}.annual-compact button{padding:9px 14px;border:1px solid #ad965b;border-radius:8px;background:transparent;color:inherit;cursor:pointer}#annualPromptPreview{white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto;font-size:12px}.history-comparison-buttons small{display:block;font-size:10px}.history-comparison-buttons button{max-width:100%}
 </style>
 <style>
 .report-hero{display:block}.report-hero>.report-identity{margin-bottom:20px}#report-overview,.report-section{scroll-margin-top:90px}
@@ -448,8 +450,12 @@
 
       <div class="controls">
         <div class="field">
-          <label for="birthTime">出生日期與時間（當地民用時間）</label>
-          <input id="birthTime" type="datetime-local">
+          <label for="birthTime">出生日期與時辰（當地民用時間）</label>
+          <input id="birthTime" type="date" required>
+          <label for="birthSlot">出生時辰</label><select id="birthSlot"></select>
+          <label class="exact-time-toggle"><input id="useExactTime" type="checkbox">知道精確時間（節氣交界建議填寫）</label>
+          <input id="exactBirthTime" type="time" aria-label="精確出生時間" hidden>
+          <p class="birth-time-note">日期保持原輸入；晚子時的日柱仍依下方換日規則。只選時辰時以區間代表時間估算起運，並非精確出生分鐘。</p><p id="birthTimeNotice" role="status"></p>
         </div>
         <div class="field">
           <label for="gender">性別</label>
@@ -972,7 +978,7 @@
 
 <!-- 曆法核心：MIT 授權 lunar-javascript 1.7.7 -->
   <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
-  <script src="bazi-core.js?v=2.1.0"></script>
+  <script src="bazi-core.js?v=2.4.0"></script>
 
   <script>
     (() => {
@@ -1023,7 +1029,7 @@
       function setMilestone(name,done=true){const el=document.querySelector(`#exploreMilestones [data-m="${name}"]`);if(el&&done)el.classList.add('done');}
       function markSectionExplored(key){if(!sectionMap[key])return;exploration.explored.add(key);setMilestone(key);updateExploration();}
       function updateExploration(){
-        $('exploreHint').textContent='閱讀進度只記錄你展開過的白話解讀；完整提示詞已可使用。';
+        $('exploreHint').textContent='閱讀進度記錄已查看的分區；完整提示詞已可使用。';
         const score=explorationScore();
         $('explorePercent').textContent=`${score}%`;$('exploreFill').style.width=`${score}%`;
         const canUnlock=!!lastData;
@@ -1258,7 +1264,7 @@
           : '<div class="shensha-empty">目前未辨識到常用神煞；請以四柱、五行、十神與干支互動為主要判讀基礎。</div>';
         bindInlineShensha();
       }
-      function formatBasic(data){return `晚子時規則：${data.sect===1?"23:00 起算次日":"23:00 後仍算當日"}\n時間基準：輸入民用時間；未校正真太陽時；節氣時間採 UTC+8；未提供出生地\n性別：${data.gender===1?'男':'女'}\n公曆：${data.solarText}\n農曆：${data.lunarText}\n四柱：${data.pillars.map(p=>p.ganZhi).join(' / ')}\n日主：${data.dayMaster}${data.dayMasterElement}（${data.dayMasterYinYang}）`;}
+      function formatBasic(data){return `${timeInputNote(data)}\n晚子時規則：${data.sect===1?"23:00 起算次日":"23:00 後仍算當日"}\n時間基準：輸入民用時間；未校正真太陽時；節氣時間採 UTC+8；未提供出生地\n性別：${data.gender===1?'男':'女'}\n公曆：${data.solarText}\n農曆：${data.lunarText}\n四柱：${data.pillars.map(p=>p.ganZhi).join(' / ')}\n日主：${data.dayMaster}${data.dayMasterElement}（${data.dayMasterYinYang}）`;}
       function formatPillars(data){return (data.pillars||[]).map(p=>`${labels[p.key]?.[0]||p.key}：${p.ganZhi}｜天干十神 ${p.shiShenGan||'日主'}｜藏干 ${(p.hideGan||[]).join('、')||'—'}｜地支十神 ${(p.shiShenZhi||[]).join('、')||'—'}｜納音 ${p.naYin||'—'}｜十二長生 ${p.diShi||'—'}｜旬空 ${p.xunKong||'—'}`).join('\n');}
       function formatElements(data){const wp=data.weightedFiveElements?.percentages||{},y=data.yinYang||{};return `表層五行：${elOrder.map(e=>`${e} ${data.fiveElements?.[e]||0}`).join('｜')}\n加權五行：${elOrder.map(e=>`${e} ${wp[e]||0}%`).join('｜')}\n陰陽：陽 ${y.yang||0}/8｜陰 ${y.yin||0}/8\n網站日主支持度：${data.scores?.support||0}/100（規則式視覺化指標）`;}
       function formatTenGods(data){const ps=data.tenGodDistribution?.percentages||{},gp=data.tenGodDistribution?.groupPercentages||{};const top=tenGodOrder.map(t=>[t,Number(ps[t])||0]).sort((a,b)=>b[1]-a[1]).slice(0,3);return `十神：${tenGodOrder.map(t=>`${t} ${ps[t]||0}%`).join('｜')}\n前三大：${top.map(x=>`${x[0]} ${x[1]}%`).join('、')}\n五大群組：${Object.entries(gp).map(([k,v])=>`${k} ${v}%`).join('｜')}`;}
@@ -1659,14 +1665,7 @@
         const interaction=strains.length?`具體有${strains.map(r=>r.label+'（'+r.position+'）').join('、')}。白話來說，原有安排較容易遇到另一種要求：工作要往前，家庭時間卻不能照舊；自己想定下來，外部條件又要變。${day.length?'其中牽動日支，核心生活與親密相處的協調感較明顯。':''}這是調整負擔的訊號，不是把每個沖刑都算成一次壞事。`:'本期未見本站收錄的直接沖刑害破，主要差別在新主題能否配合原本的做事方式。沒有明顯拉扯不代表事事自動順利，而是本規則沒有額外標出這一類調整壓力。';
         return deepBlock(`${periodName(item)}｜${a.label}`,[['這段時間的主線',`重點是${subject}。${item.kind==='luck'?'大運描述較長期的環境主題，並不代表十年裡每一年都一樣。':item.kind==='month'?'流月描述這個節氣段的短期節奏，要放在當時流年與大運背景裡理解。':'流年描述立春到次年立春的年度主題，同一年也會有不同月份的起伏。'}${a.contextText}。`],['對本盤可能怎麼發生',emphasis],['好在哪、壓力在哪',`${a.reasons.join(' ')}${interaction}`],...a.domains.map(d=>[child?(d.name==='事業'?'學習與任務':d.name==='感情'?'人際與相處':'零用與資源'):d.name,`${d.label}。${child?'成長階段請以家庭、課業與同儕情境理解。':''}${d.text}`]),['比較像生活中的哪種情境',a.groups.map(g=>roles[g][2]).join(' ')],['身心與生活節奏','這區可用來回想忙碌、作息與壓力是否改變；本模型沒有疾病預測能力，不會把沖刑、五行多寡轉成心臟或腸胃疾病風險。若回顧某年有實際健康事件，應以當時症狀、診斷與生活紀錄對照，而非由命盤補造病因。']], '先看生活主線，再看分項；吉凶是本站規則下的傾向');
       }
-      function yearComparison(data,item){
-        const start=Math.max(data.input.year,item.year-2),end=Math.min(new Date().getFullYear()+30,item.year+2);
-        const entries=rankEntries(data,Array.from({length:end-start+1},(_,i)=>timeBuildYear(data,start+i)));
-        const current=entries.find(e=>e.item.year===item.year),a=current.a;
-        const money=entries.filter(e=>e.a.groups.includes('財星'));
-        const special=a.groups.includes('財星')?`本年有財星題材；在 ${start}～${end} 的 ${entries.length} 年中，共 ${money.length} 年有此題材，較值得細看客戶、成果與收支。這項比較是「財務議題是否顯眼」，不是獲利排名。`:a.groups.includes('食傷')?'本年重點較偏向把能力、作品或服務轉成成果，尚不能只憑這一點認定收入特別高。':'本年沒有額外突出的財星題材，財務先看分項中的資源與支出情境。';
-        return `<div class="year-comparison"><b>${start}～${end} 年的局部比較</b><p>所選 ${item.year} 年在這 ${entries.length} 年中相對第 ${current.rank}（同分並列）。${esc(special)}</p><div class="history-comparison-buttons">${entries.slice().sort((x,y)=>x.item.year-y.item.year).map(e=>`<button type="button" data-history-year="${e.item.year}" aria-pressed="${e.item.year===item.year}" class="${e.a.cls}">${e.item.year}｜${esc(e.a.label)}</button>`).join('')}</div><small>只比較上述年份與本站既有評分；不宣稱是一生最好、最差或必然發生重大事件。</small></div>`;
-      }
+
       function updateYearComparison(data,item){
         let el=$('yearHistoryComparison');if(!el){el=document.createElement('div');el.id='yearHistoryComparison';$('yearDetail').after(el);}
         el.innerHTML=yearComparison(data,item);
@@ -1677,7 +1676,7 @@
       function installHistoryYear(data){
         let el=$('yearHistoryControls');if(!el){el=document.createElement('div');el.id='yearHistoryControls';$('yearFlowIntro').after(el);}
         const min=data.input.year,max=new Date().getFullYear()+30;
-        el.innerHTML=`<form class="history-year-form"><label for="historyYear">回顧或查詢年份</label><input id="historyYear" type="number" min="${min}" max="${max}" step="1" required value="${new Date().getFullYear()}" inputmode="numeric"><button type="submit">查看這一年</button><button type="button" id="historyCurrentYear">回到今年</button></form><p id="historyYearStatus" role="status"></p><small>可查 ${min}～${max} 年。選取後，下方解讀、展開內容與 AI 提示詞會一起更新；出生年只對照出生後的經歷。</small>`;
+        el.innerHTML=`<form class="history-year-form"><label for="historyYear">回顧或查詢年份</label><input id="historyYear" type="number" min="${min}" max="${max}" step="1" required value="${new Date().getFullYear()}" inputmode="numeric"><button type="submit">查看這一年</button><button type="button" id="historyCurrentYear">回到今年</button></form><p id="historyYearStatus" role="status"></p><small>可查 ${min}～${max} 年。選取後，下方評分與十年比較會一起更新；僅大吉／大凶提供年度提示詞；出生年只對照出生後的經歷。</small>`;
         el.querySelector('form').addEventListener('submit',ev=>{ev.preventDefault();const value=Number($('historyYear').value);if(!Number.isInteger(value)||value<min||value>max){$('historyYearStatus').textContent=`請輸入 ${min}～${max} 的整數年份。`;return;}selectYearItem(data,timeBuildYear(data,value));});
         $('historyCurrentYear').addEventListener('click',()=>selectYearItem(data,timeBuildYear(data,new Date().getFullYear())));
         updateYearComparison(data,selectedPeriods.years||timeBuildYear(data,new Date().getFullYear()));
@@ -1718,6 +1717,8 @@
         return `【完整本命與判讀背景】\n${formatPillars(data)}\n${formatElements(data)}\n${formatTenGods(data)}\n${formatRelations(data)}\n\n【網站解讀】\n${data.reading.rows.map(x=>`${x.title}：${x.text}\n卡點：${x.stuck}\n依據：${x.basis}`).join('\n')}\n\n【採用規則】\n${BaziCore.METHOD_NOTE}\n天干各 1；藏干按比例分配，月支乘 1.35、其他支乘 1.05；十神分布不計日干。歲運依日主支持方向、群組集中及沖刑害破作相對比較，合不直接當吉。節氣採 UTC+8，沒有出生地或時區校正。\n${formatLuck(data)}`;
       }
       function periodPromptLine(data,item){
+        if(item.kind==='year'){const a=BaziCore.annualSignals(data,item);return periodName(item)+'｜'+a.grade+'｜'+a.character+'\n'+a.context+'\n'+a.domains.map(d=>d.name+'：'+d.grade).join('；')+'\n訊號：'+a.tags.join('、')+'\n計分規則：'+BaziCore.ANNUAL_RULES.version+'；有利 '+a.positive+'、壓力 '+a.negative+'\n實際互動：'+a.relations.map(r=>r.label+'（'+r.position+'）').join('、');}
+
         const a=timeAssessment(data,item);
         return `${periodName(item)}｜${item.tenGodGan}／${item.tenGodZhi}｜${a.label}\n起訖：${item.startSolar||'—'} 至 ${item.endSolar||'—'}（不含終點）\n背景：${a.contextText}\n比較依據：${a.reasons.join(' ')}\n互動：${a.relations.map(r=>r.label+'（'+r.position+'）').join('、')||'未見收錄的直接互動'}\n${a.domains.map(x=>x.name+'：'+x.label+'；'+x.text+'；依據：'+x.basis).join('\n')}`;
       }
@@ -1999,6 +2000,7 @@ ${key==='years'&&selectedPeriods.years?'所選年度：'+selectedPeriods.years.y
       }
       function initSectionDecodeUI(){
         sectionDefinitions.forEach(def=>{
+          if(def.key==='years')return;
           const section=$(def.id);const body=section?.querySelector('.report-body');if(!body||body.querySelector('.section-decode'))return;
           const box=document.createElement('div');box.className='section-decode';box.dataset.section=def.key;
           box.innerHTML=`<div class="decode-bar"><div class="decode-copy"><strong>想知道這些數字、符號對你可能代表什麼？</strong><span>點開後直接看「這代表什麼、可能怎麼表現在本人身上、優勢與限制，以及和其他區域怎麼連起來」。</span></div><button type="button" class="decode-open">看懂這一區</button></div><div class="decode-content"><div class="decode-summary-grid"></div><div class="section-ai-box"><div><div><strong>想知道如何調整？帶著這張命盤問 AI</strong><span class="section-ai-note">提示詞會帶入完整本命、本區依據與你選取的時段，請 AI 接著說明改善方法與生活應用；貼上後也能補充自己的情況。</span></div></div><div class="section-prompt-actions"><button type="button" data-act="copy">一鍵複製「${esc(def.title)}」AI 提示詞</button><a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT ↗</a><a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini ↗</a><a href="https://claude.ai/" target="_blank" rel="noopener">Claude ↗</a></div><pre class="section-prompt-preview"></pre></div></div>`;
@@ -2063,6 +2065,7 @@ ${promptContext(data)}
 
       function renderMeta(data){
         const items=[['公曆',data.solarText],['農曆',data.lunarText],['日主',`${data.dayMaster}${data.dayMasterElement?'・'+data.dayMasterElement:''}${data.dayMasterYinYang?'・'+data.dayMasterYinYang:''}`],['前一節',data.jie?.prev?`${data.jie.prev.name} ${data.jie.prev.solar}`:'—'],['下一節',data.jie?.next?`${data.jie.next.name} ${data.jie.next.solar}`:'—']];
+        items.push(['時間依據',timeInputNote(data)]);
         $('meta').innerHTML=items.map(([k,v])=>`<div>${esc(k)}<span>${esc(v||'—')}</span></div>`).join('');
         $('meta').classList.add('show');
         $('pillarTakeaway').innerHTML=quickTakeaway('pillars',data);
@@ -2342,22 +2345,48 @@ ${promptContext(data)}
         const item=data.daYun.cycles[i];if(!item)return;setActive('luckGrid','.luck-card',i);selectedPeriods.luck=item;
         $('luckDetail').innerHTML=periodDetail(data,item,rankMap?.get(i));refreshSelectedDecode('luck',data);trackAction(`luck-${i}`);
       }
+      const annualClass=g=>({'大凶':'fortune-watch','偏凶':'fortune-mixed','平':'fortune-steady','偏吉':'fortune-good','大吉':'fortune-best'}[g]||'fortune-steady');
+      function annualWindow(data,year){
+        const start=Math.max(data.input.year,year-4);
+        return Array.from({length:10},(_,i)=>{const item=timeBuildYear(data,start+i);return {item,a:BaziCore.annualSignals(data,item)};});
+      }
+      function annualSpecial(data,item,a,list){
+        const valid=list.filter(x=>!x.a.outside),pRank=1+valid.filter(x=>x.a.negative>a.negative).length,gRank=1+valid.filter(x=>x.a.positive>a.positive).length;
+        if(a.outside)return '此年超出所列大運範圍，暫不提供五級判定。';
+        const area=a.domains.filter(d=>d.grade!=='平').map(d=>d.name+' '+d.grade).join('、');
+        const range=`${list[0].item.year}～${list.at(-1).item.year}`;
+        if(a.positive>=3&&a.negative>=3)return `${range}中，有利與壓力訊號同時突出；${area||'整體相抵，仍值得注意變動'}。`;
+        if(a.negative>=3)return `${range}中，壓力訊號相對第 ${pRank}/${valid.length}（同分並列）；${area||'各領域較分散'}。`;
+        if(a.positive>=3)return `${range}中，有利訊號相對第 ${gRank}/${valid.length}（同分並列）；${area||'各領域較分散'}。`;
+        return `${range}中，本年未見高度集中的訊號；${area||'沒有單一領域明顯突出'}。`;
+      }
+      function annualPrompt(data,item,a,list){
+        return `請用繁體中文核對以下年度的八字訊號，優先分析達到大吉或大凶的領域。這是本站自訂權重，不是已證實的事件機率。請區分可核對的干支資料、網站評分和你的推論，不把分數當成喜用神定論，也不要由沖刑推斷疾病。先說該年特別在哪，再說哪些計分可能需要修正，最後提供可追問的生活方向。\n\n${formatBasic(data)}\n${promptContext(data)}\n\n【所選年度】\n${periodName(item)}\n立春區間：${item.startSolar} 至 ${item.endSolar}\n${a.context}\n${JSON.stringify(a,null,2)}\n\n【比較十年】\n${list.map(x=>`${x.item.year}：${x.a.grade}，有利 ${x.a.positive}，壓力 ${x.a.negative}，${x.a.character}`).join('\n')}\n\n【明確計分規則】\n${JSON.stringify(BaziCore.ANNUAL_RULES)}\n流年天干／支主氣依日主支持度決定群組係數，權重2／1.4；同類有利大運支持加1.6；原局同群組達38%再遇同類扣0.6。沖1.5、害1、破0.75、一般刑1.25、完整三刑2.5。淨分≤-5大凶、≤-1.5偏凶、≥5大吉、≥1.5偏吉，其餘平。工作計月柱／大運／完整組合的壓力；財務計財星所在柱或完整組合的壓力；感情只計日支直接壓力，合只列訊號不直接加吉分。三刑組合只計一組，跨柱互動保留各自位置。`;
+      }
       function renderYearFlows(data){
-        const cy=new Date().getFullYear(),flows=data.yearFlows||[],list=rankEntries(data,flows);
-        $('threeYearCompare').innerHTML=[['去年',cy-1],['今年',cy],['明年',cy+1]].filter(x=>x[1]>=data.input.year).map(([tag,year])=>{const f=timeBuildYear(data,year),a=timeAssessment(data,f);return `<article class="year-compare-card ${a.cls}"><small>${tag}（立春起）</small><h4>${year} · ${esc(f.ganZhi)}</h4>${timeBadge(a)}<p>${a.domains.map(x=>`<b>${esc(x.name)}：</b>${esc(x.label)}`).join('<br>')}</p><button type="button" class="report-year-select" data-year="${year}">看這一年的解讀</button></article>`;}).join('');
-        $('threeYearCompare').querySelectorAll('[data-year]').forEach(btn=>btn.addEventListener('click',()=>selectYearItem(data,timeBuildYear(data,Number(btn.dataset.year)))));
-        $('yearFlowIntro').textContent=`${flows[0]?.year||cy}～${flows.at(-1)?.year||cy}：每年各有發揮與壓力。以下按同一規則比較；立春前仍屬前一流年。`;
-        $('yearSummary').innerHTML=summaryCard('相對排名靠前',list[0])+summaryCard('另一年相對靠前',list[1])+summaryCard('相對調整負擔較多',list.at(-1),list.at(-1)?timeWatchText(data,list.at(-1).a):'');
-        $('yearFlowGrid').innerHTML=flows.map((f,i)=>{const a=timeAssessment(data,f);return `<button type="button" class="flow-card ${a.cls}" data-i="${i}" aria-pressed="false"><small>${f.year}</small><b>${esc(f.ganZhi)}</b>${timeBadge(a)}<span>${esc(f.tenGodGan)} · ${esc(f.tenGodZhi)}</span><span>${esc(a.goodThemes[0]||'生活主題')}</span></button>`;}).join('');
-        $('yearFlowGrid').querySelectorAll('.flow-card').forEach(btn=>btn.addEventListener('click',()=>selectYear(data,Number(btn.dataset.i))));
-        if(flows.length)selectYear(data,Math.max(0,flows.findIndex(f=>f.year===cy)));
-        installHistoryYear(data);
+        const cy=new Date().getFullYear(),flows=data.yearFlows||[];
+        $('yearFlowIntro').textContent='每年顯示本站五級訊號分級；選取後與附近十年比較。大吉／大凶才提供年度 AI 提示詞。';
+        $('threeYearCompare').innerHTML=[['去年',cy-1],['今年',cy],['明年',cy+1]].filter(x=>x[1]>=data.input.year).map(([label,year])=>{const f=timeBuildYear(data,year),a=BaziCore.annualSignals(data,f);return `<article class="year-compare-card ${annualClass(a.grade)}"><small>${label}</small><h4>${year}｜${esc(a.grade)}</h4><p>${esc(a.character)}</p><p>${a.domains.map(d=>esc(d.name+'：'+d.grade)).join('　')}</p><button type="button" data-year="${year}">選取此年</button></article>`;}).join('');
+        $('threeYearCompare').querySelectorAll('[data-year]').forEach(b=>b.addEventListener('click',()=>selectYearItem(data,timeBuildYear(data,Number(b.dataset.year)))));
+        $('yearSummary').innerHTML='';
+        $('yearFlowGrid').innerHTML=flows.map((f,i)=>{const a=BaziCore.annualSignals(data,f);return `<button type="button" class="flow-card ${annualClass(a.grade)}" data-i="${i}" aria-pressed="false"><small>${f.year} · ${esc(f.ganZhi)}</small><b>${esc(a.grade)}</b><span>${esc(a.character)}</span><span>${a.domains.map(d=>esc(d.name+' '+d.grade)).join('／')}</span></button>`;}).join('');
+        $('yearFlowGrid').querySelectorAll('[data-i]').forEach(b=>b.addEventListener('click',()=>selectYear(data,Number(b.dataset.i))));
+        selectYearItem(data,timeBuildYear(data,cy));installHistoryYear(data);
       }
       function selectYearItem(data,item){
         const index=data.yearFlows.findIndex(x=>x.year===item.year);setActive('yearFlowGrid','.flow-card',index);selectedPeriods.years=item;
-        $('yearDetail').innerHTML=periodDetail(data,item);updateYearComparison(data,item);refreshSelectedDecode('years',data);trackAction(`year-${item.year}`);
+        const a=BaziCore.annualSignals(data,item),list=annualWindow(data,item.year);
+        const affected=[...new Set(a.pressure.map(r=>r.position))].join('、')||'未見直接沖刑害破';
+        $('yearDetail').innerHTML=`<div class="annual-compact ${annualClass(a.grade)}"><h3>${item.year}｜${esc(a.grade)} · ${esc(a.character)}</h3><p class="annual-domains">${a.domains.map(d=>`<span>${esc(d.name)}：<b>${esc(d.grade)}</b></span>`).join('')}</p><div class="annual-tags">${a.tags.length?a.tags.map(t=>`<span>${esc(t)}</span>`).join(''):'未見本規則收錄的集中訊號'}</div><p><b>這一年特別在哪？</b> ${esc(annualSpecial(data,item,a,list))}</p><p class="period-context">主要牽動：${esc(affected)}</p><small>立春區間：${esc(item.startSolar)} 至 ${esc(item.endSolar)}（不含終點）｜${esc(a.context)}</small>${a.extreme?'<p><button type="button" id="annualPromptBtn">複製 '+item.year+' 年 AI 解讀提示詞</button></p><pre id="annualPromptPreview" hidden></pre><span id="annualPromptStatus" role="status"></span>':''}</div>`;
+        $('annualPromptBtn')?.addEventListener('click',async()=>{const prompt=annualPrompt(data,item,a,list);try{await navigator.clipboard.writeText(prompt);$('annualPromptStatus').textContent='已複製年度提示詞';}catch(_){const pre=$('annualPromptPreview');pre.textContent=prompt;pre.hidden=false;$('annualPromptStatus').textContent='無法自動複製，請選取上方提示詞手動複製。';}});
+        updateYearComparison(data,item);markSectionExplored('years');trackAction('year-'+item.year);
       }
-      function selectYear(data,i){const item=data.yearFlows[i];if(item)selectYearItem(data,item);}
+      function selectYear(data,i){if(data.yearFlows[i])selectYearItem(data,data.yearFlows[i]);}
+      function yearComparison(data,item){
+        const list=annualWindow(data,item.year);
+        return `<div class="year-comparison"><b>${list[0].item.year}～${list.at(-1).item.year}｜十年訊號比較</b><div class="history-comparison-buttons">${list.map(({item:f,a})=>`<button type="button" data-history-year="${f.year}" aria-pressed="${f.year===item.year}" class="${annualClass(a.grade)}">${f.year}｜${esc(a.grade)}<small>有利 ${a.positive} · 壓力 ${a.negative}</small></button>`).join('')}</div><small>分數為本站加權訊號，非事件次數或機率；合不直接等於吉。同分並列，不強迫每十年出現大吉或大凶。</small></div>`;
+      }
+
       function renderMonthFlows(data){
         const flows=data.monthFlows||[],list=rankEntries(data,flows),watch=[...list].reverse().slice(0,2);
         $('monthFlowIntro').textContent=`${data.monthFlowYear} 年的十二個節氣月：月份是索引，實際以卡片上的節氣起訖為準。`;
@@ -2399,10 +2428,10 @@ ${promptContext(data)}
           window.print();
         });
         $('saveChartBtn')?.addEventListener('click',()=>{
-          try{localStorage.setItem('divinationhub-bazi-last',JSON.stringify({datetime:birthTime.value,gender:gender.value,sect:sect.value}));toast('已儲存在此瀏覽器');}catch(_){toast('瀏覽器禁止本機儲存');}
+          try{localStorage.setItem('divinationhub-bazi-last',JSON.stringify({datetime:birthTime.value+'T'+$('exactBirthTime').value,date:birthTime.value,timeSlot:Number($('birthSlot').value),exact:$('useExactTime').checked,gender:gender.value,sect:sect.value}));toast('已儲存在此瀏覽器');}catch(_){toast('瀏覽器禁止本機儲存');}
         });
         $('loadChartBtn')?.addEventListener('click',()=>{
-          try{const s=JSON.parse(localStorage.getItem('divinationhub-bazi-last')||'null');if(!s)return toast('尚未儲存命盤');birthTime.value=s.datetime||birthTime.value;gender.value=s.gender??gender.value;sect.value=s.sect??sect.value;cast();}catch(_){toast('無法讀取上次命盤');}
+          try{const s=JSON.parse(localStorage.getItem('divinationhub-bazi-last')||'null');if(!s)return toast('尚未儲存命盤');birthTime.value=s.date||(s.datetime||'').slice(0,10)||birthTime.value;$('exactBirthTime').value=(s.datetime||'').slice(11,16)||'12:00';$('birthSlot').value=s.timeSlot??slotForTime($('exactBirthTime').value);$('useExactTime').checked=s.exact??true;$('exactBirthTime').hidden=!$('useExactTime').checked;gender.value=s.gender??gender.value;sect.value=s.sect??sect.value;cast();}catch(_){toast('無法讀取上次命盤');}
         });
         $('generatePromptBtn')?.addEventListener('click',async()=>{if(!lastData||!exploration.unlocked)return toast('先多看幾個分區的白話解讀');exploration.prompt=buildAiPrompt(lastData,'full');$('promptPreview').textContent=exploration.prompt;$('promptPreview').classList.add('show');try{await navigator.clipboard.writeText(exploration.prompt);toast('完整命盤提示詞已產生並複製');}catch(_){toast('提示詞已產生；瀏覽器無法自動複製時，可從下方文字手動複製');}trackAction('prompt-generate-copy');});
         document.querySelectorAll('[data-qimen-topic]').forEach(a=>a.addEventListener('click',()=>{try{sessionStorage.setItem('divinationhub-qimen-intent',a.dataset.qimenTopic||'');}catch(_){}trackAction('qimen-bridge');}));
@@ -2417,20 +2446,39 @@ ${promptContext(data)}
         let t=document.getElementById('baziToast');if(!t){t=document.createElement('div');t.id='baziToast';t.style.cssText='position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:999;padding:9px 14px;border:1px solid rgba(233,189,88,.28);border-radius:999px;background:rgba(8,9,12,.94);color:#dec57e;font-size:12px;box-shadow:0 12px 40px rgba(0,0,0,.35);transition:.2s';document.body.appendChild(t);}t.textContent=msg;t.style.opacity='1';clearTimeout(t._timer);t._timer=setTimeout(()=>t.style.opacity='0',1500);
       }
 
+
+      function slotForTime(time){const h=Number(time.slice(0,2));return h===0?0:h===23?12:Math.floor((h+1)/2);}
+      function setupBirthSlots(){
+        $('birthSlot').innerHTML=BaziCore.HOUR_SLOTS.map((s,i)=>'<option value="'+i+'">'+s[0]+'（'+s[1]+'）</option>').join('');
+        const now=nowValue();birthTime.value=now.slice(0,10);$('exactBirthTime').value=now.slice(11,16);$('birthSlot').value=slotForTime(now.slice(11,16));
+        $('useExactTime').addEventListener('change',()=>{$('exactBirthTime').hidden=!$('useExactTime').checked;});
+        $('exactBirthTime').addEventListener('change',()=>{if($('exactBirthTime').value)$('birthSlot').value=slotForTime($('exactBirthTime').value);});
+        $('birthSlot').addEventListener('change',()=>{$('useExactTime').checked=false;$('exactBirthTime').hidden=true;});
+      }
+      function birthOptions(){
+        if(!birthTime.value||!birthTime.checkValidity())throw Error('請填寫有效出生日期');
+        const precise=$('useExactTime').checked,time=$('exactBirthTime').value;
+        if(precise&&!time)throw Error('請填寫精確出生時間');
+        const datetime=precise?birthTime.value+'T'+time:BaziCore.slotDateTime(birthTime.value,$('birthSlot').value);
+        if(datetime>nowValue())throw Error('出生時間不能晚於現在；若是今天出生，請填寫精確時間');
+        if(precise)$('birthSlot').value=slotForTime(time);
+        return {datetime,date:birthTime.value,timeSlot:precise?undefined:Number($('birthSlot').value),gender:gender.value,sect:sect.value};
+      }
+      function timeInputNote(data){return data.timeInput?'時間輸入：'+data.timeInput.label+' '+data.timeInput.range+'；以 '+data.timeInput.representative+' 代表時間估算。'+(data.timeInput.boundaryUncertain?'此時辰跨越年月日柱切換，請補精確時間核對。':'')+'起運日期為估算。':'時間輸入：精確民用時間。';}
+
       function cast(){
         try{
-          if(!birthTime.value||!birthTime.checkValidity())throw new Error('請填寫有效的出生日期與時間');
-          if(birthTime.value>nowValue())throw new Error('出生時間不能晚於現在');
-          const data=BaziCore.cast({datetime:birthTime.value,gender:gender.value,sect:sect.value});
+          const data=BaziCore.cast(birthOptions());
+          $('birthTimeNotice').textContent=timeInputNote(data);
           lastData=data;
           selectedPeriods={};
-          renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);renderMonthFlows(data);renderGlossary(data);initSectionDecodeUI();resetExploration();
+          renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);renderMonthFlows(data);renderGlossary(data);initSectionDecodeUI();resetExploration();markSectionExplored('years');
           emptyState.style.display='none';results.classList.add('show');
           setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
         }catch(err){alert(err&&err.message?err.message:String(err));}
       }
 
-      birthTime.value=nowValue();
+      setupBirthSlots();
       initSectionDecodeUI();
       castBtn.addEventListener('click',cast);
       setupReportActions();

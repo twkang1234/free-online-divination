@@ -399,7 +399,7 @@
     return out;
   }
 
-  function cast(options) {
+  function castExact(options) {
     if(typeof Solar === "undefined" || !Solar || typeof Solar.fromYmdHms !== "function") throw new Error("八字曆法核心尚未載入，請確認網路或 lunar-javascript 核心是否可用");
     const input=parseLocalDateTime(options.datetime);
     const gender=Number(options.gender)===0?0:1;
@@ -408,7 +408,9 @@
     const lunar=solar.getLunar();
     const eight=lunar.getEightChar();
     if(typeof eight.setSect === "function") eight.setSect(sect);
-    const pillars=[buildPillar(eight,"year"),buildPillar(eight,"month"),buildPillar(eight,"day"),buildPillar(eight,"time")];
+    const timeEight=sect===2&&input.hour===23?Solar.fromYmdHms(input.year,input.month,input.day,0,30,0).getLunar().getEightChar():eight;
+    if(timeEight!==eight)timeEight.setSect(sect);
+    const pillars=[buildPillar(eight,"year"),buildPillar(eight,"month"),buildPillar(eight,"day"),buildPillar(timeEight,"time")];
     const dayMaster=pillars[2].gan;
     const fiveElements=visibleFiveElements(pillars);
     const weighted=weightedFiveElements(pillars);
@@ -555,6 +557,71 @@
     return {score,label,cls,groups,gods:[item.tenGodGan,item.tenGodZhi],goodThemes:groups.map(g=>topics[g]),watchThemes:groups.map(g=>GROUP_LIFE[g].stuck),stats:{strain,help},relations,domains,reasons,contextText,interactionWatch:strain?'生活安排或合作方式較容易需要調整。':help?'互相牽引的題材較明顯，合作與生活安排需要一起考量。':''};
   }
 
-  window.BaziCore=Object.freeze({cast,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.1.0"});
+  // Annual signal grading v1: editorial weights, not probabilities or clinical risk.
+  const ANNUAL_RULES={version:'annual-signals-1',weights:{沖:1.5,害:1,破:.75,刑:1.25,三刑:2.5},note:'本站命理訊號分級；非事件機率。合與會合不直接加吉分；同一關係同一位置去重，跨位置分別計算。大運只用作背景與流年互動，不把十年固定訊號逐年重複加總。'};
+  function annualGrade(positive,negative){
+    const net=positive-negative;
+    return net<=-5?'大凶':net<=-1.5?'偏凶':net>=5?'大吉':net>=1.5?'偏吉':'平';
+  }
+  function annualSignals(data,item){
+    const base=assessment(data,item),luck=currentLuck(data,item.referenceSolar||item.startSolar);
+    const relations=[...new Map(base.relations.map(r=>[[r.type,r.label,r.position].join('|'),r])).values()];
+    const pressure=relations.filter(r=>['沖','刑','害','破'].includes(r.type));
+    const weight=r=>ANNUAL_RULES.weights[r.label.includes('三刑')?'三刑':r.type]||0;
+    const buckets={};relations.forEach(r=>{const key=r.label.includes('三刑')?'三刑':r.label.includes('自刑')?'自刑':r.type==='會合'?(r.label.includes('三會')?'三會':'三合'):r.type;buckets[key]=(buckets[key]||0)+1;});
+    const support=data.scores.support;
+    const benefit=support>=54?{'比劫':-.5,'印星':-.5,'食傷':1,'財星':.8,'官殺':.5}:support<47?{'比劫':1,'印星':1,'食傷':-.35,'財星':-.5,'官殺':-.7}:{'比劫':.2,'印星':.2,'食傷':.4,'財星':.4,'官殺':.2};
+    const groups=[item.tenGodGan,item.tenGodZhi].map(groupOfGod);
+    const luckGroups=luck?[luck.tenGodGan,luck.tenGodZhi].map(groupOfGod):[];
+    const signals=[];
+    [item.tenGodGan,item.tenGodZhi].forEach((god,i)=>{
+      const group=groups[i],b=benefit[group],value=b*(i?1.4:2);
+      signals.push({label:`流年${i?'地支主氣':'天干'}${god}`,value,group,source:'年度十神'});
+    });
+    const same=groups.some(g=>benefit[g]>=.5&&luckGroups.includes(g));
+    if(same)signals.push({label:'大運同類有利主題支持',value:1.6,source:'大運背景'});
+    [...new Set(groups)].forEach(g=>{if(data.tenGodDistribution.groupPercentages[g]>=38)signals.push({label:`${g}原局集中再遇同類`,value:-.6,group:g,source:'原局偏重'});});
+    const totalNegative=pressure.reduce((n,r)=>n+weight(r),0)+signals.filter(s=>s.value<0).reduce((n,s)=>n-s.value,0);
+    const totalPositive=signals.filter(s=>s.value>0).reduce((n,s)=>n+s.value,0);
+    const domain=(name,relevant,relationFilter)=>{
+      let positive=0,negative=0;const evidence=[];
+      signals.forEach(s=>{if(s.group&&!relevant.includes(s.group))return;if(!s.group&&!groups.some(g=>relevant.includes(g)))return;const v=s.value;positive+=Math.max(0,v);negative+=Math.max(0,-v);evidence.push({label:s.label,value:v});});
+      pressure.filter(relationFilter).forEach(r=>{negative+=weight(r);evidence.push({label:r.label+'（'+r.position+'）',value:-weight(r)});});
+      return {name,positive:+positive.toFixed(2),negative:+negative.toFixed(2),score:+(positive-negative).toFixed(2),grade:annualGrade(positive,negative),evidence};
+    };
+    const work=domain('工作',['官殺','食傷','財星','印星','比劫'],r=>['month','luck','combined'].includes(r.key));
+    const money=domain('財務',['財星','食傷','比劫'],r=>r.key==='combined'||(data.pillars.find(p=>p.key===r.key)&&[data.pillars.find(p=>p.key===r.key).shiShenGan,...data.pillars.find(p=>p.key===r.key).shiShenZhi].some(g=>groupOfGod(g)==='財星')));
+    // Relationship grading uses only direct day-branch pressure and links, not wealth=spouse assumptions.
+    const dayPressure=pressure.filter(r=>r.position==='日支');
+    const dayLinks=relations.filter(r=>r.position==='日支'&&r.type==='合');
+    const relationship={name:'感情',positive:0,negative:+dayPressure.reduce((n,r)=>n+weight(r),0).toFixed(2),evidence:dayPressure.map(r=>({label:r.label+'（日支）',value:-weight(r)}))};
+    relationship.score=-relationship.negative;relationship.grade=annualGrade(0,relationship.negative);relationship.links=dayLinks.length;
+    const domains=[work,money,relationship];
+    const cycles=data.daYun?.cycles||[],outside=cycles.length&&item.referenceSolar>=cycles.at(-1).endSolar;
+    const grade=outside?'資料不足':annualGrade(totalPositive,totalNegative);
+    if(outside)domains.forEach(d=>d.grade='資料不足');
+    const tags=Object.entries(buckets).map(([name,count])=>`${name} ×${count}${['三刑','三合','三會'].includes(name)?'組':''}`);
+    signals.filter(s=>s.value>0).forEach(s=>tags.push(s.label));
+    const concentration=+(totalPositive+totalNegative).toFixed(2);
+    const character=outside?'超出所列大運範圍':totalPositive>=3&&totalNegative>=3?'吉凶訊號都突出':totalNegative>=5?'壓力訊號高度集中':totalPositive>=5?'有利訊號高度集中':concentration>=3?'部分訊號較突出':'未見明顯集中';
+    return {version:ANNUAL_RULES.version,year:item.year,grade,domains,relations,pressure,signals,tags,positive:+totalPositive.toFixed(2),negative:+totalNegative.toFixed(2),score:+(totalPositive-totalNegative).toFixed(2),concentration,character,outside,extreme:!outside&&[grade,...domains.map(d=>d.grade)].some(g=>g==='大吉'||g==='大凶'),context:base.contextText};
+  }
+  const HOUR_SLOTS=[['早子時','00:00–00:59','00:30','子'],['丑時','01:00–02:59','02:00','丑'],['寅時','03:00–04:59','04:00','寅'],['卯時','05:00–06:59','06:00','卯'],['辰時','07:00–08:59','08:00','辰'],['巳時','09:00–10:59','10:00','巳'],['午時','11:00–12:59','12:00','午'],['未時','13:00–14:59','14:00','未'],['申時','15:00–16:59','16:00','申'],['酉時','17:00–18:59','18:00','酉'],['戌時','19:00–20:59','20:00','戌'],['亥時','21:00–22:59','22:00','亥'],['晚子時（夜子）','23:00–23:59','23:30','子']];
+  function slotDateTime(date,slot){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isInteger(Number(slot))||Number(slot)<0||Number(slot)>12)throw Error('請選擇有效的出生日期與時辰');
+    return date+'T'+HOUR_SLOTS[Number(slot)][2];
+  }
+
+  function cast(options){
+    if(options.timeSlot===undefined||options.timeSlot===null)return castExact(options);
+    const index=Number(options.timeSlot),datetime=slotDateTime(options.date,index),data=castExact({...options,datetime});
+    const slot=HOUR_SLOTS[index],range=slot[1].split('–');
+    const signatures=range.map(time=>{const input=parseLocalDateTime(options.date+'T'+time),e=Solar.fromYmdHms(input.year,input.month,input.day,input.hour,input.minute,0).getLunar().getEightChar();e.setSect(data.sect);return [e.getYear(),e.getMonth(),e.getDay()].join('|');});
+    data.timeInput={mode:'slot',index,label:slot[0],range:slot[1],representative:slot[2],boundaryUncertain:signatures[0]!==signatures[1]};
+    if(data.pillars[3].zhi!==slot[3])throw Error('時辰與排盤結果不一致');
+    return data;
+  }
+
+  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.4.0"});
 
 })();
