@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<!-- Interpretation revision 2.2; compatible with BaziCore 2.1.0 -->
+<!-- Interpretation revision 2.3; compatible with BaziCore 2.1.0 -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -359,6 +359,10 @@
 @media(max-width:600px){.deep-essay>summary,.shensha-deep-card>summary{padding:12px}.deep-essay-body,.shensha-deep-body{padding:0 12px 12px}.history-year-form label{width:100%}}
 @media print{.deep-essay,.shensha-deep-card{break-inside:auto}.deep-essay-body,.shensha-deep-body{color:#222}.shensha-tone{color:#333!important}.history-year-form,.history-comparison-buttons{display:none}}
 
+
+/* Each original shensha card is independently expandable, initially collapsed. */
+.shensha-inline{padding:0!important;min-width:0;align-self:start}.shensha-inline>summary{display:block;cursor:pointer;padding:12px;list-style:none}.shensha-inline>summary::-webkit-details-marker{display:none}.shensha-inline>summary:focus-visible{outline:2px solid #e9bd58;outline-offset:-3px;border-radius:12px}.shensha-inline .stage-shensha-meaning{display:block;margin-top:6px}.shensha-inline-hint{display:block;margin-top:6px;color:#bfa664;font-size:11px}.shensha-inline:not([open]) .when-open,.shensha-inline[open] .when-closed{display:none}.shensha-inline[open]>summary{border-bottom:1px solid rgba(233,189,88,.2)}.shensha-inline-body{padding:0 12px 14px;font-size:13px;line-height:1.85;overflow-wrap:anywhere}.shensha-inline-body p{margin:12px 0;color:#b6bec9}.shensha-inline-body p>b{display:block;color:#dec57e;margin-bottom:4px}.shensha-inline-body .shensha-inline-tone{color:#e6c974}.shensha-inline-basis{font-size:11px}.shensha-inline-close{border:1px solid #857143;border-radius:7px;padding:8px 12px;background:transparent;color:#dec57e;cursor:pointer}.shensha-prompt-only>.decode-content{display:block!important}.shensha-pillar-grid.integrated{align-items:start}.shensha-pillar-grid.integrated .shensha-pillar{min-height:0}.stage-shensha-list{align-content:start}
+@media print{.shensha-inline-hint,.shensha-inline-close{display:none!important}.shensha-inline-body p{color:#222}}
 </style>
 <style>
 .report-hero{display:block}.report-hero>.report-identity{margin-bottom:20px}#report-overview,.report-section{scroll-margin-top:90px}
@@ -1194,6 +1198,19 @@
           return order.indexOf(a.category)-order.indexOf(b.category)||b.positions.length-a.positions.length||a.name.localeCompare(b.name,'zh-Hant');
         });
       }
+
+      function inlineShenshaCard(hit,data){
+        const m=shenshaDetailModel(hit,data);
+        const rows=[['傳統意象',m.image],['白話意思',m.meaning],['在這張命盤中的展現',m.chart],['較能發揮的優勢',m.good],['容易出現的盲點',m.blind],['生活中可能像這樣',m.scene]];
+        return '<details class="stage-shensha-item shensha-inline" data-shensha-name="'+esc(hit.name)+'"><summary><span class="stage-shensha-item-head"><span class="stage-shensha-name">'+esc(hit.name)+'</span><span class="stage-shensha-category">'+esc(hit.category)+'</span></span><span class="stage-shensha-meaning">'+esc(hit.meaning)+'</span><span class="shensha-inline-hint"><span class="when-closed">＋ 點此看詳細解釋</span><span class="when-open">－ 點此收起解釋</span></span></summary><div class="shensha-inline-body"><p class="shensha-inline-tone">傳統傾向：'+esc(m.tone)+'｜'+esc(m.positions.join('、'))+'</p>'+rows.map(([title,text])=>'<p><b>'+esc(title)+'</b>'+esc(text)+'</p>').join('')+'<p class="shensha-inline-basis">查表依據：'+esc(m.basis.join('；'))+'</p><button type="button" class="shensha-inline-close">收起'+esc(hit.name)+'解釋 ↑</button></div></details>';
+      }
+      function bindInlineShensha(){
+        document.querySelectorAll('#shenshaPillars .shensha-inline').forEach(card=>{
+          card.addEventListener('toggle',()=>{if(card.open){markSectionExplored('shensha');trackAction('shensha-'+card.dataset.shenshaName);}});
+          card.querySelector('.shensha-inline-close').addEventListener('click',()=>{card.open=false;const summary=card.querySelector('summary');summary.focus({preventScroll:true});summary.scrollIntoView({block:'nearest',behavior:'auto'});});
+        });
+      }
+
       function renderShensha(data){
         const hits=computeShensha(data);data._shensha=hits;
         const repeated=hits.filter(x=>x.positions.length>1);
@@ -1218,14 +1235,7 @@
         $('shenshaPillars').innerHTML=pillarMeta.map(([name,stage,domain,key],i)=>{
           const p=data.pillars?.[i],arr=byPillar[name]||[];
           const items=arr.length
-            ? arr.map(x=>`<div class="stage-shensha-item">
-                <div class="stage-shensha-item-head">
-                  <div class="stage-shensha-name">${esc(x.name)}</div>
-                  <div class="stage-shensha-category">${esc(x.category)}</div>
-                </div>
-                <p class="stage-shensha-meaning">${esc(x.meaning)}</p>
-              </div>`).join('')
-            : `<div class="stage-shensha-empty">本站常用規則在這一柱未辨識到神煞。</div>`;
+            ? arr.map(x=>inlineShenshaCard(x,data)).join('')            : `<div class="stage-shensha-empty">本站常用規則在這一柱未辨識到神煞。</div>`;
 
           return `<article class="shensha-pillar ${key==='day'?'is-day':''}" data-pillar="${esc(key)}">
             <small><span>四柱位置</span><span>${arr.length} 個神煞</span></small>
@@ -1246,6 +1256,7 @@
               <em>${esc(x.positions.join('、'))} · ${esc(x.basis[0]||'常用查法')}</em>
             </article>`).join('')
           : '<div class="shensha-empty">目前未辨識到常用神煞；請以四柱、五行、十神與干支互動為主要判讀基礎。</div>';
+        bindInlineShensha();
       }
       function formatBasic(data){return `晚子時規則：${data.sect===1?"23:00 起算次日":"23:00 後仍算當日"}\n時間基準：輸入民用時間；未校正真太陽時；節氣時間採 UTC+8；未提供出生地\n性別：${data.gender===1?'男':'女'}\n公曆：${data.solarText}\n農曆：${data.lunarText}\n四柱：${data.pillars.map(p=>p.ganZhi).join(' / ')}\n日主：${data.dayMaster}${data.dayMasterElement}（${data.dayMasterYinYang}）`;}
       function formatPillars(data){return (data.pillars||[]).map(p=>`${labels[p.key]?.[0]||p.key}：${p.ganZhi}｜天干十神 ${p.shiShenGan||'日主'}｜藏干 ${(p.hideGan||[]).join('、')||'—'}｜地支十神 ${(p.shiShenZhi||[]).join('、')||'—'}｜納音 ${p.naYin||'—'}｜十二長生 ${p.diShi||'—'}｜旬空 ${p.xunKong||'—'}`).join('\n');}
@@ -1995,6 +2006,7 @@ ${key==='years'&&selectedPeriods.years?'所選年度：'+selectedPeriods.years.y
           const open=box.querySelector('.decode-open'),content=box.querySelector('.decode-content'),summary=box.querySelector('.decode-summary-grid'),preview=box.querySelector('.section-prompt-preview');
           open.addEventListener('click',()=>{const show=!content.classList.contains('show');if(show){summary.innerHTML=lastData?sectionExplanation(def.key,lastData):'';content.classList.add('show');open.classList.add('active');open.textContent='已展開白話解讀';markSectionExplored(def.key);trackAction(`decode-${def.key}`);}else{content.classList.remove('show');open.classList.remove('active');open.textContent='看懂這一區';}});
           box.querySelector('[data-act="copy"]').addEventListener('click',async()=>{if(!lastData)return;const prompt=buildSectionPrompt(lastData,def.key);preview.textContent=prompt;preview.classList.add('show');try{await navigator.clipboard.writeText(prompt);toast(`${def.title}提示詞已產生並複製`);}catch(_){toast('提示詞已產生；瀏覽器無法自動複製時，可從下方文字手動複製');}markSectionExplored(def.key);trackAction(`section-copy-${def.key}`);});
+          if(def.key==='shensha'){box.classList.add('shensha-prompt-only');box.querySelector('.decode-bar').remove();summary.remove();}
         });
       }
 
@@ -2380,7 +2392,7 @@ ${promptContext(data)}
         $('collapseAllBtn')?.addEventListener('click',()=>{document.querySelectorAll('.report-section').forEach(d=>d.open=false);trackAction('collapse-all');});
         $('printReportBtn')?.addEventListener('click',()=>{
           if(!lastData)return;
-          const states=[...document.querySelectorAll('.report-section')].map(el=>[el,el.open]);
+          const states=[...document.querySelectorAll('.report-section, .shensha-inline')].map(el=>[el,el.open]);
           document.querySelectorAll('.section-decode').forEach(box=>{const grid=box.querySelector('.decode-summary-grid');if(grid)grid.innerHTML=sectionExplanation(box.dataset.section,lastData);});
           states.forEach(([el])=>el.open=true);
           window.addEventListener('afterprint',()=>states.forEach(([el,open])=>el.open=open),{once:true});
