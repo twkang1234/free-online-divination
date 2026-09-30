@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+<!-- Interpretation revision 2.2; compatible with BaziCore 2.1.0 -->
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -345,7 +346,20 @@
     .fortune-detail .fortune-detail-item b{color:#d9c98f}
     @media(max-width:860px){.fortune-summary-grid,.three-year-compare{grid-template-columns:1fr}.fortune-detail .fortune-detail-grid{grid-template-columns:1fr}}
 
-  </style>
+  
+/* Report interpretation revision 2.2 — calculations unchanged. */
+.decode-summary-grid>.deep-essay,.decode-summary-grid>.shensha-deep-card,.decode-summary-grid>.shensha-deep-intro{grid-column:1/-1;min-width:0}
+.deep-essay,.shensha-deep-card{border:1px solid rgba(160,137,93,.28);border-radius:12px;background:rgba(255,255,255,.035);overflow:hidden;margin:0 0 12px;color:inherit}
+.deep-essay>summary,.shensha-deep-card>summary{cursor:pointer;display:list-item;padding:16px 20px;font-weight:700;line-height:1.6;list-style-position:inside}
+.deep-essay>summary small,.shensha-deep-location{display:block;font-size:12px;font-weight:400;margin-top:5px;opacity:.8}
+.deep-essay-body,.shensha-deep-body{padding:0 20px 18px;line-height:1.95;font-size:15px;overflow-wrap:anywhere}
+.deep-essay-body p,.shensha-deep-body p{margin:15px 0}.deep-essay-body p>b,.shensha-deep-body p>b{display:block;font-size:14px;margin-bottom:4px;color:var(--gold,#c6a56b)}
+.shensha-tone{display:inline-block;border:1px solid currentColor;border-radius:6px;padding:1px 8px;font-size:12px;margin-left:8px}.shensha-tone.auspicious{color:#68c59f}.shensha-tone.caution{color:#e49a86}.shensha-tone.mixed{color:#d3bd82}
+.shensha-deep-intro{line-height:1.85}.history-year-form{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0}.history-year-form input{width:110px;padding:10px;border-radius:7px;border:1px solid #8b7958;background:var(--bg,#181918);color:inherit}.history-year-form button,.history-comparison-buttons button{padding:10px 14px;border:1px solid #8b7958;border-radius:8px;background:transparent;color:inherit;cursor:pointer}.history-comparison-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.history-comparison-buttons [aria-pressed=true]{outline:2px solid #c6a56b}.year-comparison{border:1px solid rgba(160,137,93,.35);padding:18px;border-radius:12px;margin:16px 0;line-height:1.8}#yearHistoryControls{padding:14px 0;line-height:1.7}#yearHistoryStatus{margin:6px 0}.deep-essay summary:focus-visible,.shensha-deep-card summary:focus-visible{outline:2px solid #c6a56b;outline-offset:-3px}
+@media(max-width:600px){.deep-essay>summary,.shensha-deep-card>summary{padding:12px}.deep-essay-body,.shensha-deep-body{padding:0 12px 12px}.history-year-form label{width:100%}}
+@media print{.deep-essay,.shensha-deep-card{break-inside:auto}.deep-essay-body,.shensha-deep-body{color:#222}.shensha-tone{color:#333!important}.history-year-form,.history-comparison-buttons{display:none}}
+
+</style>
 <style>
 .report-hero{display:block}.report-hero>.report-identity{margin-bottom:20px}#report-overview,.report-section{scroll-margin-top:90px}
 .overview-life-grid,.period-domains{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}
@@ -982,7 +996,7 @@
 
       function pad(n){return String(n).padStart(2,'0');}
       function nowValue(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;}
-      function esc(s=''){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch]);}
+      function esc(s=''){return String(s).replace(/[惊蛰种读]/g,c=>({'惊':'驚','蛰':'蟄','种':'種','读':'讀'})[c]).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[ch]);}
       function pct(v){return Math.max(0,Math.min(100,Number(v)||0));}
 
 
@@ -1481,6 +1495,188 @@
         const hidden=elOrder.filter(e=>!data.fiveElements[e]&&wp[e]>0);
         return `<b>這張盤先看什麼：</b>${esc(sorted[0][0])} ${sorted[0][1]}%、${esc(sorted[1][0])} ${sorted[1][1]}% 較多；${esc(sorted[4][0])} ${sorted[4][1]}% 較少。${hidden.length?`表面看不到的 ${esc(hidden.join('、'))} 仍存在於藏干，不能當成完全沒有。`:''}<br>占比用來看結構集中在哪裡；生活表現要連到日主與十神一起解釋。`;
       }
+      // Traditional imagery is separated from this chart's measured positions and modern life examples.
+      const SHENSHA_DEEP={
+        '華蓋':['吉凶兼具','以古代儀仗中的華蓋傘為意象：在人群之上自成一處，延伸為專注、獨立、審美與精神世界。','華蓋常被用來描述不滿足於表面答案、願意向內探索的傾向。比起大家都在談什麼，更容易被自己真正有感的問題吸引；興趣可能落在藝術、哲學、命理文化、冷門技術或專門研究，不代表每一項都一定喜歡。','較能獨處、反覆琢磨細節，願意在少有人理解的題目上累積深度。工作需要長時間研究、創作或獨立判斷時，這份專注較容易成為特色。','容易覺得別人的討論太表面，或懶得從頭解釋自己的想法。外表未必冷淡，但內在可能保留一塊不容易讓人走進的空間；享受安靜與渴望被理解，有時會同時存在。','例如別人覺得已經夠用了，你仍想弄懂背後原理；遇到能聊到核心的人又可以談很久。這種「平時話不多、碰到興趣卻很投入」的差異，比直接說成孤僻更貼近這個象徵。','印星'],
+        '魁罡':['吉凶兼具','借剛健、有威勢的星名形容立場、原則與承擔，重點在遇事能不能站穩，並非必然成為領袖或具有絕對權力。','魁罡的常見解讀是內在有較清楚的底線，不一定天天強勢，但對自己認定的重要原則較難隨意退讓。平常可以配合，碰到責任歸屬、是非或被不合理要求時，態度可能突然變得很堅定。','面對急件、危機或別人不願拍板的局面，容易顯出承擔、決斷與撐住場面的韌性；認定值得投入的事，也較能忍受過程中的辛苦。','原則感太強時，容易把溝通變成對錯之爭，或習慣自己扛住、不願讓人看見疲倦。有時本意是把事情處理好，別人感受到的卻是壓迫、難商量或不容出錯。','例如平時不一定爭著說話，但當事情失去秩序或沒有人負責時，會想直接決定下一步；在親密關係裡，同樣的果斷也可能被解讀成替對方作主。','官殺'],
+        '天乙貴人':['吉','像在關鍵時刻提供指引或引介的人，傳統上屬於貴人助力的象徵。','白話重點是遇到難題時有機會透過人脈、長輩、主管或熟悉門路的人找到突破口。所謂貴人不一定是大人物，也可能是一句提醒、一個介紹，或有人願意解釋你不熟悉的規則。','較值得觀察的是建立信任、接受指導與借助合作的能力；有些事情不必完全靠自己摸索，與合適的人交流能減少繞路。','容易把幫助當成理所當然，或一直等待有人出面。神煞標示吉，是這類助力的傳統寓意，不等於每次有困難都會有人替你解決。','例如工作卡在流程時，有人告訴你該找誰；轉換環境時，先前累積的信用讓人願意牽線。重點是可被看見的協助，而不是憑空保證好運。','印星'],
+        '太極貴人':['吉','取追溯根源、理解變化之理的意象，常連到思辨、悟性與抽象理解。','容易對「為什麼會這樣」比「照做就好」更有興趣，會想把分散的事情整理成規律。這種興趣可以出現在哲學或命理，也可以表現在科學、系統設計與生活觀察。','擅於從不同角度理解問題，願意追問概念背後的原因；遇到需要整合知識的事情，這份耐心可能形成長處。','容易停在思考與討論，覺得還沒完全理解就不想開始。與只求快速結論的人合作時，也可能彼此覺得對方抓錯重點。','例如別人只問怎麼操作，你卻想知道整個系統如何運作；一旦理解原理，便比較能自行推演，不必每次照抄步驟。','印星'],
+        '文昌貴人':['吉','借文學、學習與文書的星曜意象，重點是把資訊整理成可以理解的形式。','常被用來觀察學習、語言、文字、整理與表達方面的興趣。它不只指考試，也可以是寫說明、做簡報、整理流程或把複雜事情講清楚。','容易在有脈絡、有結構的學習中找到方法；願意修飾說法與整理重點時，資訊更能轉成別人可使用的成果。','可能過分在意文字是否精準、格式是否完整，花很多時間修訂卻延後交付；也容易把會考試或會說明，誤認成實際執行一定順利。','例如同樣一份資料，你會在意順序、重點與對方能否看懂；在教學、文書或需要解說的工作裡，這個習慣比較容易被看見。','食傷'],
+        '國印貴人':['吉','以印信象徵授權、信用、職責與制度，像是一件事情有人正式交給你負責。','常見主題是重視名分、程序與責任歸屬。容易在意誰有權決定、事情是否留下紀錄，以及承諾能不能落實，不等於一定有官位。','在需要守規範、管理流程、保管資源或維持信用的工作中，較能理解制度存在的意義；做事可靠容易成為被託付的原因。','容易因責任感而接下太多事，或過度依賴既有流程。遇到規則不清或別人隨口承諾時，可能比旁人更不安心。','例如團隊裡大家急著開始，你會先問分工、期限與誰來確認；這能避免混亂，也可能被覺得太拘謹或太重形式。','官殺'],
+        '天德貴人':['吉','「德」取寬厚、善意與轉圜的意象；傳統將天德視為能緩和衝突、增加助力的吉曜。','所謂緩衝，白話是事情出問題時仍有談的空間：有人願意說明、讓一步、提供協助，或關係沒有立刻走到最僵的程度。這是傳統對人情與轉圜的描述，不是保證遇險必然無事。','容易把善意、信用與留餘地視為重要資源；處理摩擦時若能理解雙方立場，較有機會找到各退一步或重新合作的方式。','容易因不想撕破臉而延後表態，或把體諒變成無限承擔。若只等待事情自己變好，原本可協調的空間也可能被拖掉。','例如發生誤會後，仍有人願意聽你說明；合作有落差時，雙方能討論補救，而非立刻互相否定。這就是「助力與緩衝」較具體的生活畫面。','印星'],
+        '月德貴人':['吉','取月德照臨、和合解紛的傳統意象，常用來描述人情往來中的善意與協調。','比起只把問題分成輸贏，月德的解讀重點是能否找到共同接受的處理方式。助力有時來自一位願意協調的人，有時是平常建立的信用使對方願意多給一次機會。','適合觀察溝通、體諒、修補關係與維持合作的長處；願意先聽懂別人的難處，常比單靠強硬立場更有轉圜空間。','可能太在意和氣，真正不同意的事卻沒有說明。看起來把衝突壓下來了，心裡仍可能累積委屈或不平衡。','例如同事意見不同時，你能找到雙方都在意的目標；但若只是答應所有人，反而容易讓責任全部落到自己身上。','印星'],
+        '驛馬':['吉凶兼具','以奔走的馬象徵移動、轉換、接觸外界與環境變動。','不只指搬家或出國，也可用來描述工作內容常切換、跨部門往來、外出接洽或難以長期停在同一節奏。重點是「動」帶來資源，還是增加消耗。','對新環境較有探索空間，透過移動、接觸不同的人與事情，容易得到原地看不到的資訊。','變化太頻繁時，時間、精力與生活安排容易被切碎；忙著應付下一件事，反而沒有機會沉澱已經累積的經驗。','例如工作一成不變時覺得悶，換到需要接洽、走動或處理不同任務的環境反而有精神；但家人可能感覺你總在忙、很難配合固定安排。','財星'],
+        '桃花':['吉凶兼具','以花朵吸引目光為意象，連到魅力、審美、社交與情感交流。','桃花不只代表戀愛，也可表現在讓人願意靠近、容易受到注意、對氣氛或外在呈現較敏感。被看見是一種資源，也會增加人際期待。','在人際互動、服務、表達或需要美感的領域，較有機會透過親和力與呈現方式建立連結。','容易在意他人的回應，或因界線不清而產生誤會。得到關注和建立穩定關係是兩件事，互動熱絡並不代表彼此期待相同。','例如一句關心讓人覺得你很體貼，也可能被理解成特別好感；熟悉場合時很能帶動氣氛，但散場後仍未必感到真正被理解。','食傷'],
+        '紅鸞':['吉','取喜慶與結緣的傳統意象，常連到親密關係、情感靠近與共同生活的想像。','它的基本方向是關係連結，而非保證婚期。生活中可以表現為更在意陪伴、願意了解別人，或把伴侶與共同安排看得比較重要。','較能感受到關係中的溫度與互相照顧；願意投入互動時，容易把陌生感逐步轉為信任。','容易因期待被喜歡或被理解，而太快替一段關係加上想像；重視關係也可能使自己對冷淡與落差比較敏感。','例如開始把對方放進自己的行程與未來安排，但對方可能仍停在認識階段。是否走向穩定，需要看雙方的實際互動。','財星'],
+        '天喜':['吉','取歡喜、聚合與值得慶賀之事的意象，常連到人際氣氛與共同分享。','白話上是較容易把注意力放在令人期待的人事物，或在聚會、合作、團體活動中建立連結；不限定是結婚或生子。','懂得回應別人的好消息、營造舒服的氣氛，往往有助於讓關係更容易接近；合作中也較容易找到彼此願意參與的理由。','可能因氣氛好就忽略細節，或為了不掃興而答應超過能力的安排。開心的開始仍需要後續的落實。','例如大家談得投機便決定一起做事，事後才發現時間與分工沒說清楚；喜慶象徵提醒的是連結題材，不是每個邀約都有好結果。','食傷'],
+        '將星':['吉凶兼具','取帶領隊伍、整合人力的意象，連到主導、組織與承擔。','不一定是職位高，而是遇到需要有人統整時，較容易在意方向、分工與進度。若原局也重視自主或責任，這個主題會更值得觀察。','能在混亂裡抓出順序，願意協調不同任務，也比較能承受被期待作決定的壓力。','容易把負責變成凡事都要過問，或認為自己的方法比較有效，忽略別人需要被信任。','例如團隊沒有人安排時，你會自然開始分工；但別人已經有自己的想法時，同一份主導力也可能造成摩擦。','官殺'],
+        '祿神':['吉','「祿」原有俸祿、可依靠資源的意思，在八字中與日干祿位相連。','常用來描述可以立足的技能、資源或熟悉領域。重點不是天生不愁錢，而是什麼能力能透過持續運用形成相對穩定的支持。','願意把熟悉的事情做穩，容易從固定技能、可信任的工作方式或長期關係累積底氣。','過於依靠熟悉資源時，可能不願面對環境改變；也可能把目前的穩定視為永遠不需要調整。','例如靠一項技能長期獲得信任，比不停追逐新機會更有安全感；當需求改變時，原本的專長仍需找到新的使用方式。','比劫'],
+        '羊刃':['偏凶','以刀刃形容力量集中、反應強烈與界線鮮明，傳統上屬需要留意強度的象徵。','「凶」主要提醒衝動與碰撞，不等於人品不好。常見解讀是遇到侵犯、競爭或不合理要求時，較難一直退讓，反應可能比平常更直接。','能守住立場、處理需要勇氣的任務，在壓力下不輕易放棄；力量用在明確目標上時，也可以成為執行力。','容易先反擊、後理解，或把小分歧升高成不能輸的局面；太習慣硬撐，也可能不願表達需要協助。','例如原本可以討論的分工，因一句刺激的話突然變成爭執。這裡要看的，是力量是否有出口與界線，而不是由名字推定受傷事件。','比劫'],
+        '金輿':['吉','取華美車輿承載人的意象，連到生活條件、資源支持與被妥善安頓的需要。','常見解讀是重視生活品質、資源是否可靠，以及是否有能承接自己的環境。它可以是家庭支持、合作條件或對穩定生活的重視，不等於一定富裕。','較能察覺資源如何讓事情做得更順，也容易把品質、舒適與長期可維持性放進考量。','可能太習慣已有條件，對改變較不適應；或為了維持理想生活樣貌，讓資源負擔逐漸增加。','例如選工作時不只看收入，也在意環境、制度與生活能否安定；選擇關係時，也可能重視是否能一起把日子過好。','財星'],
+        '亡神':['偏凶','名稱取失落、隱藏與難以掌握的意象，傳統上多列為警示類；不是字面上的死亡預告。','現代白話可以從注意力、資訊落差與心事不易說清楚來理解。事情表面看似有進展，心裡卻可能一直留著尚未釐清的疑問。','對不明確的地方保持觀察，願意追查細節時，可能發現別人忽略的問題；這是警覺用得合宜的一面。','容易反覆猜測、分心或把不確定性想得很重。工作上可能知道某件事不對勁，卻還說不清楚原因；人際中也可能因沒有確認就先疏遠。','例如口頭約定看似一致，實際各自理解不同；等到要交付時才發現漏了關鍵條件。此處說的是可觀察的溝通與注意題材，不是必然失去什麼。','印星'],
+        '劫煞':['偏凶','取外力介入、資源被分奪或節奏遭打斷的意象，重點在競逐與突發調整。','較常被用來提醒原本安排可能受到別人的要求、競爭或臨時變動牽動。「劫」不必理解成遭搶劫，也可是一件事情突然需要你投入更多時間、金錢或心力。','若能在變動中快速辨認重點，反應力與應變會是可用的一面；面對競爭時，也較容易被激起爭取的動力。','容易因急著不吃虧而倉促答應、加碼投入，或把別人的行動理解成針對自己。最值得觀察的是被打亂之後，能不能分清真正需要承擔的部分。','例如合作臨時改條件、工作突然插單，原先算好的時間與資源不夠用；這類情境比直接說一定破財，更能解釋此符號的提醒。','比劫'],
+        '災煞':['偏凶','取外在衝擊與壓力打斷原有秩序的意象，傳統上屬警示類。','可以先理解為事情不完全照預定進度走，必須面對變化與額外負擔。它是提醒留意壓力來源的符號，不能據此指定事故、疾病或發生時間。','在不確定情境中培養的警覺、準備與危機處理能力，也可能成為長處；關鍵在能否把注意力放回實際狀況。','容易因擔心出錯而過度緊張，或遇到一件不順就把其他事情一併看壞。壓力感和實際問題的大小，未必完全相同。','例如環境或規則突然改變，原先的方法需要重做；若同時有多項責任，感受會比只有單一任務時更吃力。','官殺'],
+        '孤辰':['偏凶','傳統名稱帶有獨處、距離與不易相伴的意象，主要提醒關係中的疏離感。','白話上常是習慣自己處理問題，或需要比較多不被打擾的空間。不是沒有感情，而是未必自然地說出需要、依賴或脆弱。','可以獨立思考、耐住安靜，不必凡事靠別人的認同才能開始；獨處有時也讓專注與情緒整理更容易。','太習慣不麻煩人，容易讓親近的人不知道你在想什麼；心裡希望被理解，外在卻表現得好像不需要任何人。','例如有壓力先安靜消化，對方卻以為你在冷處理；或明明願意幫忙，因為話少而被誤認成不關心。傳統偏凶指的是關係阻力，不是注定單身。','印星'],
+        '寡宿':['偏凶','取內收、安靜與陪伴感不足的意象，常用來觀察關係中的保留。','容易把感受留在心裡，重視熟悉與安全之後才願意靠近。表面能應付社交，真正讓自己放鬆的對象可能不多。','不急於迎合，較能守住自己的節奏；在需要安靜、長時間投入的事情上，容易維持內在空間。','容易把失望默默累積，等到想說時已經拉開距離。別人看見的是淡淡的態度，未必知道你其實在意很多。','例如對一段關係有期待，卻不習慣主動表達，最後覺得對方一直不懂；此處可以用來理解表達距離，不能推定伴侶遭遇或婚姻結局。','印星'],
+        '天醫':['吉','借照護、修復與恢復秩序的意象，傳統上常與醫藥或關懷題材連結。','可以表現為對照顧、身心感受或修復問題有興趣，也可能只是願意傾聽、協助別人重新穩定。這是文化象徵，不是醫療能力或健康狀態的證明。','容易注意到別人不舒服或需要支持的地方；在照護、服務與協助整理問題的情境中，細心與耐心較有發揮空間。','可能過度承接別人的困難，或把關心變成凡事都替對方安排。對健康題材有興趣，也不等於能自行判斷疾病與治療。','例如朋友低落時，你會想了解他缺少什麼支持；工作出了問題，也願意花時間找出哪個環節需要修復。涉及實際症狀仍以醫療評估為準。','印星'],
+        '天羅':['偏凶','以羅網纏繞、行動受限為意象，傳統上提醒牽制與難以脫身的感受。','白話重點是某些事情不是想停就停，可能被責任、承諾、人情或反覆未解的問題綁住。名字不代表一定遇上官非或牢獄。','對複雜責任保持耐心、願意逐層釐清，有助於看見自己究竟被哪個條件限制；這是處理糾結時可發揮的一面。','容易在同一個問題裡繞圈，想顧全所有要求卻越來越難動；也可能因覺得無法改變而延後面對。','例如答應的事一層疊一層，工作、家庭與人情各有要求，任何一邊都不想失信，最後覺得自己沒有選擇空間。','官殺'],
+        '地網':['偏凶','以網住腳步、牽連不易解開為意象，常用來提醒現實安排中的糾結與牽制。','不一定是外面有人阻擋，也可能是自己同時顧慮太多責任、條件與後果。本站依辰巳同見查出此項，屬採用規則下的輔助訊號。','若願意把彼此牽連的條件拆開，耐心與細節感可成為整理複雜事務的長處；能看出環節相互影響，並不全是壞事。','容易因考慮周全而遲遲定不下來，或事情明明可以分開處理，卻在心裡綁成一整團。過度牽掛也可能讓人覺得很難抽身。','例如一個工作選擇同時牽涉家人、收入與原有承諾，每個條件都有道理，卻因此一直原地打轉。它描述的是受限題材，不是必然受困的預言。','印星'],
+        '天赦':['吉','以赦免、放下舊負擔與重新開始為意象，傳統上屬轉圜類吉曜。','可用來理解一件事出現修補、和解或重新整理的機會。不是錯誤不用負責，而是在承認問題、處理後果之後，還可能有新的安排。','願意放下僵持、接受修正時，較能把注意力從過去的失誤轉回下一步；在人際中也有理解與重新建立信任的題材。','容易期待所有問題自然被原諒，或把有機會重來當成不必珍惜現有承諾。轉圜空間需要實際行動才能落實。','例如誤會說清楚後恢復合作，或一次失敗後重新調整方向；這是修補與重整的象徵，不是免除法律或其他責任的保證。','印星']
+      };
+      function shenshaDetailModel(hit,data){
+        const [tone,image,meaning,good,blind,scene,group]=SHENSHA_DEEP[hit.name];
+        const gp=data.tenGodDistribution?.groupPercentages||{},ps=data.tenGodDistribution?.percentages||{};
+        const names={年柱:'家族與早年背景',月柱:'成長、工作與社會環境',日柱:'自我立場、核心生活與親密關係',時柱:'後續發展、子女與長期投入'};
+        const areas=hit.positions.map(p=>names[p]).filter(Boolean);
+        let chart=`本盤在${hit.positions.join('、')}查到${hit.name}${hit.positions.length>1?`，共見於 ${hit.positions.length} 柱`:''}。柱位把觀察重點帶到${areas.join('、')}。`;
+        if(hit.name==='華蓋'){
+          if(Number(ps['偏印'])>=30)chart+=`偏印占比又達 ${ps['偏印']}%，「自己理解、深入研究」在原局十神裡也很突出。兩類線索呼應，這張盤更值得留意不願只接受標準答案、喜歡找到自己說得通的方法。`;
+          else if(Number(gp['印星'])>=25)chart+=`印星占比 ${gp['印星']}%，學習與理解也是原局較明顯的主題，可以一起觀察研究、創作與獨立思考的傾向。`;
+          else chart+='這張盤沒有同時達到本站「印星較突出」的門檻，因此先把它理解為興趣、專注與獨處的線索，不直接說研究型性格主導全盤。';
+          if(hit.positions.length>1)chart+='多柱重複表示這個象徵出現在不同生活位置；不是把悟性或孤獨感直接乘上柱數。';
+        }else if(hit.name==='魁罡'){
+          chart=`本盤日柱為${data.pillars[2].ganZhi}，符合本站採用的四個魁罡日柱之一，所以這項解讀直接連到自我立場與核心處事方式。`;
+          if(Number(ps['七殺'])>=15)chart+=`七殺另占 ${ps['七殺']}%，責任、壓力與決斷的題材也有呼應，較值得觀察「平時能配合，碰到危機或底線卻很堅定」的切換。`;
+          else chart+='此處主要說明原則與承擔的象徵，不推定外貌、職位，或認定你在所有情況下都很強勢。';
+        }else{
+          if(Number(gp[group])>=25)chart+=`${group}占比 ${gp[group]}%，原局也有「${groupDescriptions[group]}」的明顯主題，可以把上面的生活情境放在這個背景中理解。`;
+          else chart+=`原局${group}占比為 ${gp[group]||0}%，這項神煞先作補充角度，沒有僅憑名字把它提升為全盤主導性格。`;
+          if(hit.positions.length>1)chart+='同一符號跨柱出現，適合觀察它是否在不同場合反覆出現；次數不是吉凶的倍數。';
+        }
+        if(['天德貴人','月德貴人'].includes(hit.name)){
+          const other=hit.name==='天德貴人'?'月德貴人':'天德貴人';
+          if((data._shensha||computeShensha(data)).some(h=>h.name===other))chart+=`本盤也見${other}，兩者都偏向助力與轉圜的象徵，可以一起看，但不能據此抹掉原有合沖與壓力。`;
+        }
+        const emphasis=hit.name==='華蓋'&&Number(ps['偏印'])>=30?'華蓋與高占比偏印呼應':hit.name==='魁罡'?'日柱直接帶魁罡':hit.positions.length>1?'跨柱重複出現':'本盤實際查得';
+        return {name:hit.name,tone,image,meaning,chart,good,blind,scene,emphasis,positions:hit.positions,basis:hit.basis};
+      }
+      function renderShenshaExplanation(data){
+        const hits=data._shensha||computeShensha(data);
+        if(!hits.length)return decodeCard('本盤沒有查到本站收錄的神煞','這一區沒有需要展開的個別神煞。仍可從四柱、五行、十神與干支互動認識自己的主要傾向。');
+        const priority=h=>(h.name==='華蓋'&&Number(data.tenGodDistribution?.percentages?.['偏印'])>=30?100:0)+(h.name==='魁罡'?80:0)+h.positions.length*5;
+        const sorted=hits.slice().sort((a,b)=>priority(b)-priority(a));
+        return `<div class="shensha-deep-intro"><b>這 ${hits.length} 種神煞，放進你的生活裡怎麼看？</b><p>以下依本盤實際查到的神煞逐項解釋。每項都可以點標題收起；重複出現或與原局呼應的項目優先閱讀。吉凶標示是神煞的傳統傾向，生活段落是白話詮釋，不等於整張命盤的吉凶結論。</p></div>`+sorted.map(hit=>{
+          const m=shenshaDetailModel(hit,data),cls=m.tone==='吉'?'auspicious':m.tone==='偏凶'?'caution':'mixed';
+          return `<details class="shensha-deep-card" open data-shensha-name="${esc(m.name)}"><summary><span class="shensha-deep-title">${esc(m.name)} <span class="shensha-tone ${cls}">${esc(m.tone)}</span></span><span class="shensha-deep-location">${esc(m.positions.join('、'))} · ${esc(m.emphasis)}</span></summary><div class="shensha-deep-body"><p><b>傳統意象</b>${esc(m.image)}</p><p><b>白話意思</b>${esc(m.meaning)}</p><p><b>在這張命盤中的展現</b>${esc(m.chart)}</p><p><b>較能發揮的優勢</b>${esc(m.good)}</p><p><b>容易出現的盲點</b>${esc(m.blind)}</p><p><b>生活中可能像這樣</b>${esc(m.scene)}</p><small>本盤查表依據：${esc(m.basis.join('；'))}。${esc(m.positions.join('、'))}。</small></div></details>`;
+        }).join('');
+      }
+
+      const GOD_DEEP={
+        '偏印':{meaning:'偏印是生扶日主的十神之一，常借來描述吸收、洞察與非典型學習。比起直接接受現成答案，它更在意自己有沒有真正想通。',thought:'你容易一面聽、一面在心裡驗證，對沒有理由的規定會保留疑問。別人只說「大家都這樣做」，未必能說服你；碰到有興趣的題目，卻可能花很多時間自行查資料、比較不同說法。',work:'在研究、分析、找問題或整理複雜資訊時，容易發揮深入理解的長處。若工作只要求照表操課，卻不容追問原因，容易感到受限；若期限很短，也可能卡在還想把資料補齊。',people:'相處時通常在意能否聊到重點、對方是否理解自己的想法。你可能願意花力氣替人分析，卻忘了對方當下只是想被安慰；沒有共同興趣時不一定多話，遇到懂的人則可以談得很深入。',tension:'因此，獨立思考、對指揮有疑問、反覆確認與想得較多，可以同時出現。這些都用「容易」理解：有清楚理由時你仍能配合，而不是必然反對權威。'},
+        '正印':{meaning:'正印也是生扶日主的十神，常用來描述循序學習、整理知識、接受支持與尋找安全感。',thought:'你容易先了解背景、尋找可信任的方法，再開始行動。遇到陌生環境時，比起立刻搶位置，可能更想先確認規則、有哪些資源，以及事情有沒有穩妥的做法。',work:'在需要整理、教學、支援或持續累積專業的工作中，耐心與完整性容易被看見。相對地，資訊不齊又要立即決定時，可能一直等更明確的指示，或希望再準備一下。',people:'人際上容易用照顧、提醒或分享經驗表達善意，也較在意彼此是否可靠。別人可能覺得你溫和、有耐心，但當關心太密集時，也可能感到被安排或被保護過頭。',tension:'穩定支持是長處，過度依靠熟悉的方法則會成為慣性。容易學得仔細，不代表不會創新；重點是環境變動時，能否把已知的方法轉成新情境可用的做法。'},
+        '比肩':{meaning:'比肩與日主同五行、同陰陽，常用來描述自我立場、自主、同儕與並肩競爭。',thought:'你容易先問自己認不認同，再決定要不要接受別人的意見。不是別人說得大聲就會改變，也不太喜歡核心決定全部由別人代勞。',work:'在可以獨立負責、權責清楚的工作中，持續性和自我要求容易形成長處。若主管事事干預，或同事一直改動你的方法，可能比任務本身更讓你煩躁。',people:'你通常比較重視平等與尊重，喜歡彼此都有能力、可以互相支持的關係。容易願意幫忙，但未必喜歡被教導；雙方都很有主見時，討論也可能變成誰要先讓步。',tension:'獨立與固執只隔著使用情境：需要守住原則時是力量，需要聽進新資訊時則可能形成阻力。較少主動求助，也不一定表示沒有需要，只是習慣先自己處理。'},
+        '劫財':{meaning:'劫財與日主同五行、陰陽不同，常用來描述競爭、行動、人脈與資源分配。名字並不表示一定破財。',thought:'你容易留意機會是否正在被拿走、自己的位置是否受到影響。環境安穩時未必急，但看見別人開始行動，或覺得再不出手就來不及時，反應可能明顯加快。',work:'在需要接洽、爭取、快速回應或整合人脈的任務裡，容易展現動能。卡點常是分工與利益沒有講清楚：一開始很願意一起做，後來卻覺得自己出力較多或失去主導。',people:'人際上容易因共同目標、義氣或氣氛投入，喜歡能一起行動的人。優點是肯出力、不一定只顧自己；盲點是不好拒絕熟人，或把別人的不同選擇感受成不站在自己這邊。',tension:'競爭心既能推動行動，也容易使人急著證明自己。資源分散、人情負擔或不甘心退場，是比「一定沒錢」更值得觀察的生活表現。'},
+        '食神':{meaning:'食神是日主所生的十神之一，常用來描述穩定輸出、技能、創作、享受與較自然的表達。',thought:'你容易從能不能做得順、做得好、做出自己的味道來理解事情。比起只爭輸贏，可能更在意過程有沒有空間、成果是不是自己願意交出去的樣子。',work:'需要把技能做熟、提供服務、創作或耐心說明時，容易慢慢建立品質。若環境一直用急迫或競爭推著走，可能覺得節奏被打亂，反而不容易發揮。',people:'相處時容易透過分享、一起做事或讓人舒服的方式建立關係。未必每次都直接談感受，但會希望彼此不要太緊繃；遇到強硬的衝突時，也可能先避開。',tension:'懂得維持舒服的節奏是長處，太依賴熟悉的舒適感則可能拖延面對壓力。穩定輸出不等於沒有企圖心，而是較傾向把事情做熟，再逐步往外延伸。'},
+        '傷官':{meaning:'傷官同樣是日主所生的十神，常用來描述質疑、突破、鮮明表達與改進既有方法。',thought:'你容易先看到不合理、沒效率或可以更好的地方。別人覺得能用就好，你可能會追問為什麼不能改；有自己的看法時，也較難一直只說場面話。',work:'提案、創作、技術改善或需要新做法的任務，較能容納這份敏銳。若上級只要求服從，卻不願解釋標準，容易出現「明明想把事情做好，卻被看成挑戰權威」的落差。',people:'你可能用指出問題來表達在意，但對方聽到的是被批評。談得投機時很有火花，不認同時也容易讓態度直接反映在說法裡。',tension:'批判力和創造力往往一起出現。卡點不一定是沒有能力，而是提出問題的速度比別人接受改變的速度快；看出缺點，也不代表每次都已經想好落地方式。'},
+        '偏財':{meaning:'偏財是日主所克的十神之一，常連到流動資源、外部機會、人脈與彈性交易。',thought:'你容易注意環境裡有哪些可能性、誰能提供什麼資源，以及事情能不能用不同方式組合。比起只守住一個固定答案，可能更想多看看市場與外面的變化。',work:'在接洽客戶、整合資源、拓展或處理變化較多的任務中，眼光與反應容易有用。太多機會同時出現時，則容易每個都想試，導致時間與投入被分散。',people:'相處時可能較願意分享、牽線或帶動活動，也在意互動能否互相成就。人情與資源交織時，容易因不好拒絕，或高估對方的承諾而承受負擔。',tension:'看得到機會不等於每次都能留下成果。這個特徵較值得觀察的是彈性、取捨與投入產出的落差，不能直接理解成一定有意外之財。'},
+        '正財':{meaning:'正財也是日主所克的十神，常用來描述實際成果、穩定資源、成本與日常管理。',thought:'你容易在意事情是否有交代、投入能不能看見成果，以及承諾有沒有照約定落實。抽象的願景若沒有具體步驟，通常不如清楚的計畫讓你安心。',work:'在需要管理收支、交付、維持品質或長期累積的任務中，可靠與細節感容易形成優勢。環境不斷改規則、回報不明或責任分配不均時，較容易覺得不值得。',people:'你可能用實際付出、照顧生活或把承諾做到來表達感情，也希望別人有相應的回應。若只看誰做多少，關係便容易被算成一筆得失帳。',tension:'務實和過度計較會隨壓力轉換。重視安全與成果不代表沒有冒險能力，而是需要先看清投入、成本與能否承擔。'},
+        '七殺':{meaning:'七殺是克制日主的十神之一，常用來描述挑戰、競爭、壓力、危機感與決斷。',thought:'你容易對時限、威脅或必須負責的情境敏感。事情平淡時未必最有精神，但壓力一來，反而可能迅速把注意力集中到問題核心。',work:'急件、困難任務或需要有人承擔的局面，較容易逼出行動力。長期處於高壓時，則可能把每件事都當成不能失敗的考驗，難以真正放鬆。',people:'你可能習慣用效率、責任與解決問題來回應別人，對模糊不清或推卸責任較沒耐性。親近的人有時感受到的是要求，而不是你原本想提供的保護。',tension:'魄力與緊繃可能同時存在。能撐住不代表沒有消耗；在沒有危機的日常裡，也可能仍維持作戰姿態，讓自己和身邊的人都感到趕。'},
+        '正官':{meaning:'正官同樣是克制日主的十神，常用來描述規範、角色、責任、名譽與可被認可的標準。',thought:'你容易先確認事情應該怎麼做、自己的角色是什麼，以及做法是否合乎承諾。明確的規則往往比各說各話更讓你安心。',work:'制度、流程與責任清楚時，容易把要求落實成穩定成果。標準互相衝突或責任沒有邊界時，可能過度在意評價，不知道何時才算做得夠好。',people:'相處時容易重視可靠、有分寸與說到做到，對失信或反覆改口較敏感。關心別人時可能先提醒應該怎麼做，卻忽略對方只是想被理解。',tension:'守規矩可以建立信用，也可能使人太怕犯錯。願意承擔並不代表應該承擔所有期待；在需要變通的情境裡，過度維持正確形象反而容易綁住自己。'}
+      };
+      function deepBlock(title,parts,meta=''){
+        return `<details class="deep-essay" open><summary>${esc(title)}${meta?`<small>${esc(meta)}</small>`:''}</summary><div class="deep-essay-body">${parts.filter(x=>x[1]).map(([h,t])=>`<p><b>${esc(h)}</b>${esc(t)}</p>`).join('')}</div></details>`;
+      }
+      function topGods(data){return Object.entries(data.tenGodDistribution.percentages).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);}
+      function combinationStory(data){
+        const ps=data.tenGodDistribution.percentages,gp=data.tenGodDistribution.groupPercentages,top=topGods(data);
+        if(ps['偏印']>=30&&ps['七殺']>=15)return `偏印 ${ps['偏印']}% 與七殺 ${ps['七殺']}% 一起看，容易出現「平常先研究，碰到期限或危機後迅速進入決斷」的切換。想得多和動得快不必然矛盾，可能分別出現在準備與承壓階段。${ps['劫財']>=15?`劫財又占 ${ps['劫財']}%，當競爭或主導權受到影響時，行動傾向更值得留意。`:''}`;
+        if(gp['印星']-gp['食傷']>=15)return `印星 ${gp['印星']}% 高於食傷 ${gp['食傷']}%，吸收、理解與建立方法較突出，轉成讓人看懂的說明或成果則未必一樣自然。可能不是沒有想法，而是腦中已想很深，外面的人還沒跟上。`;
+        if(gp['食傷']>=20&&gp['財星']>=20)return `食傷 ${gp['食傷']}% 與財星 ${gp['財星']}% 同時有分量，表達或技術之外，也會在意成果如何交換成資源。能做、能說與能交付是不同環節，較容易在這幾件事之間反覆調整。`;
+        if(gp['比劫']>=25&&gp['官殺']>=20)return `比劫 ${gp['比劫']}% 與官殺 ${gp['官殺']}% 一起看，既在意自己掌握，也會感受到外部要求。規則有道理時可以很負責，覺得被不合理干涉時則容易抵抗。`;
+        return `${top.slice(0,3).map(x=>x[0]+' '+x[1]+'%').join('、')}是這張盤較明顯的幾項。它們可以在不同情境輪流出現：${top.slice(0,2).map(x=>GOD_DEEP[x[0]].thought).join(' ')}不能只憑最高的一項，就把其他反應當成不存在。`;
+      }
+      function godLongReading(god,data){
+        const p=GOD_DEEP[god],pctGod=Number(data.tenGodDistribution.percentages[god])||0;
+        const level=pctGod>=40?'高度集中':pctGod>=25?'相當突出':pctGod>=12?'有一定分量':pctGod>0?'相對較少':'本次加權未見';
+        const strength=pctGod>=40?`占比達 ${pctGod}%，在本站加權下已接近或超過全盤四成，因此這套反應更值得當作主要閱讀線索。優勢和偏重時的卡點都需要仔細看，而不只是知道命盤裡有這一項。`:pctGod>=25?`占比 ${pctGod}%，是較有分量的反應模式；遇到相應的情境時，較值得觀察它如何影響決定。`:pctGod>0?`占比 ${pctGod}%，可作補充傾向。以下先說這個十神的常見意思，不把它當成你的唯一主導性格。`:'本站這次加權未見此項，以下是名詞解釋，不代表你沒有相關能力，也不是本盤的主要性格結論。';
+        return deepBlock(`${god} ${pctGod}%｜${level}`,[['它是什麼',p.meaning],['這個比例在本盤的意思',strength],['思考與做事',p.thought],['工作上的發揮與卡點',p.work],['人際與相處',p.people],['優勢走到偏重時',p.tension],['與本盤其他力量一起看',pctGod>=25?combinationStory(data):'此項先作輔助，閱讀重心仍以本盤最突出的幾項十神與具體生活情境為主。']], '常見傾向與生活情境；點標題可收起');
+      }
+      function yinYangLong(data){
+        const y=data.yinYang,top=topGods(data)[0],more=y.yang>y.yin?'陽':y.yin>y.yang?'陰':'相近';
+        const first=more==='陽'?'陽較多，傳統象徵偏向把事情往外推進、立場比較明確，遇到需要決定或回應時，不喜歡一直懸著。這不一定表現成話多，也可能是少說話、但決定後很堅持。':more==='陰'?'陰較多，傳統象徵偏向先感受、觀察與消化，沒有把握時不急著把所有想法說出來。這不一定是膽小，也可能是有自己的盤算，等條件清楚後才表態。':'陰陽數量相近，這一項沒有明顯單邊傾向。生活中可能視情境切換：需要對外處理時能回應，需要安靜思考時也能收回來。';
+        const mix=more==='陽'&&data.tenGodDistribution.groupPercentages['印星']>=25?'這張盤的印星又比較突出，因此可以把兩層放在一起理解：內在先反覆想清楚，外在一旦形成判斷便較有主見。別人可能看見你立場明確，卻不知道前面其實已經思考很久。':`本盤還有 ${top[0]} ${top[1]}% 這個較強的主題。${GOD_DEEP[top[0]].thought}因此，比起單說外向或內向，觀察「你在什麼條件下願意表態」更貼近日常。`;
+        return deepBlock(`陰陽 ${y.yang}：${y.yin}，生活上怎麼理解？`,[['先說白話',first],['放回這張盤',mix],['較能發揮的一面',more==='陽'?'需要站出來負責、作決定或守住立場時，較容易讓人知道你的方向。':more==='陰'?'需要耐心觀察、掌握細節或理解不同立場時，較容易保留思考空間。':'能否切換得順，會比單純哪一邊多更值得觀察。'],['容易出現的落差',more==='陽'?'壓力下容易把自己的確定感當成大家都應該跟上的速度；你想快點處理，對方可能還需要時間理解。':more==='陰'?'把很多感受留在心裡時，別人可能誤以為你沒意見；等到真正表態，彼此才發現前面的理解不同。':'需要注意的仍是這張盤較突出的十神習慣，而不是硬把陰陽分成好壞。']]);
+      }
+      function elementsLong(data){
+        const wp=data.weightedFiveElements.percentages,els=elOrder.map(e=>[e,wp[e]]).sort((a,b)=>b[1]-a[1]);
+        const images={'木':['生長與伸展','規劃方向、尋找新可能','方向太多、一直想改'], '火':['照亮與升溫','表達、啟動與帶動氣氛','急著回應、太快表態'], '土':['承載與安定','重視可靠、整理與持續累積','不喜歡頻繁改動、固守已確認的方法'], '金':['分辨與取捨','在意標準、界線、效率與品質','要求太高、對模糊與拖延缺乏耐性'], '水':['流動與滲透','觀察、資訊交換與彈性調整','反覆考慮、遲遲不定案']};
+        const dominant=els.slice(0,2).map(([e,v])=>{const gods=TIME_GANS.filter(g=>BaziCore.GAN_ELEMENT[g]===e).map(g=>timeTenGod(data.dayMaster,g));const group=timeGodGroup(gods[0]);return `${e} ${v}%：取「${images[e][0]}」的傳統意象，生活上容易重視${images[e][1]}；偏重時則可能${images[e][2]}。相對於${data.dayMaster}${data.dayMasterElement}日主，這類成分對應${gods.join('、')}，也就是${groupDescriptions[group]}。`;}).join(' ');
+        const weak=els.at(-1),weakGods=TIME_GANS.filter(g=>BaziCore.GAN_ELEMENT[g]===weak[0]).map(g=>timeTenGod(data.dayMaster,g)),weakGroup=timeGodGroup(weakGods[0]);
+        const lowText={'食傷':'比較容易有自己的理解，卻未必立即說出來或做成作品。別人催你快點交付時，可能感覺自己被迫跳過重要的思考。','印星':'遇事可能比較快投入實作或回應外部要求，卻未必先完整整理知識。需要慢慢建立理論脈絡時，容易覺得費時。','財星':'可能先在意把事做好、表達想法或履行責任，最後才想到回報與成本；不表示沒有賺錢能力。','官殺':'比較不容易把外部規範當成唯一行動理由，常要先認同才願意配合；不表示不能負責。','比劫':'比較可能先看事情或別人的需要，再確認自己的立場；爭取空間、主張分配未必是第一反應。'};
+        const pair=els[0][0]==='土'&&els[1][0]==='金'?'土與金都多時，常見的白話組合是「先求可靠，再分清標準」。可以耐心研究、把事情整理好，但一旦形成自己的判準，也較不喜歡沒有理由地改動。優點是有條理、有底線；卡點是別人覺得可以先試，你卻還想確認是否合理。':`把${els[0][0]}與${els[1][0]}的傾向一起看，重點是${images[els[0][0]][1]}與${images[els[1][0]][1]}如何同時出現；它們也可能在不同生活情境輪流成為第一反應。`;
+        const missing=data.fiveElements[weak[0]]===0&&weak[1]>0?`表層看不到${weak[0]}，藏干中仍有，所以此盤應說「較少」，不是「完全缺${weak[0]}」。`:`本次加權${weak[0]}為 ${weak[1]}%，這是相對分布，不是能力分數。`;
+        return deepBlock('五行較多、較少，對生活有什麼意思？',[['這張盤的主要底色',dominant],['兩股力量一起運作',pair],['相對較少的部分',`${missing}它對應${weakGods.join('、')}（${weakGroup}）。${lowText[weakGroup]}`],['為什麼有優勢也有卡點','同一種習慣，放對情境就是長處，用在不適合的場合就可能吃力。重視標準有助於品質，也可能讓人難以快速接受新方法；願意深想有助於理解，也可能讓輸出慢半拍。這是本區想讓你看懂的生活差異，不需要自己再去學五行生剋才能閱讀。']])+yinYangLong(data);
+      }
+      function lifeDomainLong(data){
+        const gp=data.tenGodDistribution.groupPercentages,top=topGods(data)[0],p=GOD_DEEP[top[0]],r=data.reading;
+        const dayRelations=data.relations.filter(x=>/日支/.test(x.positions));
+        return deepBlock('性格：你通常怎麼理解和回應事情',[['主要習慣',p.thought],['為什麼有時看起來像兩種人',combinationStory(data)],['別人可能怎麼感受到你',p.people]])+
+          deepBlock('工作與事業：哪些情境容易發揮',[['做事方式',p.work],['壓力從哪裡來',gp['官殺']>=20?`官殺 ${gp['官殺']}% 也有分量，責任、期限與被要求的感受值得一起看。即使喜歡研究或有自主想法，遇到必須交代的任務時，仍可能逼自己很快進入處理狀態。`:'工作上的卡點先看環境是否容得下你的主要做事方式；同一份能力，放在不同分工與期限下，感受可能差很多。'],['長處用過頭',p.tension]])+
+          deepBlock('財運與資源：付出怎麼變成回報',[['本盤重點',r.rows[2].text],['容易碰到的情境',gp['食傷']<12?'可能很願意把事情研究好、做到位，卻覺得介紹價值、談報酬或展示成果不如做事本身自然。於是自己感覺付出很多，別人卻未必知道差別在哪。':gp['比劫']>=25?'除了能不能產生成果，也容易碰到誰出力、誰決定、如何分配的問題。合作一開始談得很熱絡，不代表後續各自的期待相同。':'這張盤可以從能力、交付與資源管理三個環節理解回報；某一環節比較自然，不代表另外兩個環節也會自動完成。'],['為什麼不只看財星多少',`財星 ${gp['財星']}%、食傷 ${gp['食傷']}%、比劫 ${gp['比劫']}% 是目前的相關線索。它們描述取得與使用資源的方式，不等同實際收入；歲運區會另外看特定時段如何加強或牽動這些主題。`]])+
+          deepBlock('感情與人際：你怎麼在意別人',[['相處模式',p.people],['核心生活的牽動',dayRelations.length?`本盤涉及日支的互動有${dayRelations.map(x=>x.label+'（'+x.positions+'）').join('、')}。可以留意：家庭期待、工作變化或生活安排，是否容易影響兩個人原本的節奏。衝突有時不是不在乎，而是各自覺得重要的事情沒有排在同一個位置。`:'本盤沒有查到直接涉及日支的常見互動，這裡先以相處偏好為主，不硬套特定婚姻事件。'],['生活例子','例如你用分析、負責或解決問題表達關心，對方需要的卻可能是先被理解。兩個人都覺得自己有付出，但對「被在意」的感受不同，就容易產生落差。']])+
+          deepBlock('學習與生活中的拉扯',[['吸收和輸出',r.learning],['不同領域怎麼牽動',data.relations.length?`本盤有${data.relations.map(x=>x.label+'（'+x.positions+'）').join('、')}。這裡的拉扯應從涉及的生活位置理解，例如工作要改變時，家族期待與自己的核心安排也跟著需要協調；不只是再說一次「想太多」。`:'原局目前沒有辨識到常見互動，重點先放在主要十神的使用情境。'],['壓力下的表現',p.tension]]);
+      }
+      function pillarsLong(data){
+        return deepBlock('這四柱不是四個陌生代碼',[['日主：這張盤以誰為中心',`日干${data.dayMaster}屬${data.dayMasterElement}，它是整張盤比較其他成分的中心。十神不是十個不同的人，而是其他天干、藏干相對於日主的角色名稱；你不用先背下生剋規則。`],...data.pillars.map(p=>[`${labels[p.key][0]} ${p.ganZhi}`,`${{year:'先看家族、早年與原有背景',month:'先看成長、工作與社會環境，也提供出生季節背景',day:'日干代表自己，日支常用來觀察核心生活與伴侶位置',time:'先看後續發展、子女與較長期的投入'}[p.key]}。地支${p.zhi}內含${p.hideGan.map((g,i)=>g+'（'+p.shiShenZhi[i]+'）').join('、')}。這些內含成分會進入後面的五行、十神計算，所以表面沒有的五行，也可能在裡面存在。`]),['其他欄位怎麼理解','納音是干支組合的傳統名稱；十二長生描述日干在不同地支的階段象徵，看到「衰、病、死」也不是實際健康或壽命判斷；旬空是各柱所屬旬的空支。先把它們當成補充資料，這份報告會把與生活較有關的重點整理在後面。'],['本盤最值得接著看',combinationStory(data)]]);
+      }
+      function revision22Explanation(key,data){
+        if(key==='shensha')return renderShenshaExplanation(data);
+        if(key==='tengods')return topGods(data).slice(0,3).map(x=>godLongReading(x[0],data)).join('');
+        if(key==='elements')return elementsLong(data);
+        if(key==='reading')return lifeDomainLong(data);
+        if(key==='pillars')return pillarsLong(data);
+        if(['luck','years','months'].includes(key))return detailedPeriodExplanation(data,key);
+        return '';
+      }
+
+      function reportAssessment(data,item){
+        const a=BaziCore.assessment(data,item);
+        const map={'較順':'偏吉','偏順':'偏吉','平穩':'平','有利有壓力':'吉凶並見','變動較大':'偏凶','需留意':'偏凶'};
+        const tone={'較有發揮空間':'偏吉','推進伴隨調整':'吉凶並見','熟悉與壓力並存':'平／有壓力','機會伴隨負擔':'吉凶並見','成果與收支受關注':'機會較明顯','能力轉成果':'有發揮題材','分配與競爭':'留意分配','以原有收支為主':'平','磨合較多':'偏凶','連結與磨合並存':'吉凶並見','互動與連結增多':'偏吉','以日常相處為主':'平'};
+        return {...a,originalLabel:a.label,label:map[a.label]+'｜'+a.label,domains:a.domains.map(d=>({...d,label:(tone[d.label]||'平')+'｜'+d.label,text:d.text.replaceAll('判读','判讀')}))};
+      }
+      function detailedPeriodExplanation(data,key){
+        const item=selectedPeriods[key]||(key==='luck'?data.daYun.cycles[0]:key==='years'?data.yearFlows[0]:data.monthFlows[0]);
+        if(!item)return deepBlock('尚無可解讀的時段',[['資料狀態','請先完成排盤，再選擇時段。']]);
+        const a=timeAssessment(data,item),gp=data.tenGodDistribution.groupPercentages;
+        const child=item.kind==='luck'?item.endAge<18:item.year-data.input.year<18;
+        const roles={比劫:['自主與合作','容易需要爭取主導權、協調分工，或與能力相近的人一起處理事情。有人能互相支持，也可能因做法和分配不同而競爭。','同事都想照自己的方法推進，明明目標一致，卻卡在誰決定、誰負責。'],食傷:['表達與成果','比較容易遇到需要展示能力、提案、交付作品或說清楚想法的場合。發揮處在把內在能力變成外界看得見的東西；卡點則是想法與規則、期待之間的落差。','你已找到更好的做法，但說得太快或太直接，讓原本可以討論的改進變成意見衝突。'],財星:['資源與回報','客戶、收支、資源交換與實際成果更容易成為焦點。機會變多時，常伴隨更多交付、成本或承諾，所以要分清「事情變多」與「真正留下回報」。','接到更大的需求，收入看似有機會增加，卻也要投入更多時間、成本，或承擔後續責任。'],官殺:['責任與壓力','容易碰到期限、標準、考核或必須有人承擔的事情。能力與責任配合時較能被看見；負荷超過可用資源時，則容易覺得一直被催、沒有喘息空間。','臨時被交付重要任務，既是表現機會，也讓原本的生活與相處時間受到擠壓。'],印星:['理解與準備','進修、研究、整頓方法或尋求支援較有題材。能累積理解是長處；若一直停在準備，或外界要求立刻交付，就容易有「我還沒想完，為什麼又催」的感受。','需要補足知識才能繼續推進，但旁人只看最後成果，沒有看見你在前面投入的準備。']};
+        const subject=a.groups.map(g=>roles[g][0]).join('、');
+        const emphasis=a.groups.map(g=>`${roles[g][0]}：${roles[g][1]}${gp[g]>=38?`原局${g}已有 ${gp[g]}%，本期再出現，熟悉的長處與偏重時的盲點會一起被放大。`:gp[g]<12?`原局${g}僅 ${gp[g]}%，本期把平常較不突出的主題帶到面前，可能需要適應不同的做事方式。`:''}`).join(' ');
+        const strains=a.relations.filter(r=>['沖','刑','害','破'].includes(r.type));
+        const day=strains.filter(r=>r.position==='日支');
+        const interaction=strains.length?`具體有${strains.map(r=>r.label+'（'+r.position+'）').join('、')}。白話來說，原有安排較容易遇到另一種要求：工作要往前，家庭時間卻不能照舊；自己想定下來，外部條件又要變。${day.length?'其中牽動日支，核心生活與親密相處的協調感較明顯。':''}這是調整負擔的訊號，不是把每個沖刑都算成一次壞事。`:'本期未見本站收錄的直接沖刑害破，主要差別在新主題能否配合原本的做事方式。沒有明顯拉扯不代表事事自動順利，而是本規則沒有額外標出這一類調整壓力。';
+        return deepBlock(`${periodName(item)}｜${a.label}`,[['這段時間的主線',`重點是${subject}。${item.kind==='luck'?'大運描述較長期的環境主題，並不代表十年裡每一年都一樣。':item.kind==='month'?'流月描述這個節氣段的短期節奏，要放在當時流年與大運背景裡理解。':'流年描述立春到次年立春的年度主題，同一年也會有不同月份的起伏。'}${a.contextText}。`],['對本盤可能怎麼發生',emphasis],['好在哪、壓力在哪',`${a.reasons.join(' ')}${interaction}`],...a.domains.map(d=>[child?(d.name==='事業'?'學習與任務':d.name==='感情'?'人際與相處':'零用與資源'):d.name,`${d.label}。${child?'成長階段請以家庭、課業與同儕情境理解。':''}${d.text}`]),['比較像生活中的哪種情境',a.groups.map(g=>roles[g][2]).join(' ')],['身心與生活節奏','這區可用來回想忙碌、作息與壓力是否改變；本模型沒有疾病預測能力，不會把沖刑、五行多寡轉成心臟或腸胃疾病風險。若回顧某年有實際健康事件，應以當時症狀、診斷與生活紀錄對照，而非由命盤補造病因。']], '先看生活主線，再看分項；吉凶是本站規則下的傾向');
+      }
+      function yearComparison(data,item){
+        const start=Math.max(data.input.year,item.year-2),end=Math.min(new Date().getFullYear()+30,item.year+2);
+        const entries=rankEntries(data,Array.from({length:end-start+1},(_,i)=>timeBuildYear(data,start+i)));
+        const current=entries.find(e=>e.item.year===item.year),a=current.a;
+        const money=entries.filter(e=>e.a.groups.includes('財星'));
+        const special=a.groups.includes('財星')?`本年有財星題材；在 ${start}～${end} 的 ${entries.length} 年中，共 ${money.length} 年有此題材，較值得細看客戶、成果與收支。這項比較是「財務議題是否顯眼」，不是獲利排名。`:a.groups.includes('食傷')?'本年重點較偏向把能力、作品或服務轉成成果，尚不能只憑這一點認定收入特別高。':'本年沒有額外突出的財星題材，財務先看分項中的資源與支出情境。';
+        return `<div class="year-comparison"><b>${start}～${end} 年的局部比較</b><p>所選 ${item.year} 年在這 ${entries.length} 年中相對第 ${current.rank}（同分並列）。${esc(special)}</p><div class="history-comparison-buttons">${entries.slice().sort((x,y)=>x.item.year-y.item.year).map(e=>`<button type="button" data-history-year="${e.item.year}" aria-pressed="${e.item.year===item.year}" class="${e.a.cls}">${e.item.year}｜${esc(e.a.label)}</button>`).join('')}</div><small>只比較上述年份與本站既有評分；不宣稱是一生最好、最差或必然發生重大事件。</small></div>`;
+      }
+      function updateYearComparison(data,item){
+        let el=$('yearHistoryComparison');if(!el){el=document.createElement('div');el.id='yearHistoryComparison';$('yearDetail').after(el);}
+        el.innerHTML=yearComparison(data,item);
+        el.querySelectorAll('[data-history-year]').forEach(b=>b.addEventListener('click',()=>selectYearItem(data,timeBuildYear(data,Number(b.dataset.historyYear)))));
+        if($('historyYear'))$('historyYear').value=item.year;
+        if($('historyYearStatus'))$('historyYearStatus').textContent=`目前查看：${item.year} 年。`;
+      }
+      function installHistoryYear(data){
+        let el=$('yearHistoryControls');if(!el){el=document.createElement('div');el.id='yearHistoryControls';$('yearFlowIntro').after(el);}
+        const min=data.input.year,max=new Date().getFullYear()+30;
+        el.innerHTML=`<form class="history-year-form"><label for="historyYear">回顧或查詢年份</label><input id="historyYear" type="number" min="${min}" max="${max}" step="1" required value="${new Date().getFullYear()}" inputmode="numeric"><button type="submit">查看這一年</button><button type="button" id="historyCurrentYear">回到今年</button></form><p id="historyYearStatus" role="status"></p><small>可查 ${min}～${max} 年。選取後，下方解讀、展開內容與 AI 提示詞會一起更新；出生年只對照出生後的經歷。</small>`;
+        el.querySelector('form').addEventListener('submit',ev=>{ev.preventDefault();const value=Number($('historyYear').value);if(!Number.isInteger(value)||value<min||value>max){$('historyYearStatus').textContent=`請輸入 ${min}～${max} 的整數年份。`;return;}selectYearItem(data,timeBuildYear(data,value));});
+        $('historyCurrentYear').addEventListener('click',()=>selectYearItem(data,timeBuildYear(data,new Date().getFullYear())));
+        updateYearComparison(data,selectedPeriods.years||timeBuildYear(data,new Date().getFullYear()));
+      }
+      function expandedPromptText(data,key){
+        const holder=document.createElement('div');holder.innerHTML=revision22Explanation(key,data)||revisedExplanation(key,data);
+        holder.querySelectorAll('p,summary,small').forEach(n=>n.append(document.createTextNode('\n')));
+        return holder.textContent.trim();
+      }
+
       function revisedExplanation(key,data){
         const r=data.reading,gp=data.tenGodDistribution.groupPercentages,ps=data.tenGodDistribution.percentages;
         const top=Object.entries(ps).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
@@ -1523,6 +1719,7 @@
       }
 
       function sectionExplanation(key,data){
+        const deep=revision22Explanation(key,data);if(deep)return deep;
         const revised=revisedExplanation(key,data);if(revised)return revised;
         const wp=data.weightedFiveElements?.percentages||{},ps=data.tenGodDistribution?.percentages||{},gp=data.tenGodDistribution?.groupPercentages||{};
         const elSorted=elOrder.map(e=>[e,Number(wp[e])||0]).sort((a,b)=>b[1]-a[1]);
@@ -1782,6 +1979,10 @@ ${promptContext(data)}
 ${sectionDataText(key,data)}
 
 ${selectedPeriodPrompt(data,key)}
+
+【網站目前的詳細解讀，供你進一步核對與延伸】
+${expandedPromptText(data,key)}
+${key==='years'&&selectedPeriods.years?'所選年度：'+selectedPeriods.years.year+'；年度比較僅為附近年份，並非一生排名。':''}
 
 請使用繁體中文，先給「一句話核心結論」，再分成「可能怎麼表現在本人身上」「優勢與容易卡住」「判讀依據」「如何調整與生活應用」「值得繼續追問」五部分。`;
       }
@@ -2081,7 +2282,7 @@ ${promptContext(data)}
         return[...new Set(out)];
       }
       function timeBuildYear(data,year){return (data.yearFlows||[]).find(x=>x.year===year)||BaziCore.getYearFlow(year,data.dayMaster,data.pillars);}
-      function timeAssessment(data,item){return BaziCore.assessment(data,item);}
+      function timeAssessment(data,item){return reportAssessment(data,item);}
       function timeAssessList(data,items){return (items||[]).filter(x=>x.gan&&x.zhi).map((item,index)=>({item,index,a:timeAssessment(data,item)}));}
       function timeThemeText(a){return a.goodThemes.join('；')||'延續原有生活主題';}
       function timeWatchText(data,a){return [a.interactionWatch,...a.watchThemes.slice(0,1)].filter(Boolean).join(' ');}
@@ -2131,24 +2332,25 @@ ${promptContext(data)}
       }
       function renderYearFlows(data){
         const cy=new Date().getFullYear(),flows=data.yearFlows||[],list=rankEntries(data,flows);
-        $('threeYearCompare').innerHTML=[['去年',cy-1],['今年',cy],['明年',cy+1]].map(([tag,year])=>{const f=timeBuildYear(data,year),a=timeAssessment(data,f);return `<article class="year-compare-card ${a.cls}"><small>${tag}（立春起）</small><h4>${year} · ${esc(f.ganZhi)}</h4>${timeBadge(a)}<p>${a.domains.map(x=>`<b>${esc(x.name)}：</b>${esc(x.label)}`).join('<br>')}</p><button type="button" class="report-year-select" data-year="${year}">看這一年的解讀</button></article>`;}).join('');
+        $('threeYearCompare').innerHTML=[['去年',cy-1],['今年',cy],['明年',cy+1]].filter(x=>x[1]>=data.input.year).map(([tag,year])=>{const f=timeBuildYear(data,year),a=timeAssessment(data,f);return `<article class="year-compare-card ${a.cls}"><small>${tag}（立春起）</small><h4>${year} · ${esc(f.ganZhi)}</h4>${timeBadge(a)}<p>${a.domains.map(x=>`<b>${esc(x.name)}：</b>${esc(x.label)}`).join('<br>')}</p><button type="button" class="report-year-select" data-year="${year}">看這一年的解讀</button></article>`;}).join('');
         $('threeYearCompare').querySelectorAll('[data-year]').forEach(btn=>btn.addEventListener('click',()=>selectYearItem(data,timeBuildYear(data,Number(btn.dataset.year)))));
         $('yearFlowIntro').textContent=`${flows[0]?.year||cy}～${flows.at(-1)?.year||cy}：每年各有發揮與壓力。以下按同一規則比較；立春前仍屬前一流年。`;
         $('yearSummary').innerHTML=summaryCard('相對排名靠前',list[0])+summaryCard('另一年相對靠前',list[1])+summaryCard('相對調整負擔較多',list.at(-1),list.at(-1)?timeWatchText(data,list.at(-1).a):'');
         $('yearFlowGrid').innerHTML=flows.map((f,i)=>{const a=timeAssessment(data,f);return `<button type="button" class="flow-card ${a.cls}" data-i="${i}" aria-pressed="false"><small>${f.year}</small><b>${esc(f.ganZhi)}</b>${timeBadge(a)}<span>${esc(f.tenGodGan)} · ${esc(f.tenGodZhi)}</span><span>${esc(a.goodThemes[0]||'生活主題')}</span></button>`;}).join('');
         $('yearFlowGrid').querySelectorAll('.flow-card').forEach(btn=>btn.addEventListener('click',()=>selectYear(data,Number(btn.dataset.i))));
         if(flows.length)selectYear(data,Math.max(0,flows.findIndex(f=>f.year===cy)));
+        installHistoryYear(data);
       }
       function selectYearItem(data,item){
         const index=data.yearFlows.findIndex(x=>x.year===item.year);setActive('yearFlowGrid','.flow-card',index);selectedPeriods.years=item;
-        $('yearDetail').innerHTML=periodDetail(data,item);refreshSelectedDecode('years',data);trackAction(`year-${item.year}`);
+        $('yearDetail').innerHTML=periodDetail(data,item);updateYearComparison(data,item);refreshSelectedDecode('years',data);trackAction(`year-${item.year}`);
       }
       function selectYear(data,i){const item=data.yearFlows[i];if(item)selectYearItem(data,item);}
       function renderMonthFlows(data){
         const flows=data.monthFlows||[],list=rankEntries(data,flows),watch=[...list].reverse().slice(0,2);
         $('monthFlowIntro').textContent=`${data.monthFlowYear} 年的十二個節氣月：月份是索引，實際以卡片上的節氣起訖為準。`;
-        const best=list.slice(0,3);
-        $('monthSummary').innerHTML=`<article class="fortune-summary-card fortune-steady"><small>相對排名靠前</small><b>${best.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、')}</b><p>這是同組比較，三段不一定都屬於「較順」。點卡片看各領域差異。</p></article><article class="fortune-summary-card fortune-steady"><small>相對調整負擔較多</small><b>${watch.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、')}</b><p>較需要協調的時間，也可能有能發揮的領域。</p></article><article class="fortune-summary-card fortune-steady"><small>國曆年初交節前</small><b>仍屬前一節氣月</b>${data.monthCarry?'<button type="button" id="monthCarryBtn">查看年初交節前</button>':''}</article>`;
+        const best=list.filter(x=>['較順','偏順'].includes(x.a.originalLabel)).slice(0,3);
+        $('monthSummary').innerHTML=`<article class="fortune-summary-card fortune-steady"><small>較有利的節氣段</small><b>${best.length?best.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、'):'本組沒有達到偏吉門檻的節氣段'}</b><p>只列出本規則評為偏吉的節氣段，最多三段；沒有符合時不硬選最好月份。點卡片看各領域差異。</p></article><article class="fortune-summary-card fortune-steady"><small>相對調整負擔較多</small><b>${watch.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、')}</b><p>較需要協調的時間，也可能有能發揮的領域。</p></article><article class="fortune-summary-card fortune-steady"><small>國曆年初交節前</small><b>仍屬前一節氣月</b>${data.monthCarry?'<button type="button" id="monthCarryBtn">查看年初交節前</button>':''}</article>`;
         $('monthFlowGrid').innerHTML=flows.map((f,i)=>{const a=timeAssessment(data,f);return `<button type="button" class="month-card ${a.cls}" data-i="${i}" aria-pressed="false"><small>${f.month} 月節氣段</small><b>${esc(f.ganZhi)}</b>${timeBadge(a)}<span>${esc(f.tenGodGan)} · ${esc(f.tenGodZhi)}</span><span class="period-mini">${esc(f.startJie)} ${shortDate(f.startSolar)}<br>至 ${esc(f.endJie)} ${shortDate(f.endSolar)}</span></button>`;}).join('');
         $('monthFlowGrid').querySelectorAll('.month-card').forEach(btn=>btn.addEventListener('click',()=>selectMonth(data,Number(btn.dataset.i))));
         $('monthCarryBtn')?.addEventListener('click',()=>selectMonthItem(data,data.monthCarry,-1));
@@ -2168,7 +2370,7 @@ ${promptContext(data)}
         [...$('glossaryChips').querySelectorAll('button')].forEach(btn=>btn.addEventListener('click',()=>{
           $('glossaryChips').querySelectorAll('button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');
           const t=btn.dataset.g;const v=data.tenGodDistribution?.percentages?.[t]||0;trackAction(`glossary-${t}`);
-          $('glossaryDetail').innerHTML=`<strong>${esc(t)}</strong>　命盤結構占比約 <b>${v}%</b><br>${esc(dict[t]||'傳統十神分類之一。')}。十神是相對於日主建立的關係語言，同一十神在不同命盤中仍需配合位置、旺衰、組合與運勢判讀。`;
+          $('glossaryDetail').innerHTML=godLongReading(t,data);
         }));
       }
 
