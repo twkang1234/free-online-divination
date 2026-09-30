@@ -315,7 +315,7 @@
     @media(max-width:780px){.answer-first-grid{grid-template-columns:1fr}.evidence-details>summary{align-items:flex-start;flex-direction:column}}
 
   
-    /* v14：只修改 07 / 08 / 09 時間區塊 */
+    /* v15：加強天干地支互動的展開白話：逐組解釋重複沖如何連動，以及『有合』與『合化』的差別。 */
     .time-explain{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:14px 16px;margin-bottom:12px;border:1px solid rgba(233,189,88,.13);border-radius:14px;background:linear-gradient(135deg,rgba(233,189,88,.055),rgba(255,255,255,.012))}
     .time-explain strong{color:#ead595;font-size:.85rem}.time-explain span{color:#8290a3;font-size:.64rem;line-height:1.75}
     .fortune-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}
@@ -1531,10 +1531,81 @@
 
         if(key==='relations'){
           const groups=groupedRelations(data);
-          if(!groups.length)return decodeCard('這區目前沒有更多內容','原局沒有明顯常見合沖刑害，主畫面已經足夠。');
-          const lead=groups[0];
-          return decodeCard('這區已經把計算結果與白話放在一起',`主畫面可直接看到 <b>${safe(lead.label)}${lead.count>1?` ×${lead.count}`:''}</b> 等實際計算結果，以及每組互動的發生位置、白話意義與為什麼重要。`)
-            +decodeCard('還要更細時才需要往下問',`如果要知道某一次辰戌沖究竟對工作、家庭、伴侶或某個年份有何具體影響，就需要再把大運、流年與十神一起分析；這部分適合使用本區 AI 提示詞。`);
+          if(!groups.length){
+            return decodeCard('這張盤沒有明顯的原局合沖刑害','目前沒有辨識到常見的合、沖、刑、害、破，因此這一區不需要硬做解讀。');
+          }
+
+          const cards=[];
+
+          function posMeaning(token){
+            token=String(token||'');
+            if(token.startsWith('年'))return '家庭與早年背景';
+            if(token.startsWith('月'))return '工作、成長與社會環境';
+            if(token.startsWith('日'))return '自己、伴侶與日常核心生活';
+            if(token.startsWith('時'))return '後續發展、子女與晚年';
+            return '該柱所代表的人生領域';
+          }
+
+          function relationPairParts(g){
+            const labels=(g.positions||[]).map(x=>String(x));
+            const tokens=[...new Set(labels.flatMap(x=>positionTokens(x)))];
+            return {labels,tokens,areas:[...new Set(tokens.map(posMeaning))]};
+          }
+
+          groups.forEach(g=>{
+            const label=String(g.label||'');
+            const type=String(g.type||'');
+            const {labels,tokens,areas}=relationPairParts(g);
+            const common=g.common?.[0]||'';
+            const commonArea=common?posMeaning(common):'';
+
+            if(type.includes('沖') && g.count>1){
+              const m=label.match(/^(.)(.)沖/);
+              const a=m?.[1]||'', b=m?.[2]||'';
+              const title=a&&b?`一個${a}沖兩個${b}，牽動的是什麼？`:`${label} ×${g.count}，真正要看的是什麼？`;
+              const positionsText=labels.length?`這兩組沖分別發生在 <b>${safe(labels.join('、'))}</b>。`:'';
+              const areaText=areas.length?`依四柱的傳統象徵，這些位置涉及 <b>${safe(areas.join('、'))}</b>。`:'';
+              const body=
+                `你的命盤裡，<b>${safe(label)} 重複 ${g.count} 次</b>。${common?`也就是同一個 <b>${safe(common)}</b> 同時和不同位置形成沖。`:''}`+
+                `${positionsText}`+
+                `這不代表發生兩次相同事件，也不是把影響直接乘以 ${g.count}。<br><br>`+
+                `${areaText}`+
+                `${commonArea?`其中 <b>${safe(commonArea)}</b> 是共同被碰到的核心。`:''}`+
+                `把這幾組關係合起來看，重點比較像是：<b>其中一個領域發生變化時，另外幾個領域也比較容易跟著調整</b>，所以人生中較常遇到「原本安排需要重新協調、重新定位」的情況。<br><br>`+
+                `「沖」描述的是<b>拉扯、位移與變動</b>。它既可能打破原有穩定，也可能推動原本停滯的事情，因此不能只看到「沖」就直接判定吉凶。`;
+              cards.push(decodeCard(title,body));
+              return;
+            }
+
+            if(type.includes('合') && /合/.test(label)){
+              const stemMatch=label.match(/^(.)(.)合(.)?/);
+              const s1=stemMatch?.[1]||'', s2=stemMatch?.[2]||'', transform=stemMatch?.[3]||'';
+              const title=transform?`${safe(label)}，是不是就補到${safe(transform)}了？`:`${safe(label)}，到底代表什麼？`;
+              const locText=tokens.length?`這組關係發生在 <b>${safe(tokens.join('、'))}</b>。`:'';
+              const separated=(tokens.some(t=>t.startsWith('年')) && tokens.some(t=>t.startsWith('時')));
+              const distanceText=separated?'兩個天干分居年、時兩端，中間隔著月干與日干，因此實際作用程度更需要保留判斷。':'';
+              const body=
+                `${s1&&s2?`你的 <b>${safe(s1)}</b> 與 <b>${safe(s2)}</b> 構成天干五合中的「${safe(label)}」。`:`這是原局中的一組天干五合。`}`+
+                `${locText}「合」可以先理解為<b>彼此牽引、互相受到影響</b>，代表兩個位置之間多了一層聯繫。<br><br>`+
+                `${transform?`但<b>「有合」與「真正合化成${safe(transform)}」是兩個層次</b>。現在可以確定的是有這組五合配對；是否真的化成${safe(transform)}，還要看出生季節、整體干支氣勢與其他條件。`:''}`+
+                `${distanceText?` ${safe(distanceText)}`:''}<br><br>`+
+                `${transform?`因此這裡應先理解為「${safe(label.replace(transform,''))}有合的關係」，<b>不能直接把原本兩個天干改算成${safe(transform)}</b>，也不能因為看到「合${safe(transform)}」就認為命盤的${safe(transform)}已經被補足。`:''}`+
+                `${groups.some(x=>String(x.type||'').includes('沖'))?` <b>這組合與原局中的沖可以同時存在，彼此不會自動抵消。</b>`:''}`;
+              cards.push(decodeCard(title,body));
+              return;
+            }
+
+            if(type.includes('沖')){
+              const body=`<b>${safe(label)}</b> 發生在 <b>${safe(labels.join('、')||'原局')}</b>。${areas.length?`涉及 <b>${safe(areas.join('、'))}</b>。`:''}「沖」表示兩個位置彼此拉扯、碰撞或需要重新調整；它可以帶來變動，也可能只是讓原本不動的事情被迫重新安排，不能單獨當成凶。`;
+              cards.push(decodeCard(`${safe(label)}，白話怎麼看？`,body));
+              return;
+            }
+
+            const body=`<b>${safe(label)}</b> 發生在 <b>${safe(labels.join('、')||'原局')}</b>。${areas.length?`主要牽動 <b>${safe(areas.join('、'))}</b>。`:''}這類關係先用「${safe(relationPlain(type))}」理解即可；真正要判斷影響大小，還要看它是否重複出現，以及大運、流年是否再次碰到同一位置。`;
+            cards.push(decodeCard(`${safe(label)}，代表什麼？`,body));
+          });
+
+          return cards.join('');
         }
 
         if(key==='shensha'){
