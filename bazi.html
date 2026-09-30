@@ -315,7 +315,7 @@
     @media(max-width:780px){.answer-first-grid{grid-template-columns:1fr}.evidence-details>summary{align-items:flex-start;flex-direction:column}}
 
   
-    /* v15：加強天干地支互動的展開白話：逐組解釋重複沖如何連動，以及『有合』與『合化』的差別。 */
+    /* v16：只微調常用神煞。四欄改以年柱／月柱／日柱／時柱為主，人生階段降為輔助提示，並明確說明柱位不等於神煞只在該年齡作用。 */
     .time-explain{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;padding:14px 16px;margin-bottom:12px;border:1px solid rgba(233,189,88,.13);border-radius:14px;background:linear-gradient(135deg,rgba(233,189,88,.055),rgba(255,255,255,.012))}
     .time-explain strong{color:#ead595;font-size:.85rem}.time-explain span{color:#8290a3;font-size:.64rem;line-height:1.75}
     .fortune-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 14px}
@@ -563,14 +563,14 @@
           <summary><span><b>05</b> 常用神煞</span><small>25 COMMON SHENSHA · AUXILIARY SIGNALS</small></summary>
           <div class="report-body">
             <div class="shensha-headline" id="shenshaHeadline"></div>
-            <div class="shensha-pillar-title stage-title"><h4>依人生階段看神煞</h4><span>幼年 · 青年 · 中年 · 晚年</span></div>
-            <p class="shensha-stage-guide"><b>直接往下看同一欄即可：</b>每一欄從人生階段、四柱位置，到該柱神煞名稱與白話說明都放在一起，不必上下對照。</p>
+            <div class="shensha-pillar-title stage-title"><h4>依四柱位置看神煞</h4><span>年柱 · 月柱 · 日柱 · 時柱</span></div>
+            <p class="shensha-stage-guide"><b>四欄仍保留人生階段提示，但以「四柱位置」為主：</b>年柱看家族與早年背景、月柱看成長環境與工作社會關係、日柱看自身與伴侶、時柱看子女與後續發展。神煞落在哪一柱，<b>不等於只在那個年齡階段作用</b>；真正應期仍需結合大運、流年判讀。</p>
             <div class="shensha-pillar-grid integrated" id="shenshaPillars"></div>
             <details class="shensha-index-details">
               <summary>進階：依神煞名稱查看全部分類索引</summary>
               <div class="shensha-classification-zone">
                 <div class="shensha-pillar-title"><h4>神煞分類索引</h4><span>25 COMMON SIGNALS</span></div>
-                <p class="shensha-classification-note">這裡只是把同名神煞重新彙整，方便查找；一般閱讀以前面的幼年／青年／中年／晚年四欄為主。</p>
+                <p class="shensha-classification-note">這裡只是把同名神煞重新彙整，方便查找；一般閱讀以前面的年柱／月柱／日柱／時柱四欄為主。</p>
                 <div class="shensha-grid" id="shenshaGrid"></div>
               </div>
             </details>
@@ -1220,19 +1220,54 @@
         const hits=computeShensha(data);data._shensha=hits;
         const repeated=hits.filter(x=>x.positions.length>1);
         const pillarMeta=[
-          ['年柱','幼年','早年與家族背景','year'],['月柱','青年','成長與社會環境','month'],['日柱','中年','自身與伴侶','day'],['時柱','晚年','後續發展、子女與晚年','time']
+          ['年柱','早年','家族、根基與早年背景','year'],
+          ['月柱','青年','成長環境、工作與社會關係','month'],
+          ['日柱','中年','自身與伴侶關係','day'],
+          ['時柱','晚年','子女、後續發展與晚景','time']
         ];
         const byPillar=Object.fromEntries(pillarMeta.map(x=>[x[0],[]]));
         hits.forEach(h=>h.positions.forEach(p=>{if(byPillar[p])byPillar[p].push(h);}));
-        const counts=pillarMeta.map(([name,stage,domain,key])=>[name,byPillar[name].length,`${stage}／${domain}`,key]).sort((a,b)=>b[1]-a[1]);
-        const peak=counts[0];
-        $('shenshaHeadline').innerHTML=hits.length?`本命辨識到 <b>${hits.length}</b> 種常用神煞。以下已直接按 <b>幼年／青年／中年／晚年</b> 分欄，名稱與白話說明都放在同一欄；${peak&&peak[1]?`目前以 <b>${peak[2]}</b> 的神煞較集中。`:''}${repeated.length?`另有 <b>${repeated.length}</b> 種神煞跨兩柱以上重複出現。`:''}`:'依本站採用的常用查表規則，本命目前未辨識到明顯神煞；這不影響八字主體判讀。';
+
+        const counts=pillarMeta.map(([name,stage,domain,key])=>[name,byPillar[name].length,stage,domain,key]);
+        const maxCount=Math.max(0,...counts.map(x=>x[1]));
+        const peaks=counts.filter(x=>x[1]===maxCount&&maxCount>0);
+        const peakText=peaks.map(x=>x[0]).join('、');
+
+        $('shenshaHeadline').innerHTML=hits.length
+          ? `本命辨識到 <b>${hits.length}</b> 種常用神煞。以下依 <b>年柱／月柱／日柱／時柱</b> 整理；柱位主要用來看它落在哪個人生領域，<b>不是神煞的有效期限</b>。${peakText?`目前神煞在 <b>${peakText}</b> 較集中（各 ${maxCount} 項）。`:''}${repeated.length?`另有 <b>${repeated.length}</b> 種神煞跨兩柱以上重複出現。`:''}`
+          : '依本站採用的常用查表規則，本命目前未辨識到明顯神煞；這不影響八字主體判讀。';
+
         $('shenshaPillars').innerHTML=pillarMeta.map(([name,stage,domain,key],i)=>{
           const p=data.pillars?.[i],arr=byPillar[name]||[];
-          const items=arr.length?arr.map(x=>`<div class="stage-shensha-item"><div class="stage-shensha-item-head"><div class="stage-shensha-name">${esc(x.name)}</div><div class="stage-shensha-category">${esc(x.category)}</div></div><p class="stage-shensha-meaning">${esc(x.meaning)}</p></div>`).join(''):`<div class="stage-shensha-empty">本站常用規則在這一柱未辨識到神煞。</div>`;
-          return `<article class="shensha-pillar ${key==='day'?'is-day':''}" data-pillar="${esc(key)}"><small><span>${esc(name)}</span><span>${arr.length} 個神煞</span></small><div class="shensha-stage-kicker">人生階段</div><div class="shensha-stage">${esc(stage)}</div><p class="shensha-domain">${esc(domain)}</p><div class="shensha-gz">四柱位置 · ${esc(p?.ganZhi||'—')}</div><div class="stage-shensha-title"><span>這一階段的神煞</span><b>${arr.length} 項</b></div><div class="stage-shensha-list">${items}</div></article>`;
+          const items=arr.length
+            ? arr.map(x=>`<div class="stage-shensha-item">
+                <div class="stage-shensha-item-head">
+                  <div class="stage-shensha-name">${esc(x.name)}</div>
+                  <div class="stage-shensha-category">${esc(x.category)}</div>
+                </div>
+                <p class="stage-shensha-meaning">${esc(x.meaning)}</p>
+              </div>`).join('')
+            : `<div class="stage-shensha-empty">本站常用規則在這一柱未辨識到神煞。</div>`;
+
+          return `<article class="shensha-pillar ${key==='day'?'is-day':''}" data-pillar="${esc(key)}">
+            <small><span>四柱位置</span><span>${arr.length} 個神煞</span></small>
+            <div class="shensha-stage-kicker">${esc(domain)}</div>
+            <div class="shensha-stage">${esc(name)}</div>
+            <p class="shensha-domain">傳統階段提示 · ${esc(stage)}</p>
+            <div class="shensha-gz">命理位置 · ${esc(p?.ganZhi||'—')}</div>
+            <div class="stage-shensha-title"><span>此柱辨識到的神煞</span><b>${arr.length} 項</b></div>
+            <div class="stage-shensha-list">${items}</div>
+          </article>`;
         }).join('');
-        $('shenshaGrid').innerHTML=hits.length?hits.map(x=>`<article class="shensha-card"><small><span>${esc(x.category)}</span><span>${x.positions.length} 柱</span></small><h4>${esc(x.name)}</h4><p>${esc(x.meaning)}</p><em>${esc(x.positions.join('、'))} · ${esc(x.basis[0]||'常用查法')}</em></article>`).join(''):'<div class="shensha-empty">目前未辨識到常用神煞；請以四柱、五行、十神與干支互動為主要判讀基礎。</div>';
+
+        $('shenshaGrid').innerHTML=hits.length
+          ? hits.map(x=>`<article class="shensha-card">
+              <small><span>${esc(x.category)}</span><span>${x.positions.length} 柱</span></small>
+              <h4>${esc(x.name)}</h4>
+              <p>${esc(x.meaning)}</p>
+              <em>${esc(x.positions.join('、'))} · ${esc(x.basis[0]||'常用查法')}</em>
+            </article>`).join('')
+          : '<div class="shensha-empty">目前未辨識到常用神煞；請以四柱、五行、十神與干支互動為主要判讀基礎。</div>';
       }
       function formatBasic(data){return `性別：${data.gender===1?'男':'女'}\n公曆：${data.solarText}\n農曆：${data.lunarText}\n四柱：${data.pillars.map(p=>p.ganZhi).join(' / ')}\n日主：${data.dayMaster}${data.dayMasterElement}（${data.dayMasterYinYang}）`;}
       function formatPillars(data){return (data.pillars||[]).map(p=>`${labels[p.key]?.[0]||p.key}：${p.ganZhi}｜天干十神 ${p.shiShenGan||'日主'}｜藏干 ${(p.hideGan||[]).join('、')||'—'}｜地支十神 ${(p.shiShenZhi||[]).join('、')||'—'}｜納音 ${p.naYin||'—'}｜十二長生 ${p.diShi||'—'}｜旬空 ${p.xunKong||'—'}`).join('\n');}
@@ -1611,11 +1646,22 @@
         if(key==='shensha'){
           const hs=data._shensha||computeShensha(data);
           if(!hs.length) return decodeCard('這張盤的神煞不突出','本站收錄的常用神煞沒有辨識到明顯項目，這不影響命盤主體分析；五行、十神與干支仍然是主要判讀基礎。');
+
           const posNames=['年柱','月柱','日柱','時柱'];
-          const stage={'年柱':'幼年／早年與家族背景','月柱':'青年／成長與社會環境','日柱':'中年／自身與伴侶','時柱':'晚年／後續發展與子女'};
+          const domain={
+            '年柱':'家族、根基與早年背景',
+            '月柱':'成長環境、工作與社會關係',
+            '日柱':'自身與伴侶關係',
+            '時柱':'子女、後續發展與晚景'
+          };
+          const stageHint={'年柱':'傳統對應早年','月柱':'傳統對應青年','日柱':'傳統對應中年','時柱':'傳統對應晚年'};
           const byPos={};posNames.forEach(p=>byPos[p]=hs.filter(x=>x.positions.includes(p)));
-          const posCounts=posNames.map(p=>[p,byPos[p].length]).sort((a,b)=>b[1]-a[1]);const peak=posCounts[0]||['—',0];
+
+          const posCounts=posNames.map(p=>[p,byPos[p].length]).sort((a,b)=>b[1]-a[1]);
+          const maxCount=posCounts[0]?.[1]||0;
+          const peaks=posCounts.filter(x=>x[1]===maxCount&&maxCount>0).map(x=>x[0]);
           const rep=hs.filter(x=>x.positions.length>1);
+
           const categoryPlain={
             '德曜／緩衝':'較偏助力、緩衝與支持',
             '貴人／助力':'較偏外部支持與協助',
@@ -1631,16 +1677,20 @@
             '強度／原則':'較偏原則、決斷與承擔',
             '傳統警示':'屬傳統警示訊號，只能輔助看'
           };
-          function stageSummary(pos){
+
+          function pillarSummary(pos){
             const arr=byPos[pos]||[];
-            if(!arr.length)return '這一柱沒有明顯神煞，直接以四柱本身與十神為主。';
+            if(!arr.length)return `${pos}目前沒有明顯神煞，直接以四柱本身與十神為主。`;
             const cats=[...new Set(arr.map(x=>categoryPlain[x.category]||x.category))];
-            return `${stage[pos]}出現 ${arr.map(x=>x.name).join('、')}；整體較偏向 ${cats.join('、')}。`;
+            return `<b>${pos}</b>｜${safe(domain[pos])}（${safe(stageHint[pos])}）<br>辨識到：${arr.map(x=>safe(x.name)).join('、')}。整體較偏向 ${cats.map(safe).join('、')}。`;
           }
-          return decodeCard('先用人生階段來看，不要先背神煞名稱',`四柱裡以 <b>${safe(peak[0])}</b>（${safe(stage[peak[0]])}）的神煞較集中，共 <b>${safe(peak[1])}</b> 項。這不代表那個階段比較吉或比較凶，只代表傳統輔助訊號在那一柱比較多。`)
-            +decodeCard('幼年與青年',`${safe(stageSummary('年柱'))}<br><br>${safe(stageSummary('月柱'))}`)
-            +decodeCard('中年與晚年',`${safe(stageSummary('日柱'))}<br><br>${safe(stageSummary('時柱'))}`)
-            +decodeCard('哪些神煞比較值得看',`${rep.length?`跨兩柱以上重複出現的 <b>${rep.map(x=>safe(x.name)).join('、')}</b>，優先度高於只出現一次的神煞。`: '目前沒有跨柱重複神煞。'} 如果某顆神煞的象徵又和你的高比例十神、五行方向一致，才值得提高參考權重；如果沒有其他結構支持，就把它當輔助線索即可。`);
+
+          return decodeCard('先看柱位，不把神煞當成「哪個年齡才有效」',
+            `四柱裡目前以 <b>${peaks.map(safe).join('、')}</b> 的神煞較集中，各 <b>${safe(maxCount)}</b> 項。這只代表輔助訊號在這些柱位較多，<b>不代表那個人生階段一定比較吉、比較凶，也不代表神煞只在該階段作用</b>。`)
+            +decodeCard('年柱與月柱',`${pillarSummary('年柱')}<br><br>${pillarSummary('月柱')}`)
+            +decodeCard('日柱與時柱',`${pillarSummary('日柱')}<br><br>${pillarSummary('時柱')}`)
+            +decodeCard('哪些神煞比較值得看',
+              `${rep.length?`跨兩柱以上重複出現的 <b>${rep.map(x=>safe(x.name)).join('、')}</b>，優先度高於只出現一次的神煞。`:'目前沒有跨柱重複神煞。'} 如果某顆神煞的象徵又和高比例十神、五行或干支結構呼應，才值得提高參考權重；真正應期仍要結合大運與流年。`);
         }
 
         if(key==='reading'){
