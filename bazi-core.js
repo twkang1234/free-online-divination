@@ -622,6 +622,310 @@
     return data;
   }
 
-  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.4.0"});
+  function generateMasterReading(data) {
+    if (!data || !data.pillars || data.pillars.length < 4) return null;
+    const dm = data.dayMaster;
+    const dmEl = GAN_ELEMENT[dm];
+    const dmYy = GAN_YINYANG[dm];
+    const ps = data.pillars;
+    const wp = data.weightedFiveElements?.percentages || {};
+    const tgDist = data.tenGodDistribution?.groupPercentages || {};
+    const supportScore = data.scores?.support || 50;
+
+    const dayPillar = ps[2].ganZhi;
+    const dayZhi = ps[2].zhi;
+    const monthPillar = ps[1].ganZhi;
+    const monthZhi = ps[1].zhi;
+    const monthTenGod = ps[1].shiShenGan || '偏印';
+
+    let patternName = '';
+    let isKuiGang = false;
+    let isYangRen = false;
+    let isJianLu = false;
+
+    if (['庚戌','庚辰','戊戌','壬辰'].includes(dayPillar)) {
+      isKuiGang = true;
+      patternName = `${dayPillar}魁罡格`;
+    } else if ((dm==='甲'&&monthZhi==='卯') || (dm==='庚'&&monthZhi==='酉') || (dm==='壬'&&monthZhi==='子') || (dm==='丙'&&monthZhi==='午') || (dm==='戊'&&monthZhi==='午')) {
+      isYangRen = true;
+      patternName = '羊刃格';
+    } else if ((dm==='甲'&&monthZhi==='寅') || (dm==='乙'&&monthZhi==='卯') || (dm==='丙'&&monthZhi==='巳') || (dm==='丁'&&monthZhi==='午') || (dm==='庚'&&monthZhi==='申') || (dm==='辛'&&monthZhi==='酉') || (dm==='壬'&&monthZhi==='亥') || (dm==='癸'&&monthZhi==='子')) {
+      isJianLu = true;
+      patternName = '建祿格';
+    } else {
+      patternName = `${monthTenGod}格`;
+    }
+
+    const isStrong = supportScore >= 48;
+    const strengthTitle = isStrong ? '身強' : '身弱';
+
+    const earthPct = wp['土'] || 0;
+    const metalPct = wp['金'] || 0;
+    const waterPct = wp['水'] || 0;
+    const woodPct = wp['木'] || 0;
+    const firePct = wp['火'] || 0;
+
+    let diseaseKey = '';
+    let diseaseTitle = '';
+    let diseaseDesc = '';
+
+    if (dmEl === '金' && earthPct >= 30) {
+      diseaseKey = '土重埋金';
+      diseaseTitle = '土厚埋金之患（母慈滅子）';
+      diseaseDesc = '印星（土）太多太重，土本來是生金的母親與貴人，但土多到極致反而會把庚金活埋（「母慈滅子」）。你最大的敵人往往是自己的固執、想太多、準備太久而不行動，或是被原生家庭/長輩的期待與框架壓得喘不過氣。';
+    } else if (dmEl === '木' && waterPct >= 30) {
+      diseaseKey = '水多木漂';
+      diseaseTitle = '水多木漂之患';
+      diseaseDesc = '印星（水）過於氾濫，木無立足之根。表面上想法極多、適應力強，但容易漂泊無定、計畫頻換，做事常欠缺實質的落腳點與深耕耐性。';
+    } else if (dmEl === '火' && woodPct >= 30) {
+      diseaseKey = '木多火塞';
+      diseaseTitle = '木多火塞之患';
+      diseaseDesc = '資源與顧慮過多，如同堆滿濕柴反而悶住火苗。思慮繁雜、包袱沉重，需要明確目標將雜亂的學識與人情梳理開來，才得以燃燒發光。';
+    } else if (dmEl === '水' && metalPct >= 30) {
+      diseaseKey = '金多水濁';
+      diseaseTitle = '金多水濁（金寒水冷）之患';
+      diseaseDesc = '印星生扶太甚，水氣寒冽凝結。外表冷靜孤傲，內心容易封閉、多疑，容易因防備心過重或自我要求太嚴，錯失許多主動結緣與開創的良機。';
+    } else if (dmEl === '土' && firePct >= 30) {
+      diseaseKey = '火炎土燥';
+      diseaseTitle = '火旺土焦之患';
+      diseaseDesc = '生扶的火過旺，厚土失去生機焦躁乾裂。脾氣急躁固執，看似堅定，但內在長期焦慮，極需潤澤與流動，否則容易在壓力和執念中自我消耗。';
+    } else if (isStrong) {
+      const domGroup = Object.entries(tgDist).sort((a,b)=>b[1]-a[1])[0]?.[0] || '比劫';
+      diseaseKey = `${domGroup}過盛`;
+      diseaseTitle = `${domGroup}太重之隱患`;
+      diseaseDesc = `身旺而${domGroup}集中，做事主觀強烈、不甘屈就他人，容易獨斷專行、凡事硬扛，需特別防範個人英雄主義導致的孤立與人際阻力。`;
+    } else {
+      diseaseKey = '身弱難任財官';
+      diseaseTitle = '身弱氣虛之承載考驗';
+      diseaseDesc = '日主能量偏弱，外在環境的責任、期待或誘惑（財官）往往大於自身目前精力，容易心力交瘁、被外在要求牽著鼻子走，務必先培植底氣，切忌逞強硬扛。';
+    }
+
+    const headerTitle = isKuiGang
+      ? `魁罡身強，${diseaseKey || '厚重有力'}`
+      : `${patternName}${strengthTitle}，${diseaseKey || '氣勢雄厚'}`;
+
+    const zhiCounts = {};
+    ps.forEach(p => { zhiCounts[p.zhi] = (zhiCounts[p.zhi] || 0) + 1; });
+    const zhiTextList = Object.entries(zhiCounts).map(([z, c]) => c > 1 ? `${c}大${ZHI_ELEMENT[z]}（${z}）` : `${ZHI_ELEMENT[z]}（${z}）`).join('、');
+    const pillarsDropText = `日主是 ${dm}金（${dmYy}金），坐下是${dayZhi}土，日柱是標準的「${isKuiGang ? `${dayPillar}魁罡格` : dayPillar}」。\n月柱 ${monthPillar} 是純粹的燥厚之土（${monthTenGod}），地支更有 ${zhiTextList}。`;
+
+    const conclusions = [];
+    if (isKuiGang) {
+      conclusions.push({
+        label: '「你是極強的魁罡身旺盤」',
+        text: '為人性格極具剛性、威嚴與魄力，做事原則極強、敢做敢當、不喜被拘束。'
+      });
+    } else if (isStrong) {
+      conclusions.push({
+        label: `「你是強健有力的${patternName}身旺盤」`,
+        text: '個人主見明確、抗壓性強、做事有魄力與定見，不輕易隨波逐流，能在逆境中堅持自己的目標。'
+      });
+    } else {
+      conclusions.push({
+        label: `「你是細膩敏銳的${patternName}」`,
+        text: '感受力豐富、為人圓融有彈性，擅長借力使力，但在高壓環境下需注意精力消耗與情緒邊界。'
+      });
+    }
+    conclusions.push({
+      label: `「${diseaseTitle}」`,
+      text: diseaseDesc
+    });
+
+    const zhiChongPairs = [
+      ['辰','戌','辰戌相沖'],['子','午','子午相沖'],['寅','申','寅申相沖'],
+      ['卯','酉','卯酉相沖'],['巳','亥','巳亥相沖'],['丑','未','丑未相沖']
+    ];
+    const branchClashes = [];
+    for (let i = 0; i < ps.length; i++) {
+      for (let j = i + 1; j < ps.length; j++) {
+        const p1 = ps[i], p2 = ps[j];
+        for (const [z1, z2, cName] of zhiChongPairs) {
+          if ((p1.zhi === z1 && p2.zhi === z2) || (p1.zhi === z2 && p2.zhi === z1)) {
+            branchClashes.push({
+              pos1: p1.key, pos2: p2.key,
+              name: cName,
+              zhi1: p1.zhi, zhi2: p2.zhi,
+              pillar1: p1.ganZhi, pillar2: p2.ganZhi
+            });
+          }
+        }
+      }
+    }
+
+    let clashSectionTitle = '';
+    let clashPillarsDrop = '';
+    const realityLifePoints = [];
+    let elementDepletedText = '';
+
+    if (branchClashes.length > 0) {
+      const clashZhis = [...new Set(branchClashes.flatMap(c => [c.zhi1, c.zhi2]))].join('');
+      clashSectionTitle = `${clashZhis}沖引動的「人生領域動盪」`;
+      clashPillarsDrop = `年支 ${ps[0].zhi}（${ZHI_ELEMENT[ps[0].zhi]}，內藏${(ps[0].hideGan||[]).join('、')}）與 月支 ${ps[1].zhi}（燥土）、日支 ${ps[2].zhi}（燥土） 形成緊密的沖剋相戰。`;
+
+      if (branchClashes.some(c => (c.pos1 === 'year' && c.pos2 === 'month') || (c.pos1 === 'month' && c.pos2 === 'year'))) {
+        realityLifePoints.push({
+          label: '年柱 vs 月柱相沖（家業與祖蔭）：',
+          text: '年柱代表祖輩、早年（1~16歲），月柱代表父母與出社會（17~32歲）。辰戌相沖代表離鄉背井之象，少年時期與家庭長輩理念容易有巨大摩擦，難以依靠祖蔭，多靠白手起家。'
+        });
+      }
+      const dayClash = branchClashes.filter(c => c.pos1 === 'day' || c.pos2 === 'day');
+      if (dayClash.length > 0) {
+        realityLifePoints.push({
+          label: '月柱 vs 日柱同支（戌戌）且逢年柱沖（夫妻宮震盪）：',
+          text: '日支代表配偶宮與內心世界。兩戌沖一辰，配偶宮長期處於被震盪的狀態。命理師必須提醒：「感情婚姻晚婚為宜」，另一半個性容易與自己一樣硬，若雙方不懂得妥協，容易因原則問題產生劇烈摩擦；且需防婆媳或原生家庭（年月柱）介入婚姻。'
+        });
+      }
+
+      const weakest = ELEMENTS.slice().sort((a,b) => (wp[a]||0) - (wp[b]||0))[0];
+      const weakestPct = wp[weakest] || 0;
+      elementDepletedText = `水氣被徹底沖絕：辰中原本微弱的「癸水」是此盤唯一的甘霖（僅占約 ${weakestPct}%），但被兩顆燥土戌一沖，辰中水氣被徹底拔除吸乾。這代表原本想要自由表達、發揮創意的輸出管道（食傷）容易受到家庭或社會現實責任的強力壓制。`;
+    } else {
+      clashSectionTitle = '四柱宮位結合五行氣勢流轉';
+      clashPillarsDrop = `四柱干支相生相聚，年柱 ${ps[0].ganZhi}、月柱 ${ps[1].ganZhi}、日柱 ${ps[2].ganZhi}、時柱 ${ps[3].ganZhi} 各司其職。`;
+      realityLifePoints.push({
+        label: '宮位安定守成：',
+        text: '原局地支無劇烈大沖，生活基石相對穩健，早年、青年至中年的起伏大多屬於循序漸進的挑戰，較少突發性的天翻地覆。'
+      });
+      elementDepletedText = `雖然地支無大沖，但各柱五行分布仍然呈現主客之勢，需隨大運流年引動來把握時機。`;
+    }
+
+    const healthWarnings = [];
+    if (waterPct < 5) {
+      healthWarnings.push({
+        label: `泌尿生殖與腎水枯竭（水 ${waterPct}% 受重土剋絕）：`,
+        body: '辰中癸水被戌中燥土與戊土夾攻剋死。相關預警：天生泌尿系統弱、腎氣不足、結石風險高，年紀稍長需特別留意攝護腺（男）或內分泌代謝功能，切忌長期憋尿與熬夜。'
+      });
+    } else if (waterPct > 35) {
+      healthWarnings.push({
+        label: `水多濕寒與心腎代謝（水旺占 ${waterPct}%）：`,
+        body: '水旺過甚體質偏寒濕，容易水腫、血液循環遲緩、手腳冰冷，宜多曬太陽、保持規律有氧運動以行氣驅寒。'
+      });
+    }
+
+    if (earthPct >= 30) {
+      healthWarnings.push({
+        label: `脾胃熱燥與腸胃病變（月日柱連環燥土，土占 ${earthPct}%）：`,
+        body: `${monthPillar}、${dayPillar}兩柱全是燥土，加上時柱巳火生土。相關提醒：胃熱胃脹、消化系統脆弱、胃食道逆流，平時飲食切忌辛辣油膩與過量進補，體質偏燥熱體質。`
+      });
+    } else if (earthPct < 5) {
+      healthWarnings.push({
+        label: `脾胃運化不足（土氣微弱占 ${earthPct}%）：`,
+        body: '土虛則中氣不足，脾胃吸收轉化功能欠佳，容易消化不良或食慾不振，三餐應定時定量，多攝取溫和易消化的食物。'
+      });
+    }
+
+    if (woodPct < 6) {
+      healthWarnings.push({
+        label: `呼吸道與筋骨（強金剋弱木，木僅占 ${woodPct}%）：`,
+        body: '土多金硬，八字原局藏干極微弱的乙木（肝膽、筋骨）受辛金、庚金猛烈剋伐。需提醒中年後預防筋骨僵硬酸痛、肝膽負擔過重、眼睛容易乾澀。'
+      });
+    }
+
+    if (firePct > 35) {
+      healthWarnings.push({
+        label: `心血管熱燥與血壓波動（火旺占 ${firePct}%）：`,
+        body: '火勢熾盛容易心浮氣躁、血壓波動或心血管負擔加重，宜少吃燥熱上火食材，隨時調解情緒壓力以平抑心火。'
+      });
+    }
+
+    if (healthWarnings.length < 2) {
+      healthWarnings.push({
+        label: '呼吸道與皮膚屏障：',
+        body: '注意金木交戰或燥濕切換時對呼吸道、氣管及皮膚的影響，保持空氣濕度與水分補充。'
+      });
+    }
+
+    let diagDesc = '';
+    let firstGod = '';
+    let firstGodDesc = '';
+    let secondGod = '';
+    let secondGodDesc = '';
+    let careerDesc = '';
+    let luckyDir = '';
+
+    if (isStrong) {
+      if (dmEl === '金') {
+        diagDesc = `此盤土重（${earthPct}%）、金旺（${metalPct}%），身極旺。\n最怕火來生土（火會加重厚土），也怕土再進來（土多直接窒息）。`;
+        firstGod = '水（食神、傷官）';
+        firstGodDesc = '用潤水來洗滌強金、滋潤燥土，並作為日主才華輸出的管道。';
+        secondGod = '木（正財、偏財）';
+        secondGodDesc = '用強木來疏鬆厚土，讓庚金破土而出，同時把才華落實為財富與成果。';
+        careerDesc = '適合走「專業技術輸出、獨立創作、顧問、解決複雜問題」路線，而不是去傳統體制內當按部就班的行政職員（土多官殺重會讓他極度壓抑痛苦）。';
+        luckyDir = '適合往北方（水）或東方（木）尋求發展機會。';
+      } else if (dmEl === '木') {
+        diagDesc = `此盤水木皆旺（水 ${waterPct}%、木 ${woodPct}%），身極強。最怕水多木漂，忌比劫爭奪。`;
+        firstGod = '火（食神、傷官）';
+        firstGodDesc = '用烈火通明洩木之秀氣，使滿腹才華得以昭顯於世，形成「木火通明」之大貴格。';
+        secondGod = '土（財星）';
+        secondGodDesc = '以厚土培木並固水，將宣洩之才華轉化為紮實可見的資產與事業根基。';
+        careerDesc = '適合品牌開拓、文化傳媒、創意策劃、教育演說或高階營銷，發揮強大號召力。';
+        luckyDir = '適合往南方（火）或中原/本地（土）拓展。';
+      } else if (dmEl === '水') {
+        diagDesc = `此盤金水雙盛（金 ${metalPct}%、水 ${waterPct}%），身旺至極。忌金再增寒，忌水再沖崩。`;
+        firstGod = '木（食神、傷官）';
+        firstGodDesc = '用茂盛之木疏導奔騰旺水，將衝動與智慧轉為技術發明與藝術創作。';
+        secondGod = '火（財星）';
+        secondGodDesc = '以溫火暖局調候，解凍寒冰之水，帶來溫暖人緣與實質財富回報。';
+        careerDesc = '適合跨國商務、大數據運算、研發、流動性商業或自由職業，靈活自如。';
+        luckyDir = '適合往東方（木）或南方（火）發展。';
+      } else if (dmEl === '火') {
+        diagDesc = `此盤木火通明（木 ${woodPct}%、火 ${firePct}%），身旺神強。忌木火助焰燃燒殆盡。`;
+        firstGod = '土（食神、傷官）';
+        firstGodDesc = '以潤土承接燥烈之火，化烈焰為溫潤能量，形成吐秀生金之勢。';
+        secondGod = '金（財星）';
+        secondGodDesc = '以真金被火所煉而成大器，展現強大求財手腕與決斷力。';
+        careerDesc = '適合工程技術、商務談判、金融投資、演藝展示或專業顧問領域。';
+        luckyDir = '適合往中央/西南（土）或西方（金）拓展。';
+      } else {
+        diagDesc = `此盤火土並重（火 ${firePct}%、土 ${earthPct}%），身厚氣雄。忌火再燒焦土。`;
+        firstGod = '金（食神、傷官）';
+        firstGodDesc = '以重金吐瀉厚土之秀氣，使笨重之土化為精緻器皿與專業能力。';
+        secondGod = '水（財星）';
+        secondGodDesc = '以清涼之水潤澤燥土，使萬物生長，財源廣進。';
+        careerDesc = '適合精密研發、會計審計、專業架構師或獨立分析師。';
+        luckyDir = '適合往西方（金）或北方（水）發展。';
+      }
+    } else {
+      diagDesc = `此盤日主承載偏弱，受外部財官或耗洩影響甚大，最忌繼續加重壓制與消耗。`;
+      firstGod = `${dmEl === '木' ? '水（正偏印）' : dmEl === '火' ? '木（正偏印）' : dmEl === '土' ? '火（正偏印）' : dmEl === '金' ? '土（正偏印）' : '金（正偏印）'}`;
+      firstGodDesc = '以有力印星生身固本，提供知識後盾、長輩貴人提攜與穩定的心理安全感。';
+      secondGod = `${dmEl}（比肩、劫財）`;
+      secondGodDesc = '以同輩夥伴、團隊合作分擔壓力，互利共生，切忌單打獨鬥以卵擊石。';
+      careerDesc = '適合背靠穩定組織平台、團隊協作、專業研究、特許行業或知名品牌保護傘下深耕發展。';
+      luckyDir = '宜朝利於自身印比之方向尋求支持。';
+    }
+
+    return {
+      pattern: {
+        title: headerTitle,
+        pillarsDrop: pillarsDropText,
+        conclusions: conclusions
+      },
+      clash: {
+        title: clashSectionTitle,
+        pillarsDrop: clashPillarsDrop,
+        realityLife: realityLifePoints,
+        elementDepleted: elementDepletedText
+      },
+      health: {
+        title: '精準健康預警：臟腑對應病灶（五行結合宮位）',
+        intro: '命理師要能透過干支位置，說出客戶身體具體會出狀況的地方：',
+        items: healthWarnings
+      },
+      usefulGod: {
+        title: '抓出真正的「喜用神」與生涯抉擇建議',
+        subtitle: '很多半調子命理師看到缺水就只會叫客戶補水，但合格命理師必須綜合四柱評估：',
+        diagnosis: diagDesc,
+        firstGod: firstGod,
+        firstGodDesc: firstGodDesc,
+        secondGod: secondGod,
+        secondGodDesc: secondGodDesc,
+        careerGuide: careerDesc,
+        luckyDir: luckyDir
+      }
+    };
+  }
+
+  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
 
 })();
