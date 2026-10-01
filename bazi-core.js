@@ -926,6 +926,261 @@
     };
   }
 
-  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
+  
+  function generateElementMasterGuide(data) {
+    if (!data || !data.pillars || data.pillars.length < 4) return null;
+    const dm = data.dayMaster;
+    const dmEl = GAN_ELEMENT[dm];
+    const dmYy = GAN_YINYANG[dm];
+    const ps = data.pillars;
+    const wp = data.weightedFiveElements?.percentages || {};
+    const supportScore = data.scores?.support || 50;
+    const isStrong = supportScore >= 48;
+    const strengthTitle = isStrong ? '身旺' : '身弱';
+
+    // 排序五行
+    const sorted = ELEMENTS.slice().sort((a,b) => (wp[b]||0) - (wp[a]||0));
+    const e1 = sorted[0], e2 = sorted[1];
+    const eLast = sorted[sorted.length - 1], ePenult = sorted[sorted.length - 2];
+    const heavyPct = Math.round(((wp[e1]||0) + (wp[e2]||0)) * 10) / 10;
+    const heavyDesc = `${e1}${e2}厚重`;
+    const lackList = sorted.filter(e => (wp[e]||0) < 8);
+    const lackDesc = lackList.length ? `局中缺${lackList.join('、')}` : `五行稍偏${eLast}`;
+
+    // 尋找日支、時支的代表字
+    const dayZhi = ps[2].zhi;
+    const dayZhiEl = ZHI_ELEMENT[dayZhi];
+    const timeZhi = ps[3].zhi;
+    const timeZhiEl = ZHI_ELEMENT[timeZhi];
+
+    let headerTitle = `${dm}金${strengthTitle}（${heavyDesc}、${lackDesc}）—— 專業命理開運與調和全攻略`;
+    if (dmEl !== '金') {
+      headerTitle = `${dm}${dmEl}${strengthTitle}（${heavyDesc}、${lackDesc}）—— 專業命理開運與調和全攻略`;
+    }
+
+    let coreMotto = '';
+    let coreDetail = '';
+    let firstGod = { name: '', title: '', intro: '', bullets: [] };
+    let secondGod = { name: '', title: '', intro: '', bullets: [] };
+    let thirdGod = { name: '', title: '', intro: '', bullets: [] };
+    let checklist = [];
+
+    if (dmEl === '金') {
+      if (isStrong) {
+        coreMotto = '禁忌土金，引水為泉，植木為樑，適火煉金';
+        coreDetail = `此盤土金能量高達約 ${heavyPct}%，最忌再補「土（偏印/正印）與金（比劫/比肩）」——土來會徹底埋金、讓思維更加沉重窒息；金來會加劇比劫奪財、引發人際破耗。唯一的破局之道，在於以「水」為第一用神洗金潤土，以「木」為第二用神疏土生財，並善用日支之「火」淬鍊成器。`;
+
+        firstGod = {
+          name: '水',
+          title: '智慧、流通與心性鬆綁',
+          intro: '金太剛則易折，土太厚則壅塞。水是這輩子最重要的性靈修為，代表情緒的洩洪口與做事的彈性。',
+          bullets: [
+            { h: '放下執念，學會繞道而行', b: '遇事不硬碰硬、不與環境死磕。當感覺事情卡住時，提醒自己「流水遇石則繞，不損其奔騰」，妥協與轉彎不是認輸，而是最高級的策略。' },
+            { h: '暢通表達，建立情緒出口', b: '五行缺水容易把壓力與委屈往肚子裡吞，最終化為內耗或暴躁。平時需建立傾訴機制，無論是找信任的朋友、專業諮詢，或是透過寫作、記錄將思緒排解出來，切忌悶在心中。' },
+            { h: '柔和身段，練習刻意示弱', b: '庚辛金自尊極強，常給人難以靠近的距離感。學會主動傾聽他人意見，在人際溝通中多用提問代替斷言，留給他人三分餘地，也是為自己開闢活路。' }
+          ]
+        };
+
+        secondGod = {
+          name: '木',
+          title: '落地執行、長期深耕與守財',
+          intro: `時支「${timeZhi}${timeZhiEl}」是命局潛在的財富之根與破土工具。厚土需要木來疏鬆，否則才華永遠被掩埋。`,
+          bullets: [
+            { h: '打破空想，縮短「想法到行動」的距離', b: '印星重的人最容易過度規劃、在腦海中推演無數阻礙而遲遲不啟動。請堅持「先完成、再完美」，每有想法，24 小時內先邁出最小的一步。' },
+            { h: '專注長期主義，戒除短線投機', b: '強金虎視眈眈，切忌追求賺快錢、高槓桿投資或盲目合夥分潤。資產配置應以穩定防禦、長線定投、實體資產為主，合約條款必須白紙黑字，切莫因講義氣而犧牲利益。' },
+            { h: '適合發展領域', b: '需要長線累積、具結構性與落地深度的行業，如專業技術顧問、系統架構、教育培訓、文化出版、企劃設計、綠色產業、園藝木造等。' }
+          ]
+        };
+
+        thirdGod = {
+          name: '火',
+          title: '規矩、提振與轉化',
+          intro: `日支坐「${dayZhi}${dayZhiEl}」，內藏官殺之火。火能克制過旺的強金，但需要適度引導，避免與厚土混成焦燥。`,
+          bullets: [
+            { h: '化內耗為正向自律', b: '官殺火代表自我要求。不要把標準變成苛求自己的心魔，而要將其轉化為對專業的高標準輸出與正向影響力。' },
+            { h: '借光取暖，保持心理陽光', b: '多接觸戶外陽光、進行有氧排汗運動，驅散命局厚土的陰沉與孤僻，讓內在充滿溫暖與包容力。' }
+          ]
+        };
+
+        checklist = [
+          { aspect: '開運貴人', method: '優先結交八字水旺（生於冬季亥、子月）或木旺（生於春季寅、卯月）的朋友、伴侶與合作夥伴。', purpose: '引進命局最匱乏的能量，幫助化解固執、帶來靈感與生財機遇。' },
+          { aspect: '服裝配色', method: '日常穿搭以黑色、深藍色（屬水）與青綠色、草木綠（屬木）為首選；可點綴少許紅紫（屬火）；大幅減少大面積土黃、卡其、金銀與純白色。', purpose: '壓抑過強的土金燥氣，調和視覺與氣場平衡。' },
+          { aspect: '居所風水', method: '居家或辦公桌適宜擺放流動流水景觀、小型魚缸、大葉綠色觀葉植物；保持室內光線明亮與空氣流通。', purpose: '滋潤室內氣場，以水潤土、以木疏土。' },
+          { aspect: '身心調養', method: '養成游泳、水療、溫泉、泡澡的習慣；多安排至海邊、湖泊或森林步道散步；飲食多補充水分與黑芝麻、黑豆等滋陰補腎之物。', purpose: '針對「缺水燥土」可能引發的泌尿系統、腸胃消化與呼吸道脆弱進行體質調候。' }
+        ];
+      } else {
+        // 金弱
+        coreMotto = '禁忌木火，培土生金，引金固本，慎防水冷';
+        coreDetail = `此盤日主金氣偏弱，受外部木（財星）耗、火（官殺）剋嚴重。最忌再盲目補水木或猛火剋金。破局之道在於以「土（印星）」為第一用神滋養身心，以「金（比劫）」為第二用神幫身奪權。`;
+        firstGod = {
+          name: '土', title: '築基、厚德與包容承接',
+          intro: '土為金母，是身弱者最厚實的能量庇護所。',
+          bullets: [
+            { h: '專注本業積累，不盲目擴張', b: '身弱時切忌多線作戰，守住核心優勢方能立於不敗。' },
+            { h: '借助貴人平台，團隊協同作戰', b: '多向資深長輩前輩請益，借助大機構或團隊的品牌支撐自己。' }
+          ]
+        };
+        secondGod = {
+          name: '金', title: '立界、勇斷與自信重塑',
+          intro: '金為同儕助力，提供關鍵時挺身而出的膽識與骨氣。',
+          bullets: [
+            { h: '樹立心理邊界，敢於說不', b: '不再無底線討好妥協，清楚聲明個人底線。' },
+            { h: '專案合夥，利益共享', b: '尋找互補盟友共同承擔風險，分進合擊。' }
+          ]
+        };
+        thirdGod = {
+          name: '水', title: '適度流通，避免凝滯',
+          intro: '適量之水滋潤流通，但不可過多以免洩身太甚。',
+          bullets: [
+            { h: '保持靈動思維', b: '不因循守舊，在穩定框架內適度發揮靈活創意。' }
+          ]
+        };
+        checklist = [
+          { aspect: '開運貴人', method: '優先結交八字土旺（辰戌丑未月）或金旺（申酉月）的朋友與主管。', purpose: '補充自身氣力，提供貴人庇護與事業支撐。' },
+          { aspect: '服裝配色', method: '日常穿搭多用土黃、米褐、暖白與金銀色系；減少大面積青綠與大紅。', purpose: '生旺本命元神，增強威儀與鎮定力。' },
+          { aspect: '居所風水', method: '室內宜擺設黃水晶、陶瓷、厚實木石雕刻，保持客廳明亮穩固。', purpose: '厚植土金根基，安神固元。' },
+          { aspect: '身心調養', method: '規律生活，避免熬夜勞碌；飲食多攝取山藥、根莖類、糙米溫潤健脾。', purpose: '健脾益肺，強固先天免疫屏障。' }
+        ];
+      }
+    } else if (dmEl === '木') {
+      if (isStrong) {
+        coreMotto = '禁忌水木，引火通明，植土為財，適金修剪';
+        coreDetail = `此盤木氣旺盛達 ${heavyPct}%，最忌再灌「水」生木或「木」比劫爭奪。破局之道在於以「火」為第一用神洩秀通明，以「土」為第二用神承接財富，並善用「金」修枝成樑。`;
+        firstGod = {
+          name: '火', title: '熱情、表達與才華通明',
+          intro: '木火通明乃文彩斐然之象，把內在蓬勃想法轉化為耀眼影響力。',
+          bullets: [
+            { h: '勇於登台展現，擴大聲量', b: '不再隱藏實力，透過演講、內容創作或公開分享彰顯個人價值。' },
+            { h: '以樂觀熱忱感染他人', b: '化解獨自生悶氣的慣性，用明朗正向的態度激勵團隊。' }
+          ]
+        };
+        secondGod = {
+          name: '土', title: '落實、深耕與資本轉化',
+          intro: '茂盛之木需要厚土紮根，才華才能落地變現。',
+          bullets: [
+            { h: '堅持商業實用導向', b: '每項想法都必須對齊實際需求與獲利模式，避免曲高和寡。' },
+            { h: '做好財富留存與資產布局', b: '把流動收益轉化為穩健不動產或優質資產。' }
+          ]
+        };
+        thirdGod = {
+          name: '金', title: '自律、聚焦與取捨裁減',
+          intro: '金能修剪多餘枝節，使大樹向上昂揚。',
+          bullets: [
+            { h: '學會聚焦核心目標', b: '刪除無效社交與分散精力的旁枝末節，集中打爆單點。' }
+          ]
+        };
+        checklist = [
+          { aspect: '開運貴人', method: '優先結交八字火旺（巳午月）或土旺（辰戌丑未月）的合作夥伴。', purpose: '引動食傷生財大運，點石成金。' },
+          { aspect: '服裝配色', method: '穿搭首選紅、粉、紫暖色調及米黃、大地色；減少大面積黑藍與墨綠。', purpose: '激發積極動能，轉化鬱結木氣。' },
+          { aspect: '居所風水', method: '保持充足採光，擺設聚寶盆、暖光燈具或石雕茶盤。', purpose: '引火生土，聚氣生財。' },
+          { aspect: '身心調養', method: '多安排戶外陽光運動，飲食多補充蕃茄、紅蘿蔔、枸杞等溫潤養氣食材。', purpose: '舒暢肝經，促進代謝與活力。' }
+        ];
+      } else {
+        // 木弱
+        coreMotto = '禁忌金土，引水灌溉，培木成林，慎防燥火';
+        coreDetail = `此盤木弱受強金剋伐、厚土重耗。破局之道在於以「水（印星）」為第一用神滋潤養生，以「木（比劫）」為第二用神聚眾成林。`;
+        firstGod = { name: '水', title: '涵養、充電與智慧汲取', intro: '久旱逢甘霖，身弱之木最需智慧養分灌注。', bullets: [{ h: '持續學習精進', b: '給自己充分充電與消化時間，不急於過早定論。' }, { h: '尋求慈長指引', b: '親近智者，在良師益友引領下少走彎路。' }] };
+        secondGod = { name: '木', title: '抱團、同盟與互助共榮', intro: '獨木難支，唯有成林才能抵禦狂風驟雨。', bullets: [{ h: '依託社群力量', b: '融入志同道合的圈子，借同儕激勵提升行動力。' }, { h: '重塑自信脊梁', b: '肯定自身獨特優勢，不再自我懷疑。' }] };
+        thirdGod = { name: '火', title: '微火暖神，不燥不烈', intro: '適度溫暖驅寒即可，切忌火烈焚身。', bullets: [{ h: '保持溫和熱忱', b: '在安穩中保有對生命的期待。' }] };
+        checklist = [
+          { aspect: '開運貴人', method: '多結交生於亥子月（水旺）或寅卯月（木旺）的朋友。', purpose: '灌注生機，強健心力。' },
+          { aspect: '服裝配色', method: '以墨黑、深藍與翠綠、青碧為日常主色。', purpose: '生扶元神，凝神聚力。' },
+          { aspect: '居所風水', method: '擺放水耕植物、綠植或書法墨寶，通風清爽。', purpose: '涵潤生機，蓄勢待發。' },
+          { aspect: '身心調養', method: '充足睡眠，少熬夜傷肝；多飲水，多吃黑木耳、藍莓、深綠葉菜。', purpose: '滋養肝腎，疏筋活絡。' }
+        ];
+      }
+    } else if (dmEl === '水') {
+      if (isStrong) {
+        coreMotto = '禁忌金水，引木疏導，引火暖局，適土為堤';
+        coreDetail = `此盤金水過旺達 ${heavyPct}%，勢若奔騰汪洋。最忌金水再灌。破局之道在於以「木」為第一用神疏導旺勢，以「火」為第二用神暖局化寒，並善用「土」作為堤防規範。`;
+        firstGod = { name: '木', title: '引導、創作與技術轉化', intro: '江海之水唯有順流疏導，方能化作推動巨輪的動力。', bullets: [{ h: '將直覺轉化為具體作品', b: '不再任由思緒飄散，用程式、設計、文字或產品落地呈現。' }, { h: '保持教學分享心態', b: '在輔導與輸出中整理自身龐雜知識。' }] };
+        secondGod = { name: '火', title: '熱情、社交與財富暖局', intro: '水多則寒，唯有火光普照才能化冰雪為暖流，迎來繁榮財富。', bullets: [{ h: '積極走向真實市場', b: '主動參與商業合作，不甘於僅做幕後空想家。' }, { h: '溫暖表達同理心', b: '融化冰冷防備，拉近人際信任。' }] };
+        thirdGod = { name: '土', title: '邊界、守規與擔當架構', intro: '堤防堅固，水流才不致泛濫成災。', bullets: [{ h: '訂定明確紀律目標', b: '以嚴謹時程表約束渙散節奏。' }] };
+        checklist = [
+          { aspect: '開運貴人', method: '優先結交八字木旺（寅卯月）或火旺（巳午月）的友人夥伴。', purpose: '疏導水性，溫暖心靈。' },
+          { aspect: '服裝配色', method: '以青綠、翠色搭配熱情紅、橙橘色調；減少大面積黑白金灰。', purpose: '驅散寒氣，激發商務活力。' },
+          { aspect: '居所風水', method: '多採用暖色光源，布置大型闊葉盆栽或香氛蠟燭。', purpose: '調和水氣，生旺木火。' },
+          { aspect: '身心調養', method: '多到戶外曬太陽、進行熱瑜珈或快走；飲食多溫熱生薑、紅棗、桂圓。', purpose: '驅除體內寒濕，提升心腎陽氣。' }
+        ];
+      } else {
+        coreMotto = '禁忌土火，引金生水，比劫幫扶，慎防乾涸';
+        coreDetail = `此盤水弱受厚土圍困、燥火熬乾。破局之道在於以「金（印星）」為第一用神生水發源，以「水（比劫）」為第二用神匯流成川。`;
+        firstGod = { name: '金', title: '凝練、標準與源遠流長', intro: '高山出泉，金生麗水，是水弱者源源不絕的智慧依靠。', bullets: [{ h: '鑽研硬核專業技術', b: '憑藉不可替代的硬實力立足。' }, { h: '依賴成熟制度規範', b: '在穩健規章中做事，避免無序內耗。' }] };
+        secondGod = { name: '水', title: '聯網、借勢與靈活流動', intro: '涓涓細流匯入大江，借助團隊乘風破浪。', bullets: [{ h: '擴展人脈弱連結', b: '多接觸外界資訊，善用資訊差創造優勢。' }] };
+        thirdGod = { name: '木', title: '適度舒展才性', intro: '有微木吐秀即可，切莫過度耗損。', bullets: [{ h: '保持好奇心', b: '隨喜參與感興趣的興趣探索。' }] };
+        checklist = [
+          { aspect: '開運貴人', method: '多結交申酉月（金旺）或亥子月（水旺）的朋友。', purpose: '引水思源，強健身心。' },
+          { aspect: '服裝配色', method: '以純白、銀灰及海藍、曜黑為主色。', purpose: '增強冷靜專注與元氣防禦。' },
+          { aspect: '居所風水', method: '擺放銅鐘、金屬風鈴、水晶球或清澈小型水景。', purpose: '金生水源，氣韻流暢。' },
+          { aspect: '身心調養', method: '補充水分，充足作息；多食海帶、黑豆、百合、雪耳潤肺補水。', purpose: '潤燥養腎，強固循環機能。' }
+        ];
+      }
+    } else if (dmEl === '火') {
+      if (isStrong) {
+        coreMotto = '禁忌木火，引土洩火，引金求財，適水既濟';
+        coreDetail = `此盤木火能量強盛達 ${heavyPct}%。最忌再添木火烈焰。破局之道在於以「土」為第一用神洩火晦火，以「金」為第二用神熔金煉器生財，並善用「水」水火既濟。`;
+        firstGod = { name: '土', title: '厚重、沉澱與收斂鋒芒', intro: '烈火需得厚土承納，將暴烈熱量轉化為滋養萬物的溫暖。', bullets: [{ h: '降躁戒急，先冷靜後表態', b: '情緒衝動時默數十秒，凡事不急於當下宣判對錯。' }, { h: '深耕專業成果', b: '把絢麗激情轉為可交付的文件、流程與實體產品。' }] };
+        secondGod = { name: '金', title: '決斷、收穫與商業實踐', intro: '真金經烈火鍛造方成大器，是火旺者強大的財富戰場。', bullets: [{ h: '瞄準高價值商業目標', b: '敢於承擔大單交易與高難度談判。' }, { h: '落實績效數據考核', b: '用實實在在的成果說話。' }] };
+        thirdGod = { name: '水', title: '既濟、冷靜與自我反思', intro: '水火相濟方能安詳長久。', bullets: [{ h: '培養沉靜冥想習慣', b: '透過靜坐定息平抑亢奮心神。' }] };
+        checklist = [
+          { aspect: '開運貴人', method: '多結交辰戌丑未月（土旺）或申酉月（金旺）的朋友夥伴。', purpose: '收斂心火，轉燥為富。' },
+          { aspect: '服裝配色', method: '以米黃、咖啡、駝色搭配銀白、灰色；減少大紅大紫。', purpose: '平衡過度發散的火氣。' },
+          { aspect: '居所風水', method: '布置陶瓷花瓶、大理石茶几，保持安靜涼爽氛圍。', purpose: '鎮定氣場，吸納躁氣。' },
+          { aspect: '身心調養', method: '多游泳、散步、深呼吸，少吃麻辣燒烤，多飲綠豆湯、苦瓜降火。', purpose: '清心降火，保護心血管與神經。' }
+        ];
+      } else {
+        coreMotto = '禁忌水金，引木生火，引火助陣，慎防水澆';
+        coreDetail = `此盤火弱受強水撲滅、旺金耗神。破局之道在於以「木（印星）」為第一用神生火續焰，以「火（比劫）」為第二用神聚熱成輝。`;
+        firstGod = { name: '木', title: '累積、閱讀與底蘊深潛', intro: '如得良柴添薪，身弱之火方能歷久不息。', bullets: [{ h: '廣泛汲取跨界知識', b: '透過深度閱讀建立扎實的方法論體系。' }, { h: '沉心靜氣打磨基礎', b: '不急於出名獲利，靜待春風吹拂。' }] };
+        secondGod = { name: '火', title: '熱情、同心與抱團取暖', intro: '點點螢火聚集成炬，在夥伴支持中找回自信。', bullets: [{ h: '主動向正能量圈靠攏', b: '遠離抱怨消極環境，感受熱忱激勵。' }] };
+        thirdGod = { name: '土', title: '適度承載轉換', intro: '微土固本，轉化熱能。', bullets: [{ h: '按部就班行動', b: '從小事成就感建立穩定節奏。' }] };
+        checklist = [
+          { aspect: '開運貴人', method: '優先結交寅卯月（木旺）或巳午月（火旺）的貴人。', purpose: '添柴加火，重煥生機。' },
+          { aspect: '服裝配色', method: '穿搭首選草綠、森林綠及溫暖棗紅、亮橙色。', purpose: '生扶心陽，神采奕奕。' },
+          { aspect: '居所風水', method: '採光良好，多擺放生機綠植、暖調木質傢俱與藝術畫作。', purpose: '木火相生，朝氣蓬勃。' },
+          { aspect: '身心調養', method: '多接觸大自然與陽光，飲食補充櫻桃、紅棗、核桃、熱粥。', purpose: '溫補脾心，驅除體寒。' }
+        ];
+      }
+    } else {
+      // dmEl === '土'
+      if (isStrong) {
+        coreMotto = '禁忌火土，引金洩秀，引水為財，適木疏土';
+        coreDetail = `此盤火土厚重重疊達 ${heavyPct}%。最忌火再炙烤厚土。破局之道在於以「金」為第一用神開採秀氣，以「水」為第二用神滋養生財，並善用「木」疏鬆板結厚土。`;
+        firstGod = { name: '金', title: '精雕、效率與專業突破', intro: '厚土藏金，需得巧匠開採打磨，方顯千古奇珍。', bullets: [{ h: '打破保守沉悶，追求高效俐落', b: '凡事追求流程化、工具化，減少冗贅流程。' }, { h: '鍛鍊犀利分析思維', b: '敢於一針見血指出關鍵瓶頸。' }] };
+        secondGod = { name: '水', title: '滋潤、流通與財源廣進', intro: '燥土得甘露滋潤，始有生機萬千。', bullets: [{ h: '積極開拓流動性商業機會', b: '擁抱跨界市場，建立多元收益管道。' }, { h: '靈活因應外在變化', b: '打破僵固框架，隨順形勢起舞。' }] };
+        thirdGod = { name: '木', title: '秩序、革新與突破固化', intro: '林木深扎，土質疏鬆通氣。', bullets: [{ h: '主動擁抱新工具新挑戰', b: '走出舒適圈，讓思維煥然一新。' }] };
+        checklist = [
+          { aspect: '開運貴人', method: '優先結交申酉月（金旺）或亥子月（水旺）的朋友夥伴。', purpose: '開山見寶，點土成金。' },
+          { aspect: '服裝配色', method: '以純白、銀色、藏青、玄黑為主色；少穿土黃、赭紅。', purpose: '消解笨重滯氣，增添靈秀。' },
+          { aspect: '居所風水', method: '金屬工藝擺飾、微型噴泉、流水盆景，室內開窗透氣。', purpose: '流通氣場，以水潤土。' },
+          { aspect: '身心調養', method: '慢跑、伸展運動，飲食多補充白木耳、海藻、蓮藕、多喝清茶。', purpose: '滋陰清熱，調理脾胃與呼吸道。' }
+        ];
+      } else {
+        coreMotto = '禁忌木水，引火生土，比肩固土，慎防傾頹';
+        coreDetail = `此盤土氣羸弱，受強木重剋、大水沖蝕。破局之道在於以「火（印星）」為第一用神生身固土，以「土（比劫）」為第二用神築堤固基。`;
+        firstGod = { name: '火', title: '溫暖、信念與貴人烘托', intro: '得暖陽照耀，凍土方能孕育生機。', bullets: [{ h: '樹立不可動搖的信念', b: '在逆境中堅守初心，不為外境動搖。' }, { h: '主動向長者與主管爭取支持', b: '以誠懇贏得貴人傾力相助。' }] };
+        secondGod = { name: '土', title: '厚德、扎根與踏實穩行', intro: '聚沙成塔，在腳踏實地中累積底氣。', bullets: [{ h: '專注單一領域穩紮穩打', b: '不急功近利，以匠人精神磨鍊本領。' }] };
+        thirdGod = { name: '金', title: '適度自保禦敵', intro: '金能抗木護土，提供防衛底氣。', bullets: [{ h: '守好規則原則', b: '用清清楚楚的標準保護自己。' }] };
+        checklist = [
+          { aspect: '開運貴人', method: '多結交巳午月（火旺）或辰戌丑未月（土旺）的朋友。', purpose: '生扶基石，安穩心神。' },
+          { aspect: '服裝配色', method: '以明亮紅、橙橘及溫暖卡其、駝色為主。', purpose: '驅寒除濕，充盈氣血。' },
+          { aspect: '居所風水', method: '暖色光源、厚實地毯、陶瓷聚寶盆、石雕。', purpose: '安座泰山，基業長青。' },
+          { aspect: '身心調養', method: '三餐定時，飲食多吃南瓜、黃豆、紅棗、茯苓，養護中焦脾胃。', purpose: '強健脾陽，提升運化吸收。' }
+        ];
+      }
+    }
+
+    return {
+      headerTitle,
+      coreMotto,
+      coreDetail,
+      firstGod,
+      secondGod,
+      thirdGod,
+      checklist
+    };
+  }
+
+  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
 
 })();

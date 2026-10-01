@@ -1429,6 +1429,86 @@ body.overlay-open{overflow:hidden}
     `;
   }
 
+  function renderElementMasterGuideHtml(g) {
+    if (!g) return '';
+    const safe = x => esc(String(x ?? '—'));
+    return `
+      <article class="decode-card master-card" style="grid-column: 1 / -1; border-color: rgba(233,189,88,.42); background: radial-gradient(circle 600px at 0% 0%, rgba(233,189,88,.08), transparent 70%), rgba(14,17,25,.95); padding: 24px; box-shadow: 0 18px 45px rgba(0,0,0,.4);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+          <small style="color: #e9bd58; font-size: .68rem; letter-spacing: .14em; font-weight: 850;">五行能量調候 · 開運全攻略</small>
+          <span style="display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(233,189,88,.12); border: 1px solid rgba(233,189,88,.28); color: #f0ce73; font-size: .62rem; font-weight: 700;">專業命理開運與調和全攻略</span>
+        </div>
+        <h3 style="margin: 0 0 14px; color: #fdf6e6; font-size: 1.25rem; font-weight: 900; line-height: 1.4;">${safe(g.headerTitle)}</h3>
+
+        <div style="padding: 13px 16px; border: 1px solid rgba(233,189,88,.28); border-left: 4px solid #e9bd58; border-radius: 10px; background: rgba(233,189,88,.035); margin-bottom: 20px;">
+          <b style="color: #f5cf72; font-size: .84rem; display: block; margin-bottom: 6px; letter-spacing: .06em;">核心原則：${safe(g.coreMotto)}</b>
+          <p style="margin: 0; color: #cbd6e4; font-size: .74rem; line-height: 1.85;">${safe(g.coreDetail)}</p>
+        </div>
+
+        <div style="display: grid; gap: 16px;">
+          <!-- 一、心法修煉 -->
+          <div style="padding: 16px 18px; border: 1px solid rgba(117,220,228,.22); border-radius: 12px; background: rgba(117,220,228,.02);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="background: rgba(117,220,228,.15); color: #75dce4; font-weight: 900; border-radius: 6px; padding: 2px 7px; font-size: .66rem;">第一用神</span>
+              <h4 style="margin: 0; color: #e9f6f8; font-size: .95rem; font-weight: 850;">一、 心法修煉：${safe(g.firstGod.name)} —— ${safe(g.firstGod.title)}</h4>
+            </div>
+            <p style="margin: 0 0 10px; color: #9bb0c4; font-size: .73rem; line-height: 1.75; font-style: italic;">${safe(g.firstGod.intro)}</p>
+            <ul style="margin: 0; padding-left: 18px; color: #cfd8e4; font-size: .73rem; line-height: 1.85;">
+              ${g.firstGod.bullets.map(b => `<li style="margin-bottom: 7px;"><strong style="color: #72d7df;">${safe(b.h)}：</strong>${safe(b.b)}</li>`).join('')}
+            </ul>
+          </div>
+
+          <!-- 二、行動與事業 -->
+          <div style="padding: 16px 18px; border: 1px solid rgba(110,201,170,.25); border-radius: 12px; background: rgba(110,201,170,.02);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="background: rgba(110,201,170,.15); color: #6ec9aa; font-weight: 900; border-radius: 6px; padding: 2px 7px; font-size: .66rem;">第二用神</span>
+              <h4 style="margin: 0; color: #eaf8f3; font-size: .95rem; font-weight: 850;">二、 行動與事業：${safe(g.secondGod.name)} —— ${safe(g.secondGod.title)}</h4>
+            </div>
+            <p style="margin: 0 0 10px; color: #99b8ad; font-size: .73rem; line-height: 1.75; font-style: italic;">${safe(g.secondGod.intro)}</p>
+            <ul style="margin: 0; padding-left: 18px; color: #cfd8e4; font-size: .73rem; line-height: 1.85;">
+              ${g.secondGod.bullets.map(b => `<li style="margin-bottom: 7px;"><strong style="color: #8be0b6;">${safe(b.h)}：</strong>${safe(b.b)}</li>`).join('')}
+            </ul>
+          </div>
+
+          <!-- 三、環境與格局 -->
+          <div style="padding: 16px 18px; border: 1px solid rgba(220,112,98,.24); border-radius: 12px; background: rgba(220,112,98,.02);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="background: rgba(220,112,98,.15); color: #dc7062; font-weight: 900; border-radius: 6px; padding: 2px 7px; font-size: .66rem;">環境調候</span>
+              <h4 style="margin: 0; color: #faebe9; font-size: .95rem; font-weight: 850;">三、 環境與格局：${safe(g.thirdGod.name)} —— ${safe(g.thirdGod.title)}</h4>
+            </div>
+            <p style="margin: 0 0 10px; color: #b7a09c; font-size: .73rem; line-height: 1.75; font-style: italic;">${safe(g.thirdGod.intro)}</p>
+            <ul style="margin: 0; padding-left: 18px; color: #cfd8e4; font-size: .73rem; line-height: 1.85;">
+              ${g.thirdGod.bullets.map(b => `<li style="margin-bottom: 7px;"><strong style="color: #e59990;">${safe(b.h)}：</strong>${safe(b.b)}</li>`).join('')}
+            </ul>
+          </div>
+
+          <!-- 四、日常生活開運實戰清單 -->
+          <div style="padding: 18px; border: 1px solid rgba(255,255,255,.09); border-radius: 12px; background: rgba(255,255,255,.015); overflow-x: auto;">
+            <h4 style="margin: 0 0 14px; color: #f5ead0; font-size: .95rem; font-weight: 850; border-bottom: 1px solid rgba(255,255,255,.07); padding-bottom: 8px;">四、 日常生活開運實戰清單</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: .72rem; line-height: 1.7; min-width: 580px;">
+              <thead>
+                <tr style="border-bottom: 1px solid rgba(233,189,88,.22); color: #ecd084; text-align: left;">
+                  <th style="padding: 9px 10px; width: 15%; font-weight: 800;">開運面向</th>
+                  <th style="padding: 9px 10px; width: 50%; font-weight: 800;">具體執行方式</th>
+                  <th style="padding: 9px 10px; width: 35%; font-weight: 800;">五行調理目的</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${g.checklist.map((c, i) => `
+                  <tr style="border-bottom: 1px solid rgba(255,255,255,.05); background: ${i % 2 === 0 ? 'rgba(255,255,255,.01)' : 'transparent'};">
+                    <td style="padding: 10px; font-weight: 800; color: #f0ce73; vertical-align: top;">${safe(c.aspect)}</td>
+                    <td style="padding: 10px; color: #d0d9e5; vertical-align: top;">${safe(c.method)}</td>
+                    <td style="padding: 10px; color: #9bb0c4; vertical-align: top;">${safe(c.purpose)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
   function sectionExplanation(key, data) {
     if (key === 'shensha') return renderShenshaExplanation(data);
     if (!data) return decodeCard('提示', '請先輸入出生時間並點擊「排八字」建立命盤。');
@@ -1437,6 +1517,13 @@ body.overlay-open{overflow:hidden}
       if (typeof BaziCore !== 'undefined' && typeof BaziCore.generateMasterReading === 'function') {
         const master = BaziCore.generateMasterReading(data);
         if (master) return renderMasterReadingHtml(master);
+      }
+    }
+
+    if (key === 'elements') {
+      if (typeof BaziCore !== 'undefined' && typeof BaziCore.generateElementMasterGuide === 'function') {
+        const guide = BaziCore.generateElementMasterGuide(data);
+        if (guide) return renderElementMasterGuideHtml(guide);
       }
     }
 
