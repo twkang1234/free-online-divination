@@ -551,12 +551,6 @@ body.overlay-open{overflow:hidden}
                 <div class="group-grid" id="tenGodGroups"></div>
               </section>
             </div>
-
-            <div class="insight-strip" id="tenGodInsight"></div>
-
-            <div class="combo-title-row"><h4>這些數字放在一起，對你代表什麼？</h4><span>白話整合</span></div>
-            <div class="answer-first-lead" id="deepLifeLead"></div>
-            <div class="answer-first-grid" id="deepLifeGrid"></div>
           </div>
         </details>
 
@@ -894,6 +888,8 @@ body.overlay-open{overflow:hidden}
   function groupOfTenGod(t){if(['比肩','劫財'].includes(t))return'比劫';if(['食神','傷官'].includes(t))return'食傷';if(['偏財','正財'].includes(t))return'財星';if(['七殺','正官'].includes(t))return'官殺';return'印星';}
 
   function renderDeepTenGods(data){
+    const leadEl = $('deepLifeLead'), gridEl = $('deepLifeGrid');
+    if (!leadEl || !gridEl) return;
     const ps=data.tenGodDistribution.percentages,gp=data.tenGodDistribution.groupPercentages;
     const top=tenGodOrder.map(t=>[t,Number(ps[t])||0]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,3);
     const main=top[0],prof=godProfile[main[0]]||{},concentration=Math.round(top.reduce((s,x)=>s+x[1],0)*10)/10;
@@ -1509,6 +1505,108 @@ body.overlay-open{overflow:hidden}
     `;
   }
 
+  function renderTenGodMasterGuideHtml(g) {
+    if (!g) return '';
+    const safe = x => esc(String(x ?? '—'));
+    return `
+      <article class="decode-card master-card" style="grid-column: 1 / -1; border-color: rgba(233,189,88,.42); background: radial-gradient(circle 600px at 0% 0%, rgba(233,189,88,.08), transparent 70%), rgba(14,17,25,.95); padding: 24px; box-shadow: 0 18px 45px rgba(0,0,0,.4);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+          <small style="color: #e9bd58; font-size: .68rem; letter-spacing: .14em; font-weight: 850;">十神結構與深度性格剖析 · 行為密碼</small>
+          <span style="display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(233,189,88,.12); border: 1px solid rgba(233,189,88,.28); color: #f0ce73; font-size: .62rem; font-weight: 700;">底層認知與行為機制</span>
+        </div>
+        <div style="padding: 12px 16px; border: 1px solid rgba(233,189,88,.25); border-left: 4px solid #e9bd58; border-radius: 8px; background: rgba(233,189,88,.035); margin-bottom: 20px;">
+          <b style="color: #f7e2a9; font-size: .88rem; display: block; letter-spacing: .05em;">${safe(g.headerIntro)}</b>
+        </div>
+
+        <div style="display: grid; gap: 16px;">
+          <!-- 一、核心作業系統 -->
+          <div style="padding: 18px; border: 1px solid rgba(117,220,228,.25); border-radius: 12px; background: rgba(117,220,228,.02);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="background: rgba(117,220,228,.15); color: #75dce4; font-weight: 900; border-radius: 6px; padding: 2px 7px; font-size: .66rem;">核心系統</span>
+              <h4 style="margin: 0; color: #f2f9fa; font-size: .98rem; font-weight: 850;">${safe(g.part1.title)}</h4>
+            </div>
+            <p style="margin: 0 0 12px; color: #9bb0c4; font-size: .74rem; line-height: 1.75;">${safe(g.part1.summary)}</p>
+            <div style="margin-bottom: 10px; padding: 10px 14px; border-left: 3px solid #75dce4; background: rgba(255,255,255,.02); border-radius: 6px;">
+              <b style="color: #89dfe6; font-size: .76rem; display: block; margin-bottom: 3px;">底層邏輯：</b>
+              <span style="color: #cbd6e4; font-size: .73rem; line-height: 1.75;">${safe(g.part1.coreLogic)}</span>
+            </div>
+            <div style="margin-bottom: 10px; padding: 10px 14px; border-left: 3px solid #75dce4; background: rgba(255,255,255,.02); border-radius: 6px;">
+              <b style="color: #89dfe6; font-size: .76rem; display: block; margin-bottom: 3px;">行為模式：</b>
+              <span style="color: #cbd6e4; font-size: .73rem; line-height: 1.8;">${safe(g.part1.behaviorMode)}</span>
+            </div>
+            <div style="padding: 10px 14px; border-left: 3px solid #e9bd58; background: rgba(233,189,88,.03); border-radius: 6px;">
+              <b style="color: #f0ce73; font-size: .76rem; display: block; margin-bottom: 3px;">五行交融：</b>
+              <span style="color: #d6dfec; font-size: .73rem; line-height: 1.8;">${safe(g.part1.fiveElementsBlend)}</span>
+            </div>
+          </div>
+
+          <!-- 二、行動與防禦機制 -->
+          <div style="padding: 18px; border: 1px solid rgba(233,189,88,.25); border-radius: 12px; background: rgba(233,189,88,.02);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="background: rgba(233,189,88,.15); color: #e9bd58; font-weight: 900; border-radius: 6px; padding: 2px 7px; font-size: .66rem;">行動機制</span>
+              <h4 style="margin: 0; color: #fff8ea; font-size: .98rem; font-weight: 850;">${safe(g.part2.title)}</h4>
+            </div>
+            <p style="margin: 0 0 12px; color: #b8ad96; font-size: .74rem; line-height: 1.75;">${safe(g.part2.summary)}</p>
+            <div style="margin-bottom: 10px; padding: 10px 14px; border-left: 3px solid #e9bd58; background: rgba(255,255,255,.02); border-radius: 6px;">
+              <b style="color: #edd18a; font-size: .76rem; display: block; margin-bottom: 3px;">底層邏輯：</b>
+              <span style="color: #cbd6e4; font-size: .73rem; line-height: 1.75;">${safe(g.part2.coreLogic)}</span>
+            </div>
+            <div style="margin-bottom: 10px; padding: 10px 14px; border-left: 3px solid #e9bd58; background: rgba(255,255,255,.02); border-radius: 6px;">
+              <b style="color: #edd18a; font-size: .76rem; display: block; margin-bottom: 5px;">行為模式：</b>
+              <div style="display: grid; gap: 8px;">
+                ${g.part2.behaviorList.map(b => `<div style="color: #cbd6e4; font-size: .73rem; line-height: 1.8;">${safe(b)}</div>`).join('')}
+              </div>
+            </div>
+            <div style="padding: 10px 14px; border-left: 3px solid #dc7062; background: rgba(220,112,98,.03); border-radius: 6px;">
+              <b style="color: #e59990; font-size: .76rem; display: block; margin-bottom: 3px;">五行交融：</b>
+              <span style="color: #d6dfec; font-size: .73rem; line-height: 1.8;">${safe(g.part2.fiveElementsBlend)}</span>
+            </div>
+          </div>
+
+          <!-- 三、致命傷與能量黑洞 -->
+          <div style="padding: 18px; border: 1px solid rgba(220,112,98,.28); border-radius: 12px; background: rgba(220,112,98,.02);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="background: rgba(220,112,98,.15); color: #dc7062; font-weight: 900; border-radius: 6px; padding: 2px 7px; font-size: .66rem;">破局破口</span>
+              <h4 style="margin: 0; color: #faebe9; font-size: .98rem; font-weight: 850;">${safe(g.part3.title)}</h4>
+            </div>
+            <p style="margin: 0 0 12px; color: #c4a9a5; font-size: .74rem; line-height: 1.75;">${safe(g.part3.summary)}</p>
+            <div style="margin-bottom: 10px; padding: 10px 14px; border-left: 3px solid #dc7062; background: rgba(255,255,255,.02); border-radius: 6px;">
+              <b style="color: #e59990; font-size: .76rem; display: block; margin-bottom: 3px;">底層邏輯：</b>
+              <span style="color: #cbd6e4; font-size: .73rem; line-height: 1.75;">${safe(g.part3.coreLogic)}</span>
+            </div>
+            <div style="margin-bottom: 10px; padding: 10px 14px; border-left: 3px solid #dc7062; background: rgba(255,255,255,.02); border-radius: 6px;">
+              <b style="color: #e59990; font-size: .76rem; display: block; margin-bottom: 5px;">行為模式：</b>
+              <div style="display: grid; gap: 8px;">
+                <div style="color: #cbd6e4; font-size: .73rem; line-height: 1.8;">
+                  <strong style="color: #eab4ae;">${safe(g.part3.missingTitle)}：</strong>${safe(g.part3.missingText)}
+                </div>
+                <div style="color: #cbd6e4; font-size: .73rem; line-height: 1.8;">
+                  <strong style="color: #eab4ae;">人際關係的硬傷：</strong>${safe(g.part3.socialText)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 四、能量破局之道與實踐心法 -->
+          <div style="padding: 18px; border: 1px solid rgba(110,201,170,.25); border-radius: 12px; background: rgba(110,201,170,.02);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+              <span style="background: rgba(110,201,170,.15); color: #6ec9aa; font-weight: 900; border-radius: 6px; padding: 2px 7px; font-size: .66rem;">破局心法</span>
+              <h4 style="margin: 0; color: #eaf8f3; font-size: .98rem; font-weight: 850;">${safe(g.part4.title)}</h4>
+            </div>
+            <div style="display: grid; gap: 9px;">
+              ${g.part4.tips.map((t, idx) => `
+                <div style="padding: 11px 14px; border: 1px solid rgba(255,255,255,.07); border-left: 3px solid #6ec9aa; border-radius: 8px; background: rgba(255,255,255,.02);">
+                  <b style="color: #8be0b6; display: block; margin-bottom: 3px; font-size: .78rem;">${idx + 1}. ${safe(t.h)}</b>
+                  <span style="color: #cbd6e4; font-size: .73rem; line-height: 1.75; display: block;">${safe(t.b)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
   function sectionExplanation(key, data) {
     if (key === 'shensha') return renderShenshaExplanation(data);
     if (!data) return decodeCard('提示', '請先輸入出生時間並點擊「排八字」建立命盤。');
@@ -1524,6 +1622,13 @@ body.overlay-open{overflow:hidden}
       if (typeof BaziCore !== 'undefined' && typeof BaziCore.generateElementMasterGuide === 'function') {
         const guide = BaziCore.generateElementMasterGuide(data);
         if (guide) return renderElementMasterGuideHtml(guide);
+      }
+    }
+
+    if (key === 'tengods') {
+      if (typeof BaziCore !== 'undefined' && typeof BaziCore.generateTenGodMasterGuide === 'function') {
+        const guide = BaziCore.generateTenGodMasterGuide(data);
+        if (guide) return renderTenGodMasterGuideHtml(guide);
       }
     }
 
@@ -1843,7 +1948,10 @@ ${promptContext(data)}
     $('tenGodGroups').innerHTML=Object.keys(groupDescriptions).map(g=>`<div class="group-card ${g===dom?'dominant':''}"><strong>${esc(g)} <span>${esc(gp[g]||0)}%</span></strong><p>${esc(groupDescriptions[g])}</p></div>`).join('');
     const topTen=tenGodOrder.map(t=>[t,Number(ps[t])||0]).sort((a,b)=>b[1]-a[1])[0]||['—',0];
     const prof=godProfile[topTen[0]]||{};
-    $('tenGodInsight').innerHTML=`<b>${esc(topTen[0])} ${esc(topTen[1])}%</b> 是目前最明顯的單一十神，屬於「${esc(godPercentLabel(topTen[1]))}」。白話來說：${esc(prof.mind||godPlain[topTen[0]]||'')} <span style="opacity:.72">這裡是性格與反應傾向，不是吉凶分數；展開白話解讀可看優勢、盲點與第二、第三名如何補充。</span>`;
+    const insEl = $('tenGodInsight');
+    if (insEl) {
+      insEl.innerHTML=`<b>${esc(topTen[0])} ${esc(topTen[1])}%</b> 是目前最明顯的單一十神，屬於「${esc(godPercentLabel(topTen[1]))}」。白話來說：${esc(prof.mind||godPlain[topTen[0]]||'')} <span style="opacity:.72">這裡是性格與反應傾向，不是吉凶分數；展開白話解讀可看優勢、盲點與第二、第三名如何補充。</span>`;
+    }
   }
 
   function renderRelations(data){

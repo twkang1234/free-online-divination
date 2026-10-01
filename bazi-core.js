@@ -1181,6 +1181,219 @@
     };
   }
 
-  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
+  
+  function generateTenGodMasterGuide(data) {
+    if (!data || !data.tenGodDistribution || !data.pillars) return null;
+    const dm = data.dayMaster;
+    const dmEl = GAN_ELEMENT[dm];
+    const ps = data.tenGodDistribution.percentages || {};
+    const gp = data.tenGodDistribution.groupPercentages || {};
+    const wp = data.weightedFiveElements?.percentages || {};
+
+    // 排序所有十神
+    const sortedGods = TEN_GODS.slice().map(t => [t, Number(ps[t]) || 0]).sort((a,b) => b[1] - a[1]);
+    const topGod = sortedGods[0] || ['偏印', 0];
+    const secondGod = sortedGods[1] || ['劫財', 0];
+    const thirdGod = sortedGods[2] || ['七殺', 0];
+
+    // 排序五行
+    const sortedEls = ELEMENTS.slice().map(e => [e, Number(wp[e]) || 0]).sort((a,b) => b[1] - a[1]);
+    const topEl = sortedEls[0] || [dmEl, 0];
+    const secondEl = sortedEls[1] || [dmEl, 0];
+    const weakEl = sortedEls[sortedEls.length - 1] || ['水', 0];
+
+    // 排序五大十神群組
+    const groups = ['比劫', '食傷', '財星', '官殺', '印星'];
+    const sortedGroups = groups.slice().map(g => [g, Number(gp[g]) || 0]).sort((a,b) => b[1] - a[1]);
+    const topGroup = sortedGroups[0] || ['印星', 0];
+    const weakGroup = sortedGroups[sortedGroups.length - 1] || ['食傷', 0];
+
+    // 對應最弱群組的十神名稱
+    const groupGodMap = {
+      '比劫': ['比肩', '劫財'],
+      '食傷': ['食神', '傷官'],
+      '財星': ['偏財', '正財'],
+      '官殺': ['七殺', '正官'],
+      '印星': ['偏印', '正印']
+    };
+    const weakGodNames = groupGodMap[weakGroup[0]] || ['食神', '傷官'];
+    const weakGodsPct = Math.round(((ps[weakGodNames[0]] || 0) + (ps[weakGodNames[1]] || 0)) * 10) / 10;
+
+    // 核心系統比喻與底層邏輯
+    const metaphorMap = {
+      '偏印': '超級電腦',
+      '正印': '中央智慧資料庫',
+      '比肩': '重裝獨立伺服器',
+      '劫財': '高頻博弈引擎',
+      '食神': '深度研發工匠室',
+      '傷官': '超頻顛覆處理器',
+      '偏財': '商業調度中心',
+      '正財': '高精度精算系統',
+      '七殺': '戰略反恐指揮塔',
+      '正官': '秩序合規主控台'
+    };
+
+    const coreLogicMap = {
+      '偏印': '先解構，再建構；沒有驗證過的資訊，我不信。',
+      '正印': '以厚德承載，追求長遠安全與體制認同；先吸收涵養，不急於浮誇爭功。',
+      '比肩': '獨立自主，人人平等；我的地盤我做主，不隨波逐流，堅持親力親為。',
+      '劫財': '尊嚴與勝負欲極強，遇強則強，習慣單打獨鬥，凡事不甘居人後。',
+      '食神': '追求純粹、舒適與審美；注重精神品質與手藝打磨，順其自然不喜被強迫。',
+      '傷官': '打破常規，追求極致突破；討厭平庸與束縛，敢於挑戰權威與既定框架。',
+      '偏財': '敏銳捕捉商機，靈活整合資源；看大局、重實效，善於以小博大。',
+      '正財': '踏實精確，風險控制第一；凡事講求SOP、性價比與可預期的穩定收益。',
+      '七殺': '危機感驅動，敢於直面硬仗；以結果為導向，崇尚實力、抗壓與雷厲風行。',
+      '正官': '追求秩序、榮譽與體制規範；顧全大局，重視道德底線與社會公信力。'
+    };
+
+    const behaviorModeMap = {
+      '偏印': '偏印代表非傳統的學習與吸收。命主的大腦就像一台高效能的伺服器，遇到任何問題，第一反應不是情緒化，而是「進入研究狀態」。他們會不斷地拆解、比較、跨領域搜尋資料，試圖找出事物運作的底層規律。',
+      '正印': '正印代表深厚扎實的傳統吸納與沉澱。大腦就像一座海納百川的圖書館，凡事講求脈絡、傳承與信用，遇事沉得住氣，善於傾聽與消化他人需求，不輕易動怒。',
+      '比肩': '比肩代表自我意志的高度篤定。思維獨立如頑石，遇到歧見或挑戰時，習慣以自己的準則來衡量，不喜仰賴他人施捨，凡事親力親為，堅持走自己的路。',
+      '劫財': '劫財代表強大的群體競爭本能與敏銳直覺。大腦時刻處於高度警覺與爭取狀態，善於在人際場域中捕捉先機，遇逆境不低頭，具有極強的號召力與防衛心。',
+      '食神': '食神代表細膩的專注力與感知力。做事講求沉浸與條理，遇事善於內化自省，注重精神共鳴與手藝打磨，不喜與人勾心鬥角，傾向於用專業與才華服人。',
+      '傷官': '傷官代表天馬行空的靈感與批判力。大腦永遠在尋找現有機制的漏洞與創新機會，反應奇快、一針見血，討厭繁文縟節與愚蠢的規範，常有驚世駭俗之創見。',
+      '偏財': '偏財代表開放宏觀的商業嗅覺。思維不拘泥於細節，善於審時度勢、借力使力，在複雜的人事與市場中快速抓住核心槓桿，人際圓滑、敢於冒險搏大。',
+      '正財': '正財代表條理分明的精確計算與落地耐力。遇到任何任務，第一反應是評估成本效益、制定清晰路徑，凡事講求按部就班與可靠性，是團隊中最值得信任的定海神針。',
+      '七殺': '七殺代表雷厲風行的危機應變能力。平時自帶不怒自威的氣場，在險境或重壓之下反而心明眼亮、果斷亮劍，執行力與破局魄力極為驚人。',
+      '正官': '正官代表嚴謹自律的制度思維與大局觀。行事光明磊落，講求原則、承諾與責任，善於在既有體系中協調各方利益，贏得長輩與同儕的高度認可。'
+    };
+
+    // 五行交融深度剖析
+    let fiveElBlendOne = '';
+    if (topEl[0] === '土' && (topGod[0] === '偏印' || topGod[0] === '正印')) {
+      fiveElBlendOne = `土主「承載與思考」。${topEl[1]}%的土配上${topGod[1]}%的${topGod[0]}，意味著命主的思考極具深度與廣度，但同時也帶來了「土多金埋」或「厚土壅塞」的沉重感。這會導致一個致命的行為卡點：「想得太多，做得太少」。因為大腦運轉太快，總覺得還沒準備好、還沒研究透徹，因此遲遲不願出手，或是對既有的SOP缺乏耐心，喜歡自己另闢蹊徑。`;
+    } else if (topEl[0] === '金' && (topGod[0] === '比肩' || topGod[0] === '劫財')) {
+      fiveElBlendOne = `金主「剛毅、決斷與原則」。${topEl[1]}%的金配上${topGod[1]}%的${topGod[0]}，意味著命主的性格極具剛性、威嚴與魄力，做事原則極強，不喜被拘束。但這同時帶來了「過剛則折」的沉重感，容易在人際相處中顯得過於銳利硬朗，不自覺給周遭帶來威壓感。`;
+    } else if (topEl[0] === '木') {
+      fiveElBlendOne = `木主「生發、仁慈與向上規劃」。${topEl[1]}%的木配上${topGod[1]}%的${topGod[0]}，命主思維活躍、富有遠見和擴張欲；但木旺缺乏收斂時，容易想法繁雜、多線展開而難以聚焦收尾。`;
+    } else if (topEl[0] === '火') {
+      fiveElBlendOne = `火主「熱烈、光明與感染力」。${topEl[1]}%的火配上${topGod[1]}%的${topGod[0]}，行動如電光石火、極具感染力與號召力；但火急易躁，需防耐心不足或情緒波動過於猛烈。`;
+    } else {
+      fiveElBlendOne = `水主「智慧、靈動與深層滲透」。${topEl[1]}%的水配上${topGod[1]}%的${topGod[0]}，直覺極敏銳、擅長隨機應變；但水多漫溢時容易思緒渙散、情緒悶沉，缺乏定力守成。`;
+    }
+
+    // 第二段：行動與防禦機制
+    let actionTitle = `披著「${secondGod[0]}」外衣的「${thirdGod[0]}」戰士`;
+    if (secondGod[0] === '食神' || secondGod[0] === '傷官') {
+      actionTitle = `以「${secondGod[0]}」為鋒刃的「${thirdGod[0]}」開拓者`;
+    } else if (secondGod[0] === '正財' || secondGod[0] === '偏財') {
+      actionTitle = `以「${secondGod[0]}」為抓手的「${thirdGod[0]}」操盤手`;
+    } else if (secondGod[0] === '正官' || secondGod[0] === '七殺') {
+      actionTitle = `具備「${secondGod[0]}」威儀與「${thirdGod[0]}」底氣的執行者`;
+    }
+
+    let actionLogic = '尊嚴與勝負欲極強，遇強則強，習慣單打獨鬥。';
+    if (secondGod[0] === '偏財' || secondGod[0] === '正財') {
+      actionLogic = '追求務實產出與資源回報，拒絕無意義的消耗，以結果衡量價值。';
+    } else if (secondGod[0] === '食神' || secondGod[0] === '傷官') {
+      actionLogic = '追求思想自主與靈感具象化，不甘受限於平庸框架，以創意征服挑戰。';
+    }
+
+    // 第二段 行為模式
+    let actionBehaviorOne = `${secondGod[0]}（${secondGod[1]}%）+ ${secondEl[0]}（${secondEl[1]}%）：${secondEl[0]}主${secondEl[0] === '金' ? '意氣、剛硬' : secondEl[0] === '木' ? '生機、仁義' : secondEl[0] === '水' ? '智慧、變通' : secondEl[0] === '火' ? '熱情、守禮' : '承載、信用'}。${secondGod[0]}代表自我意識強烈、不甘示弱、敢於競爭。這使得命主在群體中往往帶有一種「傲氣」，不容易輕易妥協。`;
+    if (secondGod[0] !== '劫財') {
+      actionBehaviorOne = `${secondGod[0]}（${secondGod[1]}%）+ ${secondEl[0]}（${secondEl[1]}%）：${secondEl[0]}賦予命主${secondEl[0] === '金' ? '果決俐落' : secondEl[0] === '木' ? '蓬勃生機' : secondEl[0] === '水' ? '靈活應變' : secondEl[0] === '火' ? '熱烈直率' : '沉穩踏實'}的作風。${secondGod[0]}調動了強烈的執行意志，在關鍵時刻能迅速切入核心。`;
+    }
+
+    let actionBehaviorTwo = `${thirdGod[0]}（${thirdGod[1]}%）：${thirdGod[0]}是壓力、規矩與挑戰。當遇到困難或明確的敵人時，${thirdGod[0]}的能量會瞬間爆發，讓命主進入極度專注的「戰鬥狀態」，展現出強大的執行力與抗壓性。`;
+
+    // 第二段 五行交融（格局化學反應）
+    let actionBlend = '';
+    const hasKill = ps['七殺'] > 10;
+    const hasSeal = (ps['偏印'] || 0) + (ps['正印'] || 0) > 25;
+    const hasOutput = (ps['傷官'] || 0) + (ps['食神'] || 0) > 15;
+    const hasWealth = (ps['偏財'] || 0) + (ps['正財'] || 0) > 15;
+    const hasPeer = (ps['比肩'] || 0) + (ps['劫財'] || 0) > 20;
+
+    if (hasKill && hasSeal) {
+      actionBlend = `這裡有一個非常關鍵的命理現象——「殺印相生」（火生土，土生金）。${ps['七殺']}%的七殺（火）本來是來剋${dm}金的，但中間隔著強大的偏印（土），火氣被土吸收，轉而去生扶日主。這意味著：命主能將外界的巨大壓力、批評或危機，轉化為自我成長的養分（印）。他們是那種「越挫越勇，在壓力下反而能冷靜產出」的類型。`;
+    } else if (hasOutput && hasWealth) {
+      actionBlend = `這裡展現出標準的「食傷生財」格局動力。食傷之才華與靈感源源不絕，化為推動商業實踐與資源變現的澎湃動力。命主能夠把抽象的點子轉化為具體的世俗回報，具有極強的市場嗅覺。`;
+    } else if (hasOutput && hasSeal) {
+      actionBlend = `此處呈現「傷官配印」的高階思維模型。奔放銳利、敢於顛覆的創新衝勁，被深厚嚴謹的印星深度涵養與收斂，化為具有極高專業門檻的深度作品，既有鋒芒又具備深度底蘊。`;
+    } else if (hasPeer && hasOutput) {
+      actionBlend = `此處展現「比劫生食傷」的群體號召格局。同儕夥伴的認同與自信心，轉化為大膽輸出、揮灑才華的強大驅動力，善於帶領團隊攻城掠地。`;
+    } else {
+      actionBlend = `命局次強力量與主導星之間形成互補鏈條，當面對外部挑戰時，能迅速調動內部儲備的底蘊轉化為外顯防禦力，在逆境與壓力下表現出遠超常人的韌性。`;
+    }
+
+    // 第三段：致命傷與能量黑洞
+    let holeTitle = `被封印的「${weakGroup[0]}」（${weakEl[0]}${weakEl[1]}% + ${weakGroup[0]}${weakGroup[1]}%）`;
+    let holeLogic = '內部運算過載，但缺乏對外的「輸出介面」。';
+    let holeMissingTitle = '表達與變通的缺失';
+    let holeMissingText = `${weakGroup[0]}代表表達、創作、展示、社交潤滑與情緒宣洩。${weakEl[0]}${weakEl[1]}%，意味著命主內心即便有萬馬奔騰的思緒（${topGod[0]}），也很難用別人聽得懂、能接受的語言表達出來。正如古云：「懂很多，不一定等於很快說出去或做成果。」`;
+    let holeSocialText = `${topEl[0]}旺無${weakEl[0]}，講話容易一針見血、直來直往，缺乏圓融潤滑；遇到誤解時不屑解釋，反而築起高冷心防，讓人覺得難以接近。`;
+
+    if (weakGroup[0] === '財星') {
+      holeLogic = '深度思考與技術能力極強，但缺乏「商業變現與落地閉環」。';
+      holeMissingTitle = '落地執行與變現意識的缺失';
+      holeMissingText = '財星代表目標感、商業敏銳度與現實回報。此部分偏弱，意味著命主容易沉浸在純粹的技術、研究或原則中，不屑於算計世俗利益，常常做白工或低估自己的商業價值。';
+      holeSocialText = '在商業合作或談判中往往恥於談錢、不擅討價還價，甚至因講原則義氣而蒙受實質財務損失。';
+    } else if (weakGroup[0] === '官殺') {
+      holeLogic = '追求絕對自由與自主，但缺乏「邊界管理與體制共存機制」。';
+      holeMissingTitle = '規則適應與邊界妥協的缺失';
+      holeMissingText = '官殺代表紀律、法度、自我約束與體制適應力。此部分偏弱，代表命主極其抗拒官僚體系與死板教條，容易與傳統體制產生排斥反應。';
+      holeSocialText = '性喜無拘無束，遇強權壓迫時容易產生極端逆反心理，不願隨波逐流妥協，生涯發展容易走上非主流的突圍之路。';
+    } else if (weakGroup[0] === '印星') {
+      holeLogic = '衝勁強大、反應靈活，但缺乏「底層安全感與長線定力」。';
+      holeMissingTitle = '底蘊沉澱與身心滋養的缺失';
+      holeMissingText = '印星代表母親、貴人庇護、安全感與長線沉澱。印星匱乏意味著凡事只能靠自己單打獨鬥，內心缺乏安全依託，容易身心透支。';
+      holeSocialText = '容易過度消耗自身精力，遇挫折時習慣獨自扛起所有苦楚，難以全然信任長輩或外部體系的援助。';
+    } else if (weakGroup[0] === '比劫') {
+      holeLogic = '顧全大局、考慮周全，但缺乏「強硬的自我邊界與競爭底氣」。';
+      holeMissingTitle = '自信防線與自我主張的缺失';
+      holeMissingText = '比劫代表自主意識與抗爭精神。比劫偏弱時，在利益衝突面前容易習慣性退讓、委屈求全，難以旗幟鮮明地捍衛自身權益。';
+      holeSocialText = '容易過度同理他人而忽視自身需求，常在合作或人際中扮演討好或妥協角色，需要刻意鍛鍊拒絕的魄力。';
+    }
+
+    // 第四段：破局之道
+    const breakthroughTips = [
+      {
+        h: '開闢主動輸出介面，克服空想內耗',
+        b: `刻意練習將複雜概念簡化為三句話，用文字、圖表或原型產出說話。不要等到「100%準備好」才出手，先完成、再完美，打破「${topGod[0]}」的過度研究循環。`
+      },
+      {
+        h: '降阻溝通，在表達前先同理對方',
+        b: '與人交流時，克制住直覺性的邏輯批判與指責。多用「我理解你的角度，我的補充觀察是...」代替冷酷宣判，為自己的人際通道抹上一層潤滑劑。'
+      },
+      {
+        h: `借力補足「${weakEl[0]}」與「${weakGroup[0]}」短板`,
+        b: `主動尋找性格圓融、善於公關溝通、注重世俗落地的合作夥伴或朋友搭檔。自己專注於核心系統的頂層研發與策略，將外部介面交給互補者，達成知行合一。`
+      }
+    ];
+
+    return {
+      headerIntro: '五行是能量本質，十神是能量展現出來的行為特徵。',
+      part1: {
+        title: `一、 核心作業系統：名為「${topGod[0]}」的${metaphorMap[topGod[0]] || '核心處理器'}（${topEl[0]}${topEl[1]}% + ${topGod[0]}${topGod[1]}%）`,
+        summary: `命盤中佔比最大的是${topEl[0]}（${topGod[0]}）。這構成了命主最基礎的世界觀與反應機制。`,
+        coreLogic: coreLogicMap[topGod[0]] || '先解構，再建構；沒有驗證過的資訊，我不信。',
+        behaviorMode: behaviorModeMap[topGod[0]] || '',
+        fiveElementsBlend: fiveElBlendOne
+      },
+      part2: {
+        title: `二、 行動與防禦機制：${actionTitle}（${secondEl[0]}${secondEl[1]}% + ${secondGod[0]}${secondGod[1]}% + ${thirdGod[0]}${thirdGod[1]}%）`,
+        summary: `當${topGod[0]}的「研究」完成，或者遇到外界刺激時，命主會啟動第二層機制。`,
+        coreLogic: actionLogic,
+        behaviorList: [actionBehaviorOne, actionBehaviorTwo],
+        fiveElementsBlend: actionBlend
+      },
+      part3: {
+        title: `三、 致命傷與能量黑洞：${holeTitle}`,
+        summary: `這是整張命盤最需要被關注的破局點。五行${weakEl[1] === 0 ? '無' : '弱'}${weakEl[0]}（${weakEl[1]}%），十神中${weakGroup[0]}幾乎為零（${weakGodsPct}%）。`,
+        coreLogic: holeLogic,
+        missingTitle: holeMissingTitle,
+        missingText: holeMissingText,
+        socialText: holeSocialText
+      },
+      part4: {
+        title: '四、 能量破局之道與實踐心法',
+        tips: breakthroughTips
+      }
+    };
+  }
+
+  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,generateTenGodMasterGuide,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
 
 })();
