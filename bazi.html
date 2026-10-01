@@ -347,6 +347,38 @@ body.overlay-open{overflow:hidden}
 @media(max-width:760px){.overview-life-grid,.period-domains{grid-template-columns:1fr}.life-card,.period-domain{padding:16px}.period-range{overflow-wrap:anywhere}}
 @media print{.method-details,.period-domains,.overview-life-grid{break-inside:auto}.life-card,.period-domain,.reading-card{break-inside:avoid}.decode-content{display:block!important}.period-domain p,.life-card p,.reading-basis{color:#222!important}}
 
+/* Section 06 Master Collapsible Cards */
+.master-collapsible-card {
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.09);
+  background: rgba(14,17,25,.92);
+  transition: border-color .2s, box-shadow .2s, background .2s;
+  overflow: hidden;
+}
+.master-collapsible-card summary::-webkit-details-marker {
+  display: none !important;
+}
+.master-collapsible-card summary::marker {
+  display: none !important;
+}
+.master-collapsible-card summary {
+  list-style: none !important;
+}
+.master-collapsible-card summary:hover {
+  background: rgba(255,255,255,.03);
+}
+.master-collapsible-card[open] {
+  border-color: rgba(233,189,88,.42) !important;
+  box-shadow: 0 12px 35px rgba(0,0,0,.4);
+  background: rgba(16,20,30,.96);
+}
+.master-collapsible-card[open] > summary .chevron-icon {
+  transform: rotate(180deg);
+}
+.master-collapsible-card[open] > summary .expand-text {
+  color: #f2d482;
+}
+
   </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -589,10 +621,7 @@ body.overlay-open{overflow:hidden}
 
         <details class="report-section" id="report-reading" open>
           <summary><span><b>06</b> 命盤結構解讀</span><small>PERSONALITY · CAREER · FINANCE · RELATIONSHIP</small></summary>
-          <div class="report-body">
-            <div class="reading-lead" id="readingLead"></div>
-            <div class="reading-grid" id="readingGrid"></div>
-            <div class="method-note" id="methodNote"></div>
+          <div class="report-body" id="readingBody">
           </div>
         </details>
 
@@ -1703,6 +1732,100 @@ body.overlay-open{overflow:hidden}
     `;
   }
 
+  function renderOverallMasterSummaryHtml(s) {
+    if (!s) return '';
+    const safe = x => esc(String(x ?? '—'));
+    return `
+      <div class="overall-master-summary" style="display: grid; gap: 20px;">
+        <!-- 頂部核心命格畫像 -->
+        <div style="border-radius: 14px; border: 1px solid rgba(233,189,88,.45); background: radial-gradient(circle 700px at 0% 0%, rgba(233,189,88,.12), transparent 75%), rgba(16,19,28,.96); padding: 26px; box-shadow: 0 16px 40px rgba(0,0,0,.45);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <span style="color: #e9bd58; font-size: .72rem; letter-spacing: .16em; font-weight: 850;">全盤總結 · 命格畫像</span>
+            <span style="display: inline-block; padding: 4px 12px; border-radius: 999px; background: rgba(233,189,88,.15); border: 1px solid rgba(233,189,88,.3); color: #f2d482; font-size: .66rem; font-weight: 750;">終極全盤透析</span>
+          </div>
+          <h3 style="margin: 0 0 14px; color: #fdf6e7; font-size: 1.3rem; font-weight: 900; letter-spacing: .02em;">${safe(s.headerTitle)}</h3>
+          <div style="border-left: 4px solid #e9bd58; padding: 12px 16px; background: rgba(255,255,255,.025); border-radius: 0 8px 8px 0;">
+            <b style="color: #ecd084; font-size: .84rem; display: block; margin-bottom: 6px;">核心命格畫像：</b>
+            <p style="margin: 0; color: #cbd6e4; font-size: .76rem; line-height: 1.85; white-space: pre-line;">${safe(s.portraitParagraph)}</p>
+          </div>
+        </div>
+
+        <!-- 導言與全部展開/收合控制列 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 16px; border-radius: 10px; background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.07);">
+          <span style="color: #cbd6e4; font-size: .76rem; font-weight: 600;">以下為針對人生五大核心領域與命理師寄語的深度總結（可逐一展開觀看）：</span>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-toggle-all" onclick="document.querySelectorAll('#readingBody .master-collapsible-card').forEach(d=>{d.open=true;const t=d.querySelector('.expand-text');if(t)t.textContent='點擊收合';})" style="background: rgba(233,189,88,.12); border: 1px solid rgba(233,189,88,.28); color: #f2d482; border-radius: 6px; padding: 4px 12px; font-size: .7rem; font-weight: 700; cursor: pointer; transition: .15s;">全部展開</button>
+            <button type="button" class="btn-toggle-all" onclick="document.querySelectorAll('#readingBody .master-collapsible-card').forEach(d=>{d.open=false;const t=d.querySelector('.expand-text');if(t)t.textContent='點擊展開';})" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); color: #9bb0c4; border-radius: 6px; padding: 4px 12px; font-size: .7rem; font-weight: 600; cursor: pointer; transition: .15s;">全部收合</button>
+          </div>
+        </div>
+
+        <!-- 五大核心領域摺疊卡片 -->
+        <div style="display: grid; gap: 14px;">
+          ${s.sections.map((sec, idx) => `
+            <details class="master-collapsible-card" ontoggle="const t=this.querySelector('.expand-text');if(t)t.textContent=this.open?'點擊收合':'點擊展開';">
+              <summary style="display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; cursor: pointer; user-select: none;">
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <span style="background: rgba(233,189,88,.16); color: #e9bd58; font-weight: 900; border-radius: 6px; padding: 3px 9px; font-size: .75rem;">${safe(sec.num)}</span>
+                  <h4 style="margin: 0; color: #f6eedb; font-size: 1.02rem; font-weight: 850;">${safe(sec.title)}</h4>
+                </div>
+                <div class="expand-indicator" style="display: flex; align-items: center; gap: 6px; color: #e9bd58; font-size: .74rem; font-weight: 700;">
+                  <span class="expand-text">點擊展開</span>
+                  <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform .25s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+              </summary>
+
+              <div style="padding: 0 20px 22px 20px; border-top: 1px solid rgba(255,255,255,.06); margin-top: 4px;">
+                <!-- 命理真相 -->
+                <div style="margin: 16px 0 14px; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #75dce4; background: rgba(117,220,228,.025); border: 1px solid rgba(117,220,228,.15); border-left-width: 3px;">
+                  <b style="color: #72d7df; font-size: .76rem; display: block; margin-bottom: 4px;">【命理真相】：</b>
+                  <span style="color: #cbd6e4; font-size: .73rem; line-height: 1.8; display: block;">${safe(sec.truth)}</span>
+                </div>
+
+                <!-- 重寫描述 -->
+                <div style="border-radius: 8px; padding: 14px 16px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06);">
+                  <b style="color: #edd18a; font-size: .76rem; display: block; margin-bottom: 8px;">【重寫描述】：</b>
+                  <div style="display: grid; gap: 10px;">
+                    ${sec.points.map(pt => `
+                      <div style="color: #cbd6e4; font-size: .73rem; line-height: 1.8;">
+                        <strong style="color: #f0ce73; display: inline-block; margin-right: 4px;">${safe(pt.label)}：</strong>${safe(pt.text)}
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </details>
+          `).join('')}
+
+          <!-- 💡 命理師的最終寄語（摺疊卡片） -->
+          <details class="master-collapsible-card final-advice-collapsible" style="border-radius: 14px; border: 1px solid rgba(233,189,88,.4); background: radial-gradient(circle 600px at 100% 100%, rgba(233,189,88,.08), transparent 70%), rgba(18,20,30,.96);" ontoggle="const t=this.querySelector('.expand-text');if(t)t.textContent=this.open?'點擊收合':'點擊展開';">
+            <summary style="display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; cursor: pointer; user-select: none;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.25rem;">💡</span>
+                <h4 style="margin: 0; color: #fdf5e2; font-size: 1.05rem; font-weight: 850;">命理師的最終寄語（給命主的建議）</h4>
+              </div>
+              <div class="expand-indicator" style="display: flex; align-items: center; gap: 6px; color: #e9bd58; font-size: .74rem; font-weight: 700;">
+                <span class="expand-text">點擊展開</span>
+                <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform .25s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </summary>
+
+            <div style="padding: 0 22px 24px 22px; border-top: 1px solid rgba(233,189,88,.15); margin-top: 4px;">
+              <p style="margin: 16px 0 14px; color: #f4d380; font-size: .86rem; font-weight: 750; line-height: 1.7;">${safe(s.finalAdvice.enemy)}</p>
+
+              <div style="padding: 14px 16px; border-left: 4px solid #6ec9aa; background: rgba(110,201,170,.035); border-radius: 6px; margin-bottom: 14px;">
+                <p style="margin: 0; color: #cbd6e4; font-size: .75rem; line-height: 1.85;">${safe(s.finalAdvice.metaphor)}</p>
+              </div>
+
+              <div style="padding: 12px 16px; border: 1px solid rgba(233,189,88,.3); background: rgba(233,189,88,.06); border-radius: 8px; text-align: center;">
+                <b style="color: #fcedcb; font-size: .84rem; letter-spacing: .06em;">${safe(s.finalAdvice.motto)}</b>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    `;
+  }
+
   function sectionExplanation(key, data) {
     if (key === 'shensha') return renderShenshaExplanation(data);
     if (!data) return decodeCard('提示', '請先輸入出生時間並點擊「排八字」建立命盤。');
@@ -1912,7 +2035,7 @@ ${selectedPeriodPrompt(data,key)}
 
   function initSectionDecodeUI(){
     sectionDefinitions.forEach(def=>{
-      if(def.key==='years')return;
+      if(def.key==='years' || def.key==='reading')return;
       const section=$(def.id);const body=section?.querySelector('.report-body');if(!body||body.querySelector('.section-decode'))return;
       const box=document.createElement('div');box.className='section-decode';box.dataset.section=def.key;
       box.innerHTML=`<div class="decode-bar"><div class="decode-copy"><strong>想知道這些數字、符號對你可能代表什麼？</strong><span>點開後直接看白話解讀與深層結構。</span></div><button type="button" class="decode-open">看懂這一區</button></div><div class="decode-content"><div class="decode-summary-grid"></div><div class="section-ai-box"><div><div><strong>想知道如何調整？帶著這張命盤問 AI</strong><span class="section-ai-note">提示詞會帶入完整本命、本區依據與你選取的時段。</span></div></div><div class="section-prompt-actions"><button type="button" data-act="copy">一鍵複製「${esc(def.title)}」AI 提示詞</button><a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT ↗</a><a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini ↗</a><a href="https://claude.ai/" target="_blank" rel="noopener">Claude ↗</a></div><pre class="section-prompt-preview"></pre></div></div>`;
@@ -2115,12 +2238,22 @@ ${promptContext(data)}
   }
 
   function renderReading(data){
+    const container = $('readingBody') || $('report-reading')?.querySelector('.report-body');
+    if (!container) return;
+    if (typeof BaziCore !== 'undefined' && typeof BaziCore.generateOverallMasterSummary === 'function') {
+      const summary = BaziCore.generateOverallMasterSummary(data);
+      if (summary) {
+        container.innerHTML = renderOverallMasterSummaryHtml(summary);
+        return;
+      }
+    }
     const r=data.reading,top=Object.entries(data.tenGodDistribution.percentages).sort((a,b)=>b[1]-a[1])[0],p=godProfile[top[0]];
-    $('readingLead').innerHTML=`<b>把命盤放進生活裡看</b><br>先看哪些情境較能發揮，再看什麼時候容易卡住。每項後方都列出這張盤的判讀依據。`;
+    const lead = $('readingLead'), grid = $('readingGrid'), note = $('methodNote');
+    if (lead) lead.innerHTML=`<b>把命盤放進生活裡看</b><br>先看哪些情境較能發揮，再看什麼時候容易卡住。每項後方都列出這張盤的判讀依據。`;
     const rows=r.rows.map(x=>({...x}));
     rows[0].text=`${p?.mind||r.title} ${p?.action||''}`;rows[0].stuck=p?.watch||r.stuck;
-    $('readingGrid').innerHTML=rows.map(x=>`<article class="reading-card"><h4>${esc(x.title)}</h4><p>${esc(x.text)}</p><p><b>容易卡住：</b>${esc(x.stuck)}</p><small class="reading-basis">依據：${esc(x.basis)}</small></article>`).join('');
-    $('methodNote').textContent=BaziCore.METHOD_NOTE;
+    if (grid) grid.innerHTML=rows.map(x=>`<article class="reading-card"><h4>${esc(x.title)}</h4><p>${esc(x.text)}</p><p><b>容易卡住：</b>${esc(x.stuck)}</p><small class="reading-basis">依據：${esc(x.basis)}</small></article>`).join('');
+    if (note) note.textContent=BaziCore.METHOD_NOTE;
   }
 
   function timeAssessment(data,item){return BaziCore.assessment(data,item);}

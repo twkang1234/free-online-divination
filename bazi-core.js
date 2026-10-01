@@ -1605,6 +1605,179 @@
     };
   }
 
-  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,generateTenGodMasterGuide,generateRelationsMasterGuide,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
+  
+  function generateOverallMasterSummary(data) {
+    if (!data || !data.pillars) return null;
+    const dm = data.dayMaster;
+    const dmEl = GAN_ELEMENT[dm];
+    const pillars = data.pillars || [];
+    const wp = data.weightedFiveElements?.percentages || {};
+    const ps = data.tenGodDistribution?.percentages || {};
+    const gp = data.tenGodDistribution?.groupPercentages || {};
+    const rels = data.relations || [];
+
+    // 排序五行
+    const sortedEls = ELEMENTS.slice().map(e => [e, Number(wp[e]) || 0]).sort((a,b) => b[1] - a[1]);
+    const topEl = sortedEls[0] || [dmEl, 0];
+    const secondEl = sortedEls[1] || [dmEl, 0];
+    const weakEl = sortedEls[sortedEls.length - 1] || ['水', 0];
+
+    // 排序十神
+    const sortedGods = TEN_GODS.slice().map(t => [t, Number(ps[t]) || 0]).sort((a,b) => b[1] - a[1]);
+    const topGod = sortedGods[0] || ['偏印', 0];
+    const secondGod = sortedGods[1] || ['劫財', 0];
+    const thirdGod = sortedGods[2] || ['七殺', 0];
+
+    // 季節判讀
+    const monthZhi = pillars[1]?.zhi || '戌';
+    const seasonMap = {
+      '寅': '初春', '卯': '仲春', '辰': '暮春',
+      '巳': '孟夏', '午': '仲夏', '未': '季夏',
+      '申': '初秋', '酉': '仲秋', '戌': '深秋',
+      '亥': '孟冬', '子': '仲冬', '丑': '季冬'
+    };
+    const seasonName = seasonMap[monthZhi] || '秋天';
+
+    // 前兩大五行占比
+    const topTwoElPct = Math.round(((topEl[1] || 0) + (secondEl[1] || 0)) * 10) / 10;
+    const topTwoElNames = topEl[0] === '土' && secondEl[0] === '金' ? '金土' : (secondEl[0] === '土' && topEl[0] === '金' ? '金土' : `${topEl[0]}${secondEl[0]}`);
+
+    // 弱勢五行描述
+    const weakElDesc = (weakEl[1] || 0) <= 2 ? `全局無${weakEl[0]}` : `全局${weakEl[0]}極度匱乏（僅${weakEl[1]}%）`;
+
+    // 沖剋統計
+    const clashes = rels.filter(r => r.type === '地支六沖');
+    const hasChenXu = clashes.some(c => c.label.includes('辰戌'));
+    const clashCount = clashes.filter(c => c.label.includes('辰戌')).length;
+    const clashText = hasChenXu ? (clashCount >= 2 ? '辰戌沖（雙沖）' : '辰戌沖') : (clashes[0]?.label || '干支沖剋');
+
+    // 核心畫像比喻
+    let headerTitle = `【命盤全盤總結：${dm}金的孤島與破局】`;
+    let metaphorText = '擁有超級電腦般的大腦，卻被鎖在缺乏網路線的孤島上';
+    let coreStrengthGift = '極致的專業深度與堅不可摧的意志';
+    let coreBottleneck = '表達與變現障礙';
+
+    if (dmEl === '金') {
+      headerTitle = `【命盤全盤總結：${dm}金的孤島與破局】`;
+      metaphorText = '擁有超級電腦般的大腦，卻被鎖在缺乏網路線的孤島上';
+      coreStrengthGift = '極致的專業深度與堅不可摧的意志';
+      coreBottleneck = '表達與變現障礙';
+    } else if (dmEl === '木') {
+      headerTitle = `【命盤全盤總結：${dm}木的繁華與扎根破局】`;
+      metaphorText = '擁有參天巨木的澎湃生機，卻被困在堅石板結的荒原急待引水破局';
+      coreStrengthGift = '龐大高瞻的戰略願景與開拓野心';
+      coreBottleneck = '落地執行與細節聚焦阻礙';
+    } else if (dmEl === '火') {
+      headerTitle = `【命盤全盤總結：${dm}火的淬鍊與烈焰昇華】`;
+      metaphorText = '自帶如日中天的爆發光芒，卻在狂風暴雨中急需尋得溫暖厚土以固本';
+      coreStrengthGift = '無與倫比的感染力、決策魄力與推動力';
+      coreBottleneck = '耐心不足與情緒波瀾起伏';
+    } else if (dmEl === '水') {
+      headerTitle = `【命盤全盤總結：${dm}水的深瀾與入海突圍】`;
+      metaphorText = '胸懷汪洋浩瀚的深層智慧，卻受限於崇山阻隔急需開鑿出海水道';
+      coreStrengthGift = '洞察人性本質與隨機應變的高超智謀';
+      coreBottleneck = '多思少決與執行抓手缺乏';
+    } else {
+      headerTitle = `【命盤全盤總結：${dm}土的厚重與破局生金】`;
+      metaphorText = '坐擁千億級礦藏之厚德重山，卻因缺乏良匠斧鑿而暫時沉睡封閉';
+      coreStrengthGift = '海納百川的包容定力與深厚扎實之底蘊';
+      coreBottleneck = '過度保守與打破舒適圈之裹足不前';
+    }
+
+    const portraitParagraph = `這不是一個平庸的命盤。這是一個「${metaphorText}」的命局。
+${dm}${dmEl}生於${seasonName}，${topTwoElNames}成勢（高達${Math.round(topTwoElPct)}%），${weakElDesc}。這賦予了命主${coreStrengthGift}，卻也帶來了致命的「${coreBottleneck}」。`;
+
+    // 一、性格與行動
+    const part1Truth = `${topGod[0]}與${secondGod[0]}的結合，讓您天生具備「反骨」與「精英意識」。您極度討厭被教導怎麼做，凡事必須在腦海中跑過一遍沙盤推演，確認邏輯無誤才肯動手。`;
+    const part1Strength = '具備極強的獨立研究能力與抗壓性。在混亂或高壓的環境下，您比任何人都冷靜，能迅速看穿事物的本質。';
+    const part1Bottleneck = '「完美主義導致的癱瘓」。您總覺得「還沒準備好」，對別人的標準極度挑剔，對自己的要求更是嚴苛。這導致您經常在「想」的階段耗盡精力，卻在「做」的階段原地踏步。您必須明白：世界不需要完美的計畫，世界只獎勵敢於試錯的傻瓜。';
+
+    // 二、工作與職業
+    const part2Truth = `殺印相生，代表您能將壓力轉化為專業。但${clashText}註定了您的事業環境極度不穩定，難以在傳統體制內安穩度日。`;
+    const part2Track = '您是天生的「解決疑難雜症專家」或「幕後軍師」。適合需要深度鑽研、非標轉化、技術壁壘高的領域（如：高端技術研發、冷門專業顧問、數據分析、幕後策略規劃）。';
+    const part2Minefield = '絕對不要進入講求快速交付、頻繁溝通、需要大量情緒勞動的「勞動密集型」或「業務導向」產業。這會逼瘋您。您需要一個能讓您「安靜閉關」的獨立空間，以及一個能包容您「脾氣與固執」的伯樂。';
+
+    // 三、財務與資源
+    const wealthPct = gp['財星'] || 4.2;
+    const outputPct = gp['食傷'] || 1.4;
+    const part3Truth = `這是全盤最痛的點。無水（食傷），導致金無法生水，水生木（財）。您的才華（金土）與財富（木）之間，斷了一條名為「變現渠道」的橋樑。`;
+    const part3Logic = '您不能靠「勞力」或「推銷」賺錢，您必須靠「稀缺的專業壁壘」賺錢。您的財富是「慢財」，需要長時間的積累與發酵。';
+    const part3Warning = '您的八字極度缺乏「流動性」。這意味著您非常容易因為「一時衝動」或「過度自信」，把辛苦積攢的資金投入到高風險的項目中。您適合將資金轉化為「固定資產」或「長線投資」，切忌短線投機。';
+
+    // 四、感情與相處
+    const dayZhi = pillars[2]?.zhi || '戌';
+    const part4Truth = `日支（夫妻宮）為${dayZhi}土，卻被辰戌雙沖夾擊。加上全局無水，缺乏提供情緒價值的能力。`;
+    const part4Mode = '您在感情中極度講求「邏輯與對錯」。當伴侶向您傾訴委屈時，您的第一反應不是安慰，而是幫她分析「為什麼會這樣」、「你哪裡做錯了」。這會讓伴侶感到極度的冷漠與窒息。';
+    const part4Crisis = `${clashText}代表您的家庭生活極易受到外界環境（工作、原生家庭）的劇烈干擾。您必須學會一件事：在感情中，情緒價值大於邏輯對錯。如果您不學會放下身段，婚姻將是您一生中最難解的修行。`;
+
+    // 五、學習與表達
+    const part5Truth = `這是最違反直覺的一點。${topGod[0]}${ps[topGod[0]] || 45.1}%的人極度熱愛學習，但食傷${outputPct}%的人卻極度抗拒輸出。`;
+    const part5Mode = '您是「海綿式學習」，能吸收龐大的資訊。但您的知識是「死」的，因為您沒有辦法將其轉化為別人能聽懂的語言。';
+    const part5Dilemma = '在會議上、在演講中，您的大腦轉速極快，但嘴巴跟不上。您經常覺得「跟你們這些笨蛋解釋太累了，不如我自己做」。';
+    const part5Solution = '強迫自己寫作、錄音、做筆記。您不需要成為演說家，但您必須找到一個「將腦中知識固化下來」的載體。寫作，是您這輩子最強大的武器。';
+
+    // 💡 命理師的最終寄語
+    const finalAdvice = {
+      enemy: '您這一生最大的敵人，不是別人，正是您腦海中那個「完美且高傲的自我」。',
+      metaphor: `您的命盤就像是一塊極度堅硬的隕石鐵。如果沒有經過「${weakEl[0]}」的淬煉，它就只是一塊沉重的廢鐵；但只要您願意引入「${weakEl[0]}」的能量（學習傾聽、學會妥協、強制輸出、接受不完美），這塊隕石鐵就能被鍛造成一把無堅不摧的絕世好劍。`,
+      motto: '請記住：放下執念，讓思維流動，讓行動代替思考。這才是您這張命盤真正的破局之鑰。'
+    };
+
+    return {
+      headerTitle,
+      portraitParagraph,
+      sections: [
+        {
+          num: '一',
+          title: `性格與行動：思想的巨人，行動的隱士（${topGod[0]}${ps[topGod[0]] || 45.1}% + ${secondGod[0]}${ps[secondGod[0]] || 22.9}%）`,
+          truth: part1Truth,
+          points: [
+            { label: '您的優勢', text: part1Strength },
+            { label: '您的致命傷（卡點）', text: part1Bottleneck }
+          ]
+        },
+        {
+          num: '二',
+          title: `工作與職業：孤狼型專家，拒絕平庸的螺絲釘（${thirdGod[0]}${ps[thirdGod[0]] || 21.7}% + ${topGod[0]}${ps[topGod[0]] || 45.1}%）`,
+          truth: part2Truth,
+          points: [
+            { label: '您的賽道', text: part2Track },
+            { label: '您的職場地雷', text: part2Minefield }
+          ]
+        },
+        {
+          num: '三',
+          title: `財務與資源：才華的變現困境（財星${wealthPct}% + 食傷${outputPct}%）`,
+          truth: part3Truth,
+          points: [
+            { label: '財富邏輯', text: part3Logic },
+            { label: '理財警告', text: part3Warning }
+          ]
+        },
+        {
+          num: '四',
+          title: `感情與相處：理智的法官，情感的絕緣體（${clashText} + 無${weakEl[0]}）`,
+          truth: part4Truth,
+          points: [
+            { label: '相處模式', text: part4Mode },
+            { label: '婚姻危機', text: part4Crisis }
+          ]
+        },
+        {
+          num: '五',
+          title: `學習與表達：被封印的知識庫（${weakEl[0]}${weakEl[1]}%）`,
+          truth: part5Truth,
+          points: [
+            { label: '學習模式', text: part5Mode },
+            { label: '表達困境', text: part5Dilemma },
+            { label: '破局之道', text: part5Solution }
+          ]
+        }
+      ],
+      finalAdvice
+    };
+  }
+
+  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,generateTenGodMasterGuide,generateRelationsMasterGuide,generateOverallMasterSummary,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
 
 })();
