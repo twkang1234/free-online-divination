@@ -2144,6 +2144,276 @@ ${dm}${dmEl}生於${seasonName}，${topTwoElNames}成勢（高達${Math.round(to
     };
   }
 
-  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,generateTenGodMasterGuide,generateRelationsMasterGuide,generateOverallMasterSummary,generateLuckMasterGuide,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
+  function generateThreeYearStrategicOutlook(data) {
+    if (!data || !data.dayMaster || !data.pillars) return null;
+
+    const dm = data.dayMaster;
+    const dmEl = data.dayMasterElement || GAN_ELEMENT[dm];
+    const pillars = data.pillars;
+    const natalStems = pillars.map(p => p.gan);
+    const natalBranches = pillars.map(p => p.zhi);
+    const wp = data.weightedFiveElements?.percentages || {};
+    const ps = data.tenGodDistribution?.percentages || {};
+    const cy = new Date().getFullYear();
+
+    // 當前大運
+    const y = data.daYun || {};
+    const cycles = y.cycles || [];
+    let curCycle = cycles.find(c => cy >= c.startYear && cy <= c.endYear) || cycles[0] || null;
+
+    // 找出最弱與偏旺五行
+    const sortedEls = ELEMENTS.slice().sort((a,b) => (wp[a]||0) - (wp[b]||0));
+    const weakEl = sortedEls[0];
+    const weakPct = wp[weakEl] || 0;
+    const strongEl1 = sortedEls[4];
+    const strongEl2 = sortedEls[3];
+
+    // 五行轉十神群組
+    const elTenGodGroup = (targetEl) => {
+      const overcomeMap = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };
+      const genMap = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' };
+      if (targetEl === dmEl) return '比劫（自我同儕）';
+      if (genMap[dmEl] === targetEl) return '食傷（才華輸出）';
+      if (overcomeMap[dmEl] === targetEl) return '財星（現實成果）';
+      if (overcomeMap[targetEl] === dmEl) return '官殺（體制考驗）';
+      return '印星（支持吸收）';
+    };
+
+    const weakGodGroup = elTenGodGroup(weakEl);
+
+    // 天干五合
+    const stemCombos = {
+      '甲己': '合土', '乙庚': '合金', '丙辛': '合水', '丁壬': '合木', '戊癸': '合火'
+    };
+
+    // 地支六沖
+    const branchClashPairs = {
+      '子':'午','午':'子','丑':'未','未':'丑','寅':'申','申':'寅',
+      '卯':'酉','酉':'卯','辰':'戌','戌':'辰','巳':'亥','亥':'巳'
+    };
+
+    const branchCombos = {
+      '申子辰': '水', '寅午戌': '火', '巳酉丑': '金', '亥卯未': '木'
+    };
+
+    const posNames = ['年柱（家庭祖業）', '月柱（事業提綱）', '日柱（自身配偶）', '時柱（門戶投資與晚輩）'];
+
+    const yearsData = [
+      { label: '去年', year: cy - 1 },
+      { label: '今年', year: cy },
+      { label: '明年', year: cy + 1 }
+    ].map(({ label, year }, yIndex) => {
+      const flow = getYearFlow(year, dm, pillars);
+      const a = annualSignals(data, flow);
+      const yGan = flow.gan, yZhi = flow.zhi;
+      const yGanEl = GAN_ELEMENT[yGan];
+      const yZhiEl = ZHI_ELEMENT[yZhi];
+      const tgGan = flow.tenGodGan, tgZhi = flow.tenGodZhi;
+
+      const interactions = [];
+
+      // 1. 天干五合 (日主合)
+      const pairDm = [yGan, dm].sort().join('');
+      if (stemCombos[pairDm]) {
+        const comboName = `${pairDm}${stemCombos[pairDm]}`;
+        let detail = '';
+        if (tgGan.includes('財')) {
+          detail = '正財來合我。這代表今年會出現非常具體的求財機會或項目。但「合」也是一種牽絆，意味著這筆錢或這個項目，會讓您承擔相應的責任與壓力。';
+        } else if (tgGan.includes('官')) {
+          detail = '正官來合我。代表體制授權、主管器重或規範合約上身，利於承接關鍵職務，但言行舉止受高度審視。';
+        } else {
+          detail = `天干相合牽引，代表個人注意力被引動至${tgGan}相關的事務核心中。`;
+        }
+        interactions.push({
+          title: `【${comboName}】（流年天干合日主）`,
+          desc: detail
+        });
+      }
+
+      // 天干與原局其他柱合
+      [0, 1, 3].forEach(pos => {
+        const stem = natalStems[pos];
+        const pair = [yGan, stem].sort().join('');
+        if (stemCombos[pair] && stem !== dm) {
+          const comboName = `${pair}${stemCombos[pair]}`;
+          const stemGod = pillars[pos].tenGodGan || '';
+          interactions.push({
+            title: `【${comboName}】（流年天干與${posNames[pos].slice(0,2)}干${stem}合）`,
+            desc: `流年${tgGan}合動原局${stemGod}，帶來「化壓為權」或跨界協同之契機，可藉由團隊同儕或專業技術轉化外部壓力。`
+          });
+        }
+      });
+
+      // 2. 地支六沖
+      const clashTarget = branchClashPairs[yZhi];
+      [0, 1, 2, 3].forEach(pos => {
+        if (natalBranches[pos] === clashTarget) {
+          const clashName = `${[yZhi, clashTarget].sort().join('')}沖`;
+          interactions.push({
+            title: `【${clashName}】（流年地支沖原局${posNames[pos]}）`,
+            desc: `這是一個強烈的「動盪」信號。流年逢沖主變更與重組，代表該領域容易迎來環境轉移、人事更替或職責洗牌。`
+          });
+        }
+      });
+
+      if (curCycle && curCycle.zhi === clashTarget) {
+        interactions.push({
+          title: `【${[yZhi, clashTarget].sort().join('')}沖】（流年地支沖大運時支，或引動原局）`,
+          desc: `這是一個強烈的「動盪」信號。流年地支直接衝動大運地支，氣場強烈震盪，是人生軌跡發生劇烈轉變的關鍵信號。`
+        });
+      }
+
+      // 3. 地支相刑
+      if ((yZhi === '巳' && (natalBranches.includes('寅') || curCycle?.zhi === '寅')) ||
+          (yZhi === '寅' && (natalBranches.includes('巳') || curCycle?.zhi === '巳'))) {
+        interactions.push({
+          title: '【寅巳刑】（流年與原局時支、或大運）',
+          desc: '容易因為投資、合夥、合約條款細節或晚輩/子女的問題產生糾紛，凡事宜重契約規範，謹慎應對。'
+        });
+      }
+      if ((yZhi === '未' && (natalBranches.includes('戌') || natalBranches.includes('丑'))) ||
+          (yZhi === '戌' && (natalBranches.includes('未') || natalBranches.includes('丑')))) {
+        interactions.push({
+          title: '【丑戌未三刑】（土氣交戰相刑）',
+          desc: '未土是燥土，加重原局土氣滯塞。丑戌未交雜讓思緒容易極度煎熬混亂，人際關係易生撕裂感，宜靜不宜動。'
+        });
+      }
+
+      // 4. 地支半合 / 三合
+      ['寅午戌', '巳酉丑', '申子辰', '亥卯未'].forEach(combo => {
+        if (combo.includes(yZhi)) {
+          const otherTwo = combo.replace(yZhi, '').split('');
+          const has1 = natalBranches.includes(otherTwo[0]);
+          const has2 = natalBranches.includes(otherTwo[1]);
+          if (has1 || has2) {
+            const matchedOther = has1 ? otherTwo[0] : otherTwo[1];
+            const elem = branchCombos[combo];
+            interactions.push({
+              title: `【${[yZhi, matchedOther].sort().join('')}半合${elem}局】（流年與原局月、日支）`,
+              desc: `這是一個顯著的能量聚合信號。大運與流年引動${elem}氣大盛。若該五行為原局所忌，則如烈火生土，整個命盤變成一個巨大的壓力鍋；若為用神，則為凝聚合力之機。`
+            });
+          }
+        }
+      });
+
+      // 5. 天干直接生剋
+      if ((yGanEl === '火' && dmEl === '金') || (yGanEl === '金' && dmEl === '木') ||
+          (yGanEl === '木' && dmEl === '土') || (yGanEl === '土' && dmEl === '水') ||
+          (yGanEl === '水' && dmEl === '火')) {
+        interactions.push({
+          title: `【${yGanEl}旺剋${dmEl}】（流年${tgGan}直接剋日主）`,
+          desc: `日主在流年如同置身嚴格淬鍊之爐。外界標準嚴苛、考核指標與主管壓力集中，神經處於高度緊繃狀態。`
+        });
+      }
+
+      if (interactions.length === 0) {
+        interactions.push({
+          title: `【${yGanEl}${yZhiEl}生剋流通】`,
+          desc: `流年氣息與原局相對平和，未見正面劇烈沖剋，重心在於把握日常節奏、精進本業。`
+        });
+      }
+
+      // 根據干支互動精確定調主題、斷語與行動建議
+      let theme = '';
+      let quote = '';
+      let desc = '';
+      let advice = '';
+
+      if (tgGan.includes('財') && (interactions.some(it => it.title.includes('沖') || it.title.includes('刑')) || yZhiEl === '火')) {
+        theme = '破局與重組之年（衝擊最劇烈的一年）';
+        quote = '「壓力當頭，求財心切，但須防破財與動盪。」';
+        desc = `今年對您而言，是「機會與風險並存」的一年。${tgGan}出現，您會非常渴望賺錢或落實某個計畫。但地支引動了原局與大運的「沖、刑」壓力。`;
+        advice = '今年切忌盲目擴張或投入不熟悉的高風險投資（尤其是需要大量資金周轉的）。「乙庚合」的財是「辛苦財」，必須親力親為。今年容易有搬家、換工作或與人發生合約糾紛的情況。請務必保護好現金流，以「防守」為主，不宜「進攻」。';
+      } else if (tgZhi.includes('印') || (yZhiEl === '土' && (dmEl === '金' || dmEl === '水')) || interactions.some(it => it.title.includes('丑戌未') || it.title.includes('土多金埋'))) {
+        theme = '爐火純青，土多金埋（轉折與沉澱之年）';
+        quote = '「責任纏身，思緒混亂，宜靜不宜動。」';
+        desc = `經過了高壓期，今年您會感覺疲憊不堪。${tgGan}帶來的責任意味著被賦予某個職位或必須承擔責任，但「土多金埋」讓您感到施展不開。`;
+        advice = '今年是「沉澱年」。不要急於求成，也不要試圖去強硬改變現狀。流年的土氣是暫時的阻礙，適合整理思緒、清理舊帳、修復人際關係。如果遇到任何變動，請記住：「退一步海闊天空」。';
+      } else if (tgGan.includes('殺') || (yZhi === '午' && (dmEl === '金' || dmEl === '水')) || interactions.some(it => it.title.includes('半合火'))) {
+        theme = '水火交戰，烈焰焚身（壓力最大的一年）';
+        quote = '「考驗抗壓極限，切勿衝動行事。」';
+        desc = `今年是您事業與身心健康壓力最大的一年。${yGan}${yZhi}火勢猛烈直接考驗日主，代表來自外界的壓力（長官、客戶、大環境）或內心焦慮會達到頂峰。`;
+        advice = '今年必須「學會示弱」。不要做衝動重大決策，不要與人發生正面衝突（尤其是與體制權威人士）。學會「示弱與妥協」，適合閉關學習、休養生息，將壓力轉化為專業知識的累積。健康上特別注意心血管、腦部與睡眠品質。';
+      } else if (tgGan.includes('食') || tgGan.includes('傷')) {
+        theme = '才華流露，突破進取之年（創新變現）';
+        quote = '「靈感泉湧，務實落地。」';
+        desc = '食傷星透出，思維敏銳活躍，表達慾與開創動能強烈，為技能展現與專案突破之良機。';
+        advice = '將創意化為可執行的階段性方案，注意言行謙和，避免鋒芒太露引發人際磨合。';
+      } else {
+        theme = `步步為營，深耕厚積之年（${tgGan}主導）`;
+        quote = '「順應節奏，蓄勢而為。」';
+        desc = `流年${tgGan}透出，為生活帶來鮮明的主題挑戰，宜聚焦核心目標，穩步前行。`;
+        advice = '保持清晰邊界，在擅長領域深耕輸出，不被外部紛擾打亂既有節奏。';
+      }
+
+      return {
+        label,
+        year,
+        ganZhi: flow.ganZhi,
+        gan: yGan,
+        zhi: yZhi,
+        ganEl: yGanEl,
+        zhiEl: yZhiEl,
+        tenGodGan: tgGan,
+        tenGodZhi: tgZhi,
+        grade: a.grade,
+        character: a.character,
+        theme,
+        quote,
+        desc,
+        advice,
+        interactions
+      };
+    });
+
+    return {
+      cy,
+      yearsData,
+      survivalBlueprint: {
+        weakEl,
+        weakPct,
+        weakGodGroup,
+        strongEl1,
+        strongEl2,
+        headline: `【命理師的終極戰略警告：${cy-1}-${cy+1} 破局指南】`,
+        diagnosis: `這張命盤的核心死穴只有一個：「${weakEl}（${weakGodGroup}）的極度匱乏（僅佔約 ${weakPct}%）」。這代表您習慣用「硬碰硬的邏輯（${strongEl1}）」和「沉重固執的思考（${strongEl2}）」來面對世界。但在接下來的三年，流年將帶來猛烈的動盪與考驗。這是一場針對您性格弱點的極限測試。`,
+        rules: [
+          {
+            no: '一',
+            icon: '🔴',
+            title: `【放棄對抗，全面啟動「${weakEl}」的防禦機制】（最重要！請刻在骨子裡）`,
+            desc: '這是您能否度過難關的絕對關鍵。如果您在這三年試圖用過去「剛硬、固執、硬碰硬」的方式去解決問題，您將會身心俱疲。',
+            actions: [
+              { name: '停止硬碰硬', text: '遇到不合理的要求、機車的客戶、打壓您的上司，絕對不要正面衝突。請學會「裝傻、示弱、太極推手」。' },
+              { name: '遠離過勞', text: `狂暴的歲運極度消耗您的精氣神。這三年拒絕一切無效的加班與過度的勞累。身體承受不住這種損耗，累了就休息，這不是偷懶，是保命。` },
+              { name: `強制執行「${weakEl}」的行為`, text: `這裡的補${weakEl}不是單純物理喝水，而是「執行${weakEl}的靈活行為」。遇到卡關不要一個人死磕，去請教別人、去查資料、去換個思路。把「我非要這樣做」改成「換個方式試試看」。` }
+            ]
+          },
+          {
+            no: '二',
+            icon: '🟠',
+            title: '【順應突變，把「被迫轉向」當作救命稻草】',
+            desc: '流年逢沖破與合動，是您人生軌跡的重大轉折點。這不是壞事，這是老天爺在幫您「強制拆遷」舊有的違章建築。',
+            actions: [
+              { name: '不要抗拒變化', text: '如果出現了工作變動、搬家、或是某個合作案突然破局，請不要掙扎，直接順勢而為。這是在幫您清理舊有的包袱。' },
+              { name: '接受「不完美」的開始', text: '您總是想等到準備好100分才出手。但在這三年，您必須接受「先求有，再求好」。哪怕只有60分，先做出來、邊做邊修，才是活路。' }
+            ]
+          },
+          {
+            no: '三',
+            icon: '🟢',
+            title: `【尋找「${weakEl}」的實體化：您的貴人與變現渠道】`,
+            desc: `不要被動等待屬${weakEl}的貴人從天而降。您必須主動去「購買」或「合作」${weakEl}的能量。`,
+            actions: [
+              { name: '尋找「互補型」夥伴，而非「同類」', text: `請刻意去結交那些口才好、點子多、性格圓融、懂得推銷的人。他們是您的「行銷總監」和「業務代表」。您負責在後方專業研發，他們負責在前方變現。` },
+              { name: '改變商業模式', text: '不要賣「苦力」和「時間」。把您的專業知識打包成「課程、顧問服務、專欄文章、SOP系統」。這就是將大腦專業轉化為產品資產的過程。' }
+            ]
+          }
+        ]
+      }
+    };
+  }
+
+  window.BaziCore=Object.freeze({generateThreeYearStrategicOutlook,annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,generateTenGodMasterGuide,generateRelationsMasterGuide,generateOverallMasterSummary,generateLuckMasterGuide,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
 
 })();
