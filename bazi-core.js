@@ -1964,6 +1964,214 @@ ${dm}${dmEl}生於${seasonName}，${topTwoElNames}成勢（高達${Math.round(to
     };
   }
 
-  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,generateTenGodMasterGuide,generateRelationsMasterGuide,generateOverallMasterSummary,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
+  
+  function generateLuckMasterGuide(data) {
+    if (!data || !data.daYun || !data.daYun.cycles || !data.daYun.cycles.length) return null;
+    const dm = data.dayMaster;
+    const dmEl = GAN_ELEMENT[dm];
+    const dmYy = GAN_YINYANG[dm];
+    const pillars = data.pillars || [];
+    const wp = data.weightedFiveElements?.percentages || {};
+    const ps = data.tenGodDistribution?.percentages || {};
+    const gp = data.tenGodDistribution?.groupPercentages || {};
+    const rels = data.relations || [];
+    const y = data.daYun;
+    const cycles = y.cycles;
+
+    // 生日與年齡計算
+    const birthYear = pillars[0]?.ganZhi ? Number(data.solar?.slice(0, 4) || (new Date().getFullYear() - 40)) : (new Date().getFullYear() - 40);
+    const thisYear = new Date().getFullYear();
+    const curAge = Math.max(1, thisYear - birthYear + 1); // 虛歲
+
+    // 性別與排運
+    const isMale = data.gender === '乾造' || data.gender === '男';
+    const yearGan = pillars[0]?.gan || '甲';
+    const yearZhi = pillars[0]?.zhi || '子';
+    const yearYy = GAN_YINYANG[yearGan] || '陽';
+    const yearEl = GAN_ELEMENT[yearGan] || '木';
+
+    // 起運時間
+    const startAgeParts = [[y.startYears,'歲'], [y.startMonths,'個月']].filter(([v]) => v).map(([v,u]) => `${v}${u}`).join('');
+    const startAgeDesc = startAgeParts || '4歲半';
+
+    // 當前大運定位
+    let curIdx = cycles.findIndex(c => thisYear >= c.startYear && thisYear <= c.endYear);
+    if (curIdx === -1) {
+      if (thisYear < cycles[0].startYear) curIdx = 0;
+      else curIdx = cycles.length - 1;
+    }
+    const curCycle = cycles[curIdx];
+    const nextCycle = cycles[curIdx + 1] || cycles[curIdx];
+    const yearsInto = thisYear - curCycle.startYear;
+    const curPhase = yearsInto >= 7 ? '尾聲，即將邁入下一步大運' : yearsInto <= 3 ? '初啟階段' : '中局深耕階段';
+
+    // 五行與十神排序
+    const sortedEls = ELEMENTS.slice().map(e => [e, Number(wp[e]) || 0]).sort((a,b) => b[1] - a[1]);
+    const topEl = sortedEls[0] || [dmEl, 0];
+    const secondEl = sortedEls[1] || [dmEl, 0];
+    const weakEl = sortedEls[sortedEls.length - 1] || ['水', 0];
+
+    const sortedGods = TEN_GODS.slice().map(t => [t, Number(ps[t]) || 0]).sort((a,b) => b[1] - a[1]);
+    const topGod1 = sortedGods[0] || ['偏印', 0];
+    const topGod2 = sortedGods[1] || ['劫財', 0];
+    const topGod3 = sortedGods[2] || ['七殺', 0];
+
+    const weakElDesc = (weakEl[1] || 0) <= 2 ? `全局無${weakEl[0]}` : `全局${weakEl[0]}極度匱乏（僅${weakEl[1]}%）`;
+
+    // 核心原則判讀
+    // 如果土金旺，需補水木；如果火土旺，需補金水；如果木火旺，需補金土/水；依此類推
+    const favorableDirection = `洩耗${topEl[0]}${secondEl[0]}（補${weakEl[0]}）`;
+    const unfavorableDirection = `加重${topEl[0]}${secondEl[0]}`;
+
+    // 干支五行生剋關係輔助函數
+    function analyzePillarEnergy(c) {
+      const gEl = GAN_ELEMENT[c.gan];
+      const zEl = ZHI_ELEMENT[c.zhi];
+      const gGod = c.tenGodGan;
+      const zGod = c.tenGodZhi;
+
+      let gDesc = '';
+      let zDesc = '';
+
+      if (gEl === weakEl[0]) {
+        gDesc = `這是命盤最渴望的「${gEl}」！${c.gan}${gEl}一出，直接平衡了原局過盛的${topEl[0]}氣，將過重的${topGod1[0]}沉澱轉化為${gGod}的靈動，大幅提升了對外溝通、變通與才華變現能力。`;
+      } else if (gEl === topEl[0] || gEl === secondEl[0]) {
+        gDesc = `天干迎來${c.gan}${gEl}（${gGod}），進一步強化了原局${topEl[0]}的厚重勢力。這十年雖然自我掌控感強，但也容易加深思維執念與精神內耗，需提防固步自封。`;
+      } else {
+        gDesc = `天干【${c.gan}${gEl}】（${gGod}）透出，帶來鮮明的${gGod}課題。有利於拓展新的事業視野與外部連結，是激發行動力的重要契機。`;
+      }
+
+      if (zEl === weakEl[0]) {
+        zDesc = `地支【${c.zhi}${zEl}】（${zGod}）坐實了${weakEl[0]}的根基，猶如甘霖深植沃土，讓您在現實生活、資產佈局與人際關係上獲得實質滋養，不再懸空漂浮。`;
+      } else if (zGod.includes('財')) {
+        zDesc = `地支【${c.zhi}${zEl}】（${zGod}）為命盤注入關鍵財星能量。財星坐支，代表商業機會、實際獲利與資源整合的機會顯現，是人生中至關重要的變現考驗期。`;
+      } else if (zGod.includes('官') || zGod.includes('殺')) {
+        zDesc = `地支【${c.zhi}${zEl}】（${zGod}）帶來強烈的責任、任務與權柄考驗。外部環境要求嚴苛，但也正是在這等重壓之下，能逼出您的頂級專業實力。`;
+      } else {
+        zDesc = `地支【${c.zhi}${zEl}】（${zGod}）為原局帶來深層的結構支撐，在既有專業領域中持續沉澱，積累長期底蘊。`;
+      }
+
+      // 與原局的刑沖合害
+      const cRels = periodRelations(c.gan, c.zhi, pillars);
+      const interactions = [];
+      const clashes = cRels.filter(r => r.type === '地支六沖');
+      const punishments = cRels.filter(r => r.type === '地支相刑' || r.type === '相刑');
+      const combos = cRels.filter(r => r.type === '地支六合' || r.type === '三合' || r.type === '會合' || r.type === '天干五合');
+      const harms = cRels.filter(r => r.type === '地支相害' || r.type === '相害');
+
+      if (clashes.length > 0) {
+        clashes.forEach(cl => {
+          interactions.push({
+            name: cl.label,
+            text: `大運地支${c.zhi}與原局${cl.position}發生「${cl.label}」。這代表本大運環境充滿動態調整，生活基底、居所或工作跑道容易發生破局重組，動盪中蘊藏轉型契機。`
+          });
+        });
+      }
+      if (punishments.length > 0) {
+        punishments.forEach(p => {
+          interactions.push({
+            name: p.label,
+            text: `大運與原局構成「${p.label}」，求財或推進事業過程極度勞心費神，容易因合夥、條款或人際細節產生糾葛，凡事需重法規契約，慎防精神內耗。`
+          });
+        });
+      }
+      if (combos.length > 0) {
+        combos.forEach(cb => {
+          interactions.push({
+            name: cb.label,
+            text: `大運與原局構成「${cb.label}」，這是一個極佳的和解轉化組合！能有效緩解原局內在的對立與戾氣，促成人脈合作與資源整合，讓身心步入舒展境地。`
+          });
+        });
+      }
+      if (interactions.length === 0) {
+        interactions.push({
+          name: '安步當車',
+          text: `本大運與原局未見激烈的正面沖刑，氣場相對平和穩定。考驗更多來自內在自我修煉與日常生活規律的堅持。`
+        });
+      }
+
+      return { gEl, zEl, gGod, zGod, gDesc, zDesc, interactions };
+    }
+
+    const curAnalysis = analyzePillarEnergy(curCycle);
+    const nextAnalysis = analyzePillarEnergy(nextCycle);
+
+    // 當前大運命理師斷語
+    let curVerdict = '';
+    if (curCycle.relations && curCycle.relations.some(r => ['沖','刑'].includes(r.type))) {
+      curVerdict = `「這是一步『破局開拓之運』，也是『勞心求變之運』。」命主在這十年求財或轉型的動力極為強烈，但因運支與原局帶有動態刑沖，過程必定伴隨陣痛與適應成本。建議：以輕資產、顧問諮詢或專業技術服務切入，切忌盲目大額槓桿或不熟悉的重資產合夥。`;
+    } else {
+      curVerdict = `「這是一步『沉潛生發之運』。」環境相對穩定，適合在此十年深耕核心壁壘，將過往累積的知識與資源轉化為實際作品，為下一階段的人生巔峰做好全面鋪墊。`;
+    }
+
+    // 下一步大運命理師斷語
+    let nextVerdict = '';
+    if (nextCycle.tenGodZhi.includes('財') || nextCycle.tenGodGan.includes('財') || nextCycle.tenGodGan.includes('食') || nextCycle.tenGodGan.includes('傷')) {
+      nextVerdict = `「苦盡甘來，名利雙收。」這將是命主一生中極為難得的收割黃金期！過去數十年的鑽研與隱忍將在此時開花結果。建議將重心由一線的埋頭苦幹，逐步轉向資源整合、顧問傳承或穩健資產置辦，安享尊榮成就。`;
+    } else {
+      nextVerdict = `「心境淡泊，自立門庭。」這十年更注重生活品質與內在精神富足。放下世俗無謂的競爭與內耗，依託長年沉澱的權威專業，過上從容自得的雅緻生活。`;
+    }
+
+    // 終極生存指南 4 大要點
+    const guides = [
+      {
+        title: `關於「${weakEl[0]}」的修煉（重中之重）`,
+        text: `原局最匱乏${weakEl[0]}之氣。您必須把「學會傾聽、柔化溝通、接納不完美」當作終身功課。不要試圖單純用冷硬的邏輯去壓制所有人，學會用情緒共鳴去感染人，導入${weakEl[0]}的流動，方能水到渠成。`
+      },
+      {
+        title: '關於沖剋動盪的宿命與化解',
+        text: '若原局地支帶沖（如辰戌、子午、寅申等），代表您的人生節奏本就注定要在變動中打破僵局。不要追求絕對一成不變的安穩，換環境、跑道轉換或生活遷徙不是壞事，是定期釋放內部高壓的健康排氣閥。'
+      },
+      {
+        title: '關於財富的真實變現法則',
+        text: `您的命格本質是「厚積薄發型」。不能靠短線投機、炒作或死板打工發財，您的財富必須來自於「極致的稀缺專業壁壘」。只要在自己的垂直領域深耕到極致，財富自然會在大運轉入水木/食傷財星時主動登門。`
+      },
+      {
+        title: '總結：一生大運的破繭節奏',
+        text: `您是一位擁有強大定力與底蘊的深度探索者。前半生多為高壓積累、自我錘鍊的沉潛期；當前正處於破繭突圍、驗證所學的關鍵陣痛轉換期；而後續大運將是您收割成果、從容立世的黃金收穫期。請務必把握當下，積極輸出，擁抱即將到來的大運紅利！`
+      }
+    ];
+
+    return {
+      overview: {
+        genderText: isMale ? '男命' : '女命',
+        yearText: `${yearYy}年生（${yearGan}${yearZhi}年，${yearGan}為${yearYy}${yearEl}）`,
+        directionText: y.forward ? '大運順排' : '大運逆排',
+        startAgeText: startAgeDesc,
+        curAge,
+        curCycleGz: curCycle.ganZhi,
+        curCycleYears: `${curCycle.startYear}～${curCycle.endYear}`,
+        curCycleAge: `${curCycle.startAge}～${curCycle.endAge}歲`,
+        nextCycleGz: nextCycle.ganZhi,
+        nextCycleYears: `${nextCycle.startYear}～${nextCycle.endYear}`,
+        nextCycleAge: `${nextCycle.startAge}～${nextCycle.endAge}歲`,
+        curIdx: curIdx + 1,
+        curPhase
+      },
+      corePrinciple: {
+        chartPortrait: `${topGod1[0]}${topGod1[1]}% + ${topGod2[0]}${topGod2[1]}% + ${topGod3[0]}${topGod3[1]}%，且${weakElDesc}`,
+        principleQuestion: `這步大運是來${favorableDirection}，還是來${unfavorableDirection}？`
+      },
+      curStep: {
+        title: `當前大運（約 ${curCycle.startAge}歲 - ${curCycle.endAge}歲）：【${curCycle.ganZhi}】大運（約 ${curCycle.startYear} - ${curCycle.endYear}年）`,
+        intro: `這是命主人生中極度關鍵、充滿變革與轉型的關鍵十年。`,
+        gan: { name: curCycle.gan, el: curAnalysis.gEl, god: curAnalysis.gGod, desc: curAnalysis.gDesc },
+        zhi: { name: curCycle.zhi, el: curAnalysis.zEl, god: curAnalysis.zGod, desc: curAnalysis.zDesc },
+        interactions: curAnalysis.interactions,
+        verdict: curVerdict
+      },
+      nextStep: {
+        title: `下一步大運（約 ${nextCycle.startAge}歲 - ${nextCycle.endAge}歲）：【${nextCycle.ganZhi}】大運（約 ${nextCycle.startYear} - ${nextCycle.endYear}年）`,
+        intro: `這將是命主人生中最具收穫感、最能展現才華與收穫成果的黃金十年。`,
+        gan: { name: nextCycle.gan, el: nextAnalysis.gEl, god: nextAnalysis.gGod, desc: nextAnalysis.gDesc },
+        zhi: { name: nextCycle.zhi, el: nextAnalysis.zEl, god: nextAnalysis.zGod, desc: nextAnalysis.zDesc },
+        interactions: nextAnalysis.interactions,
+        verdict: nextVerdict
+      },
+      guides
+    };
+  }
+
+  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,generateTenGodMasterGuide,generateRelationsMasterGuide,generateOverallMasterSummary,generateLuckMasterGuide,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
 
 })();

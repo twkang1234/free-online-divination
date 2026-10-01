@@ -379,6 +379,37 @@ body.overlay-open{overflow:hidden}
   color: #f2d482;
 }
 
+/* Section 07 Modern Luck Cards */
+.modern-luck-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.45);
+}
+.modern-luck-card.active, .modern-luck-card[aria-pressed="true"] {
+  outline: 2px solid #e9bd58 !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 25px rgba(233,189,88,.4) !important;
+}
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 6px rgba(16,185,129,.5); }
+  50% { box-shadow: 0 0 16px rgba(16,185,129,.9); }
+  100% { box-shadow: 0 0 6px rgba(16,185,129,.5); }
+}
+.cur-pulse-badge {
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+.fortune-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 18px 0;
+}
+@media (max-width: 900px) {
+  .fortune-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
   </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -1826,6 +1857,259 @@ body.overlay-open{overflow:hidden}
     `;
   }
 
+  function renderLuckPeriodDetail(data, item, rank) {
+    const a = timeAssessment(data, item);
+    const endLabel = item.kind==='month'?`${item.startJie} → ${item.endJie}`:item.kind==='year'?'立春 → 次年立春':'交運 → 下一步交運';
+
+    const tgG = item.tenGodGan || '', tgZ = item.tenGodZhi || '';
+    const dm = data.dayMaster;
+    const dmEl = data.dayMasterElement || '金';
+    const overcomeMap = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };
+    const genMap = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' };
+    const wealthEl = overcomeMap[dmEl];
+    const outputEl = genMap[dmEl];
+
+    // 工作與事業深度文字
+    let careerDesc = '';
+    let careerTips = '';
+    if (tgG.includes('官') || tgZ.includes('官') || tgG.includes('殺') || tgZ.includes('殺')) {
+      careerDesc = `天干或地支引動官殺（${tgG}·${tgZ}），責任標準、考核指標與權責壓力集中。適合在專業垂直領域勇挑重擔、爭取管理實權或主導重大攻堅專案，以權威專業奠定地位。`;
+      careerTips = '機會往往伴隨嚴格考核。切忌硬碰硬對抗體制規則，多借助專業背書與流程規範以柔克剛。';
+    } else if (tgG.includes('食') || tgZ.includes('食') || tgG.includes('傷') || tgZ.includes('傷')) {
+      careerDesc = `食傷星強烈引動（${tgG}·${tgZ}），大腦才思敏捷，表達慾、創作慾與打破常規之渴望極強！極其有利於技術創新、獨立提案、產品孵化與個人IP聲望建立。`;
+      careerTips = '言辭過於犀利直接容易觸動既得利益者。注意溝通包裝，將所有銳氣聚焦在產品與作品成果上。';
+    } else if (tgG.includes('印') || tgZ.includes('印')) {
+      careerDesc = `印星生身蓄力（${tgG}·${tgZ}），利於靜心進修、學術鑽研、深造考證或系統性整理實戰方法論，為下一階段飛躍積累無可替代之護城河。`;
+      careerTips = '防範「思多行少」之完美主義癱瘓。務必設定交付死線（Deadline），在實踐中邊做邊修正。';
+    } else {
+      careerDesc = `比劫或財星主題引動（${tgG}·${tgZ}），同儕協同、合夥分工與市場開拓成為重心，向外探索與推進的動能顯著增強。`;
+      careerTips = '合作權責與利益分配條款務必白紙黑字，防範主導權爭執與精力分散。';
+    }
+
+    // 財務與金錢深度文字
+    let financeDesc = '';
+    let financeTips = '';
+    if (tgG.includes('財') || tgZ.includes('財')) {
+      financeDesc = `大運直接引動財星（${tgG}·${tgZ}），商業嗅覺敏銳，客戶回報、合約談判與變現通道全面打開！屬於一生中關鍵的財富催生與資產積累期。`;
+      financeTips = '現金流來去頻繁，容易在樂觀擴張中放大固定支出。務必將短期收益沉澱為優質固定資產或穩健長線儲備。';
+    } else if (tgG.includes('食') || tgZ.includes('食') || tgG.includes('傷') || tgZ.includes('傷')) {
+      financeDesc = `食傷（${outputEl}）為財富之源頭！這十年適合靠「稀缺專業技術、創意輸出、諮詢服務」賺錢，屬於典型的技能溢價與才華變現黃金期。`;
+      financeTips = '切莫免費消耗心血情懷。建立清晰的商務收費標準與交付門檻，讓知識與才華獲得充分的市場估值。';
+    } else if (tgG.includes('劫') || tgZ.includes('劫') || tgG.includes('比') || tgZ.includes('比')) {
+      financeDesc = `比劫星臨門（${tgG}·${tgZ}），同儕合作、人情往來與開銷顯著增多。需防範合夥被動墊資、借貸糾葛或投資破耗。`;
+      financeTips = '切忌參與非主控的高風險盲目跟風投資；親友借貸量力而行，把錢花在自我硬技能與核心工具提升上最為安全。';
+    } else {
+      financeDesc = `本期財務以長線穩定薪酬、既有資產增值與穩健複利為主，未見極端的投機暴利，亦無重大破財風險。`;
+      financeTips = '採取「防守型財務配置」，專注核心主業，保持充足的應急現金儲備。';
+    }
+
+    // 感情與相處深度文字
+    let loveDesc = '';
+    let loveTips = '';
+    const dayRels = a.relations.filter(r => r.position === '日支');
+    const dayClash = dayRels.find(r => ['沖','刑','害','破'].includes(r.type));
+    const dayCombine = dayRels.find(r => r.type === '合' || r.type === '會合');
+
+    if (dayClash) {
+      loveDesc = `大運與夫妻宮（日支）發生「${dayClash.label}」！親密關係面臨環境變動、兩地奔波、生活步調分歧或內在觀念磨合之考驗。`;
+      loveTips = '有伴侶者切忌在疲憊時把情緒宣洩給對方，「情緒價值遠大於邏輯是非」；單身者在感情選擇上容易受外界干擾，需放慢節奏觀察。';
+    } else if (dayCombine) {
+      loveDesc = `大運與夫妻宮（日支）構成「${dayCombine.label}」，感情緣分顯著增強，容易把注意力放在陪伴、家庭共築與情感靠近上。`;
+      loveTips = '單身者婚戀機緣成熟，利於定下長遠承諾；已婚者夫妻默契提升，利於共同規劃家庭重大目標。';
+    } else {
+      loveDesc = `日支未受強烈沖合牽動，感情走勢以日常相處與務實陪伴為主。平和之中透露著長流細水之溫暖。`;
+      loveTips = '生活節奏平穩但也容易缺少儀式感，適度主動製造驚喜與情感溝通，能讓感情更加保鮮。';
+    }
+
+    return `
+      <div style="border-radius: 12px; border: 1px solid rgba(233,189,88,.3); background: rgba(14,18,26,.95); padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,.35);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.07); padding-bottom: 12px;">
+          <div>
+            <span style="color: #e9bd58; font-size: .72rem; font-weight: 800; letter-spacing: .06em;">大運深度詳析</span>
+            <h4 style="margin: 4px 0 0; color: #fdf6e7; font-size: 1.25rem; font-weight: 900;">${esc(periodName(item))}</h4>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            ${rank ? `<span style="background: rgba(233,189,88,.15); border: 1px solid #e9bd58; color: #fce8a6; border-radius: 999px; padding: 3px 12px; font-size: .72rem; font-weight: 800;">相對第 ${rank}/8</span>` : ''}
+            <span class="fortune-badge" style="font-size: .74rem; font-weight: 800;">${esc(a.label)}</span>
+          </div>
+        </div>
+
+        <p style="margin: 0 0 16px; font-size: .73rem; color: #8fa3b8; line-height: 1.6;">
+          <b>交接時間段：</b>${esc(item.startSolar||'日期未取得')} 至 ${esc(item.endSolar||'日期未取得')}（不含終點）<br>
+          <b>氣場定調：</b>${esc(a.contextText)} · ${esc(a.reasons[0]||'')}
+        </p>
+
+        <!-- 三大領域深度卡片 -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 16px;">
+          <!-- 💼 工作與事業 -->
+          <article style="border: 1px solid rgba(233,189,88,.25); border-radius: 10px; padding: 16px; background: rgba(255,255,255,.025);">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+              <span style="font-size: 1rem;">💼</span>
+              <h5 style="margin: 0; color: #f2d482; font-size: .88rem; font-weight: 850;">工作與事業（生涯發展）</h5>
+            </div>
+            <p style="margin: 0 0 10px; color: #cbd6e4; font-size: .74rem; line-height: 1.8;">${careerDesc}</p>
+            <div style="border-left: 2px solid #e9bd58; padding-left: 8px; color: #ecd084; font-size: .71rem; line-height: 1.6;">
+              <b>職場策略：</b>${careerTips}
+            </div>
+          </article>
+
+          <!-- 💰 財務與金錢 -->
+          <article style="border: 1px solid rgba(52,211,153,.25); border-radius: 10px; padding: 16px; background: rgba(255,255,255,.025);">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+              <span style="font-size: 1rem;">💰</span>
+              <h5 style="margin: 0; color: #6ee7b7; font-size: .88rem; font-weight: 850;">財務與金錢（資產變現）</h5>
+            </div>
+            <p style="margin: 0 0 10px; color: #cbd6e4; font-size: .74rem; line-height: 1.8;">${financeDesc}</p>
+            <div style="border-left: 2px solid #34d399; padding-left: 8px; color: #a7f3d0; font-size: .71rem; line-height: 1.6;">
+              <b>理財指引：</b>${financeTips}
+            </div>
+          </article>
+
+          <!-- ❤️ 感情與人際 -->
+          <article style="border: 1px solid rgba(244,114,182,.25); border-radius: 10px; padding: 16px; background: rgba(255,255,255,.025);">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+              <span style="font-size: 1rem;">❤️</span>
+              <h5 style="margin: 0; color: #f472b6; font-size: .88rem; font-weight: 850;">感情與相處（親密關係）</h5>
+            </div>
+            <p style="margin: 0 0 10px; color: #cbd6e4; font-size: .74rem; line-height: 1.8;">${loveDesc}</p>
+            <div style="border-left: 2px solid #f472b6; padding-left: 8px; color: #fbcfe8; font-size: .71rem; line-height: 1.6;">
+              <b>相處修行：</b>${loveTips}
+            </div>
+          </article>
+        </div>
+
+        <!-- 底部命理線索 -->
+        <div style="padding: 12px 16px; border-radius: 8px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06); font-size: .73rem; color: #a6b5c7; line-height: 1.7;">
+          <div style="margin-bottom: 4px;"><strong style="color: #edd18a;">十神透藏線索：</strong>${esc(item.tenGodGan)}（天干透出）＋ ${esc(item.tenGodZhi)}（地支主氣）</div>
+          <div><strong style="color: #edd18a;">干支實質互動：</strong>${esc(a.relations.map(r=>`${r.label}（${r.position}）`).join('、')||'未見本步大運與原局之直接刑沖合害')}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderLuckMasterGuideHtml(guide) {
+    if (!guide) return '';
+    const safe = x => esc(String(x ?? '—'));
+    return `
+      <div class="luck-master-guide" style="display: grid; gap: 20px;">
+        <!-- 頂部概覽 Banner -->
+        <div style="border-radius: 14px; border: 1px solid rgba(233,189,88,.45); background: radial-gradient(circle 700px at 0% 0%, rgba(233,189,88,.12), transparent 75%), rgba(16,19,28,.96); padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,.45);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <span style="color: #e9bd58; font-size: .72rem; letter-spacing: .16em; font-weight: 850;">十年大運 · 專業推演</span>
+            <span style="display: inline-block; padding: 4px 12px; border-radius: 999px; background: rgba(233,189,88,.15); border: 1px solid rgba(233,189,88,.3); color: #f2d482; font-size: .66rem; font-weight: 750;">黃金大運全盤透析</span>
+          </div>
+          <h3 style="margin: 0 0 14px; color: #fdf6e7; font-size: 1.25rem; font-weight: 900; letter-spacing: .02em;">【專業命理師的十年大運推演邏輯】</h3>
+          
+          <div style="border-left: 4px solid #e9bd58; padding: 12px 16px; background: rgba(255,255,255,.025); border-radius: 0 8px 8px 0; margin-bottom: 14px;">
+            <p style="margin: 0; color: #cbd6e4; font-size: .76rem; line-height: 1.85;">
+              排大運，${safe(guide.overview.genderText)}${safe(guide.overview.yearText)}，<b>${safe(guide.overview.directionText)}</b>。<br>
+              起運約在 <b>${safe(guide.overview.startAgeText)}</b> 左右。目前命主約 <b>${safe(guide.overview.curAge)} 歲</b>，正處於第 <b>${safe(guide.overview.curIdx)} 大運（【${safe(guide.overview.curCycleGz)}】）的${safe(guide.overview.curPhase)}</b>，即將邁入第 <b>${safe(guide.overview.curIdx + 1)} 大運（【${safe(guide.overview.nextCycleGz)}】）</b>。
+            </p>
+          </div>
+
+          <div style="padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(233,189,88,.25); background: rgba(233,189,88,.05);">
+            <div style="color: #edd18a; font-size: .74rem; font-weight: 750; margin-bottom: 4px;">核心原則定調：</div>
+            <p style="margin: 0; color: #f5eedb; font-size: .78rem; line-height: 1.8; font-weight: 600;">
+              針對這張「${safe(guide.corePrinciple.chartPortrait)}」的命盤，看大運只有一個核心原則：<br>
+              <b style="color: #6ee7b7;">「${safe(guide.corePrinciple.principleQuestion)}」</b>
+            </p>
+          </div>
+        </div>
+
+        <!-- 當前大運 -->
+        <article class="decode-card" style="margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(52,211,153,.4); background: radial-gradient(circle at 10% 10%, rgba(52,211,153,.08), transparent 70%), rgba(14,18,24,.95);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="background: rgba(52,211,153,.2); color: #6ee7b7; font-weight: 900; border-radius: 6px; padding: 2px 8px; font-size: .7rem;">一</span>
+              <h4 style="margin: 0; color: #f6eedb; font-size: 1.05rem; font-weight: 850;">${safe(guide.curStep.title)}</h4>
+            </div>
+            <span style="background: rgba(52,211,153,.2); border: 1px solid #34d399; color: #a7f3d0; border-radius: 999px; padding: 2px 10px; font-size: .68rem; font-weight: 800;">當前大運進行中</span>
+          </div>
+
+          <p style="margin: 0 0 14px; color: #cbd6e4; font-size: .76rem; line-height: 1.8;">${safe(guide.curStep.intro)}</p>
+
+          <div style="border-radius: 8px; padding: 14px 16px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06); margin-bottom: 14px;">
+            <b style="color: #edd18a; font-size: .76rem; display: block; margin-bottom: 8px;">五行與十神結構：</b>
+            <div style="display: grid; gap: 10px; font-size: .73rem; line-height: 1.8; color: #cbd6e4;">
+              <div><strong style="color: #72d7df;">天干【${safe(guide.curStep.gan.name)}${safe(guide.curStep.gan.el)}】（${safe(guide.curStep.gan.god)}）：</strong>${safe(guide.curStep.gan.desc)}</div>
+              <div><strong style="color: #ecd084;">地支【${safe(guide.curStep.zhi.name)}${safe(guide.curStep.zhi.el)}】（${safe(guide.curStep.zhi.god)}）：</strong>${safe(guide.curStep.zhi.desc)}</div>
+            </div>
+          </div>
+
+          <div style="border-radius: 8px; padding: 14px 16px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06); margin-bottom: 14px;">
+            <b style="color: #edd18a; font-size: .76rem; display: block; margin-bottom: 8px;">互動與人生劇本：</b>
+            <div style="display: grid; gap: 8px;">
+              ${guide.curStep.interactions.map(it => `
+                <div style="font-size: .73rem; line-height: 1.8; color: #cbd6e4;">
+                  <strong style="color: #f87171;">【${safe(it.name)}】：</strong>${safe(it.text)}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div style="border-left: 3px solid #34d399; padding: 10px 14px; background: rgba(52,211,153,.04); border-radius: 0 8px 8px 0;">
+            <b style="color: #6ee7b7; font-size: .74rem; display: block; margin-bottom: 4px;">命理師斷語：</b>
+            <p style="margin: 0; color: #ecfdf5; font-size: .75rem; line-height: 1.85;">${safe(guide.curStep.verdict)}</p>
+          </div>
+        </article>
+
+        <!-- 下一步大運 -->
+        <article class="decode-card" style="margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(233,189,88,.4); background: radial-gradient(circle at 10% 10%, rgba(233,189,88,.08), transparent 70%), rgba(14,18,24,.95);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="background: rgba(233,189,88,.2); color: #e9bd58; font-weight: 900; border-radius: 6px; padding: 2px 8px; font-size: .7rem;">二</span>
+              <h4 style="margin: 0; color: #f6eedb; font-size: 1.05rem; font-weight: 850;">${safe(guide.nextStep.title)}</h4>
+            </div>
+            <span style="background: rgba(233,189,88,.2); border: 1px solid #e9bd58; color: #fde68a; border-radius: 999px; padding: 2px 10px; font-size: .68rem; font-weight: 800;">即將邁入之黃金十年</span>
+          </div>
+
+          <p style="margin: 0 0 14px; color: #cbd6e4; font-size: .76rem; line-height: 1.8;">${safe(guide.nextStep.intro)}</p>
+
+          <div style="border-radius: 8px; padding: 14px 16px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06); margin-bottom: 14px;">
+            <b style="color: #edd18a; font-size: .76rem; display: block; margin-bottom: 8px;">五行與十神結構：</b>
+            <div style="display: grid; gap: 10px; font-size: .73rem; line-height: 1.8; color: #cbd6e4;">
+              <div><strong style="color: #72d7df;">天干【${safe(guide.nextStep.gan.name)}${safe(guide.nextStep.gan.el)}】（${safe(guide.nextStep.gan.god)}）：</strong>${safe(guide.nextStep.gan.desc)}</div>
+              <div><strong style="color: #ecd084;">地支【${safe(guide.nextStep.zhi.name)}${safe(guide.nextStep.zhi.el)}】（${safe(guide.nextStep.zhi.god)}）：</strong>${safe(guide.nextStep.zhi.desc)}</div>
+            </div>
+          </div>
+
+          <div style="border-radius: 8px; padding: 14px 16px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06); margin-bottom: 14px;">
+            <b style="color: #edd18a; font-size: .76rem; display: block; margin-bottom: 8px;">互動與人生劇本：</b>
+            <div style="display: grid; gap: 8px;">
+              ${guide.nextStep.interactions.map(it => `
+                <div style="font-size: .73rem; line-height: 1.8; color: #cbd6e4;">
+                  <strong style="color: #fbbf24;">【${safe(it.name)}】：</strong>${safe(it.text)}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div style="border-left: 3px solid #e9bd58; padding: 10px 14px; background: rgba(233,189,88,.04); border-radius: 0 8px 8px 0;">
+            <b style="color: #edd18a; font-size: .74rem; display: block; margin-bottom: 4px;">命理師斷語：</b>
+            <p style="margin: 0; color: #fdf6e7; font-size: .75rem; line-height: 1.85;">${safe(guide.nextStep.verdict)}</p>
+          </div>
+        </article>
+
+        <!-- 終極生存指南 -->
+        <article class="decode-card" style="margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(255,255,255,.1); background: rgba(14,17,25,.94);">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+            <span style="background: rgba(233,189,88,.16); color: #e9bd58; font-weight: 900; border-radius: 6px; padding: 2px 8px; font-size: .7rem;">三</span>
+            <h4 style="margin: 0; color: #f6eedb; font-size: 1.05rem; font-weight: 850;">給命主的終極大運生存指南</h4>
+          </div>
+
+          <div style="display: grid; gap: 12px;">
+            ${guide.guides.map(g => `
+              <div style="padding: 12px 15px; border-radius: 8px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06);">
+                <b style="color: #edd18a; font-size: .78rem; display: block; margin-bottom: 6px;">${safe(g.title)}：</b>
+                <p style="margin: 0; color: #cbd6e4; font-size: .74rem; line-height: 1.85;">${safe(g.text)}</p>
+              </div>
+            `).join('')}
+          </div>
+        </article>
+      </div>
+    `;
+  }
+
   function sectionExplanation(key, data) {
     if (key === 'shensha') return renderShenshaExplanation(data);
     if (!data) return decodeCard('提示', '請先輸入出生時間並點擊「排八字」建立命盤。');
@@ -1956,6 +2240,10 @@ body.overlay-open{overflow:hidden}
     }
 
     if (key === 'luck') {
+      if (typeof BaziCore !== 'undefined' && typeof BaziCore.generateLuckMasterGuide === 'function') {
+        const guide = BaziCore.generateLuckMasterGuide(data);
+        if (guide) return renderLuckMasterGuideHtml(guide);
+      }
       const cycles = data.daYun?.cycles || [];
       if (!cycles.length) return decodeCard('目前沒有大運資料', '請先確認大運資料是否完整。');
       const assessed = timeAssessList(data, cycles).sort((a, b) => b.a.score - a.a.score);
@@ -2285,15 +2573,102 @@ ${promptContext(data)}
     $('luckMeta').textContent=`${y.forward?'順排':'逆排'}｜出生後約 ${startAgeText||'0歲'}起運｜${y.startSolar}`;
     const list=rankEntries(data,cycles),rankMap=new Map(list.map(x=>[x.index,x.rank]));
     const current=BaziCore.currentLuck(data),ci=cycles.indexOf(current),cur=ci>=0?list.find(x=>x.index===ci):null;
-    $('luckSummary').innerHTML=summaryCard('相對排名靠前',list[0])+summaryCard('另一段相對靠前',list[1])+(cur?summaryCard('目前正在走',cur):'<article class="fortune-summary-card fortune-steady"><small>目前大運</small><b>目前不在所列八步範圍</b><p>下方仍可逐步比較。</p></article>');
-    $('luckGrid').innerHTML=cycles.map((c,i)=>{const a=timeAssessment(data,c);return `<button type="button" class="luck-card ${a.cls} ${ci===i?'is-current':''}" data-i="${i}" aria-pressed="false"><small>第 ${i+1} 大運 · 相對第 ${rankMap.get(i)}/${cycles.length}</small><b>${esc(c.ganZhi)}</b><span>${c.startAge}～${c.endAge} 虛歲</span><span>${c.startYear}～${c.endYear}</span>${timeBadge(a)}<div class="tg-mini">${esc(c.tenGodGan)} · ${esc(c.tenGodZhi)}</div></button>`;}).join('');
+    
+    // 一開頭區分：最好、次之、最差的十年
+    const best = list[0];
+    const secondBest = list[1] || list[0];
+    const worst = list[list.length - 1];
+
+    $('luckSummary').innerHTML = `
+      <article class="luck-top-card best-decade" style="border: 2px solid #34d399; background: radial-gradient(circle at 10% 10%, rgba(52,211,153,.22), transparent 75%), rgba(12,28,22,.96); border-radius: 14px; padding: 20px; box-shadow: 0 10px 30px rgba(52,211,153,.22); display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: #6ee7b7; font-weight: 850; font-size: .75rem; letter-spacing: .06em;">🌟 一生黃金大運（最好的十年）</span>
+            <span style="background: rgba(52,211,153,.25); border: 1px solid #34d399; color: #a7f3d0; font-size: .68rem; font-weight: 800; border-radius: 999px; padding: 2px 10px;">相對第 1/8 · ${esc(best.a.label)}</span>
+          </div>
+          <h4 style="margin: 0 0 6px; font-size: 1.35rem; color: #fdfcf7; font-weight: 900;">${esc(best.item.ganZhi)}大運 <span style="font-size: .95rem; color: #6ee7b7;">${esc(best.item.startYear)}～${esc(best.item.endYear)}</span></h4>
+          <div style="font-size: .76rem; color: #a7f3d0; font-weight: 600; margin-bottom: 8px;">${best.item.startAge}～${best.item.endAge} 虛歲 · ${esc(best.item.tenGodGan)} · ${esc(best.item.tenGodZhi)}</div>
+          <p style="margin: 0; font-size: .74rem; color: #d1fae5; line-height: 1.7;">天干地支協同催旺有利發揮方向，各項阻力最低，為一生中最值得把握、大展身手的黃金順運！</p>
+        </div>
+        <button type="button" class="btn-select-decade" style="margin-top: 14px; background: rgba(52,211,153,.2); border: 1px solid #34d399; color: #6ee7b7; border-radius: 8px; padding: 6px 12px; font-size: .72rem; font-weight: 750; cursor: pointer; text-align: center;" onclick="document.querySelectorAll('#luckGrid .luck-card')[${best.index}]?.click()">查看這十年的深度分析 ↗</button>
+      </article>
+
+      <article class="luck-top-card second-decade" style="border: 1px solid #f59e0b; background: radial-gradient(circle at 10% 10%, rgba(245,158,11,.16), transparent 75%), rgba(26,20,12,.96); border-radius: 14px; padding: 20px; box-shadow: 0 10px 25px rgba(245,158,11,.15); display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: #fbbf24; font-weight: 850; font-size: .75rem; letter-spacing: .06em;">⚡ 關鍵機遇大運（次之的十年）</span>
+            <span style="background: rgba(245,158,11,.25); border: 1px solid #f59e0b; color: #fde68a; font-size: .68rem; font-weight: 800; border-radius: 999px; padding: 2px 10px;">相對第 2/8 · ${esc(secondBest.a.label)}</span>
+          </div>
+          <h4 style="margin: 0 0 6px; font-size: 1.35rem; color: #fdfcf7; font-weight: 900;">${esc(secondBest.item.ganZhi)}大運 <span style="font-size: .95rem; color: #fbbf24;">${esc(secondBest.item.startYear)}～${esc(secondBest.item.endYear)}</span></h4>
+          <div style="font-size: .76rem; color: #fde68a; font-weight: 600; margin-bottom: 8px;">${secondBest.item.startAge}～${secondBest.item.endAge} 虛歲 · ${esc(secondBest.item.tenGodGan)} · ${esc(secondBest.item.tenGodZhi)}</div>
+          <p style="margin: 0; font-size: .74rem; color: #fef3c7; line-height: 1.7;">轉型突破與機遇顯現之運，具備顯著的推進動能，利於鞏固成果、承接關鍵資源！</p>
+        </div>
+        <button type="button" class="btn-select-decade" style="margin-top: 14px; background: rgba(245,158,11,.18); border: 1px solid #f59e0b; color: #fbbf24; border-radius: 8px; padding: 6px 12px; font-size: .72rem; font-weight: 750; cursor: pointer; text-align: center;" onclick="document.querySelectorAll('#luckGrid .luck-card')[${secondBest.index}]?.click()">查看這十年的深度分析 ↗</button>
+      </article>
+
+      <article class="luck-top-card worst-decade" style="border: 1px solid #ef4444; background: radial-gradient(circle at 10% 10%, rgba(239,68,68,.14), transparent 75%), rgba(28,14,16,.96); border-radius: 14px; padding: 20px; box-shadow: 0 10px 25px rgba(239,68,68,.15); display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: #f87171; font-weight: 850; font-size: .75rem; letter-spacing: .06em;">⚠️ 磨礪考驗大運（最需防守的十年）</span>
+            <span style="background: rgba(239,68,68,.25); border: 1px solid #ef4444; color: #fecaca; font-size: .68rem; font-weight: 800; border-radius: 999px; padding: 2px 10px;">相對第 ${cycles.length}/${cycles.length} · ${esc(worst.a.label)}</span>
+          </div>
+          <h4 style="margin: 0 0 6px; font-size: 1.35rem; color: #fdfcf7; font-weight: 900;">${esc(worst.item.ganZhi)}大運 <span style="font-size: .95rem; color: #f87171;">${esc(worst.item.startYear)}～${esc(worst.item.endYear)}</span></h4>
+          <div style="font-size: .76rem; color: #fca5a5; font-weight: 600; margin-bottom: 8px;">${worst.item.startAge}～${worst.item.endAge} 虛歲 · ${esc(worst.item.tenGodGan)} · ${esc(worst.item.tenGodZhi)}</div>
+          <p style="margin: 0; font-size: .74rem; color: #fee2e2; line-height: 1.7;">原局沖刑、失衡或環境變革壓力集中。宜沉潛厚積、守成避險，不宜盲目擴張大額投資。</p>
+        </div>
+        <button type="button" class="btn-select-decade" style="margin-top: 14px; background: rgba(239,68,68,.18); border: 1px solid #ef4444; color: #f87171; border-radius: 8px; padding: 6px 12px; font-size: .72rem; font-weight: 750; cursor: pointer; text-align: center;" onclick="document.querySelectorAll('#luckGrid .luck-card')[${worst.index}]?.click()">查看這十年的防守指引 ↗</button>
+      </article>
+    `;
+
+    // 八步大運卡片渲染 (全新設計)
+    $('luckGrid').innerHTML=cycles.map((c,i)=>{
+      const a=timeAssessment(data,c);
+      const rank = rankMap.get(i);
+      const isCur = ci === i;
+
+      let tierBorder = 'border: 1px solid rgba(255,255,255,.1);';
+      let rankBadge = '';
+      let badgeStyle = '';
+
+      if (rank <= 2) {
+        tierBorder = 'border: 1px solid rgba(52,211,153,.55); background: radial-gradient(circle at 50% 0%, rgba(52,211,153,.15), transparent 75%), rgba(16,24,20,.95);';
+        rankBadge = `<span style="background: rgba(52,211,153,.2); border: 1px solid #34d399; color: #6ee7b7; border-radius: 6px; padding: 2px 7px; font-size: .65rem; font-weight: 850;">第 ${rank}/8</span>`;
+        badgeStyle = 'background: rgba(52,211,153,.22); border: 1px solid #34d399; color: #a7f3d0;';
+      } else if (rank <= 5) {
+        tierBorder = 'border: 1px solid rgba(233,189,88,.4); background: radial-gradient(circle at 50% 0%, rgba(233,189,88,.1), transparent 75%), rgba(20,20,26,.95);';
+        rankBadge = `<span style="background: rgba(233,189,88,.16); border: 1px solid #e9bd58; color: #fce8a6; border-radius: 6px; padding: 2px 7px; font-size: .65rem; font-weight: 750;">第 ${rank}/8</span>`;
+        badgeStyle = 'background: rgba(233,189,88,.2); border: 1px solid #e9bd58; color: #fce8a6;';
+      } else {
+        tierBorder = 'border: 1px solid rgba(239,68,68,.4); background: radial-gradient(circle at 50% 0%, rgba(239,68,68,.1), transparent 75%), rgba(26,16,18,.95);';
+        rankBadge = `<span style="background: rgba(239,68,68,.18); border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; padding: 2px 7px; font-size: .65rem; font-weight: 750;">第 ${rank}/8</span>`;
+        badgeStyle = 'background: rgba(239,68,68,.2); border: 1px solid #ef4444; color: #fca5a5;';
+      }
+
+      return `
+        <button type="button" class="luck-card modern-luck-card ${a.cls} ${isCur?'is-current':''}" data-i="${i}" aria-pressed="false" style="${tierBorder} position: relative; border-radius: 12px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; cursor: pointer;">
+          ${isCur ? `<span class="cur-pulse-badge" style="position: absolute; top: -9px; right: -4px; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-size: .62rem; font-weight: 900; padding: 2px 8px; border-radius: 999px; box-shadow: 0 0 12px rgba(16,185,129,.7); letter-spacing: .04em;">目前在走</span>` : ''}
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 2px;">
+            <span style="font-size: .65rem; color: #8fa3b8; font-weight: 700;">第 ${i+1} 步</span>
+            ${rankBadge}
+          </div>
+          <div class="luck-gz-display" style="font-size: 1.85rem; font-weight: 900; letter-spacing: .06em; color: #fdf6e7; line-height: 1.2; text-shadow: 0 2px 10px rgba(0,0,0,.6);">${esc(c.ganZhi)}</div>
+          <div style="font-size: .72rem; color: #ecd084; font-weight: 750;">${esc(c.tenGodGan)} · ${esc(c.tenGodZhi)}</div>
+          <div style="font-size: .74rem; color: #cbd6e4; font-weight: 600; margin-top: 2px;">${c.startAge}～${c.endAge} 虛歲</div>
+          <div style="font-size: .68rem; color: #8fa3b8;">${c.startYear}～${c.endYear}</div>
+          <div style="margin-top: 6px; width: 100%;">
+            <span style="${badgeStyle} display: block; border-radius: 999px; padding: 3px 0; font-size: .68rem; font-weight: 800;">${esc(a.label)}</span>
+          </div>
+        </button>
+      `;
+    }).join('');
+
     $('luckGrid').querySelectorAll('.luck-card').forEach(btn=>btn.addEventListener('click',()=>selectLuck(data,Number(btn.dataset.i),btn,rankMap)));
     selectLuck(data,ci>=0?ci:0,null,rankMap);
   }
-  function setActive(id,selector,i){$(id).querySelectorAll(selector).forEach((b,k)=>{b.classList.toggle('active',Number(b.dataset.i)===i);b.setAttribute('aria-pressed',String(Number(b.dataset.i)===i));});}
+  function setActive(id,selector,i){$(id)?.querySelectorAll(selector).forEach((b,k)=>{b.classList.toggle('active',Number(b.dataset.i)===i);b.setAttribute('aria-pressed',String(Number(b.dataset.i)===i));});}
   function selectLuck(data,i,btn,rankMap){
     const item=data.daYun.cycles[i];if(!item)return;setActive('luckGrid','.luck-card',i);selectedPeriods.luck=item;
-    $('luckDetail').innerHTML=periodDetail(data,item,rankMap?.get(i));refreshSelectedDecode('luck',data);trackAction(`luck-${i}`);
+    $('luckDetail').innerHTML=renderLuckPeriodDetail(data,item,rankMap?.get(i));refreshSelectedDecode('luck',data);trackAction(`luck-${i}`);
   }
 
   const annualClass=g=>({'大凶':'fortune-watch','偏凶':'fortune-mixed','平':'fortune-steady','偏吉':'fortune-good','大吉':'fortune-best'}[g]||'fortune-steady');
