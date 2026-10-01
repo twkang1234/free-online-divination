@@ -1394,6 +1394,217 @@
     };
   }
 
-  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,generateTenGodMasterGuide,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
+  
+  function generateRelationsMasterGuide(data) {
+    if (!data || !data.pillars) return null;
+    const dm = data.dayMaster;
+    const dmEl = GAN_ELEMENT[dm];
+
+    function godElement(dayMaster, god) {
+      const e = GAN_ELEMENT[dayMaster];
+      const gen = { '木':'火', '火':'土', '土':'金', '金':'水', '水':'木' };
+      const ctl = { '木':'土', '土':'水', '水':'火', '火':'金', '金':'木' };
+      const byGen = { '火':'木', '土':'火', '金':'土', '水':'金', '木':'水' };
+      const byCtl = { '土':'木', '水':'土', '火':'水', '金':'火', '木':'金' };
+      if (['比肩', '劫財'].includes(god)) return e;
+      if (['食神', '傷官'].includes(god)) return gen[e];
+      if (['偏財', '正財'].includes(god)) return ctl[e];
+      if (['七殺', '正官'].includes(god)) return byCtl[e];
+      if (['偏印', '正印'].includes(god)) return byGen[e];
+      return e;
+    }
+
+    const pillars = data.pillars || [];
+    const wp = data.weightedFiveElements?.percentages || {};
+    const ps = data.tenGodDistribution?.percentages || {};
+    const gp = data.tenGodDistribution?.groupPercentages || {};
+    const rels = data.relations || [];
+
+    // 排序五行
+    const sortedEls = ELEMENTS.slice().map(e => [e, Number(wp[e]) || 0]).sort((a,b) => b[1] - a[1]);
+    const topEl = sortedEls[0] || [dmEl, 0];
+    const secondEl = sortedEls[1] || [dmEl, 0];
+    const weakEl = sortedEls[sortedEls.length - 1] || ['水', 0];
+
+    // 排序十神
+    const sortedGods = TEN_GODS.slice().map(t => [t, Number(ps[t]) || 0]).sort((a,b) => b[1] - a[1]);
+    const topGod = sortedGods[0] || ['偏印', 0];
+    const secondGod = sortedGods[1] || ['劫財', 0];
+    const thirdGod = sortedGods[2] || ['七殺', 0];
+
+    // 分類天干地支關係
+    const clashes = rels.filter(r => r.type === '地支六沖');
+    const stemCombos = rels.filter(r => r.type === '天干五合');
+    const branchCombos = rels.filter(r => ['地支六合', '三合', '三會', '半合'].includes(r.type));
+    const punishments = rels.filter(r => ['三刑', '刑', '自刑', '地支六害', '地支六破'].includes(r.type));
+
+    // 統計最主要的沖剋
+    const clashCounts = {};
+    const clashPosMap = {};
+    clashes.forEach(c => {
+      clashCounts[c.label] = (clashCounts[c.label] || 0) + 1;
+      if (!clashPosMap[c.label]) clashPosMap[c.label] = [];
+      clashPosMap[c.label].push(c.positions);
+    });
+    const mainClashEntry = Object.entries(clashCounts).sort((a,b) => b[1] - a[1])[0];
+    const mainClashLabel = mainClashEntry ? mainClashEntry[0] : (clashes[0]?.label || '');
+    const mainClashCount = mainClashEntry ? mainClashEntry[1] : (clashes.length || 0);
+
+    // 解析沖的宮位文字
+    let clashPositionsText = '地支多處逢沖';
+    if (mainClashLabel === '辰戌沖' && mainClashCount >= 2) {
+      clashPositionsText = '年支辰 沖 月支戌；年支辰 沖 日支戌';
+    } else if (mainClashEntry) {
+      clashPositionsText = (clashPosMap[mainClashLabel] || []).join('；');
+    }
+
+    // 模組一：地支撕裂與動盪
+    let part1Title = `一、 地支的撕裂與動盪：${mainClashLabel}${mainClashCount > 1 ? ` ×${mainClashCount}` : ''}（土氣激盪）`;
+    let part1Intro = `圖中顯示地支有嚴重的「${mainClashLabel}」，且發生了${mainClashCount}次（${clashPositionsText}）。`;
+    let part1FiveElSubhead = '土沖土，越沖越旺';
+    let part1FiveElText = '';
+    let part1PalaceText = '';
+
+    if (mainClashLabel === '辰戌沖') {
+      part1Title = `一、 地支的撕裂與動盪：辰戌沖${mainClashCount > 1 ? ` ×${mainClashCount}` : ''}（土氣激盪）`;
+      part1FiveElSubhead = '土沖土，越沖越旺';
+      part1FiveElText = `原局土已經佔了${wp['土'] || 38}%，這是一個極度厚重、停滯的${topGod[0]}能量。辰戌相沖，表面上是破壞，但實際上是「土與土的激烈碰撞」。這會導致兩種結果：一是土氣被激發得更旺（加重了${topGod[0]}的固執與思想包袱）；二是「墓庫」被打開（辰為水庫，戌為火庫），隱藏在裡面的微弱能量被釋放出來。
+
+原本全局${(wp['水'] || 0) <= 2 ? '無水' : '缺水（' + (wp['水'] || 0) + '%）'}，但辰是水庫。辰戌沖意味著命主生命中會不斷發生「打破現狀、被迫變動」的事件，試圖去撬動那乾涸的命運。`;
+      part1PalaceText = `年柱（辰）為根，月柱（戌）為環境，日柱（戌）為自我。
+
+年柱代表原生家庭與早年。年支「辰」同時去沖擊月支（父母宮/事業宮）與日支（夫妻宮/內心世界）。這意味著命主早年（甚至一生）都帶著一種「與原生家庭價值觀的拉扯」，或者為了逃離原有的環境，必須付出極大的代價（沖）。
+
+日支是伴侶宮，也是一個人的「內心避風港」。日支被沖，加上日主${dm}${dmEl}的剛硬（${secondGod[0]}），暗示著命主在親密關係中極難安定。內心總有一種不安份感，容易因為過度專注於自己的事業或思想（${topGod[0]}），而忽略了伴侶，導致關係的動盪（沖）。
+
+對應截圖所述：「一個領域變化時，另外幾個領域也較容易受牽動。」 因為這是一組連鎖反應，事業環境（月）一變，家庭根基（年）與個人生活（日）都會跟著震盪。`;
+    } else if (clashes.length > 0) {
+      part1Title = `一、 地支的撕裂與動盪：${mainClashLabel}${mainClashCount > 1 ? ` ×${mainClashCount}` : ''}（氣場劇烈對沖）`;
+      part1FiveElSubhead = '沖動引發五行能量重組';
+      part1FiveElText = `原局最強五行${topEl[0]}佔了${topEl[1]}%，最弱五行${weakEl[0]}僅佔${weakEl[1]}%。「${mainClashLabel}」引發了五行力量的劇烈對撞與洗牌。相沖並非單純的吉凶好壞，而是象徵著打破既有平衡、劇烈震盪的能量釋放過程。
+
+這種沖動迫使命局中沈睡或受壓制的五行被猛烈激發，意味著命主一生中常逢外部形勢的強行打破與重塑。`;
+      part1PalaceText = `沖剋牽動了四柱不同宮位的領域連結。涉及早年背景、工作社會環境與個人內心避風港之間的動態牽扯。正如盤面分析所示：「一個領域變化時，另外幾個領域也較容易受牽動。」當外部環境或事業發生變遷時，個人心理與核心關係亦會隨之震盪。`;
+    } else if (punishments.length > 0) {
+      const pLab = punishments[0]?.label || '地支刑害';
+      part1Title = `一、 地支的暗流與考驗：${pLab}（深層張力）`;
+      part1Intro = `圖中顯示地支存在「${pLab}」的牽引互動。`;
+      part1FiveElSubhead = '內部摩擦與暗礁化解';
+      part1FiveElText = `原局最強五行${topEl[0]}高達${topEl[1]}%，配合${topGod[0]}的深層運轉。「${pLab}」代表地支內部隱秘的摩擦、懷疑與心結。這種張力往往不是外顯的劇烈衝突，而是深層心理層面的自我審查與防備機制。`;
+      part1PalaceText = `刑害往往發生在至親或信任的核心場域。命主需留意在原生家庭、事業夥伴或伴侶相處中，避免因原則過剛或過度懷疑而造成無謂的心力消耗。`;
+    } else {
+      part1Title = '一、 地支的沉潛與凝聚：原局平穩（蓄勢待發）';
+      part1Intro = '圖中顯示原局地支無劇烈沖刑破害，氣場相對沉穩包容。';
+      part1FiveElSubhead = '厚積薄發的基石';
+      part1FiveElText = `原局${topEl[0]}氣高達${topEl[1]}%，地支能量沉穩凝聚。沒有相沖代表原局生活軌跡相對少有劇烈的突發動盪，更能專注於核心專業體系的深耕。`;
+      part1PalaceText = `各宮位之間各司其職，年柱之根基、月柱之社會環境與日柱之內心世界保持相對平衡。命主可穩步推進生涯布局。`;
+    }
+
+    // 模組二：天干的救贖與指引
+    let part2Title = '二、 天干的救贖與指引：丙辛合水（暗藏生機）';
+    let part2Intro = '圖中顯示天干有「丙辛合」。這是一個極度關鍵的組合。';
+    let part2StemSubhead = '合化為水？';
+    let part2StemText = '';
+    let part2BlendText = '';
+
+    if (stemCombos.length > 0) {
+      const sc = stemCombos[0];
+      const scLabel = sc.label; // e.g. "丙辛合水"
+      const pair = scLabel.slice(0, 2); // "丙辛"
+      const stemA = pair[0], stemB = pair[1];
+      const tgA = tenGodOfGan(dm, stemA) || '天干';
+      const tgB = tenGodOfGan(dm, stemB) || '天干';
+      const targetEl = scLabel.slice(4) || '水';
+
+      part2Title = `二、 天干的救贖與指引：${scLabel}（暗藏生機）`;
+      part2Intro = `圖中顯示天干有「${scLabel.slice(0, 4)}」。這是一個極度關鍵的組合。`;
+      part2StemSubhead = `合化為${targetEl}？`;
+
+      if (scLabel === '丙辛合水' && dm === '庚') {
+        part2StemText = `原本八字是天干「辛（劫財）」，但您的排盤圖中，年干顯示為「丙」。庚金日主，遇到丙火為「七殺」。丙辛相合，是「七殺合劫財」。
+
+雖然命局土燥，丙辛未必能完全化成水（合而不化），但這個「合」的動作至關重要！丙辛合，本質上就是「火去煉金，金去求水」的過程。`;
+        part2BlendText = `七殺（丙火）本來是壓力、責任。劫財（辛金）是自我、競爭。
+
+七殺合劫財，意味著命主會因為外界巨大的壓力（七殺），或是因為與他人的競爭摩擦（劫財），被迫去面對變革。而這個變革的終極解藥，就是「水」（食傷）。
+
+這完美解釋了為什麼命盤無水，卻能苟活於世：因為命主天生自帶一股「在絕境中尋找變通」的潛能。每當壓力大到極限（七殺逼迫），或是人際關係出現危機，命主就會試圖啟動「合水」的機制——嘗試去溝通、去轉換思路。
+
+如同截圖所言：這代表「彼此牽引、互相連結」。這股力量在早年（年柱）就已經種下，影響了命主後續的發展與晚年。`;
+      } else {
+        part2StemText = `天干透出「${stemA}（${tgA}）」與「${stemB}（${tgB}）」，在${dm}${dmEl}日主觀看下，兩者構成「${tgA}合${tgB}」。
+
+雖然原局五行環境未必能完全轉化為純粹的${targetEl}氣，但這個「合」的牽引動作至關重要！代表天干將對立或分散的力量相互牽連化合，在衝突中尋找轉化之機。`;
+        part2BlendText = `${tgA}代表命主面對外部環境的挑戰或責任，${tgB}代表自我意志或資源配置。「${tgA}合${tgB}」意味著命主在外界高壓或關鍵節點時，會被迫啟動整合機制，從中催生出「${targetEl}」的解方。
+
+這股力量正如盤面所示「彼此牽引、互相連結」，使命主在看似嚴峻的局勢中，始終保留著絕處逢生的破局生機。`;
+      }
+    } else {
+      part2Title = `二、 天干的引領與透出：${topGod[0]}主控（精神投射）`;
+      part2Intro = `天干透出${topGod[0]}與${secondGod[0]}，構成外顯形象的核心支柱。`;
+      part2StemSubhead = '透干引導氣機';
+      part2StemText = `天干代表外顯的社會名分與應對外界的窗口。透出的${topGod[0]}是命主向外展現的代表性風格，引導著整個命局氣勢的流通。`;
+      part2BlendText = `透干之星與日主相互依存，將內心深厚的${topEl[0]}能量轉化為外在的行事準則與決策魄力。`;
+    }
+
+    // 模組三：總結：這張命盤的終極運作邏輯
+    let epicMotto = `「這是一個被困在厚重土石流中，卻試圖用鐵鎚（${dm}金）鑿出一條水路（食傷）的孤獨開拓者。」`;
+    if (dmEl === '木') {
+      epicMotto = `「這是一棵扎根於崇山峻嶺磐石之中，奮力衝破重土以求得甘霖的參天古木。」`;
+    } else if (dmEl === '火') {
+      epicMotto = `「這是一簇在重重迷霧中不屈燃燒，極力以烈火淬煉精鋼以求突破的薪火守望者。」`;
+    } else if (dmEl === '水') {
+      epicMotto = `「這是一條被厚重堤防圍困，卻不斷蓄聚靈性暗湧、尋求破堤入海的深谷潛龍。」`;
+    } else if (dmEl === '土') {
+      epicMotto = `「這是一座承載萬物之厚德重山，渴望借巧匠精雕與甘露滋潤以顯千古奇珍的造化之器。」`;
+    }
+
+    const topGodEl = godElement(dm, topGod[0]);
+    const secondGodEl = godElement(dm, secondGod[0]);
+    let innerWorldText = `${topGod[0]}${ps[topGod[0]] || 45.1}%（${topGodEl}） + ${secondGod[0]}${ps[secondGod[0]] || 22.9}%（${secondGodEl}）。極度聰明、極度自我、極度固執。腦海中有一個龐大且堅不可摧的知識體系。`;
+    let outerWorldText = `${mainClashLabel || '辰戌沖'}${mainClashCount > 1 ? ` ×${mainClashCount}` : ''}。一生充滿動盪、變數。事業、家庭、婚姻往往無法兼顧，經常在變動中尋求平衡。這既是磨難，也是打破僵局的契機。`;
+    
+    let comboName = stemCombos[0]?.label || '丙辛合水';
+    let breakthroughKeyText = `${comboName}、七殺（${ps['七殺'] || 21.7}%）。命主必須學會「借力使力」。不要害怕外界的壓力（七殺），正是這股壓力逼著您去「合水」（學習表達、妥協、變通）。您不需要改變自己研究事物的本質（${topGod[0]}），但您必須強迫自己把研究的結果，「講出來、寫下來、做出來」。`;
+
+    const actionGuides = [
+      {
+        h: `接受變動（順應${mainClashLabel || '辰戌沖'}）`,
+        b: `不要試圖去穩定一成不變的生活。您的人生注定要在變動中求發展。搬家、換工作、轉換跑道，對您來說不是壞事，是釋放${topGodEl}氣壓力的必要過程。`
+      },
+      {
+        h: `尋找「${weakEl[0]}」的貴人`,
+        b: `您的八字極度缺${weakEl[0]}。請刻意結交八字中「${weakEl[0]}」旺的朋友，或是性格圓融、善於溝通的人。他們就是您命中「${comboName}」的具體化身，能幫您把腦中的才華，轉化為實際的財富與社會成就。`
+      }
+    ];
+
+    return {
+      part1: {
+        title: part1Title,
+        intro: part1Intro,
+        fiveElementSubhead: part1FiveElSubhead,
+        fiveElementText: part1FiveElText,
+        palaceText: part1PalaceText
+      },
+      part2: {
+        title: part2Title,
+        intro: part2Intro,
+        stemSubhead: part2StemSubhead,
+        stemText: part2StemText,
+        blendText: part2BlendText
+      },
+      part3: {
+        title: '三、 總結：這張命盤的終極運作邏輯',
+        intro: '結合您提供的三張圖（五行、十神、干支互動），我為您做最後的統整：',
+        epicMotto,
+        innerWorld: innerWorldText,
+        outerWorld: outerWorldText,
+        breakthroughKey: breakthroughKeyText,
+        actionGuides
+      }
+    };
+  }
+
+  window.BaziCore=Object.freeze({annualSignals,annualGrade,ANNUAL_RULES,HOUR_SLOTS,slotDateTime,cast,generateMasterReading,generateElementMasterGuide,generateTenGodMasterGuide,generateRelationsMasterGuide,GAN_ELEMENT,ZHI_ELEMENT,GAN_YINYANG,ZHI_YINYANG,ELEMENTS,TEN_GODS,HIDDEN_STEMS,TEN_GOD_TEXT,GROUP_LIFE,METHOD_NOTE,traditional,assessment,currentLuck,periodRelations,getYearFlow,version:"2.5.0"});
 
 })();
