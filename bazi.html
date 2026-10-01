@@ -410,6 +410,17 @@ body.overlay-open{overflow:hidden}
 }
 
 
+.decode-summary-grid:has(.full-width-guide),
+.decode-summary-grid:has(.luck-master-guide) {
+  display: block !important;
+  width: 100% !important;
+}
+.full-width-guide,
+.luck-master-guide {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+}
+
   </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -1987,43 +1998,70 @@ body.overlay-open{overflow:hidden}
     `;
   }
 
-  function renderLuckMasterGuideHtml(guide) {
+  function buildLuckAiPromptText(data, guide) {
+    if (!data) return '';
+    const p = guide?.promptData || {};
+    const wp = data.weightedFiveElements?.percentages || {};
+    const elStr = ['木','火','土','金','水'].map(e => `${e} ${wp[e] || 0}%`).join(' / ');
+    return `請以專業八字命理學的角度，為我深入推演以下命盤的「十年大運」生涯發展：
+
+【本命八字與五行十神結構】
+日主：${p.dm || data.dayMaster}（五行屬${p.dmEl || data.dayMasterElement}）
+四柱八字：${p.pillars || data.pillars?.map(x=>x.ganZhi).join(' ')}
+五行加權比例：${elStr}
+原局主要十神：${p.topGods || '—'}
+原局干支實質互動：${(data.relations || []).map(r => r.label).join('、') || '未見明顯刑沖'}
+
+【當前大運分析】
+當前大運：${p.curGz} 大運（${p.curYears}，約 ${p.curAge}）
+十神配置：${p.curGods}
+評級傾向：${p.curLabel}
+大運特質：${guide.curStep.intro}
+
+【下一步大運分析】
+下一步大運：${p.nextGz} 大運（${p.nextYears}，約 ${p.nextAge}）
+十神配置：${p.nextGods}
+評級傾向：${p.nextLabel}
+大運特質：${guide.nextStep.intro}
+
+【請針對以下 4 個維度為我進行專業深度解讀】：
+1. 針對我命盤的五行衰旺與十神失衡點，看大運的核心調候用神方向是什麼？
+2. 當前這步大運中，我在工作事業與財富變現上最該抓住的機遇是什麼？有哪些潛在坑洞必須防範？
+3. 即將邁入的下一步大運，在生涯環境與親密關係上會迎來怎樣的實質轉折？
+4. 請給我 3 點具體、務實且符合我命局特質的階段性行動策略與心態指引。`;
+  }
+
+  function renderLuckMasterGuideHtml(guide, data) {
     if (!guide) return '';
     const safe = x => esc(String(x ?? '—'));
+    const promptText = buildLuckAiPromptText(data, guide);
     return `
-      <div class="luck-master-guide" style="display: grid; gap: 20px;">
-        <!-- 頂部概覽 Banner -->
-        <div style="border-radius: 14px; border: 1px solid rgba(233,189,88,.45); background: radial-gradient(circle 700px at 0% 0%, rgba(233,189,88,.12), transparent 75%), rgba(16,19,28,.96); padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,.45);">
-          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
-            <span style="color: #e9bd58; font-size: .72rem; letter-spacing: .16em; font-weight: 850;">十年大運 · 專業推演</span>
-            <span style="display: inline-block; padding: 4px 12px; border-radius: 999px; background: rgba(233,189,88,.15); border: 1px solid rgba(233,189,88,.3); color: #f2d482; font-size: .66rem; font-weight: 750;">黃金大運全盤透析</span>
+      <div class="luck-master-guide full-width-guide" style="grid-column: 1 / -1; width: 100%; display: grid; gap: 16px; box-sizing: border-box;">
+        <!-- 頂部概覽 Banner (移除任何容易出錯的性別與年齡敘述) -->
+        <div style="border-radius: 14px; border: 1px solid rgba(233,189,88,.45); background: radial-gradient(circle 700px at 0% 0%, rgba(233,189,88,.12), transparent 75%), rgba(16,19,28,.96); padding: 22px; width: 100%; box-sizing: border-box;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <span style="color: #e9bd58; font-size: .72rem; letter-spacing: .16em; font-weight: 850;">十年大運 · 命理推演邏輯</span>
+            <span style="display: inline-block; padding: 3px 12px; border-radius: 999px; background: rgba(233,189,88,.15); border: 1px solid rgba(233,189,88,.3); color: #f2d482; font-size: .66rem; font-weight: 750;">干支生剋與調候檢驗</span>
           </div>
-          <h3 style="margin: 0 0 14px; color: #fdf6e7; font-size: 1.25rem; font-weight: 900; letter-spacing: .02em;">【專業命理師的十年大運推演邏輯】</h3>
+          <h3 style="margin: 0 0 12px; color: #fdf6e7; font-size: 1.25rem; font-weight: 900; letter-spacing: .02em;">【十年大運核心推演邏輯】</h3>
           
-          <div style="border-left: 4px solid #e9bd58; padding: 12px 16px; background: rgba(255,255,255,.025); border-radius: 0 8px 8px 0; margin-bottom: 14px;">
-            <p style="margin: 0; color: #cbd6e4; font-size: .76rem; line-height: 1.85;">
-              排大運，${safe(guide.overview.genderText)}${safe(guide.overview.yearText)}，<b>${safe(guide.overview.directionText)}</b>。<br>
-              起運約在 <b>${safe(guide.overview.startAgeText)}</b> 左右。目前命主約 <b>${safe(guide.overview.curAge)} 歲</b>，正處於第 <b>${safe(guide.overview.curIdx)} 大運（【${safe(guide.overview.curCycleGz)}】）的${safe(guide.overview.curPhase)}</b>，即將邁入第 <b>${safe(guide.overview.curIdx + 1)} 大運（【${safe(guide.overview.nextCycleGz)}】）</b>。
-            </p>
-          </div>
-
-          <div style="padding: 12px 16px; border-radius: 8px; border: 1px solid rgba(233,189,88,.25); background: rgba(233,189,88,.05);">
-            <div style="color: #edd18a; font-size: .74rem; font-weight: 750; margin-bottom: 4px;">核心原則定調：</div>
-            <p style="margin: 0; color: #f5eedb; font-size: .78rem; line-height: 1.8; font-weight: 600;">
+          <div style="padding: 14px 18px; border-radius: 8px; border: 1px solid rgba(233,189,88,.25); background: rgba(233,189,88,.05);">
+            <div style="color: #edd18a; font-size: .75rem; font-weight: 750; margin-bottom: 4px;">核心定調原則：</div>
+            <p style="margin: 0; color: #f5eedb; font-size: .8rem; line-height: 1.8; font-weight: 600;">
               針對這張「${safe(guide.corePrinciple.chartPortrait)}」的命盤，看大運只有一個核心原則：<br>
               <b style="color: #6ee7b7;">「${safe(guide.corePrinciple.principleQuestion)}」</b>
             </p>
           </div>
         </div>
 
-        <!-- 當前大運 -->
-        <article class="decode-card" style="margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(52,211,153,.4); background: radial-gradient(circle at 10% 10%, rgba(52,211,153,.08), transparent 70%), rgba(14,18,24,.95);">
+        <!-- 一、 當前大運 -->
+        <article class="decode-card" style="width: 100%; box-sizing: border-box; margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(52,211,153,.35); background: radial-gradient(circle at 10% 10%, rgba(52,211,153,.07), transparent 70%), rgba(14,18,24,.95);">
           <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="background: rgba(52,211,153,.2); color: #6ee7b7; font-weight: 900; border-radius: 6px; padding: 2px 8px; font-size: .7rem;">一</span>
               <h4 style="margin: 0; color: #f6eedb; font-size: 1.05rem; font-weight: 850;">${safe(guide.curStep.title)}</h4>
             </div>
-            <span style="background: rgba(52,211,153,.2); border: 1px solid #34d399; color: #a7f3d0; border-radius: 999px; padding: 2px 10px; font-size: .68rem; font-weight: 800;">當前大運進行中</span>
+            <span style="${safe(guide.curStep.badgeCls)} border-radius: 999px; padding: 2px 10px; font-size: .68rem; font-weight: 800;">${safe(guide.curStep.badge)}</span>
           </div>
 
           <p style="margin: 0 0 14px; color: #cbd6e4; font-size: .76rem; line-height: 1.8;">${safe(guide.curStep.intro)}</p>
@@ -2053,14 +2091,14 @@ body.overlay-open{overflow:hidden}
           </div>
         </article>
 
-        <!-- 下一步大運 -->
-        <article class="decode-card" style="margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(233,189,88,.4); background: radial-gradient(circle at 10% 10%, rgba(233,189,88,.08), transparent 70%), rgba(14,18,24,.95);">
+        <!-- 二、 下一步大運 -->
+        <article class="decode-card" style="width: 100%; box-sizing: border-box; margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(233,189,88,.35); background: radial-gradient(circle at 10% 10%, rgba(233,189,88,.07), transparent 70%), rgba(14,18,24,.95);">
           <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="background: rgba(233,189,88,.2); color: #e9bd58; font-weight: 900; border-radius: 6px; padding: 2px 8px; font-size: .7rem;">二</span>
               <h4 style="margin: 0; color: #f6eedb; font-size: 1.05rem; font-weight: 850;">${safe(guide.nextStep.title)}</h4>
             </div>
-            <span style="background: rgba(233,189,88,.2); border: 1px solid #e9bd58; color: #fde68a; border-radius: 999px; padding: 2px 10px; font-size: .68rem; font-weight: 800;">即將邁入之黃金十年</span>
+            <span style="${safe(guide.nextStep.badgeCls)} border-radius: 999px; padding: 2px 10px; font-size: .68rem; font-weight: 800;">${safe(guide.nextStep.badge)}</span>
           </div>
 
           <p style="margin: 0 0 14px; color: #cbd6e4; font-size: .76rem; line-height: 1.8;">${safe(guide.nextStep.intro)}</p>
@@ -2090,20 +2128,25 @@ body.overlay-open{overflow:hidden}
           </div>
         </article>
 
-        <!-- 終極生存指南 -->
-        <article class="decode-card" style="margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(255,255,255,.1); background: rgba(14,17,25,.94);">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
-            <span style="background: rgba(233,189,88,.16); color: #e9bd58; font-weight: 900; border-radius: 6px; padding: 2px 8px; font-size: .7rem;">三</span>
-            <h4 style="margin: 0; color: #f6eedb; font-size: 1.05rem; font-weight: 850;">給命主的終極大運生存指南</h4>
+        <!-- 三、 專屬 AI 提示詞卡片（不顯示提示詞文字框） -->
+        <article class="decode-card" style="width: 100%; box-sizing: border-box; margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(233,189,88,.3); background: rgba(14,17,25,.95);">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.15rem;">🤖</span>
+              <h4 style="margin: 0; color: #f6eedb; font-size: 1.05rem; font-weight: 850;">三、 十年大運專屬 AI 深度分析提示詞</h4>
+            </div>
+            <span style="background: rgba(233,189,88,.15); border: 1px solid #e9bd58; color: #fde68a; border-radius: 999px; padding: 2px 10px; font-size: .68rem; font-weight: 800;">一鍵複製問 AI</span>
           </div>
 
-          <div style="display: grid; gap: 12px;">
-            ${guide.guides.map(g => `
-              <div style="padding: 12px 15px; border-radius: 8px; background: rgba(255,255,255,.02); border: 1px solid rgba(255,255,255,.06);">
-                <b style="color: #edd18a; font-size: .78rem; display: block; margin-bottom: 6px;">${safe(g.title)}：</b>
-                <p style="margin: 0; color: #cbd6e4; font-size: .74rem; line-height: 1.85;">${safe(g.text)}</p>
-              </div>
-            `).join('')}
+          <p style="margin: 0 0 16px; color: #cbd6e4; font-size: .76rem; line-height: 1.75;">
+            大運涉及個人命盤的五行喜忌、宮位刑沖與動態流年。下方已為您自動彙整「原局四柱 + 當前大運 + 下一步大運」的完整命理參數，點擊一鍵複製，即可直接前往各大 AI 獲取更深度的專屬推演與生涯建議。
+          </p>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 9px;">
+            <button type="button" class="btn-copy-luck-prompt" data-prompt="${esc(promptText)}" style="min-height: 38px; padding: 8px 18px; border-radius: 8px; border: 1px solid rgba(233,189,88,.4); background: linear-gradient(180deg, rgba(233,189,88,.22), rgba(165,111,35,.15)); color: #fce8a6; font-size: .74rem; font-weight: 850; cursor: pointer;">一鍵複製「十年大運」AI 提示詞</button>
+            <a href="https://chatgpt.com/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; padding: 8px 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.03); color: #cbd6e4; font-size: .72rem; text-decoration: none;">ChatGPT ↗</a>
+            <a href="https://gemini.google.com/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; padding: 8px 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.03); color: #cbd6e4; font-size: .72rem; text-decoration: none;">Gemini ↗</a>
+            <a href="https://claude.ai/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; padding: 8px 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.03); color: #cbd6e4; font-size: .72rem; text-decoration: none;">Claude ↗</a>
           </div>
         </article>
       </div>
@@ -2242,7 +2285,7 @@ body.overlay-open{overflow:hidden}
     if (key === 'luck') {
       if (typeof BaziCore !== 'undefined' && typeof BaziCore.generateLuckMasterGuide === 'function') {
         const guide = BaziCore.generateLuckMasterGuide(data);
-        if (guide) return renderLuckMasterGuideHtml(guide);
+        if (guide) return renderLuckMasterGuideHtml(guide, data);
       }
       const cycles = data.daYun?.cycles || [];
       if (!cycles.length) return decodeCard('目前沒有大運資料', '請先確認大運資料是否完整。');
@@ -2335,7 +2378,26 @@ ${selectedPeriodPrompt(data,key)}
           if(!lastData){
             try{cast();}catch(_){}
           }
+          if (def.key === 'luck') {
+            summary.style.display = 'block';
+            summary.style.width = '100%';
+          } else {
+            summary.style.display = '';
+            summary.style.width = '';
+          }
           summary.innerHTML=lastData?sectionExplanation(def.key,lastData):decodeCard('提示','請先於上方輸入出生日期時間並點選「排八字」建立命盤。');
+          const luckCopyBtn = summary.querySelector('.btn-copy-luck-prompt');
+          if (luckCopyBtn) {
+            luckCopyBtn.addEventListener('click', async () => {
+              const prompt = luckCopyBtn.dataset.prompt || '';
+              try {
+                await navigator.clipboard.writeText(prompt);
+                toast('十年大運 AI 提示詞已複製到剪貼簿！');
+              } catch (_) {
+                toast('複製失敗，請確認瀏覽器剪貼簿權限');
+              }
+            });
+          }
           content.classList.add('show');
           open.classList.add('active');
           open.textContent='已展開白話解讀';
@@ -2347,8 +2409,9 @@ ${selectedPeriodPrompt(data,key)}
           open.textContent='看懂這一區';
         }
       });
-      box.querySelector('[data-act="copy"]').addEventListener('click',async()=>{if(!lastData)return;const prompt=buildSectionPrompt(lastData,def.key);preview.textContent=prompt;preview.classList.add('show');try{await navigator.clipboard.writeText(prompt);toast(`${def.title}提示詞已產生並複製`);}catch(_){toast('提示詞已產生，可直接手動複製');}markSectionExplored(def.key);trackAction(`section-copy-${def.key}`);});
+      box.querySelector('[data-act="copy"]')?.addEventListener('click',async()=>{if(!lastData)return;const prompt=buildSectionPrompt(lastData,def.key);preview.textContent=prompt;preview.classList.add('show');try{await navigator.clipboard.writeText(prompt);toast(`${def.title}提示詞已產生並複製`);}catch(_){toast('提示詞已產生，可直接手動複製');}markSectionExplored(def.key);trackAction(`section-copy-${def.key}`);});
       if(def.key==='shensha'){box.classList.add('shensha-prompt-only');box.querySelector('.decode-bar')?.remove();summary?.remove();}
+      if(def.key==='luck'){box.querySelector('.section-ai-box')?.remove();}
     });
   }
 
