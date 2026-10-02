@@ -82,9 +82,15 @@ async function loadStats(){
   if(!token())return showLogin();
   $('status').textContent='讀取中…'; $('status').classList.remove('error');
   try{
-    const r=await fetch(API_BASE+'/admin/stats',{headers:{Authorization:'Bearer '+token(),Accept:'application/json'}});
+    const r=await fetch(API_BASE+'/admin/stats',{method:'POST',headers:{Authorization:'Bearer '+token(),Accept:'application/json','Content-Type':'application/json'},body:'{}'});
     const j=await r.json().catch(()=>null);
-    if(r.status===401){setToken('');showLogin();return;}
+    if(r.status===401){
+      setToken('');
+      showLogin();
+      $('loginStatus').textContent='Google 登入已完成，但後端驗證未通過。請確認 Cloudflare 已換成這次的新 worker.js。';
+      $('loginStatus').classList.add('error');
+      return;
+    }
     if(r.status===403)throw Error('這個 Google 帳號不是管理員。');
     if(r.status===404)throw Error('管理員 API 尚未部署：請更新 Cloudflare 的 worker.js。');
     if(!r.ok||!j?.success)throw Error(j?.error||'讀取失敗');
@@ -94,7 +100,13 @@ async function loadStats(){
     $('updatedAt').textContent='更新：'+new Date().toLocaleString('zh-TW',{hour12:false});
     $('memberRows').innerHTML=(s.recentMembers||[]).map(m=>`<tr><td>${esc(m.name||'—')}</td><td>${esc(m.email||'—')}</td><td class="muted">${fmt(m.created_at)}</td><td class="muted">${fmt(m.last_login)}</td><td>${Number(m.login_count||0)}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">目前還沒有會員資料。</td></tr>';
     $('loginCard').hidden=true; $('dashboard').hidden=false; $('refreshBtn').hidden=false; $('logoutBtn').hidden=false; $('status').textContent='';
-  }catch(e){$('status').textContent=e.message||String(e);$('status').classList.add('error');}
+  }catch(e){
+    const msg=e.message||String(e);
+    $('status').textContent=msg;
+    $('status').classList.add('error');
+    $('loginStatus').textContent=msg;
+    $('loginStatus').classList.add('error');
+  }
 }
 
 function showLogin(){
@@ -148,7 +160,7 @@ function startAdminLogin(){
     $('loginStatus').textContent='Google 登入元件尚未載入，請稍後再按一次。';
     return;
   }
-  $('loginStatus').textContent='正在開啟 Google 登入…';
+  $('loginStatus').classList.remove('error');$('loginStatus').textContent='正在開啟 Google 登入…';
   try{
     google.accounts.id.prompt(notification=>{
       if(notification?.isDisplayed?.()){
