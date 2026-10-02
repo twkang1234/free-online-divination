@@ -11,7 +11,7 @@
 *{box-sizing:border-box} body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;min-height:100vh}
 .wrap{max-width:1180px;margin:auto;padding:28px 18px 60px} .top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px}
 .brand small{display:block;color:var(--gold);letter-spacing:.18em;font-size:.68rem;margin-bottom:6px} .brand h1{margin:0;font-size:1.55rem}
-.actions{display:flex;gap:8px} .btn{border:1px solid #3b3321;background:#17140d;color:#e3c778;border-radius:10px;padding:9px 13px;cursor:pointer}
+.actions{display:flex;gap:8px;align-items:center}.nav{display:flex;gap:8px;flex-wrap:wrap}.nav a{border:1px solid #242b35;background:#0b0f15;color:#9eabba;text-decoration:none;border-radius:9px;padding:8px 11px;font-size:.78rem}.nav a:hover{border-color:#4a4130;color:#e2c574} .btn{border:1px solid #3b3321;background:#17140d;color:#e3c778;border-radius:10px;padding:9px 13px;cursor:pointer}
 .btn.secondary{border-color:#24313a;background:#0b1217;color:#a9cdd0} .login-card{max-width:520px;margin:80px auto 0;background:var(--panel);border:1px solid #282e37;border-radius:18px;padding:26px;text-align:center}
 .login-card h2{margin:0 0 8px} .login-card p{margin:0 0 20px;color:var(--muted);line-height:1.7;font-size:.9rem} #googleBtn{display:flex;justify-content:center;min-height:44px}
 .dashboard[hidden],.login-card[hidden]{display:none!important} .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}
@@ -25,13 +25,21 @@
 <div class="wrap">
   <div class="top">
     <div class="brand"><small>DIVINATIONHUB · ADMIN</small><h1>會員管理</h1></div>
-    <div class="actions"><button class="btn secondary" id="refreshBtn" hidden>重新整理</button><button class="btn" id="logoutBtn" hidden>登出</button></div>
+    <div class="actions">
+      <nav class="nav" aria-label="管理導覽">
+        <a href="/">回首頁</a>
+        <a href="/bazi.html">八字工具</a>
+      </nav>
+      <button class="btn secondary" id="refreshBtn" hidden>重新整理</button>
+      <button class="btn" id="logoutBtn" hidden>登出</button>
+    </div>
   </div>
 
   <section class="login-card" id="loginCard">
     <h2>管理員登入</h2>
-    <p>只有指定的管理員 Google 帳號可以查看會員統計。</p>
-    <div id="googleBtn"></div>
+    <p>使用指定的管理員 Google 帳號登入後，即可查看會員統計。</p>
+    <button class="btn" id="adminLoginBtn" type="button">使用 Google 管理員帳號登入</button>
+    <div id="googleBtn" style="margin-top:12px"></div>
     <div class="status" id="loginStatus"></div>
   </section>
 
@@ -54,9 +62,18 @@
 const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
 const API_BASE='https://bazi-api.ezgocpu.workers.dev';
 const TOKEN_KEY='divinationhub-admin-google-credential';
+const BAZI_TOKEN_KEY='divinationhub-bazi-google-credential';
 const $=id=>document.getElementById(id);
-const token=()=>sessionStorage.getItem(TOKEN_KEY)||'';
-const setToken=v=>v?sessionStorage.setItem(TOKEN_KEY,v):sessionStorage.removeItem(TOKEN_KEY);
+const token=()=>sessionStorage.getItem(TOKEN_KEY)||sessionStorage.getItem(BAZI_TOKEN_KEY)||'';
+const setToken=v=>{
+  if(v){
+    sessionStorage.setItem(TOKEN_KEY,v);
+    sessionStorage.setItem(BAZI_TOKEN_KEY,v);
+  }else{
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(BAZI_TOKEN_KEY);
+  }
+};
 
 function fmt(t){if(!t)return'—';const d=new Date(t);return Number.isNaN(d.getTime())?t:d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false});}
 function esc(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);}
@@ -69,6 +86,7 @@ async function loadStats(){
     const j=await r.json().catch(()=>null);
     if(r.status===401){setToken('');showLogin();return;}
     if(r.status===403)throw Error('這個 Google 帳號不是管理員。');
+    if(r.status===404)throw Error('管理員 API 尚未部署：請更新 Cloudflare 的 worker.js。');
     if(!r.ok||!j?.success)throw Error(j?.error||'讀取失敗');
     const s=j.stats||{};
     $('totalMembers').textContent=s.totalMembers??0; $('todayNew').textContent=s.todayNew??0; $('todayLogin').textContent=s.todayLogin??0;
@@ -79,16 +97,82 @@ async function loadStats(){
   }catch(e){$('status').textContent=e.message||String(e);$('status').classList.add('error');}
 }
 
-function showLogin(){$('loginCard').hidden=false;$('dashboard').hidden=true;$('refreshBtn').hidden=true;$('logoutBtn').hidden=true;renderGoogle();}
-let googleReady=false;
-function renderGoogle(){
-  if(!window.google?.accounts?.id){setTimeout(renderGoogle,250);return;}
-  if(!googleReady){google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:r=>{if(r?.credential){setToken(r.credential);loadStats();}}});googleReady=true;}
-  if(!$('googleBtn').dataset.ready){$('googleBtn').dataset.ready='1';google.accounts.id.renderButton($('googleBtn'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});}
+function showLogin(){
+  $('loginCard').hidden=false;
+  $('dashboard').hidden=true;
+  $('refreshBtn').hidden=true;
+  $('logoutBtn').hidden=true;
+  $('loginStatus').textContent='';
+  ensureGoogleReady();
 }
+
+let googleReady=false;
+function ensureGoogleReady(){
+  if(!window.google?.accounts?.id){
+    $('loginStatus').textContent='正在載入 Google 登入…';
+    setTimeout(ensureGoogleReady,300);
+    return;
+  }
+  $('loginStatus').textContent='';
+  if(!googleReady){
+    google.accounts.id.initialize({
+      client_id:GOOGLE_CLIENT_ID,
+      callback:r=>{
+        if(!r?.credential){
+          $('loginStatus').textContent='沒有取得 Google 登入憑證，請再試一次。';
+          return;
+        }
+        setToken(r.credential);
+        loadStats();
+      }
+    });
+    googleReady=true;
+  }
+
+  const mount=$('googleBtn');
+  if(mount && !mount.dataset.ready){
+    mount.dataset.ready='1';
+    google.accounts.id.renderButton(mount,{
+      theme:'outline',
+      size:'large',
+      shape:'pill',
+      text:'signin_with',
+      width:260
+    });
+  }
+}
+
+function startAdminLogin(){
+  ensureGoogleReady();
+  if(!window.google?.accounts?.id){
+    $('loginStatus').textContent='Google 登入元件尚未載入，請稍後再按一次。';
+    return;
+  }
+  $('loginStatus').textContent='正在開啟 Google 登入…';
+  try{
+    google.accounts.id.prompt(notification=>{
+      if(notification?.isDisplayed?.()){
+        $('loginStatus').textContent='';
+        return;
+      }
+      if(notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()){
+        $('loginStatus').textContent='請使用下方 Google 登入按鈕完成登入。';
+      }
+    });
+  }catch(e){
+    $('loginStatus').textContent='請使用下方 Google 登入按鈕完成登入。';
+  }
+}
+
+$('adminLoginBtn').addEventListener('click',startAdminLogin);
 $('refreshBtn').addEventListener('click',loadStats);
-$('logoutBtn').addEventListener('click',()=>{setToken('');try{google?.accounts?.id?.disableAutoSelect?.();}catch(_){}showLogin();});
-if(token())loadStats();else showLogin();
+$('logoutBtn').addEventListener('click',()=>{
+  setToken('');
+  try{google?.accounts?.id?.disableAutoSelect?.();}catch(_){}
+  showLogin();
+});
+
+if(token()) loadStats(); else showLogin();
 </script>
 </body>
 </html>
