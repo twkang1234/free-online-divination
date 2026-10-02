@@ -3089,6 +3089,15 @@ ${source}
     });
   }
 
+  // Compatibility hook for existing luck/month selection code.
+  // The old prompt-preview refresh function was removed with the previous prompt system.
+  function refreshSelectedDecode(key,data){
+    const box=document.querySelector(`.smart-prompt-box[data-prompt-key="${key}"]`);
+    if(!box)return;
+    box.querySelector('.smart-prompt-preview')?.classList.remove('show');
+    box.querySelector('.smart-ai-links')?.classList.remove('show');
+  }
+
   function initSectionDecodeUI(){
     sectionDefinitions.forEach(def=>{
       if(def.key==='reading' || def.key==='years')return;
