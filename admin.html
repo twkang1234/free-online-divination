@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>會員管理｜DivinationHub</title>
+<meta name="robots" content="noindex,nofollow">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--bg:#07090d;--panel:#0d1118;--line:#242a33;--text:#eee7da;--muted:#8290a2;--gold:#d9b65d}
+*{box-sizing:border-box} body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;min-height:100vh}
+.wrap{max-width:1180px;margin:auto;padding:28px 18px 60px} .top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:24px}
+.brand small{display:block;color:var(--gold);letter-spacing:.18em;font-size:.68rem;margin-bottom:6px} .brand h1{margin:0;font-size:1.55rem}
+.actions{display:flex;gap:8px} .btn{border:1px solid #3b3321;background:#17140d;color:#e3c778;border-radius:10px;padding:9px 13px;cursor:pointer}
+.btn.secondary{border-color:#24313a;background:#0b1217;color:#a9cdd0} .login-card{max-width:520px;margin:80px auto 0;background:var(--panel);border:1px solid #282e37;border-radius:18px;padding:26px;text-align:center}
+.login-card h2{margin:0 0 8px} .login-card p{margin:0 0 20px;color:var(--muted);line-height:1.7;font-size:.9rem} #googleBtn{display:flex;justify-content:center;min-height:44px}
+.dashboard[hidden],.login-card[hidden]{display:none!important} .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px} .card span{display:block;color:var(--muted);font-size:.76rem;margin-bottom:9px} .card strong{font-size:1.65rem;color:#f3e6bf}
+.section{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden} .section-head{display:flex;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)} .section-head h2{margin:0;font-size:1rem} .section-head span{color:var(--muted);font-size:.74rem}
+.table-wrap{overflow:auto} table{width:100%;border-collapse:collapse;min-width:760px} th,td{padding:12px 14px;text-align:left;border-bottom:1px solid #1d232b;font-size:.78rem} th{color:#9aa7b7;background:#0a0d12} td{color:#d6dce3} td.muted{color:var(--muted)} .status{margin-top:12px;color:var(--muted);font-size:.78rem} .error{color:#e09a9a}
+@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.top{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><small>DIVINATIONHUB · ADMIN</small><h1>會員管理</h1></div>
+    <div class="actions"><button class="btn secondary" id="refreshBtn" hidden>重新整理</button><button class="btn" id="logoutBtn" hidden>登出</button></div>
+  </div>
+
+  <section class="login-card" id="loginCard">
+    <h2>管理員登入</h2>
+    <p>只有指定的管理員 Google 帳號可以查看會員統計。</p>
+    <div id="googleBtn"></div>
+    <div class="status" id="loginStatus"></div>
+  </section>
+
+  <main class="dashboard" id="dashboard" hidden>
+    <div class="cards">
+      <div class="card"><span>會員總數</span><strong id="totalMembers">—</strong></div>
+      <div class="card"><span>今日新增</span><strong id="todayNew">—</strong></div>
+      <div class="card"><span>今日登入</span><strong id="todayLogin">—</strong></div>
+      <div class="card"><span>近 7 日登入</span><strong id="sevenDayLogin">—</strong></div>
+      <div class="card"><span>已儲存八字</span><strong id="savedBazi">—</strong></div>
+    </div>
+    <section class="section">
+      <div class="section-head"><h2>最近登入會員</h2><span id="updatedAt"></span></div>
+      <div class="table-wrap"><table><thead><tr><th>名稱</th><th>Email</th><th>第一次登入</th><th>最近登入</th><th>登入次數</th></tr></thead><tbody id="memberRows"></tbody></table></div>
+    </section>
+    <div class="status" id="status"></div>
+  </main>
+</div>
+<script>
+const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
+const API_BASE='https://bazi-api.ezgocpu.workers.dev';
+const TOKEN_KEY='divinationhub-admin-google-credential';
+const $=id=>document.getElementById(id);
+const token=()=>sessionStorage.getItem(TOKEN_KEY)||'';
+const setToken=v=>v?sessionStorage.setItem(TOKEN_KEY,v):sessionStorage.removeItem(TOKEN_KEY);
+
+function fmt(t){if(!t)return'—';const d=new Date(t);return Number.isNaN(d.getTime())?t:d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false});}
+function esc(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);}
+
+async function loadStats(){
+  if(!token())return showLogin();
+  $('status').textContent='讀取中…'; $('status').classList.remove('error');
+  try{
+    const r=await fetch(API_BASE+'/admin/stats',{headers:{Authorization:'Bearer '+token(),Accept:'application/json'}});
+    const j=await r.json().catch(()=>null);
+    if(r.status===401){setToken('');showLogin();return;}
+    if(r.status===403)throw Error('這個 Google 帳號不是管理員。');
+    if(!r.ok||!j?.success)throw Error(j?.error||'讀取失敗');
+    const s=j.stats||{};
+    $('totalMembers').textContent=s.totalMembers??0; $('todayNew').textContent=s.todayNew??0; $('todayLogin').textContent=s.todayLogin??0;
+    $('sevenDayLogin').textContent=s.sevenDayLogin??0; $('savedBazi').textContent=s.savedBazi??0;
+    $('updatedAt').textContent='更新：'+new Date().toLocaleString('zh-TW',{hour12:false});
+    $('memberRows').innerHTML=(s.recentMembers||[]).map(m=>`<tr><td>${esc(m.name||'—')}</td><td>${esc(m.email||'—')}</td><td class="muted">${fmt(m.created_at)}</td><td class="muted">${fmt(m.last_login)}</td><td>${Number(m.login_count||0)}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">目前還沒有會員資料。</td></tr>';
+    $('loginCard').hidden=true; $('dashboard').hidden=false; $('refreshBtn').hidden=false; $('logoutBtn').hidden=false; $('status').textContent='';
+  }catch(e){$('status').textContent=e.message||String(e);$('status').classList.add('error');}
+}
+
+function showLogin(){$('loginCard').hidden=false;$('dashboard').hidden=true;$('refreshBtn').hidden=true;$('logoutBtn').hidden=true;renderGoogle();}
+let googleReady=false;
+function renderGoogle(){
+  if(!window.google?.accounts?.id){setTimeout(renderGoogle,250);return;}
+  if(!googleReady){google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:r=>{if(r?.credential){setToken(r.credential);loadStats();}}});googleReady=true;}
+  if(!$('googleBtn').dataset.ready){$('googleBtn').dataset.ready='1';google.accounts.id.renderButton($('googleBtn'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});}
+}
+$('refreshBtn').addEventListener('click',loadStats);
+$('logoutBtn').addEventListener('click',()=>{setToken('');try{google?.accounts?.id?.disableAutoSelect?.();}catch(_){}showLogin();});
+if(token())loadStats();else showLogin();
+</script>
+</body>
+</html>
