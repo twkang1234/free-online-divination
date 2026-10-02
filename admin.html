@@ -46,11 +46,12 @@
   <main class="dashboard" id="dashboard" hidden>
     <div class="cards">
       <div class="card"><span>會員總數</span><strong id="totalMembers">—</strong></div>
-      <div class="card"><span>今日新增</span><strong id="todayNew">—</strong></div>
       <div class="card"><span>今日登入</span><strong id="todayLogin">—</strong></div>
-      <div class="card"><span>近 7 日登入</span><strong id="sevenDayLogin">—</strong></div>
-      <div class="card"><span>已儲存八字</span><strong id="savedBazi">—</strong></div>
+      <div class="card"><span>本月新增</span><strong id="monthNew">—</strong></div>
+      <div class="card"><span>近 30 日活躍</span><strong id="active30">—</strong></div>
+      <div class="card"><span>八字排盤次數</span><strong id="baziCasts">—</strong></div>
     </div>
+
     <section class="section">
       <div class="section-head"><h2>最近登入會員</h2><span id="updatedAt"></span></div>
       <div class="table-wrap"><table><thead><tr><th>名稱</th><th>Email</th><th>第一次登入</th><th>最近登入</th><th>登入次數</th></tr></thead><tbody id="memberRows"></tbody></table></div>
@@ -95,8 +96,7 @@ async function loadStats(){
     if(r.status===404)throw Error('管理員 API 尚未部署：請更新 Cloudflare 的 worker.js。');
     if(!r.ok||!j?.success)throw Error(j?.error||'讀取失敗');
     const s=j.stats||{};
-    $('totalMembers').textContent=s.totalMembers??0; $('todayNew').textContent=s.todayNew??0; $('todayLogin').textContent=s.todayLogin??0;
-    $('sevenDayLogin').textContent=s.sevenDayLogin??0; $('savedBazi').textContent=s.savedBazi??0;
+    $('totalMembers').textContent=s.totalMembers??0; $('todayLogin').textContent=s.todayLogin??0; $('monthNew').textContent=s.monthNew??0; $('active30').textContent=s.active30??0; $('baziCasts').textContent=s.baziCasts??0;
     $('updatedAt').textContent='更新：'+new Date().toLocaleString('zh-TW',{hour12:false});
     $('memberRows').innerHTML=(s.recentMembers||[]).map(m=>`<tr><td>${esc(m.name||'—')}</td><td>${esc(m.email||'—')}</td><td class="muted">${fmt(m.created_at)}</td><td class="muted">${fmt(m.last_login)}</td><td>${Number(m.login_count||0)}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">目前還沒有會員資料。</td></tr>';
     $('loginCard').hidden=true; $('dashboard').hidden=false; $('refreshBtn').hidden=false; $('logoutBtn').hidden=false; $('status').textContent='';

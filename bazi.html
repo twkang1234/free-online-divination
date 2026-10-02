@@ -950,6 +950,7 @@ body.overlay-open{overflow:hidden}
    * 真正八字核心已移至 Cloudflare Worker；前端只保留介面、時辰選項與顯示用輕量相容層。
    */
   const BAZI_API_BASE = 'https://bazi-api.ezgocpu.workers.dev';
+  const MEMBER_API_BASE = 'https://member-api.ezgocpu.workers.dev';
   const GOOGLE_CLIENT_ID = '421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   const BAZI_AUTH_KEY = 'divinationhub-bazi-google-credential';
 
@@ -990,7 +991,7 @@ body.overlay-open{overflow:hidden}
     const token=baziAuthToken();
     if(!token)return;
     try{
-      await fetch(BAZI_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}});
+      await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}});
     }catch(_){}
   }
 
@@ -3386,7 +3387,7 @@ ${promptContext(data)}
     if(!token)throw Error('請先免費解鎖');
     const headers={...(options.headers||{}),'Authorization':'Bearer '+token,'Accept':'application/json'};
     if(options.body)headers['Content-Type']='application/json';
-    const res=await fetch(BAZI_API_BASE+path,{...options,headers});
+    const res=await fetch(MEMBER_API_BASE+path,{...options,headers});
     const json=await res.json().catch(()=>null);
     if(!res.ok||json?.success===false)throw Error(json?.error||'操作失敗');
     return json;
