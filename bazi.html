@@ -948,14 +948,84 @@ body.overlay-open{overflow:hidden}
     let timeEight=eight;
     if(sect===2&&h===23){timeEight=Solar.fromYmdHms(y,mo,d,0,30,0).getLunar().getEightChar();if(typeof timeEight.setSect==='function')timeEight.setSect(sect);}
     const pillars=[frontendBuildPillar(eight,'year'),frontendBuildPillar(eight,'month'),frontendBuildPillar(eight,'day'),frontendBuildPillar(timeEight,'time')];
+
+    const pad=n=>String(n).padStart(2,'0');
+    const fmt=so=>{
+      if(!so)return'';
+      if(typeof so.toYmdHms==='function')return so.toYmdHms();
+      return `${so.getYear()}-${pad(so.getMonth())}-${pad(so.getDay())} ${pad(so.getHour())}:${pad(so.getMinute())}:${pad(so.getSecond?so.getSecond():0)}`;
+    };
+    const splitGz=gz=>({gan:String(gz||'').charAt(0)||'',zhi:String(gz||'').charAt(1)||''});
+    const getJieInfo=lu=>{
+      const out={};
+      try{const prev=lu.getPrevJie();if(prev)out.prev={name:prev.getName?prev.getName():'',solar:prev.getSolar?fmt(prev.getSolar()):''};}catch(_){}
+      try{const next=lu.getNextJie();if(next)out.next={name:next.getName?next.getName():'',solar:next.getSolar?fmt(next.getSolar()):''};}catch(_){}
+      return out;
+    };
+
     let lunarText='';try{lunarText=`${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;}catch(_){lunarText=lunar.toString?lunar.toString():'';}
-    const solarText=typeof solar.toYmdHms==='function'?solar.toYmdHms():`${options.datetime}:00`;
-    return {pillars,pillarStrings:pillars.map(p=>p.ganZhi),eightChar:pillars.map(p=>p.ganZhi).join(' '),dayMaster:pillars[2].gan,solarText,lunarText};
+    const solarText=fmt(solar);
+    const jie=getJieInfo(lunar);
+
+    // 大運的「日期與干支」由公開曆法庫先算；真正評分與解讀留在 Worker。
+    let daYun={cycles:[]};
+    try{
+      const yun=eight.getYun(Number(options.gender),2);
+      const all=yun.getDaYun(9);
+      const startSolar=yun.getStartSolar();
+      const cycles=all.filter(x=>x.getIndex()>0).slice(0,8).map((x,i)=>{
+        const ganZhi=x.getGanZhi(),gz=splitGz(ganZhi);
+        let cycleStart='',cycleEnd='';
+        try{cycleStart=fmt(startSolar.nextYear(i*10));cycleEnd=fmt(startSolar.nextYear((i+1)*10));}catch(_){}
+        return {kind:'luck',ganZhi,gan:gz.gan,zhi:gz.zhi,startYear:x.getStartYear(),endYear:x.getEndYear(),startAge:x.getStartAge(),endAge:x.getEndAge(),startSolar:cycleStart,endSolar:cycleEnd,xunKong:typeof x.getXunKong==='function'?x.getXunKong():''};
+      });
+      daYun={forward:yun.isForward(),startYears:yun.getStartYear(),startMonths:yun.getStartMonth(),startDays:yun.getStartDay(),startHours:yun.getStartHour(),startSolar:fmt(startSolar),cycles};
+    }catch(err){daYun={error:err?.message||String(err),cycles:[]};}
+
+    const rawYearFlow=year=>{
+      try{
+        const so=Solar.fromYmdHms(year,7,1,12,0,0),ec=so.getLunar().getEightChar();
+        const gan=ec.getYearGan(),zhi=ec.getYearZhi();
+        let startSolar='',endSolar='';
+        try{startSolar=fmt(Solar.fromYmdHms(year,2,15,12,0,0).getLunar().getPrevJie().getSolar());}catch(_){}
+        try{endSolar=fmt(Solar.fromYmdHms(year+1,2,15,12,0,0).getLunar().getPrevJie().getSolar());}catch(_){}
+        return {kind:'year',year,referenceSolar:fmt(so),startSolar,endSolar,gan,zhi,ganZhi:`${gan}${zhi}`};
+      }catch(_){return {kind:'year',year,gan:'',zhi:'',ganZhi:'—'};}
+    };
+    const currentYear=new Date().getFullYear();
+    const yearFlows=Array.from({length:12},(_,i)=>rawYearFlow(currentYear-1+i));
+
+    const rawMonthFlows=year=>{
+      const out=[];
+      for(let month=1;month<=12;month++){
+        try{
+          const so=Solar.fromYmdHms(year,month,15,12,0,0),ec=so.getLunar().getEightChar(),j=getJieInfo(so.getLunar());
+          const gan=ec.getMonthGan(),zhi=ec.getMonthZhi();
+          out.push({kind:'month',year,month,referenceSolar:fmt(so),startSolar:j.prev?.solar||'',endSolar:j.next?.solar||'',startJie:frontendTraditional(j.prev?.name||''),endJie:frontendTraditional(j.next?.name||''),yearGan:ec.getYearGan(),yearZhi:ec.getYearZhi(),gan,zhi,ganZhi:`${gan}${zhi}`});
+        }catch(_){out.push({kind:'month',year,month,gan:'',zhi:'',ganZhi:'—'});}
+      }
+      return out;
+    };
+    const prevMonths=rawMonthFlows(currentYear-1),monthFlows=rawMonthFlows(currentYear);
+
+    let timeInput=null;
+    if(options.timeSlot!==undefined&&options.timeSlot!==null){
+      const idx=Number(options.timeSlot),slot=BAZI_HOUR_SLOTS[idx];
+      if(slot) timeInput={mode:'slot',index:idx,label:slot[0],range:slot[1],representative:slot[2],boundaryUncertain:false};
+    }
+
+    return {
+      input:{year:y,month:mo,day:d,hour:h,minute:mi,second:0},
+      gender:Number(options.gender)===0?0:1,sect,
+      pillars,pillarStrings:pillars.map(p=>p.ganZhi),eightChar:pillars.map(p=>p.ganZhi).join(' '),dayMaster:pillars[2].gan,
+      solarText,lunarText,taiYuan:typeof eight.getTaiYuan==='function'?eight.getTaiYuan():'',mingGong:typeof eight.getMingGong==='function'?eight.getMingGong():'',shenGong:typeof eight.getShenGong==='function'?eight.getShenGong():'',
+      jie,daYun,yearFlows,monthFlowYear:currentYear,monthCarry:prevMonths.length?prevMonths[prevMonths.length-1]:null,monthFlows,timeInput
+    };
   }
 
   async function requestBaziApi(options){
     const calendar=buildFrontendCalendarPayload(options);
-    const payload={action:'cast',...options,...calendar,options:{...options,...calendar}};
+    const payload={action:'cast',...options,calendar,options:{...options,calendar}};
     const candidates=['/','/api/cast','/cast'];
     let lastError='';
     for(const path of candidates){
