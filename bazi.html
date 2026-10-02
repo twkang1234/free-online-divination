@@ -530,6 +530,10 @@ body.overlay-open{overflow:hidden}
   .primary-action-row{grid-template-columns:1fr 1fr}
 }
 
+
+.birth-date-direct input[type="number"]{appearance:auto}
+.birth-date-direct input[type="number"]:focus{outline:none}
+
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -627,15 +631,15 @@ body.overlay-open{overflow:hidden}
           <label>出生日期</label>
           <div class="birth-date-direct" aria-label="出生日期">
             <div class="date-part year-part">
-              <input id="birthYear" type="text" inputmode="numeric" maxlength="4" autocomplete="bday-year" placeholder="1976" aria-label="出生年份">
+              <input id="birthYear" type="number" inputmode="numeric" min="1900" max="2100" step="1" value="1990" autocomplete="bday-year" aria-label="出生年份">
               <span>年</span>
             </div>
             <div class="date-part">
-              <input id="birthMonth" type="text" inputmode="numeric" maxlength="2" autocomplete="bday-month" placeholder="10" aria-label="出生月份">
+              <input id="birthMonth" type="number" inputmode="numeric" min="1" max="12" step="1" value="1" autocomplete="bday-month" aria-label="出生月份">
               <span>月</span>
             </div>
             <div class="date-part">
-              <input id="birthDay" type="text" inputmode="numeric" maxlength="2" autocomplete="bday-day" placeholder="25" aria-label="出生日期">
+              <input id="birthDay" type="number" inputmode="numeric" min="1" max="31" step="1" value="1" autocomplete="bday-day" aria-label="出生日期">
               <span>日</span>
             </div>
           </div>
@@ -3563,27 +3567,25 @@ ${promptContext(data)}
   }
 
   function syncBirthDateFromParts(){
-    const y=String($('birthYear')?.value||'').replace(/\D/g,'').slice(0,4);
-    const m=String($('birthMonth')?.value||'').replace(/\D/g,'').slice(0,2);
-    const d=String($('birthDay')?.value||'').replace(/\D/g,'').slice(0,2);
-    if($('birthYear'))$('birthYear').value=y;
-    if($('birthMonth'))$('birthMonth').value=m;
-    if($('birthDay'))$('birthDay').value=d;
-    if(y.length===4 && m && d){
-      const mm=String(Math.max(1,Math.min(12,Number(m)||1))).padStart(2,'0');
-      const maxDay=new Date(Number(y),Number(mm),0).getDate();
-      const dd=String(Math.max(1,Math.min(maxDay,Number(d)||1))).padStart(2,'0');
-      $('birthTime').value=`${y}-${mm}-${dd}`;
-    }else{
-      $('birthTime').value='';
-    }
+    const yEl=$('birthYear'),mEl=$('birthMonth'),dEl=$('birthDay');
+    if(!yEl||!mEl||!dEl)return;
+
+    let y=Math.max(1900,Math.min(2100,Number(yEl.value)||1990));
+    let m=Math.max(1,Math.min(12,Number(mEl.value)||1));
+    const maxDay=new Date(y,m,0).getDate();
+    let d=Math.max(1,Math.min(maxDay,Number(dEl.value)||1));
+
+    yEl.value=String(y);
+    mEl.value=String(m);
+    dEl.value=String(d);
+    $('birthTime').value=`${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
 
   function syncBirthPartsFromHidden(){
     const v=String($('birthTime')?.value||'');
     const m=v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if(!m)return;
-    if($('birthYear'))$('birthYear').value=m[1];
+    if($('birthYear'))$('birthYear').value=String(Number(m[1]));
     if($('birthMonth'))$('birthMonth').value=String(Number(m[2]));
     if($('birthDay'))$('birthDay').value=String(Number(m[3]));
   }
@@ -3591,11 +3593,27 @@ ${promptContext(data)}
   function setupDirectBirthDate(){
     const y=$('birthYear'),m=$('birthMonth'),d=$('birthDay');
     if(!y||!m||!d)return;
-    [y,m,d].forEach(el=>el.addEventListener('input',syncBirthDateFromParts));
-    y.addEventListener('input',()=>{if(y.value.length===4)m.focus();});
-    m.addEventListener('input',()=>{if(m.value.length>=2)d.focus();});
-    [m,d].forEach(el=>el.addEventListener('blur',syncBirthDateFromParts));
-    syncBirthPartsFromHidden();
+
+    [y,m,d].forEach(el=>{
+      el.addEventListener('input',syncBirthDateFromParts);
+      el.addEventListener('change',syncBirthDateFromParts);
+      el.addEventListener('wheel',e=>{
+        if(document.activeElement!==el)return;
+        e.preventDefault();
+        const step=e.deltaY<0?1:-1;
+        const min=Number(el.min)||1,max=Number(el.max)||9999;
+        let next=(Number(el.value)||0)+step;
+        next=Math.max(min,Math.min(max,next));
+        el.value=String(next);
+        syncBirthDateFromParts();
+      },{passive:false});
+    });
+
+    // Provide usable defaults immediately.
+    if(!y.value)y.value='1990';
+    if(!m.value)m.value='1';
+    if(!d.value)d.value='1';
+    syncBirthDateFromParts();
   }
 
   function birthOptions(){
