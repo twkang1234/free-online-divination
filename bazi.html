@@ -60,6 +60,31 @@ button,a{font:inherit}button{cursor:pointer}
 .member-menu-info span{display:block;color:#6f7c8c;font-size:.62rem;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .member-menu button{width:100%;border:0;border-radius:9px;background:transparent;color:#aeb8c4;text-align:left;padding:9px 10px;font-size:.68rem}
 .member-menu button:hover{background:rgba(255,255,255,.05);color:#fff}
+
+.member-chip[hidden],
+.member-login-shell[hidden],
+.member-avatar[hidden],
+.member-avatar-fallback[hidden]{display:none!important}
+
+.member-unlock-btn{border:1px solid rgba(233,189,88,.34);border-radius:999px;background:rgba(233,189,88,.06);color:#e8cc7d;padding:8px 13px;font-size:.68rem;font-weight:800;cursor:pointer}
+.member-unlock-btn:hover{border-color:rgba(233,189,88,.58);background:rgba(233,189,88,.11)}
+.member-chip{padding:7px 12px}
+.member-chip .member-avatar,.member-chip .member-avatar-fallback{display:none!important}
+.auth-modal,.saved-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.68);backdrop-filter:blur(8px)}
+.auth-modal.show,.saved-modal.show{display:flex}
+.auth-card,.saved-card{width:min(440px,94vw);border:1px solid rgba(233,189,88,.24);border-radius:18px;background:#0a0d12;box-shadow:0 28px 90px rgba(0,0,0,.52);padding:22px}
+.auth-card h3,.saved-card h3{margin:0 0 8px;color:#f1e4c2;font-size:1rem}
+.auth-card p,.saved-card p{margin:0 0 16px;color:#8693a4;font-size:.72rem;line-height:1.7}
+.modal-close{float:right;border:0;background:transparent;color:#7f8995;font-size:1.1rem;cursor:pointer}
+.auth-google-mount{display:flex;justify-content:center;min-height:42px}
+.saved-list{display:grid;gap:9px;max-height:52vh;overflow:auto;margin-top:10px}
+.saved-item{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.02)}
+.saved-item-main{min-width:0}
+.saved-item-main b{display:block;color:#e9e2d3;font-size:.76rem;margin-bottom:3px}
+.saved-item-main span{display:block;color:#778596;font-size:.65rem}
+.saved-item-actions{display:flex;gap:6px;flex:0 0 auto}
+.saved-item-actions button{border:1px solid rgba(233,189,88,.22);border-radius:8px;background:transparent;color:#cbb26d;padding:6px 8px;font-size:.62rem;cursor:pointer}
+.saved-item-actions .danger{border-color:rgba(248,113,113,.20);color:#c78787}
 @media(max-width:900px){.member-name{display:none}.member-chip{padding-right:7px}}
 
 /* Hero */
@@ -475,12 +500,8 @@ body.overlay-open{overflow:hidden}
     </div>
     <div class="topbar-right">
       <div class="member-entry" id="baziMemberEntry">
-        <div class="member-login-shell" id="baziMemberLoggedOut">
-          <div id="baziTopbarGoogleSignIn"></div>
-        </div>
+        <button class="member-unlock-btn" id="baziTopbarUnlockBtn" type="button">免費解鎖</button>
         <button class="member-chip" id="baziMemberChip" type="button" hidden aria-haspopup="true" aria-expanded="false">
-          <img class="member-avatar" id="baziMemberAvatar" alt="" hidden>
-          <span class="member-avatar member-avatar-fallback" id="baziMemberAvatarFallback">人</span>
           <span class="member-name" id="baziMemberName">會員</span>
           <span aria-hidden="true">▾</span>
         </button>
@@ -489,6 +510,8 @@ body.overlay-open{overflow:hidden}
             <strong id="baziMemberMenuName">會員</strong>
             <span id="baziMemberEmail"></span>
           </div>
+          <button id="baziSaveCurrentBtn" type="button">儲存目前八字</button>
+          <button id="baziMyChartsBtn" type="button">我的八字</button>
           <button id="baziLogoutBtn" type="button">登出</button>
         </div>
       </div>
@@ -884,6 +907,24 @@ body.overlay-open{overflow:hidden}
   </section>
 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <div class="auth-modal" id="baziAuthModal" aria-hidden="true">
+    <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="baziAuthTitle">
+      <button class="modal-close" id="baziAuthClose" type="button" aria-label="關閉">×</button>
+      <h3 id="baziAuthTitle">免費解鎖</h3>
+      <p>使用 Google 帳號確認會員身分，即可免費查看三年戰略，並使用「我的八字」記憶功能。</p>
+      <div class="auth-google-mount" id="baziAuthGoogleMount"></div>
+    </div>
+  </div>
+
+  <div class="saved-modal" id="baziSavedModal" aria-hidden="true">
+    <div class="saved-card" role="dialog" aria-modal="true" aria-labelledby="baziSavedTitle">
+      <button class="modal-close" id="baziSavedClose" type="button" aria-label="關閉">×</button>
+      <h3 id="baziSavedTitle">我的八字</h3>
+      <p>只保存出生資料與必要排盤設定，不保存完整分析結果。</p>
+      <div class="saved-list" id="baziSavedList"></div>
+    </div>
+  </div>
+
   <!-- 曆法核心：MIT 授權 lunar-javascript 1.7.7 -->
   <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
   <script>
@@ -925,43 +966,44 @@ body.overlay-open{overflow:hidden}
       baziSetAuthToken('');
       return null;
     }
-    return {
-      name:p.name||p.given_name||p.email||'會員',
-      email:p.email||'',
-      picture:p.picture||''
-    };
+    return {name:p.name||p.given_name||p.email||'會員',email:p.email||''};
+  }
+
+  async function baziRegisterMember(){
+    const token=baziAuthToken();
+    if(!token)return;
+    try{
+      await fetch(BAZI_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}});
+    }catch(_){}
   }
 
   function baziUpdateTopbarMember(){
-    const loggedOut=document.getElementById('baziMemberLoggedOut');
+    const unlock=document.getElementById('baziTopbarUnlockBtn');
     const chip=document.getElementById('baziMemberChip');
     const profile=baziAuthProfile();
 
     if(profile){
-      if(loggedOut)loggedOut.hidden=true;
+      if(unlock)unlock.hidden=true;
       if(chip)chip.hidden=false;
-      const name=document.getElementById('baziMemberName');
-      const menuName=document.getElementById('baziMemberMenuName');
-      const email=document.getElementById('baziMemberEmail');
-      const avatar=document.getElementById('baziMemberAvatar');
-      const fallback=document.getElementById('baziMemberAvatarFallback');
-      if(name)name.textContent=profile.name;
-      if(menuName)menuName.textContent=profile.name;
-      if(email)email.textContent=profile.email;
-      if(profile.picture&&avatar){
-        avatar.src=profile.picture;
-        avatar.hidden=false;
-        if(fallback)fallback.hidden=true;
-      }else{
-        if(avatar)avatar.hidden=true;
-        if(fallback)fallback.hidden=false;
-      }
+      document.getElementById('baziMemberName').textContent=profile.name;
+      document.getElementById('baziMemberMenuName').textContent=profile.name;
+      document.getElementById('baziMemberEmail').textContent=profile.email;
     }else{
-      if(loggedOut)loggedOut.hidden=false;
+      if(unlock)unlock.hidden=false;
       if(chip)chip.hidden=true;
       document.getElementById('baziMemberEntry')?.classList.remove('is-open');
-      baziRenderGoogleButton();
     }
+  }
+
+  function baziOpenAuth(){
+    const modal=document.getElementById('baziAuthModal');
+    if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');}
+    baziRenderGoogleButton();
+  }
+
+  function baziCloseAuth(){
+    const modal=document.getElementById('baziAuthModal');
+    if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
   }
 
   function baziRenderGoogleButton(){
@@ -972,37 +1014,28 @@ body.overlay-open{overflow:hidden}
     if(!baziGoogleInitialized){
       window.google.accounts.id.initialize({
         client_id:GOOGLE_CLIENT_ID,
-        callback:response=>{
+        callback:async response=>{
           const credential=response?.credential||'';
           if(!credential)return;
           baziSetAuthToken(credential);
+          await baziRegisterMember();
           baziUpdateTopbarMember();
+          baziCloseAuth();
           window.dispatchEvent(new CustomEvent('bazi-google-login',{detail:{credential}}));
         }
       });
       baziGoogleInitialized=true;
     }
-
-    const mounts=[
-      document.getElementById('baziGoogleSignIn'),
-      document.getElementById('baziTopbarGoogleSignIn')
-    ].filter(Boolean);
-
-    mounts.forEach(mount=>{
-      if(mount.dataset.ready==='1')return;
+    const mount=document.getElementById('baziAuthGoogleMount');
+    if(mount && mount.dataset.ready!=='1'){
       mount.dataset.ready='1';
-      window.google.accounts.id.renderButton(mount,{
-        theme:'outline',
-        size:'medium',
-        shape:'pill',
-        text:'signin_with',
-        width:220
-      });
-    });
+      window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});
+    }
   }
 
   window.baziRenderGoogleButton=baziRenderGoogleButton;
   window.baziUpdateTopbarMember=baziUpdateTopbarMember;
+  window.baziOpenAuth=baziOpenAuth;
 
   const BAZI_HOUR_SLOTS=[
     ['早子時','00:00–00:59','00:30','子'],['丑時','01:00–02:59','02:00','丑'],['寅時','03:00–04:59','04:00','寅'],
@@ -3201,10 +3234,9 @@ ${promptContext(data)}
           <div style="font-size:1.35rem;margin-bottom:8px;">🔒</div>
           <h3 style="margin:0 0 8px;color:#f4e8c4;font-size:1.05rem;">登入後免費查看三年戰略</h3>
           <p style="margin:0 auto 18px;max-width:560px;color:#93a1b4;line-height:1.8;font-size:.82rem;">前面的八字排盤與分析都可以免費查看。若想繼續看去年、今年與明年的完整三年戰略，只需要使用 Google 帳號登入，不收費。</p>
-          <div id="baziGoogleSignIn" style="display:flex;justify-content:center;min-height:44px;"></div>
+          <button type="button" class="member-unlock-btn" onclick="window.baziOpenAuth?.()">免費解鎖三年戰略</button>
           <div style="margin-top:12px;color:#687587;font-size:.72rem;">登入只用來確認會員身分；第八區目前免費解鎖。</div>
         </div>`;
-      setTimeout(()=>window.baziRenderGoogleButton?.(),0);
       return;
     }
 
@@ -3302,6 +3334,92 @@ ${promptContext(data)}
     }));
   }
 
+  async function savedBaziRequest(path,options={}){
+    const token=baziAuthToken();
+    if(!token)throw Error('請先免費解鎖');
+    const headers={...(options.headers||{}),'Authorization':'Bearer '+token,'Accept':'application/json'};
+    if(options.body)headers['Content-Type']='application/json';
+    const res=await fetch(BAZI_API_BASE+path,{...options,headers});
+    const json=await res.json().catch(()=>null);
+    if(!res.ok||json?.success===false)throw Error(json?.error||'操作失敗');
+    return json;
+  }
+
+  async function saveCurrentBazi(){
+    if(!baziAuthProfile())return baziOpenAuth();
+    if(!lastData)return toast('請先排出一張八字');
+    const nickname=(prompt('幫這張八字取一個名稱，例如：我的、媽媽、小孩','我的八字')||'').trim();
+    if(!nickname)return;
+    const exact=$('useExactTime').checked;
+    const payload={
+      nickname,
+      birth_date:birthTime.value,
+      time_slot:exact?null:Number($('birthSlot').value),
+      exact_time:exact?$('exactBirthTime').value:'',
+      use_exact:exact,
+      gender:gender.value,
+      sect:sect.value
+    };
+    try{
+      await savedBaziRequest('/saved-bazi',{method:'POST',body:JSON.stringify(payload)});
+      toast('已儲存到我的八字');
+    }catch(err){toast(err?.message||'儲存失敗');}
+  }
+
+  async function openMyBazi(){
+    if(!baziAuthProfile())return baziOpenAuth();
+    const modal=$('baziSavedModal'),list=$('baziSavedList');
+    modal?.classList.add('show');modal?.setAttribute('aria-hidden','false');
+    if(list)list.innerHTML='<div style="color:#778596;font-size:.7rem;padding:8px 0;">讀取中…</div>';
+    try{
+      const json=await savedBaziRequest('/saved-bazi');
+      const records=json.records||[];
+      if(!records.length){
+        list.innerHTML='<div style="color:#778596;font-size:.7rem;padding:8px 0;">目前還沒有儲存任何八字。</div>';
+        return;
+      }
+      list.innerHTML=records.map(r=>`
+        <div class="saved-item">
+          <div class="saved-item-main">
+            <b>${esc(r.nickname)}</b>
+            <span>${esc(r.birth_date)} · ${r.use_exact?esc(r.exact_time||''):esc(BAZI_HOUR_SLOTS[Number(r.time_slot)]?.[0]||'時辰')} · ${String(r.gender)==='1'?'男':'女'}</span>
+          </div>
+          <div class="saved-item-actions">
+            <button type="button" data-load="${r.id}">載入</button>
+            <button type="button" class="danger" data-delete="${r.id}">刪除</button>
+          </div>
+        </div>`).join('');
+
+      const byId=id=>records.find(x=>String(x.id)===String(id));
+      list.querySelectorAll('[data-load]').forEach(btn=>btn.addEventListener('click',()=>{
+        const r=byId(btn.dataset.load);if(!r)return;
+        birthTime.value=r.birth_date;
+        gender.value=String(r.gender);
+        sect.value=String(r.sect);
+        $('useExactTime').checked=!!r.use_exact;
+        $('exactBirthTime').hidden=!r.use_exact;
+        if(r.use_exact){
+          $('exactBirthTime').value=r.exact_time||'12:00';
+          $('birthSlot').value=slotForTime($('exactBirthTime').value);
+        }else{
+          $('birthSlot').value=String(r.time_slot??0);
+        }
+        modal.classList.remove('show');modal.setAttribute('aria-hidden','true');
+        cast();
+      }));
+      list.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',async()=>{
+        if(!confirm('刪除這筆已儲存八字？'))return;
+        try{
+          await savedBaziRequest('/saved-bazi/'+btn.dataset.delete,{method:'DELETE'});
+          btn.closest('.saved-item')?.remove();
+          toast('已刪除');
+        }catch(err){toast(err?.message||'刪除失敗');}
+      }));
+    }catch(err){
+      list.innerHTML='<div style="color:#c78787;font-size:.7rem;padding:8px 0;">'+esc(err?.message||'讀取失敗')+'</div>';
+    }
+  }
+
   function setupReportActions(){
     document.querySelectorAll('.report-section').forEach(d=>d.addEventListener('toggle',()=>{if(d.open)trackAction(`section-${d.id}`);}));
     $('expandAllBtn')?.addEventListener('click',()=>{document.querySelectorAll('.report-section').forEach(d=>d.open=true);trackAction('expand-all');});
@@ -3381,17 +3499,25 @@ ${promptContext(data)}
 
   document.addEventListener('DOMContentLoaded', () => {
     window.baziUpdateTopbarMember?.();
-    window.baziRenderGoogleButton?.();
 
     const memberEntry=document.getElementById('baziMemberEntry');
     const memberChip=document.getElementById('baziMemberChip');
     const logoutBtn=document.getElementById('baziLogoutBtn');
+
+    document.getElementById('baziTopbarUnlockBtn')?.addEventListener('click',baziOpenAuth);
+    document.getElementById('baziAuthClose')?.addEventListener('click',baziCloseAuth);
+    document.getElementById('baziAuthModal')?.addEventListener('click',e=>{if(e.target.id==='baziAuthModal')baziCloseAuth();});
 
     memberChip?.addEventListener('click',e=>{
       e.stopPropagation();
       const open=memberEntry?.classList.toggle('is-open');
       memberChip.setAttribute('aria-expanded',open?'true':'false');
     });
+
+    document.getElementById('baziSaveCurrentBtn')?.addEventListener('click',()=>{memberEntry?.classList.remove('is-open');saveCurrentBazi();});
+    document.getElementById('baziMyChartsBtn')?.addEventListener('click',()=>{memberEntry?.classList.remove('is-open');openMyBazi();});
+    document.getElementById('baziSavedClose')?.addEventListener('click',()=>{$('baziSavedModal')?.classList.remove('show');$('baziSavedModal')?.setAttribute('aria-hidden','true');});
+    document.getElementById('baziSavedModal')?.addEventListener('click',e=>{if(e.target.id==='baziSavedModal'){e.currentTarget.classList.remove('show');e.currentTarget.setAttribute('aria-hidden','true');}});
 
     logoutBtn?.addEventListener('click',()=>{
       try{window.google?.accounts?.id?.disableAutoSelect?.();}catch(_){}
