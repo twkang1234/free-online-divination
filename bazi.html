@@ -45,6 +45,23 @@ button,a{font:inherit}button{cursor:pointer}
 .listing-open,.resource-apply-btn{min-height:36px;padding:7px 13px;border:1px solid rgba(233,189,88,.27);border-radius:999px;background:rgba(57,37,6,.48);color:#e7c779;font-weight:800;font-size:.70rem}
 .listing-open:hover,.resource-apply-btn:hover{border-color:rgba(233,189,88,.58);background:rgba(233,189,88,.09)}
 
+.member-entry{position:relative;display:flex;align-items:center}
+.member-login-shell{display:flex;align-items:center;min-height:36px}
+.member-login-shell>div{display:flex;align-items:center}
+.member-chip{display:flex;align-items:center;gap:9px;min-height:36px;padding:6px 10px 6px 7px;border:1px solid rgba(117,220,228,.20);border-radius:999px;background:rgba(7,17,22,.68);color:#d9ecee;font-size:.70rem;font-weight:760}
+.member-chip:hover{border-color:rgba(117,220,228,.42);background:rgba(117,220,228,.07)}
+.member-avatar{width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.12);background:#111822}
+.member-avatar-fallback{display:grid;place-items:center;font-size:.68rem;color:#d9b45e}
+.member-name{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.member-menu{position:absolute;right:0;top:calc(100% + 8px);min-width:190px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(5,8,12,.97);box-shadow:0 18px 50px rgba(0,0,0,.34);display:none;z-index:120}
+.member-entry.is-open .member-menu{display:block}
+.member-menu-info{padding:8px 9px 9px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:6px}
+.member-menu-info strong{display:block;color:#eee4ce;font-size:.74rem;margin-bottom:3px}
+.member-menu-info span{display:block;color:#6f7c8c;font-size:.62rem;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.member-menu button{width:100%;border:0;border-radius:9px;background:transparent;color:#aeb8c4;text-align:left;padding:9px 10px;font-size:.68rem}
+.member-menu button:hover{background:rgba(255,255,255,.05);color:#fff}
+@media(max-width:900px){.member-name{display:none}.member-chip{padding-right:7px}}
+
 /* Hero */
 .bazi-hero{position:relative;isolation:isolate;min-height:calc(100vh - 64px);width:min(1460px,calc(100% - 40px));margin:0 auto;
   display:grid;grid-template-columns:minmax(0,.9fr) minmax(520px,1.1fr);gap:58px;align-items:center;padding:70px 0 76px;overflow:hidden}
@@ -457,6 +474,24 @@ body.overlay-open{overflow:hidden}
       </nav>
     </div>
     <div class="topbar-right">
+      <div class="member-entry" id="baziMemberEntry">
+        <div class="member-login-shell" id="baziMemberLoggedOut">
+          <div id="baziTopbarGoogleSignIn"></div>
+        </div>
+        <button class="member-chip" id="baziMemberChip" type="button" hidden aria-haspopup="true" aria-expanded="false">
+          <img class="member-avatar" id="baziMemberAvatar" alt="" hidden>
+          <span class="member-avatar member-avatar-fallback" id="baziMemberAvatarFallback">人</span>
+          <span class="member-name" id="baziMemberName">會員</span>
+          <span aria-hidden="true">▾</span>
+        </button>
+        <div class="member-menu" id="baziMemberMenu">
+          <div class="member-menu-info">
+            <strong id="baziMemberMenuName">會員</strong>
+            <span id="baziMemberEmail"></span>
+          </div>
+          <button id="baziLogoutBtn" type="button">登出</button>
+        </div>
+      </div>
       <button class="listing-open" id="openListing" type="button">申請刊登</button>
     </div>
   </header>
@@ -869,33 +904,105 @@ body.overlay-open{overflow:hidden}
       else sessionStorage.removeItem(BAZI_AUTH_KEY);
     }catch(_){}
   }
+  let baziGoogleInitialized=false;
+
+  function baziDecodeJwt(token){
+    try{
+      const part=String(token||'').split('.')[1];
+      if(!part)return null;
+      const base=part.replace(/-/g,'+').replace(/_/g,'/');
+      const json=decodeURIComponent(atob(base).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+      return JSON.parse(json);
+    }catch(_){return null;}
+  }
+
+  function baziAuthProfile(){
+    const token=baziAuthToken();
+    if(!token)return null;
+    const p=baziDecodeJwt(token);
+    if(!p)return null;
+    if(Number(p.exp||0)*1000<=Date.now()){
+      baziSetAuthToken('');
+      return null;
+    }
+    return {
+      name:p.name||p.given_name||p.email||'會員',
+      email:p.email||'',
+      picture:p.picture||''
+    };
+  }
+
+  function baziUpdateTopbarMember(){
+    const loggedOut=document.getElementById('baziMemberLoggedOut');
+    const chip=document.getElementById('baziMemberChip');
+    const profile=baziAuthProfile();
+
+    if(profile){
+      if(loggedOut)loggedOut.hidden=true;
+      if(chip)chip.hidden=false;
+      const name=document.getElementById('baziMemberName');
+      const menuName=document.getElementById('baziMemberMenuName');
+      const email=document.getElementById('baziMemberEmail');
+      const avatar=document.getElementById('baziMemberAvatar');
+      const fallback=document.getElementById('baziMemberAvatarFallback');
+      if(name)name.textContent=profile.name;
+      if(menuName)menuName.textContent=profile.name;
+      if(email)email.textContent=profile.email;
+      if(profile.picture&&avatar){
+        avatar.src=profile.picture;
+        avatar.hidden=false;
+        if(fallback)fallback.hidden=true;
+      }else{
+        if(avatar)avatar.hidden=true;
+        if(fallback)fallback.hidden=false;
+      }
+    }else{
+      if(loggedOut)loggedOut.hidden=false;
+      if(chip)chip.hidden=true;
+      document.getElementById('baziMemberEntry')?.classList.remove('is-open');
+      baziRenderGoogleButton();
+    }
+  }
+
   function baziRenderGoogleButton(){
-    const mount = document.getElementById('baziGoogleSignIn');
-    if(!mount) return;
     if(!window.google?.accounts?.id){
-      setTimeout(baziRenderGoogleButton, 250);
+      setTimeout(baziRenderGoogleButton,250);
       return;
     }
-    if(mount.dataset.ready === '1') return;
-    mount.dataset.ready = '1';
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: response => {
-        const credential = response?.credential || '';
-        if(!credential) return;
-        baziSetAuthToken(credential);
-        window.dispatchEvent(new CustomEvent('bazi-google-login', {detail:{credential}}));
-      }
-    });
-    window.google.accounts.id.renderButton(mount, {
-      theme: 'outline',
-      size: 'large',
-      shape: 'pill',
-      text: 'signin_with',
-      width: 260
+    if(!baziGoogleInitialized){
+      window.google.accounts.id.initialize({
+        client_id:GOOGLE_CLIENT_ID,
+        callback:response=>{
+          const credential=response?.credential||'';
+          if(!credential)return;
+          baziSetAuthToken(credential);
+          baziUpdateTopbarMember();
+          window.dispatchEvent(new CustomEvent('bazi-google-login',{detail:{credential}}));
+        }
+      });
+      baziGoogleInitialized=true;
+    }
+
+    const mounts=[
+      document.getElementById('baziGoogleSignIn'),
+      document.getElementById('baziTopbarGoogleSignIn')
+    ].filter(Boolean);
+
+    mounts.forEach(mount=>{
+      if(mount.dataset.ready==='1')return;
+      mount.dataset.ready='1';
+      window.google.accounts.id.renderButton(mount,{
+        theme:'outline',
+        size:'medium',
+        shape:'pill',
+        text:'signin_with',
+        width:220
+      });
     });
   }
-  window.baziRenderGoogleButton = baziRenderGoogleButton;
+
+  window.baziRenderGoogleButton=baziRenderGoogleButton;
+  window.baziUpdateTopbarMember=baziUpdateTopbarMember;
 
   const BAZI_HOUR_SLOTS=[
     ['早子時','00:00–00:59','00:30','子'],['丑時','01:00–02:59','02:00','丑'],['寅時','03:00–04:59','04:00','寅'],
@@ -3257,6 +3364,7 @@ ${promptContext(data)}
   }
 
   window.addEventListener('bazi-google-login', async () => {
+    window.baziUpdateTopbarMember?.();
     if(!lastData) return;
     try{
       toast('登入成功，正在解鎖三年戰略…');
@@ -3272,6 +3380,36 @@ ${promptContext(data)}
   });
 
   document.addEventListener('DOMContentLoaded', () => {
+    window.baziUpdateTopbarMember?.();
+    window.baziRenderGoogleButton?.();
+
+    const memberEntry=document.getElementById('baziMemberEntry');
+    const memberChip=document.getElementById('baziMemberChip');
+    const logoutBtn=document.getElementById('baziLogoutBtn');
+
+    memberChip?.addEventListener('click',e=>{
+      e.stopPropagation();
+      const open=memberEntry?.classList.toggle('is-open');
+      memberChip.setAttribute('aria-expanded',open?'true':'false');
+    });
+
+    logoutBtn?.addEventListener('click',()=>{
+      try{window.google?.accounts?.id?.disableAutoSelect?.();}catch(_){}
+      baziSetAuthToken('');
+      memberEntry?.classList.remove('is-open');
+      if(memberChip)memberChip.setAttribute('aria-expanded','false');
+      window.baziUpdateTopbarMember?.();
+      if(lastData)renderYearFlows({...lastData,threeYearStrategicOutlook:null});
+      toast('已登出');
+    });
+
+    document.addEventListener('click',e=>{
+      if(memberEntry && !memberEntry.contains(e.target)){
+        memberEntry.classList.remove('is-open');
+        if(memberChip)memberChip.setAttribute('aria-expanded','false');
+      }
+    });
+
     setupBirthSlots();
     initSectionDecodeUI();
     cast(false);
