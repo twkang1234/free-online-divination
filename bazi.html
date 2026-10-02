@@ -692,32 +692,7 @@ body.overlay-open{overflow:hidden}
       </div>
 
       <div class="results" id="results">
-        <div class="report-toolbar" id="reportToolbar">
-          <div>
-            <span class="report-eyebrow">PERSONAL BAZI REPORT</span>
-            <strong>你的八字結構報告已建立</strong>
-          </div>
-          <div class="report-actions">
-            <button type="button" id="expandAllBtn">全部展開</button>
-            <button type="button" id="collapseAllBtn">收合章節</button>
-            <button type="button" id="copyReportBtn">複製摘要</button>
-            <button type="button" id="saveChartBtn">儲存本機</button>
-            <button type="button" id="loadChartBtn">載入上次</button>
-            <button type="button" id="printReportBtn">列印 / PDF</button>
-          </div>
-        </div>
-
-        <nav class="report-nav" aria-label="八字報告導覽">
-          <a href="#report-overview">總覽</a><a href="#report-pillars">四柱</a><a href="#report-elements">五行</a><a href="#report-tengods">十神</a><a href="#report-relations">干支關係</a><a href="#report-shensha">神煞</a><a href="#report-reading">結構解讀</a><a href="#report-luck">大運</a><a href="#report-years">流年</a><a href="#ai-prompt-zone">完整提示詞</a><a href="/qimen.html">奇門</a>
-        </nav>
-
-        <section class="explore-panel" id="explorePanel" aria-label="命盤探索進度">
-          <div class="explore-head"><div><strong>命盤探索進度</strong><span id="exploreHint">先看計算結果；想知道「這代表什麼」，再展開各分區的白話解讀。</span></div><span class="explore-percent" id="explorePercent">10%</span></div>
-          <div class="explore-track"><i id="exploreFill"></i></div>
-          <div class="explore-milestones" id="exploreMilestones"><span data-m="chart">✓ 命盤建立</span><span data-m="pillars">四柱</span><span data-m="elements">五行</span><span data-m="tengods">十神</span><span data-m="relations">干支</span><span data-m="shensha">神煞</span><span data-m="luck">大運</span><span data-m="years">流年</span><span data-m="ai">完整整理</span></div>
-        </section>
-
-        <section class="report-hero" id="report-overview">
+<section class="report-hero" id="report-overview">
           <div class="report-identity">
             <div class="identity-seal" id="identitySeal">命</div>
             <div>
@@ -1384,39 +1359,22 @@ body.overlay-open{overflow:hidden}
     {key:'years',id:'report-years',title:'流年',promptTitle:'去年、今年、明年與未來十年流年',instruction:'先比較去年、今年、明年哪一年相對較順，再看未來十年。每年要清楚說明較有利的主題與需留意的地方，不要只列十神或互動數量。'}
   ];
   const sectionMap=Object.fromEntries(sectionDefinitions.map(x=>[x.key,x]));
-  const exploration={seen:new Set(),actions:new Set(),explored:new Set(),unlocked:false,prompt:''};
-
-  function trackAction(key){exploration.actions.add(key);updateExploration();}
-  function explorationScore(){return Math.min(100,10+Math.round(exploration.explored.size/sectionDefinitions.length*90));}
-  function setMilestone(name,done=true){const el=document.querySelector(`#exploreMilestones [data-m="${name}"]`);if(el&&done)el.classList.add('done');}
-  function markSectionExplored(key){if(!sectionMap[key])return;exploration.explored.add(key);setMilestone(key);updateExploration();}
-  function updateExploration(){
-    $('exploreHint').textContent='閱讀進度記錄已查看的分區；完整提示詞已可使用。';
-    const score=explorationScore();
-    $('explorePercent').textContent=`${score}%`;$('exploreFill').style.width=`${score}%`;
-    const canUnlock=!!lastData;
-    if(canUnlock&&!exploration.unlocked)unlockAiPrompt();
-    if(!exploration.unlocked){
-      $('exploreHint').textContent='從你有興趣的分區繼續展開白話解讀；讀過的內容越多，這張命盤會逐步整理完整。';
-      $('unlockDesc').textContent='先看各分區的計算結果，再展開你真正想了解的白話說明；完整提示詞會在閱讀到一定深度後自然準備好。';
-    }
-  }
+  // 舊版「命盤探索進度」已移除。
+  // 保留最小相容層，讓既有分區互動與 AI 提示詞功能不受影響。
+  const exploration={prompt:''};
+  function trackAction(){}
+  function markSectionExplored(){}
   function resetExploration(){
-    exploration.seen=new Set(['report-overview']);exploration.actions=new Set();exploration.explored=new Set();exploration.unlocked=false;exploration.prompt='';
-    document.querySelectorAll('#exploreMilestones span').forEach(x=>x.classList.remove('done','unlock'));setMilestone('chart');
-    $('aiGenerator')?.classList.remove('show');$('unlockBadge').textContent='整理中';$('unlockBadge').classList.remove('ready');$('unlockTitle').textContent='完整提示詞正在整理';$('promptPreview').classList.remove('show');$('promptPreview').textContent='';
-    document.querySelectorAll('.section-decode').forEach(box=>{box.querySelector('.decode-content')?.classList.remove('show');box.querySelector('.decode-open')?.classList.remove('active');const b=box.querySelector('.decode-open');if(b)b.textContent='看懂這一區';const pr=box.querySelector('.section-prompt-preview');if(pr){pr.textContent='';pr.classList.remove('show');}});
-    updateExploration();setupExplorationObserver();
-  }
-  let reportObserver=null;
-  function setupExplorationObserver(){
-    if(reportObserver)reportObserver.disconnect();
-    if(!('IntersectionObserver'in window))return;
-    reportObserver=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting&&entry.intersectionRatio>=.28)exploration.seen.add(entry.target.id);})},{threshold:[.28,.55]});
-    document.querySelectorAll('#results .report-section,#report-overview,#ai-prompt-zone,#qimen-bridge').forEach(el=>reportObserver.observe(el));
-  }
-  function unlockAiPrompt(){
-    exploration.unlocked=true;setMilestone('ai');document.querySelector('#exploreMilestones [data-m="ai"]')?.classList.add('unlock');$('aiGenerator').classList.add('show');$('unlockBadge').textContent='READY';$('unlockBadge').classList.add('ready');$('unlockTitle').textContent='完整命盤 AI 提示詞已準備好';$('unlockDesc').textContent='命盤已建立，隨時可以帶著完整資料追問如何調整或應用。閱讀進度不影響提示詞使用。';
+    exploration.prompt='';
+    $('aiGenerator')?.classList.add('show');
+    const badge=$('unlockBadge');
+    const title=$('unlockTitle');
+    const desc=$('unlockDesc');
+    const preview=$('promptPreview');
+    if(badge){badge.textContent='READY';badge.classList.add('ready');}
+    if(title)title.textContent='完整命盤 AI 提示詞已準備好';
+    if(desc)desc.textContent='命盤建立後即可產生完整提示詞。';
+    if(preview){preview.classList.remove('show');preview.textContent='';}
   }
 
   const comboSpecial={
@@ -3545,7 +3503,7 @@ ${promptContext(data)}
     $('loadChartBtn')?.addEventListener('click',()=>{
       try{const s=JSON.parse(localStorage.getItem('divinationhub-bazi-last')||'null');if(!s)return toast('尚未儲存命盤');birthTime.value=s.date||(s.datetime||'').slice(0,10)||birthTime.value;$('exactBirthTime').value=(s.datetime||'').slice(11,16)||'12:00';$('birthSlot').value=s.timeSlot??slotForTime($('exactBirthTime').value);$('useExactTime').checked=s.exact??true;$('exactBirthTime').hidden=!$('useExactTime').checked;gender.value=s.gender??gender.value;sect.value=s.sect??sect.value;cast();}catch(_){toast('無法讀取上次命盤');}
     });
-    $('generatePromptBtn')?.addEventListener('click',async()=>{if(!lastData||!exploration.unlocked)return toast('先多看幾個分區的白話解讀');exploration.prompt=buildAiPrompt(lastData);$('promptPreview').textContent=exploration.prompt;$('promptPreview').classList.add('show');try{await navigator.clipboard.writeText(exploration.prompt);toast('完整命盤提示詞已產生並複製');}catch(_){toast('提示詞已產生，可直接複製');}trackAction('prompt-generate-copy');});
+    $('generatePromptBtn')?.addEventListener('click',async()=>{if(!lastData)return toast('請先建立命盤');exploration.prompt=buildAiPrompt(lastData);$('promptPreview').textContent=exploration.prompt;$('promptPreview').classList.add('show');try{await navigator.clipboard.writeText(exploration.prompt);toast('完整命盤提示詞已產生並複製');}catch(_){toast('提示詞已產生，可直接複製');}trackAction('prompt-generate-copy');});
     $('copyReportBtn')?.addEventListener('click',async()=>{
       if(!lastData)return;
       const d=lastData;const lines=[`八字：${d.pillars.map(p=>p.ganZhi).join(' ')}`,`日主：${d.dayMaster}${d.dayMasterElement}（${d.dayMasterYinYang}）`,`結構摘要：${d.highlights?.summary||''}`,`五行：${elOrder.map(e=>`${e}${d.weightedFiveElements?.percentages?.[e]||0}%`).join(' / ')}`,`十神主題：${d.highlights?.dominantGroup||'—'}`,`干支互動：${(d.relations||[]).map(r=>r.label).join('、')||'未見明顯常見組合'}`];
@@ -3636,7 +3594,7 @@ ${promptContext(data)}
       $('birthTimeNotice').textContent=timeInputNote(data);
       lastData=data;
       selectedPeriods={};
-      renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);initSectionDecodeUI();resetExploration();markSectionExplored('years');
+      renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);initSectionDecodeUI();resetExploration();
       emptyState.style.display='none';results.classList.add('show');
       if (scroll) setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
     }catch(err){
