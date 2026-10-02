@@ -739,7 +739,7 @@ body.overlay-open{overflow:hidden}
         ✦ 本頁使用節氣與四柱曆法核心計算。出生時間若接近立春、交節、23:00 或午夜，不同流派與真太陽時設定可能產生命盤差異；正式解盤前仍建議確認出生地與採用的換日規則。
       </div>
 
-      <footer>bazi-core.js · lunar-javascript 1.7.7 · local chart rendering</footer>
+      <footer>Cloudflare Worker · lunar-javascript 1.7.7 · server-side Bazi engine</footer>
     </section>
   </section>
 
@@ -850,7 +850,93 @@ body.overlay-open{overflow:hidden}
 
   <!-- 曆法核心：MIT 授權 lunar-javascript 1.7.7 -->
   <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
-  <script src="bazi-core.js?v=2.4.0"></script>
+  <script>
+  /*
+   * Bazi API thin client
+   * 真正八字核心已移至 Cloudflare Worker；前端只保留介面、時辰選項與顯示用輕量相容層。
+   */
+  const BAZI_API_BASE = 'https://bazi-api.ezgocpu.workers.dev';
+
+  const BAZI_HOUR_SLOTS=[
+    ['早子時','00:00–00:59','00:30','子'],['丑時','01:00–02:59','02:00','丑'],['寅時','03:00–04:59','04:00','寅'],
+    ['卯時','05:00–06:59','06:00','卯'],['辰時','07:00–08:59','08:00','辰'],['巳時','09:00–10:59','10:00','巳'],
+    ['午時','11:00–12:59','12:00','午'],['未時','13:00–14:59','14:00','未'],['申時','15:00–16:59','16:00','申'],
+    ['酉時','17:00–18:59','18:00','酉'],['戌時','19:00–20:59','20:00','戌'],['亥時','21:00–22:59','22:00','亥'],
+    ['晚子時（夜子）','23:00–23:59','23:30','子']
+  ];
+  const BAZI_METHOD_NOTE='本報告以常見八字象徵解釋生活傾向；百分比是本站藏干加權占比，並非能力、財富或事件機率。日主支持度只作扶抑方向參考，未完整判定格局、調候與喜用神。歲運評語在此規則下相對比較，不保證事件發生。';
+  const BAZI_GROUP_MAP={比肩:'比劫',劫財:'比劫',食神:'食傷',傷官:'食傷',偏財:'財星',正財:'財星',七殺:'官殺',正官:'官殺',偏印:'印星',正印:'印星'};
+  const BAZI_GROUP_TOPICS={比劫:'自主決定、同儕合作與競爭',食傷:'作品、技術與表達',財星:'客戶、收入安排與資源交換',官殺:'職責、標準與任務壓力',印星:'進修、研究與專業支援'};
+  const BAZI_GROUP_WATCH={比劫:'合作、分配與主導權需要說清楚。',食傷:'表達與規則之間需要拿捏。',財星:'投入、成本與回報要同步確認。',官殺:'責任、期限與壓力需要管理。',印星:'準備與行動之間避免反覆拖延。'};
+
+  function baziSlotDateTime(date,slot){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isInteger(Number(slot))||Number(slot)<0||Number(slot)>12)throw Error('請選擇有效的出生日期與時辰');
+    return date+'T'+BAZI_HOUR_SLOTS[Number(slot)][2];
+  }
+  function baziCurrentLuck(data,at){
+    const stamp=String(at||new Date().toISOString().slice(0,19).replace('T',' '));
+    return (data?.daYun?.cycles||[]).find(c=>String(c.startSolar||'')<=stamp && stamp<String(c.endSolar||'')) ||
+           (data?.daYun?.cycles||[]).find(c=>{const y=new Date().getFullYear();return y>=Number(c.startYear)&&y<=Number(c.endYear);}) || null;
+  }
+  function baziAssessment(data,item){
+    if(item?.assessment && typeof item.assessment==='object') return item.assessment;
+    const gods=[item?.tenGodGan,item?.tenGodZhi].filter(Boolean),groups=[...new Set(gods.map(g=>BAZI_GROUP_MAP[g]).filter(Boolean))];
+    const support=Number(data?.scores?.support ?? 50),gp=data?.tenGodDistribution?.groupPercentages||{};
+    const benefits=support>=54?{比劫:-.5,印星:-.5,食傷:1,財星:.8,官殺:.5}:support<47?{比劫:1,印星:1,食傷:-.35,財星:-.5,官殺:-.7}:{比劫:.2,印星:.2,食傷:.4,財星:.4,官殺:.2};
+    let score=gods.reduce((sum,g,i)=>sum+(benefits[BAZI_GROUP_MAP[g]]||0)*(i?.7:1),0);
+    groups.forEach(g=>{if(Number(gp[g]||0)>=38)score-=.25;});
+    const relText=[...(item?.relations||[]).map(r=>r.label||''),...(item?.interactions||[])].join('、');
+    const strain=(relText.match(/沖|刑|害|破/g)||[]).length;
+    score-=Math.min(strain,6)*.35;
+    const label=score>=1.15&&strain<2?'較順':score>=.5&&strain<2?'偏順':score>=.5?'有利有壓力':score>=-.35&&strain<2?'平穩':score>=-1.1?'變動較大':'需留意';
+    const cls={'較順':'fortune-best','偏順':'fortune-good','有利有壓力':'fortune-mixed','平穩':'fortune-steady','變動較大':'fortune-mixed','需留意':'fortune-watch'}[label]||'fortune-steady';
+    return {score,label,cls,groups,gods,goodThemes:groups.map(g=>BAZI_GROUP_TOPICS[g]||g),watchThemes:groups.map(g=>BAZI_GROUP_WATCH[g]||''),stats:{strain,help:0},relations:item?.relations||[],domains:[],reasons:[`日主支持度 ${support}；本期主題 ${groups.join('、')||'依原局延續'}。`],contextText:'由後端命盤資料與前端顯示層整理。',interactionWatch:strain?'生活安排或合作方式較容易需要調整。':''};
+  }
+  function baziThreeYear(data){
+    return data?.threeYearStrategicOutlook || data?.strategicOutlook || data?.masterReading?.threeYearStrategicOutlook || null;
+  }
+  function baziAnnualSignals(data,item){
+    if(item?.annualSignals) return item.annualSignals;
+    const a=baziAssessment(data,item);return {version:'server-data',year:item?.year,grade:'資料請以後端結果為準',domains:a.domains||[],relations:a.relations||[],pressure:[],signals:[],tags:a.relations?.map(r=>r.label)||[],positive:Math.max(0,a.score||0),negative:Math.max(0,-(a.score||0)),score:a.score||0,concentration:Math.abs(a.score||0),character:a.label||'—',outside:false,extreme:false,context:a.contextText||''};
+  }
+  function baziGetYearFlow(year,data){return (data?.yearFlows||[]).find(x=>Number(x.year)===Number(year))||{year,ganZhi:'—',interactions:[]};}
+
+  window.BaziCore=Object.freeze({
+    HOUR_SLOTS:BAZI_HOUR_SLOTS,slotDateTime:baziSlotDateTime,METHOD_NOTE:BAZI_METHOD_NOTE,ANNUAL_RULES:{version:'server-data'},
+    currentLuck:baziCurrentLuck,assessment:baziAssessment,annualSignals:baziAnnualSignals,
+    getYearFlow:(year,dayMaster,pillars)=>({year,ganZhi:'—',interactions:[]}),
+    generateThreeYearStrategicOutlook:baziThreeYear,
+    generateMasterReading:data=>data?.masterReading||null,
+    generateElementMasterGuide:data=>data?.elementMasterGuide||data?.masterReading?.elementMasterGuide||null,
+    generateTenGodMasterGuide:data=>data?.tenGodMasterGuide||data?.masterReading?.tenGodMasterGuide||null,
+    generateRelationsMasterGuide:data=>data?.relationsMasterGuide||data?.masterReading?.relationsMasterGuide||null,
+    generateLuckMasterGuide:data=>data?.luckMasterGuide||data?.masterReading?.luckMasterGuide||null,
+    generateOverallMasterSummary:data=>data?.overallMasterSummary||data?.masterReading?.overallMasterSummary||null
+  });
+
+  async function requestBaziApi(options){
+    const payload={action:'cast',...options,options};
+    const candidates=['/','/api/cast','/cast'];
+    let lastError='';
+    for(const path of candidates){
+      try{
+        const res=await fetch(BAZI_API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
+        const text=await res.text();
+        let json=null;try{json=text?JSON.parse(text):null;}catch(_){json=null;}
+        if(res.ok){
+          const data=json?.data ?? json?.result ?? json;
+          if(data && Array.isArray(data.pillars)) return data;
+          if(json?.success===false) throw Error(json.error||json.message||'後端排盤失敗');
+          lastError='後端有回應，但沒有收到完整命盤資料';
+          continue;
+        }
+        if(res.status===404||res.status===405){lastError=`${path}：${res.status}`;continue;}
+        throw Error(json?.error||json?.message||text||`HTTP ${res.status}`);
+      }catch(err){lastError=err?.message||String(err);}
+    }
+    throw Error('無法取得八字後端資料：'+lastError+'。請確認 Cloudflare Worker 已部署 POST 排盤路由與 CORS。');
+  }
+  </script>
   <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -2845,7 +2931,7 @@ ${promptContext(data)}
   }
 
   const annualClass=g=>({'大凶':'fortune-watch','偏凶':'fortune-mixed','平':'fortune-steady','偏吉':'fortune-good','大吉':'fortune-best'}[g]||'fortune-steady');
-  function timeBuildYear(data,year){return (data.yearFlows||[]).find(x=>x.year===year)||BaziCore.getYearFlow(year,data.dayMaster,data.pillars);}
+  function timeBuildYear(data,year){return baziGetYearFlow(year,data);}
 
   function renderYearFlows(data) {
     const outlook = BaziCore.generateThreeYearStrategicOutlook(data);
@@ -2987,19 +3073,22 @@ ${promptContext(data)}
   }
   function timeInputNote(data){return data.timeInput?'時間輸入：'+data.timeInput.label+' '+data.timeInput.range+'；以 '+data.timeInput.representative+' 代表時間估算。起運日期為估算。':'時間輸入：精確民用時間。';}
 
-  function cast(scroll = true){
+  async function cast(scroll = true){
+    const originalText=castBtn?.textContent;
     try{
-      const data=BaziCore.cast(birthOptions());
+      if(castBtn){castBtn.disabled=true;castBtn.textContent='後端排盤中…';}
+      const data=await requestBaziApi(birthOptions());
       $('birthTimeNotice').textContent=timeInputNote(data);
       lastData=data;
       selectedPeriods={};
       renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);initSectionDecodeUI();resetExploration();markSectionExplored('years');
       emptyState.style.display='none';results.classList.add('show');
-      if (scroll) {
-        setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
-      }
+      if (scroll) setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
     }catch(err){
+      console.error('[Bazi API]',err);
       if (scroll) alert(err&&err.message?err.message:String(err));
+    }finally{
+      if(castBtn){castBtn.disabled=false;castBtn.textContent=originalText||'排八字';}
     }
   }
 
