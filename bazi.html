@@ -429,6 +429,10 @@ body.overlay-open{overflow:hidden}
   grid-column: 1 / -1 !important;
   width: 100% !important;
 }
+.three-year-cards-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px!important;width:100%!important;align-items:start!important}
+.three-year-cards-grid>.three-year-card{min-width:0;width:100%}
+@media(max-width:900px){.three-year-cards-grid{grid-template-columns:1fr!important}}
+
 .three-year-card {
   transition: transform .2s ease, box-shadow .2s ease;
 }
@@ -590,7 +594,7 @@ body.overlay-open{overflow:hidden}
           <summary><span><b>01</b> 四柱命盤</span><small>FOUR PILLARS · HIDDEN STEMS · TEN GODS</small></summary>
           <div class="report-body">
             <div class="pillars" id="pillars"></div>
-            <div class="meta" id="meta"></div><div class="section-takeaway" id="pillarTakeaway"></div>
+            <div class="meta" id="meta"></div>
           </div>
         </details>
 
@@ -2586,10 +2590,8 @@ ${promptContext(data)}
 
   function renderMeta(data){
     const items=[['公曆',data.solarText],['農曆',data.lunarText],['日主',`${data.dayMaster}${data.dayMasterElement?'・'+data.dayMasterElement:''}${data.dayMasterYinYang?'・'+data.dayMasterYinYang:''}`],['前一節',data.jie?.prev?`${data.jie.prev.name} ${data.jie.prev.solar}`:'—'],['下一節',data.jie?.next?`${data.jie.next.name} ${data.jie.next.solar}`:'—']];
-    items.push(['時間依據',timeInputNote(data)]);
     $('meta').innerHTML=items.map(([k,v])=>`<div>${esc(k)}<span>${esc(v||'—')}</span></div>`).join('');
     $('meta').classList.add('show');
-    $('pillarTakeaway').innerHTML=quickTakeaway('pillars',data);
   }
 
   function renderPillars(data){
@@ -2874,7 +2876,7 @@ ${promptContext(data)}
     if (!outlook || !outlook.yearsData) return;
 
     $('threeYearCompare').innerHTML = `
-      <div class="three-year-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; width: 100%; box-sizing: border-box;">
+      <div class="three-year-cards-grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;width:100%;box-sizing:border-box;align-items:start;">
         ${outlook.yearsData.map((y, idx) => {
           const isThisYear = y.label === '今年';
           const cardBorder = isThisYear 
