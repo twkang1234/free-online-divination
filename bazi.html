@@ -914,8 +914,48 @@ body.overlay-open{overflow:hidden}
     generateOverallMasterSummary:data=>data?.overallMasterSummary||data?.masterReading?.overallMasterSummary||null
   });
 
+  function frontendTraditional(value){
+    if(Array.isArray(value)) return value.map(frontendTraditional);
+    if(typeof value!=='string') return value;
+    const map={'杀':'殺','财':'財','伤':'傷','长':'長','养':'養','绝':'絕','临':'臨','带':'帶','钗':'釵','钏':'釧','蜡':'蠟','炉':'爐','头':'頭','涧':'澗','杨':'楊','剑':'劍','锋':'鋒','灯':'燈','复':'覆','汉':'漢','驿':'驛','银':'銀','腊':'臘','闰':'閏'};
+    return value.replace(/[杀财伤长养绝临带钗钏蜡炉头涧杨剑锋灯复汉驿银腊闰]/g,c=>map[c]||c);
+  }
+  const FRONT_GAN_ELEMENT={'甲':'木','乙':'木','丙':'火','丁':'火','戊':'土','己':'土','庚':'金','辛':'金','壬':'水','癸':'水'};
+  const FRONT_GAN_YY={'甲':'陽','乙':'陰','丙':'陽','丁':'陰','戊':'陽','己':'陰','庚':'陽','辛':'陰','壬':'陽','癸':'陰'};
+  const FRONT_ZHI_ELEMENT={'子':'水','丑':'土','寅':'木','卯':'木','辰':'土','巳':'火','午':'火','未':'土','申':'金','酉':'金','戌':'土','亥':'水'};
+  const FRONT_ZHI_YY={'子':'陽','丑':'陰','寅':'陽','卯':'陰','辰':'陽','巳':'陰','午':'陽','未':'陰','申':'陽','酉':'陰','戌':'陽','亥':'陰'};
+  function frontendBuildPillar(eight,type){
+    const cap=type.charAt(0).toUpperCase()+type.slice(1);
+    const get=name=>{
+      const fn=eight['get'+cap+name];
+      return typeof fn==='function'?frontendTraditional(fn.call(eight)):null;
+    };
+    const gan=get('Gan')||'',zhi=get('Zhi')||'';
+    return {key:type,ganZhi:get('')||gan+zhi,gan,zhi,
+      ganElement:FRONT_GAN_ELEMENT[gan]||'',zhiElement:FRONT_ZHI_ELEMENT[zhi]||'',
+      ganYinYang:FRONT_GAN_YY[gan]||'',zhiYinYang:FRONT_ZHI_YY[zhi]||'',
+      hideGan:get('HideGan')||[],wuXing:get('WuXing')||'',naYin:get('NaYin')||'',
+      shiShenGan:get('ShiShenGan')||'',shiShenZhi:get('ShiShenZhi')||[],
+      diShi:get('DiShi')||'',xunKong:get('XunKong')||''};
+  }
+  function buildFrontendCalendarPayload(options){
+    if(typeof Solar==='undefined'||!Solar||typeof Solar.fromYmdHms!=='function') throw Error('曆法核心尚未載入，請重新整理頁面後再試');
+    const m=String(options.datetime||'').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+    if(!m) throw Error('出生日期時間格式不正確');
+    const y=+m[1],mo=+m[2],d=+m[3],h=+m[4],mi=+m[5],sect=Number(options.sect)===1?1:2;
+    const solar=Solar.fromYmdHms(y,mo,d,h,mi,0),lunar=solar.getLunar(),eight=lunar.getEightChar();
+    if(typeof eight.setSect==='function') eight.setSect(sect);
+    let timeEight=eight;
+    if(sect===2&&h===23){timeEight=Solar.fromYmdHms(y,mo,d,0,30,0).getLunar().getEightChar();if(typeof timeEight.setSect==='function')timeEight.setSect(sect);}
+    const pillars=[frontendBuildPillar(eight,'year'),frontendBuildPillar(eight,'month'),frontendBuildPillar(eight,'day'),frontendBuildPillar(timeEight,'time')];
+    let lunarText='';try{lunarText=`${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;}catch(_){lunarText=lunar.toString?lunar.toString():'';}
+    const solarText=typeof solar.toYmdHms==='function'?solar.toYmdHms():`${options.datetime}:00`;
+    return {pillars,pillarStrings:pillars.map(p=>p.ganZhi),eightChar:pillars.map(p=>p.ganZhi).join(' '),dayMaster:pillars[2].gan,solarText,lunarText};
+  }
+
   async function requestBaziApi(options){
-    const payload={action:'cast',...options,options};
+    const calendar=buildFrontendCalendarPayload(options);
+    const payload={action:'cast',...options,...calendar,options:{...options,...calendar}};
     const candidates=['/','/api/cast','/cast'];
     let lastError='';
     for(const path of candidates){
