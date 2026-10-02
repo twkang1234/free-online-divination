@@ -556,6 +556,27 @@ body.overlay-open{overflow:hidden}
   .three-year-preview-card:nth-child(n+3){display:none}
 }
 
+
+.birth-date-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:7px}
+.birth-date-heading>label{margin:0}
+.calendar-mode-switch{display:inline-flex;align-items:center;padding:3px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.025);box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
+.calendar-mode-btn{min-width:64px;border:0;border-radius:7px;padding:6px 12px;background:transparent;color:#778496;font-size:.68rem;font-weight:800;cursor:pointer;transition:background .18s ease,color .18s ease,box-shadow .18s ease}
+.calendar-mode-btn:hover{color:#cdd5df}
+.calendar-mode-btn.active{background:rgba(233,189,88,.12);color:#edcd77;box-shadow:inset 0 0 0 1px rgba(233,189,88,.25)}
+.lunar-date-options{display:flex;align-items:center;gap:13px;min-height:30px;margin:-5px 0 10px}
+.lunar-date-options[hidden]{display:none!important}
+.lunar-leap-toggle{display:inline-flex!important;align-items:center;gap:7px!important;margin:0!important;color:#c6af6e!important;font-size:.69rem!important;cursor:pointer;white-space:nowrap}
+.lunar-leap-toggle input{width:15px!important;height:15px!important;margin:0!important;accent-color:#d8ae48}
+.calendar-conversion-note{color:#687689;font-size:.64rem;line-height:1.5}
+.calendar-mode-lunar .birth-date-direct{box-shadow:0 0 0 1px rgba(117,220,228,.055);border-radius:12px}
+@media(max-width:600px){
+  .birth-date-heading{align-items:flex-end}
+  .calendar-mode-switch{flex:0 0 auto}
+  .calendar-mode-btn{min-width:58px;padding:6px 9px}
+  .lunar-date-options{align-items:flex-start;flex-wrap:wrap;gap:7px 12px}
+  .calendar-conversion-note{width:100%}
+}
+
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -650,7 +671,14 @@ body.overlay-open{overflow:hidden}
 
       <div class="controls controls-simple">
         <div class="field field-main">
-          <label>出生日期</label>
+          <div class="birth-date-heading">
+            <label>出生日期</label>
+            <div class="calendar-mode-switch" role="group" aria-label="出生日期曆法">
+              <button type="button" class="calendar-mode-btn active" id="solarModeBtn" data-calendar-mode="solar" aria-pressed="true">國曆</button>
+              <button type="button" class="calendar-mode-btn" id="lunarModeBtn" data-calendar-mode="lunar" aria-pressed="false">農曆</button>
+            </div>
+          </div>
+
           <div class="birth-date-direct" aria-label="出生日期">
             <div class="date-part year-part">
               <input id="birthYear" type="number" inputmode="numeric" min="1900" max="2100" step="1" value="1990" autocomplete="bday-year" aria-label="出生年份">
@@ -665,6 +693,15 @@ body.overlay-open{overflow:hidden}
               <span>日</span>
             </div>
           </div>
+
+          <div class="lunar-date-options" id="lunarDateOptions" hidden>
+            <label class="lunar-leap-toggle">
+              <input id="lunarLeapMonth" type="checkbox">
+              <span>閏月</span>
+            </label>
+            <span class="calendar-conversion-note" id="calendarConversionNote"></span>
+          </div>
+
           <input id="birthTime" type="date" required hidden>
 
           <label for="birthSlot">出生時辰</label>
@@ -3564,28 +3601,126 @@ ${promptContext(data)}
     $('birthSlot').addEventListener('change',()=>{$('useExactTime').checked=false;$('exactBirthTime').hidden=true;});
   }
 
+  let birthCalendarMode='solar';
+
+  function formatSolarDate(y,m,d){
+    return `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+
+  function getBirthDateParts(){
+    const yEl=$('birthYear'),mEl=$('birthMonth'),dEl=$('birthDay');
+    return {
+      y:Number(yEl?.value)||1990,
+      m:Number(mEl?.value)||1,
+      d:Number(dEl?.value)||1
+    };
+  }
+
+  function updateCalendarModeUI(){
+    const solarBtn=$('solarModeBtn'),lunarBtn=$('lunarModeBtn');
+    const lunarOptions=$('lunarDateOptions');
+    const main=$('birthYear')?.closest('.field-main');
+    const isLunar=birthCalendarMode==='lunar';
+
+    solarBtn?.classList.toggle('active',!isLunar);
+    lunarBtn?.classList.toggle('active',isLunar);
+    solarBtn?.setAttribute('aria-pressed',String(!isLunar));
+    lunarBtn?.setAttribute('aria-pressed',String(isLunar));
+    if(lunarOptions)lunarOptions.hidden=!isLunar;
+    main?.classList.toggle('calendar-mode-lunar',isLunar);
+    if($('birthDay'))$('birthDay').max=isLunar?'30':'31';
+  }
+
+  function solarPartsToLunarDisplay(){
+    if(typeof Solar==='undefined'||typeof Solar.fromYmd!=='function')return false;
+    const {y,m,d}=getBirthDateParts();
+    try{
+      const lunar=Solar.fromYmd(y,m,d).getLunar();
+      const lm=Number(lunar.getMonth());
+      $('birthYear').value=String(lunar.getYear());
+      $('birthMonth').value=String(Math.abs(lm));
+      $('birthDay').value=String(lunar.getDay());
+      $('lunarLeapMonth').checked=lm<0;
+      return true;
+    }catch(_){return false;}
+  }
+
+  function lunarPartsToSolarDisplay(){
+    if(typeof Lunar==='undefined'||typeof Lunar.fromYmd!=='function')return false;
+    const {y,m,d}=getBirthDateParts();
+    const month=$('lunarLeapMonth')?.checked?-Math.abs(m):Math.abs(m);
+    try{
+      const solar=Lunar.fromYmd(y,month,d).getSolar();
+      $('birthYear').value=String(solar.getYear());
+      $('birthMonth').value=String(solar.getMonth());
+      $('birthDay').value=String(solar.getDay());
+      return true;
+    }catch(_){return false;}
+  }
+
+  function setBirthCalendarMode(mode,convert=true){
+    const next=mode==='lunar'?'lunar':'solar';
+    if(next===birthCalendarMode){
+      updateCalendarModeUI();
+      syncBirthDateFromParts();
+      return;
+    }
+
+    if(convert){
+      if(next==='lunar')solarPartsToLunarDisplay();
+      else lunarPartsToSolarDisplay();
+    }
+
+    birthCalendarMode=next;
+    updateCalendarModeUI();
+    syncBirthDateFromParts();
+  }
+
   function syncBirthDateFromParts(){
     const yEl=$('birthYear'),mEl=$('birthMonth'),dEl=$('birthDay');
     if(!yEl||!mEl||!dEl)return;
 
     let y=Math.max(1900,Math.min(2100,Number(yEl.value)||1990));
     let m=Math.max(1,Math.min(12,Number(mEl.value)||1));
+
+    if(birthCalendarMode==='lunar'){
+      let d=Math.max(1,Math.min(30,Number(dEl.value)||1));
+      yEl.value=String(y);mEl.value=String(m);dEl.value=String(d);
+
+      try{
+        if(typeof Lunar==='undefined'||typeof Lunar.fromYmd!=='function')throw Error('曆法核心尚未載入');
+        const lunarMonth=$('lunarLeapMonth')?.checked?-m:m;
+        const solar=Lunar.fromYmd(y,lunarMonth,d).getSolar();
+        const sy=solar.getYear(),sm=solar.getMonth(),sd=solar.getDay();
+        $('birthTime').value=formatSolarDate(sy,sm,sd);
+        const note=$('calendarConversionNote');
+        if(note)note.textContent=`換算國曆：${sy}/${sm}/${sd}`;
+      }catch(_){
+        $('birthTime').value='';
+        const note=$('calendarConversionNote');
+        if(note)note.textContent=$('lunarLeapMonth')?.checked?'此年可能沒有這個閏月':'請調整農曆日期';
+      }
+      return;
+    }
+
     const maxDay=new Date(y,m,0).getDate();
     let d=Math.max(1,Math.min(maxDay,Number(dEl.value)||1));
-
-    yEl.value=String(y);
-    mEl.value=String(m);
-    dEl.value=String(d);
-    $('birthTime').value=`${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    yEl.value=String(y);mEl.value=String(m);dEl.value=String(d);
+    $('birthTime').value=formatSolarDate(y,m,d);
   }
 
   function syncBirthPartsFromHidden(){
     const v=String($('birthTime')?.value||'');
     const m=v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if(!m)return;
+
+    // 已儲存命盤目前保存的是實際國曆日期，因此載入時回到國曆顯示。
+    birthCalendarMode='solar';
+    if($('lunarLeapMonth'))$('lunarLeapMonth').checked=false;
     if($('birthYear'))$('birthYear').value=String(Number(m[1]));
     if($('birthMonth'))$('birthMonth').value=String(Number(m[2]));
     if($('birthDay'))$('birthDay').value=String(Number(m[3]));
+    updateCalendarModeUI();
   }
 
   function setupDirectBirthDate(){
@@ -3607,16 +3742,21 @@ ${promptContext(data)}
       },{passive:false});
     });
 
-    // Provide usable defaults immediately.
+    $('solarModeBtn')?.addEventListener('click',()=>setBirthCalendarMode('solar',true));
+    $('lunarModeBtn')?.addEventListener('click',()=>setBirthCalendarMode('lunar',true));
+    $('lunarLeapMonth')?.addEventListener('change',syncBirthDateFromParts);
+
     if(!y.value)y.value='1990';
     if(!m.value)m.value='1';
     if(!d.value)d.value='1';
+
+    updateCalendarModeUI();
     syncBirthDateFromParts();
   }
 
   function birthOptions(){
     syncBirthDateFromParts();
-    if(!birthTime.value||!birthTime.checkValidity())throw Error('請填寫有效出生日期');
+    if(!birthTime.value||!birthTime.checkValidity())throw Error(birthCalendarMode==='lunar'?'請確認農曆日期與閏月設定':'請填寫有效出生日期');
     const precise=$('useExactTime').checked,time=$('exactBirthTime').value;
     if(precise&&!time)throw Error('請填寫精確出生時間');
     const datetime=precise?birthTime.value+'T'+time:BaziCore.slotDateTime(birthTime.value,$('birthSlot').value);
