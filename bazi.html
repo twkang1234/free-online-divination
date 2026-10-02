@@ -848,6 +848,7 @@ body.overlay-open{overflow:hidden}
     </div>
   </section>
 
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- 曆法核心：MIT 授權 lunar-javascript 1.7.7 -->
   <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
   <script>
@@ -856,6 +857,45 @@ body.overlay-open{overflow:hidden}
    * 真正八字核心已移至 Cloudflare Worker；前端只保留介面、時辰選項與顯示用輕量相容層。
    */
   const BAZI_API_BASE = 'https://bazi-api.ezgocpu.workers.dev';
+  const GOOGLE_CLIENT_ID = '421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
+  const BAZI_AUTH_KEY = 'divinationhub-bazi-google-credential';
+
+  function baziAuthToken(){
+    try{ return sessionStorage.getItem(BAZI_AUTH_KEY) || ''; }catch(_){ return ''; }
+  }
+  function baziSetAuthToken(token){
+    try{
+      if(token) sessionStorage.setItem(BAZI_AUTH_KEY, token);
+      else sessionStorage.removeItem(BAZI_AUTH_KEY);
+    }catch(_){}
+  }
+  function baziRenderGoogleButton(){
+    const mount = document.getElementById('baziGoogleSignIn');
+    if(!mount) return;
+    if(!window.google?.accounts?.id){
+      setTimeout(baziRenderGoogleButton, 250);
+      return;
+    }
+    if(mount.dataset.ready === '1') return;
+    mount.dataset.ready = '1';
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: response => {
+        const credential = response?.credential || '';
+        if(!credential) return;
+        baziSetAuthToken(credential);
+        window.dispatchEvent(new CustomEvent('bazi-google-login', {detail:{credential}}));
+      }
+    });
+    window.google.accounts.id.renderButton(mount, {
+      theme: 'outline',
+      size: 'large',
+      shape: 'pill',
+      text: 'signin_with',
+      width: 260
+    });
+  }
+  window.baziRenderGoogleButton = baziRenderGoogleButton;
 
   const BAZI_HOUR_SLOTS=[
     ['早子時','00:00–00:59','00:30','子'],['丑時','01:00–02:59','02:00','丑'],['寅時','03:00–04:59','04:00','寅'],
@@ -1030,7 +1070,10 @@ body.overlay-open{overflow:hidden}
     let lastError='';
     for(const path of candidates){
       try{
-        const res=await fetch(BAZI_API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});
+        const headers={'Content-Type':'application/json','Accept':'application/json'};
+        const authToken=baziAuthToken();
+        if(authToken)headers['Authorization']='Bearer '+authToken;
+        const res=await fetch(BAZI_API_BASE+path,{method:'POST',headers,body:JSON.stringify(payload)});
         const text=await res.text();
         let json=null;try{json=text?JSON.parse(text):null;}catch(_){json=null;}
         if(res.ok){
@@ -3045,7 +3088,18 @@ ${promptContext(data)}
 
   function renderYearFlows(data) {
     const outlook = BaziCore.generateThreeYearStrategicOutlook(data);
-    if (!outlook || !outlook.yearsData) return;
+    if (!outlook || !outlook.yearsData) {
+      $('threeYearCompare').innerHTML = `
+        <div style="border:1px solid rgba(233,189,88,.28);border-radius:16px;padding:28px 22px;text-align:center;background:linear-gradient(180deg,rgba(233,189,88,.06),rgba(10,14,22,.72));">
+          <div style="font-size:1.35rem;margin-bottom:8px;">🔒</div>
+          <h3 style="margin:0 0 8px;color:#f4e8c4;font-size:1.05rem;">登入後免費查看三年戰略</h3>
+          <p style="margin:0 auto 18px;max-width:560px;color:#93a1b4;line-height:1.8;font-size:.82rem;">前面的八字排盤與分析都可以免費查看。若想繼續看去年、今年與明年的完整三年戰略，只需要使用 Google 帳號登入，不收費。</p>
+          <div id="baziGoogleSignIn" style="display:flex;justify-content:center;min-height:44px;"></div>
+          <div style="margin-top:12px;color:#687587;font-size:.72rem;">登入只用來確認會員身分；第八區目前免費解鎖。</div>
+        </div>`;
+      setTimeout(()=>window.baziRenderGoogleButton?.(),0);
+      return;
+    }
 
     $('threeYearCompare').innerHTML = `
       <div class="three-year-cards-grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;width:100%;box-sizing:border-box;align-items:start;">
@@ -3201,6 +3255,21 @@ ${promptContext(data)}
       if(castBtn){castBtn.disabled=false;castBtn.textContent=originalText||'排八字';}
     }
   }
+
+  window.addEventListener('bazi-google-login', async () => {
+    if(!lastData) return;
+    try{
+      toast('登入成功，正在解鎖三年戰略…');
+      const data = await requestBaziApi(birthOptions());
+      lastData = data;
+      renderYearFlows(data);
+      if(data?.auth?.authenticated) toast('第八區已免費解鎖');
+      else toast('登入驗證尚未完成，請再試一次');
+    }catch(err){
+      console.error('[Google Login]',err);
+      toast('登入成功，但解鎖時發生錯誤');
+    }
+  });
 
   document.addEventListener('DOMContentLoaded', () => {
     setupBirthSlots();
