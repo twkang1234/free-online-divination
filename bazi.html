@@ -66,6 +66,16 @@ button,a{font:inherit}button{cursor:pointer}
 .member-avatar[hidden],
 .member-avatar-fallback[hidden]{display:none!important}
 
+
+.birth-member-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.birth-member-actions{display:flex;gap:7px;align-items:center;white-space:nowrap}
+.birth-member-actions button{min-height:42px;border-radius:10px;padding:0 12px;font-size:.67rem;font-weight:800;cursor:pointer;transition:.18s ease}
+.birth-member-login{border:1px solid rgba(233,189,88,.28);background:rgba(233,189,88,.05);color:#ddc16f}
+.birth-member-login:hover{border-color:rgba(233,189,88,.52);background:rgba(233,189,88,.10)}
+.birth-member-save{border:1px solid rgba(117,220,228,.26);background:rgba(117,220,228,.05);color:#9fdde1}
+.birth-member-load{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.025);color:#aab5c2}
+.birth-member-actions button[hidden]{display:none!important}
+@media(max-width:760px){.birth-member-row{grid-template-columns:1fr}.birth-member-actions{justify-content:flex-start}.birth-member-actions button{min-height:36px}}
 .member-unlock-btn{border:1px solid rgba(233,189,88,.34);border-radius:999px;background:rgba(233,189,88,.06);color:#e8cc7d;padding:8px 13px;font-size:.68rem;font-weight:800;cursor:pointer}
 .member-unlock-btn:hover{border-color:rgba(233,189,88,.58);background:rgba(233,189,88,.11)}
 .member-chip{padding:7px 12px}
@@ -500,7 +510,7 @@ body.overlay-open{overflow:hidden}
     </div>
     <div class="topbar-right">
       <div class="member-entry" id="baziMemberEntry">
-        <button class="member-unlock-btn" id="baziTopbarUnlockBtn" type="button">免費解鎖</button>
+        <button class="member-unlock-btn" id="baziTopbarUnlockBtn" type="button">會員</button>
         <button class="member-chip" id="baziMemberChip" type="button" hidden aria-haspopup="true" aria-expanded="false">
           <span class="member-name" id="baziMemberName">會員</span>
           <span aria-hidden="true">▾</span>
@@ -577,7 +587,14 @@ body.overlay-open{overflow:hidden}
       <div class="controls">
         <div class="field">
           <label for="birthTime">出生日期與時辰（當地民用時間）</label>
-          <input id="birthTime" type="date" required>
+          <div class="birth-member-row">
+            <input id="birthTime" type="date" required>
+            <div class="birth-member-actions" id="birthMemberActions">
+              <button class="birth-member-login" id="birthMemberLoginBtn" type="button">登入可儲存</button>
+              <button class="birth-member-save" id="birthMemberSaveBtn" type="button" hidden>儲存八字</button>
+              <button class="birth-member-load" id="birthMemberLoadBtn" type="button" hidden>載入八字</button>
+            </div>
+          </div>
           <label for="birthSlot">出生時辰</label><select id="birthSlot"></select>
           <label class="exact-time-toggle"><input id="useExactTime" type="checkbox">知道精確時間（節氣交界建議填寫）</label>
           <input id="exactBirthTime" type="time" aria-label="精確出生時間" hidden>
@@ -910,8 +927,8 @@ body.overlay-open{overflow:hidden}
   <div class="auth-modal" id="baziAuthModal" aria-hidden="true">
     <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="baziAuthTitle">
       <button class="modal-close" id="baziAuthClose" type="button" aria-label="關閉">×</button>
-      <h3 id="baziAuthTitle">免費解鎖</h3>
-      <p>使用 Google 帳號確認會員身分，即可免費查看三年戰略，並使用「我的八字」記憶功能。</p>
+      <h3 id="baziAuthTitle">會員登入</h3>
+      <p>使用 Google 帳號登入，即可使用會員功能與儲存設定。</p>
       <div class="auth-google-mount" id="baziAuthGoogleMount"></div>
     </div>
   </div>
@@ -982,23 +999,53 @@ body.overlay-open{overflow:hidden}
     const chip=document.getElementById('baziMemberChip');
     const profile=baziAuthProfile();
 
+    const inlineLogin=document.getElementById('birthMemberLoginBtn');
+    const inlineSave=document.getElementById('birthMemberSaveBtn');
+    const inlineLoad=document.getElementById('birthMemberLoadBtn');
+
     if(profile){
       if(unlock)unlock.hidden=true;
       if(chip)chip.hidden=false;
+      if(inlineLogin)inlineLogin.hidden=true;
+      if(inlineSave)inlineSave.hidden=false;
+      if(inlineLoad)inlineLoad.hidden=false;
       document.getElementById('baziMemberName').textContent=profile.name;
       document.getElementById('baziMemberMenuName').textContent=profile.name;
       document.getElementById('baziMemberEmail').textContent=profile.email;
     }else{
       if(unlock)unlock.hidden=false;
       if(chip)chip.hidden=true;
+      if(inlineLogin)inlineLogin.hidden=false;
+      if(inlineSave)inlineSave.hidden=true;
+      if(inlineLoad)inlineLoad.hidden=true;
       document.getElementById('baziMemberEntry')?.classList.remove('is-open');
     }
   }
 
   function baziOpenAuth(){
-    const modal=document.getElementById('baziAuthModal');
-    if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');}
+    if(baziAuthProfile()){
+      baziUpdateTopbarMember();
+      return;
+    }
     baziRenderGoogleButton();
+    let fallbackTimer=setTimeout(()=>{
+      const modal=document.getElementById('baziAuthModal');
+      if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');}
+    },700);
+
+    try{
+      window.google?.accounts?.id?.prompt?.(notification=>{
+        if(notification?.isDisplayed?.()){
+          clearTimeout(fallbackTimer);
+          return;
+        }
+        if(notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()){
+          clearTimeout(fallbackTimer);
+          const modal=document.getElementById('baziAuthModal');
+          if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');}
+        }
+      });
+    }catch(_){}
   }
 
   function baziCloseAuth(){
@@ -3234,7 +3281,7 @@ ${promptContext(data)}
           <div style="font-size:1.35rem;margin-bottom:8px;">🔒</div>
           <h3 style="margin:0 0 8px;color:#f4e8c4;font-size:1.05rem;">登入後免費查看三年戰略</h3>
           <p style="margin:0 auto 18px;max-width:560px;color:#93a1b4;line-height:1.8;font-size:.82rem;">前面的八字排盤與分析都可以免費查看。若想繼續看去年、今年與明年的完整三年戰略，只需要使用 Google 帳號登入，不收費。</p>
-          <button type="button" class="member-unlock-btn" onclick="window.baziOpenAuth?.()">免費解鎖三年戰略</button>
+          <button type="button" class="member-unlock-btn" onclick="window.baziOpenAuth?.()">免費解鎖</button>
           <div style="margin-top:12px;color:#687587;font-size:.72rem;">登入只用來確認會員身分；第八區目前免費解鎖。</div>
         </div>`;
       return;
@@ -3505,6 +3552,9 @@ ${promptContext(data)}
     const logoutBtn=document.getElementById('baziLogoutBtn');
 
     document.getElementById('baziTopbarUnlockBtn')?.addEventListener('click',baziOpenAuth);
+    document.getElementById('birthMemberLoginBtn')?.addEventListener('click',baziOpenAuth);
+    document.getElementById('birthMemberSaveBtn')?.addEventListener('click',saveCurrentBazi);
+    document.getElementById('birthMemberLoadBtn')?.addEventListener('click',openMyBazi);
     document.getElementById('baziAuthClose')?.addEventListener('click',baziCloseAuth);
     document.getElementById('baziAuthModal')?.addEventListener('click',e=>{if(e.target.id==='baziAuthModal')baziCloseAuth();});
 
