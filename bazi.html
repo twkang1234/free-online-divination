@@ -682,6 +682,33 @@ body.overlay-open{overflow:hidden}
   .compact-form .member-load-cta{grid-column:2}
 }
 
+
+/* Unified AI prompt system */
+.smart-prompt-box{position:relative;margin-top:18px;border:1px solid rgba(233,189,88,.18);border-radius:16px;background:linear-gradient(180deg,rgba(233,189,88,.035),rgba(255,255,255,.012));padding:18px;overflow:hidden}
+.smart-prompt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.smart-prompt-head strong{display:block;color:#eee6d3;font-size:.84rem;margin-bottom:4px}
+.smart-prompt-head span{display:block;color:#7f8da0;font-size:.66rem;line-height:1.6}
+.smart-prompt-mode{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.smart-prompt-mode button,.smart-topic-chip{border:1px solid rgba(255,255,255,.09);border-radius:999px;background:rgba(255,255,255,.025);color:#94a0b0;padding:8px 12px;font-size:.68rem;font-weight:760;cursor:pointer;transition:.18s}
+.smart-prompt-mode button:hover,.smart-topic-chip:hover{border-color:rgba(233,189,88,.28);color:#d7c38a}
+.smart-prompt-mode button.active,.smart-topic-chip.active{border-color:rgba(233,189,88,.42);background:rgba(233,189,88,.10);color:#efd27e}
+.smart-prompt-label{margin:2px 0 8px;color:#7d8999;font-size:.64rem;font-weight:760}
+.smart-topic-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.smart-prompt-generate{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 16px;border:1px solid rgba(233,189,88,.42);border-radius:9px;background:linear-gradient(180deg,rgba(233,189,88,.22),rgba(165,111,35,.14));color:#f4d783;font-size:.72rem;font-weight:850;cursor:pointer}
+.smart-prompt-preview{display:none;white-space:pre-wrap;overflow-wrap:anywhere;margin:14px 0 0;padding:14px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(0,0,0,.18);color:#abb7c6;font-size:.68rem;line-height:1.75;max-height:340px;overflow:auto}
+.smart-prompt-preview.show{display:block}
+.smart-ai-links{display:none;flex-wrap:wrap;gap:7px;margin-top:10px}
+.smart-ai-links.show{display:flex}
+.smart-ai-links a{display:inline-flex;align-items:center;padding:7px 11px;border:1px solid rgba(255,255,255,.09);border-radius:8px;background:rgba(255,255,255,.025);color:#aeb9c8;text-decoration:none;font-size:.66rem}
+.smart-prompt-lock{display:none;position:absolute;inset:0;z-index:3;align-items:center;justify-content:center;text-align:center;padding:22px;background:rgba(8,11,16,.82);backdrop-filter:blur(5px)}
+.smart-prompt-box.is-locked .smart-prompt-lock{display:flex}
+.smart-prompt-lock-card{max-width:430px}
+.smart-prompt-lock-card b{display:block;color:#f0d17b;font-size:.86rem;margin-bottom:6px}
+.smart-prompt-lock-card p{margin:0 0 12px;color:#8b98a9;font-size:.68rem;line-height:1.65}
+.smart-prompt-login{border:1px solid rgba(233,189,88,.45);border-radius:9px;background:rgba(233,189,88,.10);color:#efd27e;padding:8px 14px;font-size:.7rem;font-weight:820;cursor:pointer}
+.smart-prompt-full .smart-prompt-box{margin-top:0}
+@media(max-width:700px){.smart-prompt-head{display:block}.smart-prompt-head span{margin-top:5px}.smart-prompt-mode button,.smart-topic-chip{padding:7px 10px}.smart-prompt-generate{width:100%}}
+
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -982,14 +1009,13 @@ body.overlay-open{overflow:hidden}
           </div>
         </details>
 
-        <section class="ai-unlock-zone" id="ai-prompt-zone">
-          <div class="ai-unlock-head"><span class="report-eyebrow">FULL CHART · UNIVERSAL AI PROMPT</span><h3>把整張命盤整理成一份萬用 AI 提示詞</h3><p>每個分區都有自己的「一鍵 AI 提示詞」；不需要先想問題、也不用填任何欄位。命盤建立後，這裡就能整理完整資料包，讓 AI 接著解釋如何調整與應用。</p></div>
-          <div class="unlock-status"><div><strong id="unlockTitle">完整提示詞正在整理</strong><span id="unlockDesc">先從你有興趣的分區繼續展開白話解讀；網站會依你已讀的內容逐步整理。</span></div><span class="unlock-badge" id="unlockBadge">整理中</span></div>
-          <div class="ai-generator" id="aiGenerator">
-            <div class="prompt-actions"><button type="button" class="primary" id="generatePromptBtn">一鍵產生並複製完整提示詞</button><a href="https://chatgpt.com/" target="_blank" rel="noopener">開啟 ChatGPT ↗</a><a href="https://gemini.google.com/" target="_blank" rel="noopener">開啟 Gemini ↗</a><a href="https://claude.ai/" target="_blank" rel="noopener">開啟 Claude ↗</a></div>
-            <pre class="prompt-preview" id="promptPreview"></pre>
-            <p class="privacy-note">隱私提醒：出生年月日時屬個人資料。複製提示詞後，是否提供給第三方 AI 由你自行決定；本站不會自動送出。</p>
+        <section class="ai-unlock-zone smart-prompt-full" id="ai-prompt-zone">
+          <div class="ai-unlock-head">
+            <span class="report-eyebrow">AI DEEP DIVE · FULL CHART</span>
+            <h3>完整命盤｜交給 AI 繼續深入</h3>
+            <p>網站先整理命盤事實，你再選最想了解的方向。登入後可產生個人化提示詞；不知道該問什麼，也可以讓 AI 先替你找出最值得追問的地方。</p>
           </div>
+          <div class="smart-prompt-mount" data-smart-prompt="full"></div>
         </section>
 
         <section class="qimen-bridge" id="qimen-bridge">
@@ -2592,43 +2618,9 @@ body.overlay-open{overflow:hidden}
     `;
   }
 
-  function buildLuckAiPromptText(data, guide) {
-    if (!data) return '';
-    const p = guide?.promptData || {};
-    const wp = data.weightedFiveElements?.percentages || {};
-    const elStr = ['木','火','土','金','水'].map(e => `${e} ${wp[e] || 0}%`).join(' / ');
-    return `請以專業八字命理學的角度，為我深入推演以下命盤的「十年大運」生涯發展：
-
-【本命八字與五行十神結構】
-日主：${p.dm || data.dayMaster}（五行屬${p.dmEl || data.dayMasterElement}）
-四柱八字：${p.pillars || data.pillars?.map(x=>x.ganZhi).join(' ')}
-五行加權比例：${elStr}
-原局主要十神：${p.topGods || '—'}
-原局干支實質互動：${(data.relations || []).map(r => r.label).join('、') || '未見明顯刑沖'}
-
-【當前大運分析】
-當前大運：${p.curGz} 大運（${p.curYears}，約 ${p.curAge}）
-十神配置：${p.curGods}
-評級傾向：${p.curLabel}
-大運特質：${guide.curStep.intro}
-
-【下一步大運分析】
-下一步大運：${p.nextGz} 大運（${p.nextYears}，約 ${p.nextAge}）
-十神配置：${p.nextGods}
-評級傾向：${p.nextLabel}
-大運特質：${guide.nextStep.intro}
-
-【請針對以下 4 個維度為我進行專業深度解讀】：
-1. 針對我命盤的五行衰旺與十神失衡點，看大運的核心調候用神方向是什麼？
-2. 當前這步大運中，我在工作事業與財富變現上最該抓住的機遇是什麼？有哪些潛在坑洞必須防範？
-3. 即將邁入的下一步大運，在生涯環境與親密關係上會迎來怎樣的實質轉折？
-4. 請給我 3 點具體、務實且符合我命局特質的階段性行動策略與心態指引。`;
-  }
-
   function renderLuckMasterGuideHtml(guide, data) {
     if (!guide) return '';
     const safe = x => esc(String(x ?? '—'));
-    const promptText = buildLuckAiPromptText(data, guide);
     return `
       <div class="luck-master-guide full-width-guide" style="grid-column: 1 / -1; width: 100%; display: grid; gap: 16px; box-sizing: border-box;">
         <!-- 頂部概覽 Banner (移除任何容易出錯的性別與年齡敘述) -->
@@ -2723,77 +2715,14 @@ body.overlay-open{overflow:hidden}
         </article>
 
         <!-- 三、 專屬 AI 提示詞卡片（不顯示提示詞文字框） -->
-        <article class="decode-card" style="width: 100%; box-sizing: border-box; margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(233,189,88,.3); background: rgba(14,17,25,.95);">
-          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 1.15rem;">🤖</span>
-              <h4 style="margin: 0; color: #f6eedb; font-size: 1.05rem; font-weight: 850;">三、 十年大運專屬 AI 深度分析提示詞</h4>
-            </div>
-            <span style="background: rgba(233,189,88,.15); border: 1px solid #e9bd58; color: #fde68a; border-radius: 999px; padding: 2px 10px; font-size: .68rem; font-weight: 800;">一鍵複製問 AI</span>
-          </div>
-
-          <p style="margin: 0 0 16px; color: #cbd6e4; font-size: .76rem; line-height: 1.75;">
-            大運涉及個人命盤的五行喜忌、宮位刑沖與動態流年。下方已為您自動彙整「原局四柱 + 當前大運 + 下一步大運」的完整命理參數，點擊一鍵複製，即可直接前往各大 AI 獲取更深度的專屬推演與生涯建議。
-          </p>
-
-          <div style="display: flex; flex-wrap: wrap; gap: 9px;">
-            <button type="button" class="btn-copy-luck-prompt" data-prompt="${esc(promptText)}" style="min-height: 38px; padding: 8px 18px; border-radius: 8px; border: 1px solid rgba(233,189,88,.4); background: linear-gradient(180deg, rgba(233,189,88,.22), rgba(165,111,35,.15)); color: #fce8a6; font-size: .74rem; font-weight: 850; cursor: pointer;">一鍵複製「十年大運」AI 提示詞</button>
-            <a href="https://chatgpt.com/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; padding: 8px 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.03); color: #cbd6e4; font-size: .72rem; text-decoration: none;">ChatGPT ↗</a>
-            <a href="https://gemini.google.com/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; padding: 8px 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.03); color: #cbd6e4; font-size: .72rem; text-decoration: none;">Gemini ↗</a>
-            <a href="https://claude.ai/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; padding: 8px 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.03); color: #cbd6e4; font-size: .72rem; text-decoration: none;">Claude ↗</a>
-          </div>
-        </article>
       </div>
     `;
-  }
-
-  function buildYearsAiPromptText(data, outlook) {
-    if (!data || !outlook) return '';
-    const dm = data.dayMaster;
-    const dmEl = data.dayMasterElement || '金';
-    const cy = outlook.cy;
-    const sb = outlook.survivalBlueprint;
-    const y0 = outlook.yearsData[0] || {};
-    const y1 = outlook.yearsData[1] || {};
-    const y2 = outlook.yearsData[2] || {};
-    const curCycle = (data.daYun?.cycles || []).find(c => cy >= c.startYear && cy <= c.endYear) || data.daYun?.cycles?.[0];
-
-    return `請以傳統八字命理的高階格局與歲運合化刑沖視角，為我深度推演「去年、今年、明年（${cy-1}-${cy+1}）」的關鍵三年戰略指南：
-
-【本命八字與命盤特質】
-日主：${dm}（五行屬${dmEl}）
-四柱八字：${data.pillars.map(p=>p.ganZhi).join(' ')}
-當前大運：${curCycle?.ganZhi || '—'} 大運
-五行結構：最匱乏之五行為「${sb.weakEl}（${sb.weakGodGroup}，佔比約 ${sb.weakPct}%）」，主要偏旺為「${sb.strongEl1}」與「${sb.strongEl2}」。
-
-【關鍵三年流年資訊】
-1. 去年（${y0.year} ${y0.ganZhi}年）：${y0.gan}（${y0.tenGodGan}）＋${y0.zhi}（${y0.tenGodZhi}）
-   年度主題：${y0.theme}
-   實質互動：${y0.interactions.map(it => it.title).join('、')}
-   命理師斷語：${y0.quote} ${y0.desc}
-
-2. 今年（${y1.year} ${y1.ganZhi}年）：${y1.gan}（${y1.tenGodGan}）＋${y1.zhi}（${y1.tenGodZhi}）
-   年度主題：${y1.theme}
-   實質互動：${y1.interactions.map(it => it.title).join('、')}
-   命理師斷語：${y1.quote} ${y1.desc}
-
-3. 明年（${y2.year} ${y2.ganZhi}年）：${y2.gan}（${y2.tenGodGan}）＋${y2.zhi}（${y2.tenGodZhi}）
-   年度主題：${y2.theme}
-   實質互動：${y2.interactions.map(it => it.title).join('、')}
-   命理師斷語：${y2.quote} ${y2.desc}
-
-【請針對以下 4 個問題為我進行專業深度解答】：
-1. 針對這張命盤在「${sb.weakEl}（${sb.weakGodGroup}）」極度缺乏的情況下，這三年的歲運逆流對我最大的性格盲點是什麼？
-2. 今年的高壓與瓶頸，最有效化解與借力突破的「具體轉向方式」是什麼？
-3. 明年作為承前啟後的沉澱轉折年，在事業工作與人際合作上，該如何提前做好防守與布局？
-4. 請給我 3 個在日常生活、工作與健康上可立即執行的具體破局原則。`;
   }
 
   function renderThreeYearMasterGuideHtml(outlook, data) {
     if (!outlook || !outlook.survivalBlueprint) return '';
     const safe = x => esc(String(x ?? '—'));
     const sb = outlook.survivalBlueprint;
-    const promptText = buildYearsAiPromptText(data, outlook);
 
     return `
       <div class="years-master-guide full-width-guide" style="grid-column: 1 / -1; width: 100%; display: grid; gap: 16px; box-sizing: border-box;">
@@ -2832,26 +2761,6 @@ body.overlay-open{overflow:hidden}
         `).join('')}
 
         <!-- 專屬三年 AI 提示詞卡片 (符合圖2標準) -->
-        <article class="decode-card" style="width: 100%; box-sizing: border-box; margin: 0; padding: 22px; border-radius: 12px; border: 1px solid rgba(233,189,88,.3); background: rgba(14,17,25,.95);">
-          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 1.15rem;">🤖</span>
-              <h4 style="margin: 0; color: #f6eedb; font-size: 1.05rem; font-weight: 850;">三年流年專屬 AI 深度分析提示詞</h4>
-            </div>
-            <span style="background: rgba(233,189,88,.15); border: 1px solid #e9bd58; color: #fde68a; border-radius: 999px; padding: 2px 10px; font-size: .68rem; font-weight: 800;">一鍵複製問 AI</span>
-          </div>
-
-          <p style="margin: 0 0 16px; color: #cbd6e4; font-size: .76rem; line-height: 1.75;">
-            下方已自動打包「原局四柱 + 當前大運 + 去年/今年/明年三年干支合化刑沖」的完整命理參數。點擊一鍵複製，即可直接前往各大 AI 獲取更深度的專屬推演與生涯決策指引。
-          </p>
-
-          <div style="display: flex; flex-wrap: wrap; gap: 9px;">
-            <button type="button" class="btn-copy-years-prompt" data-prompt="${esc(promptText)}" style="min-height: 38px; padding: 8px 18px; border-radius: 8px; border: 1px solid rgba(233,189,88,.4); background: linear-gradient(180deg, rgba(233,189,88,.22), rgba(165,111,35,.15)); color: #fce8a6; font-size: .74rem; font-weight: 850; cursor: pointer;">一鍵複製「三年流年」AI 提示詞</button>
-            <a href="https://chatgpt.com/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; padding: 8px 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.03); color: #cbd6e4; font-size: .72rem; text-decoration: none;">ChatGPT ↗</a>
-            <a href="https://gemini.google.com/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; padding: 8px 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.03); color: #cbd6e4; font-size: .72rem; text-decoration: none;">Gemini ↗</a>
-            <a href="https://claude.ai/" target="_blank" rel="noopener" style="display: inline-flex; align-items: center; padding: 8px 15px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.03); color: #cbd6e4; font-size: .72rem; text-decoration: none;">Claude ↗</a>
-          </div>
-        </article>
       </div>
     `;
   }
@@ -3023,98 +2932,184 @@ body.overlay-open{overflow:hidden}
     return decodeCard('解讀說明', `${data.reading?.summary || '命盤已計算完成。'}`);
   }
 
-  function promptContext(data){
-    return `【完整本命與判讀背景】\n${formatPillars(data)}\n${formatElements(data)}\n${formatTenGods(data)}\n${formatRelations(data)}\n\n【網站解讀】\n${data.reading.rows.map(x=>`${x.title}：${x.text}\n卡點：${x.stuck}\n依據：${x.basis}`).join('\n')}\n\n【採用規則】\n${BaziCore.METHOD_NOTE}\n天干各 1；藏干按比例分配，月支乘 1.35、其他支乘 1.05；十神分布不計日干。歲運依日主支持方向、群組集中及沖刑害破作相對比較，合不直接當吉。節氣採 UTC+8，沒有出生地或時區校正。\n${formatLuck(data)}`;
-  }
-  function periodPromptLine(data,item){
-    if(item.kind==='year'){const a=BaziCore.annualSignals(data,item);return periodName(item)+'｜'+a.grade+'｜'+a.character+'\n'+a.context+'\n'+a.domains.map(d=>d.name+'：'+d.grade).join('；')+'\n訊號：'+a.tags.join('、')+'\n計分規則：'+BaziCore.ANNUAL_RULES.version+'；有利 '+a.positive+'、壓力 '+a.negative+'\n實際互動：'+a.relations.map(r=>r.label+'（'+r.position+'）').join('、');}
-    const a=timeAssessment(data,item);
-    return `${periodName(item)}｜${item.tenGodGan}／${item.tenGodZhi}｜${a.label}\n起訖：${item.startSolar||'—'} 至 ${item.endSolar||'—'}（不含終點）\n背景：${a.contextText}\n比較依據：${a.reasons.join(' ')}\n互動：${a.relations.map(r=>r.label+'（'+r.position+'）').join('、')||'未見收錄的直接互動'}\n${a.domains.map(x=>x.name+'：'+x.label+'；'+x.text+'；依據：'+x.basis).join('\n')}`;
-  }
-  function selectedPeriodPrompt(data,key){return selectedPeriods[key]?`【使用者目前選取的時段，優先深入分析】\n${periodPromptLine(data,selectedPeriods[key])}`:'';}
-  function refreshSelectedDecode(key,data){
-    const box=document.querySelector(`.section-decode[data-section="${key}"]`);
-    if(box?.querySelector('.decode-content.show'))box.querySelector('.decode-summary-grid').innerHTML=sectionExplanation(key,data);
-    const preview=box?.querySelector('.section-prompt-preview');if(preview){preview.textContent='';preview.classList.remove('show');}
-  }
+  const SMART_PROMPT_SECTIONS = {
+    tengods:{id:'report-tengods',title:'十神結構',promptTitle:'十神結構與行為模式'},
+    relations:{id:'report-relations',title:'天干地支互動',promptTitle:'天干地支互動'},
+    luck:{id:'report-luck',title:'十年大運',promptTitle:'十年大運與人生階段'},
+    years:{id:'report-years',title:'三年流年',promptTitle:'去年、今年與明年三年流年'},
+    full:{id:'ai-prompt-zone',title:'完整命盤',promptTitle:'完整命盤'}
+  };
+  const SMART_TOPICS = ['工作事業','正財收入','偏財投資','感情關係','健康壓力','人生方向'];
 
-  function sectionDataText(key,data){
-    if(key==='pillars')return `【四柱詳細】\n${formatPillars(data)}`;
-    if(key==='elements')return `【五行與陰陽】\n${formatElements(data)}`;
-    if(key==='tengods'||key==='deep')return `【十神資料】\n${formatTenGods(data)}`;
-    if(key==='relations')return `【原局干支互動】\n${formatRelations(data)}`;
-    if(key==='shensha')return `【常用神煞】\n${formatShensha(data)}\n\n註：神煞依本站常用查表規則整理，不同流派可能不同。`;
-    if(key==='reading')return `【五行】\n${formatElements(data)}\n\n【十神】\n${formatTenGods(data)}\n\n【干支互動】\n${formatRelations(data)}`;
-    if(key==='luck')return `【大運】\n${formatLuck(data)}`;
-    if(key==='years')return `【目前大運】\n${formatLuck(data).split('\n\n')[0]}\n\n【未來十年流年】\n${formatYears(data)}`;
-    if(key==='months')return `【目前大運】\n${formatLuck(data).split('\n\n')[0]}\n\n【今年流月】\n${formatMonths(data)}`;
-    return '';
+  function smartPromptDataText(key,data){
+    if(key==='tengods') return `【十神結構】\n${formatTenGods(data)}\n\n【必要背景】\n${formatBasic(data)}\n${formatElements(data)}`;
+    if(key==='relations') return `【天干地支互動】\n${formatRelations(data)}\n\n【必要背景】\n${formatBasic(data)}\n${formatPillars(data)}`;
+    if(key==='luck') return `【十年大運】\n${formatLuck(data)}\n\n【必要背景】\n${formatBasic(data)}\n${formatTenGods(data)}\n${formatRelations(data)}`;
+    if(key==='years') return `【三年／流年資料】\n${formatYears(data)}\n\n【目前大運】\n${formatLuck(data).split('\n\n')[0]}\n\n【必要背景】\n${formatBasic(data)}\n${formatTenGods(data)}\n${formatRelations(data)}`;
+    return `【基本資料】\n${formatBasic(data)}
+【四柱】\n${formatPillars(data)}
+【五行】\n${formatElements(data)}
+【十神】\n${formatTenGods(data)}
+【干支互動】\n${formatRelations(data)}
+【大運】\n${formatLuck(data)}
+【流年】\n${formatYears(data)}`;
   }
 
-  function buildSectionPrompt(data,key){
-    const def=sectionMap[key];if(!def)return'';
-    return `請以傳統八字命理的「結構分析」方式，深入分析以下命盤的【${def.promptTitle}】。
+  function buildSmartPrompt(data,key,topic,mode){
+    const def=SMART_PROMPT_SECTIONS[key]||SMART_PROMPT_SECTIONS.full;
+    const source=smartPromptDataText(key,data);
+    const common=`以下資料已由網站排盤系統整理完成，請把它視為本次分析的既定資料，不要自行改寫四柱或重新排盤。若資料不足，請明確指出，不要自行補造事件。請使用繁體中文，並把命理術語翻成一般人看得懂的白話。命理解讀請以傾向、條件與可能性表達，不要把單一訊號說成必然事件。`;
 
-【基本資料】
-${formatBasic(data)}
+    if(mode==='discover'){
+      return `${common}
 
-${promptContext(data)}
+我正在查看【${def.promptTitle}】，目前最想了解的方向是【${topic}】。
 
-${sectionDataText(key,data)}
+${source}
 
-${selectedPeriodPrompt(data,key)}
+【你的任務】
+先不要急著替我下人生結論。請像一位「命盤翻譯員＋提問教練」：
+1. 從這一區找出 3～5 個最突出、反差最大或最值得注意的訊號。
+2. 說明每個訊號為什麼值得追問，以及它可能牽動哪些現實面向。
+3. 針對【${topic}】替我設計 6～10 個具體、可以繼續追問 AI 或命理師的問題。
+4. 如果這一區單獨不足以下判斷，告訴我下一步最值得一起看的命盤資料是什麼。
+5. 最後選出「最值得先問的 3 題」，並說明理由。`;
+    }
 
-請使用繁體中文，先給「核心結論摘要」，再分段深入分析，最後列出具體建議。`;
+    return `${common}
+
+我正在查看【${def.promptTitle}】，請把【${topic}】當成這次的主要分析目標。
+
+${source}
+
+【你的任務】
+1. 先用 3～5 點整理這一區與【${topic}】最有關的核心訊號。
+2. 把命盤結構翻譯成具體的性格、行為模式、機會、壓力或時間節奏，不要只重複術語。
+3. 區分「命盤原局本身」與「大運／流年帶來的動態變化」，不要混在一起。
+4. 提出可觀察、可驗證的現實問題，幫我對照自己的真實經歷。
+5. 最後給我 3～5 個務實的行動方向；若無法由此區判斷，請直接說明需要補看哪些資料。
+6. 再補充 3 個我可能沒有想到、但值得繼續追問的問題。`;
+  }
+
+  function smartPromptBoxHtml(key){
+    const def=SMART_PROMPT_SECTIONS[key];
+    const full=key==='full';
+    return `<div class="smart-prompt-box${baziAuthProfile()?'':' is-locked'}" data-prompt-key="${key}">
+      <div class="smart-prompt-lock">
+        <div class="smart-prompt-lock-card">
+          <b>🔒 登入後取得個人化 AI 提示詞</b>
+          <p>免費登入後，可依這張命盤選擇主題，產生「深入分析」或「幫我找問題」提示詞。</p>
+          <button type="button" class="smart-prompt-login">免費解鎖</button>
+        </div>
+      </div>
+      <div class="smart-prompt-head">
+        <div><strong>${full?'完整命盤 AI 深入分析':'用 AI 繼續深入這一區'}</strong><span>${full?'把重要命盤資料整合後，再依你最在意的方向深入。':'命盤本身不變；你選的主題只會改變提示詞的分析重心。'}</span></div>
+      </div>
+      <div class="smart-prompt-mode">
+        <button type="button" class="active" data-prompt-mode="deep">深入分析${full?'完整命盤':'這一區'}</button>
+        <button type="button" data-prompt-mode="discover">我還可以問什麼？</button>
+      </div>
+      <div class="smart-prompt-label">你現在最想深入哪個方向？</div>
+      <div class="smart-topic-row">
+        ${SMART_TOPICS.map((x,i)=>`<button type="button" class="smart-topic-chip${i===0?' active':''}" data-topic="${x}">${x}</button>`).join('')}
+      </div>
+      <button type="button" class="smart-prompt-generate">產生並複製專屬提示詞</button>
+      <pre class="smart-prompt-preview"></pre>
+      <div class="smart-ai-links">
+        <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT ↗</a>
+        <a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini ↗</a>
+        <a href="https://claude.ai/" target="_blank" rel="noopener">Claude ↗</a>
+        <a href="https://chat.deepseek.com/" target="_blank" rel="noopener">DeepSeek ↗</a>
+      </div>
+    </div>`;
+  }
+
+  function bindSmartPromptBox(box){
+    if(!box||box.dataset.bound==='1')return;
+    box.dataset.bound='1';
+    let mode='deep';
+    let topic='工作事業';
+
+    box.querySelectorAll('[data-prompt-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+      mode=btn.dataset.promptMode;
+      box.querySelectorAll('[data-prompt-mode]').forEach(x=>x.classList.toggle('active',x===btn));
+      box.querySelector('.smart-prompt-preview')?.classList.remove('show');
+      box.querySelector('.smart-ai-links')?.classList.remove('show');
+    }));
+
+    box.querySelectorAll('[data-topic]').forEach(btn=>btn.addEventListener('click',()=>{
+      topic=btn.dataset.topic;
+      box.querySelectorAll('[data-topic]').forEach(x=>x.classList.toggle('active',x===btn));
+      box.querySelector('.smart-prompt-preview')?.classList.remove('show');
+      box.querySelector('.smart-ai-links')?.classList.remove('show');
+    }));
+
+    box.querySelector('.smart-prompt-login')?.addEventListener('click',baziOpenAuth);
+    box.querySelector('.smart-prompt-generate')?.addEventListener('click',async()=>{
+      if(!baziAuthProfile()){ baziOpenAuth(); return; }
+      if(!lastData){ toast('請先建立命盤'); return; }
+      const key=box.dataset.promptKey||'full';
+      const prompt=buildSmartPrompt(lastData,key,topic,mode);
+      const preview=box.querySelector('.smart-prompt-preview');
+      const links=box.querySelector('.smart-ai-links');
+      if(preview){preview.textContent=prompt;preview.classList.add('show');}
+      links?.classList.add('show');
+      try{
+        await navigator.clipboard.writeText(prompt);
+        toast(mode==='discover'?'「值得追問」提示詞已產生並複製':'深入分析提示詞已產生並複製');
+      }catch(_){
+        toast('提示詞已產生，可直接手動複製');
+      }
+      trackAction(`smart-prompt-${key}-${mode}`);
+    });
+  }
+
+  function initSmartPromptUI(){
+    ['tengods','relations','luck','years'].forEach(key=>{
+      const def=SMART_PROMPT_SECTIONS[key];
+      const body=document.querySelector(`#${def.id} .report-body`);
+      if(!body||body.querySelector(`.smart-prompt-box[data-prompt-key="${key}"]`))return;
+      const mount=document.createElement('div');
+      mount.className='smart-prompt-mount';
+      mount.dataset.smartPrompt=key;
+      mount.innerHTML=smartPromptBoxHtml(key);
+      body.appendChild(mount);
+      bindSmartPromptBox(mount.querySelector('.smart-prompt-box'));
+    });
+    const fullMount=document.querySelector('[data-smart-prompt="full"]');
+    if(fullMount && !fullMount.querySelector('.smart-prompt-box')){
+      fullMount.innerHTML=smartPromptBoxHtml('full');
+      bindSmartPromptBox(fullMount.querySelector('.smart-prompt-box'));
+    }
+  }
+
+  function refreshSmartPromptLocks(){
+    document.querySelectorAll('.smart-prompt-box').forEach(box=>{
+      box.classList.toggle('is-locked',!baziAuthProfile());
+    });
   }
 
   function initSectionDecodeUI(){
     sectionDefinitions.forEach(def=>{
       if(def.key==='reading' || def.key==='years')return;
-      const section=$(def.id);const body=section?.querySelector('.report-body');if(!body||body.querySelector('.section-decode'))return;
-      const box=document.createElement('div');box.className='section-decode';box.dataset.section=def.key;
-      box.innerHTML=`<div class="decode-bar"><div class="decode-copy"><strong>想知道這些數字、符號對你可能代表什麼？</strong><span>點開後直接看白話解讀與深層結構。</span></div><button type="button" class="decode-open">看懂這一區</button></div><div class="decode-content"><div class="decode-summary-grid"></div><div class="section-ai-box"><div><div><strong>想知道如何調整？帶著這張命盤問 AI</strong><span class="section-ai-note">提示詞會帶入完整本命、本區依據與你選取的時段。</span></div></div><div class="section-prompt-actions"><button type="button" data-act="copy">一鍵複製「${esc(def.title)}」AI 提示詞</button><a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT ↗</a><a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini ↗</a><a href="https://claude.ai/" target="_blank" rel="noopener">Claude ↗</a></div><pre class="section-prompt-preview"></pre></div></div>`;
+      const section=$(def.id);
+      const body=section?.querySelector('.report-body');
+      if(!body||body.querySelector('.section-decode'))return;
+      const box=document.createElement('div');
+      box.className='section-decode';
+      box.dataset.section=def.key;
+      box.innerHTML=`<div class="decode-bar"><div class="decode-copy"><strong>想知道這些數字、符號對你可能代表什麼？</strong><span>點開後直接看白話解讀與深層結構。</span></div><button type="button" class="decode-open">看懂這一區</button></div><div class="decode-content"><div class="decode-summary-grid"></div></div>`;
       body.appendChild(box);
-      const open=box.querySelector('.decode-open'),content=box.querySelector('.decode-content'),summary=box.querySelector('.decode-summary-grid'),preview=box.querySelector('.section-prompt-preview');
+      const open=box.querySelector('.decode-open');
+      const content=box.querySelector('.decode-content');
+      const summary=box.querySelector('.decode-summary-grid');
       open.addEventListener('click',()=>{
         const show=!content.classList.contains('show');
         if(show){
-          if(!lastData){
-            try{cast();}catch(_){}
-          }
-          if (def.key === 'luck' || def.key === 'years') {
-            summary.style.display = 'block';
-            summary.style.width = '100%';
-          } else {
-            summary.style.display = '';
-            summary.style.width = '';
-          }
+          if(!lastData){ try{cast();}catch(_){} }
+          if(def.key==='luck'||def.key==='years'){summary.style.display='block';summary.style.width='100%';}
+          else{summary.style.display='';summary.style.width='';}
           summary.innerHTML=lastData?sectionExplanation(def.key,lastData):decodeCard('提示','請先於上方輸入出生日期時間並點選「排八字」建立命盤。');
-          const luckCopyBtn = summary.querySelector('.btn-copy-luck-prompt');
-          if (luckCopyBtn) {
-            luckCopyBtn.addEventListener('click', async () => {
-              const prompt = luckCopyBtn.dataset.prompt || '';
-              try {
-                await navigator.clipboard.writeText(prompt);
-                toast('十年大運 AI 提示詞已複製到剪貼簿！');
-              } catch (_) {
-                toast('複製失敗，請確認瀏覽器剪貼簿權限');
-              }
-            });
-          }
-          
-          const yearsCopyBtn = summary.querySelector('.btn-copy-years-prompt');
-          if (yearsCopyBtn) {
-            yearsCopyBtn.addEventListener('click', async () => {
-              const prompt = yearsCopyBtn.dataset.prompt || '';
-              try {
-                await navigator.clipboard.writeText(prompt);
-                toast('三年流年 AI 提示詞已複製到剪貼簿！');
-              } catch (_) {
-                toast('複製失敗，請確認瀏覽器剪貼簿權限');
-              }
-            });
-          }
-
           content.classList.add('show');
           open.classList.add('active');
           open.textContent='已展開白話解讀';
@@ -3126,48 +3121,13 @@ ${selectedPeriodPrompt(data,key)}
           open.textContent='看懂這一區';
         }
       });
-      box.querySelector('[data-act="copy"]')?.addEventListener('click',async()=>{if(!lastData)return;const prompt=buildSectionPrompt(lastData,def.key);preview.textContent=prompt;preview.classList.add('show');try{await navigator.clipboard.writeText(prompt);toast(`${def.title}提示詞已產生並複製`);}catch(_){toast('提示詞已產生，可直接手動複製');}markSectionExplored(def.key);trackAction(`section-copy-${def.key}`);});
-      if(def.key==='shensha'){box.classList.add('shensha-prompt-only');box.querySelector('.decode-bar')?.remove();summary?.remove();}
-      if(def.key==='luck' || def.key==='years'){box.querySelector('.section-ai-box')?.remove();}
+      if(def.key==='shensha'){box.querySelector('.decode-bar')?.remove();summary?.remove();box.remove();}
     });
+    initSmartPromptUI();
+    refreshSmartPromptLocks();
   }
 
-  function buildAiPrompt(data){
-    return `請以傳統八字命理的「結構分析」方式，完整分析以下命盤。
-
-【基本資料】
-${formatBasic(data)}
-胎元：${data.taiYuan||'—'}｜命宮：${data.mingGong||'—'}｜身宮：${data.shenGong||'—'}
-
-【四柱詳細】
-${formatPillars(data)}
-
-【五行與陰陽】
-${formatElements(data)}
-
-【十神】
-${formatTenGods(data)}
-
-【原局干支互動】
-${formatRelations(data)}
-
-【常用神煞】
-${formatShensha(data)}
-
-【目前與八步大運】
-${formatLuck(data)}
-
-【未來十年流年】
-${formatYears(data)}
-
-【今年節氣流月】
-${formatMonths(data)}
-
-【網站解讀】
-${promptContext(data)}
-
-請使用繁體中文，深入分析其性格底牌、事業方向、財富格局、感情模式及大運流年重點。`;
-  }
+  function buildAiPrompt(data){ return buildSmartPrompt(data,'full','工作事業','deep'); }
 
   function renderMeta(data){
     const items=[['公曆',data.solarText],['農曆',data.lunarText],['日主',`${data.dayMaster}${data.dayMasterElement?'・'+data.dayMasterElement:''}${data.dayMasterYinYang?'・'+data.dayMasterYinYang:''}`],['前一節',data.jie?.prev?`${data.jie.prev.name} ${data.jie.prev.solar}`:'—'],['下一節',data.jie?.next?`${data.jie.next.name} ${data.jie.next.solar}`:'—']];
@@ -3684,7 +3644,6 @@ ${promptContext(data)}
     $('loadChartBtn')?.addEventListener('click',()=>{
       try{const s=JSON.parse(localStorage.getItem('divinationhub-bazi-last')||'null');if(!s)return toast('尚未儲存命盤');birthTime.value=s.date||(s.datetime||'').slice(0,10)||birthTime.value;$('exactBirthTime').value=(s.datetime||'').slice(11,16)||'12:00';$('birthSlot').value=s.timeSlot??slotForTime($('exactBirthTime').value);$('useExactTime').checked=s.exact??true;$('exactBirthTime').hidden=!$('useExactTime').checked;gender.value=s.gender??gender.value;sect.value=s.sect??sect.value;cast();}catch(_){toast('無法讀取上次命盤');}
     });
-    $('generatePromptBtn')?.addEventListener('click',async()=>{if(!lastData)return toast('請先建立命盤');exploration.prompt=buildAiPrompt(lastData);$('promptPreview').textContent=exploration.prompt;$('promptPreview').classList.add('show');try{await navigator.clipboard.writeText(exploration.prompt);toast('完整命盤提示詞已產生並複製');}catch(_){toast('提示詞已產生，可直接複製');}trackAction('prompt-generate-copy');});
     $('copyReportBtn')?.addEventListener('click',async()=>{
       if(!lastData)return;
       const d=lastData;const lines=[`八字：${d.pillars.map(p=>p.ganZhi).join(' ')}`,`日主：${d.dayMaster}${d.dayMasterElement}（${d.dayMasterYinYang}）`,`結構摘要：${d.highlights?.summary||''}`,`五行：${elOrder.map(e=>`${e}${d.weightedFiveElements?.percentages?.[e]||0}%`).join(' / ')}`,`十神主題：${d.highlights?.dominantGroup||'—'}`,`干支互動：${(d.relations||[]).map(r=>r.label).join('、')||'未見明顯常見組合'}`];
@@ -3891,6 +3850,7 @@ ${promptContext(data)}
 
   window.addEventListener('bazi-google-login', async () => {
     window.baziUpdateTopbarMember?.();
+    refreshSmartPromptLocks?.();
     if(!lastData) return;
     try{
       toast('登入成功，正在解鎖三年戰略…');
@@ -3936,6 +3896,7 @@ ${promptContext(data)}
       memberEntry?.classList.remove('is-open');
       if(memberChip)memberChip.setAttribute('aria-expanded','false');
       window.baziUpdateTopbarMember?.();
+      refreshSmartPromptLocks?.();
       if(lastData)renderYearFlows({...lastData,threeYearStrategicOutlook:null});
       toast('已登出');
     });
