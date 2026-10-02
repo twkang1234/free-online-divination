@@ -492,7 +492,45 @@ body.overlay-open{overflow:hidden}
   transform: translateY(-2px);
 }
 
-  </style>
+  
+.controls-simple{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(170px,.65fr);gap:18px 22px;align-items:start}
+.controls-simple .field-main{grid-column:1/2}
+.controls-simple .field-gender{grid-column:2/3}
+.birth-date-direct{display:grid;grid-template-columns:minmax(120px,1.25fr) minmax(88px,.72fr) minmax(88px,.72fr);gap:10px;margin-bottom:14px}
+.date-part{display:flex;align-items:center;gap:7px}
+.date-part input{width:100%;min-width:0}
+.date-part span{color:#8e9aac;font-size:.74rem;flex:0 0 auto}
+.advanced-settings{grid-column:1/-1;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.018)}
+.advanced-settings summary{cursor:pointer;list-style:none;padding:10px 13px;color:#7f8b9d;font-size:.72rem;font-weight:760}
+.advanced-settings summary::-webkit-details-marker{display:none}
+.advanced-settings summary::after{content:"＋";float:right;color:#8a7650}
+.advanced-settings[open] summary::after{content:"－"}
+.advanced-settings-body{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(240px,1fr);gap:10px 18px;padding:0 13px 13px}
+.advanced-settings-body .birth-time-note{grid-column:1/-1;margin:2px 0 0}
+.primary-action-row{grid-column:1/-1;display:flex;align-items:stretch;gap:8px;margin-top:2px}
+.primary-action-row .cast-btn{min-width:190px}
+.member-save-cta{min-height:48px;border:1px solid rgba(233,189,88,.26);border-radius:12px;background:rgba(233,189,88,.05);color:#d8bd6d;padding:0 17px;font-weight:800;cursor:pointer}
+.member-save-cta:hover{border-color:rgba(233,189,88,.5);background:rgba(233,189,88,.09)}
+.member-load-cta{border-color:rgba(255,255,255,.10);color:#aab5c2;background:rgba(255,255,255,.025)}
+.member-save-cta[hidden]{display:none!important}
+#birthTimeNotice{grid-column:1/-1;margin:0}
+@media(max-width:820px){
+  .controls-simple{grid-template-columns:1fr}
+  .controls-simple .field-main,.controls-simple .field-gender,.advanced-settings,.primary-action-row,#birthTimeNotice{grid-column:1}
+  .birth-date-direct{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr) minmax(0,.8fr)}
+  .advanced-settings-body{grid-template-columns:1fr}
+  .primary-action-row{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr);gap:7px}
+  .primary-action-row .cast-btn,.member-save-cta{min-width:0;width:100%;padding-left:10px;padding-right:10px}
+  .member-load-cta{grid-column:2}
+}
+@media(max-width:430px){
+  .birth-date-direct{gap:6px}
+  .date-part{gap:4px}
+  .date-part input{padding-left:10px;padding-right:8px}
+  .primary-action-row{grid-template-columns:1fr 1fr}
+}
+
+</style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
 <header class="page-topbar">
@@ -584,37 +622,61 @@ body.overlay-open{overflow:hidden}
         <div class="tool-mark">BIRTH TIME → FOUR PILLARS → TEN GODS → LUCK CYCLES</div>
       </div>
 
-      <div class="controls">
-        <div class="field">
-          <label for="birthTime">出生日期與時辰（當地民用時間）</label>
-          <div class="birth-member-row">
-            <input id="birthTime" type="date" required>
-            <div class="birth-member-actions" id="birthMemberActions">
-              <button class="birth-member-login" id="birthMemberLoginBtn" type="button">登入可儲存</button>
-              <button class="birth-member-save" id="birthMemberSaveBtn" type="button" hidden>儲存八字</button>
-              <button class="birth-member-load" id="birthMemberLoadBtn" type="button" hidden>載入八字</button>
+      <div class="controls controls-simple">
+        <div class="field field-main">
+          <label>出生日期</label>
+          <div class="birth-date-direct" aria-label="出生日期">
+            <div class="date-part year-part">
+              <input id="birthYear" type="text" inputmode="numeric" maxlength="4" autocomplete="bday-year" placeholder="1976" aria-label="出生年份">
+              <span>年</span>
+            </div>
+            <div class="date-part">
+              <input id="birthMonth" type="text" inputmode="numeric" maxlength="2" autocomplete="bday-month" placeholder="10" aria-label="出生月份">
+              <span>月</span>
+            </div>
+            <div class="date-part">
+              <input id="birthDay" type="text" inputmode="numeric" maxlength="2" autocomplete="bday-day" placeholder="25" aria-label="出生日期">
+              <span>日</span>
             </div>
           </div>
-          <label for="birthSlot">出生時辰</label><select id="birthSlot"></select>
-          <label class="exact-time-toggle"><input id="useExactTime" type="checkbox">知道精確時間（節氣交界建議填寫）</label>
-          <input id="exactBirthTime" type="time" aria-label="精確出生時間" hidden>
-          <p class="birth-time-note">日期保持原輸入；晚子時的日柱仍依下方換日規則。只選時辰時以區間代表時間估算起運，並非精確出生分鐘。</p><p id="birthTimeNotice" role="status"></p>
+          <input id="birthTime" type="date" required hidden>
+
+          <label for="birthSlot">出生時辰</label>
+          <select id="birthSlot"></select>
         </div>
-        <div class="field">
+
+        <div class="field field-gender">
           <label for="gender">性別</label>
           <select id="gender">
             <option value="1">男</option>
             <option value="0">女</option>
           </select>
         </div>
-        <div class="field">
-          <label for="sect">晚子時換日</label>
-          <select id="sect">
-            <option value="2" selected>23:00 後仍算當日</option>
-            <option value="1">23:00 起算次日</option>
-          </select>
+
+        <details class="advanced-settings">
+          <summary>進階設定</summary>
+          <div class="advanced-settings-body">
+            <label class="exact-time-toggle"><input id="useExactTime" type="checkbox">知道精確時間</label>
+            <input id="exactBirthTime" type="time" aria-label="精確出生時間" hidden>
+
+            <label for="sect">晚子時換日</label>
+            <select id="sect">
+              <option value="2" selected>23:00 後仍算當日</option>
+              <option value="1">23:00 起算次日</option>
+            </select>
+
+            <p class="birth-time-note">接近節氣交界、23:00 或時辰交界時，再展開這裡調整即可。</p>
+          </div>
+        </details>
+
+        <p id="birthTimeNotice" role="status"></p>
+
+        <div class="primary-action-row">
+          <button class="cast-btn" id="castBtn" type="button">免費排八字</button>
+          <button class="member-save-cta" id="birthMemberLoginBtn" type="button">登入可儲存</button>
+          <button class="member-save-cta" id="birthMemberSaveBtn" type="button" hidden>儲存八字</button>
+          <button class="member-save-cta member-load-cta" id="birthMemberLoadBtn" type="button" hidden>載入八字</button>
         </div>
-        <button class="cast-btn" id="castBtn" type="button">排 八 字</button>
       </div>
 
       <div class="empty" id="emptyState">
@@ -3441,7 +3503,7 @@ ${promptContext(data)}
       const byId=id=>records.find(x=>String(x.id)===String(id));
       list.querySelectorAll('[data-load]').forEach(btn=>btn.addEventListener('click',()=>{
         const r=byId(btn.dataset.load);if(!r)return;
-        birthTime.value=r.birth_date;
+        birthTime.value=r.birth_date; syncBirthPartsFromHidden();
         gender.value=String(r.gender);
         sect.value=String(r.sect);
         $('useExactTime').checked=!!r.use_exact;
@@ -3499,7 +3561,45 @@ ${promptContext(data)}
     $('exactBirthTime').addEventListener('change',()=>{if($('exactBirthTime').value)$('birthSlot').value=slotForTime($('exactBirthTime').value);});
     $('birthSlot').addEventListener('change',()=>{$('useExactTime').checked=false;$('exactBirthTime').hidden=true;});
   }
+
+  function syncBirthDateFromParts(){
+    const y=String($('birthYear')?.value||'').replace(/\D/g,'').slice(0,4);
+    const m=String($('birthMonth')?.value||'').replace(/\D/g,'').slice(0,2);
+    const d=String($('birthDay')?.value||'').replace(/\D/g,'').slice(0,2);
+    if($('birthYear'))$('birthYear').value=y;
+    if($('birthMonth'))$('birthMonth').value=m;
+    if($('birthDay'))$('birthDay').value=d;
+    if(y.length===4 && m && d){
+      const mm=String(Math.max(1,Math.min(12,Number(m)||1))).padStart(2,'0');
+      const maxDay=new Date(Number(y),Number(mm),0).getDate();
+      const dd=String(Math.max(1,Math.min(maxDay,Number(d)||1))).padStart(2,'0');
+      $('birthTime').value=`${y}-${mm}-${dd}`;
+    }else{
+      $('birthTime').value='';
+    }
+  }
+
+  function syncBirthPartsFromHidden(){
+    const v=String($('birthTime')?.value||'');
+    const m=v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(!m)return;
+    if($('birthYear'))$('birthYear').value=m[1];
+    if($('birthMonth'))$('birthMonth').value=String(Number(m[2]));
+    if($('birthDay'))$('birthDay').value=String(Number(m[3]));
+  }
+
+  function setupDirectBirthDate(){
+    const y=$('birthYear'),m=$('birthMonth'),d=$('birthDay');
+    if(!y||!m||!d)return;
+    [y,m,d].forEach(el=>el.addEventListener('input',syncBirthDateFromParts));
+    y.addEventListener('input',()=>{if(y.value.length===4)m.focus();});
+    m.addEventListener('input',()=>{if(m.value.length>=2)d.focus();});
+    [m,d].forEach(el=>el.addEventListener('blur',syncBirthDateFromParts));
+    syncBirthPartsFromHidden();
+  }
+
   function birthOptions(){
+    syncBirthDateFromParts();
     if(!birthTime.value||!birthTime.checkValidity())throw Error('請填寫有效出生日期');
     const precise=$('useExactTime').checked,time=$('exactBirthTime').value;
     if(precise&&!time)throw Error('請填寫精確出生時間');
@@ -3587,6 +3687,7 @@ ${promptContext(data)}
       }
     });
 
+    setupDirectBirthDate();
     setupBirthSlots();
     initSectionDecodeUI();
     cast(false);
