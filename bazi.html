@@ -844,6 +844,42 @@ body.overlay-open{overflow:hidden}
   .smart-prompt-collapse.is-locked-teaser .smart-prompt-collapse-body{max-height:145px}
 }
 
+
+.birth-date-direct .date-part select{
+  width:100%;
+  min-width:0;
+  min-height:48px;
+  padding:0 38px 0 14px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:11px;
+  background:#0d1119;
+  color:#e8edf4;
+  font:inherit;
+  font-size:.82rem;
+  appearance:auto;
+  -webkit-appearance:menulist;
+  touch-action:manipulation;
+}
+.birth-date-direct .date-part select:focus{
+  outline:none;
+  border-color:rgba(233,189,88,.45);
+  box-shadow:0 0 0 3px rgba(233,189,88,.07);
+}
+@media(max-width:700px){
+  .birth-date-direct{
+    grid-template-columns:minmax(0,1.32fr) minmax(0,.78fr) minmax(0,.78fr)!important;
+    gap:7px!important;
+  }
+  .birth-date-direct .date-part{gap:5px}
+  .birth-date-direct .date-part select{
+    min-height:46px;
+    padding-left:10px;
+    padding-right:26px;
+    font-size:16px; /* avoids iOS zoom and opens native wheel picker cleanly */
+  }
+  .birth-date-direct .date-part span{font-size:.68rem}
+}
+
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -948,15 +984,15 @@ body.overlay-open{overflow:hidden}
 
           <div class="birth-date-direct" aria-label="出生日期">
             <div class="date-part year-part">
-              <input id="birthYear" type="number" inputmode="numeric" min="1900" max="2100" step="1" value="1990" autocomplete="bday-year" aria-label="出生年份">
+              <select id="birthYear" aria-label="出生年份"></select>
               <span>年</span>
             </div>
             <div class="date-part">
-              <input id="birthMonth" type="number" inputmode="numeric" min="1" max="12" step="1" value="1" autocomplete="bday-month" aria-label="出生月份">
+              <select id="birthMonth" aria-label="出生月份"></select>
               <span>月</span>
             </div>
             <div class="date-part">
-              <input id="birthDay" type="number" inputmode="numeric" min="1" max="31" step="1" value="1" autocomplete="bday-day" aria-label="出生日期">
+              <select id="birthDay" aria-label="出生日期"></select>
               <span>日</span>
             </div>
           </div>
@@ -3979,30 +4015,53 @@ ${source}
     const y=$('birthYear'),m=$('birthMonth'),d=$('birthDay');
     if(!y||!m||!d)return;
 
-    [y,m,d].forEach(el=>{
-      el.addEventListener('input',syncBirthDateFromParts);
-      el.addEventListener('change',syncBirthDateFromParts);
-      el.addEventListener('wheel',e=>{
-        if(document.activeElement!==el)return;
-        e.preventDefault();
-        const step=e.deltaY<0?1:-1;
-        const min=Number(el.min)||1,max=Number(el.max)||9999;
-        let next=(Number(el.value)||0)+step;
-        next=Math.max(min,Math.min(max,next));
-        el.value=String(next);
-        syncBirthDateFromParts();
-      },{passive:false});
-    });
+    function fillSelect(el,start,end,value){
+      const current=Number(value)||start;
+      el.innerHTML='';
+      for(let n=start;n<=end;n++){
+        const op=document.createElement('option');
+        op.value=String(n);
+        op.textContent=String(n);
+        if(n===current)op.selected=true;
+        el.appendChild(op);
+      }
+    }
 
-    $('solarModeBtn')?.addEventListener('click',()=>setBirthCalendarMode('solar',true));
-    $('lunarModeBtn')?.addEventListener('click',()=>setBirthCalendarMode('lunar',true));
+    function rebuildDays(keepValue=true){
+      const current=Number(d.value)||1;
+      let maxDay=31;
+      if(birthCalendarMode==='lunar'){
+        maxDay=30;
+      }else{
+        const yy=Number(y.value)||1990;
+        const mm=Number(m.value)||1;
+        maxDay=new Date(yy,mm,0).getDate();
+      }
+      fillSelect(d,1,maxDay,keepValue?Math.min(current,maxDay):1);
+    }
+
+    fillSelect(y,1900,2100,1990);
+    fillSelect(m,1,12,1);
+    fillSelect(d,1,31,1);
+
+    y.addEventListener('change',()=>{rebuildDays(true);syncBirthDateFromParts();});
+    m.addEventListener('change',()=>{rebuildDays(true);syncBirthDateFromParts();});
+    d.addEventListener('change',syncBirthDateFromParts);
+
+    $('solarModeBtn')?.addEventListener('click',()=>{
+      setBirthCalendarMode('solar',true);
+      rebuildDays(true);
+      syncBirthDateFromParts();
+    });
+    $('lunarModeBtn')?.addEventListener('click',()=>{
+      setBirthCalendarMode('lunar',true);
+      rebuildDays(true);
+      syncBirthDateFromParts();
+    });
     $('lunarLeapMonth')?.addEventListener('change',syncBirthDateFromParts);
 
-    if(!y.value)y.value='1990';
-    if(!m.value)m.value='1';
-    if(!d.value)d.value='1';
-
     updateCalendarModeUI();
+    rebuildDays(true);
     syncBirthDateFromParts();
   }
 
