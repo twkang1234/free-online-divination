@@ -578,9 +578,9 @@
       <div>
         <div class="tarot-stage-kicker">GUIDED TAROT · LOCAL INTERPRETATION TEST</div>
         <h2 class="tarot-stage-title">引導式塔羅占卜</h2>
-        <p class="tarot-stage-desc">解讀版本 V8.3：保留 V8.2 閱讀動線，這次集中升級解讀核心。A 加入「牌 × 牌位 × 主題」的深層情境判斷，B 補強大阿爾克那的心理機制，追問後最終整合不再拼接關鍵字，而會把主牌、深層因素、走向與補牌重新組成一個新的故事。C／D 維持證據與行動優勢。測試階段不限次數。</p>
+        <p class="tarot-stage-desc">解讀版本 V8.4：保留 A → B → C → D → 追問 → TXT 的閱讀動線，這次專攻自然語言與整合判斷。移除「呈現某主題／力量失衡」等程式味句型；B 改用每張小阿爾克那自己的心理機制；若主牌與追問出現同一張牌正逆位，會自動辨識為「同一課題的修正」；最終整合先產生新的核心結論，再回頭解釋牌面。測試階段不限次數。</p>
       </div>
-      <div class="tarot-engine-chip"><i></i><span>解讀版本 V8.3 · CONTEXT DEPTH · NATURAL SYNTHESIS · UNLIMITED</span></div>
+      <div class="tarot-engine-chip"><i></i><span>解讀版本 V8.4 · NATURAL LANGUAGE · CARD FLIP LOGIC · UNLIMITED</span></div>
     </header>
 
     <section class="guided-shell" aria-label="引導式塔羅占卜">
@@ -620,7 +620,7 @@
       </div>
 
       <div class="reading-workspace" id="readingWorkspace" hidden>
-        <div class="reading-topline"><div><span id="readingPath">—</span><h3 id="readingQuestion">—</h3></div><div class="reader-seal">✦ 四鏡解牌 · V8.3</div></div>
+        <div class="reading-topline"><div><span id="readingPath">—</span><h3 id="readingQuestion">—</h3></div><div class="reader-seal">✦ 四鏡解牌 · V8.4</div></div>
         <div class="spread-info guided-spread-info"><div class="spread-symbol">✺</div><div><strong id="spreadName">—</strong><p id="spreadDesc">—</p></div><div class="deck-count"><span id="deckCount">78</span> CARDS</div></div>
         <div class="reading-zone" id="readingZone">
           <div class="cards" id="cards"></div>
@@ -1362,35 +1362,100 @@
         if(role==='feelings')return `放在「${card.position}」，它只能描述感受與互動傾向，仍不能代替對方親口說明：${base}`;
         return base;
       }
+      const LOVE_MINOR_NATURAL={
+        '權杖':{
+          'Ace':['已經有想主動開始、讓關係點火的意願','想開始的心還在，但動能容易被遲疑或準備不足壓住'],
+          '2':['正在評估未來方向，也開始思考誰值得你往前走','容易因害怕未知而停在觀望，想很多卻難跨出舒適圈'],
+          '3':['已經把眼光放到更遠的發展，願意看一段關係能不能往外拓展','期待與現實進度不一致，容易因看不到成果而失去耐性'],
+          '4':['很重視安心、歸屬與能不能自然進入彼此生活','對穩定的期待還沒有真正落地，表面和諧不一定等於內在安心'],
+          '5':['願意面對差異與磨合，不會因小摩擦就立刻否定關係','容易把磨合變成內耗，或表面不吵、心裡卻一直累積不滿'],
+          '6':['希望被看見、被肯定，也比較敢接住對方的正面回應','容易把對方的反應當成自我價值判決，認可不足時很快失去信心'],
+          '7':['會守住自己的立場與界線，不願為了戀愛失去自己','防衛容易開得太滿，還沒確認對方是否越界就先進入備戰'],
+          '8':['互動容易加速，訊息、邀約或關係進度會明顯變快','節奏一快就容易焦躁、誤會或突然踩煞車'],
+          '9':['即使曾經疲累，仍保有撐住與再觀察一次的韌性','長期警戒正在消耗你，容易把每一次靠近都當成下一次受傷的前兆'],
+          '10':['很願意承擔、照顧進度，也希望事情能被推到完成','容易一個人扛太多，最後把關係變成責任而不是互相參與'],
+          'Page':['對新的人與新訊號仍有好奇，願意先認識再理解','好奇心有，但容易三分鐘熱度、訊號太多或只停在想像'],
+          'Knight':['有很強的追求與靠近動能，喜歡直接讓關係往前走','容易太快衝、太快熱，也可能在熱度過後突然失去方向'],
+          'Queen':['能自然展現魅力與熱度，越做自己越容易形成吸引','需要被肯定的焦慮容易藏在自信下面，互動一不如預期就開始不安'],
+          'King':['知道自己想往哪裡走，也有能力帶動關係進度','主導感容易變成控制，太急著掌握節奏時會讓別人難以參與']
+        },
+        '聖杯':{
+          'Ace':['已經願意讓新的情感與好感進來，心其實是打開的','有感受卻不容易真正接住或表達，情緒入口仍偏封閉'],
+          '2':['在意雙向吸引與對等回應，也願意建立真正的連結','彼此有感覺也可能因誤解、失衡或互動不對等而難以靠近'],
+          '3':['更容易在朋友、社交與輕鬆交流中打開自己','社交熱鬧不一定等於真正親密，也容易受第三方期待或人際雜訊干擾'],
+          '4':['仍在觀望，情緒上不急著接受眼前的機會','開始從停滯裡醒來，重新看見原本忽略的可能'],
+          '5':['仍容易被失落與遺憾拉住，注意力會先落在已失去的部分','正在從失落裡恢復，開始重新看見仍然存在的資源與可能'],
+          '6':['熟悉感、過去經驗與「像以前某個人」的感受很容易影響選擇','正在學著把過去和現在分開，不再只因熟悉就判定適不適合'],
+          '7':['容易同時看到太多可能，也容易把期待投射到尚未確認的關係上','正在收回幻想、縮小選項，準備用現實做判斷'],
+          '8':['開始知道什麼已經不再滿足自己，也願意離開不合適的情緒結構','明知不滿仍容易回頭，熟悉感與害怕改變讓離開變得反覆'],
+          '9':['比較知道自己真正想要什麼，也有能力享受自己的生活','外在看似有選擇，內在卻仍可能不滿足，容易把被選中當成填補空缺'],
+          '10':['真正想要的是有歸屬、有互相支持、能長期生活的關係','對理想關係的期待和現實容易出現落差，需要重新校正「幸福應該長什麼樣」'],
+          'Page':['願意接收新的情緒訊號與好感，也保有柔軟的好奇','容易因敏感、多想或訊號混亂，把一點感覺放大成整段故事'],
+          'Knight':['願意浪漫地靠近、邀請與表達好感','容易理想化、情緒反覆，浪漫感跑在承諾與落地之前'],
+          'Queen':['能感受很深，也願意理解與承接情緒','容易太投入、界線變薄，最後分不清哪些情緒是自己的、哪些是對方的'],
+          'King':['有能力穩定承接感受，也比較能用成熟方式溝通','表面冷靜不代表內在平靜，壓抑久了可能用控制代替真正表達']
+        },
+        '寶劍':{
+          'Ace':['想把事情說清楚、看清楚，也願意直接面對真相','資訊與判斷仍混亂，越想一次搞懂越容易說不清或下錯結論'],
+          '2':['面對感情會先權衡，不願在資訊不足時倉促決定','長期猶豫已經開始變成壓力，越想兩全越難真正選擇'],
+          '3':['仍會被失落、分離或受傷經驗刺到，這份痛需要被承認','正在修復舊傷，但過去的痛仍可能偷偷影響新的判斷'],
+          '4':['需要先冷卻與恢復，現在不適合一直逼自己做感情決定','表面想休息，內在卻仍焦躁，真正的恢復還沒有完成'],
+          '5':['遇到差異時容易進入勝負與防衛，會很在意誰吃虧','開始想退出無效攻防，但餘怨或輸贏感仍需要真正放下'],
+          '6':['正在把自己從較混亂的情緒與關係場景移開','舊包袱仍被帶在身上，身體離開了，思考與反應卻還沒有完全過岸'],
+          '7':['容易用試探、策略或保留資訊來降低風險','正在看見試探與自我欺騙的代價，真正的課題是更直接地面對事實'],
+          '8':['會覺得選擇有限，很多「不能」其實正在主導你的靠近方式','開始看見自己其實有選擇，限制感正在鬆開'],
+          '9':['焦慮容易把最壞情境演得很真，思緒比現實跑得快','恐懼還在，但已經開始能被辨認、被處理，不再完全主導反應'],
+          '10':['某個舊思考或關係模式已經走到不能再拖的位置','正在從谷底往上，但真正收尾仍需要把舊痛和舊方法一起放下'],
+          'Page':['很會觀察訊號、蒐集資訊，也希望先弄懂再靠近','容易變成過度查證、疑神疑鬼或話說太快，資訊反而越查越亂'],
+          'Knight':['傾向快速確認、直接推進與追求答案','容易太快分析、定義或出手，讓判斷速度跑在感情成熟之前'],
+          'Queen':['很清楚自己的界線，也重視誠實與理性辨別','界線容易變成隔離，太快用冷與尖銳把不確定切掉'],
+          'King':['習慣用邏輯、標準與策略做成熟判斷','容易把理性用成控制或僵化規則，答案看似正確卻不一定適合關係']
+        },
+        '錢幣':{
+          'Ace':['願意替感情留出真實的時間與生活空間，重視能不能落地','機會可能存在，但生活節奏、資源或準備還沒有真正承接住'],
+          '2':['正在學著把感情放進既有生活裡，調整時間與優先順序','生活負荷太滿或優先順序混亂，感情很容易永遠排到最後'],
+          '3':['重視彼此合作、分工與一起把生活做好的能力','容易因合作失衡、分工不清而覺得最後還是自己在撐'],
+          '4':['很重視安全感與資源穩定，不會輕易把自己交出去','抓得太緊時，安全感會變成控制，新的交換與靠近也一起被擋住'],
+          '5':['現實壓力或匱乏感容易影響你對自己與桃花的判斷','正在走出匱乏，開始願意接受支持，也比較看得到可用資源'],
+          '6':['很在意付出是否互惠，也會觀察對方有沒有真正回應','不對等交換、附帶條件或人情壓力容易讓關係變得不舒服'],
+          '7':['願意給一段關係時間，也會務實評估投入值不值得','容易因看不到快速成果就失去耐性，或覺得投入回報不成比例'],
+          '8':['願意把關係能力當成可以練習與累積的東西','容易完美主義、太用力修正自己，反而忘記關係需要雙方一起學'],
+          '9':['有能力把自己的生活過好，不需要靠戀愛填滿全部','獨立容易變成過度自給自足，表面很好卻不讓別人真正進入生活'],
+          '10':['真正看重的是長期穩定、家庭與能不能一起經營生活','長期結構、家庭或資源問題容易成為安全感裂縫，需要先談清楚現實'],
+          'Page':['願意從小而實際的互動開始，不急著一次決定全部','容易只規劃、不落地，或一直等到自己更準備好才開始'],
+          'Knight':['重視可靠、規律與說到做到，偏好慢慢累積信任','過度保守會讓穩定變成停滯，關係很安全卻沒有進展'],
+          'Queen':['知道怎麼照顧生活與關係，也有能力提供穩定支持','容易過度照顧別人而忽略自己，把「有用」誤當成「值得被愛」'],
+          'King':['看重長期承擔、資源管理與現實可靠度','安全感容易建立在掌控資源與條件上，太重現實時會壓縮情感流動']
+        }
+      };
       function shortRelationshipTheme(card){
         if(state.topic.id!=='love')return signal(card,2);
         const special={
-          '教皇':card.reversed?'正在重寫自己的關係規則':'想要正式、可被承認且價值一致的關係',
-          '皇后':card.reversed?'容易用照顧與付出換安全感':'有能力滋養一段互惠的關係',
-          '皇帝':card.reversed?'控制與安全感容易綁在一起':'需要清楚而穩定的界線與承諾',
-          '月亮':card.reversed?'正在從迷霧裡重新辨認事實':'仍容易在不確定裡用感覺補空白',
-          '星星':card.reversed?'正在修復信心':'正在恢復相信好的關係可以發生',
-          '高塔':card.reversed?'仍在避免舊餘震再次發生':'對突然失控與崩塌保持高度警戒',
-          '隱者':card.reversed?'保護自己太久、需要讓新經驗進來':'需要先整理自己真正要什麼',
-          '戀人':card.reversed?'吸引與選擇沒有完全對齊':'正在面對價值與承擔是否一致的選擇',
-          '死神':card.reversed?'舊模式還沒有真正放手':'需要讓舊模式結束，才能進入新階段',
+          '教皇':card.reversed?'正在重寫自己對承諾與正式關係的標準':'真正看重正式承諾、共同價值與能被承認的關係',
+          '皇后':card.reversed?'容易用照顧與付出換取安全感與被需要':'有能力滋養一段互惠而舒服的關係',
+          '皇帝':card.reversed?'容易把控制節奏當成安全感':'需要清楚、穩定而可協商的界線與承諾',
+          '月亮':card.reversed?'正在從迷霧裡重新辨認事實':'容易在不確定裡讓直覺、恐懼與想像混在一起',
+          '星星':card.reversed?'仍在修復對愛與未來的信心':'正在恢復相信好的關係可以慢慢發生',
+          '高塔':card.reversed?'仍在避免舊餘震再次發生':'對突然失控與真相翻轉保持高度警戒',
+          '隱者':card.reversed?'保護自己太久，新的經驗不容易進來':'需要先整理自己真正要什麼，再回到互動裡驗證',
+          '戀人':card.reversed?'吸引、價值與承擔還沒有完全對齊':'正在面對「喜歡」和「願不願意一起承擔」是否一致',
+          '死神':card.reversed?'知道舊模式不適合，卻還沒有真正放手':'需要讓舊模式結束，才能用新的自己承接關係',
           '節制':card.reversed?'互動節奏與投入比例需要重整':'適合用慢而穩的節奏建立信任',
           '惡魔':card.reversed?'正在把主導權從依賴與執著裡拿回來':'某種依賴、慾望或熟悉模式仍有很強拉力'
         };
         if(special[card.name])return special[card.name];
+        const row=LOVE_MINOR_NATURAL[card.suit]?.[String(card.number||'')];
+        if(row)return card.reversed?row[1]:row[0];
         const w=words(card)[0]||signal(card,1);
-        const positive=/修復|原諒|改善|甦醒|重新|完成|穩定|圓滿|希望|成長|合作|清晰|療癒|接受/.test(card.meaning||'');
-        if(card.reversed&&positive)return `正在從「${w}」的舊狀態往外走`;
-        if(card.reversed)return `「${w}」這股力量目前仍有失衡或延遲`;
-        return `更明顯地呈現「${w}」這個主題`;
+        return card.reversed?`「${w}」仍有需要調整的地方`:`「${w}」正在成為這段關係裡的重要力量`;
       }
       function naturalMainStory(){
         const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1],q=state.question.type;
         if(state.topic.id==='love'){
-          if(q==='state')return `這三張牌其實在描述一個過渡：你現在${shortRelationshipTheme(first)}；更深層真正影響準備度的是你${shortRelationshipTheme(mid)}；而近期則開始朝「${shortRelationshipTheme(last)}」的方向移動。真正的準備度，不在於你嘴上想不想談戀愛，而在於能不能讓新的互動進來，不再只用舊的安全方式判斷一切。`;
-          if(q==='obstacle')return `這副牌的卡點有清楚層次：表面最先出現的是「${shortRelationshipTheme(first)}」，背後真正讓它反覆的是「${shortRelationshipTheme(mid)}」，而最後的「${shortRelationshipTheme(last)}」才是目前最值得練習的新反應。`;
-          if(q==='feelings')return `這副牌把「看起來怎麼樣、心裡怎麼感受、最後願不願意靠近」拆開來看：第一張是可見反應，中間牌是內在條件，最後一張才需要用真實行動驗證。`;
-          if(q==='future')return `這副牌不是把未來寫死，而是描述一條發展線：現在的動能先由「${shortRelationshipTheme(first)}」開始，中間的「${shortRelationshipTheme(mid)}」決定轉折，最後才走向「${shortRelationshipTheme(last)}」。`;
+          if(q==='state')return `你現在${shortRelationshipTheme(first)}；更深一層，${shortRelationshipTheme(mid)}；近期則${shortRelationshipTheme(last)}。所以你的準備度不是「有／沒有」這麼簡單，而是心、判斷與選擇能不能走在同一個節奏上。`;
+          if(q==='obstacle')return `最先卡住你的是：${shortRelationshipTheme(first)}。背後讓這個反應反覆出現的是：${shortRelationshipTheme(mid)}。真正的突破則要看你能不能開始做到：${shortRelationshipTheme(last)}。`;
+          if(q==='feelings')return `這副牌把可見反應、內在感受與真正願不願意靠近拆開來看；前兩層可以有感覺，但最後仍要用持續的現實行動確認。`;
+          if(q==='future')return `這不是把未來寫死，而是一條發展線：現在先由「${shortRelationshipTheme(first)}」啟動，中間條件是「${shortRelationshipTheme(mid)}」，最後較容易走向「${shortRelationshipTheme(last)}」。`;
         }
         return currentCoreLine(composition());
       }
@@ -1444,16 +1509,16 @@
         const bIsSource=/來源|成因|深層/.test(bp), bIsTool=/突破|建議|方向|做法|下一步/.test(bp), bIsFuture=/未來|走向|結果|趨勢/.test(bp);
         if(bIsSource){
           const depth=state.topic.id==='love'?shortRelationshipTheme(b):bk;
-          return `「${a.name}${a.reversed?'逆位':'正位'}」先描述目前看得見的「${ak}」，而「${b.name}${b.reversed?'逆位':'正位'}」落在來源位置，等於把鏡頭往下移：真正值得理解的是${depth}如何在背後塑造前面的反應。它不是解法，而是原因層。`;
+          return `「${a.name}${a.reversed?'逆位':'正位'}」先把眼前反應放到檯面上；到了來源牌「${b.name}${b.reversed?'逆位':'正位'}」，鏡頭才真正往下移。這裡更像在說：${depth}。它不是解法，而是前面反應為什麼會出現的內在條件。`;
         }
         if(bIsFuture){
           const future=state.topic.id==='love'?shortRelationshipTheme(b):bk;
-          if(sb>sa)return `前一張留下「${ak}」的條件，到了走向牌「${b.name}${b.reversed?'逆位':'正位'}」，牌面開始往「${future}」移動。這不是保證，而是說：只要前面的模式不再完全主導，後續有機會逐步出現這種變化。`;
-          if(sb<sa)return `前一張的「${ak}」若沒有被處理，到了走向牌「${b.name}${b.reversed?'逆位':'正位'}」可能把問題帶向「${future}」。它不是命定結果，而是提醒你目前最需要留意的後續代價。`;
-          return `從「${a.name}」到走向牌「${b.name}」，重點不是好壞升降，而是前一個條件正在把局勢帶向「${future}」。接下來要用現實行為驗證這個方向是否真的持續出現。`;
+          if(sb>sa)return `前一張留下的條件若開始被調整，到了走向牌「${b.name}${b.reversed?'逆位':'正位'}」，後續更容易出現這種變化：${future}。這不是保證，而是目前較合理的發展方向。`;
+          if(sb<sa)return `前一張的問題若一直沒有被處理，到了走向牌「${b.name}${b.reversed?'逆位':'正位'}」，後續要特別留意：${future}。這不是命定結果，而是目前最值得防止的代價。`;
+          return `從「${a.name}」走到走向牌「${b.name}」，不是單純變好或變壞，而是前一個條件正在把局勢帶向這種狀態：${future}。接下來要用現實行為確認它是否真的持續出現。`;
         }
         if(bIsTool){
-          return `前一張先把「${ak}」放到檯面上，而「${b.name}${b.reversed?'逆位':'正位'}」落在突破／建議位置，才真正把「${bk}」變成可以採取的新做法。兩張牌在這裡是「問題／條件 → 可操作出口」的關係。`;
+          return `前一張先把「${ak}」的問題放到檯面上，而「${b.name}${b.reversed?'逆位':'正位'}」落在突破／建議位置，才真正把「${bk}」變成可以採取的新做法。兩張牌在這裡是「問題／條件 → 可操作出口」的關係。`;
         }
         if(sa<0&&sb>=0)return `「${a.name}${a.reversed?'逆位':'正位'}」先指出「${ak}」的卡點，而「${b.name}${b.reversed?'逆位':'正位'}」開始把局勢往「${bk}」拉回來；真正要看的是中間條件是否真的改變，而不是把後一張好牌當成保證。`;
         if(sa>=0&&sb<0)return `「${a.name}${a.reversed?'逆位':'正位'}」原本有「${ak}」的動能，到了「${b.name}${b.reversed?'逆位':'正位'}」則出現「${bk}」的代價或失衡；前面的亮點仍然存在，但不能因此忽略後續成本。`;
@@ -1476,7 +1541,10 @@
       function teacherHeadline(comp){
         const q=state.question,first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1];
         if(state.topic.id==='love'&&state.scenario.id==='single'&&q.type==='obstacle')return `你不是沒有想開始，而是內在仍把「靠近」和「可能受傷」綁在一起`;
-        if(state.topic.id==='love'&&state.scenario.id==='single'&&q.type==='state')return `你已經不是完全封閉，而是正在從「${shortRelationshipTheme(first)}」走向「${shortRelationshipTheme(last)}」；真正的準備度卡在「${shortRelationshipTheme(mid)}」能不能被你用更成熟的方式承接`;
+        if(state.topic.id==='love'&&state.scenario.id==='single'&&q.type==='state'){
+          if(first.name==='聖杯王牌'&&mid.name==='寶劍騎士'&&mid.reversed&&last.name==='聖杯七'&&!last.reversed)return `你的心其實已經打開了，但判斷與溝通還跑得太快；接下來最重要的是把心動變成看得清楚的選擇`;
+          return `你現在${shortRelationshipTheme(first)}；真正影響準備度的是你${shortRelationshipTheme(mid)}，而接下來${shortRelationshipTheme(last)}`;
+        }
         if(q.type==='feelings')return `真正要看的不是有沒有感覺，而是感覺能不能走到行動與承擔`;
         if(q.type==='external')return `這副牌可以提醒你哪裡值得確認，但不能把懷疑直接翻成事實`;
         if(q.type==='action')return `答案不只在「做或不做」，而在你用什麼節奏、界線與方法去做`;
@@ -1516,7 +1584,7 @@
         if(state.topic.id==='love'&&state.scenario.id==='single')return [
           ['練習「小幅度主動」，不要等到完全確定','下一次遇到有點好感、互動還不錯的人，不要立刻判斷能不能交往。先做一件很小的事：多回一句、多問一個問題、答應一次低壓的見面。你現在需要的不是一次把愛情決定完，而是重新讓自己熟悉「靠近一點也仍然安全」。'],
           ['把「不確定」和「不安全」分開','當你想退縮時，先把客觀事實和腦中劇本分成兩欄。說謊、反覆失信、界線混亂是警訊；但回覆慢一點、還不知道會不會長久，很多時候只是正常的不確定。不要讓保護機制替你把尚未發生的可能一起關掉。'],
-          [`讓「${last.name}${last.reversed?'逆位':'正位'}」變成一個兩週實驗`,`從「${signal(last,2)}」挑一件能看見的行動，例如更清楚地表達、固定一次互動、加入一個新的社交場景，或停止某種過度預判。兩週後只看現實回饋：你是否比以前更能留下來觀察，而不是一有風險感就撤退。`]
+          [`用「${last.name}${last.reversed?'逆位':'正位'}」做一次現實校正`,`${concreteAction(last)} 兩週後只看現實回饋：你是否比以前更能分清楚感覺、想像與真正發生的事。`]
         ];
         if(state.topic.id==='love'&&state.scenario.id==='breakup')return [
           ['把「想念」和「適合重來」分開','有情感不代表舊問題已經解決。先列出當初真正造成分手的兩到三個核心問題，看現在是否出現不同做法，而不是只看聯絡有沒有回溫。'],
@@ -1546,7 +1614,7 @@
         const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1],q=state.question.type;
         const fs=signal(first,2),ms=signal(mid,2),ls=signal(last,2),mood=sentiment(mid);
         if(q==='state'){
-          if(mood>=0)return state.topic.id==='love'?`你現在真正的拉扯，不是單純「想要 vs 害怕」。${shortRelationshipTheme(first)}會先影響你怎麼靠近，而${shortRelationshipTheme(mid)}是你內在用來判斷安全與價值的標準；最後雖然出現${shortRelationshipTheme(last)}，但只有當前兩層不再互相牽制，這個方向才有機會真正落地。`:`你現在真正的拉扯，不是單純「想要 vs 害怕」。第一張的「${fs}」會先影響你當下的感受與姿態，但中間其實已經出現「${ms}」這股能往外走的力量；矛盾在於，你能不能讓這股力量穿過前面的不確定，最後真的走到「${ls}」所代表的穩定方向。`;
+          if(mood>=0)return state.topic.id==='love'?`你現在真正的拉扯，不是單純「想要 vs 害怕」。第一張顯示你${shortRelationshipTheme(first)}；中間牌則顯示你${shortRelationshipTheme(mid)}。這兩股力量如果不同步，即使最後出現「${shortRelationshipTheme(last)}」的可能，你也容易一邊靠近、一邊用舊方法把自己拉回去。`:`你現在真正的拉扯，不是單純「想要 vs 害怕」。第一張的「${fs}」會先影響你當下的感受與姿態，但中間其實已經出現「${ms}」這股能往外走的力量；矛盾在於，你能不能讓這股力量穿過前面的不確定，最後真的走到「${ls}」所代表的穩定方向。`;
           return `你一方面會用「${fs}」維持安全，另一方面深層的「${ms}」又讓你難以完全往前；所以真正的矛盾不是你沒有想要「${ls}」，而是目前的保護方式仍在消耗前進能力。`;
         }
         if(q==='obstacle')return `第一張的「${fs}」是你最先感受到的卡點，中間的「${ms}」則比較像讓它反覆出現的心理條件；你真正想要的不是消滅所有不安，而是讓最後的「${ls}」有空間變成新的反應。`;
@@ -1638,6 +1706,64 @@
         if(q.type==='feelings')return `心理視角不急著替對方讀心，而是看雙方在靠近、退開、等待與防衛之間怎麼互相影響。最重要的是分清楚「有感受」和「有能力承擔關係」是不是同一件事。`;
         return `心理視角不把牌當成預言，而是把它們當成一張內在地圖：你在保護什麼、害怕失去什麼、又有哪些需要其實已經準備好被看見。`;
       }
+      const MINOR_PSYCH_SPECIFIC={
+        '權杖王牌':['避免錯過開始與行動時機','太急著把第一股熱度當成答案，或反過來怕失敗而一直不開始','只做一個低風險的第一步，讓回饋決定下一步'],
+        '權杖二':['避免走錯方向與失去主導','一直比較未來版本，最後把規劃變成不行動','先選一個小方向試七天，不需要先決定整段關係'],
+        '權杖三':['避免投入後看不到成果','太早檢查回報，進展不明顯就想撤退','把目標改成取得真實進展，而不是立刻證明結果'],
+        '權杖四':['保護歸屬感與穩定感','為了維持和諧而忽略真正不舒服的地方','保留舒服感，同時說出一個需要調整的現實細節'],
+        '權杖五':['避免在差異裡被壓過或失去位置','把磨合很快變成競爭、內耗或誰對誰錯','先確認這是可協調差異，還是真正的價值衝突'],
+        '權杖六':['保護被肯定與被選擇的感覺','太依賴對方的正面回應來確認自己值不值得','把回應當資料，不把掌聲當成自我價值'],
+        '權杖七':['保護界線與自主，不讓自己被推著走','防衛開得太滿，容易把正常靠近也當成挑戰','留下真正重要的界線，對可協商部分保持開放'],
+        '權杖八':['避免錯過節奏與機會','一加速就焦慮，一有變化就跟著情緒起伏','設定可持續的聯絡與互動節奏，不追著每個訊號跑'],
+        '權杖九':['避免再次受傷','長期備戰，還沒發生的風險也先當成威脅','警報響起時先查證現在，再決定要不要退'],
+        '權杖十':['避免事情失控或沒人承擔','把責任全扛在自己身上，最後累到覺得關係都是負擔','明確分工，至少讓對方承擔一次可見責任'],
+        '權杖侍者':['避免錯過新鮮訊號與可能性','好奇很多但容易分心，互動停在試水溫','用一個真誠問題換取真實資訊，再決定要不要繼續'],
+        '權杖騎士':['避免停滯與錯過機會','把熱度當成確定感，衝太快又容易突然降溫','把衝動縮成一次具體邀約，再看後續是否一致'],
+        '權杖皇后':['保護魅力、自主與自信','太在意被肯定時，魅力會變成控制或比較','做自己並保留界線，不用靠對方反應證明吸引力'],
+        '權杖國王':['保護方向感與主導權','太想掌控進度，別人很難真正參與','把主導改成清楚邀請，再讓對方承擔自己的選擇'],
+        '聖杯王牌':['保護剛打開的情感入口，不想太早被消耗','太怕失望會讓「慢一點」變成一直不讓感受落地','只承諾下一步，允許好感存在但不提前保證結果'],
+        '聖杯二':['保護對等與互相選擇的感覺','太在意同步時，任何節奏差都容易被解讀成不對等','看雙方是否持續互相靠近，而不是要求每一刻都一樣熱'],
+        '聖杯三':['保護輕鬆、被接納與群體連結','可能用熱鬧避免真正的一對一靠近，或被旁人意見干擾','保留社交支持，同時創造一次真正的一對一互動'],
+        '聖杯四':['保護自己不再對不值得的東西投入','觀望太久會把正常的「還沒心動」變成永久關門','給不排斥的機會多一次互動，再用現實決定'],
+        '聖杯五':['保護自己不要再次經歷同樣失落','注意力會一直回到失去與遺憾，看不到仍可使用的關係資源','承認失落，同時列出現在仍存在的三個支持與選項'],
+        '聖杯六':['保護熟悉感與情感連續性','容易把熟悉誤認成適合，把現在的人套進過去劇本','問自己喜歡的是眼前這個人，還是熟悉的感覺'],
+        '聖杯七':['保留選項，避免太早選錯或失去可能性','想像與投射太多，越比較越難知道什麼是真的','縮小選項，只用可驗證的行為判斷，不替空白處補故事'],
+        '聖杯八':['保護自己不要一直留在不再滿足的狀態','害怕改變時會反覆回頭，離開與留下都很消耗','說清楚你不再願意接受什麼，再把時間投向新的生活'],
+        '聖杯九':['保護滿足感與自我肯定','容易把願望成真或被選中當成唯一證明','先確認真正想要的關係感受，不只追求得到某個人'],
+        '聖杯十':['保護歸屬、家庭感與長期幸福的想像','理想太完整時，容易要求關係太早證明能不能走到最後','把長期願景拆成日常一致性，一步一步看相容性'],
+        '聖杯侍者':['保護柔軟與剛萌芽的情感','太敏感時會把小訊號放大，或只靠感覺猜故事','回應情緒訊號，但只把它當開始，不提前命名關係'],
+        '聖杯騎士':['保護浪漫、被追求與情感流動','容易把浪漫姿態當成承諾，或一失望就快速降溫','享受靠近，但用後續一致行動確認它能不能落地'],
+        '聖杯皇后':['保護深度連結與被理解的需要','共感過強時界線變薄，容易替對方承擔情緒','允許自己感受很多，但只為自己的選擇負責'],
+        '聖杯國王':['保護情緒穩定與成熟形象','過度管理情緒會變成不說需求、只剩控制表面','保持穩定，同時說出一個真實需求或不舒服'],
+        '寶劍王牌':['保護清楚與真相，不想被模糊牽著走','太急著切開問題時，容易把複雜關係簡化成非黑即白','把最需要確認的一件事問清楚，其他先保留未知'],
+        '寶劍二':['避免做錯選擇與承受後果','用猶豫維持暫時安全，最後讓不決定變成結果','設定期限補資料，到期後做一個可回看的選擇'],
+        '寶劍三':['避免再次被同一種痛刺傷','舊傷會讓你把新訊號也先當成危險','承認哪個點仍會痛，再檢查眼前是否真的有同樣證據'],
+        '寶劍四':['保護神經與判斷不要繼續耗盡','休息變成逃避時，外界也永遠沒有新資料進來','先真正休息，再替自己安排一個低壓回到互動的時間'],
+        '寶劍五':['避免在衝突裡吃虧或被壓過','關係容易變成勝負、辯論與先退出就不算輸','停下輸贏，改問這場衝突真正要保護的是哪個需要'],
+        '寶劍六':['保護自己離開高壓與混亂','身體往前走，心裡卻一直把舊包袱帶著','做一個能明確區分「以前／現在」的新生活安排'],
+        '寶劍七':['避免完全暴露自己與失去策略空間','試探、隱瞞與猜測會先消耗信任','停止一次測試，改成一個直接但有界線的確認'],
+        '寶劍八':['避免做出看似沒有退路的選擇','把限制想成絕對事實，最後看不到其實存在的出口','列出三個「我不能」，逐條查證它究竟是事實還是假設'],
+        '寶劍九':['避免最壞情況真的發生','反覆預演災難會讓焦慮看起來像證據','焦慮升高時延後回應，先分開事實與最壞劇本'],
+        '寶劍十':['避免再被拖進已經無法承受的局面','不肯真正收尾時，舊痛會一直用新形式回來','替一個已走完的模式做明確收尾，不再靠反覆查看維持連結'],
+        '寶劍侍者':['避免漏掉重要訊號與資訊','過度蒐集會變成偵查與疑神疑鬼','少查一次、多問一次，用真實回答取代想像'],
+        '寶劍騎士':['避免停在不確定裡，想快速取得答案與控制感','速度會被誤當成確定，容易太快分析、定義、追問或出手','把衝動縮成一個低風險問題或需求，說完後留時間看回饋'],
+        '寶劍皇后':['保護界線、自尊與不被話術影響','理性過度時會變成冷與切割，還沒確認就先關門','用一句清楚界線取代冷淡，既不討好也不隔離'],
+        '寶劍國王':['保護秩序、公平與成熟判斷','標準太硬時會把人變成條件清單，情緒資訊被排除','先定義判斷標準，再把感受也列入資料，不只看邏輯'],
+        '錢幣王牌':['保護能落地、值得投入的開始','太怕浪費資源會讓機會永遠停在評估','替感情留一個真實時段，讓機會有地方發生'],
+        '錢幣二':['保護生活平衡與既有節奏','一直維持所有事情時，感情永遠只能插空','重新排一次優先順序，替互動留固定空間'],
+        '錢幣三':['保護合作品質與彼此可靠度','合作失衡時容易覺得最後還是自己做比較快','讓對方參與一件小安排，觀察他是否真的能補位'],
+        '錢幣四':['保護安全感、資源與已有秩序','抓太緊會把交換、信任與別人參與的空間一起鎖住','保留核心底線，刻意放手一個低風險細節讓對方決定'],
+        '錢幣五':['避免再次陷入匱乏與沒有支持的感覺','匱乏感會讓你先假設自己不被選擇或沒有資源','先處理現實壓力並接受可用支持，再判斷關係本身'],
+        '錢幣六':['保護互惠與公平交換','太在意誰多誰少時，付出容易變成人情帳','連續觀察付出是否雙向，用模式而不是單次計分'],
+        '錢幣七':['保護長期投入不要白費','太急著看結果會把正常等待解讀成沒希望','設定合理觀察期，到期再評估是否值得繼續'],
+        '錢幣八':['保護品質與讓自己做得更好','完美主義會讓你把關係問題全變成自己的作業','只練一個關係技能，也要求對方有可見的投入'],
+        '錢幣九':['保護獨立、生活品質與自我掌控','自給自足過頭時，別人很難真正參與你的生活','保留自己的生活，同時固定開一小塊空間給新的連結'],
+        '錢幣十':['保護長期穩定、家庭與資源結構','太早審核能不能走一輩子，會讓現在的互動像面試','先談一個現實價值題，看能不能一起生活，而不是一次判定終身'],
+        '錢幣侍者':['保護務實與可學習的開始','一直準備會讓「更成熟再開始」變成拖延','做一個小而實際的行動，讓經驗本身成為學習'],
+        '錢幣騎士':['保護可靠、規律與可預期','穩定過度會變成停滯，什麼都安全但沒有進展','保留規律，同時加入一個小變化看關係是否能承接'],
+        '錢幣皇后':['保護生活、資源與照顧品質','很會照顧別人時容易忽略自己，把有用當成被愛的理由','先照顧自己的作息、資源與需求，再從有餘裕的位置付出'],
+        '錢幣國王':['保護長期承擔與現實安全','過度依賴條件與掌控資源會讓關係缺少情感彈性','把可靠變成可見行為，也允許對方用自己的方式承擔']
+      };
       function psychFunction(card){
         const rank=String(card.number||''),rev=card.reversed;
         const major={
@@ -1665,6 +1791,7 @@
           '世界':['保護完整感與已建立的秩序','容易因怕破壞平衡而抗拒新階段','承認完成，同時替下一階段留空間']
         };
         if(major[card.name]){const [protect,cost,repair]=major[card.name];return {protect,cost:rev?`逆位時更容易出現：${cost}`:cost,repair};}
+        if(MINOR_PSYCH_SPECIFIC[card.name]){const [protect,cost,repair]=MINOR_PSYCH_SPECIFIC[card.name];return {protect,cost:rev?`逆位時更容易出現：${cost}`:cost,repair};}
         const rankMap={
           'Ace':['避免一開始就投入太深','因此容易把第一步拖成等待','只承諾下一步，不需要先承諾結果'],
           '2':['避免選錯方向或太早暴露猶豫','因此容易卡在比較、觀望與「再等等」','先做一個小選擇，讓現實提供新資料'],
@@ -1756,7 +1883,7 @@
       }
       function consensusHTML(comp){
         const last=state.current[state.current.length-1],mid=state.current[Math.floor(state.current.length/2)],first=state.current[0];
-        return `<div class="consensus-panel"><div class="consensus-head"><b>四鏡共識｜同一副牌，不重抽</b><span>CONSENSUS · V8.3</span></div><div class="consensus-grid"><div class="consensus-item"><small>四個視角都同意</small><p>${esc(teacherHeadline(comp))}</p></div><div class="consensus-item"><small>最需要保留的不確定</small><p>${esc(guardrail())}</p></div><div class="consensus-item"><small>最值得帶回現實驗證</small><p>${esc(`先觀察「${mid.name}」指出的核心條件，再看「${last.name}${last.reversed?'逆位':'正位'}」是否真的變成持續行動，而不是只出現一次。`)}</p></div></div><div class="consensus-foot">共識主線｜${esc(`${first.name} → ${mid.name} → ${last.name}`)}｜四份解讀可以角度不同，但不能彼此改寫同一副牌的基本事實。</div></div>`;
+        return `<div class="consensus-panel"><div class="consensus-head"><b>四鏡共識｜同一副牌，不重抽</b><span>CONSENSUS · V8.4</span></div><div class="consensus-grid"><div class="consensus-item"><small>四個視角都同意</small><p>${esc(teacherHeadline(comp))}</p></div><div class="consensus-item"><small>最需要保留的不確定</small><p>${esc(guardrail())}</p></div><div class="consensus-item"><small>最值得帶回現實驗證</small><p>${esc(`先觀察「${mid.name}」指出的核心條件，再看「${last.name}${last.reversed?'逆位':'正位'}」是否真的變成持續行動，而不是只出現一次。`)}</p></div></div><div class="consensus-foot">共識主線｜${esc(`${first.name} → ${mid.name} → ${last.name}`)}｜四份解讀可以角度不同，但不能彼此改寫同一副牌的基本事實。</div></div>`;
       }
       function readerJourneyFooter(key){
         const order=['a','b','c','d'];
@@ -1779,7 +1906,7 @@
       function buildArchiveText(){
         const now=new Date();
         const parts=[
-          'DivinationHub 塔羅四鏡解牌｜完整備份 V8.3',
+          'DivinationHub 塔羅四鏡解牌｜完整備份 V8.4',
           '==================================================',
           `備份時間：${now.toLocaleString('zh-TW',{hour12:false})}`,
           `主題：${state.topic?.name||''}`,
@@ -1848,17 +1975,57 @@
         const comp=composition(),tags=[];if(comp.major)tags.push(`${comp.major} 張大阿爾克那`);if(comp.topSuit&&comp.topCount>=2)tags.push(`${comp.topSuit}偏強`);tags.push(`${comp.rev}/${state.current.length} 張逆位`);
         const a=readerAHTML(comp,tags),b=readerBHTML(comp),c=readerCHTML(comp),d=readerDHTML(comp);
         state.readerBodies={a,b,c,d};state.readersViewed=new Set(['a']);
-        els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · SAME CARDS · SEQUENTIAL READING</div><h3 class="analysis-title">四鏡解牌｜V8.3</h3></div><div class="analysis-actions"><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製 AI 解牌提示詞</button></div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">SAME CARDS · DIFFERENT LENSES</div><h4>同一副牌，四位老師依序讀完</h4><p>先完整讀 A；文章底部會直接帶你到 B，再依序到 C、D。切換時會自動移到下一篇開頭，不必再往上找按鈕。</p></div><div class="same-cards-chip">NO REDRAW · 4 READERS</div></div>${readerPane('a','A｜首席綜合老師','把逐牌、因果、故事與直接答案整合成一份完整主解讀。','✦',a,true)}${readerPane('b','B｜心理老師','不讀心、不貼標籤，專看防衛、需求、界線與內在拉扯。','☾',b)}${readerPane('c','C｜理性老師','把牌面訊號和現實證據分開，避免因一張牌就把事情說死。','◇',c)}${readerPane('d','D｜行動老師','不再重複玄學描述，直接把牌面翻成你下一步可以做的事情。','↗',d)}${consensusHTML(comp)}<div class="reader-tip"><b>V8.3 閱讀流程：</b>A → B → C → D。四鏡全部看過後，D 的底部才會解鎖「進行追問」。完成追問與最終整合判讀後，才會出現 TXT 完整備份下載。</div></div><div class="ai-prompt-note" style="margin-top:14px">想要第五種意見？「複製 AI 解牌提示詞」會帶入同一個問題、牌位、牌名與正逆位，可直接貼到其他 AI，不會重新抽牌。</div><div class="guardrail-note">解讀界線｜${esc(guardrail())}</div>`;
+        els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · SAME CARDS · SEQUENTIAL READING</div><h3 class="analysis-title">四鏡解牌｜V8.4</h3></div><div class="analysis-actions"><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製 AI 解牌提示詞</button></div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">SAME CARDS · DIFFERENT LENSES</div><h4>同一副牌，四位老師依序讀完</h4><p>先完整讀 A；文章底部會直接帶你到 B，再依序到 C、D。切換時會自動移到下一篇開頭，不必再往上找按鈕。</p></div><div class="same-cards-chip">NO REDRAW · 4 READERS</div></div>${readerPane('a','A｜首席綜合老師','把逐牌、因果、故事與直接答案整合成一份完整主解讀。','✦',a,true)}${readerPane('b','B｜心理老師','不讀心、不貼標籤，專看防衛、需求、界線與內在拉扯。','☾',b)}${readerPane('c','C｜理性老師','把牌面訊號和現實證據分開，避免因一張牌就把事情說死。','◇',c)}${readerPane('d','D｜行動老師','不再重複玄學描述，直接把牌面翻成你下一步可以做的事情。','↗',d)}${consensusHTML(comp)}<div class="reader-tip"><b>V8.4 閱讀流程：</b>A → B → C → D。四鏡全部看過後，D 的底部才會解鎖「進行追問」。完成追問與最終整合判讀後，才會出現 TXT 完整備份下載。</div></div><div class="ai-prompt-note" style="margin-top:14px">想要第五種意見？「複製 AI 解牌提示詞」會帶入同一個問題、牌位、牌名與正逆位，可直接貼到其他 AI，不會重新抽牌。</div><div class="guardrail-note">解讀界線｜${esc(guardrail())}</div>`;
         els.analysis.hidden=false;updateReaderJourney();
       }
 
 
 
+      function sameCardFlipPair(){
+        if(!state.followupCards?.length)return null;
+        for(const f of state.followupCards){
+          const main=state.current.find(c=>c.name===f.name&&c.reversed!==f.reversed);
+          if(main)return {main,follow:f};
+        }
+        return null;
+      }
+      function sameCardFlipInsight(){
+        const pair=sameCardFlipPair();
+        if(!pair)return null;
+        const {main,follow}=pair;
+        const special={
+          '聖杯七':{
+            headline:'同一張聖杯七從正位走到逆位：這次追問沒有換題，而是直接把修正方向寫出來——收回幻想、縮小選項、用現實做選擇。',
+            story:'主牌的聖杯七正位先把「可能性太多、投射太多、還沒看清楚」放到近期走向；追問又抽到同一張聖杯七逆位，等於把同一課題翻到另一面：現在真正需要的不是更多選項，而是減少想像、縮小範圍，讓實際行為替你淘汰不合適的可能。這是很清楚的「失焦 → 收斂」修正。',
+            direct:'最重要的新結論是：你的問題不在沒有感情機會，而在可能性太多時容易讓想像跑在現實前面。追問的聖杯七逆位已經把方向縮得很清楚——少猜一點、少同時評估太多版本，先用三個以上可驗證的事實再決定要不要投入。'
+          },
+          '寶劍三':{
+            headline:'同一張寶劍三由正逆位互換，表示這次追問仍在處理同一個傷口：重點不是再證明受過傷，而是看修復是否真的開始影響新的選擇。',
+            story:'同一張寶劍三以相反方向再次出現，代表主題沒有換，只是從「痛本身」轉向「怎麼處理痛」。這種重複比抽到另一張完全不同的牌更值得重視，因為它把修復與舊傷的影響直接放到同一條軸線上。',
+            direct:'最重要的新結論是：舊傷仍然重要，但現在真正需要驗證的是，你是否已經能在新的互動裡做出不同反應，而不是讓過去自動替現在判刑。'
+          },
+          '月亮':{
+            headline:'同一張月亮以相反方向再次出現，表示核心課題仍是「不確定怎麼被看待」：從霧裡猜測，走向讓事實慢慢浮現。',
+            story:'月亮正逆位互換時，通常不是出現一個全新的問題，而是同一份不確定正在被重新處理：一面是直覺、恐懼與想像混在一起，另一面則是開始讓資訊與現實逐步取代猜測。',
+            direct:'最重要的新結論是：你不需要逼自己完全沒有疑慮，只需要讓每一次判斷多一個可驗證事實，少一個自動補上的劇本。'
+          }
+        };
+        if(special[main.name])return {...special[main.name],pair};
+        const mainDir=main.reversed?'逆位':'正位',followDir=follow.reversed?'逆位':'正位';
+        return {
+          pair,
+          headline:`同一張「${main.name}」從${mainDir}再以${followDir}出現：追問沒有換主題，而是在同一課題上要求你調整使用方式。`,
+          story:`主牌中的「${main.name}${mainDir}」先把「${signal(main,2)}」放進原本故事，追問又出現同一張「${main.name}${followDir}」，表示這不是另一個無關訊號，而是同一課題正在從一種表現走向另一種表現。最值得看的不是兩張誰好誰壞，而是：你能不能把「${signal(main,2)}」修正成「${signal(follow,2)}」更成熟、可落地的版本。`,
+          direct:`最重要的新結論是：這次追問把主題收得非常集中。你不需要再找新的答案，而是要在同一個「${main.name}」課題上，看自己是否真的從「${signal(main,2)}」走向「${signal(follow,2)}」。`
+        };
+      }
       function finalSynthesisHeadline(){
         const first=state.current[0],mainMid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1],f=state.followupCards?.[0];
         if(!f)return teacherHeadline(composition());
+        const flip=sameCardFlipInsight();
+        if(flip)return flip.headline;
         const q=state.question.type;
-        if(state.topic.id==='love'&&q==='state')return `你已經在從「${shortRelationshipTheme(first)}」往「${shortRelationshipTheme(last)}」移動；追問的「${f.name}${f.reversed?'逆位':'正位'}」提醒你，真正需要調整的不是更快找到答案，而是${psychFunction(f).repair}。`;
+        if(state.topic.id==='love'&&q==='state')return `主牌顯示你現在${shortRelationshipTheme(first)}，但更深層${shortRelationshipTheme(mainMid)}；近期${shortRelationshipTheme(last)}。追問的「${f.name}${f.reversed?'逆位':'正位'}」把修正方向縮到一件事：${psychFunction(f).repair}。`;
         if(state.topic.id==='love'&&q==='obstacle')return `主牌先把卡點與來源拆開，追問的「${f.name}${f.reversed?'逆位':'正位'}」則指出最值得先動的那一環：${psychFunction(f).repair}。`;
         if(q==='feelings')return `主牌描述了感受與靠近條件，追問的「${signal(f,2)}」則提醒你：真正要相信的仍是可驗證的互動，而不是替對方把內心故事補完整。`;
         if(q==='action')return `原本的牌陣已經給出行動方向，追問再把方法縮小一步：${concreteAction(f)}。`;
@@ -1869,7 +2036,9 @@
         const comp=composition(),f=state.followupCards?.[0],first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1];
         const base=directAnswerDeep(comp).filter(Boolean).slice(0,2).join(' ');
         if(!f)return base;
-        if(state.topic.id==='love'&&state.question.type==='state')return `直接回答：你已經具備進入新關係的一部分準備，但不是「完全好了才可以開始」的狀態。${shortRelationshipTheme(first)}仍會影響你現在怎麼靠近，${shortRelationshipTheme(mid)}則是你深層用來判斷安全與長期性的標準；近期的「${shortRelationshipTheme(last)}」顯示接受度正在變化。追問的「${f.name}${f.reversed?'逆位':'正位'}」進一步指出，最值得先調整的是：${psychFunction(f).repair}。也就是說，你真正需要的不是把風險降到零，而是用新的方式保護自己，讓新的機會不必再通過舊模式的考試。`;
+        const flip=sameCardFlipInsight();
+        if(flip)return flip.direct;
+        if(state.topic.id==='love'&&state.question.type==='state')return `直接回答：你已經具備進入新關係的一部分準備，不需要等到「完全沒有疑慮」才開始。你現在${shortRelationshipTheme(first)}；真正需要留意的是${shortRelationshipTheme(mid)}；近期則${shortRelationshipTheme(last)}。追問的「${f.name}${f.reversed?'逆位':'正位'}」把最需要調整的地方縮到：${psychFunction(f).repair}。所以重點不是把風險降到零，而是讓你的感受、判斷與選擇開始用同一個節奏往前。`;
         return `${base} 追問補出的「${f.name}${f.reversed?'逆位':'正位'}」把最需要調整的焦點放在「${signal(f,3)}」。這張牌不是新結論，而是把原本主線縮小成一個更具體的入口。最後仍要回到「${last.name}${last.reversed?'逆位':'正位'}」所在牌位，觀察現實是否真的朝「${signal(last,2)}」發展。`;
       }
       function finalSynthesisActions(){
@@ -1892,20 +2061,26 @@
         let mainStory='';
         let followStory='';
         if(state.topic.id==='love'){
-          mainStory=`主牌的故事不是三個關鍵字相加，而是一個過渡：${roleAwareDeep(first)} ${roleAwareDeep(mid)} ${roleAwareDeep(last)} 換句話說，${naturalMainStory()}`;
-          const pf=psychFunction(f);
-          followStory=`追問「${state.followupQuestion}」抽到「${f.name}${f.reversed?'逆位':'正位'}」，它沒有改寫前面的故事，而是指出最值得先動的環節。這張牌原本想保護的是「${pf.protect}」，但如果過度使用，代價會變成「${pf.cost}」。因此真正的修正不是否定自己，而是「${pf.repair}」。如果這一點開始改變，原本最後一張「${last.name}${last.reversed?'逆位':'正位'}」所代表的方向才更有機會從可能性變成現實。`;
+          mainStory=`主牌先說的是：${naturalMainStory()} 其中「${mid.name}${mid.reversed?'逆位':'正位'}」之所以重要，不是因為它比較壞，而是它落在深層位置，最能說明你為什麼會用現在這種方式靠近、判斷或保護自己。`;
+          const flip=sameCardFlipInsight();
+          if(flip){
+            followStory=flip.story;
+          }else{
+            const pf=psychFunction(f);
+            followStory=`追問「${state.followupQuestion}」抽到「${f.name}${f.reversed?'逆位':'正位'}」，它沒有改寫前面的故事，而是把最值得先調整的地方放大。這張牌原本想保護的是「${pf.protect}」，但過度使用時會變成「${pf.cost}」。真正的修正是：${pf.repair}。這樣做的目的不是變成另一個人，而是讓原本最後一張牌代表的方向有機會真正落地。`;
+          }
         }else{
           mainStory=`原本主牌先建立「${signal(first,2)} → ${signal(mid,2)} → ${signal(last,2)}」的主線。${transitionDeep(first,mid)} ${transitionDeep(mid,last)}`;
           followStory=`追問「${state.followupQuestion}」抽到「${f.name}${f.reversed?'逆位':'正位'}」，它把焦點收斂到「${signal(f,3)}」。${cardMetaphor(f)} ${topicManifestation(f)} 這不是把原本三張推翻，而是告訴你：原本的故事裡，哪一個環節最值得先動。`;
         }
-        const psychology=state.topic.id==='love'?`心理層真正值得看的是「你如何保護自己」。主牌描述了目前反應、深層判準與後續接受度；追問牌則把保護機制再拉近。這些都只能當成可能的內在模式，不代表你過去一定發生過某件事。`:`心理角度看，主牌描述的是一套正在運作的保護／推進模式；追問牌則像把鏡頭拉近。你可以把它當成「我在什麼情境下最容易自動回到舊反應」的提示，而不是把它當成對人格或過去經歷的診斷。`;
+        const flipInsight=sameCardFlipInsight();
+        const psychology=state.topic.id==='love'?`心理層真正值得看的是「你如何保護自己」。主牌描述了目前反應、深層判準與後續接受度；追問牌則把保護機制再拉近。${flipInsight?'同一張牌以相反方向再次出現，表示修正焦點非常集中：不是換一個問題，而是同一個模式要換一種用法。':''}這些都只能當成可能的內在模式，不代表你過去一定發生過某件事。`:`心理角度看，主牌描述的是一套正在運作的保護／推進模式；追問牌則像把鏡頭拉近。你可以把它當成「我在什麼情境下最容易自動回到舊反應」的提示，而不是把它當成對人格或過去經歷的診斷。`;
         const evidence=`理性角度看，目前可以較有把握地說的是牌位之間的結構與重複訊號；仍不能從牌面補出具體過往事件、第三者或他人未說出口的內心事實。${guardrail()}`;
         const direct=finalSynthesisDirectAnswer();
         const actions=finalSynthesisActions();
-        const html=`<section class="final-synthesis"><div class="final-synthesis-kicker">FINAL INTEGRATION · MAIN SPREAD + FOLLOW-UP · V8.3</div><h4>追問後最終整合判讀</h4><div class="final-synthesis-lead"><b>${esc(lead)}</b></div><div class="final-synthesis-grid"><div class="final-synthesis-card"><small>原主牌主線</small><b>${esc(`${first.name} → ${mid.name} → ${last.name}`)}</b><p>${esc(naturalMainStory())}</p></div><div class="final-synthesis-card"><small>追問新增焦點</small><b>${esc(`${f.name}${f.reversed?'逆位':'正位'}｜${signal(f,2)}`)}</b><p>${esc('補牌不是另起一局，而是指出原主線裡最值得先調整的環節。')}</p></div><div class="final-synthesis-card"><small>最後驗證方向</small><b>${esc(`${last.name}${last.reversed?'逆位':'正位'}｜${signal(last,2)}`)}</b><p>${esc('看這個方向是否真的變成持續行為，而不是只出現一次。')}</p></div></div><div class="final-synthesis-section"><h5>一、主牌與補牌現在如何接成同一個故事</h5><p>${esc(mainStory)}</p><p>${esc(followStory)}</p></div><div class="final-synthesis-section"><h5>二、心理與理性兩層一起看</h5><p><b>心理層：</b>${esc(psychology)}</p><p><b>證據層：</b>${esc(evidence)}</p></div><div class="final-synthesis-section"><h5>三、最後直接回答</h5><p>${esc(direct)}</p></div><div class="final-synthesis-section"><h5>四、接下來只做三件事</h5><ol class="final-synthesis-actions">${actions.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div><span class="final-synthesis-badge">${esc(cardsLine)} · NO REDRAW</span></section>`;
+        const html=`<section class="final-synthesis"><div class="final-synthesis-kicker">FINAL INTEGRATION · MAIN SPREAD + FOLLOW-UP · V8.4</div><h4>追問後最終整合判讀</h4><div class="final-synthesis-lead"><b>${esc(lead)}</b></div><div class="final-synthesis-grid"><div class="final-synthesis-card"><small>原主牌主線</small><b>${esc(`${first.name} → ${mid.name} → ${last.name}`)}</b><p>${esc(naturalMainStory())}</p></div><div class="final-synthesis-card"><small>追問新增焦點</small><b>${esc(`${f.name}${f.reversed?'逆位':'正位'}｜${signal(f,2)}`)}</b><p>${esc('補牌不是另起一局，而是指出原主線裡最值得先調整的環節。')}</p></div><div class="final-synthesis-card"><small>最後驗證方向</small><b>${esc(`${last.name}${last.reversed?'逆位':'正位'}｜${signal(last,2)}`)}</b><p>${esc('看這個方向是否真的變成持續行為，而不是只出現一次。')}</p></div></div><div class="final-synthesis-section"><h5>一、主牌與補牌現在如何接成同一個故事</h5><p>${esc(mainStory)}</p><p>${esc(followStory)}</p></div><div class="final-synthesis-section"><h5>二、心理與理性兩層一起看</h5><p><b>心理層：</b>${esc(psychology)}</p><p><b>證據層：</b>${esc(evidence)}</p></div><div class="final-synthesis-section"><h5>三、最後直接回答</h5><p>${esc(direct)}</p></div><div class="final-synthesis-section"><h5>四、接下來只做三件事</h5><ol class="final-synthesis-actions">${actions.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div><span class="final-synthesis-badge">${esc(cardsLine)} · NO REDRAW</span></section>`;
         const plain=[
-          '【追問後最終整合判讀｜V8.3】',
+          '【追問後最終整合判讀｜V8.4】',
           lead,'',
           '一、主牌與補牌如何接成同一個故事',mainStory,followStory,'',
           '二、心理與理性兩層一起看','心理層：'+psychology,'證據層：'+evidence,'',
