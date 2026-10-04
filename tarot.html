@@ -1543,1487 +1543,343 @@
   </section>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="tarot-core.js"></script>
-  <script>
-    (() => {
-      const TOPICS = [
-        {id:'love',icon:'♡',name:'感情關係',desc:'曖昧、交往、冷淡、分手、復合與桃花',scenarios:[['ambiguous','曖昧中','關係還沒說清楚，正在觀察彼此訊號'],['dating','交往中','已在關係裡，想理解目前互動與下一步'],['distant','冷淡／疏遠','聯絡變少、態度改變或關係卡住'],['breakup','分手後','已經分開，正在面對復合與放下'],['reconcile','復合中','重新接觸或嘗試修復關係'],['single','單身桃花','目前單身，想看新的感情機會']]},
-        {id:'work',icon:'◇',name:'工作職場',desc:'在職、轉職、求職、升遷與主管同事',scenarios:[['employed','目前在職','想了解現在工作是否值得繼續投入'],['leave','正在考慮離職','留下或離開之間仍在衡量'],['jobhunt','求職／面試','正在找工作、投履歷或等待結果'],['newjob','剛到新工作','進入新環境，仍在適應與觀察'],['promotion','升遷／轉調','面對職位、部門或責任變化']]},
-        {id:'business',icon:'✦',name:'創業事業',desc:'創業、經營、合作、產品與擴張',scenarios:[['planning','準備創業','還在構想、評估與準備階段'],['running','已開始經營','事業已運作，正在找突破點'],['partner','合作夥伴','正在評估或處理共同經營關係'],['product','新產品／新方案','準備推出新的商品、服務或專案'],['scale','擴張／轉型','考慮增加投入、改方向或擴大規模']]},
-        {id:'finance',icon:'⬡',name:'財運金錢',desc:'收入、支出、資源配置與金錢壓力',scenarios:[['income','收入與機會','想改善收入或尋找新的財務機會'],['pressure','支出／財務壓力','目前金錢壓力較大，需要重新整理'],['bigdecision','大額金錢決定','面對大筆支出、投入或資源配置'],['moneyrelation','合作與金錢','牽涉分潤、借貸、報酬或共同資源'],['planning','長期財務規劃','想調整未來的金錢與資源安排']]},
-        {id:'people',icon:'☍',name:'人際關係',desc:'朋友、家人、同事、合作與衝突',scenarios:[['friend','朋友關係','友情、信任、距離或誤會'],['family','家庭關係','家人之間的互動與界線'],['coworker','同事／主管','職場人際、權責與合作'],['partner','合作關係','合作夥伴、客戶或共同計畫'],['conflict','疏遠／衝突','關係已出現摩擦、沉默或對立']]},
-        {id:'choice',icon:'⇄',name:'選擇決策',desc:'A/B、去留、行動與時機判斷',scenarios:[['ab','A／B 二選一','兩個具體方案之間難以取捨'],['act','要不要行動','正在考慮主動、提出、開始或停止'],['stayleave','留下／離開','一段關係、工作或環境的去留'],['timing','現在是不是時機','方向大致確定，但時點仍不確定'],['multi','多方案整理','選項很多，需要先找出判斷重點']]},
-        {id:'self',icon:'☾',name:'自我探索',desc:'情緒、盲點、卡點、成長與方向',scenarios:[['stuck','最近卡住','知道不順，卻說不清真正原因'],['emotion','情緒反覆','焦慮、矛盾、失落或難以放下'],['blindspot','想看自己的盲點','希望換個角度理解自己'],['growth','正在改變自己','處於調整習慣、關係或生活方式的階段'],['direction','找下一階段方向','想知道現在最值得投入的成長方向']]},
-        {id:'fortune',icon:'☼',name:'近期運勢',desc:'一週、一月與近期需要注意的主題',scenarios:[['week','未來一週','看短期節奏與最重要提醒'],['month','未來一個月','看接下來幾週的主要課題'],['love','近期感情','聚焦近期感情與互動氛圍'],['work','近期工作','聚焦近期工作、責任與機會'],['overall','近期整體提醒','不指定單一領域，先看整體重點']]}
-      ];
-
-      const SPREADS = {
-        state:{name:'三張牌｜現況結構',desc:'從目前表現、深層因素到近期走向，理解這個階段真正發生什麼。',positions:['目前表現','深層因素','近期走向']},
-        feelings:{name:'三張牌｜關係感受',desc:'看可觀察的態度、內在情緒線索與靠近／保持距離的傾向。',positions:['表面態度','內在感受','靠近／行動傾向']},
-        obstacle:{name:'三張牌｜阻礙拆解',desc:'找出主要阻礙、它的來源，以及目前比較可行的突破方向。',positions:['主要阻礙','阻礙來源','突破方向']},
-        future:{name:'三張牌｜近期發展',desc:'以目前條件為起點，看推動力量、變化關鍵與近期趨勢。',positions:['目前動能','變化關鍵','近期趨勢']},
-        action:{name:'三張牌｜行動判斷',desc:'看採取行動後的反應、風險與較有利做法。',positions:['行動後的反應','需要承擔的風險','較有利的做法']},
-        external:{name:'三張牌｜外部因素',desc:'判斷是否有其他人事物正在影響局勢，不把牌面直接當成第三者或欺騙的證據。',positions:['外部影響','如何作用於關係','需要保留的判斷']},
-        choice:{name:'五張牌｜A／B 比較',desc:'把兩個選項的優勢與代價分開，再回到真正的判斷標準。',positions:['A 的優勢','A 的代價','B 的優勢','B 的代價','真正應優先的判準']},
-        timing:{name:'三張牌｜時機判斷',desc:'看目前是否成熟、還欠哪個條件，以及下一個值得觀察的訊號。',positions:['目前時機','尚缺的條件','下一個觀察訊號']}
-      };
-
-      const BASE_Q = {
-        love:[['state','這個階段目前最需要看清的核心狀態是什麼？'],['feelings','對方目前對這段關係的態度與靠近意願如何？'],['obstacle','現在讓這段關係卡住的最大阻礙是什麼？'],['future','照目前狀態走下去，接下來一個月關係可能怎麼發展？'],['action','我現在採取什麼做法，對這段關係比較有利？'],['external','目前是否有其他人事物正在分散對方對這段關係的投入？']],
-        work:[['state','我目前在這個工作階段的真實狀態是什麼？'],['obstacle','現在最影響我工作發展的阻礙是什麼？'],['future','接下來一到三個月，工作局勢可能怎麼變化？'],['action','我現在最值得採取的職場行動是什麼？'],['timing','現在是推進改變的好時機嗎？'],['state','目前有哪些工作條件是我容易忽略的？']],
-        business:[['state','目前這個事業／創業階段的核心狀態是什麼？'],['obstacle','現在最可能拖慢事業發展的因素是什麼？'],['future','照目前方式經營，接下來的發展趨勢如何？'],['action','現在最值得優先投入的事情是什麼？'],['timing','現在適合擴張、推出或推進嗎？'],['state','我目前可運用但容易忽略的資源是什麼？']],
-        finance:[['state','我目前的財務狀態真正需要注意什麼？'],['obstacle','現在最影響財務改善的因素是什麼？'],['future','照目前狀態走下去，近期財務趨勢如何？'],['action','現在最值得優先調整的金錢策略是什麼？'],['timing','現在適合做這個較大的金錢決定嗎？'],['state','目前有哪些資源是我還沒有好好利用的？']],
-        people:[['state','這段人際關係目前真正處在什麼狀態？'],['feelings','對方目前對這段關係呈現什麼態度與距離？'],['obstacle','目前最大的誤會或阻礙是什麼？'],['future','照目前互動方式，接下來關係可能怎麼發展？'],['action','我現在怎麼處理比較有利？'],['external','是否有其他人事物正在影響這段關係？']],
-        choice:[['choice','A 與 B 各自的優勢與代價是什麼？'],['action','如果我現在採取行動，最需要注意什麼？'],['timing','現在是不是適合做決定的時機？'],['state','我真正卡住、難以決定的核心是什麼？'],['obstacle','目前哪個因素最容易讓我判斷失準？'],['action','什麼判斷原則對我最有利？']],
-        self:[['state','我現在真正處在什麼心理／人生狀態？'],['obstacle','我目前最大的內在卡點是什麼？'],['state','有哪些盲點是我現在比較難自己看見的？'],['action','我現在最值得做的調整是什麼？'],['future','如果持續現在的改變，接下來會往哪裡走？'],['state','我有哪些力量其實已經在形成？']],
-        fortune:[['state','近期最主要的能量與課題是什麼？'],['future','接下來這段時間最可能出現什麼變化？'],['obstacle','近期最需要避免或留意什麼？'],['action','近期最值得主動把握的方向是什麼？'],['state','近期哪個生活面向最需要我的注意？'],['timing','接下來什麼訊號出現時，代表可以更積極行動？']]
-      };
-
-      const SCENARIO_SPECIAL = {
-        'love:breakup':[['feelings','分手後，他目前對這段關係還留有多少情感與靠近意願？'],['future','我們還有重新建立關係的可能嗎？'],['obstacle','造成分手、現在仍未解決的核心問題是什麼？'],['action','我現在主動聯絡，對局勢比較有利嗎？'],['future','如果我暫時不主動，接下來一個月關係可能怎麼走？'],['external','目前是否有其他人事物正在影響他對這段關係的投入？'],['state','我現在最需要看清楚、但容易被情緒蓋住的是什麼？']],
-        'love:single':[['state','我目前進入新感情的狀態與準備度如何？'],['obstacle','現在最影響我開始新關係的內在阻礙是什麼？'],['future','近期是否容易出現值得認識的新對象或新互動？'],['action','我現在怎麼做，比較容易讓感情機會進來？'],['state','下一段關係我最需要避免重複什麼模式？'],['future','接下來一到三個月的感情氣氛如何？']],
-        'work:leave':[['state','我現在想離職，真正的核心原因是什麼？'],['choice','留下與離開，各自可能帶來什麼？'],['timing','現在適合提出離職或開始轉職嗎？'],['obstacle','如果離開，最需要先處理的現實風險是什麼？'],['future','如果繼續留下，接下來一到三個月工作可能怎麼發展？'],['action','我現在最值得先做的準備是什麼？']],
-        'choice:ab':[['choice','A 與 B 各自的優勢與代價是什麼？'],['state','我真正重視、卻可能還沒看清楚的判斷標準是什麼？'],['obstacle','目前哪個偏誤最容易影響我的選擇？'],['timing','現在已經到了適合做決定的時機嗎？'],['action','做決定前，最值得再確認哪一件事？']]
-      };
-
-      const FOLLOWUPS={
-        feelings:[['對方目前最大的顧慮是什麼？',['對方顧慮']],['目前真正讓他保持距離的是什麼？',['距離來源']],['我現在最需要看懂的訊號是什麼？',['需要看懂的訊號']],['如果我主動靠近，最可能遇到什麼反應？',['主動後的反應','需要注意的界線']]],
-        future:[['接下來最可能先出現的變化是什麼？',['最先出現的變化']],['什麼因素最可能改變目前趨勢？',['改變趨勢的因素']],['我現在最該觀察哪個現實訊號？',['現實觀察訊號']],['這個發展中我最需要避免什麼？',['需要避免的方向']]],
-        action:[['我現在最需要調整的是什麼？',['最需要調整']],['如果照這個建議做，最大的幫助是什麼？',['可能帶來的幫助']],['行動時最容易踩到什麼雷？',['行動風險']],['現在什麼事情其實不需要急著做？',['可以暫緩的事']]],
-        obstacle:[['這個阻礙最深層的來源是什麼？',['深層來源']],['我目前有能力突破它嗎？',['可用力量']],['第一個最實際的突破口在哪？',['第一個突破口']],['我最容易把哪件事想錯？',['容易誤判之處']]],
-        external:[['這個外部影響比較像人，還是其他現實因素？',['外部影響的性質']],['它對局勢的影響程度有多大？',['影響程度']],['我最需要避免做出什麼過度推論？',['判斷界線']],['現在最值得確認的現實資訊是什麼？',['需要確認的資訊']]],
-        choice:[['哪個選項更符合我的長期需要？',['長期需要']],['哪個代價最容易被我低估？',['容易低估的代價']],['做決定前還需要確認什麼？',['決定前確認']],['如果暫時不選，會帶來什麼？',['暫緩的影響']]],
-        timing:[['現在還欠哪個關鍵條件？',['尚缺的關鍵條件']],['什麼訊號出現，代表時機成熟？',['時機成熟訊號']],['如果現在硬推，最大風險是什麼？',['過早推進風險']],['等待期間最值得做什麼？',['等待期間的準備']]],
-        state:[['我現在最需要調整的是什麼？',['最需要調整']],['這個狀態背後真正的原因是什麼？',['深層原因']],['我已經具備、但容易忽略的優勢是什麼？',['已具備的優勢']],['接下來第一步最值得做什麼？',['下一步']]]
-      };
-
-      const SUIT_CONTEXT={
-        '權杖':{core:'行動力、熱情、企圖與推進速度',love:'在感情裡較像主動、吸引力、熱度與追求意願',work:'在工作裡偏向企圖心、專案推進、競爭與表現',business:'在事業裡代表創意、擴張、推動與執行力',finance:'在金錢上常指向開源動機、冒險性與行動帶來的收入機會',people:'在人際裡偏向互動火花、立場碰撞與誰先採取行動',choice:'在選擇裡提醒你看哪個方案更有動能與投入意願',self:'在自我層面代表生命力、勇氣與把想法化成行動',fortune:'在近期節奏上通常表示事情會動、需要回應機會'},
-        '聖杯':{core:'感情、情緒、關係感受與內在需求',love:'直接牽涉情感連結、依戀、接納與彼此感受',work:'在工作裡偏向滿足感、團隊氣氛與是否有情感認同',business:'在事業裡代表客戶感受、品牌共鳴、人際連結與願景認同',finance:'在金錢上提醒情緒性消費、滿足感與金錢帶來的安全感',people:'在人際裡代表親近感、信任、理解與情緒交流',choice:'在選擇裡提醒你不要忽略真正想要的感受與價值感',self:'在自我層面代表情緒需求、療癒與內在真實感受',fortune:'在近期節奏上容易把重點拉到關係、感受與心境變化'},
-        '寶劍':{core:'思考、溝通、決斷、壓力與真相',love:'在感情裡常反映溝通、猜測、防備、界線與理性衝突',work:'在工作裡偏向決策、壓力、溝通、制度與競爭思維',business:'在事業裡代表策略、談判、風險判斷與資訊',finance:'在金錢上較像計算、風險、焦慮與需要理性處理的問題',people:'在人際裡代表話語、誤會、立場差異與需要說清楚的事',choice:'在選擇裡要求你把資訊、風險與假設拆開來看',self:'在自我層面代表內在對話、焦慮、信念與認知模式',fortune:'在近期節奏上常表示需要處理資訊、決定或壓力'},
-        '錢幣':{core:'現實條件、資源、穩定、金錢與可持續性',love:'在感情裡較重視承諾、穩定、實際付出與能不能長期經營',work:'在工作裡直接關聯收入、技能、成果、職位與資源',business:'在事業裡代表現金流、產品落地、資源配置與穩健經營',finance:'在金錢問題裡是最直接的現實資源、收入與安全感訊號',people:'在人際裡偏向互惠、實際支持、責任與長期信任',choice:'在選擇裡提醒你比較可持續性、成本與真正能落地的條件',self:'在自我層面代表生活基礎、身體節奏、習慣與穩定感',fortune:'在近期節奏上多半表示事情要靠實際累積而不是突然翻轉'},
-        '大阿爾克那':{core:'較深層的人生主題、重要轉折與不能只用短期得失理解的課題'}
-      };
-
-      const RANK_CONTEXT={
-        'Ace':'事情正在形成新的入口，重點在願不願意開始與怎麼使用第一波能量',
-        '2':'兩股力量同時存在，常伴隨選擇、平衡或暫時無法定案',
-        '3':'事情開始從個人走向互動、合作或初步成果，需要看彼此能否接得上',
-        '4':'局勢想要穩定下來，但也可能因為太想維持安全而變得僵住',
-        '5':'進入摩擦與重新定位階段，問題通常不是完全失敗，而是舊平衡已經不夠用',
-        '6':'開始出現回饋、修復或往前推進的可能，但仍要看是否形成真正的互惠',
-        '7':'需要守住立場並接受考驗，容易出現防備、觀望或策略調整',
-        '8':'節奏加快，事情通常不再只停留在想法，而會進入明顯推進或壓力累積',
-        '9':'已經接近某個階段的完成，但同時也容易因為累積太久而變得疲憊或防備',
-        '10':'一個週期走到結果與責任浮現的位置，該收尾、承擔或重新分配負荷',
-        'Page':'帶有消息、試探與學習性，還在初步理解與嘗試，不宜過早視為成熟承諾',
-        'Knight':'動能明顯上升，會更想追求或推進，但要留意速度是否超過判斷',
-        'Queen':'開始回到成熟的內在掌握，重點是界線、穩定與如何照顧長期需求',
-        'King':'事情要求更成熟的承擔、決策與掌控，不只是有想法，而是要能負責結果'
-      };
-
-      const MAJOR_DETAIL={
-        '愚者':'一個新的可能正在打開，但真正的考驗是分清楚「願意嘗試」與「沒有評估就往前衝」。',
-        '魔術師':'資源其實已經在手上，關鍵不是等待更多條件，而是能不能把意圖轉成清楚、可執行的行動。',
-        '女祭司':'局勢裡仍有尚未說明或尚未看清的部分，現在比急著逼答案更重要的是觀察細節與自己的直覺反應。',
-        '皇后':'事情有成長與滋養的空間，但也要確認付出是否健康，而不是因為想維持關係而一直單方面補位。',
-        '皇帝':'需要界線、秩序與明確規則。這張牌通常把問題拉回「誰負責、怎麼做、什麼不能再模糊」。',
-        '教皇':'既有價值、承諾或制度正在影響判斷。若雙方對關係／工作的基本規則不同，再多感情也容易卡住。',
-        '戀人':'真正的核心不只是愛不愛，而是價值、選擇與彼此是否願意站在同一個方向。',
-        '戰車':'局勢有往前推的力量，但需要方向一致；如果只是靠意志硬衝，速度越快反而越容易失控。',
-        '力量':'這不是靠強壓就能解決的局面，真正有效的是穩定情緒、維持耐心並用柔性的方式掌握節奏。',
-        '隱者':'現在需要的不是更多外界聲音，而是把自己真正的需要與判斷整理清楚；孤立太久則會讓問題失去現實回饋。',
-        '命運之輪':'局勢正處在週期轉換點，外部變化可能比平常更快；能做的是辨認時機，而不是假裝一切都能完全控制。',
-        '正義':'結果高度取決於事實、責任與公平交換。這張牌要求把情緒之外的證據與承諾也放進判斷。',
-        '倒吊人':'事情暫時不適合用原本方式硬推；停一下、換角度或接受短期無法定案，反而可能看到真正的突破口。',
-        '死神':'舊模式已經走到需要結束或大幅改變的位置。它不一定代表失去，而是提醒「不能再用原來的方法維持」。',
-        '節制':'最有利的不是極端決定，而是重新調配節奏、界線與投入，讓不同需求能在現實中共存。',
-        '惡魔':'有很強的吸引、執著、慾望或依賴因素存在；它提醒先看自己被什麼綁住，而不是立刻把責任推給某個人。',
-        '高塔':'原本以為穩定的結構正在被現實檢驗。某些真相、衝突或突發變化會迫使事情重新安排。',
-        '星星':'局勢仍有修復、希望與重新建立信任的空間，但它比較像長期復原，而不是立刻翻盤。',
-        '月亮':'資訊還不完整，恐懼、想像與直覺混在一起。這時最危險的是把自己最害怕的版本當成事實。',
-        '太陽':'事情有往清楚、開放與正向方向發展的條件，適合把問題說明、確認並讓彼此看到真實狀態。',
-        '審判':'舊問題正在要求一個真正的回應：不是回頭重演，而是看清楚過去之後，做出不同於以前的決定。',
-        '世界':'一個階段已經接近完成，重點是整合成果、把缺口補完，再決定下一個週期要怎麼開始。'
-      };
-
-
-      const MAJOR_REVERSED_DETAIL={
-        '愚者':'逆位把自由變成了猶豫或準備不足：不是完全不能開始，而是內心還沒有真正同意承擔開始之後的風險。',
-        '魔術師':'逆位常表示資源不是沒有，而是分散、沒有用在真正關鍵處，或過度依賴技巧而忽略了清楚的意圖。',
-        '女祭司':'逆位容易出現直覺和焦慮混在一起的情況；你可能感覺到某些不對勁，但目前還不足以把感覺直接當成事實。',
-        '皇后':'逆位把滋養變成過度付出、依賴或自我忽略，提醒你先確認自己是不是為了維持關係而一直補位。',
-        '皇帝':'逆位常見於控制感失衡：可能太想掌握結果，也可能因為缺乏明確界線而讓局勢反覆。',
-        '教皇':'逆位表示既有規則或價值觀正在被質疑。你可能不再願意照舊方式走，但新的共識還沒有建立。',
-        '戀人':'逆位不是直接等於第三者，更常見的是價值不一致、選擇搖擺、關係裡「想要」和「願意承擔」沒有對上。',
-        '戰車':'逆位代表推進力失去方向；越急著證明或追結果，反而越容易把不同力量拉向相反方向。',
-        '力量':'逆位常把勇氣變成自我懷疑、情緒耗損或忍耐過頭。問題不一定是你不夠強，而是太用力撐著。',
-        '隱者':'逆位常見於封閉過久、想太多卻缺少現實回饋；你可能已經思考很多，但仍不太願意讓新的經驗進來。',
-        '命運之輪':'逆位像是舊循環還沒有真正結束，事情容易回到熟悉的模式。重點不是運氣不好，而是辨認哪個模式一直重演。',
-        '正義':'逆位提醒資訊、責任或交換可能不對等。此時最重要的是補足事實，而不是只靠情緒判斷誰對誰錯。',
-        '倒吊人':'逆位容易變成拖延或無效犧牲：表面在等待，實際上可能只是不想面對需要改變的地方。',
-        '死神':'逆位表示舊階段其實已經不適合，卻還有一部分不願放手。真正的卡點往往不是結束本身，而是害怕失去熟悉感。',
-        '節制':'逆位顯示節奏、界線或投入比例失衡。問題通常不是完全不合，而是目前的配方讓彼此都很難舒服。',
-        '惡魔':'逆位往往不是「更糟」，反而代表你已經開始看見依賴、執著或舊模式的束縛，正在嘗試把主導權拿回來。',
-        '高塔':'逆位常表示危機還沒有完全爆開，或你正在努力避免某個不得不面對的改變；壓住不等於問題已消失。',
-        '星星':'逆位不是沒有希望，而是信心變弱、療癒速度比期待慢；需要先把理想和現實距離調整到可承受的範圍。',
-        '月亮':'逆位有時代表迷霧開始散，但也可能是焦慮正在尋找出口；最重要的是讓可驗證的資訊慢慢取代想像。',
-        '太陽':'逆位仍保留正向條件，只是清晰度、熱度或成果被延遲；不要因為還沒達到理想狀態，就把已有的進展全部否定。',
-        '審判':'逆位常見於明知道需要做決定，卻仍被舊經驗、內疚或自我否定牽制。重新開始前，先要真的回應過去留下的課題。',
-        '世界':'逆位表示一個階段看似快結束，實際還有缺口未補。與其急著進下一章，不如先把最後一塊收尾完成。'
-      };
-
-      const TOPIC_NARRATIVE={
-        love:'感情題最重要的不是把每張牌當成「會不會發生」的答案，而是看情感、界線、靠近意願與現實行動是否彼此一致。',
-        work:'工作題要把內在感受和現實條件一起看：滿意度、壓力、資源、發展性與可執行選項缺一不可。',
-        business:'創業題不能只看熱情，還要看資源、風險、執行節奏與市場回饋是否能形成可持續的結構。',
-        finance:'財務題要把情緒和風險拆開，牌面可以提醒盲點，但現實數據、現金流與可承受損失仍是最後判斷基礎。',
-        people:'人際題的核心通常不是誰好誰壞，而是界線、期待、溝通方式與彼此投入是否平衡。',
-        choice:'選擇題不是替你決定，而是把兩邊的收益、代價與你真正不能犧牲的條件攤開來看。',
-        self:'自我探索題要看你目前如何保護自己、哪個模式正在重演，以及哪些力量其實已經準備好被使用。',
-        fortune:'近期運勢比較像看當下節奏與課題，不是把未來寫死；重點是哪些訊號值得把握、哪些地方需要保守。'
-      };
-
-      const $=id=>document.getElementById(id);
-      const els={topic:$('topicGrid'),scenario:$('scenarioGrid'),question:$('questionGrid'),qctx:$('questionContext'),workspace:$('readingWorkspace'),cards:$('cards'),interp:$('interpretation'),analysis:$('readingAnalysis'),follow:$('followupPanel'),followResult:$('followupResult'),finish:$('readingFinish'),progress:$('flowProgress')};
-      let state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null};
-
-      const esc=(s='')=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
-      const topicBy=id=>TOPICS.find(x=>x.id===id);
-      const scenarioBy=(t,id)=>{const a=t.scenarios.find(x=>x[0]===id);return a?{id:a[0],name:a[1],desc:a[2]}:null};
-      const stepEl=s=>document.querySelector(`[data-step="${s}"]`);
-      function showStep(s){document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));stepEl(s)?.classList.add('active');document.querySelectorAll('#flowProgress button').forEach((b,i)=>{const map=['topic','scenario','question','ready'];const idx=map.indexOf(s);b.classList.toggle('active',i===idx);b.disabled=i>idx});stepEl(s)?.scrollIntoView({behavior:'smooth',block:'start'});}
-
-      const TAROT_USAGE_KEY='divinationhub-tarot-guest-v2';
-      const TAROT_AUTH_KEY='divinationhub-bazi-google-credential';
-      const TAROT_LOCAL_MEMBER_KEY='divinationhub-tarot-local-member-preview';
-      const MEMBER_API_BASE='https://member-api.ezgocpu.workers.dev';
-      const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
-      const DAY_MS=24*60*60*1000, SAME_Q_MS=72*60*60*1000;
-      let tarotGoogleInitialized=false, guestNoticeAction=null;
-
-      function safeRead(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(_){return fallback}}
-      function safeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}}
-      function usage(){const u=safeRead(TAROT_USAGE_KEY,{});return {demoUsed:!!u.demoUsed,lastFormalAt:Number(u.lastFormalAt||0),questionUses:u.questionUses&&typeof u.questionUses==='object'?u.questionUses:{}}}
-      function saveUsage(u){safeWrite(TAROT_USAGE_KEY,u)}
-      function questionKey(){return `${state.topic?.id||''}:${state.scenario?.id||''}:${state.question?.id||''}`}
-      function decodeJwt(token){try{const part=String(token||'').split('.')[1];if(!part)return null;const base=part.replace(/-/g,'+').replace(/_/g,'/');const json=decodeURIComponent(atob(base).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));return JSON.parse(json)}catch(_){return null}}
-      function authToken(){try{return localStorage.getItem(TAROT_AUTH_KEY)||''}catch(_){return ''}}
-      function setAuthToken(token){try{if(token)localStorage.setItem(TAROT_AUTH_KEY,token);else localStorage.removeItem(TAROT_AUTH_KEY)}catch(_){}}
-      function authProfile(){
-        if(location.protocol==='file:'&&safeRead(TAROT_LOCAL_MEMBER_KEY,false))return {name:'本機測試會員',email:'LOCAL PREVIEW'};
-        const token=authToken();if(!token)return null;const p=decodeJwt(token);if(!p)return null;if(Number(p.exp||0)*1000<=Date.now()){setAuthToken('');return null}return {name:p.name||p.given_name||p.email||'會員',email:p.email||''};
-      }
-      function isLogged(){return !!authProfile()}
-      function canAccessAllReaders(){return isLogged()||state.accessTier==='demo'||state.accessTier==='member'}
-      function remaining(ms){const total=Math.max(0,Math.ceil(ms/60000));const h=Math.floor(total/60),m=total%60;return h?`${h} 小時${m?` ${m} 分鐘`:''}`:`${m} 分鐘`}
-      function updateAccessMini(){const el=$('tarotAccessMini');if(!el)return;const u=usage();if(isLogged())el.textContent='FREE MEMBER · A/B/C/D';else if(!u.demoUsed)el.textContent='FIRST EXPERIENCE · A/B/C/D OPEN';else el.textContent='GUEST · A OPEN · B/C/D FREE LOGIN';}
-      function updateMemberUI(){const p=authProfile(),btn=$('tarotMemberButton'),txt=$('tarotMemberButtonText');if(!btn||!txt)return;btn.classList.toggle('logged',!!p);txt.textContent=p?p.name:'免費登入';updateAccessMini();const prof=$('tarotMemberProfile');if(prof){prof.hidden=!p;$('tarotMemberName').textContent=p?.name||'會員';$('tarotMemberEmail').textContent=p?.email||''}const mount=$('tarotGoogleMount');if(mount)mount.hidden=!!p;const title=$('tarotMemberTitle'),intro=$('tarotMemberIntro');if(title)title.textContent=p?'免費會員':'免費登入';if(intro)intro.textContent=p?'你已登入，A／B／C／D 四位老師全部開放。':'登入後直接沿用這一副牌，解鎖 B 內在老師、C 理性老師與 D 行動老師，不會重新抽牌。';}
-      async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})}catch(_){}}
-      function renderGoogleButton(){
-        if(isLogged())return;
-        if(location.protocol==='file:'){$('tarotLocalLogin').hidden=false;return;}
-        if(!window.google?.accounts?.id){setTimeout(renderGoogleButton,250);return;}
-        if(!tarotGoogleInitialized){window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async response=>{const credential=response?.credential||'';if(!credential)return;setAuthToken(credential);await registerMember();memberLoginSucceeded();}});tarotGoogleInitialized=true;}
-        const mount=$('tarotGoogleMount');if(mount&&mount.dataset.ready!=='1'){mount.dataset.ready='1';window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});}
-      }
-      function openMemberModal(targetReader=null){state.pendingReader=targetReader||null;updateMemberUI();const modal=$('tarotMemberModal');modal.classList.add('show');modal.setAttribute('aria-hidden','false');renderGoogleButton();}
-      function closeMemberModal(){const modal=$('tarotMemberModal');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
-      function memberLoginSucceeded(){state.accessTier='member';const target=state.pendingReader;state.pendingReader=null;updateMemberUI();closeMemberModal();if(!els.analysis.hidden&&state.readerBodies){renderReaderShell('a');}if(target)setTimeout(()=>activateReader(target,true),100);}
-      function logoutMember(){setAuthToken('');safeWrite(TAROT_LOCAL_MEMBER_KEY,false);try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}state.accessTier=state.current?.length?(state.accessTier==='demo'?'demo':'guest'):null;updateMemberUI();if(!els.analysis.hidden){if(!canAccessAllReaders()&&!state.readersViewed.has('a'))state.readersViewed=new Set(['a']);activateReader('a',false);updateReaderJourney()}closeMemberModal();}
-      function openGuestNotice(kind,confirmFn){
-        const title=$('tarotGuestNoticeTitle'),kicker=$('tarotGuestNoticeKicker'),copy=$('tarotGuestNoticeCopy'),confirm=$('tarotGuestNoticeConfirm');guestNoticeAction=confirmFn;
-        if(kind==='first'){
-          kicker.textContent='FIRST EXPERIENCE · EXTRA GIFT';title.textContent='第一次先放心體驗，這次不算正式次數';confirm.textContent='看看有哪些問題';
-          copy.innerHTML='<p>第一次來通常只是想試試看流程，很可能還不確定這個網站值不值得認真問。</p><div class="gate-highlight"><strong>所以第一次額外送你完整展示：</strong><br>A 首席、B 內在、C 理性、D 行動四位老師全部開放，也包含一次追問與最後整合。</div><p>這次<strong>不計入正式免費占卜次數</strong>。先熟悉一次；現在先不用選題；按下下方按鈕後，才會顯示問題清單，再挑一題試看看。</p>';
-        }else if(kind==='second'){
-          kicker.textContent='FORMAL GUEST READING';title.textContent='這次開始，請選一個你真正想問的問題';confirm.textContent='我知道了，讓我選問題';
-          copy.innerHTML='<p>你已經看過完整體驗。從這一次開始，會計入訪客免費占卜次數。</p><div class="gate-rules"><span><strong>訪客：</strong>每 24 小時 1 次主牌占卜</span><span><strong>同一核心問題：</strong>72 小時內不重抽</span><span><strong>解讀：</strong>A 首席老師完整開放；B／C／D 免費登入後解鎖</span></div><p>按下下方按鈕後，才會顯示問題清單。先慢慢看，再選一題你現在真正想知道的。</p>';
-        }else{
-          kicker.textContent='COOLDOWN';title.textContent='這一局還需要等一下';confirm.textContent='知道了';
-        }
-        const modal=$('tarotGuestNotice');modal.classList.add('show');modal.setAttribute('aria-hidden','false');
-      }
-      function closeGuestNotice(){const modal=$('tarotGuestNotice');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');guestNoticeAction=null;}
-      function showCooldown(kind,ms){
-        const title=$('tarotGuestNoticeTitle'),kicker=$('tarotGuestNoticeKicker'),copy=$('tarotGuestNoticeCopy'),confirm=$('tarotGuestNoticeConfirm');kicker.textContent='GUEST COOLDOWN';
-        if(kind==='daily'){
-          title.textContent='今天的訪客免費占卜已使用';
-          confirm.textContent='免費登入｜繼續使用';
-          copy.innerHTML=`<p>下一次訪客免費占卜約在 <strong>${remaining(ms)}</strong> 後開放。</p><div class="gate-highlight"><strong>不需要等 24 小時才能繼續。</strong><br>免費登入後，可以直接解鎖同一副牌的 B 內在、C 理性、D 行動三位老師；如果你已經完成這一局，也可以繼續使用免費會員功能。</div>`;
-          guestNoticeAction=()=>{closeGuestNotice();openMemberModal(state.current?.length?'b':null);};
-        }else{
-          title.textContent='同一個問題先不要重抽';
-          confirm.textContent='免費登入｜繼續使用';
-          copy.innerHTML=`<p>這個核心問題仍在 72 小時整理期，約還有 <strong>${remaining(ms)}</strong>。</p><p>不用為了得到不同答案重抽。免費登入後，可繼續查看會員解讀與同一副牌的後續內容。</p>`;
-          guestNoticeAction=()=>{closeGuestNotice();openMemberModal(state.current?.length?'b':null);};
-        }
-        const modal=$('tarotGuestNotice');modal.classList.add('show');modal.setAttribute('aria-hidden','false');
-      }
-      function markDemoUsed(){const u=usage();u.demoUsed=true;saveUsage(u);updateAccessMini()}
-      function markFormalUse(){const u=usage(),now=Date.now();u.lastFormalAt=now;u.questionUses[questionKey()]=now;saveUsage(u);updateAccessMini()}
-      function enterQuestionStage(){
-        // 提醒一定要發生在問題清單出現之前；先清掉任何前一次殘留的問題，避免使用者先看到題目才被提醒。
-        els.question.innerHTML='';
-        if(els.qctx)els.qctx.textContent='';
-        if(isLogged()){renderQuestions();showStep('question');return;}
-        const u=usage(),now=Date.now();
-        if(!u.demoUsed){
-          openGuestNotice('first',()=>{closeGuestNotice();renderQuestions();showStep('question');});
-          return;
-        }
-        const dailyLeft=u.lastFormalAt?DAY_MS-(now-u.lastFormalAt):0;
-        if(dailyLeft>0){showCooldown('daily',dailyLeft);return;}
-        if(!u.lastFormalAt){
-          openGuestNotice('second',()=>{closeGuestNotice();renderQuestions();showStep('question');});
-          return;
-        }
-        renderQuestions();showStep('question');
-      }
-      function requestStartReading(){
-        if(isLogged()){state.accessTier='member';drawReading();return;}
-        const u=usage();
-        if(!u.demoUsed){markDemoUsed();state.accessTier='demo';drawReading();return;}
-        const now=Date.now(),dailyLeft=u.lastFormalAt?DAY_MS-(now-u.lastFormalAt):0,qAt=Number(u.questionUses[questionKey()]||0),sameLeft=qAt?SAME_Q_MS-(now-qAt):0;
-        if(dailyLeft>0){showCooldown('daily',dailyLeft);return;}
-        if(sameLeft>0){showCooldown('same',sameLeft);return;}
-        markFormalUse();state.accessTier='guest';drawReading();
-      }
-
-      function renderTopics(){els.topic.innerHTML=TOPICS.map((t,i)=>`<button class="choice-card" data-topic="${t.id}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small></button>`).join('');}
-      function renderScenarios(){const t=state.topic;$('scenarioTitle').textContent=`${t.name}｜你目前處在哪個階段？`;els.scenario.innerHTML=t.scenarios.map((s,i)=>`<button class="choice-card" data-scenario="${s[0]}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><b>${s[1]}</b><small>${s[2]}</small></button>`).join('');}
-      function questions(){const key=`${state.topic.id}:${state.scenario.id}`;const arr=SCENARIO_SPECIAL[key]||BASE_Q[state.topic.id]||BASE_Q.self;return arr.map((x,i)=>({id:`q${i+1}`,type:x[0],text:x[1],spread:SPREADS[x[0]]||SPREADS.state}));}
-      function renderQuestions(){const qs=questions();state.questions=qs;els.qctx.textContent=`${state.topic.name} → ${state.scenario.name}｜請選一個最想看清楚的方向。`;els.question.innerHTML=qs.map((q,i)=>`<button class="question-card" data-question="${q.id}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b></button>`).join('');}
-      function renderReady(){const q=state.question;$('readyCard').innerHTML=`<div class="crumb">${state.topic.name} → ${state.scenario.name}</div><h4>${esc(q.text)}</h4><p><b>${q.spread.name}</b><br>${q.spread.desc}<br><br>牌位：${q.spread.positions.join('／')}</p>`;}
-
-      function buildCard(card,index){const slot=document.createElement('div');slot.className='tarot-slot';slot.innerHTML=`<div class="position-label">${esc(card.position)}</div>`;const wrap=document.createElement('div');wrap.className='tarot-card';wrap.style.setProperty('--delay',`${index*90}ms`);wrap.dataset.index=index;wrap.tabIndex=0;wrap.setAttribute('role','button');wrap.setAttribute('aria-label',`${card.position}，點擊翻牌`);const frontClass=card.reversed?'card-front reversed-content':'card-front';wrap.innerHTML=`<div class="card-inner"><div class="card-face card-back"><div class="back-sigil">✺</div></div><div class="card-face ${frontClass}"><div class="card-content"><div class="card-number">${esc(card.number)} · ${esc(card.suit)}</div><div class="arcana-symbol">${esc(card.symbol)}</div><div class="card-name">${esc(card.name)}</div><div class="card-en">${esc(card.en)}</div><div class="orientation">${card.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div></div></div></div>`;const hint=document.createElement('div');hint.className='reveal-hint';hint.textContent='點擊翻牌';const reveal=()=>revealCard(index,wrap,hint);wrap.addEventListener('click',reveal);wrap.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();reveal();}});slot.append(wrap,hint);return slot;}
-      function drawReading(){const q=state.question;state.current=TarotCore.drawPositions(q.spread.positions);$('revealAllBtn').disabled=false;state.revealed=new Set();state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];els.cards.innerHTML='';els.cards.style.setProperty('--count',state.current.length);state.current.forEach((c,i)=>els.cards.appendChild(buildCard(c,i)));els.interp.innerHTML='';els.interp.classList.remove('show');els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;$('readingPath').textContent=`${state.topic.name} → ${state.scenario.name}`;$('readingQuestion').textContent=q.text;$('spreadName').textContent=q.spread.name;$('spreadDesc').textContent=q.spread.desc;$('deckCount').textContent=TarotCore.CARD_COUNT;els.workspace.hidden=false;document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));els.progress.querySelectorAll('button').forEach(x=>x.classList.remove('active'));setTimeout(()=>els.workspace.scrollIntoView({behavior:'smooth',block:'start'}),50);}
-      function revealCard(i,wrap,hint){if(!state.current[i]||state.revealed.has(i))return;state.revealed.add(i);wrap.classList.add('revealed');hint.textContent=state.current[i].reversed?'逆位':'正位';renderMeanings();if(state.revealed.size===state.current.length){$('revealAllBtn').disabled=true;renderFullReading();els.follow.hidden=true;els.followResult.hidden=true;}}
-      function revealAll(){els.cards.querySelectorAll('.tarot-card').forEach((w,i)=>{const h=w.parentElement.querySelector('.reveal-hint');revealCard(i,w,h);});}
-      function renderMeanings(){els.interp.innerHTML=state.current.map((c,i)=>state.revealed.has(i)?`<article class="meaning-card"><div class="meaning-index">${String(i+1).padStart(2,'0')} // ${esc(c.position)}</div><h3>${esc(c.name)}</h3><div class="ori">${c.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div><p>${esc(c.meaning)}</p></article>`:'').join('');els.interp.classList.toggle('show',state.revealed.size>0);}
-
-      function words(card){return String(card.meaning || card.upright || '').split(/[、：]/).map(x=>x.trim()).filter(Boolean);}
-      function sentiment(card){const txt=String(card.meaning || card.upright || '');const pos=['成功','希望','成長','穩定','改善','合作','機會','勇氣','平衡','完成','清晰','療癒','進展','成果','肯定','資源整合','重新掌控','轉機','行動力','修復','原諒','釋放','甦醒','重新注意','開始看見','脫離束縛','覺醒','回升','坦白','鬆綁','接受','重新相信','歸屬','圓滿'];const neg=['失衡','停滯','逃避','衝突','失控','挫折','孤立','封閉','延遲','偏頗','拖延','束縛','危機','失望','混亂','誤判','壓力','疲憊','防備','內耗','不成熟','僵化','依賴','匱乏','過度警戒','不信任','痛苦','受限'];let s=0;pos.forEach(w=>{if(txt.includes(w))s+=1});neg.forEach(w=>{if(txt.includes(w))s-=1});return s;}
-      function contextualSuit(card){const m=SUIT_CONTEXT[card.suit]||SUIT_CONTEXT['大阿爾克那'];return m[state.topic.id]||m.core;}
-      function majorNarrative(card){
-        if(card.arcana!=='major')return '';
-        if(card.reversed&&MAJOR_REVERSED_DETAIL[card.name])return MAJOR_REVERSED_DETAIL[card.name];
-        return MAJOR_DETAIL[card.name]||'這張大阿爾克那把問題拉回較深層的價值、選擇與轉折，不適合只用眼前得失來理解。';
-      }
-      function positionLens(pos){
-        const p=String(pos||'');
-        if(/阻礙|風險|代價|卡點/.test(p))return '它落在阻礙／風險位置，重點不是宣判失敗，而是指出「如果不處理，最容易在哪裡反覆」。';
-        if(/來源|成因|深層/.test(p))return '它落在來源位置，所以更像在追問：這個狀態為什麼形成，而不是只描述表面現象。';
-        if(/突破|建議|方向|做法|下一步/.test(p))return '它落在突破／建議位置，代表這股能量比較適合被轉成具體行動，而不是只停留在理解。';
-        if(/未來|走向|結果|趨勢/.test(p))return '它落在未來／走向位置，描述的是目前條件延續下去的傾向，不等於不可改變的結果。';
-        if(/對方|感受|態度/.test(p))return '它落在對方相關位置，只能用來描述互動與情緒傾向，不能當成對方已親口確認的內心事實。';
-        if(/優勢|資源|力量/.test(p))return '它落在優勢／資源位置，代表你已經擁有、但可能還沒有充分使用的力量。';
-        return '它在這個牌位裡提供的是一個觀察角度，要和前後牌一起看，才會變成完整答案。';
-      }
-      function cardHeadline(card){
-        const w=words(card).slice(0,3);
-        const key=w[0]||'核心訊息';
-        if(card.reversed){
-          const map={'束縛':'正在鬆開舊束縛','孤立':'保護自己太久','失衡':'節奏與界線需要重整','延遲':'條件還沒完全到位','混亂':'先讓迷霧散開','停滯':'不是沒路，而是方法卡住','逃避':'真正要面對的是不願碰的部分','依賴':'把主導權拿回自己手上'};
-          return map[key]||`這股「${key}」正在被重新整理`;
-        }
-        const map={'希望':'重新相信仍有可能','清晰':'事情開始變得可理解','穩定':'把答案拉回可持續的現實','勇氣':'用穩定而不是硬撐往前','平衡':'重新調整投入與界線','行動力':'把理解轉成真正的行動','療癒':'允許修復慢慢發生','完成':'一個階段正在收束'};
-        return map[key]||`「${key}」是這張牌的主要訊號`;
-      }
-      function cardParagraph(card,index){
-        const ori=card.reversed?'逆位':'正位';
-        const pos=card.position;
-        let body1='';
-        if(card.arcana==='major')body1=majorNarrative(card);
-        else body1=`在${state.topic.name}這個題目裡，${contextualSuit(card)}。${RANK_CONTEXT[card.number]||''}`;
-        const orient=card.reversed?`逆位不等於單純的「壞」，更常是這股力量被壓住、過度使用、延遲，或你正在從舊模式裡抽離。`:`正位表示這股力量目前比較容易被看見與運用，但是否真的有利，仍取決於它所在的牌位。`;
-        let bridge='';
-        if(index===0)bridge='它是整副牌的起點，所以先定義了這次問題真正從哪裡開始。';
-        else if(index===state.current.length-1)bridge='它在最後的位置，像是把前面的問題收束成「接下來最值得往哪裡走」。';
-        else bridge='它在中間承上啟下，通常是把表面的困難連到真正原因的那一張。';
-        return `<div class="card-reading-item"><div class="meta">${String(index+1).padStart(2,'0')} · ${esc(pos)} · ${ori}</div><h5>${esc(pos)}：${esc(card.name)}${ori}——${esc(cardHeadline(card))}</h5><p>${esc(body1)}</p><p>${esc(positionLens(pos))} ${esc(orient)}</p><div class="takeaway">放回這一題來看｜${esc(bridge)}</div></div>`;
-      }
-      function composition(){const cards=state.current;const major=cards.filter(c=>c.arcana==='major').length;const rev=cards.filter(c=>c.reversed).length;const suits={};cards.forEach(c=>suits[c.suit]=(suits[c.suit]||0)+1);const top=Object.entries(suits).sort((a,b)=>b[1]-a[1])[0];const avg=cards.reduce((a,c)=>a+sentiment(c),0)/cards.length;return {major,rev,topSuit:top?.[0],topCount:top?.[1]||0,avg};}
-      function coreHeadline(comp){
-        const q=state.question,first=state.current[0],last=state.current[state.current.length-1];
-        if(state.topic.id==='love'&&state.scenario.id==='single'&&q.type==='obstacle')return '不是沒有愛的可能，而是保護自己的機制還沒有完全退場';
-        if(state.topic.id==='love'&&state.scenario.id==='single'&&q.type==='state')return '你可能比自己想像中更接近準備好，只是心還在確認安全感';
-        if(q.type==='feelings')return '有感受不等於會行動，真正要看的是情緒和靠近意願是否同時存在';
-        if(q.type==='external')return '牌面可以提示外部干擾，但不能把懷疑直接變成第三者的事實';
-        if(q.type==='obstacle'&&sentiment(first)<0&&sentiment(last)>0)return '卡點是真的，但出口也已經出現在牌面裡';
-        if(q.type==='action')return '這不是單純的「做或不做」，而是要用對方法與節奏';
-        if(q.type==='choice')return '真正的答案不在最漂亮的選項，而在你願意承擔哪一種代價';
-        if(q.type==='future')return '未來不是突然翻盤，而是中間條件改變後才會換方向';
-        if(comp.avg>0.65)return '牌面有往前的條件，但要把優勢轉成現實行動才會成立';
-        if(comp.avg<-0.65)return '目前阻力偏多，先處理卡點比急著追結果更重要';
-        return '這不是全好或全壞的局，而是一個需要把關鍵條件理清的過渡期';
-      }
-      function directVerdict(comp){
-        const q=state.question;let base='';
-        if(q.type==='choice')base='這副牌不適合被簡化成「A一定好、B一定壞」。它更像在提醒：兩邊都有代價，而真正關鍵是你最不能犧牲的條件。';
-        else if(q.type==='feelings')base='這組牌可以看出關係裡仍存在的情緒、顧慮與靠近傾向，但最需要分清楚的是：心裡有感受，和願意真正採取行動，是兩件不同的事。';
-        else if(q.type==='external')base='牌面可以顯示分心、隱瞞感或外部人事物介入的風險，但它不能單靠某一張牌證明第三者、劈腿或欺騙已經發生。';
-        else if(comp.avg>0.65)base='整體來看，可利用的力量多於卡點。這不代表結果保證發生，而是代表只要關鍵條件被好好使用，局勢有往前的空間。';
-        else if(comp.avg<-0.65)base='這組牌目前的阻力確實偏多。與其急著問「最後會不會成」，更重要的是先處理造成反覆的源頭。';
-        else base='這組牌不是明顯的全好或全壞，而是「有空間，但需要條件」。真正的答案藏在你能不能處理中間那個核心因素。';
-        return base;
-      }
-      function pairBridge(a,b){
-        const sa=sentiment(a),sb=sentiment(b);
-        if(sa<0&&sb>0)return `「${a.name}」先把卡點攤開，而「${b.name}」開始提供修復或轉向的力量，代表問題不是沒有出口，而是要先承認前面的阻礙。`;
-        if(sa>0&&sb<0)return `「${a.name}」帶來動能，但「${b.name}」提醒後續仍有代價或風險；只看前面的亮點，容易低估真正的難處。`;
-        if(a.suit===b.suit&&a.suit!=='大阿爾克那')return `「${a.name}」和「${b.name}」同屬${a.suit}，表示同一類議題被重複強調：${contextualSuit(a)}。`;
-        if(a.arcana==='major'||b.arcana==='major')return `「${a.name}」與「${b.name}」放在一起時，會把眼前事件拉回更深的價值與模式：表面發生什麼是一層，你如何回應這個模式又是另一層。`;
-        return `「${a.name}」到「${b.name}」的銜接，顯示事情不是單點問題，而是前一個狀態正在影響下一步的選擇。`;
-      }
-      function story(comp){
-        const cards=state.current,first=cards[0],last=cards[cards.length-1];
-        let p1='';
-        if(sentiment(first)<0&&sentiment(last)>0)p1='牌面走勢是「前段卡、後段開」：一開始確實有防衛、延遲或舊模式，但後面的牌不是繼續往封閉走，而是逐漸出現可用的力量。這種結構通常不是「沒有機會」，而是要先完成一段內在或現實上的轉換。';
-        else if(sentiment(first)>0&&sentiment(last)<0)p1='牌面走勢是「前段有動能、後段需要踩煞車」：一開始的吸引力或條件不差，但若中間的問題被略過，後面容易出現消耗、落差或延遲。';
-        else if(sentiment(last)>=sentiment(first))p1='整體沒有往更差的方向滑落，後段仍保留整理、修復或重新定位的空間。';
-        else p1='後段比前段更需要謹慎，表示如果照目前方式不調整，問題可能逐步累積。';
-        let p2=cards.slice(0,-1).map((c,i)=>pairBridge(c,cards[i+1])).join(' ');
-        let p3='';
-        if(comp.major>=2)p3=`這副牌同時出現 ${comp.major} 張大阿爾克那，表示這件事不像只是最近一兩次互動造成的小波動，而比較像牽涉你長期的價值、關係模式或人生階段。`;
-        else if(comp.major===1)p3='其中有一張大阿爾克那，代表局勢裡至少有一個不能只用短期得失理解的核心課題。';
-        else p3='牌面以小阿爾克那為主，說明事情仍相當貼近日常選擇與可調整條件，不必把它理解成無法改變的命定結果。';
-        if(comp.topSuit&&comp.topCount>=2)p3+=` 同時「${comp.topSuit}」偏強，${contextualSuit({suit:comp.topSuit})}，這是這題最需要持續觀察的主軸。`;
-        return [p1,p2,p3];
-      }
-      function answerQuestion(comp){
-        const q=state.question,last=state.current[state.current.length-1],mid=state.current[Math.floor(state.current.length/2)],lastS=sentiment(last);let p1='',p2='';
-        if(q.type==='state'){p1=`就這一題而言，你現在不是單純處在「好或不好」的狀態，而是目前表現、深層準備度與後續方向還在彼此校正。中間的「${mid.name}${mid.reversed?'逆位':'正位'}」把核心放在「${words(mid).slice(0,2).join('、')}」；這可能是推動力，也可能是尚未成熟的條件，要依正逆位與牌位一起判斷。`;p2=`最後的「${last.name}${last.reversed?'逆位':'正位'}」把方向帶向「${words(last).slice(0,2).join('、')}」。因此你比較像正在形成新的狀態，而不是已經定型；真正值得觀察的，是這個方向能不能逐漸變成穩定、重複而可驗證的現實行為。`;}
-        if(q.type==='feelings'){p1=`牌面顯示可以把「仍有感受」和「願意靠近」拆開來看。前兩張牌描述的是情緒、顧慮和互動模式，但真正決定關係能不能往前的是最後的「${last.name}${last.reversed?'逆位':'正位'}」。`;p2=lastS>0?'這表示仍保留靠近、修復或重新互動的條件，但請把現實裡的主動聯絡、願意溝通、願意處理舊問題當成真正驗證。':'它顯示目前的行動意願或推進條件仍不足，因此即使牌面有感情，也不適合直接翻譯成「他一定會回來」。';}
-        if(q.type==='future'){p1=`以目前條件延續來看，趨勢最後落到「${last.name}${last.reversed?'逆位':'正位'}」。它不是固定命運，而是告訴你：如果現在的互動方式與條件都不變，事情比較容易往哪裡走。`;p2=lastS>0?'後段比前段更有形成結果的空間，因此局面不是封死的；真正的關鍵是中間位置指出的條件是否會在現實中發生。':'後段仍偏保守或受阻，短期內不要把期待建立在突然翻盤上；除非中間那個關鍵條件真的改變。';}
-        if(q.type==='obstacle'){p1=`這題的答案很集中：阻礙不只是一個表面事件，而是某種防衛、慣性或現實條件在持續運作。中間的「${mid.name}${mid.reversed?'逆位':'正位'}」說明源頭和「${words(mid).slice(0,2).join('、')}」有關。`;p2=`最後的「${last.name}${last.reversed?'逆位':'正位'}」不是在說「事情自然就會好」，而是在指出突破要使用的力量。先處理源頭，再談結果，會比一直測試「到底可不可以」有效。`;}
-        if(q.type==='action'){p1=`牌面不是單純回答「做／不做」，而是在提醒你行動方式本身就是答案的一部分。中間牌指出要避免的風險，最後的「${last.name}${last.reversed?'逆位':'正位'}」則比較像真正的行動準則。`;p2=lastS>0?'可以往前，但要保留它代表的成熟度、節奏與界線；先做小而明確的行動，再看回饋。':'現在比較適合降低強度、補足條件或換方法，而不是因為焦慮就硬推。';}
-        if(q.type==='external'){p1=`目前牌面${comp.avg<-0.4?'確實有一些不透明、分心或外部干擾的訊號':'沒有形成足以直接判成「一定有第三者」的強烈結構'}。即使出現月亮、惡魔、戀人逆位或七劍等象徵，也只能提高「需要確認」的程度。`;p2='如果你真正擔心的是第三者、欺騙或隱瞞，下一步應該回到可驗證的行為、時間線、溝通與一致性，而不是繼續抽到某張牌才安心。';}
-        if(q.type==='choice'){p1=`這副牌的重點不是替你決定，而是把兩邊的收益與代價攤開。尤其要看每個選項的「代價」位置，以及最後的「${last.name}${last.reversed?'逆位':'正位'}」所代表的判準。`;p2='如果某個選項優勢很亮眼、但代價位置明顯吃力，就不適合只看最好的一面。真正適合你的選擇，通常是你能長期承擔其代價的那一個。';}
-        if(q.type==='timing'){p1=`目前時機${comp.avg>0.5?'偏向逐步成熟':'仍需要補條件'}。最後的「${last.name}${last.reversed?'逆位':'正位'}」不是給你精準日期，而是告訴你要等什麼訊號。`;p2='當那個訊號真的在現實中出現，再提高行動強度，會比單純追問「今天到底行不行」更可靠。';}
-        return [p1||directVerdict(comp),p2].filter(Boolean);
-      }
-      function adviceItems(comp){
-        const q=state.question,last=state.current[state.current.length-1];
-        if(state.topic.id==='love'&&state.scenario.id==='single')return [
-          ['降低「完全準備好才能開始」的門檻','不要把每一次新互動都當成關係承諾。先允許低壓、可退出的認識與交流，讓自己重新累積安全的情感經驗。'],
-          ['把防衛和界線分開','界線是知道什麼可以、什麼不可以；防衛則是還沒發生就先把門關上。每當你想立刻退開時，先問自己：現在是真的不適合，還是我只是在避免再次受傷？'],
-          [`使用「${last.name}${last.reversed?'逆位':'正位'}」的力量`,`把最後一張牌當作接下來兩週的實驗方向：從「${words(last).slice(0,2).join('、')}」挑一個最小行動去做，然後用現實回饋而不是想像來判斷。`]
-        ];
-        if(q.type==='feelings')return [['看行動一致性','把主動聯絡、願意溝通、是否願意處理舊問題列為觀察指標，不要只靠一句話或一張牌判斷。'],['不要替對方完成他的決定','你可以表達，但不要一直替對方找理由、猜內心或補上他沒有做的行動。'],[`觀察「${last.name}」的現實版本`,`接下來若真的出現與「${words(last).slice(0,2).join('、')}」一致的行為，再提高你的投入。`]];
-        if(q.type==='obstacle')return [['先處理來源，不急著追結果','把中間牌指出的核心因素轉成一個可以觀察或改變的現實問題，先解一個，不要一次解全部。'],['用小步測試取代反覆確認','做一個低風險的小行動，看現實怎麼回應；這比立刻重新抽牌更能分辨卡點是否真的鬆動。'],[`把「${last.name}」當突破工具`,`最後一張不是保證，而是提示你目前最值得使用的能力：${words(last).slice(0,3).join('、')}。`]];
-        if(q.type==='action')return [['先做最小可行行動','不要一次把局勢推到必須表態或必須成功的位置，先做一個可回收、可觀察的小步驟。'],['把風險寫出來','把你最怕發生的三件事列出來，分清楚哪些是可預防的、哪些只是焦慮想像。'],[`用「${last.name}」校正節奏`,`如果你的行動方式和最後一張牌代表的「${words(last).slice(0,2).join('、')}」相反，就先調整方法。`]];
-        if(q.type==='choice')return [['把兩邊代價各寫三條','不要只寫優點；真正難選通常是因為兩邊都有你不想承受的成本。'],['找出不能犧牲的底線','薪資、時間、關係、自由、穩定或成長，先排出前三名，答案會清楚很多。'],['給決定一個期限','如果資訊已足夠，就設定一個合理期限，避免無限分析本身變成拖延。']];
-        return [['先把牌面變成現實觀察','從這副牌挑出一個最重要的訊號，接下來只觀察它，而不是立刻再抽一副確認。'],['保留調整空間','塔羅描述的是目前條件下的傾向；如果人的選擇與現實事件改變，後續也會變。'],[`從「${last.name}」開始`,`把最後一張牌的「${words(last).slice(0,2).join('、')}」轉成一個可以在一週內完成的小行動。`]];
-      }
-      function guardrail(){if(state.question.type==='feelings')return '涉及「對方怎麼想」，本解讀只描述互動與情緒傾向，不把牌面當成對方已親口確認的內心事實。';if(state.question.type==='external')return '涉及第三者、欺騙或外部介入時，牌面只能作為需要確認的訊號，不能取代現實證據。';if(state.topic.id==='finance')return '金錢題只用來整理風險與決策方向，不應取代實際財務資料或專業建議。';return '塔羅呈現的是目前條件下的傾向與提醒；人的選擇、溝通與現實事件改變後，後續也可能改變。';}
-      function buildAIPrompt(){
-        const cards=state.current.map((c,i)=>`${i+1}. 牌位「${c.position}」：${c.name}｜${c.reversed?'逆位':'正位'}｜基礎牌義：${c.meaning}`).join('\n');
-        let follow='';
-        if(state.followupQuestion&&state.followupCards?.length){follow=`\n\n【已追加的追問】\n${state.followupQuestion}\n${state.followupCards.map((c,i)=>`${i+1}. ${c.position}：${c.name}｜${c.reversed?'逆位':'正位'}｜基礎牌義：${c.meaning}`).join('\n')}`;}
-        return `請你扮演一位經驗豐富、但不過度斷言的專業塔羅老師，使用繁體中文，依照我已經抽出的牌解讀。不要重新抽牌，也不要更換牌位。\n\n【主題】${state.topic.name}\n【目前情境】${state.scenario.name}\n【我的問題】${state.question.text}\n【牌陣】${state.question.spread.name}\n【牌面】\n${cards}${follow}\n\n【解讀要求】\n1. 先用一句有洞察力的核心結論開場，像真人老師先抓出這副牌最重要的矛盾或主題。\n2. 逐張牌深入解釋：必須結合「牌位＋正逆位＋我的問題」，不要只重複牌義關鍵字。\n3. 把牌與牌串成一個前後有因果、轉折與發展的故事，說明它們彼此如何影響。\n4. 直接回答我的原問題，不要只說抽象的可能性。\n5. 最後提出 3 個具體、可執行的建議。\n6. 遇到「對方怎麼想、第三者、欺騙、外遇」等問題時，可以談傾向與訊號，但不要把塔羅當成現實證據，也不要因單張牌就下定論。\n7. 語氣可以細膩、有畫面感、有老師個人觀點，但不要故意恐嚇、宿命化或保證結果。\n8. 內容希望約 1900～2200 個中文字，內容要有足夠閱讀深度，但避免模板式重複與灌水。
-9. 若能做到，請分別補充「內在視角」「理性證據視角」「行動策略視角」，但三者必須建立在同一副牌與同一核心判斷上。`;
-      }
-      async function copyAIPrompt(btn){
-        const text=buildAIPrompt();
-        try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);else{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}const old=btn.textContent;btn.textContent='✓ 已複製，可貼到其他 AI';setTimeout(()=>btn.textContent=old,1800);}catch(e){btn.textContent='複製失敗，請再試一次';setTimeout(()=>btn.textContent='複製 AI 解牌提示詞',1800);}
-      }
-      function stripHTMLText(html=''){
-        const box=document.createElement('div');box.innerHTML=html;return (box.textContent||box.innerText||'').replace(/\s+/g,'').trim();
-      }
-      function readingMeta(html=''){
-        const n=stripHTMLText(html).length;const mins=Math.max(1,Math.ceil(n/430));return {chars:n,mins};
-      }
-      function scenarioFrame(){
-        const key=`${state.topic.id}:${state.scenario.id}`;
-        const map={
-          'love:single':'這題的重點不是判斷你「有沒有桃花」，而是看你是否真的允許一段新的連結靠近，以及你會在哪一刻把自己收回安全距離。',
-          'love:ambiguous':'曖昧最容易讓人把希望、猜測和現實混在一起，所以這裡要看的不是一句話有多甜，而是靠近、退開與投入是否形成一致的軌跡。',
-          'love:dating':'已在關係裡時，牌面更適合用來看互動結構：誰在承擔、誰在退、哪些需求沒有被說清楚，而不是只問還愛不愛。',
-          'love:distant':'冷淡或疏遠通常不是單一事件，這副牌要幫你拆開：是情緒降溫、現實壓力、溝通失衡，還是彼此正在用不同方式保護自己。',
-          'love:breakup':'分手後最容易把「仍有感情」和「適不適合重來」混在一起。這裡要把情緒、未解決問題與實際靠近意願分開看。',
-          'love:reconcile':'重新接觸不等於舊問題已經消失。這副牌要看的，是這次是否真的有新的互動方式，還是只是熟悉感把兩個人拉回原位。',
-          'work:leave':'離職題不應只看現在有多累，也要分清楚：問題是環境本身、成長停滯，還是你已經到了需要換一種工作方式的階段。',
-          'work:jobhunt':'求職題要把機會和條件拆開：有沒有門打開是一件事，你是否準備好接住、談清楚與判斷適配度是另一件事。',
-          'business:planning':'創業初期最容易把熱情當成可行性。這裡要同時看動能、資源、風險與市場回饋，才能知道哪一步值得先做。',
-          'business:running':'已在經營時，真正重要的是哪個環節正在放大成果、哪個環節持續消耗，以及資源是否用在能形成複利的地方。',
-          'finance:pressure':'財務壓力會放大焦慮與短期衝動，所以這副牌的功能是把可控制的資源與不可控制的恐懼分開。',
-          'people:conflict':'衝突題最容易陷入誰對誰錯。這裡更值得看的是界線、期待與溝通方式如何一步步把關係推到現在的位置。',
-          'choice:ab':'A／B 題不是找一個「完美答案」，而是看哪一種代價是你真正願意承擔，哪一個選項更符合長期需要。',
-          'self:stuck':'卡住時最需要的不是更多答案，而是找出哪個模式一直重複、哪個力量其實已經準備好但沒有被使用。'
-        };
-        return map[key]||TOPIC_NARRATIVE[state.topic.id]||'這副牌的價值在於把目前混在一起的條件拆開，讓真正的核心變得可以被看見與處理。';
-      }
-      function surfaceProblem(){
-        const key=`${state.topic.id}:${state.scenario.id}`;
-        const map={
-          'love:single':'不是「完全沒有桃花」','love:breakup':'不是只剩「他還愛不愛」','love:ambiguous':'不是只看「他有沒有回訊息」','love:distant':'不是只把冷淡解讀成「沒感情」',
-          'work:leave':'不是「累了就一定要離開」','work:jobhunt':'不是只看「有沒有錄取」','business:planning':'不是「有熱情就會成功」','finance:pressure':'不是把每一個壓力都當成失敗',
-          'choice:ab':'不是找一個完全沒有代價的選項','self:stuck':'不是你真的沒有能力往前'
-        };
-        return map[key]||'不是表面上最顯眼的那個問題';
-      }
-      function signal(card,n=3){return words(card).slice(0,n).join('、')||'這股核心能量';}
-      function minorScene(card){
-        const suit=card.suit, rank=String(card.number||'');
-        const scenes={
-          '權杖':{
-            'Ace':'像第一根火柴剛被點亮：真正的問題不是有沒有火，而是你願不願意把這股衝動變成第一個可見的動作。',
-            '2':'像站在城牆上手握地圖：你已經看見遠方，但還在評估哪一種未知值得承擔。',
-            '3':'像船已經離港、視線開始放遠：它要求你看進展與回饋，而不是只盯著第一步有沒有立刻成功。',
-            '4':'像一個能停下來慶祝的營地：它談的是安全感、歸屬與「這裡能不能讓人願意留下」。',
-            '5':'像幾根權杖在同一個場地互相碰撞：衝突未必等於破局，但需要先分清楚競爭、誤解和真正的價值差異。',
-            '6':'像在人群中收到掌聲：被看見能增加信心，但也要小心把外界肯定變成唯一的安全感來源。',
-            '7':'像站在高處守住位置：真正的力量不是把所有人擋回去，而是知道哪些界線需要守、哪些挑戰其實可以讓你前進。',
-            '8':'像八支箭已經離弦：事情會加速，重點是跟上節奏而不是在每一個訊號出現時都重新懷疑方向。',
-            '9':'像最後一道防線還在撐：你確實有韌性，但若每一次靠近都先進入備戰，保護就會慢慢變成消耗。',
-            '10':'像手上抱滿木柴：責任可以證明投入，但當所有事情都由你扛，關係或工作就很難真正形成分工。',
-            'Page':'像剛收到一個讓人心動的消息：好奇心已經出現，下一步不是想太遠，而是先確認這個訊號值不值得繼續。',
-            'Knight':'像騎士帶著火往前衝：動能很強，但真正成熟的是知道什麼時候加速、什麼時候不要把熱度當成答案。',
-            'Queen':'像一團穩定而有吸引力的火：不需要追著證明自己，反而是越能做自己，越容易形成自然的吸引。',
-            'King':'像掌舵一支隊伍的火：重點在主導與方向，但若只剩控制，別人就很難真正參與。'
-          },
-          '聖杯':{
-            'Ace':'像一只剛注滿水的杯子：感受已經有空間流動，真正要看的是你願不願意承認並接住它。',
-            '2':'像兩只杯子在彼此面前舉起：它要求的是雙向，不是你一個人的想像、付出或期待。',
-            '3':'像一場共同舉杯的聚會：連結來自輕鬆分享與群體互動，但也要留意關係是否只停在熱鬧表面。',
-            '4':'像面前其實有杯子，視線卻沒有真正落上去：有時不是沒有機會，而是疲乏、失望或比較心讓你暫時感受不到。',
-            '5':'像先看見灑掉的杯子：失落是真的，但它提醒你別讓已失去的部分遮住仍可使用的關係資源。',
-            '6':'像翻開一張舊照片：熟悉感很有力量，但「熟悉」不一定等於「現在仍適合」。',
-            '7':'像雲端擺著許多杯子：選項與想像很多，真正需要的是把幻想、期待與可驗證的現實分開。',
-            '8':'像轉身離開已經裝不滿自己的杯子：退出不是失敗，而是承認某些情緒結構已經不能再支撐你。',
-            '9':'像坐在自己想要的生活面前：它談滿足，也提醒你先問清楚「我真正要的是什麼」，而不是只追求被選中。',
-            '10':'像一張共同生活的圖景：它談的不只是浪漫，而是這段連結能不能讓人感到歸屬、安心與可持續。',
-            'Page':'像收到一封帶著情緒的訊息：它很真誠，但還在學習怎麼表達，不宜太早把一個訊號放大成完整承諾。',
-            'Knight':'像有人捧著杯子往你走來：靠近與表達是重點，但浪漫姿態仍需要用後續的一致行動驗證。',
-            'Queen':'像一片很深的水：感受力很強，真正成熟的是能感受很多，卻不需要替每一個感覺立刻下結論。',
-            'King':'像平靜的海面下仍有深水：情緒不是沒有，而是被管理；重點在能不能穩定承接，而不是只會控制表情。'
-          },
-          '寶劍':{
-            'Ace':'像刀鋒第一次把霧切開：真正的力量是把問題說清楚，不是把所有關係都切掉。',
-            '2':'像蒙著眼在兩個選項之間維持平衡：暫停可以保護你，但拖太久就會讓「不決定」變成一種決定。',
-            '3':'像一道已經被看見的裂口：疼痛需要被承認，但不能讓受傷的證據變成對未來所有人的判決。',
-            '4':'像把劍暫時放下休息：這不是逃避，而是提醒你在耗盡前先讓神經和判斷重新恢復。',
-            '5':'像一場即使贏了也可能失去關係的爭辯：真正要問的是這場勝負值不值得，而不是誰比較會說。',
-            '6':'像船正在離開舊岸：改變通常不是瞬間痊癒，而是允許自己從高壓位置慢慢移到比較平靜的地方。',
-            '7':'像手裡拿著不能全被看見的資訊：策略有必要，但若長期靠猜測、隱瞞或試探，信任會先被消耗。',
-            '8':'像被自己的視線和規則困住：限制感很真，但其中一部分可能來自你還沒重新檢查的假設。',
-            '9':'像夜裡反覆醒來的大腦：焦慮會把最壞情境演練得很真，卻不等於那些情境真的已經發生。',
-            '10':'像一個思考模式走到盡頭：有些痛已不能再靠原方法解決，真正的轉機往往從承認「這套方法到此為止」開始。',
-            'Page':'像一雙正在觀察環境的眼睛：資訊敏感是優勢，但若一直查證、測試與猜測，也會讓人無法放鬆。',
-            'Knight':'像一把快速衝出去的劍：決斷力很強，但速度越快，越需要確認自己不是在替焦慮找出口。',
-            'Queen':'像一把乾淨利落的劍：她能設界線、說清楚、看事實；真正的成熟不是冷，而是不再靠模糊保護自己。',
-            'King':'像把複雜資訊整理成可執行的判斷：理性是力量，但若完全排除感受，答案也可能只剩正確而不適合。'
-          },
-          '錢幣':{
-            'Ace':'像手上出現一枚真正可以使用的籌碼：機會的價值不在想像，而在你能不能把它變成穩定的開始。',
-            '2':'像同時轉動兩枚硬幣：彈性很重要，但若一直只做平衡，可能也代表你沒有真正決定優先順序。',
-            '3':'像幾個人一起把一件作品完成：真正的品質來自分工、互相補位與願意接受別人的貢獻。',
-            '4':'像雙手把資源抱得很緊：保留能帶來安全感，但抓得太緊時，新的交換與流動也會一起被擋住。',
-            '5':'像走在寒冷街道上卻沒有先看見可求助的光：匱乏感很真，但也可能讓人忽略其實存在的資源與支持。',
-            '6':'像天秤兩端在交換資源：重點不是誰給得多，而是付出與接受能不能長期維持尊重與平衡。',
-            '7':'像站在田裡看作物長到一半：不是沒有成果，而是需要評估這份投入是否值得繼續，以及還要等多久。',
-            '8':'像一件作品被反覆打磨：成熟來自可重複的練習與細節，而不是一次漂亮表現。',
-            '9':'像站在自己打造的花園裡：獨立與品質是優勢，但也要確認「我一個人很好」沒有變成拒絕別人參與。',
-            '10':'像一個可延續的家族與結構：真正的穩定不只看當下舒服，而是看價值、責任與資源能不能長期承接。',
-            'Page':'像第一次把一枚硬幣放到桌上研究：它重視學習與落地，適合用小步驟驗證，而不是一下投入全部。',
-            'Knight':'像一步一步走同一條路的騎士：速度不快，但真正的價值在可靠、持續與說到做到。',
-            'Queen':'像一個把生活照顧得井然有序的人：她提醒你，穩定不是防守，而是有能力照顧自己也允許別人參與。',
-            'King':'像一個能把資源放在正確位置的人：成熟不是只有掌控，而是讓承諾、時間與實際投入彼此一致。'
-          }
-        };
-        return scenes[suit]?.[rank]||'';
-      }
-      function cardMetaphor(card){
-        const m={
-          '愚者':'像站在新路口，真正的課題不是保證前面安全，而是你願不願意帶著判斷力跨出第一步。','魔術師':'像桌上的工具都已經到位，關鍵不再是缺什麼，而是你是否真的開始使用。','女祭司':'像一扇還沒完全打開的門，答案不適合靠逼問，而要靠觀察細節與內在反應慢慢浮現。','隱者':'像把燈關小、退回自己的房間；這能幫助整理，也可能讓外界再也進不來。','命運之輪':'像齒輪開始轉動，真正重要的是你能不能辨認時機，而不是想把所有變化控制住。','正義':'像把兩邊證據放上秤，感受重要，但不能取代事實與責任。','倒吊人':'像暫時倒過來看世界，停下不是失敗，而是原本的視角可能已經看不到出口。','死神':'像關上一扇已經走完的門，真正困難的是承認有些東西需要結束，新的才有空間進來。','節制':'像把兩杯不同的水慢慢調到可以共存，靠的是節奏與比例，不是一次做到完美。','惡魔':'像已經看見鎖鏈在哪裡；真正要處理的不是恐懼本身，而是你仍把多少主導權交給它。','高塔':'像餘震仍留在身體記憶裡；就算現在沒有倒塌，你也可能先用最壞情境保護自己。','星星':'像黑夜裡重新找到一個不刺眼但穩定的方向，重點是恢復相信，而不是立刻得到結果。','月亮':'像走在霧裡，直覺有價值，但如果沒有現實驗證，很容易把害怕當成事實。','太陽':'像光照進來後事情變得比較容易看清，重點是把清晰變成坦率與實際行動。','審判':'像聽見一個不能再忽略的召喚，舊事需要被重新理解，才有真正重新開始的可能。','世界':'像一個循環走到收尾，答案不一定是抓得更緊，而是確認什麼已經完成、什麼值得帶走。'
-        };
-        return m[card.name]||minorScene(card)||'';
-      }
-
-      const LOVE_MAJOR_DEEP={
-        '愚者':{up:'你願意重新打開一個入口，但真正的準備不是毫無顧慮，而是知道自己可以邊走邊判斷。',rev:'你並非完全拒絕開始，而是對開始之後的風險仍缺乏把握，容易把「再等等」當成安全。'},
-        '魔術師':{up:'你其實有能力讓關係開始發生，重點是把好感、意圖與行動放到同一條線上。',rev:'你可能不是沒有能力，而是太在意方法、技巧或控制感，反而讓真實意圖變得不清楚。'},
-        '女祭司':{up:'你很重視內在感受與細節，容易先觀察再靠近；真正的課題是讓直覺和現實資訊彼此校正。',rev:'直覺、焦慮與資訊不足可能混在一起，現在更需要分清楚「感覺到」和「已經證實」。'},
-        '皇后':{up:'你渴望的是能夠滋養彼此、舒服成長的關係，也較願意用照顧與接納建立親密。',rev:'你容易把照顧、付出與被需要綁在一起；如果自我價值要靠對方回應確認，關係就很容易失衡。'},
-        '皇帝':{up:'你需要清楚、穩定、可預期的界線與承諾，安全感常來自「彼此知道規則是什麼」。',rev:'你可能太想控制節奏或結果，或反過來因界線不清而感到不安；真正要調整的是控制與秩序的比例。'},
-        '教皇':{up:'你真正看重的不只是心動，而是正式、可被承認、有共同價值與承諾的關係框架。',rev:'你正在重新思考什麼才算適合自己的關係，不想再只照既有標準走，但新的共識仍需要建立。'},
-        '戀人':{up:'你面對的不是單純有沒有感覺，而是價值、選擇與願不願意共同承擔是否一致。',rev:'吸引力可能存在，但選擇、價值或承擔沒有完全對齊；這不等於第三者，也不適合直接把矛盾說成背叛。'},
-        '戰車':{up:'你有往前推進的意願，但真正成熟的推進要讓方向和節奏一致，而不是只靠意志硬衝。',rev:'你可能同時想靠近又想保留退路，或不同需求互相拉扯，導致越用力越難真正前進。'},
-        '力量':{up:'你有能力承受感情裡的不確定，真正的力量來自溫和穩定，而不是把情緒壓到看不見。',rev:'你可能太用力撐住自己，表面平靜，內在卻更容易自我懷疑或耗損。'},
-        '隱者':{up:'你需要先知道自己真正要什麼，獨處能幫你整理，但答案仍需要回到現實互動裡驗證。',rev:'你可能保護自己太久，思考已經很多，但新的經驗進不來；封閉和沉澱的界線需要重新調整。'},
-        '命運之輪':{up:'你的感情狀態正在進入新的週期，機會可能來得比預期快，重點是能不能在變化出現時真正回應。',rev:'舊循環可能仍在重播；真正需要看的是你是不是又用熟悉方式回應新的對象。'},
-        '正義':{up:'你很需要關係中的公平、責任與清楚交換，安全感來自雙方說到做到，而不是只靠感覺。',rev:'你可能覺得資訊、責任或付出不夠對等；此時先補事實，比急著判定誰對誰錯更重要。'},
-        '倒吊人':{up:'你正在重新調整看待感情的角度；暫停不一定是退縮，也可能是在放下舊的判斷方式。',rev:'等待可能已經從沉澱變成拖延；如果只是反覆觀察卻不讓新資料進來，停著本身也會形成結果。'},
-        '死神':{up:'你已經走到必須讓某個舊模式真正結束的位置，新的關係需要一個不同於以前的自己來承接。',rev:'你知道舊方式已經不適合，卻還沒完全放手；真正難的不是結束，而是失去熟悉的保護方式。'},
-        '節制':{up:'你適合用慢而穩的方式建立關係，安全感不是一次得到，而是靠節奏、界線與投入比例逐步形成。',rev:'互動中的節奏或投入比例容易失衡；問題不一定是不適合，而是目前的相處配方讓人難以舒服。'},
-        '惡魔':{up:'某種吸引、依賴、慾望或熟悉模式的拉力很強；真正要問的是你是否仍保有選擇權。',rev:'你已經開始看見舊依賴或執著的束縛，現在的課題是把主導權真正拿回來，而不是只知道它不健康。'},
-        '高塔':{up:'你對關係裡的突然失控或真相翻轉較敏感，容易在真正投入前先預演最壞情況。',rev:'你可能正在努力避免某個改變或餘震；表面沒有爆發，不代表內在警報已經解除。'},
-        '星星':{up:'你正在恢復對愛與未來的信任，真正的進步不是立刻遇到完美的人，而是重新願意相信好的互動可以累積。',rev:'希望仍在，但信心比較薄；你需要把理想縮到可驗證的小步驟，讓現實慢慢把信任補回來。'},
-        '月亮':{up:'你對關係裡的模糊訊號很敏感，直覺有價值，但資訊不足時也容易把想像、恐懼與感受混在一起。',rev:'迷霧可能正在散去，但清醒也可能變成過度警戒；真正重要的是讓事實逐步取代猜測。'},
-        '太陽':{up:'你正在靠近更坦白、更清楚、更能被看見的互動，這份開放有助於建立安全感。',rev:'正向條件仍在，只是熱度、信心或清晰度沒有完全到位；不要因為不夠完美就否定已有進展。'},
-        '審判':{up:'你已經到了需要重新理解過去、做出不同選擇的階段，新的關係不能只靠舊反射來決定。',rev:'你可能知道自己需要往前，卻仍被舊事、自我否定或內疚拉住；真正的重新開始需要一個不同決定。'},
-        '世界':{up:'你正在完成一個舊週期，準備把過去整合成經驗，而不是繼續帶成包袱。',rev:'舊階段還有一個缺口沒有收尾；急著開始新關係，可能只是把未完成的問題帶進下一章。'}
-      };
-      function loveDeepMeaning(card){
-        if(card.arcana==='major'){
-          const row=LOVE_MAJOR_DEEP[card.name];
-          if(row)return card.reversed?row.rev:row.up;
-        }
-        const key=signal(card,3), scene=minorScene(card), rank=RANK_CONTEXT[String(card.number||'')]||'';
-        const suitLead={
-          '權杖':'它主要反映你如何啟動靠近、維持熱度與處理主動權',
-          '聖杯':'它主要反映你如何接收、表達與承接情緒連結',
-          '寶劍':'它主要反映你如何理解風險、溝通與保護自己的判斷',
-          '錢幣':'它主要反映你如何建立信任、投入與可持續的穩定'
-        }[card.suit]||'它反映你目前在關係中的一個具體運作方式';
-        return `${suitLead}。這張牌把焦點放在「${key}」；${rank}${scene?` ${scene}`:''}`;
-      }
-      function roleType(pos){
-        const p=String(pos||'');
-        if(/來源|成因|深層/.test(p))return 'source';
-        if(/未來|走向|結果|趨勢/.test(p))return 'future';
-        if(/阻礙|風險|卡點|代價/.test(p))return 'obstacle';
-        if(/突破|建議|方向|做法|下一步/.test(p))return 'action';
-        if(/目前|現況|表現/.test(p))return 'current';
-        if(/感受|態度|對方/.test(p))return 'feelings';
-        return 'other';
-      }
-      function roleAwareDeep(card){
-        const base=state.topic.id==='love'?loveDeepMeaning(card):(card.arcana==='major'?majorNarrative(card):`${minorScene(card)} ${topicManifestation(card)}`);
-        const role=roleType(card.position);
-        if(role==='current')return `放在「${card.position}」，它更像你現在如何把這個議題呈現出來：${base}`;
-        if(role==='source')return `放在「${card.position}」，它比較像驅動前面反應的內在判準，而不是解法：${base}`;
-        if(role==='future')return `放在「${card.position}」，它不是保證，而是在說如果前面的模式有所鬆動，接下來最可能朝這個方向發展：${base}`;
-        if(role==='obstacle')return `放在「${card.position}」，它指出目前最容易反覆卡住的地方：${base}`;
-        if(role==='action')return `放在「${card.position}」，它最適合被轉成新的做法：${base}`;
-        if(role==='feelings')return `放在「${card.position}」，它只能描述感受與互動傾向，仍不能代替對方親口說明：${base}`;
-        return base;
-      }
-      const LOVE_MINOR_NATURAL={
-        '權杖':{
-          'Ace':['已經有想主動開始、讓關係點火的意願','想開始的心還在，但動能容易被遲疑或準備不足壓住'],
-          '2':['正在評估未來方向，也開始思考誰值得你往前走','容易因害怕未知而停在觀望，想很多卻難跨出舒適圈'],
-          '3':['已經把眼光放到更遠的發展，願意看一段關係能不能往外拓展','期待與現實進度不一致，容易因看不到成果而失去耐性'],
-          '4':['很重視安心、歸屬與能不能自然進入彼此生活','對穩定的期待還沒有真正落地，表面和諧不一定等於內在安心'],
-          '5':['願意面對差異與磨合，不會因小摩擦就立刻否定關係','容易把磨合變成內耗，或表面不吵、心裡卻一直累積不滿'],
-          '6':['希望被看見、被肯定，也比較敢接住對方的正面回應','容易把對方的反應當成自我價值判決，認可不足時很快失去信心'],
-          '7':['會守住自己的立場與界線，不願為了戀愛失去自己','防衛容易開得太滿，還沒確認對方是否越界就先進入備戰'],
-          '8':['互動容易加速，訊息、邀約或關係進度會明顯變快','節奏一快就容易焦躁、誤會或突然踩煞車'],
-          '9':['即使曾經疲累，仍保有撐住與再觀察一次的韌性','長期警戒正在消耗你，容易把每一次靠近都當成下一次受傷的前兆'],
-          '10':['很願意承擔、照顧進度，也希望事情能被推到完成','容易一個人扛太多，最後把關係變成責任而不是互相參與'],
-          'Page':['對新的人與新訊號仍有好奇，願意先認識再理解','好奇心有，但容易三分鐘熱度、訊號太多或只停在想像'],
-          'Knight':['有很強的追求與靠近動能，喜歡直接讓關係往前走','容易太快衝、太快熱，也可能在熱度過後突然失去方向'],
-          'Queen':['能自然展現魅力與熱度，越做自己越容易形成吸引','需要被肯定的焦慮容易藏在自信下面，互動一不如預期就開始不安'],
-          'King':['知道自己想往哪裡走，也有能力帶動關係進度','主導感容易變成控制，太急著掌握節奏時會讓別人難以參與']
-        },
-        '聖杯':{
-          'Ace':['已經願意讓新的情感與好感進來，心其實是打開的','有感受卻不容易真正接住或表達，情緒入口仍偏封閉'],
-          '2':['在意雙向吸引與對等回應，也願意建立真正的連結','彼此有感覺也可能因誤解、失衡或互動不對等而難以靠近'],
-          '3':['更容易在朋友、社交與輕鬆交流中打開自己','社交熱鬧不一定等於真正親密，也容易受第三方期待或人際雜訊干擾'],
-          '4':['仍在觀望，情緒上不急著接受眼前的機會','開始從停滯裡醒來，重新看見原本忽略的可能'],
-          '5':['仍容易被失落與遺憾拉住，注意力會先落在已失去的部分','正在從失落裡恢復，開始重新看見仍然存在的資源與可能'],
-          '6':['熟悉感、過去經驗與「像以前某個人」的感受很容易影響選擇','正在學著把過去和現在分開，不再只因熟悉就判定適不適合'],
-          '7':['容易同時看到太多可能，也容易把期待投射到尚未確認的關係上','正在收回幻想、縮小選項，準備用現實做判斷'],
-          '8':['開始知道什麼已經不再滿足自己，也願意離開不合適的情緒結構','明知不滿仍容易回頭，熟悉感與害怕改變讓離開變得反覆'],
-          '9':['比較知道自己真正想要什麼，也有能力享受自己的生活','外在看似有選擇，內在卻仍可能不滿足，容易把被選中當成填補空缺'],
-          '10':['真正想要的是有歸屬、有互相支持、能長期生活的關係','對理想關係的期待和現實容易出現落差，需要重新校正「幸福應該長什麼樣」'],
-          'Page':['願意接收新的情緒訊號與好感，也保有柔軟的好奇','容易因敏感、多想或訊號混亂，把一點感覺放大成整段故事'],
-          'Knight':['願意浪漫地靠近、邀請與表達好感','容易理想化、情緒反覆，浪漫感跑在承諾與落地之前'],
-          'Queen':['能感受很深，也願意理解與承接情緒','容易太投入、界線變薄，最後分不清哪些情緒是自己的、哪些是對方的'],
-          'King':['有能力穩定承接感受，也比較能用成熟方式溝通','表面冷靜不代表內在平靜，壓抑久了可能用控制代替真正表達']
-        },
-        '寶劍':{
-          'Ace':['想把事情說清楚、看清楚，也願意直接面對真相','資訊與判斷仍混亂，越想一次搞懂越容易說不清或下錯結論'],
-          '2':['面對感情會先權衡，不願在資訊不足時倉促決定','長期猶豫已經開始變成壓力，越想兩全越難真正選擇'],
-          '3':['仍會被失落、分離或受傷經驗刺到，這份痛需要被承認','正在修復舊傷，但過去的痛仍可能偷偷影響新的判斷'],
-          '4':['需要先冷卻與恢復，現在不適合一直逼自己做感情決定','表面想休息，內在卻仍焦躁，真正的恢復還沒有完成'],
-          '5':['遇到差異時容易進入勝負與防衛，會很在意誰吃虧','開始想退出無效攻防，但餘怨或輸贏感仍需要真正放下'],
-          '6':['正在把自己從較混亂的情緒與關係場景移開','舊包袱仍被帶在身上，身體離開了，思考與反應卻還沒有完全過岸'],
-          '7':['容易用試探、策略或保留資訊來降低風險','正在看見試探與自我欺騙的代價，真正的課題是更直接地面對事實'],
-          '8':['會覺得選擇有限，很多「不能」其實正在主導你的靠近方式','開始看見自己其實有選擇，限制感正在鬆開'],
-          '9':['焦慮容易把最壞情境演得很真，思緒比現實跑得快','恐懼還在，但已經開始能被辨認、被處理，不再完全主導反應'],
-          '10':['某個舊思考或關係模式已經走到不能再拖的位置','正在從谷底往上，但真正收尾仍需要把舊痛和舊方法一起放下'],
-          'Page':['很會觀察訊號、蒐集資訊，也希望先弄懂再靠近','容易變成過度查證、疑神疑鬼或話說太快，資訊反而越查越亂'],
-          'Knight':['傾向快速確認、直接推進與追求答案','容易太快分析、定義或出手，讓判斷速度跑在感情成熟之前'],
-          'Queen':['很清楚自己的界線，也重視誠實與理性辨別','界線容易變成隔離，太快用冷與尖銳把不確定切掉'],
-          'King':['習慣用邏輯、標準與策略做成熟判斷','容易把理性用成控制或僵化規則，答案看似正確卻不一定適合關係']
-        },
-        '錢幣':{
-          'Ace':['願意替感情留出真實的時間與生活空間，重視能不能落地','機會可能存在，但生活節奏、資源或準備還沒有真正承接住'],
-          '2':['正在學著把感情放進既有生活裡，調整時間與優先順序','生活負荷太滿或優先順序混亂，感情很容易永遠排到最後'],
-          '3':['重視彼此合作、分工與一起把生活做好的能力','容易因合作失衡、分工不清而覺得最後還是自己在撐'],
-          '4':['很重視安全感與資源穩定，不會輕易把自己交出去','抓得太緊時，安全感會變成控制，新的交換與靠近也一起被擋住'],
-          '5':['現實壓力或匱乏感容易影響你對自己與桃花的判斷','正在走出匱乏，開始願意接受支持，也比較看得到可用資源'],
-          '6':['很在意付出是否互惠，也會觀察對方有沒有真正回應','不對等交換、附帶條件或人情壓力容易讓關係變得不舒服'],
-          '7':['願意給一段關係時間，也會務實評估投入值不值得','容易因看不到快速成果就失去耐性，或覺得投入回報不成比例'],
-          '8':['願意把關係能力當成可以練習與累積的東西','容易完美主義、太用力修正自己，反而忘記關係需要雙方一起學'],
-          '9':['有能力把自己的生活過好，不需要靠戀愛填滿全部','獨立容易變成過度自給自足，表面很好卻不讓別人真正進入生活'],
-          '10':['真正看重的是長期穩定、家庭與能不能一起經營生活','長期結構、家庭或資源問題容易成為安全感裂縫，需要先談清楚現實'],
-          'Page':['願意從小而實際的互動開始，不急著一次決定全部','容易只規劃、不落地，或一直等到自己更準備好才開始'],
-          'Knight':['重視可靠、規律與說到做到，偏好慢慢累積信任','過度保守會讓穩定變成停滯，關係很安全卻沒有進展'],
-          'Queen':['知道怎麼照顧生活與關係，也有能力提供穩定支持','容易過度照顧別人而忽略自己，把「有用」誤當成「值得被愛」'],
-          'King':['看重長期承擔、資源管理與現實可靠度','安全感容易建立在掌控資源與條件上，太重現實時會壓縮情感流動']
-        }
-      };
-      function shortRelationshipTheme(card){
-        if(state.topic.id!=='love')return signal(card,2);
-        const special={
-          '教皇':card.reversed?'正在重寫自己對承諾與正式關係的標準':'真正看重正式承諾、共同價值與能被承認的關係',
-          '皇后':card.reversed?'容易用照顧與付出換取安全感與被需要':'有能力滋養一段互惠而舒服的關係',
-          '皇帝':card.reversed?'容易把控制節奏當成安全感':'需要清楚、穩定而可協商的界線與承諾',
-          '月亮':card.reversed?'正在從迷霧裡重新辨認事實':'容易在不確定裡讓直覺、恐懼與想像混在一起',
-          '星星':card.reversed?'仍在修復對愛與未來的信心':'正在恢復相信好的關係可以慢慢發生',
-          '高塔':card.reversed?'仍在避免舊餘震再次發生':'對突然失控與真相翻轉保持高度警戒',
-          '隱者':card.reversed?'保護自己太久，新的經驗不容易進來':'需要先整理自己真正要什麼，再回到互動裡驗證',
-          '戀人':card.reversed?'吸引、價值與承擔還沒有完全對齊':'正在面對「喜歡」和「願不願意一起承擔」是否一致',
-          '死神':card.reversed?'知道舊模式不適合，卻還沒有真正放手':'需要讓舊模式結束，才能用新的自己承接關係',
-          '節制':card.reversed?'互動節奏與投入比例需要重整':'適合用慢而穩的節奏建立信任',
-          '惡魔':card.reversed?'正在把主導權從依賴與執著裡拿回來':'某種依賴、慾望或熟悉模式仍有很強拉力'
-        };
-        if(special[card.name])return special[card.name];
-        const row=LOVE_MINOR_NATURAL[card.suit]?.[String(card.number||'')];
-        if(row)return card.reversed?row[1]:row[0];
-        const w=words(card)[0]||signal(card,1);
-        return card.reversed?`「${w}」仍有需要調整的地方`:`「${w}」正在成為這段關係裡的重要力量`;
-      }
-      function naturalMainStory(){
-        const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1],q=state.question.type;
-        if(state.topic.id==='love'){
-          if(q==='state')return `你現在${shortRelationshipTheme(first)}；更深一層，${shortRelationshipTheme(mid)}；近期則${shortRelationshipTheme(last)}。所以你的準備度不是「有／沒有」這麼簡單，而是心、判斷與選擇能不能走在同一個節奏上。`;
-          if(q==='obstacle')return `最先卡住你的是：${shortRelationshipTheme(first)}。背後讓這個反應反覆出現的是：${shortRelationshipTheme(mid)}。真正的突破則要看你能不能開始做到：${shortRelationshipTheme(last)}。`;
-          if(q==='feelings')return `這副牌把可見反應、內在感受與真正願不願意靠近拆開來看；前兩層可以有感覺，但最後仍要用持續的現實行動確認。`;
-          if(q==='future')return `這不是把未來寫死，而是一條發展線：現在先由「${shortRelationshipTheme(first)}」啟動，中間條件是「${shortRelationshipTheme(mid)}」，最後較容易走向「${shortRelationshipTheme(last)}」。`;
-        }
-        return currentCoreLine(composition());
-      }
-
-      function topicManifestation(card){
-        const rev=card.reversed, suit=card.suit, t=state.topic.id;
-        const maps={
-          love:{
-            '權杖':rev?'可能表現在「想靠近又收回主動」、聊天有火花卻很快降溫，或一直等對方先給更確定的訊號。':'可能表現在願意主動、增加互動、表達好感，或讓關係從想像真正進到接觸。',
-            '聖杯':rev?'可能表現在有感受卻不容易表達、期待與失望反覆，或把需要藏起來後再用冷淡保護自己。':'可能表現在願意分享感受、接住對方、承認好感，以及讓互動有情緒上的來回。',
-            '寶劍':rev?'可能表現在反覆分析訊息、把不確定先當成風險、怕說錯而沉默，或很快用理性替感情踩煞車。':'可能表現在把話說清楚、確認界線、問真正需要問的問題，而不是長期靠猜測維持安全。',
-            '錢幣':rev?'可能表現在太早用條件審核一段關係、擔心投入沒有回報，或因生活穩定被打亂而降低靠近意願。':'可能表現在看重穩定、時間安排、實際付出與承諾，用持續行動而不是一句話判斷關係。',
-            '大阿爾克那':'它比較像一個深層關係模式被觸發，現實事件只是入口，真正要看的是你如何回應這個模式。'
-          },
-          work:{
-            '權杖':rev?'可能表現在想推進但容易疲乏、方向分散，或因一次挫折就懷疑整條職涯方向。':'可能表現在主動承擔、提出方案、搶到節奏與能見度。',
-            '聖杯':rev?'可能表現在失去認同感、團隊情緒耗損，或因不被理解而逐漸抽離。':'可能表現在工作滿足感、團隊信任與願意投入。',
-            '寶劍':rev?'可能表現在資訊不清、溝通成本高、過度焦慮或判斷被壓力干擾。':'可能表現在把資訊查清、談條件、做決策、設界線。',
-            '錢幣':rev?'可能表現在薪資、資源、技能或穩定性不符合預期。':'可能表現在成果、收入、技能與可持續的職涯基礎。',
-            '大阿爾克那':'它把工作問題拉回人生階段與價值選擇，可能不是只換一個職位就能完全解決。'
-          },
-          business:{'權杖':'會落在推進速度、創意與市場動能。','聖杯':'會落在客戶感受、團隊信任與品牌共鳴。','寶劍':'會落在策略、資訊、談判與風險判斷。','錢幣':'會落在現金流、資源、產品落地與可持續性。','大阿爾克那':'代表這不只是單一專案，而可能牽動經營模式或長期方向。'},
-          finance:{'權杖':'會落在開源動機與冒險強度。','聖杯':'會落在情緒性花費、安全感與滿足感。','寶劍':'會落在風險、資訊與理性判斷。','錢幣':'會直接落在現金流、資源、負擔與安全邊際。','大阿爾克那':'代表金錢問題背後還牽涉價值與人生階段，不能只看單筆得失。'},
-          people:{'權杖':'可能表現在互動火花、立場碰撞與誰先採取行動。','聖杯':'可能表現在親近、信任、情緒回應與是否有被理解。','寶劍':'可能表現在誤會、話語、界線與需要說清楚的事。','錢幣':'可能表現在互惠、責任、承諾與實際支持。','大阿爾克那':'代表這段互動可能碰到你更深的人際模式或價值底線。'},
-          choice:{'權杖':'提醒你比較哪個方案更有動能與投入意願。','聖杯':'提醒你別忽略真正想要的感受與價值。','寶劍':'要求把資訊、風險與假設拆開。','錢幣':'要求比較成本、可持續性與能否落地。','大阿爾克那':'表示選擇牽涉長期價值，不宜只看眼前方便。'},
-          self:{'權杖':'會落在生命力、勇氣與行動。','聖杯':'會落在情緒需求與療癒。','寶劍':'會落在內在對話、焦慮與信念。','錢幣':'會落在生活基礎、身體節奏與習慣。','大阿爾克那':'代表這是一個較深的自我課題，不只是最近心情。'},
-          fortune:{'權杖':'近期節奏較重行動與機會回應。','聖杯':'近期重點較在人際與心境。','寶劍':'近期容易出現資訊、壓力或需要決斷的情境。','錢幣':'近期要靠實際累積、資源與穩定。','大阿爾克那':'近期可能出現較有轉折感的主題，但仍需看現實如何落地。'}
-        };
-        const group=maps[t]||maps.self;
-        let base=group[suit]||group['大阿爾克那']||'';
-        if(card.arcana==='major'&&group['大阿爾克那'])base=group['大阿爾克那'];
-        return base;
-      }
-      function deepCardParagraph(card,index){
-        const ori=card.reversed?'逆位':'正位', pos=card.position;
-        const base=state.topic.id==='love'?roleAwareDeep(card):(card.arcana==='major'?majorNarrative(card):`這張牌本身把焦點放在「${signal(card,4)}」。在${state.topic.name}題裡，${contextualSuit(card)}。`);
-        const orient=card.reversed?`逆位在這裡比較像能量被壓住、過度使用、方向偏掉，或你正在從舊模式鬆開；所以不能只把它翻譯成「不好」，而要看它具體卡在哪裡。`:`正位表示這股力量比較容易直接被看見與使用；但正位也不是保證順利，仍要看它落在「${pos}」這個位置時，是資源、條件、現況還是需要承擔的責任。`;
-        let role='';
-        if(/阻礙|風險|卡點|代價/.test(pos))role=`它是這一題的主要卡點：重點不是「這張牌很差」，而是這個模式最容易在什麼地方讓你反覆。`;
-        else if(/來源|成因|深層/.test(pos))role=`它不是解法，而是原因層：它要回答「為什麼前面的狀態會形成」，所以不能把它誤當成你現在應該去做的事。`;
-        else if(/突破|建議|方向|做法|下一步/.test(pos))role=`它是牌陣裡真正可操作的出口：前面的卡點要怎麼換一種反應，主要看這張牌能不能被落到現實。`;
-        else if(/未來|走向|結果|趨勢/.test(pos))role=`它不是命令你「照這張牌去做」，而是描述：若目前條件延續、前面的問題有被處理，局勢最容易往哪裡發展。`;
-        else if(/目前|現況|表現/.test(pos))role=`它先描述你現在最容易被看見的反應與姿態；它不一定是最深原因，但會決定別人或局勢首先接收到什麼。`;
-        else role=index===0?'它先定義這次問題的起點。':index===state.current.length-1?'它把前面的訊號收束成最後要觀察的方向。':'它在中段負責連起表面與核心。';
-        const boundary=/對方|感受|態度/.test(pos)?'如果牽涉另一個人的內心，這裡只能理解成互動傾向，仍要以對方實際說法與行動驗證。':'';
-        return `<div class="card-reading-item deep-card"><div class="meta">${String(index+1).padStart(2,'0')} · ${esc(pos)} · ${ori}</div><h5>${esc(pos)}：${esc(card.name)}${ori}——${esc(cardHeadline(card))}</h5><p>${esc(base)}</p><p>${esc(cardMetaphor(card))}</p><p>${esc(positionLens(pos))} ${esc(orient)}</p><p><b>放進你現在的情境：</b>${esc(state.topic.id==='love'?loveDeepMeaning(card):topicManifestation(card))}</p><div class="takeaway">這張牌在整個故事裡的角色｜${esc(role)}${boundary?` ${esc(boundary)}`:''}</div></div>`;
-      }
-
-      function transitionDeep(a,b){
-        const ak=signal(a,2),bk=signal(b,2),sa=sentiment(a),sb=sentiment(b),bp=String(b.position||'');
-        const bIsSource=/來源|成因|深層/.test(bp), bIsTool=/突破|建議|方向|做法|下一步/.test(bp), bIsFuture=/未來|走向|結果|趨勢/.test(bp);
-        if(bIsSource){
-          const depth=state.topic.id==='love'?shortRelationshipTheme(b):bk;
-          return `「${a.name}${a.reversed?'逆位':'正位'}」先把眼前反應放到檯面上；到了來源牌「${b.name}${b.reversed?'逆位':'正位'}」，鏡頭才真正往下移。這裡更像在說：${depth}。它不是解法，而是前面反應為什麼會出現的內在條件。`;
-        }
-        if(bIsFuture){
-          const future=state.topic.id==='love'?shortRelationshipTheme(b):bk;
-          if(sb>sa)return `前一張留下的條件若開始被調整，到了走向牌「${b.name}${b.reversed?'逆位':'正位'}」，後續更容易出現這種變化：${future}。這不是保證，而是目前較合理的發展方向。`;
-          if(sb<sa)return `前一張的問題若一直沒有被處理，到了走向牌「${b.name}${b.reversed?'逆位':'正位'}」，後續要特別留意：${future}。這不是命定結果，而是目前最值得防止的代價。`;
-          return `從「${a.name}」走到走向牌「${b.name}」，不是單純變好或變壞，而是前一個條件正在把局勢帶向這種狀態：${future}。接下來要用現實行為確認它是否真的持續出現。`;
-        }
-        if(bIsTool){
-          return `前一張先把「${ak}」的問題放到檯面上，而「${b.name}${b.reversed?'逆位':'正位'}」落在突破／建議位置，才真正把「${bk}」變成可以採取的新做法。兩張牌在這裡是「問題／條件 → 可操作出口」的關係。`;
-        }
-        if(sa<0&&sb>=0)return `「${a.name}${a.reversed?'逆位':'正位'}」先指出「${ak}」的卡點，而「${b.name}${b.reversed?'逆位':'正位'}」開始把局勢往「${bk}」拉回來；真正要看的是中間條件是否真的改變，而不是把後一張好牌當成保證。`;
-        if(sa>=0&&sb<0)return `「${a.name}${a.reversed?'逆位':'正位'}」原本有「${ak}」的動能，到了「${b.name}${b.reversed?'逆位':'正位'}」則出現「${bk}」的代價或失衡；前面的亮點仍然存在，但不能因此忽略後續成本。`;
-        if(a.suit===b.suit&&a.suit!=='大阿爾克那')return `兩張都落在${a.suit}，代表同一條主題被連續強調。從「${ak}」走到「${bk}」，不是兩個無關訊號，而是同一類問題正在從第一層反應往下一層變化。`;
-        if(a.arcana==='major'&&b.arcana!=='major')return `前一張大阿爾克那「${a.name}」比較像深層模式，到了「${b.name}」則開始落到日常行為。也就是說，真正的轉變不能只停在理解，最後一定要在生活裡看見不同做法。`;
-        if(a.arcana!=='major'&&b.arcana==='major')return `前一張「${a.name}」看似是日常事件，但後面的「${b.name}」把它拉回更深層的價值與模式；眼前的小事可能只是入口，真正需要調整的是你長期怎麼做判斷與回應。`;
-        return `從「${a.name}」的「${ak}」走到「${b.name}」的「${bk}」，牌面顯示前一個狀態正在塑造下一步；如果只單看其中一張，就會漏掉兩者之間真正的承接。`;
-      }
-
-      function currentCoreLine(comp){
-        const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1];
-        if(state.question.type==='obstacle')return `這副牌真正要說的是：${surfaceProblem()}，而是「${signal(first,2)}」如何被「${signal(mid,2)}」這個深層條件維持；最後的「${signal(last,2)}」則是在告訴你，出口或改善方向要從哪裡出現。`;
-        if(state.question.type==='state')return state.topic.id==='love'?naturalMainStory():`這副牌把三個層次拆得很清楚：${first.name}描述你目前最容易呈現出的狀態，${mid.name}說明背後正在推動或牽制準備度的深層條件，而${last.name}則描述目前條件延續下最可能形成的方向。中間牌不一定是「壞因素」，它更像真正需要理解的內在引擎。`;
-        if(state.question.type==='feelings')return `這副牌把「情緒存在」和「願意承擔行動」拆開來看：${first.name}描述可見態度，${mid.name}比較接近內在感受，而${last.name}才是最需要用現實行為驗證的靠近意願。`;
-        if(state.question.type==='action')return `這副牌不是在叫你更用力，而是在校正方法：${mid.name}指出「${signal(mid,2)}」可能是風險，${last.name}則把下一步拉回「${signal(last,2)}」。`;
-        if(state.question.type==='choice')return `這副牌不是替你挑一個最漂亮的選項，而是把「想要什麼」和「願意承擔什麼」分開；真正的答案要回到最後那張牌代表的判準。`;
-        return `${first.name}先定下起點，${mid.name}把真正的核心條件攤開，${last.name}再把方向收束；它們不是三個獨立答案，而是一條從「目前反應」走到「核心條件」，再走向「後續方向」的路徑。`;
-      }
-
-      function teacherHeadline(comp){
-        const q=state.question,first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1];
-        if(state.topic.id==='love'&&state.scenario.id==='single'&&q.type==='obstacle')return `你不是沒有想開始，而是內在仍把「靠近」和「可能受傷」綁在一起`;
-        if(state.topic.id==='love'&&state.scenario.id==='single'&&q.type==='state'){
-          if(first.name==='聖杯王牌'&&mid.name==='寶劍騎士'&&mid.reversed&&last.name==='聖杯七'&&!last.reversed)return `你的心其實已經打開了，但判斷與溝通還跑得太快；接下來最重要的是把心動變成看得清楚的選擇`;
-          return `你現在${shortRelationshipTheme(first)}；真正影響準備度的是你${shortRelationshipTheme(mid)}，而接下來${shortRelationshipTheme(last)}`;
-        }
-        if(q.type==='feelings')return `真正要看的不是有沒有感覺，而是感覺能不能走到行動與承擔`;
-        if(q.type==='external')return `這副牌可以提醒你哪裡值得確認，但不能把懷疑直接翻成事實`;
-        if(q.type==='action')return `答案不只在「做或不做」，而在你用什麼節奏、界線與方法去做`;
-        if(q.type==='choice')return `沒有完全零代價的選項，真正的選擇是你願意承擔哪一種成本`;
-        if(q.type==='future')return `未來沒有被寫死，真正的轉折點藏在中間那個條件是否改變`;
-        if(q.type==='obstacle')return `真正的卡點不是最後沒有路，而是前面的保護方式已經開始限制下一步`;
-        return coreHeadline(comp);
-      }
-      function causalNarrative(comp){
-        const cards=state.current, paras=[],last=cards[cards.length-1],lp=String(last.position||'');
-        let ending='最後一張負責把前面的訊號收束。';
-        if(/突破|建議|方向|做法|下一步/.test(lp))ending='最後一張才真正告訴你：前面的卡點要換成哪一種做法，才可能打開出口。';
-        else if(/未來|走向|結果|趨勢/.test(lp))ending='最後一張不是解法本身，而是告訴你：若前面的核心條件被處理，局勢最容易往哪一種方向發展。';
-        else if(/優勢|資源|力量/.test(lp))ending='最後一張指出你已經擁有、但可能還沒充分使用的資源。';
-        paras.push(`${scenarioFrame()} 這次牌面之所以值得細看，是因為第一張牌定義你最先啟動的反應，中間牌把那個反應背後的原因往下挖，而${ending}`);
-        for(let i=0;i<cards.length-1;i++)paras.push(transitionDeep(cards[i],cards[i+1]));
-        if(comp.major>=2)paras.push(`同一個牌陣裡出現 ${comp.major} 張大阿爾克那，表示這件事不太像只靠一次對話、一次運氣就會徹底改變；它碰到的是比較深的價值、信任或長期模式。深層不等於命定，只代表改變需要比「知道答案」多一步：你要真的換一種回應方式。`);
-        else if(comp.major===1)paras.push(`牌面有一張大阿爾克那，像一個較深的支點；其他牌則把這個支點落到日常行為。換句話說，真正的答案仍然能透過具體選擇被調整。`);
-        else paras.push(`牌面以小阿爾克那為主，說明這題目前仍高度貼近生活選擇、溝通與節奏，不必把它想成不可逆的命運。`);
-        return paras;
-      }
-
-      function directAnswerDeep(comp){
-        const q=state.question, first=state.current[0], mid=state.current[Math.floor(state.current.length/2)], last=state.current[state.current.length-1];
-        const base=answerQuestion(comp);
-        let extra='';
-        if(q.type==='obstacle')extra=`如果要把它濃縮成一句話：目前最需要處理的不是「${signal(first,1)}」本身，而是「${signal(mid,2)}」這個來源如何讓它一直被啟動；只有來源被改寫，最後的「${signal(last,2)}」才可能真的變成突破。`;
-        else if(q.type==='state')extra=`所以你的準備度不是零或一百，而是「外在已經有一部分能力，內在仍有一個核心條件需要跟上」。接下來不要只看自己有沒有想談戀愛，而要看你是否真的願意在安全範圍內讓互動持續、讓未知存在、讓現實累積新資料。`;
-        else if(q.type==='feelings')extra=`因此目前最值得相信的，不是某一張牌替你宣告對方心裡的答案，而是接下來是否真的出現和「${signal(last,2)}」一致的聯絡、溝通、安排與承擔。`;
-        else if(q.type==='future')extra=`這不是「一定會發生」的預言，而是目前條件不變時最容易形成的方向；只要中間條件被改寫，後面的趨勢就有可能跟著改。`;
-        else extra=`所以這一題真正的答案，不是再多抽一次確認，而是把最後一張牌放回它原本的牌位角色：若它是建議，就把它變成行動；若它是走向，就觀察現實是否真的開始往那裡發展。`;
-        return [...base,extra];
-      }
-
-      function adviceItemsDeep(comp){
-        const q=state.question,last=state.current[state.current.length-1];
-        if(state.topic.id==='love'&&state.scenario.id==='single')return [
-          ['練習「小幅度主動」，不要等到完全確定','下一次遇到有點好感、互動還不錯的人，不要立刻判斷能不能交往。先做一件很小的事：多回一句、多問一個問題、答應一次低壓的見面。你現在需要的不是一次把愛情決定完，而是重新讓自己熟悉「靠近一點也仍然安全」。'],
-          ['把「不確定」和「不安全」分開','當你想退縮時，先把客觀事實和腦中劇本分成兩欄。說謊、反覆失信、界線混亂是警訊；但回覆慢一點、還不知道會不會長久，很多時候只是正常的不確定。不要讓保護機制替你把尚未發生的可能一起關掉。'],
-          [`用「${last.name}${last.reversed?'逆位':'正位'}」做一次現實校正`,`${concreteAction(last)} 兩週後只看現實回饋：你是否比以前更能分清楚感覺、想像與真正發生的事。`]
-        ];
-        if(state.topic.id==='love'&&state.scenario.id==='breakup')return [
-          ['把「想念」和「適合重來」分開','有情感不代表舊問題已經解決。先列出當初真正造成分手的兩到三個核心問題，看現在是否出現不同做法，而不是只看聯絡有沒有回溫。'],
-          ['只把實際靠近算進證據','主動聯絡、願意談問題、提出安排、持續一致，才算關係在往前；想念、按讚、偶爾關心不等於已準備好復合。'],
-          [`用「${last.name}」設定一個新的互動規則`,`如果要再靠近，至少讓一件舊模式真的不同：溝通節奏、界線、承諾方式或衝突處理。否則熟悉感很容易把你帶回同一個循環。`]
-        ];
-        if(q.type==='feelings')return [['看「持續的行動」而不是單一訊號','把主動聯絡、願意溝通、是否安排下一步、是否願意處理舊問題列成四個觀察點。至少連續觀察一段時間，不要因一次熱絡或一次冷淡就把答案翻盤。'],['不要替對方完成他的決定','你可以表達，但不要一直替對方找理由、猜內心或補上他沒有做的行動。對方若真的有靠近意願，應該能在現實裡承擔一部分推進。'],[`觀察「${last.name}」的現實版本`,`接下來若真的出現和「${signal(last,2)}」一致的行為，再提高你的投入；若牌面和現實相反，以現實為優先。`]];
-        if(q.type==='obstacle')return [['把「來源」變成一個可以觀察的問題','不要只說自己卡住。把中間牌代表的來源翻成一個具體問題，例如「我是不是一遇到不確定就撤退？」或「我是不是總在資訊不足時先想最壞？」接下來只觀察這一件事。'],['用低風險測試取代反覆確認','設計一個不會讓你付出巨大代價的小行動，讓現實回答你。真正能鬆動阻礙的不是再抽一副牌，而是累積一次和舊模式不同的經驗。'],[`把「${last.name}」當作突破工具`,`最後一張不是保證，而是目前最值得使用的能力：${signal(last,3)}。把它變成一個一週內看得到的行動，再看局勢是否真的鬆動。`]];
-        if(q.type==='action')return [['先做最小可行行動','不要一次把局勢推到必須表態、必須成功的位置。把行動縮小到可撤回、可觀察、有回饋的一步。'],['把最怕發生的事分成「可預防」與「只能承受」','能透過資訊、界線與準備降低的風險就先處理；不能完全控制的部分，則不要因為害怕就把所有行動凍結。'],[`用「${last.name}」校正方法`,`如果你的做法和「${signal(last,2)}」相反，就先換方法再加力。方向對，強度才有意義。`]];
-        if(q.type==='choice')return [['把兩邊的代價各寫三條','不要只列優點。真正難選，常常不是兩邊都很好，而是兩邊都有你不想承受的成本。'],['列出三個不能犧牲的條件','時間、收入、自由、關係、成長、穩定等先排序；只要某個選項長期違反核心條件，再漂亮也可能不適合。'],['設定決策期限與補資料清單','還缺資料就去補；資料已足夠就給自己一個期限，避免「再想一下」本身變成拖延。']];
-        return adviceItems(comp).map(([a,b])=>[a,b+' 請把這件事做成可觀察的行為，讓下一次判斷有現實資料，而不是只有感覺。']);
-      }
-      function causalChainSignature(){
-        const cards=state.current;
-        if(cards.length<2)return '';
-        const chain=cards.map((c,i)=>`${i===0?'起點':i===cards.length-1?'出口':'中段'}「${c.name}${c.reversed?'逆位':'正位'}」＝${signal(c,2)}`).join(' → ');
-        return `${chain}。這條鏈不是在說每一步一定發生，而是在指出：前一層若沒有被看見，下一層就更容易用同樣的方式延續。`;
-      }
-      function misconceptionLine(){
-        const first=state.current[0],last=state.current[state.current.length-1];
-        if(state.question.type==='obstacle')return `這副牌最容易被誤讀成「${first.reversed?'你就是太負面':'只要更努力就好'}」。其實真正重點是：第一張說明你怎麼被卡住，最後的「${last.name}」才是在告訴你用哪一種不同反應打開出口。`;
-        if(state.question.type==='feelings')return `最容易誤讀的是把任何情緒牌直接翻成「他愛你／不愛你」。這副牌更適合分開看：感受是否存在、顧慮是什麼、以及最後是否有真實靠近行動。`;
-        if(state.question.type==='future')return `最容易誤讀的是把最後一張牌當成命定結果。它其實比較像「照目前條件繼續，最容易形成的方向」；中間條件改變，後續就可能跟著改。`;
-        return `最容易誤讀的是把單張牌當成結論。這副牌真正有價值的地方，是看前後牌如何互相修正，而不是挑一張最喜歡或最害怕的牌來代表全部。`;
-      }
-      function psychTensionLine(){
-        const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1],q=state.question.type;
-        const fs=signal(first,2),ms=signal(mid,2),ls=signal(last,2),mood=sentiment(mid);
-        if(q==='state'){
-          if(mood>=0)return state.topic.id==='love'?`你現在真正的拉扯，不是單純「想要 vs 害怕」。第一張顯示你${shortRelationshipTheme(first)}；中間牌則顯示你${shortRelationshipTheme(mid)}。這兩股力量如果不同步，即使最後出現「${shortRelationshipTheme(last)}」的可能，你也容易一邊靠近、一邊用舊方法把自己拉回去。`:`你現在真正的拉扯，不是單純「想要 vs 害怕」。第一張的「${fs}」會先影響你當下的感受與姿態，但中間其實已經出現「${ms}」這股能往外走的力量；矛盾在於，你能不能讓這股力量穿過前面的不確定，最後真的走到「${ls}」所代表的穩定方向。`;
-          return `你一方面會用「${fs}」維持安全，另一方面深層的「${ms}」又讓你難以完全往前；所以真正的矛盾不是你沒有想要「${ls}」，而是目前的保護方式仍在消耗前進能力。`;
-        }
-        if(q==='obstacle')return `第一張的「${fs}」是你最先感受到的卡點，中間的「${ms}」則比較像讓它反覆出現的心理條件；你真正想要的不是消滅所有不安，而是讓最後的「${ls}」有空間變成新的反應。`;
-        if(q==='feelings')return `心理上最容易混在一起的是「有感受」與「有能力靠近」。第一張的「${fs}」描述可見反應，中間的「${ms}」補出內在條件，而最後的「${ls}」才需要用現實行動確認。`;
-        return `你現在不是只有一個情緒，而是三層力量同時存在：先有「${fs}」的反應，再受到「${ms}」的深層條件影響，最後又朝「${ls}」的需要或方向收束。真正要調整的是它們之間的關係，而不是把其中一張牌當成你的全部。`;
-      }
-      function evidenceConclusionRows(comp){
-        const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1];
-        return [
-          ['較強支持',currentCoreLine(comp),'至少由牌位結構與前後連動共同支撐，不只靠單張牌。'],
-          ['中等支持',`「${mid.name}${mid.reversed?'逆位':'正位'}」指出的「${signal(mid,2)}」很可能是目前需要驗證的核心條件。`,'它有明確牌位支持，但仍需要現實行為確認。'],
-          ['暫不支持',state.question.type==='external'?'直接斷定第三者、欺騙或外遇已經發生。':'替你補上一段牌面沒有提供的具體過去故事或他人內心事實。','牌面可以提供假設，不能取代證據。'],
-          ['驗證方向',`觀察「${last.name}${last.reversed?'逆位':'正位'}」代表的「${signal(last,2)}」是否持續出現在現實行動裡。`,'若現實與牌面相反，以現實為優先。']
-        ];
-      }
-      function concreteAction(card){
-        const rank=String(card.number||''),t=state.topic.id;
-        if(t==='love'){
-          const majorLove={
-            '愚者':'答應一次低壓、可退出的新體驗，例如新的社交活動或短時間見面；只觀察自己是否願意往前一步，不先問結果。',
-            '魔術師':'把一個想法變成明確訊息或邀請，不再只靠暗示；說清楚你想做什麼，再看對方是否回應。',
-            '女祭司':'先不急著表態，把三個你真正觀察到的事實寫下來；直覺可以保留，但不要讓沉默替你完成判斷。',
-            '女皇':'安排一件讓自己感到被照顧、舒服且有餘裕的事，再從充足而不是匱乏的位置進入互動。',
-            '皇帝':'把界線說成一句可執行的規則，例如聯絡節奏、見面安排或不能接受的行為，避免只用冷淡維持秩序。',
-            '教皇':'列出你對關係最重要的三個價值與一個可協商項目；遇到新對象時談價值，而不是只看感覺強不強。',
-            '戀人':'把真正的選擇說清楚：你願意靠近到哪裡、願意承擔什麼，不用用曖昧拖延決定。',
-            '戰車':'選一個方向推進七天，不要同時前進又煞車；動作可以小，但節奏要一致。',
-            '力量':'情緒升高時先放慢，不靠壓抑也不靠爆發；用一句溫和但清楚的需求取代硬撐。',
-            '隱者':'保留獨處，但主動打開一個入口，例如接受一次邀約或主動聯絡一個值得認識的人。',
-            '命運之輪':'當新機會出現時，不要因為「還沒想好」立刻錯過；先答應一個低成本的下一步，再看變化。',
-            '正義':'把事實、承諾與責任列出來，確認雙方標準是否一致；不要只用感覺判定公平。',
-            '倒吊人':'暫停原本最熟悉的做法一次，刻意從對方或旁觀者角度重看；先換視角，再決定要不要動。',
-            '死神':'明確結束一個已經失效的舊互動或舊習慣，例如停止反覆查看、測試、比較或保留曖昧退路。',
-            '節制':'把互動調到可長期維持的節奏，例如固定而不密集的聯絡或見面，避免忽冷忽熱。',
-            '惡魔':'選出一個最常讓你失去主導權的行為，例如反覆確認、控制回覆或無法抽離，先停止七天觀察變化。',
-            '高塔':'當警報響起時先問「現在真的發生了什麼？」再列出最壞劇本；沒有證據前，不用舊餘震替新關係判刑。',
-            '星星':'做一件能恢復信任的小事，例如坦白一個低風險感受、接受一次善意或允許互動慢慢累積。',
-            '月亮':'把一個模糊訊號拆成「事實／感受／猜測」三欄，至少取得一個新事實後再下判斷。',
-            '太陽':'把原本隱晦的好感或需求說得更坦白一點，讓關係少靠猜、多靠清楚回應。',
-            '審判':'選一個過去反覆出現的關係模式，寫下這次要做得不同的一件事，讓回顧真的變成新決定。',
-            '世界':'替一段已完成的關係或單身階段做收尾，整理一個舊物、舊聯絡或舊期待，為新階段騰出位置。'
-          };
-          if(card.arcana==='major'&&majorLove[card.name])return majorLove[card.name];
-          const love={
-            '權杖':{'Ace':'主動多回一句、提出一次低壓邀約，讓火苗真正有第一步','2':'挑一個你一直猶豫的互動，在 48 小時內做最小一步，不先決定長期結果','3':'把下一次互動排進日程，只觀察進展，不提前預判關係結局','4':'安排一個舒服、低壓、能看見彼此生活節奏的見面','5':'遇到分歧時先問清楚立場，不用冷掉、較勁或急著證明誰對','6':'當對方給正面回應時，允許自己接住，不要立刻用「他可能只是客氣」抵消','7':'寫下三條真正不能退的界線，再寫一條可以協商的空間','8':'互動變快時不要連發或突然消失，替自己設定可持續的回覆節奏','9':'當警報響起時，寫下「現在證據」和「過去記憶」各一欄再決定是否退','10':'停止一個人維持整段互動，至少讓對方承擔一次安排、回應或付出','Page':'多問一個真誠而不審問的問題，用好奇取代猜測','Knight':'把衝動變成一次具體邀約，不用把熱度直接當成承諾','Queen':'做一件讓自己有自信的社交行動，不用等被選中才感覺有魅力','King':'把主導改成清楚邀請，例如直接提出時間與安排，再讓對方自由回應'},
-            '聖杯':{'Ace':'說出一個真實但不過度暴露的感受，例如「我跟你聊天其實滿舒服」','2':'安排一次一對一互動，觀察彼此是否都願意投入，不只看自己有沒有心動','3':'去一次朋友聚會、興趣活動或群體社交，先恢復輕鬆連結','4':'面對一個不討厭的邀約，不要因為「還沒很有感覺」就立刻關門，先多給一次互動','5':'寫下你最在意的失落，同時列出現在仍可用的三個資源，避免只盯著失去','6':'遇到讓你覺得熟悉的人，刻意問自己「我喜歡的是這個人，還是熟悉感」','7':'把對方的實際行為與你腦中的想像分兩欄，至少累積三個事實再判斷','8':'對明顯消耗、無回應或價值不合的互動退一步，把時間還給自己','9':'列出你真正想要的三個關係感受，不要只列對方條件','10':'安排一次能看見生活相容性的互動，例如一起吃飯、散步、處理一件小事','Page':'回應一個情緒訊號，但只把它當開始，不提前替它命名','Knight':'接受或提出一次帶有明確好感的邀約，再看後續是否一致','Queen':'在一次互動裡說出感受而不是只照顧對方，例如「我其實有點緊張／期待」','King':'情緒來時先穩住再說，讓表達有溫度也有邊界'},
-            '寶劍':{'Ace':'把你最想確認的一件事直接問清楚，不再用猜測補空白','2':'替自己設定一個決定期限；到期前補資料，到期後不再無限拖延','3':'承認一個仍會刺痛你的點，避免它在新關係裡偷偷替你做決定','4':'安排一個真正的休息日，不拿感情訊息來反覆刺激自己','5':'如果互動開始變成攻防，先停止贏輸，改問「我們真正不同的是什麼」','6':'把注意力從舊人／舊劇本移到一個新的生活安排，讓身體先離開舊場景','7':'停止試探與測試，改成一次直接但有界線的確認','8':'把你覺得「不能」的三件事寫下來，逐條檢查它是不是事實','9':'焦慮時延後 30 分鐘再回訊息，先分清楚事實與最壞劇本','10':'替一個已經走完的互動做收尾，不再用反覆查看、重抽或追問維持連結','Page':'少查一次、多問一次；用現實資訊取代偵查式想像','Knight':'重要話題不要在情緒最高點衝出去，先把一句核心需求寫清楚再說','Queen':'用一句清楚界線取代冷淡，例如「我需要慢一點，但我不是拒絕你」','King':'先定義判斷標準，再看行為是否符合，不因單次情緒改變規則'},
-            '錢幣':{'Ace':'替感情留出一個真實時段，例如每週固定一次社交或約會窗口','2':'重新排一週行程，讓感情不是永遠排在「有空再說」','3':'讓對方參與一件小安排，不要什麼都自己處理，觀察合作感','4':'選一件你平常很想控制的細節，刻意留一點空間讓對方決定','5':'若你最近很匱乏，先處理睡眠、金錢或生活壓力，再判斷是不是「沒桃花」','6':'觀察付出是否雙向；連續三次都只有你主動，就把投入降一級','7':'給一段互動一個合理觀察期，不因一天好壞立刻加碼或退出','8':'練一個關係技能，例如表達需求、安排約會或說不，持續兩週','9':'保留自己的生活品質，同時開放一小塊時間讓別人能參與','10':'談一個價值與生活問題，例如家庭、時間或金錢觀，確認長期相容性','Page':'把一個好感變成一個小而實際的行動，不停留在想像','Knight':'固定而穩定地回應，不追求突然的大進展','Queen':'先照顧作息、環境與情緒，讓自己有餘裕承接一段關係','King':'把「可靠」變成可見行為：準時、兌現、清楚安排，也觀察對方是否如此'}
-          };
-          if(love[card.suit]?.[rank])return love[card.suit][rank];
-        }
-        if(t==='work'||t==='business'){
-          const work={
-            '權杖':'把想法變成一個 7 天內可交付的小成果，不再只停在規劃。','聖杯':'安排一次直接溝通，確認期待、合作感與真正的滿意度。','寶劍':'把關鍵資訊、風險與選項寫成一頁，做一次可回看的決策。','錢幣':'把時間、成本、收入或資源量化，先處理最影響落地的那一項。','大阿爾克那':'選一個最能代表這張牌主題的決策，設定期限，不讓它只停在理解。'
-          };return work[card.suit]||work['大阿爾克那'];
-        }
-        return `從「${signal(card,2)}」挑一個最小可行動作，在七天內完成一次，並記錄現實回饋。`;
-      }
-      function actionCommand(card,index){
-        const sig=signal(card,2), concrete=concreteAction(card);
-        let stop='';
-        if(card.reversed)stop=`先停止讓「${sig}」的失衡版本直接替你做決定；資訊不足時，不急著撤退、加碼或把一次反應解讀成整體結果。`;
-        else stop=`先停止只在腦中理解「${sig}」；如果現實完全沒有新行為，再漂亮的牌義也不會自己發生。`;
-        const start=`開始做這件事：${concrete}`;
-        let verify='';
-        if(card.suit==='權杖')verify='驗證方式：七天內看「行動後是否得到更清楚的回應」，而不是只看自己有沒有更興奮。';
-        else if(card.suit==='聖杯')verify='驗證方式：七天內看「情緒是否更能雙向流動、被回應」，而不是只看自己感受有多強。';
-        else if(card.suit==='寶劍')verify='驗證方式：七天內看「資訊是否更清楚、猜測是否變少」，而不是看你分析得有多完整。';
-        else if(card.suit==='錢幣')verify='驗證方式：七天內看「投入是否更穩定、可持續、能落地」，而不是只看一時的熱度。';
-        else verify='驗證方式：七天內只看現實是否出現一個和這張牌方向一致、可重複觀察的改變。';
-        return {stop,start,verify};
-      }
-
-      function lastRoleInstruction(){
-        const last=state.current[state.current.length-1],p=String(last.position||''),name=`${last.name}${last.reversed?'逆位':'正位'}`;
-        if(/突破|建議|方向|做法|下一步/.test(p))return `最後的「${name}」落在可操作位置，所以現在可以把「${signal(last,2)}」直接轉成一個小行動，之後看現實是否回應。`;
-        if(/未來|走向|結果|趨勢/.test(p))return `最後的「${name}」落在走向位置，因此它不是命令，也不是保證；它比較像一個驗證方向：接下來看「${signal(last,2)}」是否逐漸出現在持續、可重複的現實行為裡。`;
-        if(/優勢|資源|力量/.test(p))return `最後的「${name}」落在資源位置，重點是辨認「${signal(last,2)}」是否已經存在，以及你能不能更有意識地使用它。`;
-        return `最後的「${name}」負責收束前面的訊號；不要單獨拿它當結論，而要看它如何修正前面兩張牌。`;
-      }
-      function readerAHTML(comp,tags){
-        let causal=causalNarrative(comp), answers=directAnswerDeep(comp), adv=adviceItemsDeep(comp); if(state.topic.id==='love')causal=[naturalMainStory(),...causal.slice(1)];
-        const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1];
-        return `<div class="lens-hero"><b>牌面核心透視｜${esc(teacherHeadline(comp))}</b><p>${esc(currentCoreLine(comp))}</p></div><div class="core-insight"><b>如果今天你坐在我面前，我會先告訴你</b><p>${esc(scenarioFrame())}</p><p>${esc(`這副牌最值得注意的不是哪一張比較好或比較壞，而是從「${first.name}${first.reversed?'逆位':'正位'}」一路走到「${last.name}${last.reversed?'逆位':'正位'}」的過程。真正的答案藏在這個過程裡，而不是單張牌義裡。`)}</p><p><b>這副牌的因果骨架：</b>${esc(causalChainSignature())}</p></div><div class="lens-section"><h4>一、逐張深解：每張牌在這個問題裡真正說什麼</h4><div class="card-reading-stack">${state.current.map(deepCardParagraph).join('')}</div></div><div class="lens-section"><h4>二、把整副牌串成一個有前因後果的故事</h4>${causal.map(p=>`<p>${esc(p)}</p>`).join('')}<p><b>最容易看錯的地方：</b>${esc(misconceptionLine())}</p></div><div class="lens-section"><h4>三、直接回答你的原問題</h4>${answers.map(p=>`<p>${esc(p)}</p>`).join('')}<p>${esc(`如果把這份解讀壓縮成一個判斷：先看「${signal(mid,2)}」這個深層條件如何影響你的反應。${lastRoleInstruction()}`)}</p></div><div class="lens-section"><h4>四、綜合老師的結論與三個具體建議</h4><div class="teacher-summary"><strong>「${esc(teacherHeadline(comp))}」</strong><p>${esc(`如果只帶走一件事，就是：不要把理解牌面當成結束。真正的突破，要從下一次你遇到同樣情境時，能不能做出和以前稍微不同的反應開始。`)}</p></div><ol class="advice-list">${adv.map(x=>`<li><b>${esc(x[0])}：</b>${esc(x[1])}</li>`).join('')}</ol><div class="analysis-tags">${tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div></div>`;
-      }
-      function psychLead(comp){
-        const q=state.question,first=state.current[0],last=state.current[state.current.length-1];
-        if(q.type==='obstacle')return `內在視角會把這副牌看成一套「保護自己的方法」。${first.name}${first.reversed?'逆位':'正位'}像最先啟動的保護機制，${last.name}${last.reversed?'逆位':'正位'}則在問：你能不能保留安全感，同時不再把所有可能性一起擋掉。`;
-        if(q.type==='feelings')return `內在視角不急著替對方讀心，而是看雙方在靠近、退開、等待與防衛之間怎麼互相影響。最重要的是分清楚「有感受」和「有能力承擔關係」是不是同一件事。`;
-        return `內在視角不把牌當成預言，而是把它們當成一張內在地圖：你在保護什麼、害怕失去什麼、又有哪些需要其實已經準備好被看見。`;
-      }
-      const MINOR_PSYCH_SPECIFIC={
-        '權杖王牌':['避免錯過開始與行動時機','太急著把第一股熱度當成答案，或反過來怕失敗而一直不開始','只做一個低風險的第一步，讓回饋決定下一步'],
-        '權杖二':['避免走錯方向與失去主導','一直比較未來版本，最後把規劃變成不行動','先選一個小方向試七天，不需要先決定整段關係'],
-        '權杖三':['避免投入後看不到成果','太早檢查回報，進展不明顯就想撤退','把目標改成取得真實進展，而不是立刻證明結果'],
-        '權杖四':['保護歸屬感與穩定感','為了維持和諧而忽略真正不舒服的地方','保留舒服感，同時說出一個需要調整的現實細節'],
-        '權杖五':['避免在差異裡被壓過或失去位置','把磨合很快變成競爭、內耗或誰對誰錯','先確認這是可協調差異，還是真正的價值衝突'],
-        '權杖六':['保護被肯定與被選擇的感覺','太依賴對方的正面回應來確認自己值不值得','把回應當資料，不把掌聲當成自我價值'],
-        '權杖七':['保護界線與自主，不讓自己被推著走','防衛開得太滿，容易把正常靠近也當成挑戰','留下真正重要的界線，對可協商部分保持開放'],
-        '權杖八':['避免錯過節奏與機會','一加速就焦慮，一有變化就跟著情緒起伏','設定可持續的聯絡與互動節奏，不追著每個訊號跑'],
-        '權杖九':['避免再次受傷','長期備戰，還沒發生的風險也先當成威脅','警報響起時先查證現在，再決定要不要退'],
-        '權杖十':['避免事情失控或沒人承擔','把責任全扛在自己身上，最後累到覺得關係都是負擔','明確分工，至少讓對方承擔一次可見責任'],
-        '權杖侍者':['避免錯過新鮮訊號與可能性','好奇很多但容易分心，互動停在試水溫','用一個真誠問題換取真實資訊，再決定要不要繼續'],
-        '權杖騎士':['避免停滯與錯過機會','把熱度當成確定感，衝太快又容易突然降溫','把衝動縮成一次具體邀約，再看後續是否一致'],
-        '權杖皇后':['保護魅力、自主與自信','太在意被肯定時，魅力會變成控制或比較','做自己並保留界線，不用靠對方反應證明吸引力'],
-        '權杖國王':['保護方向感與主導權','太想掌控進度，別人很難真正參與','把主導改成清楚邀請，再讓對方承擔自己的選擇'],
-        '聖杯王牌':['保護剛打開的情感入口，不想太早被消耗','太怕失望會讓「慢一點」變成一直不讓感受落地','只承諾下一步，允許好感存在但不提前保證結果'],
-        '聖杯二':['保護對等與互相選擇的感覺','太在意同步時，任何節奏差都容易被解讀成不對等','看雙方是否持續互相靠近，而不是要求每一刻都一樣熱'],
-        '聖杯三':['保護輕鬆、被接納與群體連結','可能用熱鬧避免真正的一對一靠近，或被旁人意見干擾','保留社交支持，同時創造一次真正的一對一互動'],
-        '聖杯四':['保護自己不再對不值得的東西投入','觀望太久會把正常的「還沒心動」變成永久關門','給不排斥的機會多一次互動，再用現實決定'],
-        '聖杯五':['保護自己不要再次經歷同樣失落','注意力會一直回到失去與遺憾，看不到仍可使用的關係資源','承認失落，同時列出現在仍存在的三個支持與選項'],
-        '聖杯六':['保護熟悉感與情感連續性','容易把熟悉誤認成適合，把現在的人套進過去劇本','問自己喜歡的是眼前這個人，還是熟悉的感覺'],
-        '聖杯七':['保留選項，避免太早選錯或失去可能性','想像與投射太多，越比較越難知道什麼是真的','縮小選項，只用可驗證的行為判斷，不替空白處補故事'],
-        '聖杯八':['保護自己不要一直留在不再滿足的狀態','害怕改變時會反覆回頭，離開與留下都很消耗','說清楚你不再願意接受什麼，再把時間投向新的生活'],
-        '聖杯九':['保護滿足感與自我肯定','容易把願望成真或被選中當成唯一證明','先確認真正想要的關係感受，不只追求得到某個人'],
-        '聖杯十':['保護歸屬、家庭感與長期幸福的想像','理想太完整時，容易要求關係太早證明能不能走到最後','把長期願景拆成日常一致性，一步一步看相容性'],
-        '聖杯侍者':['保護柔軟與剛萌芽的情感','太敏感時會把小訊號放大，或只靠感覺猜故事','回應情緒訊號，但只把它當開始，不提前命名關係'],
-        '聖杯騎士':['保護浪漫、被追求與情感流動','容易把浪漫姿態當成承諾，或一失望就快速降溫','享受靠近，但用後續一致行動確認它能不能落地'],
-        '聖杯皇后':['保護深度連結與被理解的需要','共感過強時界線變薄，容易替對方承擔情緒','允許自己感受很多，但只為自己的選擇負責'],
-        '聖杯國王':['保護情緒穩定與成熟形象','過度管理情緒會變成不說需求、只剩控制表面','保持穩定，同時說出一個真實需求或不舒服'],
-        '寶劍王牌':['保護清楚與真相，不想被模糊牽著走','太急著切開問題時，容易把複雜關係簡化成非黑即白','把最需要確認的一件事問清楚，其他先保留未知'],
-        '寶劍二':['避免做錯選擇與承受後果','用猶豫維持暫時安全，最後讓不決定變成結果','設定期限補資料，到期後做一個可回看的選擇'],
-        '寶劍三':['避免再次被同一種痛刺傷','舊傷會讓你把新訊號也先當成危險','承認哪個點仍會痛，再檢查眼前是否真的有同樣證據'],
-        '寶劍四':['保護神經與判斷不要繼續耗盡','休息變成逃避時，外界也永遠沒有新資料進來','先真正休息，再替自己安排一個低壓回到互動的時間'],
-        '寶劍五':['避免在衝突裡吃虧或被壓過','關係容易變成勝負、辯論與先退出就不算輸','停下輸贏，改問這場衝突真正要保護的是哪個需要'],
-        '寶劍六':['保護自己離開高壓與混亂','身體往前走，心裡卻一直把舊包袱帶著','做一個能明確區分「以前／現在」的新生活安排'],
-        '寶劍七':['避免完全暴露自己與失去策略空間','試探、隱瞞與猜測會先消耗信任','停止一次測試，改成一個直接但有界線的確認'],
-        '寶劍八':['避免做出看似沒有退路的選擇','把限制想成絕對事實，最後看不到其實存在的出口','列出三個「我不能」，逐條查證它究竟是事實還是假設'],
-        '寶劍九':['避免最壞情況真的發生','反覆預演災難會讓焦慮看起來像證據','焦慮升高時延後回應，先分開事實與最壞劇本'],
-        '寶劍十':['避免再被拖進已經無法承受的局面','不肯真正收尾時，舊痛會一直用新形式回來','替一個已走完的模式做明確收尾，不再靠反覆查看維持連結'],
-        '寶劍侍者':['避免漏掉重要訊號與資訊','過度蒐集會變成偵查與疑神疑鬼','少查一次、多問一次，用真實回答取代想像'],
-        '寶劍騎士':['避免停在不確定裡，想快速取得答案與控制感','速度會被誤當成確定，容易太快分析、定義、追問或出手','把衝動縮成一個低風險問題或需求，說完後留時間看回饋'],
-        '寶劍皇后':['保護界線、自尊與不被話術影響','理性過度時會變成冷與切割，還沒確認就先關門','用一句清楚界線取代冷淡，既不討好也不隔離'],
-        '寶劍國王':['保護秩序、公平與成熟判斷','標準太硬時會把人變成條件清單，情緒資訊被排除','先定義判斷標準，再把感受也列入資料，不只看邏輯'],
-        '錢幣王牌':['保護能落地、值得投入的開始','太怕浪費資源會讓機會永遠停在評估','替感情留一個真實時段，讓機會有地方發生'],
-        '錢幣二':['保護生活平衡與既有節奏','一直維持所有事情時，感情永遠只能插空','重新排一次優先順序，替互動留固定空間'],
-        '錢幣三':['保護合作品質與彼此可靠度','合作失衡時容易覺得最後還是自己做比較快','讓對方參與一件小安排，觀察他是否真的能補位'],
-        '錢幣四':['保護安全感、資源與已有秩序','抓太緊會把交換、信任與別人參與的空間一起鎖住','保留核心底線，刻意放手一個低風險細節讓對方決定'],
-        '錢幣五':['避免再次陷入匱乏與沒有支持的感覺','匱乏感會讓你先假設自己不被選擇或沒有資源','先處理現實壓力並接受可用支持，再判斷關係本身'],
-        '錢幣六':['保護互惠與公平交換','太在意誰多誰少時，付出容易變成人情帳','連續觀察付出是否雙向，用模式而不是單次計分'],
-        '錢幣七':['保護長期投入不要白費','太急著看結果會把正常等待解讀成沒希望','設定合理觀察期，到期再評估是否值得繼續'],
-        '錢幣八':['保護品質與讓自己做得更好','完美主義會讓你把關係問題全變成自己的作業','只練一個關係技能，也要求對方有可見的投入'],
-        '錢幣九':['保護獨立、生活品質與自我掌控','自給自足過頭時，別人很難真正參與你的生活','保留自己的生活，同時固定開一小塊空間給新的連結'],
-        '錢幣十':['保護長期穩定、家庭與資源結構','太早審核能不能走一輩子，會讓現在的互動像面試','先談一個現實價值題，看能不能一起生活，而不是一次判定終身'],
-        '錢幣侍者':['保護務實與可學習的開始','一直準備會讓「更成熟再開始」變成拖延','做一個小而實際的行動，讓經驗本身成為學習'],
-        '錢幣騎士':['保護可靠、規律與可預期','穩定過度會變成停滯，什麼都安全但沒有進展','保留規律，同時加入一個小變化看關係是否能承接'],
-        '錢幣皇后':['保護生活、資源與照顧品質','很會照顧別人時容易忽略自己，把有用當成被愛的理由','先照顧自己的作息、資源與需求，再從有餘裕的位置付出'],
-        '錢幣國王':['保護長期承擔與現實安全','過度依賴條件與掌控資源會讓關係缺少情感彈性','把可靠變成可見行為，也允許對方用自己的方式承擔']
-      };
-      function psychFunction(card){
-        const rank=String(card.number||''),rev=card.reversed;
-        const major={
-          '愚者':['保護自己不被舊規則綁住','容易把自由用成逃避承擔或一直不落地','允許自己試一步，但替這一步設定可回看的界線'],
-          '魔術師':['維持能力感與主導感','容易覺得凡事都得靠技巧或自己掌控','把能力用在清楚表達與協作，而不是證明自己什麼都能'],
-          '女祭司':['保護內在感受不被打擾','容易把直覺變成不說、不問、只等答案浮現','保留直覺，同時用一個可驗證問題去接現實'],
-          '皇后':['透過照顧、被需要與關係中的滋養確認自己的價值','容易過度付出、忽略自己，甚至把照顧變成換取安全感的方式','先照顧自己的生活與需求，讓付出變成選擇而不是交換'],
-          '皇帝':['用秩序、界線與可控性維持安全','容易把安全感變成控制節奏、要求確定或不願示弱','把控制改成清楚規則與可協商界線'],
-          '教皇':['用正式承諾、共同價值與「正確的關係形式」降低不確定','容易把新對象放進標準答案或未來伴侶的考卷裡','把標準變成對話：先確認價值是否能談，而不是要求一開始就證明未來'],
-          '戀人':['避免做出會背離自己價值的選擇','容易把吸引、選擇與承擔混在一起，或一直等到完全確定才決定','把「我想要什麼」與「我願意承擔什麼」分開說清楚'],
-          '戰車':['避免停滯與失去主導','容易一焦慮就加速，或同時踩油門與煞車','只選一個方向推進一小步，讓速度服從方向'],
-          '力量':['保護自己不要被情緒淹沒','容易把穩定誤成硬撐或壓抑需要','允許情緒存在，再用溫和而清楚的方式表達'],
-          '隱者':['保護自己免於過度刺激與失望','容易把沉澱拉長成封閉','保留獨處，但替外界留一扇能進來的門'],
-          '命運之輪':['避免錯過時機或再次掉進舊循環','容易把變化看成不可控，於是反覆使用熟悉的應對方式','辨認新的機會出現時，刻意做一個和舊循環不同的小選擇'],
-          '正義':['保護公平、責任與自我尊重','容易把關係變成計分或只看誰付出比較多','先對齊事實與規則，再談感受與彈性'],
-          '倒吊人':['避免在資訊不足時做錯事','容易把等待合理化成長期不行動或無效犧牲','替等待設定期限，期限內只收集新資料'],
-          '死神':['保護自己不再被舊模式拖住','容易在結束與放不下之間反覆','明確說出什麼已經結束，並安排一個新的替代行為'],
-          '節制':['保護互動不要走向極端','容易為了維持和平過度調整自己或拖慢必要決定','把節奏、界線與投入比例調到雙方都能長期維持'],
-          '惡魔':['保護熟悉感與短期安全','容易把害怕失去變成依賴、控制或反覆確認','把主導權拿回自己，先改掉一個最常重複的反應'],
-          '高塔':['避免再次經歷突然失控','容易對任何不確定都先預演最壞情況','把真正紅旗和一般不確定分開，不讓餘震替現在做決定'],
-          '星星':['保護希望不要再次破滅','容易因怕失望而只敢遠遠期待','把希望拆成可驗證的小步驟，讓信任慢慢長回來'],
-          '月亮':['避免在資訊不清時做錯判斷','容易把敏感變成過度解讀','先記錄事實，再讓直覺成為第二層參考'],
-          '太陽':['保護清楚、被看見與肯定','容易因期待順利而低估複雜度','保留坦率，同時容納不完美'],
-          '審判':['避免再重複舊錯','容易不停回頭審查自己或他人','把回顧轉成一個新的決定，而不是繼續審判'],
-          '世界':['保護完整感與已建立的秩序','容易因怕破壞平衡而抗拒新階段','承認完成，同時替下一階段留空間']
-        };
-        if(major[card.name]){const [protect,cost,repair]=major[card.name];return {protect,cost:rev?`逆位時更容易出現：${cost}`:cost,repair};}
-        if(MINOR_PSYCH_SPECIFIC[card.name]){const [protect,cost,repair]=MINOR_PSYCH_SPECIFIC[card.name];return {protect,cost:rev?`逆位時更容易出現：${cost}`:cost,repair};}
-        const rankMap={
-          'Ace':['避免一開始就投入太深','因此容易把第一步拖成等待','只承諾下一步，不需要先承諾結果'],
-          '2':['避免選錯方向或太早暴露猶豫','因此容易卡在比較、觀望與「再等等」','先做一個小選擇，讓現實提供新資料'],
-          '3':['避免期待落空或合作失敗','因此容易太早評估回報、看不到就退','把目標改成取得一次真實回饋，而不是立刻證明結果'],
-          '4':['維持熟悉與穩定','因此容易把安全感做成不願移動','保留原本的安全區，但只打開一個可控入口'],
-          '5':['避免在衝突裡吃虧','因此容易把差異很快看成威脅','先辨認這是可協調分歧，還是真正越界'],
-          '6':['維持被肯定與有價值的感覺','因此容易過度依賴他人回饋判斷自己','把外界回應當資料，不當成自我價值的判決'],
-          '7':['守住界線、立場與已取得的位置','因此容易把所有靠近都先視為挑戰','保留三條真正重要的界線，同時開放一條可以談的空間'],
-          '8':['避免事情失去節奏或控制','因此容易一快就焦慮、一慢就懷疑','替互動設定一個可承受的節奏，不跟每個瞬間高低起伏'],
-          '9':['避免再次受傷','因此容易長期處在備戰狀態','每次警報響起時，先問「現在真的有證據，還是只是舊經驗被叫醒」'],
-          '10':['避免事情散掉、沒人承擔','因此容易把責任全部扛到自己身上','明確分出哪些是你的責任，哪些必須讓別人承擔'],
-          'Page':['避免錯過訊號，也避免顯得太投入','因此容易不停觀察卻缺少真正互動','用一個真誠問題換取資訊，不用靠猜'],
-          'Knight':['避免停滯與失去機會','因此容易把速度當成確定感','把衝動縮成一個低風險動作，再看回饋'],
-          'Queen':['保護自尊、感受與自主','因此容易只展示成熟的一面，不讓需要被看見','在保有界線的同時，允許自己說出一個真實需要'],
-          'King':['維持主導、秩序與可控感','因此容易把成熟用成控制或自己扛全部','把主導改成清楚邀請、清楚分工與清楚界線']
-        };
-        const suitFocus={'權杖':'在主動、熱度與行動節奏上','聖杯':'在情緒連結、期待與被理解上','寶劍':'在判斷、資訊與溝通上','錢幣':'在穩定、投入與現實資源上'};
-        const r=rankMap[rank]||['避免失去安全感','因此容易用熟悉方法反覆保護自己','先把反應縮小，讓新資料進來'];
-        return {protect:`${suitFocus[card.suit]||''}${r[0]}`,cost:rev?`逆位時更容易出現：${r[1]}`:r[1],repair:r[2]};
-      }
-
-      function psychCard(card,index){
-        const orient=card.reversed?'逆位':'正位', f=psychFunction(card);
-        const life=`在生活裡可以特別觀察：${topicManifestation(card)} 如果這個反應總在相似情境出現，它就不只是一次心情，而可能是一個你已經習慣的保護路徑。`;
-        return `<div class="lens-card"><div class="k">0${index+1} · ${esc(card.position)} · ${orient}</div><h5>${esc(card.name)}｜它想替你保護什麼？</h5><p><b>它在保護：</b>${esc(f.protect)}。</p><p><b>如果過度使用：</b>${esc(f.cost)}。</p><p><b>新的做法：</b>${esc(f.repair)}。</p><p><b>現實裡怎麼看見：</b>${esc(life)}</p><div class="evidence">內在視角只描述可能的內在模式，不把它當成診斷或已證實的過往事件。</div></div>`;
-      }
-
-      function readerBHTML(comp){
-        const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1];
-        const shadow=comp.rev>=Math.ceil(state.current.length/2)?'逆位比例偏高，表示很多力量不是不存在，而是目前以壓抑、延遲、防衛或「想很多但做不出來」的方式呈現。':'正逆位沒有形成全面封閉，表示你仍有不少可用的力量；真正需要調整的是如何使用，而不是等待自己變成另一個人。';
-        const suit=comp.topSuit&&comp.topCount>=2?`「${comp.topSuit}」重複出現，顯示同一類內在需求被反覆觸發：${contextualSuit({suit:comp.topSuit})}。`:'花色沒有單一壓倒性主導，表示這不是一個單純情緒造成的問題，而是幾種需要同時拉扯。';
-        const adv=adviceItemsDeep(comp);
-        return `<div class="lens-hero"><b>內在老師的核心判讀｜你不是只有一個問題，而是在用一套方式保護自己</b><p>${esc(psychLead(comp))}</p></div><div class="lens-section"><h4>一、每張牌背後的內在功能：它在保護什麼，又付出什麼代價</h4><div class="lens-card-grid">${state.current.map(psychCard).join('')}</div></div><div class="lens-section"><h4>二、這套保護模式可能怎麼形成</h4><p>${esc(shadow)}</p><p>${esc(suit)}</p><p>${esc(transitionDeep(first,mid))}</p><p>${esc(transitionDeep(mid,last))}</p><p>${esc(`這裡需要保留一個界線：牌面可以提示「現在像什麼模式」，但不能證明你過去一定發生過某件特定事件。比起追問過去到底是哪一次造成，真正有用的是看這套模式現在怎麼影響你的選擇。`)}</p></div><div class="lens-section"><h4>三、最深的矛盾：你真正想要的，和你真正害怕的</h4><p>${esc(psychTensionLine())}</p><p>${esc(`從「${first.name}」到「${last.name}」的變化看起來，你並不是完全不想前進；更像是想前進的同時，希望先確定自己不會再失去控制。這種拉扯最容易把「慢一點」變成「乾脆不要」，或把「觀察」變成「永遠不投入」。`)}</p><p>${esc(`真正要練習的不是取消警戒，而是讓警戒變得有層次：先辨認感受，再看行為，再讓現實累積資料。安全感如果只能靠關閉自己維持，就會連同真正想要的連結一起關掉。`)}</p></div><div class="lens-section"><h4>四、這套保護模式在生活裡會留下哪些痕跡</h4><p>${esc(`下一次你遇到和「${first.name}」相似的觸發時，不用先判斷自己是不是有問題。先觀察：你是更想靠近、更想控制、更想撤退，還是開始用理性把感受壓掉？再對照「${mid.name}」指出的核心條件，看這是不是一個重複模式。能被看見的模式，才有機會被改寫。`)}</p></div><div class="lens-section"><h4>五、內在老師會給你的三個「替代反應」</h4><ol class="advice-list">${adv.map((x,i)=>`<li><b>${esc(i===0?'情緒辨識｜'+x[0]:i===1?'界線校正｜'+x[0]:'新經驗練習｜'+x[0])}：</b>${esc(x[1])}</li>`).join('')}</ol></div>`;
-      }
-      function evidenceLevel(comp){
-        const same=comp.topCount>=2?1:0, majors=comp.major>=2?1:0, revHeavy=comp.rev>=Math.ceil(state.current.length*.67)?1:0;const score=same+majors+revHeavy;
-        return score>=2?'中高':score===1?'中等':'一般';
-      }
-      function rationalCard(card,index){
-        const orient=card.reversed?'逆位':'正位',w=signal(card,3);
-        const supports=`這張牌支持我們討論「${w}」與「${card.position}」之間的關聯；${topicManifestation(card)}`;
-        let notProve='它本身不能證明某個具體事件一定已經發生，也不能取代當事人的實際行為與可驗證資訊。';
-        if(state.question.type==='feelings')notProve='它不能單獨證明對方內心已做出明確決定；真正的靠近意願仍要看聯絡、溝通、安排與承擔。';
-        if(state.question.type==='external')notProve='它不能單獨證明第三者、劈腿或欺騙；最多只能把某些風險提高到「值得確認」。';
-        return `<div class="lens-card"><div class="k">EVIDENCE 0${index+1} · ${esc(card.position)}</div><h5>${esc(card.name)} ${orient}｜可以支持什麼？</h5><p>${esc(supports)} ${esc(positionLens(card.position))}</p><div class="evidence">不能直接證明｜${esc(notProve)}</div></div>`;
-      }
-      function evidenceSynthesis(comp){
-        const bits=[];
-        if(comp.topSuit&&comp.topCount>=2)bits.push(`同一花色「${comp.topSuit}」出現 ${comp.topCount} 次，表示「${contextualSuit({suit:comp.topSuit})}」不是偶然點綴，而是這題反覆出現的主軸。`);
-        if(comp.major>=2)bits.push(`${comp.major} 張大阿爾克那同場，讓「深層模式／價值轉折」的權重提高；但它仍不能告訴我們具體過去事件一定是什麼。`);
-        if(comp.rev>=Math.ceil(state.current.length*.67))bits.push(`逆位比例偏高，較支持「能量被卡住、延遲或失衡」的解釋，而不是簡單把每一張逆位都視為壞結果。`);
-        if(!bits.length)bits.push('牌面沒有形成單一壓倒性的重複訊號，因此更適合保留多個可能解釋，再用現實資訊慢慢排除。');
-        return bits;
-      }
-      function readerCHTML(comp){
-        const first=state.current[0],last=state.current[state.current.length-1],answers=directAnswerDeep(comp);
-        const trend=sentiment(last)>sentiment(first)?'後段訊號比前段改善':'後段並沒有明顯優於前段';
-        const consistency=comp.topCount>=2?'牌面有重複主題，可視為較一致的訊號':'牌面主題較分散，需要避免過度濃縮成單一原因';
-        const synth=evidenceSynthesis(comp);
-        return `<div class="lens-hero"><b>理性老師的核心判讀｜把「牌面訊號」和「現實事實」分開</b><p>這一版不追求說得最玄，而是整理哪些結論有多張牌支持、哪些只能列為可能，以及下一步要用什麼現實資訊驗證。</p></div><div class="signal-meter"><div class="signal-box"><small>牌面一致性</small><b>${esc(evidenceLevel(comp))}</b><p>${esc(consistency)}</p></div><div class="signal-box"><small>前後走勢</small><b>${esc(trend)}</b><p>比較第一張與最後一張的方向，不把單張好壞當結果。</p></div><div class="signal-box"><small>解讀邊界</small><b>保留驗證</b><p>${esc(guardrail())}</p></div></div><div class="lens-section"><h4>一、逐張看證據：它支持什麼，又不能證明什麼</h4><div class="lens-card-grid">${state.current.map(rationalCard).join('')}</div></div><div class="lens-section"><h4>二、交叉驗證：哪些訊號真的有重複出現</h4>${synth.map(p=>`<p>${esc(p)}</p>`).join('')}</div><div class="lens-section"><h4>三、目前最合理的因果模型</h4>${state.current.slice(0,-1).map((c,i)=>`<p>${esc(transitionDeep(c,state.current[i+1]))}</p>`).join('')}<p>${esc(currentCoreLine(comp))}</p></div><div class="lens-section"><h4>四、直接回答：目前可以下到哪個程度</h4>${answers.map(p=>`<p>${esc(p)}</p>`).join('')}<p>${esc(`如果之後的現實行為和「${last.name}${last.reversed?'逆位':'正位'}」呈現的方向一致，才適合逐步提高判斷信心；若現實完全相反，就應該以現實為優先，而不是為了維持牌面結論去扭曲事實。`)}</p></div><div class="lens-section"><h4>五、判斷強度表：哪些可以說得比較肯定</h4><div class="lens-card-grid">${evidenceConclusionRows(comp).map((r,i)=>`<div class="lens-card"><div class="k">CONFIDENCE 0${i+1}</div><h5>${esc(r[0])}</h5><p>${esc(r[1])}</p><div class="evidence">${esc(r[2])}</div></div>`).join('')}</div></div><div class="lens-section"><h4>六、理性老師要你驗證的三件事</h4><ol class="advice-list"><li><b>行為：</b>只記錄實際發生的聯絡、行動、決策、投入與界線，不用感覺替空白處補故事。</li><li><b>一致性：</b>看重要行為是否連續出現；一次好或一次壞都不足以推翻整體趨勢。</li><li><b>時間：</b>給目前趨勢一個合理觀察窗，再回頭比較牌面與現實是否對得上。</li></ol></div>`;
-      }
-      function actionSpecific(card){
-        const w=signal(card,2), base=topicManifestation(card);
-        if(card.reversed)return `先不要用「${w}」的失衡版本做大決定。${base} 這張牌比較適合先降一級強度：補資料、補界線、補休息，或先做一個能撤回的小測試，再決定是否推進。`;
-        return `把「${w}」轉成一個看得到的動作。${base} 不要只停在理解；你需要訊息、確認、安排、拒絕、嘗試或完成一個小步驟，讓現實開始回應。`;
-      }
-      function timelineSteps(){
-        const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1],t=state.topic.id;
-        if(t==='love')return [
-          ['現在～48H','先抓到自己的自動反應',`遇到和「${first.name}」相似的觸發點時，不急著做最大判斷。把「事實、感受、推測」分三欄寫開，看看你是不是又在資訊不足時先把門關上。`],
-          ['7 DAYS','做一次低壓互動測試',`用「${mid.name}」指出的核心條件設計一個小測試：多一次真實對話、一次低壓見面、一次清楚表達或一次界線確認。目標不是得到承諾，而是取得新資料。`],
-          ['2～4 WEEKS','只看一致性，不看單次高低',`如果現實開始穩定出現與「${last.name}${last.reversed?'逆位':'正位'}」相符的行為，再把投入提高一級；如果只有偶發熱度，先不要用希望替空白處補答案。`]
-        ];
-        if(t==='work'||t==='business')return [
-          ['現在～48H','先把問題量化',`把「${first.name}」代表的困難拆成可觀察指標：時間、收入、工作量、資源、合作、成長，至少寫出三項，不要只用「感覺不對」做大決定。`],
-          ['7 DAYS','補最關鍵的一份資料',`針對「${mid.name}」指出的核心條件，去談一次、問一次、查一次或試一次。讓你下一步有新資訊，而不是只有反覆思考。`],
-          ['2～4 WEEKS','用結果決定是否加碼',`若「${last.name}」代表的成熟訊號開始落地，就提高投入；若沒有，就重新配置資源，而不是靠意志硬撐。`]
-        ];
-        return [
-          ['現在～48H','先停止自動反應',`遇到和「${first.name}」相似的觸發點時，先不急著做最大決定。把事實、感受、推測分開。`],
-          ['7 DAYS','做一個低風險測試',`用「${mid.name}」指出的核心條件設計一個小測試，只看現實怎麼回應。`],
-          ['2～4 WEEKS','依回饋調整投入',`如果現實開始出現與「${last.name}${last.reversed?'逆位':'正位'}」一致的成熟訊號，再提高投入；若沒有，就保留資源。`]
-        ];
-      }
-      function readerDHTML(comp){
-        const adv=adviceItemsDeep(comp),steps=timelineSteps();
-        const commands=state.current.map((c,i)=>{const x=actionCommand(c,i);return `<div class="lens-card"><div class="k">ACTION 0${i+1} · ${esc(c.position)}</div><h5>${esc(c.name)} ${c.reversed?'逆位':'正位'}</h5><p><b>先停：</b>${esc(x.stop)}</p><p><b>開始：</b>${esc(x.start)}</p><div class="evidence">${esc(x.verify)}</div></div>`}).join('');
-        return `<div class="lens-hero"><b>行動老師的核心判讀｜這副牌最後一定要落回「你接下來怎麼做」</b><p>這裡不重複全部牌義，而是把同一副牌翻成可執行策略：每張牌都要對應一個「先停什麼、開始什麼、怎麼驗證」，避免建議只剩漂亮口號。</p></div><div class="lens-section"><h4>一、每張牌各自變成一個行動指令</h4><div class="lens-card-grid">${commands}</div></div><div class="lens-section"><h4>二、把牌面變成一個 48 小時／7 天／2～4 週時間表</h4><div class="action-timeline">${steps.map(s=>`<div class="action-step"><div class="when">${esc(s[0])}</div><div><b>${esc(s[1])}</b><p>${esc(s[2])}</p></div></div>`).join('')}</div></div><div class="lens-section"><h4>三、三個生活化行動：今天就知道怎麼做</h4><ol class="advice-list">${adv.map(x=>`<li><b>${esc(x[0])}：</b>${esc(x[1])}</li>`).join('')}</ol></div><div class="lens-section"><h4>四、本週只做一件事：不要再抽牌，直接做一次小實驗</h4><p>${esc(`從「${state.current[state.current.length-1].name}${state.current[state.current.length-1].reversed?'逆位':'正位'}」挑一個最小可行動作，設定明確期限與觀察指標。你不是要證明塔羅準不準，而是要用一次新的行為取得以前沒有的現實資料。`)}</p><p>${esc(`完成後只問三件事：我有沒有比以前更清楚？我有沒有保住自己的界線？現實回饋有沒有比我的想像更值得信任？只要其中兩項變得更清楚，這次行動就有價值。`)}</p></div><div class="lens-section"><h4>五、什麼情況下要停，什麼情況下可以往前</h4><p><b>停：</b>現實持續出現不一致、反覆失信、界線被踩、投入明顯失衡，或你的身心消耗持續增加時，不要因為牌面有漂亮訊號就硬推。</p><p><b>往前：</b>行為逐漸穩定、溝通更清楚、彼此投入更一致，而且你仍能保有自己的界線時，就可以把行動強度提高一級。</p><p><b>最重要的判準：</b>塔羅的行動建議不是要你照單全收，而是提供一個小型實驗。真正的答案，要看你做完之後，現實是否真的變得更清楚。</p></div>`;
-      }
-      function consensusHTML(comp){
-        const last=state.current[state.current.length-1],mid=state.current[Math.floor(state.current.length/2)],first=state.current[0];
-        return `<section class="consensus-panel" data-consensus-panel hidden><div class="phase-label"><span>01 COMPLETE</span><b>四鏡會診結論</b></div><div class="consensus-grid"><div class="consensus-item"><small>共同結論</small><p>${esc(teacherHeadline(comp))}</p></div><div class="consensus-item"><small>仍需保留</small><p>${esc(guardrail())}</p></div><div class="consensus-item"><small>回到現實看什麼</small><p>${esc(`先觀察「${mid.name}」指出的核心條件，再看「${last.name}${last.reversed?'逆位':'正位'}」是否真的變成持續行動。`)}</p></div></div><div class="consensus-foot">${esc(`${first.name} → ${mid.name} → ${last.name}`)}</div><button type="button" class="phase-next-cta" data-open-followup>進行一次追問 ↓</button></section>`;
-      }
-      function readerJourneyFooter(key){
-        const order=['a','b','c','d'];
-        const labels={a:['A｜首席綜合','主線判讀'],b:['B｜內在老師','看見你的保護模式'],c:['C｜理性老師','哪些能信、哪些不能斷言'],d:['D｜行動老師','接下來到底怎麼做']};
-        const idx=order.indexOf(key),next=order[idx+1],allOpen=canAccessAllReaders(),demoMode=state.accessTier==='demo'&&!isLogged();
-        const steps=order.map((k,i)=>{const locked=!allOpen&&k!=='a',demoOpen=demoMode&&k!=='a';return `<button type="button" class="reader-bottom-step ${k===key?'current':''} ${locked?'locked':''} ${demoOpen?'demo-open':''}" data-reader-go="${k}" data-reader-step-index="${i}"><b>${labels[k][0]}</b><small>${labels[k][1]}</small></button>`}).join('');
-        let nextButton='';
-        if(!allOpen){nextButton=`<div class="reader-lock-gate"><div><b>登入後，一次解鎖 B／C／D 三位老師</b><span>內在模式 × 理性驗證 × 行動策略｜沿用現在這一副牌，直接接著看，不會重新抽牌。</span></div><button type="button" class="reader-login-cta" data-member-login data-target-reader="b">免費登入｜一次解鎖</button></div>`;}
-        else if(next){nextButton=`<button type="button" class="reader-next-cta" data-reader-next="${next}">下一篇｜${labels[next][0]} ↓</button>`;}
-        else{nextButton=`<button type="button" class="reader-next-cta reader-finish-cta" data-scroll-consensus>查看四鏡會診結論 ↓</button>`;}
-        return `<div class="reader-bottom-nav ${demoMode?'demo-mode':''}" data-reader-footer="${key}"><div class="reader-bottom-nav-head"><b>閱讀進度</b><span data-reader-footer-progress>1/4</span></div><div class="reader-bottom-steps">${steps}</div>${nextButton}</div>`;
-      }
-      function readerPane(key,title,subtitle,icon,body,active=false){
-        const meta=readingMeta(body);return `<section class="reader-pane ${active?'active':''}" data-reader-pane="${key}"><div class="reader-view-head"><div class="identity"><div class="reader-avatar">${icon}</div><div><h3>${title}</h3><p>${subtitle}</p></div></div><div class="reading-meta"><span>約 ${meta.mins} 分鐘</span></div></div>${body}${readerJourneyFooter(key)}</section>`;
-      }
-      function htmlToPlainReading(html=''){
-        const box=document.createElement('div');box.innerHTML=html;
-        box.querySelectorAll('br').forEach(el=>el.replaceWith('\n'));
-        box.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,.takeaway,.evidence,.teacher-summary,.signal-box,.consensus-item,.action-step').forEach(el=>{el.insertAdjacentText('beforebegin','\n');el.insertAdjacentText('afterend','\n');});
-        return (box.textContent||'').replace(/\u00a0/g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
-      }
-      function archiveCardsText(cards){return cards.map((c,i)=>`${i+1}. ${c.position}：${c.name}｜${c.reversed?'逆位':'正位'}｜基礎牌義：${c.meaning}`).join('\n');}
-      function buildArchiveText(){
-        const now=new Date();
-        const parts=[
-          'DivinationHub 塔羅四鏡解牌｜完整備份 V9.1',
-          '==================================================',
-          `備份時間：${now.toLocaleString('zh-TW',{hour12:false})}`,
-          `主題：${state.topic?.name||''}`,
-          `目前情境：${state.scenario?.name||''}`,
-          `原問題：${state.question?.text||''}`,
-          `牌陣：${state.question?.spread?.name||''}`,
-          '',
-          '【主牌】',archiveCardsText(state.current),'',
-          '==================================================',
-          '【A｜首席綜合老師】',htmlToPlainReading(state.readerBodies?.a||''),'',
-          '==================================================',
-          '【B｜內在老師】',htmlToPlainReading(state.readerBodies?.b||''),'',
-          '==================================================',
-          '【C｜理性老師】',htmlToPlainReading(state.readerBodies?.c||''),'',
-          '==================================================',
-          '【D｜行動老師】',htmlToPlainReading(state.readerBodies?.d||''),'',
-          '==================================================',
-          '【四鏡共識】',htmlToPlainReading(consensusHTML(composition())),'',
-          `【解讀界線】${guardrail()}`
-        ];
-        if(state.followupQuestion&&state.followupCards?.length){
-          parts.push('','==================================================','【追加追問】',state.followupQuestion,archiveCardsText(state.followupCards),'');
-          if(state.followupText?.length)parts.push('【追問解讀】',...state.followupText);
-          if(state.finalSynthesisText?.length)parts.push('','==================================================',...state.finalSynthesisText);
-        }
-        parts.push('','==================================================','備註：本檔案整理同一副牌 A／B／C／D 四個視角；四份解讀共用相同牌面，不代表四次重新抽牌。塔羅內容用於整理問題與反思，現實事實仍以可驗證資訊為優先。');
-        return parts.join('\n');
-      }
-      function safeFileStamp(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;}
-      function downloadArchive(){
-        if((state.readersViewed?.size||0)<4||!state.followupUsed||!state.followupQuestion||!state.followupCards?.length)return;
-        const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-        a.href=url;a.download=`tarot-four-lenses-v8-8-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
-      }
-      function updateReaderJourney(){
-        const order=['a','b','c','d'],n=state.readersViewed?.size||0,allOpen=canAccessAllReaders();
-        els.analysis.querySelectorAll('[data-reader-footer-progress]').forEach(x=>x.textContent=`${n}/4`);
-        els.analysis.querySelectorAll('[data-reader-go]').forEach(btn=>{
-          const key=btn.dataset.readerGo,idx=order.indexOf(key),prev=order[idx-1],locked=!allOpen&&key!=='a';
-          const demoMode=state.accessTier==='demo'&&!isLogged();
-          btn.classList.toggle('done',state.readersViewed.has(key));btn.classList.toggle('locked',locked);btn.classList.toggle('demo-open',demoMode&&key!=='a'&&!state.readersViewed.has(key));
-          btn.disabled=locked||(!demoMode&&idx>0&&!state.readersViewed.has(prev));
-        });
-        const consensus=els.analysis.querySelector('[data-consensus-panel]');if(consensus)consensus.hidden=n<4;
-      }
-      function scrollReaderIntoView(key){
-        const pane=els.analysis.querySelector(`[data-reader-pane="${key}"]`);
-        if(!pane)return;
-        requestAnimationFrame(()=>{pane.scrollIntoView({behavior:'smooth',block:'start'});});
-      }
-      function activateReader(key,doScroll=true){
-        if(!['a','b','c','d'].includes(key))return;
-        if(key!=='a'&&!canAccessAllReaders()){openMemberModal(key);return;}
-        state.readersViewed.add(key);
-        els.analysis.querySelectorAll('[data-reader-pane]').forEach(x=>x.classList.toggle('active',x.dataset.readerPane===key));
-        const pane=els.analysis.querySelector(`[data-reader-pane="${key}"]`);
-        if(pane){pane.classList.add('reader-switch-flash');setTimeout(()=>pane.classList.remove('reader-switch-flash'),700);}
-        updateReaderJourney();
-        if(doScroll)scrollReaderIntoView(key);
-      }
-      function renderReaderShell(activeKey='a'){
-        const comp=composition(),bodies=state.readerBodies||{};
-        els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">四鏡解牌｜V9.1</h3></div><div class="analysis-actions"><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button></div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">01 · FOUR READERS</div><h4>四位老師，四種視角</h4></div><div class="same-cards-chip">1 SPREAD · 4 LENSES</div></div>${readerPane('a','A｜首席綜合老師','把整副牌串成完整故事，先回答「這一局到底在說什麼」。','✦',bodies.a||'',activeKey==='a')}${readerPane('b','B｜內在老師','專看保護方式、需求、界線與內在拉扯。','☾',bodies.b||'',activeKey==='b')}${readerPane('c','C｜理性老師','拆開牌面訊號與現實證據，控制過度解讀。','◇',bodies.c||'',activeKey==='c')}${readerPane('d','D｜行動老師','把同一副牌轉成可執行的下一步。','↗',bodies.d||'',activeKey==='d')}${consensusHTML(comp)}</div><details class="guardrail-details"><summary>解讀界線</summary><p>${esc(guardrail())}</p></details>`;
-        els.analysis.hidden=false;updateReaderJourney();
-      }
-      function renderFullReading(){
-        const comp=composition(),tags=[];if(comp.major)tags.push(`${comp.major} 張大阿爾克那`);if(comp.topSuit&&comp.topCount>=2)tags.push(`${comp.topSuit}偏強`);tags.push(`${comp.rev}/${state.current.length} 張逆位`);
-        const a=readerAHTML(comp,tags),b=readerBHTML(comp),c=readerCHTML(comp),d=readerDHTML(comp);
-        state.readerBodies={a,b,c,d};state.readersViewed=new Set(['a']);renderReaderShell('a');
-      }
-
-
-
-      function sameCardFlipPair(){
-        if(!state.followupCards?.length)return null;
-        for(const f of state.followupCards){
-          const main=state.current.find(c=>c.name===f.name&&c.reversed!==f.reversed);
-          if(main)return {main,follow:f};
-        }
-        return null;
-      }
-      function sameCardFlipInsight(){
-        const pair=sameCardFlipPair();
-        if(!pair)return null;
-        const {main,follow}=pair;
-        const special={
-          '聖杯七':{
-            headline:'同一張聖杯七從正位走到逆位：這次追問沒有換題，而是直接把修正方向寫出來——收回幻想、縮小選項、用現實做選擇。',
-            story:'主牌的聖杯七正位先把「可能性太多、投射太多、還沒看清楚」放到近期走向；追問又抽到同一張聖杯七逆位，等於把同一課題翻到另一面：現在真正需要的不是更多選項，而是減少想像、縮小範圍，讓實際行為替你淘汰不合適的可能。這是很清楚的「失焦 → 收斂」修正。',
-            direct:'最重要的新結論是：你的問題不在沒有感情機會，而在可能性太多時容易讓想像跑在現實前面。追問的聖杯七逆位已經把方向縮得很清楚——少猜一點、少同時評估太多版本，先用三個以上可驗證的事實再決定要不要投入。'
-          },
-          '寶劍三':{
-            headline:'同一張寶劍三由正逆位互換，表示這次追問仍在處理同一個傷口：重點不是再證明受過傷，而是看修復是否真的開始影響新的選擇。',
-            story:'同一張寶劍三以相反方向再次出現，代表主題沒有換，只是從「痛本身」轉向「怎麼處理痛」。這種重複比抽到另一張完全不同的牌更值得重視，因為它把修復與舊傷的影響直接放到同一條軸線上。',
-            direct:'最重要的新結論是：舊傷仍然重要，但現在真正需要驗證的是，你是否已經能在新的互動裡做出不同反應，而不是讓過去自動替現在判刑。'
-          },
-          '月亮':{
-            headline:'同一張月亮以相反方向再次出現，表示核心課題仍是「不確定怎麼被看待」：從霧裡猜測，走向讓事實慢慢浮現。',
-            story:'月亮正逆位互換時，通常不是出現一個全新的問題，而是同一份不確定正在被重新處理：一面是直覺、恐懼與想像混在一起，另一面則是開始讓資訊與現實逐步取代猜測。',
-            direct:'最重要的新結論是：你不需要逼自己完全沒有疑慮，只需要讓每一次判斷多一個可驗證事實，少一個自動補上的劇本。'
-          }
-        };
-        if(special[main.name])return {...special[main.name],pair};
-        const mainDir=main.reversed?'逆位':'正位',followDir=follow.reversed?'逆位':'正位';
-        return {
-          pair,
-          headline:`同一張「${main.name}」從${mainDir}再以${followDir}出現：追問沒有換主題，而是在同一課題上要求你調整使用方式。`,
-          story:`主牌中的「${main.name}${mainDir}」先把「${signal(main,2)}」放進原本故事，追問又出現同一張「${main.name}${followDir}」，表示這不是另一個無關訊號，而是同一課題正在從一種表現走向另一種表現。最值得看的不是兩張誰好誰壞，而是：你能不能把「${signal(main,2)}」修正成「${signal(follow,2)}」更成熟、可落地的版本。`,
-          direct:`最重要的新結論是：這次追問把主題收得非常集中。你不需要再找新的答案，而是要在同一個「${main.name}」課題上，看自己是否真的從「${signal(main,2)}」走向「${signal(follow,2)}」。`
-        };
-      }
-      function finalSynthesisHeadline(){
-        const first=state.current[0],mainMid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1],f=state.followupCards?.[0];
-        if(!f)return teacherHeadline(composition());
-        const flip=sameCardFlipInsight();
-        if(flip)return flip.headline;
-        const q=state.question.type;
-        if(state.topic.id==='love'&&q==='state')return `主牌顯示你現在${shortRelationshipTheme(first)}，但更深層${shortRelationshipTheme(mainMid)}；近期${shortRelationshipTheme(last)}。追問的「${f.name}${f.reversed?'逆位':'正位'}」把修正方向縮到一件事：${psychFunction(f).repair}。`;
-        if(state.topic.id==='love'&&q==='obstacle')return `主牌先把卡點與來源拆開，追問的「${f.name}${f.reversed?'逆位':'正位'}」則指出最值得先動的那一環：${psychFunction(f).repair}。`;
-        if(q==='feelings')return `主牌描述了感受與靠近條件，追問的「${signal(f,2)}」則提醒你：真正要相信的仍是可驗證的互動，而不是替對方把內心故事補完整。`;
-        if(q==='action')return `原本的牌陣已經給出行動方向，追問再把方法縮小一步：${concreteAction(f)}。`;
-        if(q==='future')return `原本的走向仍然成立，追問則補上「${signal(f,2)}」這個需要先處理的條件；它決定未來訊號能不能真的落地。`;
-        return `追問沒有推翻原本三張牌，而是把最需要處理的焦點收斂到「${signal(f,2)}」；接下來用現實行動驗證，比再抽更多牌更有價值。`;
-      }
-      function finalSynthesisDirectAnswer(){
-        const comp=composition(),f=state.followupCards?.[0],first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1];
-        const base=directAnswerDeep(comp).filter(Boolean).slice(0,2).join(' ');
-        if(!f)return base;
-        const flip=sameCardFlipInsight();
-        if(flip)return flip.direct;
-        if(state.topic.id==='love'&&state.question.type==='state')return `直接回答：你已經具備進入新關係的一部分準備，不需要等到「完全沒有疑慮」才開始。你現在${shortRelationshipTheme(first)}；真正需要留意的是${shortRelationshipTheme(mid)}；近期則${shortRelationshipTheme(last)}。追問的「${f.name}${f.reversed?'逆位':'正位'}」把最需要調整的地方縮到：${psychFunction(f).repair}。所以重點不是把風險降到零，而是讓你的感受、判斷與選擇開始用同一個節奏往前。`;
-        return `${base} 追問補出的「${f.name}${f.reversed?'逆位':'正位'}」把最需要調整的焦點放在「${signal(f,3)}」。這張牌不是新結論，而是把原本主線縮小成一個更具體的入口。最後仍要回到「${last.name}${last.reversed?'逆位':'正位'}」所在牌位，觀察現實是否真的朝「${signal(last,2)}」發展。`;
-      }
-      function finalSynthesisActions(){
-        const f=state.followupCards?.[0],main=adviceItemsDeep(composition());
-        const out=[];
-        if(f){
-          let act=concreteAction(f).replace(/[。；]+$/,'');
-          out.push(`先處理追問牌「${f.name}${f.reversed?'逆位':'正位'}」：${act}。這一步只做一次小實驗，不要求立刻得到完整答案。`);
-        }
-        if(main[0])out.push(`${main[0][0]}：${main[0][1]}`);
-        const last=state.current[state.current.length-1];
-        out.push(`設定一個 7～14 天驗證窗：只看「${signal(last,2)}」是否變成持續、可重複的現實回饋；若牌面和現實相反，以現實為優先。`);
-        return out.slice(0,3);
-      }
-      function buildFinalSynthesis(){
-        if(!state.followupQuestion||!state.followupCards?.length)return {html:'',text:[]};
-        const comp=composition(),first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1],f=state.followupCards[0];
-        const cardsLine=`${first.name}${first.reversed?'逆':'正'} → ${mid.name}${mid.reversed?'逆':'正'} → ${last.name}${last.reversed?'逆':'正'} ＋ 追問 ${f.name}${f.reversed?'逆':'正'}`;
-        const lead=finalSynthesisHeadline();
-        let mainStory='';
-        let followStory='';
-        if(state.topic.id==='love'){
-          mainStory=`主牌先說的是：${naturalMainStory()} 其中「${mid.name}${mid.reversed?'逆位':'正位'}」之所以重要，不是因為它比較壞，而是它落在深層位置，最能說明你為什麼會用現在這種方式靠近、判斷或保護自己。`;
-          const flip=sameCardFlipInsight();
-          if(flip){
-            followStory=flip.story;
-          }else{
-            const pf=psychFunction(f);
-            followStory=`追問「${state.followupQuestion}」抽到「${f.name}${f.reversed?'逆位':'正位'}」，它沒有改寫前面的故事，而是把最值得先調整的地方放大。這張牌原本想保護的是「${pf.protect}」，但過度使用時會變成「${pf.cost}」。真正的修正是：${pf.repair}。這樣做的目的不是變成另一個人，而是讓原本最後一張牌代表的方向有機會真正落地。`;
-          }
-        }else{
-          mainStory=`原本主牌先建立「${signal(first,2)} → ${signal(mid,2)} → ${signal(last,2)}」的主線。${transitionDeep(first,mid)} ${transitionDeep(mid,last)}`;
-          followStory=`追問「${state.followupQuestion}」抽到「${f.name}${f.reversed?'逆位':'正位'}」，它把焦點收斂到「${signal(f,3)}」。${cardMetaphor(f)} ${topicManifestation(f)} 這不是把原本三張推翻，而是告訴你：原本的故事裡，哪一個環節最值得先動。`;
-        }
-        const flipInsight=sameCardFlipInsight();
-        const psychology=state.topic.id==='love'?`內在層真正值得看的是「你如何保護自己」。主牌描述了目前反應、深層判準與後續接受度；追問牌則把保護機制再拉近。${flipInsight?'同一張牌以相反方向再次出現，表示修正焦點非常集中：不是換一個問題，而是同一個模式要換一種用法。':''}這些都只能當成可能的內在模式，不代表你過去一定發生過某件事。`:`內在角度看，主牌描述的是一套正在運作的保護／推進模式；追問牌則像把鏡頭拉近。你可以把它當成「我在什麼情境下最容易自動回到舊反應」的提示，而不是把它當成對人格或過去經歷的診斷。`;
-        const evidence=`理性角度看，目前可以較有把握地說的是牌位之間的結構與重複訊號；仍不能從牌面補出具體過往事件、第三者或他人未說出口的內心事實。${guardrail()}`;
-        const direct=finalSynthesisDirectAnswer();
-        const actions=finalSynthesisActions();
-        const html=`<section class="final-synthesis"><div class="final-synthesis-kicker">FINAL INTEGRATION · MAIN SPREAD + FOLLOW-UP · V9.1</div><h4>追問後最終整合判讀</h4><div class="final-synthesis-lead"><b>${esc(lead)}</b></div><div class="final-synthesis-grid"><div class="final-synthesis-card"><small>原主牌主線</small><b>${esc(`${first.name} → ${mid.name} → ${last.name}`)}</b><p>${esc(naturalMainStory())}</p></div><div class="final-synthesis-card"><small>追問新增焦點</small><b>${esc(`${f.name}${f.reversed?'逆位':'正位'}｜${signal(f,2)}`)}</b><p>${esc('補牌不是另起一局，而是指出原主線裡最值得先調整的環節。')}</p></div><div class="final-synthesis-card"><small>最後驗證方向</small><b>${esc(`${last.name}${last.reversed?'逆位':'正位'}｜${signal(last,2)}`)}</b><p>${esc('看這個方向是否真的變成持續行為，而不是只出現一次。')}</p></div></div><div class="final-synthesis-section"><h5>一、主牌與補牌現在如何接成同一個故事</h5><p>${esc(mainStory)}</p><p>${esc(followStory)}</p></div><div class="final-synthesis-section"><h5>二、內在與理性兩層一起看</h5><p><b>內在層：</b>${esc(psychology)}</p><p><b>證據層：</b>${esc(evidence)}</p></div><div class="final-synthesis-section"><h5>三、最後直接回答</h5><p>${esc(direct)}</p></div><div class="final-synthesis-section"><h5>四、接下來只做三件事</h5><ol class="final-synthesis-actions">${actions.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div><span class="final-synthesis-badge">${esc(cardsLine)} · NO REDRAW</span></section>`;
-        const plain=[
-          '【追問後最終整合判讀｜V9.1】',
-          lead,'',
-          '一、主牌與補牌如何接成同一個故事',mainStory,followStory,'',
-          '二、內在與理性兩層一起看','內在層：'+psychology,'證據層：'+evidence,'',
-          '三、最後直接回答',direct,'',
-          '四、接下來只做三件事',...actions.map((x,i)=>`${i+1}. ${x}`),
-          '',`整合牌序：${cardsLine}`
-        ];
-        return {html,text:plain};
-      }
-
-
-
-      function renderFollowups(){const opts=FOLLOWUPS[state.question.type]||FOLLOWUPS.state;els.follow.innerHTML=`<div class="phase-label"><span>02 · FOLLOW-UP</span><b>一次追問</b></div><h4>你現在最想再確認哪一件事？</h4><div class="followup-options">${opts.map((o,i)=>`<button class="followup-option" data-followup="${i}">${esc(o[0])}<br><small>${o[1].length} 張牌</small></button>`).join('')}</div>`;els.follow.hidden=false;setTimeout(()=>els.follow.scrollIntoView({behavior:'smooth',block:'start'}),40);}
-      function followup(index){
-        if(state.followupUsed)return;
-        const opts=FOLLOWUPS[state.question.type]||FOLLOWUPS.state, opt=opts[index]; if(!opt)return;
-        state.followupUsed=true; const cards=TarotCore.drawPositions(opt[1]); state.followupQuestion=opt[0]; state.followupCards=cards; state.followupText=[]; els.follow.hidden=true;
-        const c=cards[0], orient=c.reversed?'逆位':'正位';
-        let paras=[];
-        paras.push(`這次補牌只回答「${opt[0]}」，不推翻原本主牌。第一張「${c.name}${orient}」把焦點收斂到「${signal(c,3)}」；${topicManifestation(c)}`);
-        paras.push(`${positionLens(c.position)} ${c.arcana==='major'?majorNarrative(c):cardMetaphor(c)}`);
-        if(cards.length>1){const c2=cards[1]; paras.push(`第二張「${c2.name}${c2.reversed?'逆位':'正位'}」再補上一層。${transitionDeep(c,c2)} 兩張合看，比單張更值得注意的是「前一張怎麼造成後一張」。`);}
-        const mainMid=state.current[Math.floor(state.current.length/2)], mainLast=state.current[state.current.length-1];
-        paras.push(`把補牌接回主牌來看，仍然要回到原本的主線：先處理「${mainMid.name}」指出的核心因素，再觀察「${mainLast.name}${mainLast.reversed?'逆位':'正位'}」是否在現實裡出現。補牌的功能是縮小焦點，不是抽到喜歡的牌就改判。`);
-        paras.push(`最實際的做法，是把這次追問轉成一個可驗證的小觀察：接下來一段時間，只看和「${signal(c,2)}」直接相關的行為與回饋，不再用新的抽牌代替現實資料。`);
-        state.followupText=[...paras];
-        const finalPack=buildFinalSynthesis();state.finalSynthesisHTML=finalPack.html;state.finalSynthesisText=finalPack.text;
-        els.followResult.innerHTML=`<div class="phase-label"><span>02 · RESULT</span><b>追問結果</b></div><h4>${esc(opt[0])}</h4><div class="followup-card-row">${cards.map(x=>`<div class="followup-mini"><b>${esc(x.name)}</b><span>${x.reversed?'逆位':'正位'} · ${esc(x.position)}</span><p>${esc(x.meaning)}</p></div>`).join('')}</div><div class="followup-answer">${paras.map(p=>`<p>${esc(p)}</p>`).join('')}</div>${state.finalSynthesisHTML}<div class="post-followup-download"><button class="download-txt" type="button" data-download-txt title="下載文字備份">TXT 備份</button><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button></div>`;
-        els.followResult.hidden=false; renderFinish();
-      }
-      function renderFinish(){els.finish.innerHTML=`<h4>本次牌局完成</h4><div class="finish-actions"><button type="button" data-new-reading>換一個問題</button><button type="button" data-same-question>同一題重新測試</button></div>`;els.finish.hidden=false;}
-      function resetToTopic(){state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null};els.workspace.hidden=true;renderTopics();showStep('topic');}
-
-      // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
-      // 例：tarot.html?topic=love&scenario=single#worldSecond
-      window.openTarotDeepLink=(topicId,scenarioId)=>{
-        const t=topicBy(topicId);
-        if(!t)return false;
-        const sc=scenarioBy(t,scenarioId);
-        if(!sc)return false;
-        state.topic=t;state.scenario=sc;state.question=null;
-        renderScenarios();
-        // 直接進入該情境的正式選題流程；第一次／第二次提醒仍由主引擎統一判斷。
-        enterQuestionStage();
-        return true;
-      };
-
-      els.topic.addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b)return;state.topic=topicBy(b.dataset.topic);state.scenario=state.question=null;renderScenarios();showStep('scenario');});
-      els.scenario.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;enterQuestionStage();});
-      els.question.addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;state.question=state.questions.find(q=>q.id===b.dataset.question);renderReady();showStep('ready');});
-      document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.back)));
-      $('startReading').addEventListener('click',requestStartReading);$('revealAllBtn').addEventListener('click',revealAll);
-      els.follow.addEventListener('click',e=>{const b=e.target.closest('[data-followup]');if(b)followup(Number(b.dataset.followup));});
-      els.finish.addEventListener('click',e=>{if(e.target.closest('[data-new-reading]'))resetToTopic();if(e.target.closest('[data-same-question]')){els.workspace.hidden=true;renderReady();showStep('ready');}});
-      document.addEventListener('click',e=>{
-        const b=e.target.closest('[data-copy-ai-prompt]');if(b)copyAIPrompt(b);
-        const memberLogin=e.target.closest('[data-member-login]');if(memberLogin){openMemberModal(memberLogin.dataset.targetReader||'b');return;}
-        const dl=e.target.closest('[data-download-txt]');if(dl&&!dl.disabled)downloadArchive();
-        const go=e.target.closest('[data-reader-go]');if(go&&!go.disabled)activateReader(go.dataset.readerGo,true);
-        const next=e.target.closest('[data-reader-next]');if(next&&!next.disabled)activateReader(next.dataset.readerNext,true);
-        const scrollConsensus=e.target.closest('[data-scroll-consensus]');if(scrollConsensus){const c=els.analysis.querySelector('[data-consensus-panel]');if(c&&!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});}
-        const followGate=e.target.closest('[data-open-followup]');if(followGate&&!followGate.disabled&&(state.readersViewed?.size||0)>=4)renderFollowups();
-      });
-      $('tarotMemberButton')?.addEventListener('click',()=>openMemberModal());
-      $('tarotMemberClose')?.addEventListener('click',closeMemberModal);
-      $('tarotMemberLogout')?.addEventListener('click',logoutMember);
-      $('tarotLocalLogin')?.addEventListener('click',()=>{safeWrite(TAROT_LOCAL_MEMBER_KEY,true);memberLoginSucceeded();});
-      $('tarotGuestNoticeClose')?.addEventListener('click',closeGuestNotice);
-      $('tarotGuestNoticeBack')?.addEventListener('click',closeGuestNotice);
-      $('tarotGuestNoticeConfirm')?.addEventListener('click',()=>{const fn=guestNoticeAction;if(fn)fn();});
-      $('tarotMemberModal')?.addEventListener('click',e=>{if(e.target===$('tarotMemberModal'))closeMemberModal();});
-      $('tarotGuestNotice')?.addEventListener('click',e=>{if(e.target===$('tarotGuestNotice'))closeGuestNotice();});
-      renderTopics();$('deckCount').textContent=TarotCore.CARD_COUNT;updateMemberUI();
-    })();
-  </script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const worldSecond = document.getElementById('worldSecond');
-
-      // SEO 子頁只帶入主題／情境；主頁本身一進來就能直接選主題，不再加前置教學關卡。
-      const deepLink = new URLSearchParams(location.search);
-      const deepTopic = deepLink.get('topic');
-      const deepScenario = deepLink.get('scenario');
-      if (deepTopic && deepScenario) {
-        setTimeout(() => {
-          const opened = window.openTarotDeepLink?.(deepTopic, deepScenario);
-          if (opened) worldSecond?.scrollIntoView({behavior:'smooth',block:'start'});
-        }, 0);
-      }
-
-      // hero star field
-      const hero = document.getElementById('tarotHeroVisual');
-      if (hero) {
-        for (let i=0;i<34;i++) {
-          const s = document.createElement('i');
-          s.className = 'tarot-star';
-          s.style.left = (4 + Math.random()*92) + '%';
-          s.style.top = (3 + Math.random()*92) + '%';
-          s.style.setProperty('--dur',(2.8 + Math.random()*4.5)+'s');
-          s.style.animationDelay = (-Math.random()*5)+'s';
-          hero.appendChild(s);
-        }
-      }
-
-      const faqWorld = document.getElementById('faqWorld');
-      const listingWorld = document.getElementById('listingWorld');
-      const setOverlay = () => {
-        document.body.classList.toggle('overlay-open',
-          faqWorld?.classList.contains('is-active') || listingWorld?.classList.contains('is-active'));
-      };
-
-      const openFaq = () => {
-        faqWorld?.classList.add('is-active');
-        faqWorld?.setAttribute('aria-hidden','false');
-        if (faqWorld) faqWorld.scrollTop = 0;
-        history.replaceState(null,'','#faq-full');
-        setOverlay();
-      };
-      const closeFaq = () => {
-        faqWorld?.classList.remove('is-active');
-        faqWorld?.setAttribute('aria-hidden','true');
-        history.replaceState(null,'',location.pathname + location.search + '#tarot-faq');
-        setOverlay();
-      };
-      document.getElementById('openFaqWorld')?.addEventListener('click', openFaq);
-      document.getElementById('closeFaqWorld')?.addEventListener('click', closeFaq);
-      document.getElementById('closeFaqWorldBottom')?.addEventListener('click', closeFaq);
-
-      const openListing = () => {
-        listingWorld?.classList.add('is-active');
-        listingWorld?.setAttribute('aria-hidden','false');
-        if (listingWorld) listingWorld.scrollTop = 0;
-        history.replaceState(null,'','#apply-listing');
-        setOverlay();
-      };
-      const closeListing = () => {
-        listingWorld?.classList.remove('is-active');
-        listingWorld?.setAttribute('aria-hidden','true');
-        history.replaceState(null,'',location.pathname + location.search);
-        setOverlay();
-      };
-      document.getElementById('openListing')?.addEventListener('click', openListing);
-      document.getElementById('openListingInline')?.addEventListener('click', openListing);
-      document.getElementById('closeListing')?.addEventListener('click', closeListing);
-      document.getElementById('closeListingBottom')?.addEventListener('click', closeListing);
-
-      const copyBtn = document.getElementById('copySiteInfo');
-      copyBtn?.addEventListener('click', async () => {
-        const text = `網站名稱：免費線上占卜
-頁面名稱：免費線上占卜｜塔羅・奇門・八字・紫微斗數・易經占卜
-網址：https://divinationhub.tw/index.html
-建議介紹：免費線上占卜工具網站，提供奇門遁甲、塔羅、八字、紫微斗數、梅花易數、六爻與易經 64 卦等工具，並整理各類占卜工具介紹，以及感情、工作、事業與生活選擇等相關內容。
-建議連結文字：免費線上占卜 ／ 免費線上占卜工具`;
-        try {
-          await navigator.clipboard.writeText(text);
-          const old = copyBtn.textContent;
-          copyBtn.textContent = '已複製';
-          setTimeout(() => copyBtn.textContent = old, 1600);
-        } catch(e) {
-          copyBtn.textContent = '請手動複製上方資料';
-        }
-      });
-
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-          if (faqWorld?.classList.contains('is-active')) closeFaq();
-          if (listingWorld?.classList.contains('is-active')) closeListing();
-        }
-      });
-
-      if (location.hash === '#faq-full') openFaq();
-      if (location.hash === '#apply-listing') openListing();
-    });
-  </script>
-
-<script id="themeToggleScript">
+<script>
 (() => {
-  const KEY='divinationhub-color-theme';
-  const root=document.documentElement;
-  const btn=document.getElementById('themeToggle');
-  const icon=document.getElementById('themeToggleIcon');
-  const label=document.getElementById('themeToggleText');
-  if(!btn)return;
-  const sync=()=>{
-    const light=root.dataset.theme==='light';
-    if(icon)icon.textContent=light?'☾':'☀';
-    if(label)label.textContent=light?'深色':'淺色';
-    btn.setAttribute('aria-label',light?'切換為深色模式':'切換為淺色模式');
-    btn.setAttribute('title',light?'切換為深色模式':'切換為淺色模式');
+  const TOPICS = [
+    {id:'love',icon:'♡',name:'感情關係',desc:'曖昧、交往、冷淡、分手、復合與桃花',scenarios:[['ambiguous','曖昧中','關係還沒說清楚，正在觀察彼此訊號'],['dating','交往中','已在關係裡，想理解目前互動與下一步'],['distant','冷淡／疏遠','聯絡變少、態度改變或關係卡住'],['breakup','分手後','已經分開，正在面對復合與放下'],['reconcile','復合中','重新接觸或嘗試修復關係'],['single','單身桃花','目前單身，想看新的感情機會']]},
+    {id:'work',icon:'◇',name:'工作職場',desc:'在職、轉職、求職、升遷與主管同事',scenarios:[['employed','目前在職','想了解現在工作是否值得繼續投入'],['leave','正在考慮離職','留下或離開之間仍在衡量'],['jobhunt','求職／面試','正在找工作、投履歷或等待結果'],['newjob','剛到新工作','進入新環境，仍在適應與觀察'],['promotion','升遷／轉調','面對職位、部門或責任變化']]},
+    {id:'business',icon:'✦',name:'創業事業',desc:'創業、經營、合作、產品與擴張',scenarios:[['planning','準備創業','還在構想、評估與準備階段'],['running','已開始經營','事業已運作，正在找突破點'],['partner','合作夥伴','正在評估或處理共同經營關係'],['product','新產品／新方案','準備推出新的商品、服務或專案'],['scale','擴張／轉型','考慮增加投入、改方向或擴大規模']]},
+    {id:'finance',icon:'⬡',name:'財運金錢',desc:'收入、支出、資源配置與金錢壓力',scenarios:[['income','收入與機會','想改善收入或尋找新的財務機會'],['pressure','支出／財務壓力','目前金錢壓力較大，需要重新整理'],['bigdecision','大額金錢決定','面對大筆支出、投入或資源配置'],['moneyrelation','合作與金錢','牽涉分潤、借貸、報酬或共同資源'],['planning','長期財務規劃','想調整未來的金錢與資源安排']]},
+    {id:'people',icon:'☍',name:'人際關係',desc:'朋友、家人、同事、合作與衝突',scenarios:[['friend','朋友關係','友情、信任、距離或誤會'],['family','家庭關係','家人之間的互動與界線'],['coworker','同事／主管','職場人際、權責與合作'],['partner','合作關係','合作夥伴、客戶或共同計畫'],['conflict','疏遠／衝突','關係已出現摩擦、沉默或對立']]},
+    {id:'choice',icon:'⇄',name:'選擇決策',desc:'A/B、去留、行動與時機判斷',scenarios:[['ab','A／B 二選一','兩個具體方案之間難以取捨'],['act','要不要行動','正在考慮主動、提出、開始或停止'],['stayleave','留下／離開','一段關係、工作或環境的去留'],['timing','現在是不是時機','方向大致確定，但時點仍不確定'],['multi','多方案整理','選項很多，需要先找出判斷重點']]},
+    {id:'self',icon:'☾',name:'自我探索',desc:'情緒、盲點、卡點、成長與方向',scenarios:[['stuck','最近卡住','知道不順，卻說不清真正原因'],['emotion','情緒反覆','焦慮、矛盾、失落或難以放下'],['blindspot','想看自己的盲點','希望換個角度理解自己'],['growth','正在改變自己','處於調整習慣、關係或生活方式的階段'],['direction','找下一階段方向','想知道現在最值得投入的成長方向']]},
+    {id:'fortune',icon:'☼',name:'近期運勢',desc:'一週、一月與近期需要注意的主題',scenarios:[['week','未來一週','看短期節奏與最重要提醒'],['month','未來一個月','看接下來幾週的主要課題'],['love','近期感情','聚焦近期感情與互動氛圍'],['work','近期工作','聚焦近期工作、責任與機會'],['overall','近期整體提醒','不指定單一領域，先看整體重點']]}
+  ];
+  
+  const TAROT_API_BASE='https://tarot-api.ezgocpu.workers.dev';
+  async function tarotAPI(path,body=null){
+    const res=await fetch(TAROT_API_BASE+path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+    let data=null;try{data=await res.json()}catch(_){data=null}
+    if(!res.ok||!data?.ok)throw new Error(data?.error||`HTTP_${res.status}`);
+    return data;
+  }
+  function showTarotApiError(err){
+    console.error('Tarot API error:',err);
+    alert('塔羅核心暫時無法連線，請稍後再試。');
+  }
+  
+  const $=id=>document.getElementById(id);
+  const els={topic:$('topicGrid'),scenario:$('scenarioGrid'),question:$('questionGrid'),qctx:$('questionContext'),workspace:$('readingWorkspace'),cards:$('cards'),interp:$('interpretation'),analysis:$('readingAnalysis'),follow:$('followupPanel'),followResult:$('followupResult'),finish:$('readingFinish'),progress:$('flowProgress')};
+  let state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[]};
+  
+  const esc=(s='')=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
+  const topicBy=id=>TOPICS.find(x=>x.id===id);
+  const scenarioBy=(t,id)=>{const a=t.scenarios.find(x=>x[0]===id);return a?{id:a[0],name:a[1],desc:a[2]}:null};
+  const stepEl=s=>document.querySelector(`[data-step="${s}"]`);
+  function showStep(s){document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));stepEl(s)?.classList.add('active');document.querySelectorAll('#flowProgress button').forEach((b,i)=>{const map=['topic','scenario','question','ready'];const idx=map.indexOf(s);b.classList.toggle('active',i===idx);b.disabled=i>idx});stepEl(s)?.scrollIntoView({behavior:'smooth',block:'start'});}
+  
+  const TAROT_USAGE_KEY='divinationhub-tarot-guest-v2';
+  const TAROT_AUTH_KEY='divinationhub-bazi-google-credential';
+  const TAROT_LOCAL_MEMBER_KEY='divinationhub-tarot-local-member-preview';
+  const MEMBER_API_BASE='https://member-api.ezgocpu.workers.dev';
+  const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
+  const DAY_MS=24*60*60*1000, SAME_Q_MS=72*60*60*1000;
+  let tarotGoogleInitialized=false, guestNoticeAction=null;
+  
+  function safeRead(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(_){return fallback}}
+  function safeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}}
+  function usage(){const u=safeRead(TAROT_USAGE_KEY,{});return {demoUsed:!!u.demoUsed,lastFormalAt:Number(u.lastFormalAt||0),questionUses:u.questionUses&&typeof u.questionUses==='object'?u.questionUses:{}}}
+  function saveUsage(u){safeWrite(TAROT_USAGE_KEY,u)}
+  function questionKey(){return `${state.topic?.id||''}:${state.scenario?.id||''}:${state.question?.id||''}`}
+  function decodeJwt(token){try{const part=String(token||'').split('.')[1];if(!part)return null;const base=part.replace(/-/g,'+').replace(/_/g,'/');const json=decodeURIComponent(atob(base).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));return JSON.parse(json)}catch(_){return null}}
+  function authToken(){try{return localStorage.getItem(TAROT_AUTH_KEY)||''}catch(_){return ''}}
+  function setAuthToken(token){try{if(token)localStorage.setItem(TAROT_AUTH_KEY,token);else localStorage.removeItem(TAROT_AUTH_KEY)}catch(_){}}
+  function authProfile(){
+    if(location.protocol==='file:'&&safeRead(TAROT_LOCAL_MEMBER_KEY,false))return {name:'本機測試會員',email:'LOCAL PREVIEW'};
+    const token=authToken();if(!token)return null;const p=decodeJwt(token);if(!p)return null;if(Number(p.exp||0)*1000<=Date.now()){setAuthToken('');return null}return {name:p.name||p.given_name||p.email||'會員',email:p.email||''};
+  }
+  function isLogged(){return !!authProfile()}
+  function canAccessAllReaders(){return isLogged()||state.accessTier==='demo'||state.accessTier==='member'}
+  function remaining(ms){const total=Math.max(0,Math.ceil(ms/60000));const h=Math.floor(total/60),m=total%60;return h?`${h} 小時${m?` ${m} 分鐘`:''}`:`${m} 分鐘`}
+  function updateAccessMini(){const el=$('tarotAccessMini');if(!el)return;const u=usage();if(isLogged())el.textContent='FREE MEMBER · A/B/C/D';else if(!u.demoUsed)el.textContent='FIRST EXPERIENCE · A/B/C/D OPEN';else el.textContent='GUEST · A OPEN · B/C/D FREE LOGIN';}
+  function updateMemberUI(){const p=authProfile(),btn=$('tarotMemberButton'),txt=$('tarotMemberButtonText');if(!btn||!txt)return;btn.classList.toggle('logged',!!p);txt.textContent=p?p.name:'免費登入';updateAccessMini();const prof=$('tarotMemberProfile');if(prof){prof.hidden=!p;$('tarotMemberName').textContent=p?.name||'會員';$('tarotMemberEmail').textContent=p?.email||''}const mount=$('tarotGoogleMount');if(mount)mount.hidden=!!p;const title=$('tarotMemberTitle'),intro=$('tarotMemberIntro');if(title)title.textContent=p?'免費會員':'免費登入';if(intro)intro.textContent=p?'你已登入，A／B／C／D 四位老師全部開放。':'登入後直接沿用這一副牌，解鎖 B 內在老師、C 理性老師與 D 行動老師，不會重新抽牌。';}
+  async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})}catch(_){}}
+  function renderGoogleButton(){
+    if(isLogged())return;
+    if(location.protocol==='file:'){$('tarotLocalLogin').hidden=false;return;}
+    if(!window.google?.accounts?.id){setTimeout(renderGoogleButton,250);return;}
+    if(!tarotGoogleInitialized){window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async response=>{const credential=response?.credential||'';if(!credential)return;setAuthToken(credential);await registerMember();memberLoginSucceeded();}});tarotGoogleInitialized=true;}
+    const mount=$('tarotGoogleMount');if(mount&&mount.dataset.ready!=='1'){mount.dataset.ready='1';window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});}
+  }
+  function openMemberModal(targetReader=null){state.pendingReader=targetReader||null;updateMemberUI();const modal=$('tarotMemberModal');modal.classList.add('show');modal.setAttribute('aria-hidden','false');renderGoogleButton();}
+  function closeMemberModal(){const modal=$('tarotMemberModal');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
+  function memberLoginSucceeded(){state.accessTier='member';const target=state.pendingReader;state.pendingReader=null;updateMemberUI();closeMemberModal();if(!els.analysis.hidden&&state.readerBodies){renderReaderShell('a');}if(target)setTimeout(()=>activateReader(target,true),100);}
+  function logoutMember(){setAuthToken('');safeWrite(TAROT_LOCAL_MEMBER_KEY,false);try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}state.accessTier=state.current?.length?(state.accessTier==='demo'?'demo':'guest'):null;updateMemberUI();if(!els.analysis.hidden){if(!canAccessAllReaders()&&!state.readersViewed.has('a'))state.readersViewed=new Set(['a']);activateReader('a',false);updateReaderJourney()}closeMemberModal();}
+  function openGuestNotice(kind,confirmFn){
+    const title=$('tarotGuestNoticeTitle'),kicker=$('tarotGuestNoticeKicker'),copy=$('tarotGuestNoticeCopy'),confirm=$('tarotGuestNoticeConfirm');guestNoticeAction=confirmFn;
+    if(kind==='first'){
+      kicker.textContent='FIRST EXPERIENCE · EXTRA GIFT';title.textContent='第一次先放心體驗，這次不算正式次數';confirm.textContent='看看有哪些問題';
+      copy.innerHTML='<p>第一次來通常只是想試試看流程，很可能還不確定這個網站值不值得認真問。</p><div class="gate-highlight"><strong>所以第一次額外送你完整展示：</strong><br>A 首席、B 內在、C 理性、D 行動四位老師全部開放，也包含一次追問與最後整合。</div><p>這次<strong>不計入正式免費占卜次數</strong>。先熟悉一次；現在先不用選題；按下下方按鈕後，才會顯示問題清單，再挑一題試看看。</p>';
+    }else if(kind==='second'){
+      kicker.textContent='FORMAL GUEST READING';title.textContent='這次開始，請選一個你真正想問的問題';confirm.textContent='我知道了，讓我選問題';
+      copy.innerHTML='<p>你已經看過完整體驗。從這一次開始，會計入訪客免費占卜次數。</p><div class="gate-rules"><span><strong>訪客：</strong>每 24 小時 1 次主牌占卜</span><span><strong>同一核心問題：</strong>72 小時內不重抽</span><span><strong>解讀：</strong>A 首席老師完整開放；B／C／D 免費登入後解鎖</span></div><p>按下下方按鈕後，才會顯示問題清單。先慢慢看，再選一題你現在真正想知道的。</p>';
+    }else{
+      kicker.textContent='COOLDOWN';title.textContent='這一局還需要等一下';confirm.textContent='知道了';
+    }
+    const modal=$('tarotGuestNotice');modal.classList.add('show');modal.setAttribute('aria-hidden','false');
+  }
+  function closeGuestNotice(){const modal=$('tarotGuestNotice');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');guestNoticeAction=null;}
+  function showCooldown(kind,ms){
+    const title=$('tarotGuestNoticeTitle'),kicker=$('tarotGuestNoticeKicker'),copy=$('tarotGuestNoticeCopy'),confirm=$('tarotGuestNoticeConfirm');kicker.textContent='GUEST COOLDOWN';
+    if(kind==='daily'){
+      title.textContent='今天的訪客免費占卜已使用';
+      confirm.textContent='免費登入｜繼續使用';
+      copy.innerHTML=`<p>下一次訪客免費占卜約在 <strong>${remaining(ms)}</strong> 後開放。</p><div class="gate-highlight"><strong>不需要等 24 小時才能繼續。</strong><br>免費登入後，可以直接解鎖同一副牌的 B 內在、C 理性、D 行動三位老師；如果你已經完成這一局，也可以繼續使用免費會員功能。</div>`;
+      guestNoticeAction=()=>{closeGuestNotice();openMemberModal(state.current?.length?'b':null);};
+    }else{
+      title.textContent='同一個問題先不要重抽';
+      confirm.textContent='免費登入｜繼續使用';
+      copy.innerHTML=`<p>這個核心問題仍在 72 小時整理期，約還有 <strong>${remaining(ms)}</strong>。</p><p>不用為了得到不同答案重抽。免費登入後，可繼續查看會員解讀與同一副牌的後續內容。</p>`;
+      guestNoticeAction=()=>{closeGuestNotice();openMemberModal(state.current?.length?'b':null);};
+    }
+    const modal=$('tarotGuestNotice');modal.classList.add('show');modal.setAttribute('aria-hidden','false');
+  }
+  function markDemoUsed(){const u=usage();u.demoUsed=true;saveUsage(u);updateAccessMini()}
+  function markFormalUse(){const u=usage(),now=Date.now();u.lastFormalAt=now;u.questionUses[questionKey()]=now;saveUsage(u);updateAccessMini()}
+  async function enterQuestionStage(){
+    // 提醒一定要發生在問題清單出現之前；先清掉任何前一次殘留的問題，避免使用者先看到題目才被提醒。
+    els.question.innerHTML='';
+    if(els.qctx)els.qctx.textContent='';
+    if(isLogged()){try{await renderQuestions();showStep('question');}catch(e){showTarotApiError(e)}return;}
+    const u=usage(),now=Date.now();
+    if(!u.demoUsed){
+      openGuestNotice('first',async()=>{closeGuestNotice();try{await renderQuestions();showStep('question');}catch(e){showTarotApiError(e)}});
+      return;
+    }
+    const dailyLeft=u.lastFormalAt?DAY_MS-(now-u.lastFormalAt):0;
+    if(dailyLeft>0){showCooldown('daily',dailyLeft);return;}
+    if(!u.lastFormalAt){
+      openGuestNotice('second',async()=>{closeGuestNotice();try{await renderQuestions();showStep('question');}catch(e){showTarotApiError(e)}});
+      return;
+    }
+    try{await renderQuestions();showStep('question');}catch(e){showTarotApiError(e)}
+  }
+  
+  async function requestStartReading(){
+    if(isLogged()){state.accessTier='member';await drawReading();return;}
+    const u=usage();
+    if(!u.demoUsed){state.accessTier='demo';if(await drawReading())markDemoUsed();return;}
+    const now=Date.now(),dailyLeft=u.lastFormalAt?DAY_MS-(now-u.lastFormalAt):0,qAt=Number(u.questionUses[questionKey()]||0),sameLeft=qAt?SAME_Q_MS-(now-qAt):0;
+    if(dailyLeft>0){showCooldown('daily',dailyLeft);return;}
+    if(sameLeft>0){showCooldown('same',sameLeft);return;}
+    state.accessTier='guest';if(await drawReading())markFormalUse();
+  }
+  function renderTopics(){els.topic.innerHTML=TOPICS.map((t,i)=>`<button class="choice-card" data-topic="${t.id}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small></button>`).join('');}
+  function renderScenarios(){const t=state.topic;$('scenarioTitle').textContent=`${t.name}｜你目前處在哪個階段？`;els.scenario.innerHTML=t.scenarios.map((s,i)=>`<button class="choice-card" data-scenario="${s[0]}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><b>${s[1]}</b><small>${s[2]}</small></button>`).join('');}
+  async function questions(){const data=await tarotAPI('/questions',{topicId:state.topic.id,scenarioId:state.scenario.id});return data.questions||[];}
+  async function renderQuestions(){const qs=await questions();state.questions=qs;els.qctx.textContent=`${state.topic.name} → ${state.scenario.name}｜請選一個最想看清楚的方向。`;els.question.innerHTML=qs.map((q,i)=>`<button class="question-card" data-question="${q.id}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b></button>`).join('');}
+  function renderReady(){const q=state.question;$('readyCard').innerHTML=`<div class="crumb">${state.topic.name} → ${state.scenario.name}</div><h4>${esc(q.text)}</h4><p><b>${q.spread.name}</b><br>${q.spread.desc}<br><br>牌位：${q.spread.positions.join('／')}</p>`;}
+  function buildCard(card,index){const slot=document.createElement('div');slot.className='tarot-slot';slot.innerHTML=`<div class="position-label">${esc(card.position)}</div>`;const wrap=document.createElement('div');wrap.className='tarot-card';wrap.style.setProperty('--delay',`${index*90}ms`);wrap.dataset.index=index;wrap.tabIndex=0;wrap.setAttribute('role','button');wrap.setAttribute('aria-label',`${card.position}，點擊翻牌`);const frontClass=card.reversed?'card-front reversed-content':'card-front';wrap.innerHTML=`<div class="card-inner"><div class="card-face card-back"><div class="back-sigil">✺</div></div><div class="card-face ${frontClass}"><div class="card-content"><div class="card-number">${esc(card.number)} · ${esc(card.suit)}</div><div class="arcana-symbol">${esc(card.symbol)}</div><div class="card-name">${esc(card.name)}</div><div class="card-en">${esc(card.en)}</div><div class="orientation">${card.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div></div></div></div>`;const hint=document.createElement('div');hint.className='reveal-hint';hint.textContent='點擊翻牌';const reveal=()=>revealCard(index,wrap,hint);wrap.addEventListener('click',reveal);wrap.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();reveal();}});slot.append(wrap,hint);return slot;}
+  async function drawReading(){
+    const q=state.question,startBtn=$('startReading'),old=startBtn?.textContent;
+    try{
+      if(startBtn){startBtn.disabled=true;startBtn.textContent='正在洗牌…';}
+      const pack=await tarotAPI('/draw',{topicId:state.topic.id,scenarioId:state.scenario.id,questionId:q.id});
+      state.current=pack.cards||[];state.readingToken=pack.token||'';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.followupOptions=[];
+      $('revealAllBtn').disabled=false;state.revealed=new Set();state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
+      els.cards.innerHTML='';els.cards.style.setProperty('--count',state.current.length);state.current.forEach((c,i)=>els.cards.appendChild(buildCard(c,i)));
+      els.interp.innerHTML='';els.interp.classList.remove('show');els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
+      $('readingPath').textContent=`${state.topic.name} → ${state.scenario.name}`;$('readingQuestion').textContent=q.text;$('spreadName').textContent=q.spread.name;$('spreadDesc').textContent=q.spread.desc;$('deckCount').textContent=pack.cardCount||78;
+      els.workspace.hidden=false;document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));els.progress.querySelectorAll('button').forEach(x=>x.classList.remove('active'));setTimeout(()=>els.workspace.scrollIntoView({behavior:'smooth',block:'start'}),50);return true;
+    }catch(e){showTarotApiError(e);return false;}finally{if(startBtn){startBtn.disabled=false;if(old)startBtn.textContent=old;}}
+  }
+  function revealCard(i,wrap,hint){if(!state.current[i]||state.revealed.has(i))return;state.revealed.add(i);wrap.classList.add('revealed');hint.textContent=state.current[i].reversed?'逆位':'正位';renderMeanings();if(state.revealed.size===state.current.length){$('revealAllBtn').disabled=true;renderFullReading();els.follow.hidden=true;els.followResult.hidden=true;}}
+  function revealAll(){els.cards.querySelectorAll('.tarot-card').forEach((w,i)=>{const h=w.parentElement.querySelector('.reveal-hint');revealCard(i,w,h);});}
+  function renderMeanings(){els.interp.innerHTML=state.current.map((c,i)=>state.revealed.has(i)?`<article class="meaning-card"><div class="meaning-index">${String(i+1).padStart(2,'0')} // ${esc(c.position)}</div><h3>${esc(c.name)}</h3><div class="ori">${c.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div><p>${esc(c.meaning)}</p></article>`:'').join('');els.interp.classList.toggle('show',state.revealed.size>0);}
+  
+  function buildAIPrompt(){
+    const cards=state.current.map((c,i)=>`${i+1}. 牌位「${c.position}」：${c.name}｜${c.reversed?'逆位':'正位'}｜基礎牌義：${c.meaning}`).join('\n');
+    let follow='';
+    if(state.followupQuestion&&state.followupCards?.length){follow=`\n\n【已追加的追問】\n${state.followupQuestion}\n${state.followupCards.map((c,i)=>`${i+1}. ${c.position}：${c.name}｜${c.reversed?'逆位':'正位'}｜基礎牌義：${c.meaning}`).join('\n')}`;}
+    return `請你扮演一位經驗豐富、但不過度斷言的專業塔羅老師，使用繁體中文，依照我已經抽出的牌解讀。不要重新抽牌，也不要更換牌位。\n\n【主題】${state.topic.name}\n【目前情境】${state.scenario.name}\n【我的問題】${state.question.text}\n【牌陣】${state.question.spread.name}\n【牌面】\n${cards}${follow}\n\n【解讀要求】\n1. 先用一句有洞察力的核心結論開場，像真人老師先抓出這副牌最重要的矛盾或主題。\n2. 逐張牌深入解釋：必須結合「牌位＋正逆位＋我的問題」，不要只重複牌義關鍵字。\n3. 把牌與牌串成一個前後有因果、轉折與發展的故事，說明它們彼此如何影響。\n4. 直接回答我的原問題，不要只說抽象的可能性。\n5. 最後提出 3 個具體、可執行的建議。\n6. 遇到「對方怎麼想、第三者、欺騙、外遇」等問題時，可以談傾向與訊號，但不要把塔羅當成現實證據，也不要因單張牌就下定論。\n7. 語氣可以細膩、有畫面感、有老師個人觀點，但不要故意恐嚇、宿命化或保證結果。\n8. 內容希望約 1900～2200 個中文字，內容要有足夠閱讀深度，但避免模板式重複與灌水。
+  9. 若能做到，請分別補充「內在視角」「理性證據視角」「行動策略視角」，但三者必須建立在同一副牌與同一核心判斷上。`;
+  }
+  async function copyAIPrompt(btn){
+    const text=buildAIPrompt();
+    try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);else{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}const old=btn.textContent;btn.textContent='✓ 已複製，可貼到其他 AI';setTimeout(()=>btn.textContent=old,1800);}catch(e){btn.textContent='複製失敗，請再試一次';setTimeout(()=>btn.textContent='複製 AI 解牌提示詞',1800);}
+  }
+  function stripHTMLText(html=''){
+    const box=document.createElement('div');box.innerHTML=html;return (box.textContent||box.innerText||'').replace(/\s+/g,'').trim();
+  }
+  function readingMeta(html=''){
+    const n=stripHTMLText(html).length;const mins=Math.max(1,Math.ceil(n/430));return {chars:n,mins};
+  }
+  
+  function readerJourneyFooter(key){
+    const order=['a','b','c','d'];
+    const labels={a:['A｜首席綜合','主線判讀'],b:['B｜內在老師','看見你的保護模式'],c:['C｜理性老師','哪些能信、哪些不能斷言'],d:['D｜行動老師','接下來到底怎麼做']};
+    const idx=order.indexOf(key),next=order[idx+1],allOpen=canAccessAllReaders(),demoMode=state.accessTier==='demo'&&!isLogged();
+    const steps=order.map((k,i)=>{const locked=!allOpen&&k!=='a',demoOpen=demoMode&&k!=='a';return `<button type="button" class="reader-bottom-step ${k===key?'current':''} ${locked?'locked':''} ${demoOpen?'demo-open':''}" data-reader-go="${k}" data-reader-step-index="${i}"><b>${labels[k][0]}</b><small>${labels[k][1]}</small></button>`}).join('');
+    let nextButton='';
+    if(!allOpen){nextButton=`<div class="reader-lock-gate"><div><b>登入後，一次解鎖 B／C／D 三位老師</b><span>內在模式 × 理性驗證 × 行動策略｜沿用現在這一副牌，直接接著看，不會重新抽牌。</span></div><button type="button" class="reader-login-cta" data-member-login data-target-reader="b">免費登入｜一次解鎖</button></div>`;}
+    else if(next){nextButton=`<button type="button" class="reader-next-cta" data-reader-next="${next}">下一篇｜${labels[next][0]} ↓</button>`;}
+    else{nextButton=`<button type="button" class="reader-next-cta reader-finish-cta" data-scroll-consensus>查看四鏡會診結論 ↓</button>`;}
+    return `<div class="reader-bottom-nav ${demoMode?'demo-mode':''}" data-reader-footer="${key}"><div class="reader-bottom-nav-head"><b>閱讀進度</b><span data-reader-footer-progress>1/4</span></div><div class="reader-bottom-steps">${steps}</div>${nextButton}</div>`;
+  }
+  function readerPane(key,title,subtitle,icon,body,active=false){
+    const meta=readingMeta(body);return `<section class="reader-pane ${active?'active':''}" data-reader-pane="${key}"><div class="reader-view-head"><div class="identity"><div class="reader-avatar">${icon}</div><div><h3>${title}</h3><p>${subtitle}</p></div></div><div class="reading-meta"><span>約 ${meta.mins} 分鐘</span></div></div>${body}${readerJourneyFooter(key)}</section>`;
+  }
+  function htmlToPlainReading(html=''){
+    const box=document.createElement('div');box.innerHTML=html;
+    box.querySelectorAll('br').forEach(el=>el.replaceWith('\n'));
+    box.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,.takeaway,.evidence,.teacher-summary,.signal-box,.consensus-item,.action-step').forEach(el=>{el.insertAdjacentText('beforebegin','\n');el.insertAdjacentText('afterend','\n');});
+    return (box.textContent||'').replace(/\u00a0/g,' ').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+  }
+  function archiveCardsText(cards){return cards.map((c,i)=>`${i+1}. ${c.position}：${c.name}｜${c.reversed?'逆位':'正位'}｜基礎牌義：${c.meaning}`).join('\n');}
+  function buildArchiveText(){
+    const now=new Date();
+    const parts=[
+      'DivinationHub 塔羅四鏡解牌｜完整備份 V9.1',
+      '==================================================',
+      `備份時間：${now.toLocaleString('zh-TW',{hour12:false})}`,
+      `主題：${state.topic?.name||''}`,
+      `目前情境：${state.scenario?.name||''}`,
+      `原問題：${state.question?.text||''}`,
+      `牌陣：${state.question?.spread?.name||''}`,
+      '',
+      '【主牌】',archiveCardsText(state.current),'',
+      '==================================================',
+      '【A｜首席綜合老師】',htmlToPlainReading(state.readerBodies?.a||''),'',
+      '==================================================',
+      '【B｜內在老師】',htmlToPlainReading(state.readerBodies?.b||''),'',
+      '==================================================',
+      '【C｜理性老師】',htmlToPlainReading(state.readerBodies?.c||''),'',
+      '==================================================',
+      '【D｜行動老師】',htmlToPlainReading(state.readerBodies?.d||''),'',
+      '==================================================',
+      '【四鏡共識】',htmlToPlainReading(state.consensusHTML||''),'',
+      `【解讀界線】${state.guardrailText||''}`
+    ];
+    if(state.followupQuestion&&state.followupCards?.length){
+      parts.push('','==================================================','【追加追問】',state.followupQuestion,archiveCardsText(state.followupCards),'');
+      if(state.followupText?.length)parts.push('【追問解讀】',...state.followupText);
+      if(state.finalSynthesisText?.length)parts.push('','==================================================',...state.finalSynthesisText);
+    }
+    parts.push('','==================================================','備註：本檔案整理同一副牌 A／B／C／D 四個視角；四份解讀共用相同牌面，不代表四次重新抽牌。塔羅內容用於整理問題與反思，現實事實仍以可驗證資訊為優先。');
+    return parts.join('\n');
+  }
+  function safeFileStamp(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;}
+  function downloadArchive(){
+    if((state.readersViewed?.size||0)<4||!state.followupUsed||!state.followupQuestion||!state.followupCards?.length)return;
+    const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=`tarot-four-lenses-v8-8-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+  }
+  function updateReaderJourney(){
+    const order=['a','b','c','d'],n=state.readersViewed?.size||0,allOpen=canAccessAllReaders();
+    els.analysis.querySelectorAll('[data-reader-footer-progress]').forEach(x=>x.textContent=`${n}/4`);
+    els.analysis.querySelectorAll('[data-reader-go]').forEach(btn=>{
+      const key=btn.dataset.readerGo,idx=order.indexOf(key),prev=order[idx-1],locked=!allOpen&&key!=='a';
+      const demoMode=state.accessTier==='demo'&&!isLogged();
+      btn.classList.toggle('done',state.readersViewed.has(key));btn.classList.toggle('locked',locked);btn.classList.toggle('demo-open',demoMode&&key!=='a'&&!state.readersViewed.has(key));
+      btn.disabled=locked||(!demoMode&&idx>0&&!state.readersViewed.has(prev));
+    });
+    const consensus=els.analysis.querySelector('[data-consensus-panel]');if(consensus)consensus.hidden=n<4;
+  }
+  function scrollReaderIntoView(key){
+    const pane=els.analysis.querySelector(`[data-reader-pane="${key}"]`);
+    if(!pane)return;
+    requestAnimationFrame(()=>{pane.scrollIntoView({behavior:'smooth',block:'start'});});
+  }
+  function activateReader(key,doScroll=true){
+    if(!['a','b','c','d'].includes(key))return;
+    if(key!=='a'&&!canAccessAllReaders()){openMemberModal(key);return;}
+    state.readersViewed.add(key);
+    els.analysis.querySelectorAll('[data-reader-pane]').forEach(x=>x.classList.toggle('active',x.dataset.readerPane===key));
+    const pane=els.analysis.querySelector(`[data-reader-pane="${key}"]`);
+    if(pane){pane.classList.add('reader-switch-flash');setTimeout(()=>pane.classList.remove('reader-switch-flash'),700);}
+    updateReaderJourney();
+    if(doScroll)scrollReaderIntoView(key);
+  }
+  function renderReaderShell(activeKey='a'){
+    const bodies=state.readerBodies||{};
+    els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">四鏡解牌｜V9.1</h3></div><div class="analysis-actions"><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button></div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">01 · FOUR READERS</div><h4>四位老師，四種視角</h4></div><div class="same-cards-chip">1 SPREAD · 4 LENSES</div></div>${readerPane('a','A｜首席綜合老師','把整副牌串成完整故事，先回答「這一局到底在說什麼」。','✦',bodies.a||'',activeKey==='a')}${readerPane('b','B｜內在老師','專看保護方式、需求、界線與內在拉扯。','☾',bodies.b||'',activeKey==='b')}${readerPane('c','C｜理性老師','拆開牌面訊號與現實證據，控制過度解讀。','◇',bodies.c||'',activeKey==='c')}${readerPane('d','D｜行動老師','把同一副牌轉成可執行的下一步。','↗',bodies.d||'',activeKey==='d')}${state.consensusHTML||''}</div><details class="guardrail-details"><summary>解讀界線</summary><p>${esc(state.guardrailText||'')}</p></details>`;
+    els.analysis.hidden=false;updateReaderJourney();
+  }
+  async function renderFullReading(){
+    try{
+      els.analysis.hidden=false;els.analysis.innerHTML='<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">正在整理四鏡解讀…</h3></div></div>';
+      const pack=await tarotAPI('/interpret',{token:state.readingToken});
+      state.readerBodies=pack.readerBodies||{a:'',b:'',c:'',d:''};state.consensusHTML=pack.consensusHTML||'';state.guardrailText=pack.guardrail||'';state.readersViewed=new Set(['a']);renderReaderShell('a');
+    }catch(e){showTarotApiError(e);els.analysis.hidden=true;}
+  }
+  
+  
+  
+  async function renderFollowups(){
+    try{
+      const pack=await tarotAPI('/followups',{token:state.readingToken});state.followupOptions=pack.options||[];
+      els.follow.innerHTML=`<div class="phase-label"><span>02 · FOLLOW-UP</span><b>一次追問</b></div><h4>你現在最想再確認哪一件事？</h4><div class="followup-options">${state.followupOptions.map((o,i)=>`<button class="followup-option" data-followup="${i}">${esc(o.text)}<br><small>${o.cardCount} 張牌</small></button>`).join('')}</div>`;
+      els.follow.hidden=false;setTimeout(()=>els.follow.scrollIntoView({behavior:'smooth',block:'start'}),40);
+    }catch(e){showTarotApiError(e)}
+  }
+  async function followup(index){
+    if(state.followupUsed)return;
+    try{
+      state.followupUsed=true;els.follow.hidden=true;
+      const pack=await tarotAPI('/followup',{token:state.readingToken,index});
+      state.followupQuestion=pack.question||'';state.followupCards=pack.cards||[];state.followupText=pack.paragraphs||[];state.finalSynthesisHTML=pack.finalSynthesisHTML||'';state.finalSynthesisText=pack.finalSynthesisText||[];
+      const cards=state.followupCards,paras=state.followupText;
+      els.followResult.innerHTML=`<div class="phase-label"><span>02 · RESULT</span><b>追問結果</b></div><h4>${esc(state.followupQuestion)}</h4><div class="followup-card-row">${cards.map(x=>`<div class="followup-mini"><b>${esc(x.name)}</b><span>${x.reversed?'逆位':'正位'} · ${esc(x.position)}</span><p>${esc(x.meaning)}</p></div>`).join('')}</div><div class="followup-answer">${paras.map(p=>`<p>${esc(p)}</p>`).join('')}</div>${state.finalSynthesisHTML}<div class="post-followup-download"><button class="download-txt" type="button" data-download-txt title="下載文字備份">TXT 備份</button><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button></div>`;
+      els.followResult.hidden=false;renderFinish();
+    }catch(e){state.followupUsed=false;showTarotApiError(e)}
+  }
+  
+  function renderFinish(){els.finish.innerHTML=`<h4>本次牌局完成</h4><div class="finish-actions"><button type="button" data-new-reading>換一個問題</button><button type="button" data-same-question>同一題重新測試</button></div>`;els.finish.hidden=false;}
+  function resetToTopic(){state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[]};els.workspace.hidden=true;renderTopics();showStep('topic');}
+  
+  // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
+  // 例：tarot.html?topic=love&scenario=single#worldSecond
+  window.openTarotDeepLink=(topicId,scenarioId)=>{
+    const t=topicBy(topicId);
+    if(!t)return false;
+    const sc=scenarioBy(t,scenarioId);
+    if(!sc)return false;
+    state.topic=t;state.scenario=sc;state.question=null;
+    renderScenarios();
+    // 直接進入該情境的正式選題流程；第一次／第二次提醒仍由主引擎統一判斷。
+    enterQuestionStage();
+    return true;
   };
-  btn.classList.add('theme-hint');
-  btn.addEventListener('animationend',()=>btn.classList.remove('theme-hint'),{once:true});
-  btn.addEventListener('click',()=>{
-    btn.classList.remove('theme-hint');
-    const next=root.dataset.theme==='light'?'dark':'light';
-    root.dataset.theme=next;
-    try{localStorage.setItem(KEY,next)}catch(_){}
-    sync();
+  
+  els.topic.addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b)return;state.topic=topicBy(b.dataset.topic);state.scenario=state.question=null;renderScenarios();showStep('scenario');});
+  els.scenario.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;enterQuestionStage();});
+  els.question.addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;state.question=state.questions.find(q=>q.id===b.dataset.question);renderReady();showStep('ready');});
+  document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.back)));
+  $('startReading').addEventListener('click',requestStartReading);$('revealAllBtn').addEventListener('click',revealAll);
+  els.follow.addEventListener('click',e=>{const b=e.target.closest('[data-followup]');if(b)followup(Number(b.dataset.followup));});
+  els.finish.addEventListener('click',e=>{if(e.target.closest('[data-new-reading]'))resetToTopic();if(e.target.closest('[data-same-question]')){els.workspace.hidden=true;renderReady();showStep('ready');}});
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-copy-ai-prompt]');if(b)copyAIPrompt(b);
+    const memberLogin=e.target.closest('[data-member-login]');if(memberLogin){openMemberModal(memberLogin.dataset.targetReader||'b');return;}
+    const dl=e.target.closest('[data-download-txt]');if(dl&&!dl.disabled)downloadArchive();
+    const go=e.target.closest('[data-reader-go]');if(go&&!go.disabled)activateReader(go.dataset.readerGo,true);
+    const next=e.target.closest('[data-reader-next]');if(next&&!next.disabled)activateReader(next.dataset.readerNext,true);
+    const scrollConsensus=e.target.closest('[data-scroll-consensus]');if(scrollConsensus){const c=els.analysis.querySelector('[data-consensus-panel]');if(c&&!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});}
+    const followGate=e.target.closest('[data-open-followup]');if(followGate&&!followGate.disabled&&(state.readersViewed?.size||0)>=4)renderFollowups();
   });
-  sync();
+  $('tarotMemberButton')?.addEventListener('click',()=>openMemberModal());
+  $('tarotMemberClose')?.addEventListener('click',closeMemberModal);
+  $('tarotMemberLogout')?.addEventListener('click',logoutMember);
+  $('tarotLocalLogin')?.addEventListener('click',()=>{safeWrite(TAROT_LOCAL_MEMBER_KEY,true);memberLoginSucceeded();});
+  $('tarotGuestNoticeClose')?.addEventListener('click',closeGuestNotice);
+  $('tarotGuestNoticeBack')?.addEventListener('click',closeGuestNotice);
+  $('tarotGuestNoticeConfirm')?.addEventListener('click',()=>{const fn=guestNoticeAction;if(fn)fn();});
+  $('tarotMemberModal')?.addEventListener('click',e=>{if(e.target===$('tarotMemberModal'))closeMemberModal();});
+  $('tarotGuestNotice')?.addEventListener('click',e=>{if(e.target===$('tarotGuestNotice'))closeGuestNotice();});
+  renderTopics();$('deckCount').textContent=78;updateMemberUI();
+      })();
+    </script>
 })();
 </script>
-
 </body>
 </html>
