@@ -117,6 +117,7 @@
     draw,
     drawPositions,
     getCardById,
-    CARD_COUNT: deck.length
+    CARD_COUNT: deck.length,
+    ENGINE_VERSION: "2.0"
   });
 })();
