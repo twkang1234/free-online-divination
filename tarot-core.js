@@ -90,7 +90,6 @@
     });
   }
 
-
   function drawPositions(positions = ["目前狀態", "核心因素", "近期趨勢"]) {
     const safePositions = Array.isArray(positions) && positions.length ? positions.slice(0, 7) : ["核心訊息"];
     const shuffled = shuffle(deck);
