@@ -2414,6 +2414,27 @@
       function renderFinish(){els.finish.innerHTML=`<h4>本次牌局完成</h4><div class="finish-actions"><button type="button" data-new-reading>換一個問題</button><button type="button" data-same-question>同一題重新測試</button></div>`;els.finish.hidden=false;}
       function resetToTopic(){state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null};els.workspace.hidden=true;renderTopics();showStep('topic');}
 
+      // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
+      // 例：tarot.html?topic=love&scenario=single#worldSecond
+      window.openTarotDeepLink=(topicId,scenarioId)=>{
+        const t=topicBy(topicId);
+        if(!t)return false;
+        const sc=scenarioBy(t,scenarioId);
+        if(!sc)return false;
+        state.topic=t;state.scenario=sc;state.question=null;
+        window.__tarotEntryReady=true;
+        const topicGrid=document.getElementById('topicGrid');
+        topicGrid?.classList.remove('is-entry-locked');
+        topicGrid?.setAttribute('aria-disabled','false');
+        document.getElementById('tarotEntryGate')?.setAttribute('hidden','');
+        document.getElementById('prepare')?.classList.remove('is-open');
+        document.getElementById('prepare')?.setAttribute('aria-hidden','true');
+        renderScenarios();
+        // 直接進入該情境的正式選題流程；第一次／第二次提醒仍由主引擎統一判斷。
+        enterQuestionStage();
+        return true;
+      };
+
       els.topic.addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b)return;if(!window.__tarotEntryReady){document.getElementById('openTarotPrep')?.focus();return;}state.topic=topicBy(b.dataset.topic);state.scenario=state.question=null;renderScenarios();showStep('scenario');});
       els.scenario.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;enterQuestionStage();});
       els.question.addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;state.question=state.questions.find(q=>q.id===b.dataset.question);renderReady();showStep('ready');});
@@ -2452,6 +2473,23 @@
       const topicGrid = document.getElementById('topicGrid');
       const entryGate = document.getElementById('tarotEntryGate');
       window.__tarotEntryReady = false;
+
+      // 支援 SEO 子頁把使用者帶回唯一主引擎，並直接帶入主題與情境。
+      const deepLink = new URLSearchParams(location.search);
+      const deepTopic = deepLink.get('topic');
+      const deepScenario = deepLink.get('scenario');
+      if (deepTopic && deepScenario) {
+        window.__tarotEntryReady = true;
+        topicGrid?.classList.remove('is-entry-locked');
+        topicGrid?.setAttribute('aria-disabled','false');
+        entryGate?.setAttribute('hidden','');
+        prepSection?.classList.remove('is-open');
+        prepSection?.setAttribute('aria-hidden','true');
+        setTimeout(() => {
+          const opened = window.openTarotDeepLink?.(deepTopic, deepScenario);
+          if (opened) worldSecond?.scrollIntoView({behavior:'smooth',block:'start'});
+        }, 0);
+      }
 
       openTarotPrep?.addEventListener('click', () => {
         prepSection?.classList.add('is-open');
