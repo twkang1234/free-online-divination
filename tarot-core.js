@@ -68,5 +68,5 @@
     return safePositions.map((position,index)=>{ const card=shuffled[index]; const reversed=randomInt(2)===1; return {...card,position,reversed,meaning:reversed?card.reversed:card.upright}; });
   }
   function getCardById(id) { const card=deck.find(item=>item.id===id); return card?{...card}:null; }
-  window.TarotCore = Object.freeze({deck,spreads,shuffle,draw,drawPositions,getCardById,CARD_COUNT:deck.length,ENGINE_VERSION:"5.0"});
+  window.TarotCore = Object.freeze({deck,spreads,shuffle,draw,drawPositions,getCardById,CARD_COUNT:deck.length,ENGINE_VERSION:"5.1"});
 })();
