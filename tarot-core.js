@@ -118,6 +118,6 @@
     drawPositions,
     getCardById,
     CARD_COUNT: deck.length,
-    ENGINE_VERSION: "2.0"
+    ENGINE_VERSION: "3.0"
   });
 })();
