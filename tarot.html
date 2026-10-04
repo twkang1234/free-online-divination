@@ -1565,7 +1565,7 @@
   }
   function showTarotApiError(err){
     console.error('Tarot API error:',err);
-    alert('塔羅核心暫時無法連線，請稍後再試。');
+    alert(`塔羅核心暫時無法連線，請稍後再試。\n\n錯誤：${err?.message||'UNKNOWN'}`);
   }
   
   const $=id=>document.getElementById(id);
@@ -1685,7 +1685,7 @@
     try{
       if(startBtn){startBtn.disabled=true;startBtn.textContent='正在洗牌…';}
       const pack=await tarotAPI('/draw',{topicId:state.topic.id,scenarioId:state.scenario.id,questionId:q.id});
-      state.current=pack.cards||[];state.readingToken=pack.token||'';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.followupOptions=[];
+      state.current=pack.cards||[];state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.followupOptions=[];
       $('revealAllBtn').disabled=false;state.revealed=new Set();state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
       els.cards.innerHTML='';els.cards.style.setProperty('--count',state.current.length);state.current.forEach((c,i)=>els.cards.appendChild(buildCard(c,i)));
       els.interp.innerHTML='';els.interp.classList.remove('show');els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
@@ -1805,10 +1805,11 @@
     els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">四鏡解牌｜V9.1</h3></div><div class="analysis-actions"><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button></div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">01 · FOUR READERS</div><h4>四位老師，四種視角</h4></div><div class="same-cards-chip">1 SPREAD · 4 LENSES</div></div>${readerPane('a','A｜首席綜合老師','把整副牌串成完整故事，先回答「這一局到底在說什麼」。','✦',bodies.a||'',activeKey==='a')}${readerPane('b','B｜內在老師','專看保護方式、需求、界線與內在拉扯。','☾',bodies.b||'',activeKey==='b')}${readerPane('c','C｜理性老師','拆開牌面訊號與現實證據，控制過度解讀。','◇',bodies.c||'',activeKey==='c')}${readerPane('d','D｜行動老師','把同一副牌轉成可執行的下一步。','↗',bodies.d||'',activeKey==='d')}${state.consensusHTML||''}</div><details class="guardrail-details"><summary>解讀界線</summary><p>${esc(state.guardrailText||'')}</p></details>`;
     els.analysis.hidden=false;updateReaderJourney();
   }
+  function readingPayload(){return {topicId:state.topic.id,scenarioId:state.scenario.id,questionId:state.question.id,cards:state.current.map(c=>({id:c.id,reversed:!!c.reversed}))};}
   async function renderFullReading(){
     try{
       els.analysis.hidden=false;els.analysis.innerHTML='<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">正在整理四鏡解讀…</h3></div></div>';
-      const pack=await tarotAPI('/interpret',{token:state.readingToken});
+      const pack=await tarotAPI('/interpret',readingPayload());
       state.readerBodies=pack.readerBodies||{a:'',b:'',c:'',d:''};state.consensusHTML=pack.consensusHTML||'';state.guardrailText=pack.guardrail||'';state.readersViewed=new Set(['a']);renderReaderShell('a');
     }catch(e){showTarotApiError(e);els.analysis.hidden=true;}
   }
@@ -1817,7 +1818,7 @@
   
   async function renderFollowups(){
     try{
-      const pack=await tarotAPI('/followups',{token:state.readingToken});state.followupOptions=pack.options||[];
+      const pack=await tarotAPI('/followups',readingPayload());state.followupOptions=pack.options||[];
       els.follow.innerHTML=`<div class="phase-label"><span>02 · FOLLOW-UP</span><b>一次追問</b></div><h4>你現在最想再確認哪一件事？</h4><div class="followup-options">${state.followupOptions.map((o,i)=>`<button class="followup-option" data-followup="${i}">${esc(o.text)}<br><small>${o.cardCount} 張牌</small></button>`).join('')}</div>`;
       els.follow.hidden=false;setTimeout(()=>els.follow.scrollIntoView({behavior:'smooth',block:'start'}),40);
     }catch(e){showTarotApiError(e)}
@@ -1826,7 +1827,7 @@
     if(state.followupUsed)return;
     try{
       state.followupUsed=true;els.follow.hidden=true;
-      const pack=await tarotAPI('/followup',{token:state.readingToken,index});
+      const pack=await tarotAPI('/followup',{...readingPayload(),index});
       state.followupQuestion=pack.question||'';state.followupCards=pack.cards||[];state.followupText=pack.paragraphs||[];state.finalSynthesisHTML=pack.finalSynthesisHTML||'';state.finalSynthesisText=pack.finalSynthesisText||[];
       const cards=state.followupCards,paras=state.followupText;
       els.followResult.innerHTML=`<div class="phase-label"><span>02 · RESULT</span><b>追問結果</b></div><h4>${esc(state.followupQuestion)}</h4><div class="followup-card-row">${cards.map(x=>`<div class="followup-mini"><b>${esc(x.name)}</b><span>${x.reversed?'逆位':'正位'} · ${esc(x.position)}</span><p>${esc(x.meaning)}</p></div>`).join('')}</div><div class="followup-answer">${paras.map(p=>`<p>${esc(p)}</p>`).join('')}</div>${state.finalSynthesisHTML}<div class="post-followup-download"><button class="download-txt" type="button" data-download-txt title="下載文字備份">TXT 備份</button><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button></div>`;
