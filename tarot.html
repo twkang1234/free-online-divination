@@ -215,26 +215,10 @@
     .quiet-rule i{display:block;color:#966f9b;font-family:var(--font-mono);font-size:.60rem;letter-spacing:.12em;font-style:normal}
     .quiet-rule b{display:block;margin:17px 0 8px;color:#f0e9f3;font-size:1rem}
     .quiet-rule span{display:block;color:#8e8497;font-size:.77rem;line-height:1.75}
-    .begin-tarot{
-      min-height:48px;padding:10px 22px;border:1px solid rgba(231,94,215,.45);border-radius:999px;
-      background:linear-gradient(180deg,#e879d8,#a354b2);color:#170a18;font-weight:850;letter-spacing:.04em;
-      box-shadow:0 12px 38px rgba(231,94,215,.13)
-    }
 
     /* guided tool stays visible: show the "main course" before interaction */
     #worldSecond{display:block;max-width:1540px;margin:0 auto;padding:86px 28px 82px}
     #worldSecond.is-open{display:block}
-    .prep-reveal{display:none}
-    .prep-reveal.is-open{display:block;animation:stageIn .42s ease both}
-    .tarot-entry-gate{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:18px;padding:18px 20px;border:1px solid rgba(231,94,215,.22);border-radius:18px;background:linear-gradient(100deg,rgba(231,94,215,.075),rgba(154,114,255,.035) 55%,rgba(232,198,122,.03));box-shadow:0 16px 44px rgba(0,0,0,.18)}
-    .tarot-entry-copy span{display:block;margin-bottom:5px;color:#b76dac;font-family:var(--font-mono);font-size:.56rem;letter-spacing:.14em}.tarot-entry-copy b{display:block;color:#f3edf5;font-size:1.02rem}.tarot-entry-copy p{margin:5px 0 0;color:#8f8497;font-size:.70rem;line-height:1.65}
-    .tarot-entry-start{flex:0 0 auto;min-height:46px;padding:9px 18px;border:1px solid rgba(231,94,215,.48);border-radius:999px;background:linear-gradient(180deg,#e879d8,#a354b2);color:#170a18;font-weight:900;letter-spacing:.03em;box-shadow:0 10px 28px rgba(231,94,215,.14);animation:entryPulse 2.2s ease-in-out infinite}
-    @keyframes entryPulse{0%,100%{transform:translateY(0);box-shadow:0 10px 28px rgba(231,94,215,.12)}50%{transform:translateY(-1px);box-shadow:0 12px 34px rgba(231,94,215,.25)}}
-    .topic-choice-grid.is-entry-locked .choice-card{opacity:.78;filter:saturate(.8);cursor:default}
-    .topic-choice-grid.is-entry-locked .choice-card:hover{transform:none;border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.018)}
-    .topic-choice-grid.entry-ready .choice-card{animation:topicReady .7s ease both}
-    @keyframes topicReady{0%{box-shadow:0 0 0 rgba(231,94,215,0)}45%{box-shadow:0 0 0 1px rgba(231,94,215,.32),0 0 28px rgba(231,94,215,.10)}100%{box-shadow:none}}
-    @keyframes stageIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
     .tarot-stage-header{
       display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;
       max-width:1460px;margin:0 auto 28px
@@ -688,14 +672,6 @@
     </header>
 
     <section class="guided-shell" aria-label="引導式塔羅占卜">
-      <div class="tarot-entry-gate" id="tarotEntryGate">
-        <div class="tarot-entry-copy">
-          <span>BEFORE YOU CHOOSE</span>
-          <b>準備好了嗎？</b>
-          <p>八大主題已經在下面。先看一個很短的占卜提醒，再開始選你真正想問的事情。</p>
-        </div>
-        <button class="tarot-entry-start" id="openTarotPrep" type="button">準備好了｜開始占卜</button>
-      </div>
       <div class="tarot-access-mini" id="tarotAccessMini" aria-live="polite"></div>
 
       <div class="flow-progress" id="flowProgress" aria-label="占卜步驟">
@@ -707,7 +683,7 @@
 
       <div class="flow-step active" id="stepTopic" data-step="topic">
         <div class="flow-head"><div><span>STEP 01</span><h3>你現在最想處理哪一類事情？</h3><p>先選生活領域。這一步只是界定問題範圍，不會開始抽牌。</p></div></div>
-        <div class="choice-grid topic-choice-grid is-entry-locked" id="topicGrid" aria-disabled="true"></div>
+        <div class="choice-grid topic-choice-grid" id="topicGrid"></div>
       </div>
 
       <div class="flow-step" id="stepScenario" data-step="scenario">
@@ -745,18 +721,6 @@
         <section class="reading-finish" id="readingFinish" hidden></section>
       </div>
     </section>
-  </section>
-
-  <section class="quiet-section prep-reveal" id="prepare" aria-hidden="true">
-    <div class="quiet-kicker">BEFORE THE DRAW · FOCUS THE QUESTION</div>
-    <h2>塔羅占卜怎麼問？抽牌之前先把問題整理清楚</h2>
-    <p class="quiet-lead">先決定你要問的是感情、工作、財運、選擇還是近期發展，再選目前情境與固定問題。抽牌後不因為結果不喜歡就重抽，而是讓同一副牌從首席綜合、內在、理性與行動四種角度依序解讀。</p>
-    <div class="quiet-rules">
-      <article class="quiet-rule"><i>01 / ONE FOCUS</i><b>一次先問一件事</b><span>先選感情、工作、創業、財運等生活領域，讓每一個牌局只有一個清楚焦點。</span></article>
-      <article class="quiet-rule"><i>02 / ASK CLEARLY</i><b>把問題問清楚</b><span>再選目前所處階段與固定問題，讓牌位知道自己真正要回答的是什麼。</span></article>
-      <article class="quiet-rule"><i>03 / READ, DON'T FORCE</i><b>不要先決定自己想看到的答案</b><span>同一個問題不要為了不喜歡答案而反覆重抽；先把第一副牌看完，再回到現實驗證。</span></article>
-    </div>
-    <button class="begin-tarot" id="beginTarot" type="button">我知道了，開始選題</button>
   </section>
 
 
@@ -2422,20 +2386,13 @@
         const sc=scenarioBy(t,scenarioId);
         if(!sc)return false;
         state.topic=t;state.scenario=sc;state.question=null;
-        window.__tarotEntryReady=true;
-        const topicGrid=document.getElementById('topicGrid');
-        topicGrid?.classList.remove('is-entry-locked');
-        topicGrid?.setAttribute('aria-disabled','false');
-        document.getElementById('tarotEntryGate')?.setAttribute('hidden','');
-        document.getElementById('prepare')?.classList.remove('is-open');
-        document.getElementById('prepare')?.setAttribute('aria-hidden','true');
         renderScenarios();
         // 直接進入該情境的正式選題流程；第一次／第二次提醒仍由主引擎統一判斷。
         enterQuestionStage();
         return true;
       };
 
-      els.topic.addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b)return;if(!window.__tarotEntryReady){document.getElementById('openTarotPrep')?.focus();return;}state.topic=topicBy(b.dataset.topic);state.scenario=state.question=null;renderScenarios();showStep('scenario');});
+      els.topic.addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b)return;state.topic=topicBy(b.dataset.topic);state.scenario=state.question=null;renderScenarios();showStep('scenario');});
       els.scenario.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;enterQuestionStage();});
       els.question.addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;state.question=state.questions.find(q=>q.id===b.dataset.question);renderReady();showStep('ready');});
       document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.back)));
@@ -2467,49 +2424,17 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const worldSecond = document.getElementById('worldSecond');
-      const beginTarot = document.getElementById('beginTarot');
-      const openTarotPrep = document.getElementById('openTarotPrep');
-      const prepSection = document.getElementById('prepare');
-      const topicGrid = document.getElementById('topicGrid');
-      const entryGate = document.getElementById('tarotEntryGate');
-      window.__tarotEntryReady = false;
 
-      // 支援 SEO 子頁把使用者帶回唯一主引擎，並直接帶入主題與情境。
+      // SEO 子頁只帶入主題／情境；主頁本身一進來就能直接選主題，不再加前置教學關卡。
       const deepLink = new URLSearchParams(location.search);
       const deepTopic = deepLink.get('topic');
       const deepScenario = deepLink.get('scenario');
       if (deepTopic && deepScenario) {
-        window.__tarotEntryReady = true;
-        topicGrid?.classList.remove('is-entry-locked');
-        topicGrid?.setAttribute('aria-disabled','false');
-        entryGate?.setAttribute('hidden','');
-        prepSection?.classList.remove('is-open');
-        prepSection?.setAttribute('aria-hidden','true');
         setTimeout(() => {
           const opened = window.openTarotDeepLink?.(deepTopic, deepScenario);
           if (opened) worldSecond?.scrollIntoView({behavior:'smooth',block:'start'});
         }, 0);
       }
-
-      openTarotPrep?.addEventListener('click', () => {
-        prepSection?.classList.add('is-open');
-        prepSection?.setAttribute('aria-hidden','false');
-        setTimeout(() => prepSection?.scrollIntoView({behavior:'smooth',block:'center'}), 40);
-      });
-
-      beginTarot?.addEventListener('click', () => {
-        window.__tarotEntryReady = true;
-        topicGrid?.classList.remove('is-entry-locked');
-        topicGrid?.classList.add('entry-ready');
-        topicGrid?.setAttribute('aria-disabled','false');
-        entryGate?.setAttribute('hidden','');
-        prepSection?.classList.remove('is-open');
-        prepSection?.setAttribute('aria-hidden','true');
-        setTimeout(() => {
-          worldSecond?.scrollIntoView({behavior:'smooth',block:'start'});
-          setTimeout(()=>topicGrid?.classList.remove('entry-ready'),900);
-        }, 40);
-      });
 
       // hero star field
       const hero = document.getElementById('tarotHeroVisual');
