@@ -569,9 +569,9 @@
       <div>
         <div class="tarot-stage-kicker">GUIDED TAROT · LOCAL INTERPRETATION TEST</div>
         <h2 class="tarot-stage-title">引導式塔羅占卜</h2>
-        <p class="tarot-stage-desc">解讀版本 V7：加強牌位因果、每張牌的心理機制與生活化行動；A／B／C／D 四鏡仍共用同一副牌，全部讀完可下載完整 TXT 備份。測試階段不限次數。</p>
+        <p class="tarot-stage-desc">解讀版本 V7.1：修復 V7 解讀中斷，保留牌位因果、心理機制與生活化行動；A／B／C／D 四鏡仍共用同一副牌，全部讀完可下載完整 TXT 備份。測試階段不限次數。</p>
       </div>
-      <div class="tarot-engine-chip"><i></i><span>解讀版本 V7 · FOUR LENSES · DEEPER NARRATIVE · UNLIMITED</span></div>
+      <div class="tarot-engine-chip"><i></i><span>解讀版本 V7.1 · HOTFIX · FOUR LENSES · UNLIMITED</span></div>
     </header>
 
     <section class="guided-shell" aria-label="引導式塔羅占卜">
@@ -611,7 +611,7 @@
       </div>
 
       <div class="reading-workspace" id="readingWorkspace" hidden>
-        <div class="reading-topline"><div><span id="readingPath">—</span><h3 id="readingQuestion">—</h3></div><div class="reader-seal">✦ 四鏡解牌 · V7</div></div>
+        <div class="reading-topline"><div><span id="readingPath">—</span><h3 id="readingQuestion">—</h3></div><div class="reader-seal">✦ 四鏡解牌 · V7.1</div></div>
         <div class="spread-info guided-spread-info"><div class="spread-symbol">✺</div><div><strong id="spreadName">—</strong><p id="spreadDesc">—</p></div><div class="deck-count"><span id="deckCount">78</span> CARDS</div></div>
         <div class="reading-zone" id="readingZone">
           <div class="cards" id="cards"></div>
@@ -1479,7 +1479,7 @@
 
       function readerAHTML(comp,tags){
         const causal=causalNarrative(comp), answers=directAnswerDeep(comp), adv=adviceItemsDeep(comp);
-        const first=state.current[0],last=state.current[state.current.length-1];
+        const first=state.current[0],mid=state.current[Math.floor(state.current.length/2)],last=state.current[state.current.length-1];
         return `<div class="lens-hero"><b>牌面核心透視｜${esc(teacherHeadline(comp))}</b><p>${esc(currentCoreLine(comp))}</p></div><div class="core-insight"><b>如果今天你坐在我面前，我會先告訴你</b><p>${esc(scenarioFrame())}</p><p>${esc(`這副牌最值得注意的不是哪一張比較好或比較壞，而是從「${first.name}${first.reversed?'逆位':'正位'}」一路走到「${last.name}${last.reversed?'逆位':'正位'}」的過程。真正的答案藏在這個過程裡，而不是單張牌義裡。`)}</p><p><b>這副牌的因果骨架：</b>${esc(causalChainSignature())}</p></div><div class="lens-section"><h4>一、逐張深解：每張牌在這個問題裡真正說什麼</h4><div class="card-reading-stack">${state.current.map(deepCardParagraph).join('')}</div></div><div class="lens-section"><h4>二、把整副牌串成一個有前因後果的故事</h4>${causal.map(p=>`<p>${esc(p)}</p>`).join('')}<p><b>最容易看錯的地方：</b>${esc(misconceptionLine())}</p></div><div class="lens-section"><h4>三、直接回答你的原問題</h4>${answers.map(p=>`<p>${esc(p)}</p>`).join('')}<p>${esc(`如果把這份解讀壓縮成一個判斷：先看「${signal(mid,2)}」這個核心條件是否仍在主導你的反應；最後一張若是建議，就把它變成行動，若是走向，就把它當成接下來需要用現實驗證的方向。`)}</p></div><div class="lens-section"><h4>四、綜合老師的結論與三個具體建議</h4><div class="teacher-summary"><strong>「${esc(teacherHeadline(comp))}」</strong><p>${esc(`如果只帶走一件事，就是：不要把理解牌面當成結束。真正的突破，要從下一次你遇到同樣情境時，能不能做出和以前稍微不同的反應開始。`)}</p></div><ol class="advice-list">${adv.map(x=>`<li><b>${esc(x[0])}：</b>${esc(x[1])}</li>`).join('')}</ol><div class="analysis-tags">${tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div></div>`;
       }
       function psychLead(comp){
@@ -1596,7 +1596,7 @@
       }
       function consensusHTML(comp){
         const last=state.current[state.current.length-1],mid=state.current[Math.floor(state.current.length/2)],first=state.current[0];
-        return `<div class="consensus-panel"><div class="consensus-head"><b>四鏡共識｜同一副牌，不重抽</b><span>CONSENSUS · V7</span></div><div class="consensus-grid"><div class="consensus-item"><small>四個視角都同意</small><p>${esc(teacherHeadline(comp))}</p></div><div class="consensus-item"><small>最需要保留的不確定</small><p>${esc(guardrail())}</p></div><div class="consensus-item"><small>最值得帶回現實驗證</small><p>${esc(`先觀察「${mid.name}」指出的核心條件，再看「${last.name}${last.reversed?'逆位':'正位'}」是否真的變成持續行動，而不是只出現一次。`)}</p></div></div><div class="consensus-foot">共識主線｜${esc(`${first.name} → ${mid.name} → ${last.name}`)}｜四份解讀可以角度不同，但不能彼此改寫同一副牌的基本事實。</div></div>`;
+        return `<div class="consensus-panel"><div class="consensus-head"><b>四鏡共識｜同一副牌，不重抽</b><span>CONSENSUS · V7.1</span></div><div class="consensus-grid"><div class="consensus-item"><small>四個視角都同意</small><p>${esc(teacherHeadline(comp))}</p></div><div class="consensus-item"><small>最需要保留的不確定</small><p>${esc(guardrail())}</p></div><div class="consensus-item"><small>最值得帶回現實驗證</small><p>${esc(`先觀察「${mid.name}」指出的核心條件，再看「${last.name}${last.reversed?'逆位':'正位'}」是否真的變成持續行動，而不是只出現一次。`)}</p></div></div><div class="consensus-foot">共識主線｜${esc(`${first.name} → ${mid.name} → ${last.name}`)}｜四份解讀可以角度不同，但不能彼此改寫同一副牌的基本事實。</div></div>`;
       }
       function readerPane(key,title,subtitle,icon,body,active=false){
         const meta=readingMeta(body);return `<section class="reader-pane ${active?'active':''}" data-reader-pane="${key}"><div class="reader-view-head"><div class="identity"><div class="reader-avatar">${icon}</div><div><h3>${title}</h3><p>${subtitle}</p></div></div><div class="reading-meta"><span>約 ${meta.mins} 分鐘</span><span>${meta.chars.toLocaleString()} 字</span><span>同一副牌</span></div></div>${body}</section>`;
@@ -1611,7 +1611,7 @@
       function buildArchiveText(){
         const now=new Date();
         const parts=[
-          'DivinationHub 塔羅四鏡解牌｜完整備份 V7',
+          'DivinationHub 塔羅四鏡解牌｜完整備份 V7.1',
           '==================================================',
           `備份時間：${now.toLocaleString('zh-TW',{hour12:false})}`,
           `主題：${state.topic?.name||''}`,
@@ -1643,7 +1643,7 @@
       function downloadArchive(){
         if((state.readersViewed?.size||0)<4)return;
         const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-        a.href=url;a.download=`tarot-four-lenses-v6-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+        a.href=url;a.download=`tarot-four-lenses-v7-1-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
       }
       function updateArchiveProgress(){
         const n=state.readersViewed?.size||0,box=els.analysis.querySelector('[data-archive-progress]'),btn=els.analysis.querySelector('[data-download-txt]');
@@ -1654,7 +1654,7 @@
         const comp=composition(),tags=[];if(comp.major)tags.push(`${comp.major} 張大阿爾克那`);if(comp.topSuit&&comp.topCount>=2)tags.push(`${comp.topSuit}偏強`);tags.push(`${comp.rev}/${state.current.length} 張逆位`);
         const a=readerAHTML(comp,tags),b=readerBHTML(comp),c=readerCHTML(comp),d=readerDHTML(comp);
         state.readerBodies={a,b,c,d};state.readersViewed=new Set(['a']);
-        els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · SAME CARDS · DEEP LOCAL ENGINE</div><h3 class="analysis-title">四鏡解牌｜V7</h3></div><div class="analysis-actions"><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製 AI 解牌提示詞</button><button class="download-txt" type="button" data-download-txt disabled>TXT 備份 1/4</button></div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">SAME CARDS · DIFFERENT LENSES</div><h4>同一副牌，換一位老師重新看</h4><p>牌、正逆位與牌位完全不變。你切換的是解讀角度，不是重新抽牌。</p></div><div class="same-cards-chip">NO REDRAW · 4 READERS</div></div><div class="reader-tabs" role="tablist"><button class="reader-tab active" type="button" data-reader-tab="a"><span class="reader-code"><i class="reader-dot"></i>A · PRIMARY</span><b>綜合解牌</b><span>主線、逐牌、因果、直接答案</span></button><button class="reader-tab" type="button" data-reader-tab="b"><span class="reader-code"><i class="reader-dot"></i>B · INNER</span><b>心理透視</b><span>防衛、需求、內在矛盾與模式</span></button><button class="reader-tab" type="button" data-reader-tab="c"><span class="reader-code"><i class="reader-dot"></i>C · EVIDENCE</span><b>理性驗證</b><span>證據強度、能說什麼、不能說什麼</span></button><button class="reader-tab" type="button" data-reader-tab="d"><span class="reader-code"><i class="reader-dot"></i>D · ACTION</span><b>行動策略</b><span>48 小時、7 天、2～4 週怎麼做</span></button></div><div class="archive-progress" data-archive-progress><b>四鏡閱讀進度</b><div class="archive-dots"><i class="archive-dot done" data-archive-reader="a">A</i><i class="archive-dot" data-archive-reader="b">B</i><i class="archive-dot" data-archive-reader="c">C</i><i class="archive-dot" data-archive-reader="d">D</i></div><span class="note" data-archive-note>四鏡閱讀進度 1/4｜全部看過後解鎖 TXT 備份</span></div>${readerPane('a','A｜首席綜合老師','把逐牌、因果、故事與直接答案整合成一份完整主解讀。','✦',a,true)}${readerPane('b','B｜心理老師','不讀心、不貼標籤，專看防衛、需求、界線與內在拉扯。','☾',b)}${readerPane('c','C｜理性老師','把牌面訊號和現實證據分開，避免因一張牌就把事情說死。','◇',c)}${readerPane('d','D｜行動老師','不再重複玄學描述，直接把牌面翻成你下一步可以做的事情。','↗',d)}${consensusHTML(comp)}<div class="reader-tip"><b>閱讀方式：</b>先看 A 抓主線，再依你最在意的角度切 B／C／D。四份解讀共用同一副牌，所以不會出現為了換老師而重抽、抽到自己想看的答案。四鏡全部看過後，右上角會解鎖 TXT 備份。</div></div><div class="ai-prompt-note" style="margin-top:14px">想要第五種意見？「複製 AI 解牌提示詞」會帶入同一個問題、牌位、牌名與正逆位，可直接貼到其他 AI，不會重新抽牌。</div><div class="guardrail-note">解讀界線｜${esc(guardrail())}</div>`;
+        els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · SAME CARDS · DEEP LOCAL ENGINE</div><h3 class="analysis-title">四鏡解牌｜V7.1</h3></div><div class="analysis-actions"><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製 AI 解牌提示詞</button><button class="download-txt" type="button" data-download-txt disabled>TXT 備份 1/4</button></div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">SAME CARDS · DIFFERENT LENSES</div><h4>同一副牌，換一位老師重新看</h4><p>牌、正逆位與牌位完全不變。你切換的是解讀角度，不是重新抽牌。</p></div><div class="same-cards-chip">NO REDRAW · 4 READERS</div></div><div class="reader-tabs" role="tablist"><button class="reader-tab active" type="button" data-reader-tab="a"><span class="reader-code"><i class="reader-dot"></i>A · PRIMARY</span><b>綜合解牌</b><span>主線、逐牌、因果、直接答案</span></button><button class="reader-tab" type="button" data-reader-tab="b"><span class="reader-code"><i class="reader-dot"></i>B · INNER</span><b>心理透視</b><span>防衛、需求、內在矛盾與模式</span></button><button class="reader-tab" type="button" data-reader-tab="c"><span class="reader-code"><i class="reader-dot"></i>C · EVIDENCE</span><b>理性驗證</b><span>證據強度、能說什麼、不能說什麼</span></button><button class="reader-tab" type="button" data-reader-tab="d"><span class="reader-code"><i class="reader-dot"></i>D · ACTION</span><b>行動策略</b><span>48 小時、7 天、2～4 週怎麼做</span></button></div><div class="archive-progress" data-archive-progress><b>四鏡閱讀進度</b><div class="archive-dots"><i class="archive-dot done" data-archive-reader="a">A</i><i class="archive-dot" data-archive-reader="b">B</i><i class="archive-dot" data-archive-reader="c">C</i><i class="archive-dot" data-archive-reader="d">D</i></div><span class="note" data-archive-note>四鏡閱讀進度 1/4｜全部看過後解鎖 TXT 備份</span></div>${readerPane('a','A｜首席綜合老師','把逐牌、因果、故事與直接答案整合成一份完整主解讀。','✦',a,true)}${readerPane('b','B｜心理老師','不讀心、不貼標籤，專看防衛、需求、界線與內在拉扯。','☾',b)}${readerPane('c','C｜理性老師','把牌面訊號和現實證據分開，避免因一張牌就把事情說死。','◇',c)}${readerPane('d','D｜行動老師','不再重複玄學描述，直接把牌面翻成你下一步可以做的事情。','↗',d)}${consensusHTML(comp)}<div class="reader-tip"><b>閱讀方式：</b>先看 A 抓主線，再依你最在意的角度切 B／C／D。四份解讀共用同一副牌，所以不會出現為了換老師而重抽、抽到自己想看的答案。四鏡全部看過後，右上角會解鎖 TXT 備份。</div></div><div class="ai-prompt-note" style="margin-top:14px">想要第五種意見？「複製 AI 解牌提示詞」會帶入同一個問題、牌位、牌名與正逆位，可直接貼到其他 AI，不會重新抽牌。</div><div class="guardrail-note">解讀界線｜${esc(guardrail())}</div>`;
         els.analysis.hidden=false;updateArchiveProgress();
       }
 

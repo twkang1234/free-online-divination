@@ -881,34 +881,56 @@ body.overlay-open{overflow:hidden}
 }
 
 
-/* 白話解讀：進入畫面時提醒 5 次；只動按鈕，不增加版面 */
-.decode-open{
+/* 展開提醒：進入畫面後持續閃爍，直到使用者點擊 */
+.decode-open,
+.btn-toggle-all.attention-expand-all{
   position:relative;
-  min-width:94px;
-  letter-spacing:.02em;
-  transition:border-color .18s ease,background .18s ease,color .18s ease,box-shadow .18s ease,transform .18s ease;
+  transition:border-color .15s ease,background .15s ease,color .15s ease,box-shadow .15s ease,transform .15s ease;
 }
-.decode-open.decode-attention{
-  animation:decodeAttention .62s ease-in-out 5;
+.decode-open{min-width:94px;letter-spacing:.02em}
+
+/* 0–3 秒：柔和提醒 */
+.attention-stage-1{
+  animation:attentionPulse1 1.05s ease-in-out infinite;
 }
-@keyframes decodeAttention{
-  0%,100%{
-    border-color:rgba(233,189,88,.24);
-    background:rgba(233,189,88,.04);
-    color:#e1c779;
-    box-shadow:0 0 0 rgba(233,189,88,0);
-    transform:translateY(0);
-  }
-  50%{
-    border-color:rgba(244,205,102,.88);
-    background:rgba(233,189,88,.20);
-    color:#fff0b0;
-    box-shadow:0 0 0 4px rgba(233,189,88,.07),0 0 22px rgba(233,189,88,.34);
-    transform:translateY(-1px);
-  }
+/* 3–6 秒：更明顯 */
+.attention-stage-2{
+  animation:attentionPulse2 .72s ease-in-out infinite;
 }
+/* 6–9 秒：急促 */
+.attention-stage-3{
+  animation:attentionPulse3 .46s ease-in-out infinite;
+}
+/* 9 秒以上：最明顯，直到點擊 */
+.attention-stage-4{
+  animation:attentionPulse4 .29s ease-in-out infinite;
+}
+
+@keyframes attentionPulse1{
+  0%,100%{border-color:rgba(233,189,88,.28);background:rgba(233,189,88,.05);color:#e1c779;box-shadow:0 0 0 rgba(233,189,88,0);transform:translateY(0)}
+  50%{border-color:rgba(238,197,91,.64);background:rgba(233,189,88,.12);color:#f4d98c;box-shadow:0 0 14px rgba(233,189,88,.16);transform:translateY(-.5px)}
+}
+@keyframes attentionPulse2{
+  0%,100%{border-color:rgba(233,189,88,.34);background:rgba(233,189,88,.07);color:#e7cc7e;box-shadow:0 0 0 rgba(233,189,88,0);transform:scale(1)}
+  50%{border-color:rgba(245,206,104,.82);background:rgba(233,189,88,.18);color:#fff0b0;box-shadow:0 0 0 3px rgba(233,189,88,.06),0 0 20px rgba(233,189,88,.28);transform:scale(1.018)}
+}
+@keyframes attentionPulse3{
+  0%,100%{border-color:rgba(233,189,88,.42);background:rgba(233,189,88,.08);color:#efd48b;box-shadow:0 0 0 rgba(233,189,88,0);transform:scale(1)}
+  50%{border-color:rgba(255,220,120,.96);background:rgba(233,189,88,.25);color:#fff5c5;box-shadow:0 0 0 4px rgba(233,189,88,.08),0 0 26px rgba(233,189,88,.42);transform:scale(1.028)}
+}
+@keyframes attentionPulse4{
+  0%,100%{border-color:rgba(233,189,88,.50);background:rgba(233,189,88,.10);color:#f3d98f;box-shadow:0 0 0 rgba(233,189,88,0);transform:scale(1)}
+  50%{border-color:#ffe39a;background:rgba(233,189,88,.33);color:#fff9dc;box-shadow:0 0 0 5px rgba(233,189,88,.10),0 0 34px rgba(233,189,88,.56);transform:scale(1.04)}
+}
+
 @media (prefers-reduced-motion:reduce){
-  .decode-open.decode-attention{animation:none!important}
+  .attention-stage-1,.attention-stage-2,.attention-stage-3,.attention-stage-4{
+    animation:attentionPulseReduced 1.3s ease-in-out infinite!important;
+  }
+  @keyframes attentionPulseReduced{
+    0%,100%{box-shadow:0 0 0 rgba(233,189,88,0)}
+    50%{box-shadow:0 0 18px rgba(233,189,88,.28)}
+  }
 }
 
 </style>
@@ -3345,6 +3367,62 @@ ${source}
     box.querySelector('.smart-ai-links')?.classList.remove('show');
   }
 
+  function stopAttention(el){
+    if(!el)return;
+    el.dataset.attentionStopped='1';
+    el.classList.remove('attention-stage-1','attention-stage-2','attention-stage-3','attention-stage-4');
+    (el._attentionTimers||[]).forEach(clearTimeout);
+    el._attentionTimers=[];
+  }
+
+  function startEscalatingAttention(el){
+    if(!el || el.dataset.attentionStopped==='1' || el.dataset.attentionStarted==='1')return;
+    el.dataset.attentionStarted='1';
+    const setStage=n=>{
+      if(el.dataset.attentionStopped==='1')return;
+      el.classList.remove('attention-stage-1','attention-stage-2','attention-stage-3','attention-stage-4');
+      el.classList.add(`attention-stage-${n}`);
+    };
+    setStage(1);
+    el._attentionTimers=[
+      setTimeout(()=>setStage(2),3000),
+      setTimeout(()=>setStage(3),6000),
+      setTimeout(()=>setStage(4),9000)
+    ];
+  }
+
+  function observeAttentionTarget(el){
+    if(!el || el.dataset.attentionObserved==='1')return;
+    el.dataset.attentionObserved='1';
+    if(!('IntersectionObserver' in window)){
+      startEscalatingAttention(el);
+      return;
+    }
+    const observer=new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting && entry.intersectionRatio>=.35){
+          startEscalatingAttention(entry.target);
+          observer.unobserve(entry.target);
+        }
+      });
+    },{threshold:[.35],rootMargin:'0px 0px -6% 0px'});
+    observer.observe(el);
+  }
+
+  function initExpandAttentionTargets(root=document){
+    root.querySelectorAll?.('.decode-open').forEach(btn=>observeAttentionTarget(btn));
+    root.querySelectorAll?.('.btn-toggle-all').forEach(btn=>{
+      if((btn.textContent||'').trim()==='全部展開'){
+        btn.classList.add('attention-expand-all');
+        observeAttentionTarget(btn);
+        if(btn.dataset.attentionClickBound!=='1'){
+          btn.dataset.attentionClickBound='1';
+          btn.addEventListener('click',()=>stopAttention(btn),{once:true});
+        }
+      }
+    });
+  }
+
   function initSectionDecodeUI(){
     sectionDefinitions.forEach(def=>{
       if(def.key==='reading' || def.key==='years')return;
@@ -3362,7 +3440,7 @@ ${source}
       const content=box.querySelector('.decode-content');
       const summary=box.querySelector('.decode-summary-grid');
 
-      function showDecode(fromDemo=false){
+      function showDecode(){
         if(!lastData){ try{cast();}catch(_){} }
         if(def.key==='luck'||def.key==='years'){
           summary.style.display='block';
@@ -3377,25 +3455,21 @@ ${source}
         content.classList.add('show');
         open.classList.add('active');
         open.textContent='收起解讀 ↑';
-        if(!fromDemo){
-          box.dataset.userOpened='1';
-          markSectionExplored(def.key);
-          trackAction(`decode-${def.key}`);
-        }
+        markSectionExplored(def.key);
+        trackAction(`decode-${def.key}`);
       }
 
-      function hideDecode(fromDemo=false){
+      function hideDecode(){
         content.classList.remove('show');
         open.classList.remove('active');
         open.textContent='白話解讀 ↓';
-        if(!fromDemo) box.dataset.userOpened='0';
       }
 
       open.addEventListener('click',()=>{
-        box.dataset.userTouched='1';
+        stopAttention(open);
         const show=!content.classList.contains('show');
-        if(show)showDecode(false);
-        else hideDecode(false);
+        if(show)showDecode();
+        else hideDecode();
       });
 
       if(def.key==='shensha'){
@@ -3408,77 +3482,27 @@ ${source}
     initSmartPromptUI();
     refreshSmartPromptLocks();
 
-    // 畫面滑到每個分區時，只提醒一次：按鈕發光閃爍 5 次。
-    const decodeBoxes=[...document.querySelectorAll('.section-decode')];
-    if('IntersectionObserver' in window){
-      const attentionObserver=new IntersectionObserver(entries=>{
-        entries.forEach(entry=>{
-          if(!entry.isIntersecting)return;
-          const box=entry.target;
-          const btn=box.querySelector('.decode-open');
-          if(!btn || box.dataset.attentionDone==='1')return;
-          box.dataset.attentionDone='1';
-          btn.classList.remove('decode-attention');
-          void btn.offsetWidth;
-          btn.classList.add('decode-attention');
-          btn.addEventListener('animationend',()=>btn.classList.remove('decode-attention'),{once:true});
-          attentionObserver.unobserve(box);
-        });
-      },{threshold:.42,rootMargin:'0px 0px -8% 0px'});
-      decodeBoxes.forEach(box=>attentionObserver.observe(box));
+    // 白話解讀與「全部展開」：進入視窗後持續提醒，直到使用者實際點擊。
+    initExpandAttentionTargets(document);
 
-      // 只示範第一個可用分區一次：自動展開 → 停留 → 自動收回。
-      const firstBox=decodeBoxes[0];
-      if(firstBox){
-        const demoObserver=new IntersectionObserver(entries=>{
-          const entry=entries[0];
-          if(!entry?.isIntersecting)return;
-          const box=entry.target;
-          if(box.dataset.demoDone==='1' || box.dataset.userTouched==='1')return;
-          box.dataset.demoDone='1';
-          demoObserver.unobserve(box);
-
-          const btn=box.querySelector('.decode-open');
-          const content=box.querySelector('.decode-content');
-          const summary=box.querySelector('.decode-summary-grid');
-          const key=box.dataset.section;
-          if(!btn||!content||!summary||!key)return;
-
-          setTimeout(()=>{
-            if(box.dataset.userTouched==='1' || content.classList.contains('show'))return;
-
-            if(key==='luck'||key==='years'){
-              summary.style.display='block';
-              summary.style.width='100%';
-            }else{
-              summary.style.display='';
-              summary.style.width='';
+    // 「全部展開」按鈕由命盤內容動態產生，因此持續偵測新加入的按鈕。
+    const attentionMutationObserver=new MutationObserver(mutations=>{
+      mutations.forEach(m=>{
+        m.addedNodes.forEach(node=>{
+          if(node.nodeType!==1)return;
+          if(node.matches?.('.btn-toggle-all') && (node.textContent||'').trim()==='全部展開'){
+            node.classList.add('attention-expand-all');
+            observeAttentionTarget(node);
+            if(node.dataset.attentionClickBound!=='1'){
+              node.dataset.attentionClickBound='1';
+              node.addEventListener('click',()=>stopAttention(node),{once:true});
             }
-            summary.innerHTML=lastData
-              ? sectionExplanation(key,lastData)
-              : decodeCard('提示','請先於上方輸入出生日期時間並點選「排八字」建立命盤。');
-
-            content.classList.add('show');
-            btn.classList.add('active');
-            btn.textContent='收起解讀 ↑';
-
-            setTimeout(()=>{
-              if(box.dataset.userTouched==='1')return;
-              content.classList.remove('show');
-              btn.classList.remove('active');
-              btn.textContent='白話解讀 ↓';
-            },1500);
-          },650);
-        },{threshold:.56});
-        demoObserver.observe(firstBox);
-      }
-    }else{
-      // 舊瀏覽器退化：仍保留清楚的「白話解讀」按鈕。
-      decodeBoxes.forEach(box=>{
-        const btn=box.querySelector('.decode-open');
-        btn?.classList.add('decode-attention');
+          }
+          initExpandAttentionTargets(node);
+        });
       });
-    }
+    });
+    attentionMutationObserver.observe(document.body,{childList:true,subtree:true});
   }
 
   function buildAiPrompt(data){ return buildSmartPrompt(data,'full','工作事業','deep'); }
