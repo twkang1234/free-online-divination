@@ -90,11 +90,34 @@
     });
   }
 
+
+  function drawPositions(positions = ["目前狀態", "核心因素", "近期趨勢"]) {
+    const safePositions = Array.isArray(positions) && positions.length ? positions.slice(0, 7) : ["核心訊息"];
+    const shuffled = shuffle(deck);
+    return safePositions.map((position, index) => {
+      const card = shuffled[index];
+      const reversed = randomInt(2) === 1;
+      return {
+        ...card,
+        position,
+        reversed,
+        meaning: reversed ? card.reversed : card.upright
+      };
+    });
+  }
+
+  function getCardById(id) {
+    const card = deck.find(item => item.id === id);
+    return card ? {...card} : null;
+  }
+
   window.TarotCore = Object.freeze({
     deck,
     spreads,
     shuffle,
     draw,
+    drawPositions,
+    getCardById,
     CARD_COUNT: deck.length
   });
 })();
