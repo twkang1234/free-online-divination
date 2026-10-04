@@ -665,6 +665,12 @@
     .love-page .love-hidden-topic-step{display:none!important}
     .love-page #scenarioGrid.is-entry-locked .choice-card{opacity:.76;filter:saturate(.72);cursor:default}.love-page #scenarioGrid.is-entry-locked .choice-card:hover{transform:none;border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.018)}
     .love-page #scenarioGrid.entry-ready .choice-card{animation:topicReady .7s ease both}
+    .love-page .tarot-entry-gate.is-complete{display:none!important}
+    .love-page #stepScenario.scenario-attention{position:relative}
+    .love-page #stepScenario.scenario-attention::before{content:'請選擇你目前的關係階段 ↓';display:inline-flex;margin:0 0 12px;padding:7px 12px;border:1px solid rgba(241,141,212,.42);border-radius:999px;background:rgba(241,141,212,.09);color:#f2b9e2;font-size:.68rem;font-weight:800;letter-spacing:.04em;box-shadow:0 0 0 0 rgba(241,141,212,.22);animation:scenarioHintPulse 1.05s ease-in-out 5}
+    .love-page #stepScenario.scenario-attention #scenarioGrid .choice-card{animation:scenarioCardPulse 1.05s ease-in-out 5}
+    @keyframes scenarioHintPulse{0%,100%{box-shadow:0 0 0 0 rgba(241,141,212,.10);transform:translateY(0)}50%{box-shadow:0 0 0 8px rgba(241,141,212,.06);transform:translateY(-1px)}}
+    @keyframes scenarioCardPulse{0%,100%{border-color:rgba(255,255,255,.08);box-shadow:0 0 0 rgba(241,141,212,0)}50%{border-color:rgba(241,141,212,.38);box-shadow:0 0 28px rgba(241,141,212,.08)}}
     .love-page .tarot-entry-gate{border-color:rgba(243,138,213,.20);background:linear-gradient(135deg,rgba(43,15,42,.48),rgba(11,9,19,.62))}
     .love-page .tarot-entry-start{background:linear-gradient(180deg,#f18dd4,#ad58bb)}
     .love-page .love-scenario-seo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:28px}
@@ -2306,14 +2312,28 @@
       beginTarot?.addEventListener('click', () => {
         window.__tarotEntryReady = true;
         scenarioGrid?.classList.remove('is-entry-locked');
-        scenarioGrid?.classList.add('entry-ready');
         scenarioGrid?.setAttribute('aria-disabled','false');
-        entryGate?.setAttribute('hidden','');
+
+        // 這一步完成後，入口框不再出現，避免使用者回到同一顆按鈕形成循環。
+        if(entryGate){
+          entryGate.hidden = true;
+          entryGate.classList.add('is-complete');
+          entryGate.setAttribute('aria-hidden','true');
+          entryGate.style.display='none';
+        }
         prepSection?.classList.remove('is-open');
         prepSection?.setAttribute('aria-hidden','true');
+
+        const scenarioStep = document.getElementById('stepScenario');
+        scenarioStep?.classList.add('scenario-attention');
+        scenarioGrid?.classList.add('entry-ready');
+
         setTimeout(() => {
-          worldSecond?.scrollIntoView({behavior:'smooth',block:'start'});
-          setTimeout(()=>scenarioGrid?.classList.remove('entry-ready'),900);
+          scenarioStep?.scrollIntoView({behavior:'smooth',block:'start'});
+          setTimeout(()=>{
+            scenarioGrid?.classList.remove('entry-ready');
+            scenarioStep?.classList.remove('scenario-attention');
+          }, 5600);
         }, 40);
       });
 
