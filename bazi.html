@@ -548,7 +548,12 @@ body.overlay-open{overflow:hidden}
 .three-year-lock-box{width:min(470px,92%);text-align:center;padding:24px 22px;border:1px solid rgba(233,189,88,.32);border-radius:18px;background:rgba(7,10,15,.88);box-shadow:0 20px 70px rgba(0,0,0,.42)}
 .three-year-lock-icon{font-size:1.45rem;margin-bottom:9px}
 .three-year-lock-box h3{margin:0 0 8px;color:#f3e4bb;font-size:1.08rem}
-.three-year-lock-box p{margin:0 auto 17px;color:#95a1b1;font-size:.78rem;line-height:1.75;max-width:380px}
+.three-year-lock-box p{margin:0 auto 14px;color:#95a1b1;font-size:.78rem;line-height:1.75;max-width:390px}
+.three-year-payment-note{display:flex;align-items:center;justify-content:center;gap:7px;margin:0 auto 14px;color:#78dce3;font-family:var(--mono);font-size:.61rem;letter-spacing:.06em}
+.three-year-payment-note::before{content:"●";color:#78dce3;text-shadow:0 0 10px rgba(117,220,228,.65);font-size:.55rem}
+.three-year-paid-btn{border:1px solid rgba(233,189,88,.42);border-radius:10px;background:linear-gradient(180deg,rgba(233,189,88,.13),rgba(111,77,21,.16));color:#efd077;padding:10px 20px;font-weight:850;cursor:default;box-shadow:0 8px 24px rgba(233,189,88,.08)}
+.three-year-paid-btn[disabled]{opacity:1}
+.three-year-coming{margin-top:9px;color:#697588;font-size:.59rem;line-height:1.55}
 @media(max-width:820px){
   .three-year-locked-preview{min-height:520px}
   .three-year-preview-grid{grid-template-columns:1fr;gap:10px}
@@ -878,59 +883,6 @@ body.overlay-open{overflow:hidden}
     font-size:16px; /* avoids iOS zoom and opens native wheel picker cleanly */
   }
   .birth-date-direct .date-part span{font-size:.68rem}
-}
-
-
-/* 展開提醒：進入畫面後持續閃爍，直到使用者點擊 */
-.decode-open,
-.btn-toggle-all.attention-expand-all{
-  position:relative;
-  transition:border-color .15s ease,background .15s ease,color .15s ease,box-shadow .15s ease,transform .15s ease;
-}
-.decode-open{min-width:94px;letter-spacing:.02em}
-
-/* 0–3 秒：柔和提醒 */
-.attention-stage-1{
-  animation:attentionPulse1 1.05s ease-in-out infinite;
-}
-/* 3–6 秒：更明顯 */
-.attention-stage-2{
-  animation:attentionPulse2 .72s ease-in-out infinite;
-}
-/* 6–9 秒：急促 */
-.attention-stage-3{
-  animation:attentionPulse3 .46s ease-in-out infinite;
-}
-/* 9 秒以上：最明顯，直到點擊 */
-.attention-stage-4{
-  animation:attentionPulse4 .29s ease-in-out infinite;
-}
-
-@keyframes attentionPulse1{
-  0%,100%{border-color:rgba(233,189,88,.28);background:rgba(233,189,88,.05);color:#e1c779;box-shadow:0 0 0 rgba(233,189,88,0);transform:translateY(0)}
-  50%{border-color:rgba(238,197,91,.64);background:rgba(233,189,88,.12);color:#f4d98c;box-shadow:0 0 14px rgba(233,189,88,.16);transform:translateY(-.5px)}
-}
-@keyframes attentionPulse2{
-  0%,100%{border-color:rgba(233,189,88,.34);background:rgba(233,189,88,.07);color:#e7cc7e;box-shadow:0 0 0 rgba(233,189,88,0);transform:scale(1)}
-  50%{border-color:rgba(245,206,104,.82);background:rgba(233,189,88,.18);color:#fff0b0;box-shadow:0 0 0 3px rgba(233,189,88,.06),0 0 20px rgba(233,189,88,.28);transform:scale(1.018)}
-}
-@keyframes attentionPulse3{
-  0%,100%{border-color:rgba(233,189,88,.42);background:rgba(233,189,88,.08);color:#efd48b;box-shadow:0 0 0 rgba(233,189,88,0);transform:scale(1)}
-  50%{border-color:rgba(255,220,120,.96);background:rgba(233,189,88,.25);color:#fff5c5;box-shadow:0 0 0 4px rgba(233,189,88,.08),0 0 26px rgba(233,189,88,.42);transform:scale(1.028)}
-}
-@keyframes attentionPulse4{
-  0%,100%{border-color:rgba(233,189,88,.50);background:rgba(233,189,88,.10);color:#f3d98f;box-shadow:0 0 0 rgba(233,189,88,0);transform:scale(1)}
-  50%{border-color:#ffe39a;background:rgba(233,189,88,.33);color:#fff9dc;box-shadow:0 0 0 5px rgba(233,189,88,.10),0 0 34px rgba(233,189,88,.56);transform:scale(1.04)}
-}
-
-@media (prefers-reduced-motion:reduce){
-  .attention-stage-1,.attention-stage-2,.attention-stage-3,.attention-stage-4{
-    animation:attentionPulseReduced 1.3s ease-in-out infinite!important;
-  }
-  @keyframes attentionPulseReduced{
-    0%,100%{box-shadow:0 0 0 rgba(233,189,88,0)}
-    50%{box-shadow:0 0 18px rgba(233,189,88,.28)}
-  }
 }
 
 </style>
@@ -1696,9 +1648,9 @@ body.overlay-open{overflow:hidden}
     };
   }
 
-  async function requestBaziApi(options){
+  async function requestBaziApi(options, countUsage=false){
     const calendar=buildFrontendCalendarPayload(options);
-    const payload={action:'cast',...options,calendar,options:{...options,calendar}};
+    const payload={action:'cast',usageIntent:countUsage?'user-cast':'internal-refresh',...options,calendar,options:{...options,calendar}};
     const candidates=['/','/api/cast','/cast'];
     let lastError='';
     for(const path of candidates){
@@ -3367,142 +3319,42 @@ ${source}
     box.querySelector('.smart-ai-links')?.classList.remove('show');
   }
 
-  function stopAttention(el){
-    if(!el)return;
-    el.dataset.attentionStopped='1';
-    el.classList.remove('attention-stage-1','attention-stage-2','attention-stage-3','attention-stage-4');
-    (el._attentionTimers||[]).forEach(clearTimeout);
-    el._attentionTimers=[];
-  }
-
-  function startEscalatingAttention(el){
-    if(!el || el.dataset.attentionStopped==='1' || el.dataset.attentionStarted==='1')return;
-    el.dataset.attentionStarted='1';
-    const setStage=n=>{
-      if(el.dataset.attentionStopped==='1')return;
-      el.classList.remove('attention-stage-1','attention-stage-2','attention-stage-3','attention-stage-4');
-      el.classList.add(`attention-stage-${n}`);
-    };
-    setStage(1);
-    el._attentionTimers=[
-      setTimeout(()=>setStage(2),3000),
-      setTimeout(()=>setStage(3),6000),
-      setTimeout(()=>setStage(4),9000)
-    ];
-  }
-
-  function observeAttentionTarget(el){
-    if(!el || el.dataset.attentionObserved==='1')return;
-    el.dataset.attentionObserved='1';
-    if(!('IntersectionObserver' in window)){
-      startEscalatingAttention(el);
-      return;
-    }
-    const observer=new IntersectionObserver(entries=>{
-      entries.forEach(entry=>{
-        if(entry.isIntersecting && entry.intersectionRatio>=.35){
-          startEscalatingAttention(entry.target);
-          observer.unobserve(entry.target);
-        }
-      });
-    },{threshold:[.35],rootMargin:'0px 0px -6% 0px'});
-    observer.observe(el);
-  }
-
-  function initExpandAttentionTargets(root=document){
-    root.querySelectorAll?.('.decode-open').forEach(btn=>observeAttentionTarget(btn));
-    root.querySelectorAll?.('.btn-toggle-all').forEach(btn=>{
-      if((btn.textContent||'').trim()==='全部展開'){
-        btn.classList.add('attention-expand-all');
-        observeAttentionTarget(btn);
-        if(btn.dataset.attentionClickBound!=='1'){
-          btn.dataset.attentionClickBound='1';
-          btn.addEventListener('click',()=>stopAttention(btn),{once:true});
-        }
-      }
-    });
-  }
-
   function initSectionDecodeUI(){
     sectionDefinitions.forEach(def=>{
       if(def.key==='reading' || def.key==='years')return;
       const section=$(def.id);
       const body=section?.querySelector('.report-body');
       if(!body||body.querySelector('.section-decode'))return;
-
       const box=document.createElement('div');
       box.className='section-decode';
       box.dataset.section=def.key;
-      box.innerHTML=`<div class="decode-bar"><div class="decode-copy"><strong>想知道這些數字、符號對你可能代表什麼？</strong><span>點開後直接看白話解讀與深層結構。</span></div><button type="button" class="decode-open">白話解讀 ↓</button></div><div class="decode-content"><div class="decode-summary-grid"></div></div>`;
+      box.innerHTML=`<div class="decode-bar"><div class="decode-copy"><strong>想知道這些數字、符號對你可能代表什麼？</strong><span>點開後直接看白話解讀與深層結構。</span></div><button type="button" class="decode-open">看懂這一區</button></div><div class="decode-content"><div class="decode-summary-grid"></div></div>`;
       body.appendChild(box);
-
       const open=box.querySelector('.decode-open');
       const content=box.querySelector('.decode-content');
       const summary=box.querySelector('.decode-summary-grid');
-
-      function showDecode(){
-        if(!lastData){ try{cast();}catch(_){} }
-        if(def.key==='luck'||def.key==='years'){
-          summary.style.display='block';
-          summary.style.width='100%';
-        }else{
-          summary.style.display='';
-          summary.style.width='';
-        }
-        summary.innerHTML=lastData
-          ? sectionExplanation(def.key,lastData)
-          : decodeCard('提示','請先於上方輸入出生日期時間並點選「排八字」建立命盤。');
-        content.classList.add('show');
-        open.classList.add('active');
-        open.textContent='收起解讀 ↑';
-        markSectionExplored(def.key);
-        trackAction(`decode-${def.key}`);
-      }
-
-      function hideDecode(){
-        content.classList.remove('show');
-        open.classList.remove('active');
-        open.textContent='白話解讀 ↓';
-      }
-
       open.addEventListener('click',()=>{
-        stopAttention(open);
         const show=!content.classList.contains('show');
-        if(show)showDecode();
-        else hideDecode();
+        if(show){
+          if(!lastData){ try{cast();}catch(_){} }
+          if(def.key==='luck'||def.key==='years'){summary.style.display='block';summary.style.width='100%';}
+          else{summary.style.display='';summary.style.width='';}
+          summary.innerHTML=lastData?sectionExplanation(def.key,lastData):decodeCard('提示','請先於上方輸入出生日期時間並點選「排八字」建立命盤。');
+          content.classList.add('show');
+          open.classList.add('active');
+          open.textContent='已展開白話解讀';
+          markSectionExplored(def.key);
+          trackAction(`decode-${def.key}`);
+        }else{
+          content.classList.remove('show');
+          open.classList.remove('active');
+          open.textContent='看懂這一區';
+        }
       });
-
-      if(def.key==='shensha'){
-        box.querySelector('.decode-bar')?.remove();
-        summary?.remove();
-        box.remove();
-      }
+      if(def.key==='shensha'){box.querySelector('.decode-bar')?.remove();summary?.remove();box.remove();}
     });
-
     initSmartPromptUI();
     refreshSmartPromptLocks();
-
-    // 白話解讀與「全部展開」：進入視窗後持續提醒，直到使用者實際點擊。
-    initExpandAttentionTargets(document);
-
-    // 「全部展開」按鈕由命盤內容動態產生，因此持續偵測新加入的按鈕。
-    const attentionMutationObserver=new MutationObserver(mutations=>{
-      mutations.forEach(m=>{
-        m.addedNodes.forEach(node=>{
-          if(node.nodeType!==1)return;
-          if(node.matches?.('.btn-toggle-all') && (node.textContent||'').trim()==='全部展開'){
-            node.classList.add('attention-expand-all');
-            observeAttentionTarget(node);
-            if(node.dataset.attentionClickBound!=='1'){
-              node.dataset.attentionClickBound='1';
-              node.addEventListener('click',()=>stopAttention(node),{once:true});
-            }
-          }
-          initExpandAttentionTargets(node);
-        });
-      });
-    });
-    attentionMutationObserver.observe(document.body,{childList:true,subtree:true});
   }
 
   function buildAiPrompt(data){ return buildSmartPrompt(data,'full','工作事業','deep'); }
@@ -3822,9 +3674,12 @@ ${source}
           <div class="three-year-lock-overlay">
             <div class="three-year-lock-box">
               <div class="three-year-lock-icon">🔒</div>
-              <h3>完整三年戰略</h3>
-              <p>登入後即可查看去年、今年與明年的完整分析內容。</p>
-              <button type="button" class="member-unlock-btn" onclick="window.baziOpenAuth?.()">免費解鎖</button>
+              <h3>完整三年進階分析</h3>
+              <p>免費版提供基本命盤與流年資訊；完整三年策略、進階解讀與深度分析採單次付費解鎖。</p>
+              <div class="three-year-payment-note">台灣付款｜藍新／綠界金流申請中</div>
+              <div style="margin:0 auto 12px;color:#f0d07b;font-weight:850;font-size:.86rem;">單次解鎖 NT$199</div>
+              <button type="button" class="three-year-paid-btn" disabled>付費解鎖</button>
+              <div class="three-year-coming">付款服務申請中，核准並完成串接後正式開放。</div>
             </div>
           </div>
         </div>`;
@@ -4230,11 +4085,11 @@ ${source}
   }
   function timeInputNote(data){return data.timeInput?'時間輸入：'+data.timeInput.label+' '+data.timeInput.range+'；以 '+data.timeInput.representative+' 代表時間估算。起運日期為估算。':'時間輸入：精確民用時間。';}
 
-  async function cast(scroll = true){
+  async function cast(scroll = true, countUsage = false){
     const originalText=castBtn?.textContent;
     try{
       if(castBtn){castBtn.disabled=true;castBtn.textContent='後端排盤中…';}
-      const data=await requestBaziApi(birthOptions());
+      const data=await requestBaziApi(birthOptions(), countUsage);
       $('birthTimeNotice').textContent=timeInputNote(data);
       lastData=data;
       selectedPeriods={};
@@ -4312,8 +4167,8 @@ ${source}
     setupDirectBirthDate();
     setupBirthSlots();
     initSectionDecodeUI();
-    cast(false);
-    castBtn.addEventListener('click', () => cast(true));
+    cast(false, false);
+    castBtn.addEventListener('click', () => cast(true, true));
     setupReportActions();
 
     const worldSecond = document.getElementById('worldSecond');
