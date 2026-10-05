@@ -1877,6 +1877,32 @@
   $('tarotGuestNoticeConfirm')?.addEventListener('click',()=>{const fn=guestNoticeAction;if(fn)fn();});
   $('tarotMemberModal')?.addEventListener('click',e=>{if(e.target===$('tarotMemberModal'))closeMemberModal();});
   $('tarotGuestNotice')?.addEventListener('click',e=>{if(e.target===$('tarotGuestNotice'))closeGuestNotice();});
+  // 顯示模式切換：只控制前端外觀，並記住使用者最後一次選擇。
+  const TAROT_THEME_KEY='divinationhub-color-theme';
+  function syncThemeToggle(){
+    const theme=document.documentElement.dataset.theme==='light'?'light':'dark';
+    const btn=document.getElementById('themeToggle');
+    const icon=document.getElementById('themeToggleIcon');
+    const label=document.getElementById('themeToggleText');
+    const nextLabel=theme==='light'?'深色':'淺色';
+    if(icon)icon.textContent=theme==='light'?'☾':'☀';
+    if(label)label.textContent=nextLabel;
+    if(btn){
+      btn.setAttribute('aria-label',`切換成${nextLabel}模式`);
+      btn.title=`切換成${nextLabel}模式`;
+    }
+    const meta=document.querySelector('meta[name="theme-color"]');
+    if(meta)meta.setAttribute('content',theme==='light'?'#f7f4f8':'#090913');
+  }
+  document.getElementById('themeToggle')?.addEventListener('click',()=>{
+    const current=document.documentElement.dataset.theme==='light'?'light':'dark';
+    const next=current==='light'?'dark':'light';
+    document.documentElement.dataset.theme=next;
+    try{localStorage.setItem(TAROT_THEME_KEY,next)}catch(_){}
+    syncThemeToggle();
+  });
+  syncThemeToggle();
+
   renderTopics();$('deckCount').textContent=78;updateMemberUI();
       })();
     </script>
