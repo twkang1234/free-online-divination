@@ -127,13 +127,25 @@ function adviceForTopic(topic, base, changed, moving) {
   return [...new Set(out.map(s=>s.trim()))].slice(0,6);
 }
 
-function buildReading(question, values) {
+function topicFromContext(context, question="") {
+  const t = context && context.topic;
+  if (t && t.name) return {id:t.id||"guided", name:t.name, focus:t.focus||"目前局勢、主要阻力、轉折與可採取的行動"};
+  return topicFromQuestion(question);
+}
+
+function scenarioFromContext(context) {
+  const s = context && context.scenario;
+  return s && s.name ? {id:s.id||"", name:s.name, desc:s.desc||""} : null;
+}
+
+function buildReading(question, values, context={}) {
   const baseLines = values.map(v => v === 7 || v === 9);
   const changedLines = values.map((v,i) => (v === 6 || v === 9) ? !baseLines[i] : baseLines[i]);
   const moving = values.map((v,i) => (v === 6 || v === 9) ? i+1 : 0).filter(Boolean);
   const base = hexagramFromLines(baseLines);
   const changed = hexagramFromLines(changedLines);
-  const topic = topicFromQuestion(question);
+  const topic = topicFromContext(context, question);
+  const scenario = scenarioFromContext(context);
   const pattern = movementPattern(moving);
   const lines = moving.map(pos => {
     const value = values[pos-1];
@@ -159,6 +171,8 @@ function buildReading(question, values) {
   return {
     question: questionText,
     topic,
+    scenario,
+    questionIntent:context?.questionIntent||"",
     values,
     base,
     changed,
@@ -176,9 +190,9 @@ function buildReading(question, values) {
   };
 }
 
-function draw(question="") {
+function draw(question="", context={}) {
   const values = Array.from({length:6}, coinLine);
-  return buildReading(question, values);
+  return buildReading(question, values, context);
 }
 
 function buildPrompt(reading) {
@@ -186,14 +200,14 @@ function buildPrompt(reading) {
   const movingText = r.lineReadings.length
     ? r.lineReadings.map(x=>`${x.label}動（${x.value}，${x.change}）`).join("\n- ")
     : "無動爻，為靜卦";
-  return `請你扮演一位熟悉《易經》六十四卦與動爻判讀、但不過度斷言的專業解卦老師，使用繁體中文解讀以下已經起出的卦。\n\n【重要】不要重新起卦、不要更換本卦、變卦或動爻，也不要假裝知道未提供的月建、日辰、世應、六親。若無法從這組資料確定的內容，請明確說明。\n\n【我的問題】\n${r.question}\n\n【卦象】\n本卦：第 ${r.base.number} 卦・${r.base.name}（上${r.base.upper}${r.base.upperMeta.symbol}／下${r.base.lower}${r.base.lowerMeta.symbol}）\n變卦：${r.movingLines.length ? `第 ${r.changed.number} 卦・${r.changed.name}（上${r.changed.upper}${r.changed.upperMeta.symbol}／下${r.changed.lower}${r.changed.lowerMeta.symbol}）` : "無變卦，六爻皆靜"}\n動爻：${r.movingNames}\n- ${movingText}\n\n【請依照這個順序回答】\n一、先看整體象義：本卦、變卦、動爻各代表什麼。\n二、解釋本卦真正的核心，不要只列關鍵字。\n三、如果有變卦，說明從本卦走到變卦代表什麼變化。\n四、逐一解釋每個動爻，並連回我的問題；若沒有動爻則說明靜卦應如何看。\n五、直接回答我的問題：目前最重要的局勢、阻力、機會各是什麼。\n六、給我 3～6 個具體可執行建議。\n七、最後用一句話總結。\n\n語氣請像有經驗的命理老師：白話、具體、有邏輯，但不要把卦象說成百分之百注定。`;
+  return `請你扮演一位熟悉《易經》六十四卦與動爻判讀、但不過度斷言的專業解卦老師，使用繁體中文解讀以下已經起出的卦。\n\n【重要】不要重新起卦、不要更換本卦、變卦或動爻，也不要假裝知道未提供的月建、日辰、世應、六親。若無法從這組資料確定的內容，請明確說明。\n\n【主題】${r.topic.name}\n${r.scenario?.name?`【目前情境】${r.scenario.name}\n`:""}【我的問題】\n${r.question}\n\n【卦象】\n本卦：第 ${r.base.number} 卦・${r.base.name}（上${r.base.upper}${r.base.upperMeta.symbol}／下${r.base.lower}${r.base.lowerMeta.symbol}）\n變卦：${r.movingLines.length ? `第 ${r.changed.number} 卦・${r.changed.name}（上${r.changed.upper}${r.changed.upperMeta.symbol}／下${r.changed.lower}${r.changed.lowerMeta.symbol}）` : "無變卦，六爻皆靜"}\n動爻：${r.movingNames}\n- ${movingText}\n\n【請依照這個順序回答】\n一、先看整體象義：本卦、變卦、動爻各代表什麼。\n二、解釋本卦真正的核心，不要只列關鍵字。\n三、如果有變卦，說明從本卦走到變卦代表什麼變化。\n四、逐一解釋每個動爻，並連回我的問題；若沒有動爻則說明靜卦應如何看。\n五、直接回答我的問題：目前最重要的局勢、阻力、機會各是什麼。\n六、給我 3～6 個具體可執行建議。\n七、最後用一句話總結。\n\n語氣請像有經驗的命理老師：白話、具體、有邏輯，但不要把卦象說成百分之百注定。`;
 }
 
 function buildTxt(reading) {
   const r = reading;
   const lineBlock = r.lineReadings.length ? r.lineReadings.map((x,i)=>`${i+1}. ${x.label}動（${x.value}）\n   位置：${x.stage}\n   變化：${x.change}\n   解讀：${x.advice}`).join("\n\n") : "本次六爻皆靜，沒有動爻。重點以本卦為主。";
   const adviceBlock = r.advice.map((x,i)=>`${i+1}. ${x}`).join("\n");
-  return `易經六十四卦｜本次網站解卦\n================================\n\n問題：${r.question}\n主題判定：${r.topic.name}\n\n本卦：第 ${r.base.number} 卦・${r.base.name}\n上卦：${r.base.upper} ${r.base.upperMeta.symbol}（${r.base.upperMeta.image}／${r.base.upperMeta.element}）\n下卦：${r.base.lower} ${r.base.lowerMeta.symbol}（${r.base.lowerMeta.image}／${r.base.lowerMeta.element}）\n本卦提示：${r.base.summary}\n\n變卦：${r.movingLines.length ? `第 ${r.changed.number} 卦・${r.changed.name}` : "無變卦（六爻皆靜）"}\n${r.movingLines.length ? `變卦提示：${r.changed.summary}` : ""}\n動爻：${r.movingNames}\n\n一、先看整體象義\n--------------------------------\n本卦代表現在的主要狀態：${r.base.summary}\n${r.movingLines.length ? `變卦代表事情改變後較可能呈現的方向：${r.changed.summary}` : "因為沒有動爻，現在不需要另外追變卦。"}\n動爻型態：${r.pattern.title}\n${r.pattern.text}\n\n二、這一卦如何回答你的問題\n--------------------------------\n你的問題屬於「${r.topic.name}」，解讀時重點放在：${r.topic.focus}。\n\n本卦「${r.base.name}」先告訴你：${r.base.summary}\n${r.movingLines.length ? `變卦「${r.changed.name}」再補充：${r.changed.summary}` : "本卦為靜卦，現況本身就是最主要訊息。"}\n\n三、動爻逐一解讀\n--------------------------------\n${lineBlock}\n\n四、後續發展與轉折\n--------------------------------\n${r.trend}\n\n五、網站給你的具體建議\n--------------------------------\n${adviceBlock}\n\n六、一句話總結\n--------------------------------\n${r.summary}\n\n================================\n說明：本工具採三枚銅錢機率產生六爻，提供本卦、動爻、變卦與白話整理，作為自我思考與易經學習參考；不把卦象視為百分之百確定的未來。\n`;
+  return `易經六十四卦｜本次網站解卦\n================================\n\n問題：${r.question}\n主題：${r.topic.name}\n${r.scenario?.name?`目前情境：${r.scenario.name}\n`:""}\n本卦：第 ${r.base.number} 卦・${r.base.name}\n上卦：${r.base.upper} ${r.base.upperMeta.symbol}（${r.base.upperMeta.image}／${r.base.upperMeta.element}）\n下卦：${r.base.lower} ${r.base.lowerMeta.symbol}（${r.base.lowerMeta.image}／${r.base.lowerMeta.element}）\n本卦提示：${r.base.summary}\n\n變卦：${r.movingLines.length ? `第 ${r.changed.number} 卦・${r.changed.name}` : "無變卦（六爻皆靜）"}\n${r.movingLines.length ? `變卦提示：${r.changed.summary}` : ""}\n動爻：${r.movingNames}\n\n一、先看整體象義\n--------------------------------\n本卦代表現在的主要狀態：${r.base.summary}\n${r.movingLines.length ? `變卦代表事情改變後較可能呈現的方向：${r.changed.summary}` : "因為沒有動爻，現在不需要另外追變卦。"}\n動爻型態：${r.pattern.title}\n${r.pattern.text}\n\n二、這一卦如何回答你的問題\n--------------------------------\n你的問題屬於「${r.topic.name}」，解讀時重點放在：${r.topic.focus}。\n\n本卦「${r.base.name}」先告訴你：${r.base.summary}\n${r.movingLines.length ? `變卦「${r.changed.name}」再補充：${r.changed.summary}` : "本卦為靜卦，現況本身就是最主要訊息。"}\n\n三、動爻逐一解讀\n--------------------------------\n${lineBlock}\n\n四、後續發展與轉折\n--------------------------------\n${r.trend}\n\n五、網站給你的具體建議\n--------------------------------\n${adviceBlock}\n\n六、一句話總結\n--------------------------------\n${r.summary}\n\n================================\n說明：本工具採三枚銅錢機率產生六爻，提供本卦、動爻、變卦與白話整理，作為自我思考與易經學習參考；不把卦象視為百分之百確定的未來。\n`;
 }
 
 window.YijingCore = Object.freeze({
@@ -202,6 +216,6 @@ window.YijingCore = Object.freeze({
   buildTxt,
   hexagramFromLines,
   count:Object.keys(HEXAGRAMS).length,
-  version:"2.0-six-line-reading"
+  version:"3.0-guided-six-line-reading"
 });
 })();
