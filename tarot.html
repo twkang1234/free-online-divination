@@ -1903,7 +1903,39 @@
   });
   syncThemeToggle();
 
+  // 初始化主塔羅頁，並接住 SEO 子頁傳入的主題／情境。
   renderTopics();$('deckCount').textContent=78;updateMemberUI();
+
+  // SEO 子頁深層導流：例如 tarot-love.html 的「單身桃花」會帶入
+  // tarot.html?topic=love&scenario=single#worldSecond。
+  // 核心改為 API 後，入口參數仍由主頁統一處理，避免子頁複製任何占卜邏輯。
+  (()=>{
+    try{
+      const params=new URLSearchParams(window.location.search);
+      const topicId=(params.get('topic')||'').trim();
+      const scenarioId=(params.get('scenario')||'').trim();
+      if(!topicId)return;
+
+      const t=topicBy(topicId);
+      if(!t)return;
+
+      // 先把使用者帶到真正的占卜區，再套用子頁選好的入口。
+      const world=document.getElementById('worldSecond');
+      if(world){setTimeout(()=>world.scrollIntoView({behavior:'auto',block:'start'}),0);}
+
+      if(scenarioId){
+        // 有完整情境就直接進正式選題流程（提醒／冷卻仍由主引擎負責）。
+        setTimeout(()=>window.openTarotDeepLink(topicId,scenarioId),0);
+      }else{
+        // 只有主題時，至少直接展開該主題的情境，不退回八大主題首頁。
+        state.topic=t;state.scenario=state.question=null;
+        renderScenarios();
+        setTimeout(()=>showStep('scenario'),0);
+      }
+    }catch(err){
+      console.warn('Tarot deep-link init skipped:',err);
+    }
+  })();
       })();
     </script>
 })();
