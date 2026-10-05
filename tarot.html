@@ -1613,7 +1613,7 @@
   }
   function openMemberModal(targetReader=null){state.pendingReader=targetReader||null;updateMemberUI();const modal=$('tarotMemberModal');modal.classList.add('show');modal.setAttribute('aria-hidden','false');renderGoogleButton();}
   function closeMemberModal(){const modal=$('tarotMemberModal');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
-  function memberLoginSucceeded(){state.accessTier='member';const target=state.pendingReader;state.pendingReader=null;updateMemberUI();closeMemberModal();if(!els.analysis.hidden&&state.readerBodies){renderReaderShell('a');}if(target)setTimeout(()=>activateReader(target,true),100);}
+  function memberLoginSucceeded(){state.accessTier='member';const target=state.pendingReader;state.pendingReader=null;updateMemberUI();flashThemeToggle();closeMemberModal();if(!els.analysis.hidden&&state.readerBodies){renderReaderShell('a');}if(target)setTimeout(()=>activateReader(target,true),100);}
   function logoutMember(){setAuthToken('');safeWrite(TAROT_LOCAL_MEMBER_KEY,false);try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}state.accessTier=state.current?.length?(state.accessTier==='demo'?'demo':'guest'):null;updateMemberUI();if(!els.analysis.hidden){if(!canAccessAllReaders()&&!state.readersViewed.has('a'))state.readersViewed=new Set(['a']);activateReader('a',false);updateReaderJourney()}closeMemberModal();}
   function openGuestNotice(kind,confirmFn){
     const title=$('tarotGuestNoticeTitle'),kicker=$('tarotGuestNoticeKicker'),copy=$('tarotGuestNoticeCopy'),confirm=$('tarotGuestNoticeConfirm');guestNoticeAction=confirmFn;
@@ -1894,6 +1894,16 @@
     const meta=document.querySelector('meta[name="theme-color"]');
     if(meta)meta.setAttribute('content',theme==='light'?'#f7f4f8':'#090913');
   }
+  function flashThemeToggle(){
+    const btn=document.getElementById('themeToggle');
+    if(!btn)return;
+    btn.classList.remove('theme-hint');
+    // 重新觸發動畫；每次進入頁面／登入成功都閃爍 5 次後自動停止。
+    void btn.offsetWidth;
+    btn.classList.add('theme-hint');
+    const stop=()=>btn.classList.remove('theme-hint');
+    btn.addEventListener('animationend',stop,{once:true});
+  }
   document.getElementById('themeToggle')?.addEventListener('click',()=>{
     const current=document.documentElement.dataset.theme==='light'?'light':'dark';
     const next=current==='light'?'dark':'light';
@@ -1902,6 +1912,7 @@
     syncThemeToggle();
   });
   syncThemeToggle();
+  flashThemeToggle();
 
   // 初始化主塔羅頁，並接住 SEO 子頁傳入的主題／情境。
   renderTopics();$('deckCount').textContent=78;updateMemberUI();
