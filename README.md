@@ -1,2 +1,2 @@
-# qimen-paipan
-大陸ai做的排盤網站
+# (https://divinationhub.tw/)
+免費占卜網站平台
