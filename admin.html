@@ -27,7 +27,7 @@ body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-
 .login-form input:focus{border-color:#7d6840;box-shadow:0 0 0 3px rgba(217,182,93,.08)}
 .login-form .btn{width:100%;font-size:.92rem}
 .dashboard[hidden],.login-card[hidden]{display:none!important}
-.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}.tool-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 18px 18px}.tool-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px}
 .card span{display:block;color:var(--muted);font-size:.76rem;margin-bottom:9px}
 .card strong{font-size:1.65rem;color:#f3e6bf}
@@ -43,7 +43,7 @@ td{color:#d6dce3}
 td.muted{color:var(--muted)}
 .status{margin-top:12px;color:var(--muted);font-size:.78rem}
 .error{color:#e09a9a}
-@media(max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}.top{align-items:flex-start;flex-direction:column}}
+@media(max-width:900px){.cards,.tool-cards{grid-template-columns:repeat(2,1fr)}.top{align-items:flex-start;flex-direction:column}}@media(max-width:560px){.cards,.tool-cards{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -76,8 +76,13 @@ td.muted{color:var(--muted)}
       <div class="card"><span>今日登入</span><strong id="todayLogin">—</strong></div>
       <div class="card"><span>本月新增</span><strong id="monthNew">—</strong></div>
       <div class="card"><span>近 30 日活躍</span><strong id="active30">—</strong></div>
-      <div class="card"><span>八字排盤次數</span><strong id="baziCasts">—</strong></div>
+      <div class="card"><span>儲存出生資料</span><strong id="savedBirthProfiles">—</strong></div>
     </div>
+
+    <section class="section" style="margin-bottom:24px">
+      <div class="section-head"><h2>各工具使用次數</h2><span>正式使用紀錄｜測試資料不列入</span></div>
+      <div class="tool-cards" id="toolCards"></div>
+    </section>
 
     <section class="section">
       <div class="section-head"><h2>最近登入會員</h2><span id="updatedAt"></span></div>
@@ -166,7 +171,27 @@ async function loadStats(){
     $('todayLogin').textContent=s.todayLogin??0;
     $('monthNew').textContent=s.monthNew??0;
     $('active30').textContent=s.active30??0;
-    $('baziCasts').textContent=s.baziCasts??0;
+    $('savedBirthProfiles').textContent=s.savedBirthProfiles??0;
+
+    const knownTools=[
+      {tool:'bazi',event:'cast',label:'八字排盤'},
+      {tool:'tarot',event:'draw',label:'塔羅抽牌'},
+      {tool:'qimen',event:'cast',label:'奇門排盤'},
+      {tool:'ziwei',event:'cast',label:'紫微排盤'},
+      {tool:'yijing',event:'cast',label:'易經占卜'}
+    ];
+    const totals=new Map((s.toolUsage||[]).map(x=>[`${x.tool}/${x.event}`,Number(x.total||0)]));
+    const todayTotals=new Map((s.toolUsageToday||[]).map(x=>[`${x.tool}/${x.event}`,Number(x.total||0)]));
+    const knownKeys=new Set(knownTools.map(x=>`${x.tool}/${x.event}`));
+    const extras=(s.toolUsage||[])
+      .filter(x=>!knownKeys.has(`${x.tool}/${x.event}`))
+      .map(x=>({tool:x.tool,event:x.event,label:`${x.tool} / ${x.event}`}));
+
+    $('toolCards').innerHTML=[...knownTools,...extras].map(x=>{
+      const key=`${x.tool}/${x.event}`;
+      return `<div class="card tool-card"><span>${esc(x.label)}</span><strong>${totals.get(key)??0}</strong><small>今日 ${todayTotals.get(key)??0} 次</small></div>`;
+    }).join('');
+
     $('updatedAt').textContent='更新：'+new Date().toLocaleString('zh-TW',{hour12:false});
     $('memberRows').innerHTML=(s.recentMembers||[]).map(m=>`
       <tr>
