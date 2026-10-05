@@ -575,16 +575,53 @@ function cardHTML(h, lines, label, movingLine=0){
   }
   paintCounter(shownCount);
 
-  // 開著頁面時每 20 秒重新計算；真正是否增加仍由上面的不規則時段決定。
+  // 開著頁面時除了依時間回算，另外安排可被肉眼看見的「不規則即時增加」。
+  // 第一次會較快出現，方便使用者感受到這是一個持續運作的計數器；
+  // 之後每次間隔都不同，不會固定每 N 秒規律跳動。
+  const LOCAL_AUTO_EXTRA_KEY='divinationhub-meihua-auto-extra-v2';
+  function getAutoExtra(){
+    try{return Math.max(0,parseInt(localStorage.getItem(LOCAL_AUTO_EXTRA_KEY)||'0',10)||0)}catch(_){return 0}
+  }
+  function setAutoExtra(v){try{localStorage.setItem(LOCAL_AUTO_EXTRA_KEY,String(v))}catch(_){}}
+
+  // 把既有畫面補上目前瀏覽器已累積的自動增量。
+  if(getAutoExtra()>0){
+    paintCounter(COUNTER_BASE+simulatedTimeGrowth()+getLocalExtra()+getAutoExtra());
+  }
+
+  function currentCounterTarget(){
+    return COUNTER_BASE+simulatedTimeGrowth()+getLocalExtra()+getAutoExtra();
+  }
+
+  // 每 15 秒仍會檢查「離線期間／經過時間」應有的成長。
   setInterval(()=>{
-    const target=COUNTER_BASE+simulatedTimeGrowth()+getLocalExtra();
+    const target=currentCounterTarget();
     if(target>shownCount) paintCounter(target,{animate:true});
-  },20000);
+  },15000);
+
+  let firstAutoBump=true;
+  function scheduleVisibleAutoBump(){
+    // 第一次 35～70 秒內一定會看到變化；之後約 80～220 秒不規則增加。
+    const delay=firstAutoBump
+      ? 35000+Math.random()*35000
+      : 80000+Math.random()*140000;
+
+    setTimeout(()=>{
+      let extra=getAutoExtra()+1;
+      // 約 4% 機率同一刻多一筆，避免永遠只呈現機械式 +1。
+      if(Math.random()<0.04) extra+=1;
+      setAutoExtra(extra);
+      paintCounter(currentCounterTarget(),{animate:true});
+      firstAutoBump=false;
+      scheduleVisibleAutoBump();
+    },delay);
+  }
+  scheduleVisibleAutoBump();
 
   function countSuccessfulManualCast(){
     const nextExtra=getLocalExtra()+1;
     setLocalExtra(nextExtra);
-    paintCounter(COUNTER_BASE+simulatedTimeGrowth()+nextExtra,{animate:true});
+    paintCounter(COUNTER_BASE+simulatedTimeGrowth()+nextExtra+getAutoExtra(),{animate:true});
   }
 
   function render(data){
