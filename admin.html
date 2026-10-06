@@ -29,7 +29,7 @@ body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}
 .tool-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 18px 18px}
 .tool-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}
-.support-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px 18px}
+.payment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px 12px}.payment-types{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 18px 18px}.payment-type-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}.subline{display:block;margin-top:4px;color:var(--muted);font-size:.68rem}.payment-table{min-width:980px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px}
 .card span{display:block;color:var(--muted);font-size:.76rem;margin-bottom:9px}
 .card strong{font-size:1.65rem;color:#f3e6bf}
@@ -48,7 +48,7 @@ td.muted{color:var(--muted)}
 .error{color:#e09a9a}
 @media(max-width:900px){
   .cards,.tool-cards{grid-template-columns:repeat(2,1fr)}
-  .support-cards{grid-template-columns:1fr}
+  .payment-summary,.payment-types{grid-template-columns:1fr}
   .top{align-items:flex-start;flex-direction:column}
 }
 @media(max-width:560px){
@@ -96,26 +96,49 @@ td.muted{color:var(--muted)}
     </section>
 
     <section class="section" style="margin-bottom:24px">
-      <div class="section-head"><h2>支持紀錄</h2><span>僅顯示付款成功｜金額與時間以台灣時間統計</span></div>
+      <div class="section-head">
+        <h2>付款紀錄</h2>
+        <span>僅顯示付款成功｜自由支持・單次解鎖・訂閱｜支援藍新與未來綠界</span>
+      </div>
 
-      <div class="support-cards">
-        <div class="card"><span>今日支持總額</span><strong id="supportTodayAmount">—</strong></div>
-        <div class="card"><span>本月支持總額</span><strong id="supportMonthAmount">—</strong></div>
-        <div class="card"><span>已付款筆數</span><strong id="supportPaidCount">—</strong></div>
+      <div class="payment-summary">
+        <div class="card"><span>今日付款總額</span><strong id="paymentTodayAmount">—</strong></div>
+        <div class="card"><span>本月付款總額</span><strong id="paymentMonthAmount">—</strong></div>
+        <div class="card"><span>已付款筆數</span><strong id="paymentPaidCount">—</strong></div>
+      </div>
+
+      <div class="payment-types">
+        <div class="card payment-type-card">
+          <span>自由支持</span>
+          <strong id="supportMonthAmount">—</strong>
+          <small>本月｜累計 <span id="supportPaidCount">0</span> 筆</small>
+        </div>
+        <div class="card payment-type-card">
+          <span>單次解鎖</span>
+          <strong id="unlockMonthAmount">—</strong>
+          <small>本月｜累計 <span id="unlockPaidCount">0</span> 筆</small>
+        </div>
+        <div class="card payment-type-card">
+          <span>訂閱</span>
+          <strong id="subscriptionMonthAmount">—</strong>
+          <small>本月｜累計 <span id="subscriptionPaidCount">0</span> 筆</small>
+        </div>
       </div>
 
       <div class="table-wrap">
-        <table>
+        <table class="payment-table">
           <thead>
             <tr>
-              <th>支持金額</th>
+              <th>類型</th>
+              <th>商品／方案</th>
+              <th>金額</th>
               <th>金流</th>
-              <th>藍新交易編號</th>
-              <th>商店訂單編號</th>
+              <th>會員</th>
+              <th>交易編號</th>
               <th>付款時間</th>
             </tr>
           </thead>
-          <tbody id="supportRows"></tbody>
+          <tbody id="paymentRows"></tbody>
         </table>
       </div>
     </section>
@@ -161,8 +184,11 @@ function fmtPaymentTime(t){
   return Number.isNaN(d.getTime())?raw:d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false});
 }
 
-function money(v){
-  return 'NT$'+Number(v||0).toLocaleString('zh-TW');
+function money(v,currency='TWD'){
+  const n=Number(v||0).toLocaleString('zh-TW');
+  const c=String(currency||'TWD').toUpperCase();
+  if(c==='TWD')return 'NT$'+n;
+  return `${c} ${n}`;
 }
 
 function esc(v=''){
@@ -174,6 +200,28 @@ function providerLabel(v){
   if(key==='newebpay')return'藍新';
   if(key==='ecpay')return'綠界';
   return v||'—';
+}
+
+function purposeLabel(v){
+  const key=String(v||'').toLowerCase();
+  if(key==='support')return'自由支持';
+  if(key==='unlock')return'單次解鎖';
+  if(key==='subscription')return'訂閱';
+  return v||'—';
+}
+
+function billingPeriodLabel(v){
+  const key=String(v||'').toLowerCase();
+  if(!key)return'';
+  if(['month','monthly','1_month'].includes(key))return'月費';
+  if(['year','yearly','annual','1_year'].includes(key))return'年費';
+  return v;
+}
+
+function productLabel(p){
+  const base=p.productName||p.productCode||'未命名商品';
+  const period=billingPeriodLabel(p.billingPeriod);
+  return period?`${base}｜${period}`:base;
 }
 
 function showLogin(message=''){
@@ -322,19 +370,36 @@ async function loadStats(){
       return `<div class="card tool-card"><span>${esc(x.label)}</span><strong>${totals.get(key)??0}</strong><small>今日 ${todayTotals.get(key)??0} 次</small></div>`;
     }).join('');
 
-    $('supportTodayAmount').textContent=money(s.supportTodayAmount);
+    $('paymentTodayAmount').textContent=money(s.paymentTodayAmount);
+    $('paymentMonthAmount').textContent=money(s.paymentMonthAmount);
+    $('paymentPaidCount').textContent=Number(s.paymentPaidCount||0);
+
     $('supportMonthAmount').textContent=money(s.supportMonthAmount);
     $('supportPaidCount').textContent=Number(s.supportPaidCount||0);
 
-    $('supportRows').innerHTML=(s.recentSupports||[]).map(p=>`
+    $('unlockMonthAmount').textContent=money(s.unlockMonthAmount);
+    $('unlockPaidCount').textContent=Number(s.unlockPaidCount||0);
+
+    $('subscriptionMonthAmount').textContent=money(s.subscriptionMonthAmount);
+    $('subscriptionPaidCount').textContent=Number(s.subscriptionPaidCount||0);
+
+    $('paymentRows').innerHTML=(s.recentPayments||[]).map(p=>`
       <tr>
-        <td class="amount">${money(p.amount)}</td>
+        <td>${esc(purposeLabel(p.purpose))}</td>
+        <td>
+          ${esc(productLabel(p))}
+          ${p.productCode?`<span class="subline">${esc(p.productCode)}</span>`:''}
+        </td>
+        <td class="amount">${money(p.amount,p.currency)}</td>
         <td>${esc(providerLabel(p.provider))}</td>
-        <td>${esc(p.providerTradeNo||'—')}</td>
-        <td class="muted">${esc(p.merchantOrderNo||'—')}</td>
+        <td>${esc(p.memberEmail||'—')}</td>
+        <td>
+          ${esc(p.providerTradeNo||'—')}
+          ${p.merchantOrderNo?`<span class="subline">訂單：${esc(p.merchantOrderNo)}</span>`:''}
+        </td>
         <td class="muted">${fmtPaymentTime(p.paidAt)}</td>
       </tr>
-    `).join('')||'<tr><td colspan="5" class="muted">目前還沒有成功付款的支持紀錄。</td></tr>';
+    `).join('')||'<tr><td colspan="7" class="muted">目前還沒有成功付款紀錄。</td></tr>';
 
     $('updatedAt').textContent='更新：'+new Date().toLocaleString('zh-TW',{hour12:false});
 
