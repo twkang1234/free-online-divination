@@ -706,12 +706,23 @@ function cardHTML(h, lines, label, movingLines=[]){
   document.getElementById('yijingQuestionGrid').addEventListener('click',e=>{const qbtn=e.target.closest('[data-question-index]');const custom=e.target.closest('[data-custom-question]');if(qbtn){const qs=questionsFor(state.topic,state.scenario);state.question=qs[Number(qbtn.dataset.questionIndex)];state.custom=false;renderReady();showStep('ready');}else if(custom){state.question='其他問題｜自行輸入';state.custom=true;renderReady();showStep('ready');}});
   document.querySelectorAll('[data-guide-back]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.guideBack)));
   document.querySelectorAll('[data-guide-jump]').forEach(b=>b.addEventListener('click',()=>{if(!b.disabled)showStep(b.dataset.guideJump)}));
-  document.getElementById('drawBtn').addEventListener('click',()=>{
+  document.getElementById('drawBtn').addEventListener('click',async()=>{
+    const btn=document.getElementById('drawBtn');
     const extra=document.getElementById('yijingExtraContext')?.value.trim()||'';
     if(state.custom&&!extra){const input=document.getElementById('yijingExtraContext');input.focus();input.style.borderColor='rgba(225,197,110,.7)';setTimeout(()=>input.style.borderColor='',1100);return;}
     const q=state.custom?extra:(extra?`${state.question}（補充背景：${extra}）`:state.question);
     const context={topic:{id:state.topic.id,name:state.topic.name,focus:state.topic.focus},scenario:{id:state.scenario.id,name:state.scenario.name,desc:state.scenario.desc},questionIntent:state.custom?'custom':'guided'};
-    render(YijingCore.draw(q,context));
+    const oldText=btn.textContent;
+    btn.disabled=true; btn.textContent='正在起卦與解讀…';
+    try{
+      const reading=await YijingCore.draw(q,context);
+      render(reading);
+    }catch(err){
+      console.error(err);
+      alert(err?.message||'目前無法取得解卦結果，請稍後再試。');
+    }finally{
+      btn.disabled=false; btn.textContent=oldText;
+    }
   });
 })();
 </script>
