@@ -62,10 +62,10 @@ td.muted{color:var(--muted)}
 
   <section class="login-card" id="loginCard">
     <h2>管理員登入</h2>
-    <p>請輸入管理員密碼。密碼只會送到 Cloudflare Worker 驗證，不會寫在這個網頁檔案裡。</p>
+    <p>請輸入管理員密碼。密碼正確後會自動登入；密碼只會送到 Cloudflare Worker 驗證，不會寫在這個網頁檔案裡。</p>
     <form class="login-form" id="loginForm">
       <input id="passwordInput" type="password" autocomplete="current-password" placeholder="管理員密碼" required>
-      <button class="btn" id="loginBtn" type="submit">登入後台</button>
+      <button class="btn" id="loginBtn" type="submit" hidden>登入後台</button>
     </form>
     <div class="status" id="loginStatus"></div>
   </section>
@@ -103,6 +103,9 @@ const TOKEN_KEY='divinationhub-admin-session';
 const $=id=>document.getElementById(id);
 const token=()=>sessionStorage.getItem(TOKEN_KEY)||'';
 const setToken=v=>v?sessionStorage.setItem(TOKEN_KEY,v):sessionStorage.removeItem(TOKEN_KEY);
+let loginBusy=false;
+let autoLoginTimer=null;
+let lastTriedPassword='';
 
 function fmt(t){
   if(!t)return'—';
@@ -124,6 +127,9 @@ function showLogin(message=''){
 }
 
 async function login(password){
+  password=String(password||'');
+  if(!password||loginBusy)return;
+  loginBusy=true;
   $('loginBtn').disabled=true;
   $('loginStatus').classList.remove('error');
   $('loginStatus').textContent='驗證中…';
@@ -138,6 +144,7 @@ async function login(password){
       throw Error(j?.error||'登入失敗');
     }
     setToken(j.token);
+    lastTriedPassword='';
     $('passwordInput').value='';
     await loadStats();
   }catch(e){
@@ -145,6 +152,7 @@ async function login(password){
     $('loginStatus').textContent=e.message||String(e);
     $('loginStatus').classList.add('error');
   }finally{
+    loginBusy=false;
     $('loginBtn').disabled=false;
   }
 }
@@ -173,22 +181,42 @@ async function loadStats(){
     $('active30').textContent=s.active30??0;
     $('savedBirthProfiles').textContent=s.savedBirthProfiles??0;
 
+    const usageKey=(tool,event)=>{
+      tool=String(tool||'').toLowerCase();
+      event=String(event||'').toLowerCase();
+      if(tool==='yijing'&&(event==='cast'||event==='reading'))return 'yijing/reading';
+      return `${tool}/${event}`;
+    };
+    const aggregateUsage=rows=>{
+      const map=new Map();
+      for(const x of (rows||[])){
+        const key=usageKey(x.tool,x.event);
+        map.set(key,(map.get(key)||0)+Number(x.total||0));
+      }
+      return map;
+    };
+
     const knownTools=[
       {tool:'bazi',event:'cast',label:'八字排盤'},
       {tool:'tarot',event:'draw',label:'塔羅抽牌'},
       {tool:'qimen',event:'cast',label:'奇門排盤'},
       {tool:'ziwei',event:'cast',label:'紫微排盤'},
-      {tool:'yijing',event:'cast',label:'易經占卜'}
+      {tool:'yijing',event:'reading',label:'易經占卜'}
     ];
-    const totals=new Map((s.toolUsage||[]).map(x=>[`${x.tool}/${x.event}`,Number(x.total||0)]));
-    const todayTotals=new Map((s.toolUsageToday||[]).map(x=>[`${x.tool}/${x.event}`,Number(x.total||0)]));
-    const knownKeys=new Set(knownTools.map(x=>`${x.tool}/${x.event}`));
-    const extras=(s.toolUsage||[])
-      .filter(x=>!knownKeys.has(`${x.tool}/${x.event}`))
-      .map(x=>({tool:x.tool,event:x.event,label:`${x.tool} / ${x.event}`}));
+    const totals=aggregateUsage(s.toolUsage);
+    const todayTotals=aggregateUsage(s.toolUsageToday);
+    const knownKeys=new Set(knownTools.map(x=>usageKey(x.tool,x.event)));
+    const extras=[];
+    const extraKeys=new Set();
+    for(const x of (s.toolUsage||[])){
+      const key=usageKey(x.tool,x.event);
+      if(knownKeys.has(key)||extraKeys.has(key))continue;
+      extraKeys.add(key);
+      extras.push({tool:x.tool,event:x.event,label:`${x.tool} / ${x.event}`});
+    }
 
     $('toolCards').innerHTML=[...knownTools,...extras].map(x=>{
-      const key=`${x.tool}/${x.event}`;
+      const key=usageKey(x.tool,x.event);
       return `<div class="card tool-card"><span>${esc(x.label)}</span><strong>${totals.get(key)??0}</strong><small>今日 ${todayTotals.get(key)??0} 次</small></div>`;
     }).join('');
 
@@ -214,6 +242,23 @@ async function loadStats(){
     $('status').classList.add('error');
   }
 }
+
+$('passwordInput').addEventListener('input',()=>{
+  clearTimeout(autoLoginTimer);
+  const password=$('passwordInput').value;
+  $('loginStatus').classList.remove('error');
+  $('loginStatus').textContent=password?'':'';
+  if(!password){
+    lastTriedPassword='';
+    return;
+  }
+  autoLoginTimer=setTimeout(()=>{
+    const current=$('passwordInput').value;
+    if(!current||current===lastTriedPassword||loginBusy)return;
+    lastTriedPassword=current;
+    login(current);
+  },500);
+});
 
 $('loginForm').addEventListener('submit',e=>{
   e.preventDefault();
