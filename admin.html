@@ -25,25 +25,37 @@ body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-
 .login-form{display:grid;gap:12px;max-width:360px;margin:0 auto}
 .login-form input{width:100%;border:1px solid #2b323d;background:#090d13;color:#f1eadb;border-radius:10px;padding:12px 13px;font-size:1rem;outline:none}
 .login-form input:focus{border-color:#7d6840;box-shadow:0 0 0 3px rgba(217,182,93,.08)}
-.login-form .btn{width:100%;font-size:.92rem}
 .dashboard[hidden],.login-card[hidden]{display:none!important}
-.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}.tool-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 18px 18px}.tool-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}
+.tool-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 18px 18px}
+.tool-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}
+.support-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px 18px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px}
 .card span{display:block;color:var(--muted);font-size:.76rem;margin-bottom:9px}
 .card strong{font-size:1.65rem;color:#f3e6bf}
 .section{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.section-head{display:flex;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+.section-head{display:flex;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line)}
 .section-head h2{margin:0;font-size:1rem}
-.section-head span{color:var(--muted);font-size:.74rem}
+.section-head span{color:var(--muted);font-size:.74rem;text-align:right}
 .table-wrap{overflow:auto}
 table{width:100%;border-collapse:collapse;min-width:760px}
 th,td{padding:12px 14px;text-align:left;border-bottom:1px solid #1d232b;font-size:.78rem}
 th{color:#9aa7b7;background:#0a0d12}
 td{color:#d6dce3}
 td.muted{color:var(--muted)}
+.amount{font-weight:800;color:#f3e6bf}
 .status{margin-top:12px;color:var(--muted);font-size:.78rem}
 .error{color:#e09a9a}
-@media(max-width:900px){.cards,.tool-cards{grid-template-columns:repeat(2,1fr)}.top{align-items:flex-start;flex-direction:column}}@media(max-width:560px){.cards,.tool-cards{grid-template-columns:1fr}}
+@media(max-width:900px){
+  .cards,.tool-cards{grid-template-columns:repeat(2,1fr)}
+  .support-cards{grid-template-columns:1fr}
+  .top{align-items:flex-start;flex-direction:column}
+}
+@media(max-width:560px){
+  .cards,.tool-cards{grid-template-columns:1fr}
+  .section-head{align-items:flex-start;flex-direction:column}
+  .section-head span{text-align:left}
+}
 </style>
 </head>
 <body>
@@ -62,10 +74,9 @@ td.muted{color:var(--muted)}
 
   <section class="login-card" id="loginCard">
     <h2>管理員登入</h2>
-    <p>請輸入管理員密碼。密碼正確後會自動登入；密碼只會送到 Cloudflare Worker 驗證，不會寫在這個網頁檔案裡。</p>
+    <p>輸入正確密碼後會自動登入。密碼只會送到 Cloudflare Worker 驗證，不會寫在這個網頁檔案裡。</p>
     <form class="login-form" id="loginForm">
       <input id="passwordInput" type="password" autocomplete="current-password" placeholder="管理員密碼" required>
-      <button class="btn" id="loginBtn" type="submit" hidden>登入後台</button>
     </form>
     <div class="status" id="loginStatus"></div>
   </section>
@@ -84,6 +95,31 @@ td.muted{color:var(--muted)}
       <div class="tool-cards" id="toolCards"></div>
     </section>
 
+    <section class="section" style="margin-bottom:24px">
+      <div class="section-head"><h2>支持紀錄</h2><span>僅顯示付款成功｜金額與時間以台灣時間統計</span></div>
+
+      <div class="support-cards">
+        <div class="card"><span>今日支持總額</span><strong id="supportTodayAmount">—</strong></div>
+        <div class="card"><span>本月支持總額</span><strong id="supportMonthAmount">—</strong></div>
+        <div class="card"><span>已付款筆數</span><strong id="supportPaidCount">—</strong></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>支持金額</th>
+              <th>金流</th>
+              <th>藍新交易編號</th>
+              <th>商店訂單編號</th>
+              <th>付款時間</th>
+            </tr>
+          </thead>
+          <tbody id="supportRows"></tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="section">
       <div class="section-head"><h2>最近登入會員</h2><span id="updatedAt"></span></div>
       <div class="table-wrap">
@@ -93,6 +129,7 @@ td.muted{color:var(--muted)}
         </table>
       </div>
     </section>
+
     <div class="status" id="status"></div>
   </main>
 </div>
@@ -103,17 +140,40 @@ const TOKEN_KEY='divinationhub-admin-session';
 const $=id=>document.getElementById(id);
 const token=()=>sessionStorage.getItem(TOKEN_KEY)||'';
 const setToken=v=>v?sessionStorage.setItem(TOKEN_KEY,v):sessionStorage.removeItem(TOKEN_KEY);
-let loginBusy=false;
-let autoLoginTimer=null;
-let lastTriedPassword='';
+
+let loginTimer=null;
+let loggingIn=false;
+let lastAttempt='';
 
 function fmt(t){
   if(!t)return'—';
   const d=new Date(t);
   return Number.isNaN(d.getTime())?t:d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false});
 }
+
+function fmtPaymentTime(t){
+  if(!t)return'—';
+  const raw=String(t).trim();
+  const normalized=/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)
+    ? raw.replace(' ','T')+'Z'
+    : raw;
+  const d=new Date(normalized);
+  return Number.isNaN(d.getTime())?raw:d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false});
+}
+
+function money(v){
+  return 'NT$'+Number(v||0).toLocaleString('zh-TW');
+}
+
 function esc(v=''){
   return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[c]);
+}
+
+function providerLabel(v){
+  const key=String(v||'').toLowerCase();
+  if(key==='newebpay')return'藍新';
+  if(key==='ecpay')return'綠界';
+  return v||'—';
 }
 
 function showLogin(message=''){
@@ -123,104 +183,161 @@ function showLogin(message=''){
   $('logoutBtn').hidden=true;
   $('loginStatus').classList.remove('error');
   $('loginStatus').textContent=message;
+  loggingIn=false;
+  lastAttempt='';
   setTimeout(()=>$('passwordInput')?.focus(),0);
 }
 
 async function login(password){
-  password=String(password||'');
-  if(!password||loginBusy)return;
-  loginBusy=true;
-  $('loginBtn').disabled=true;
+  if(loggingIn||!password)return;
+  loggingIn=true;
+  lastAttempt=password;
   $('loginStatus').classList.remove('error');
   $('loginStatus').textContent='驗證中…';
+
   try{
     const r=await fetch(API_BASE+'/admin/login',{
       method:'POST',
       headers:{Accept:'application/json','Content-Type':'application/json'},
       body:JSON.stringify({password})
     });
+
     const j=await r.json().catch(()=>null);
+
     if(!r.ok||!j?.success||!j?.token){
       throw Error(j?.error||'登入失敗');
     }
+
     setToken(j.token);
-    lastTriedPassword='';
     $('passwordInput').value='';
     await loadStats();
+
   }catch(e){
     setToken('');
     $('loginStatus').textContent=e.message||String(e);
     $('loginStatus').classList.add('error');
   }finally{
-    loginBusy=false;
-    $('loginBtn').disabled=false;
+    loggingIn=false;
   }
+}
+
+function scheduleAutoLogin(){
+  clearTimeout(loginTimer);
+  const password=$('passwordInput').value;
+
+  $('loginStatus').classList.remove('error');
+  if(!password){
+    $('loginStatus').textContent='';
+    lastAttempt='';
+    return;
+  }
+
+  if(password===lastAttempt)return;
+
+  $('loginStatus').textContent='輸入完成後將自動驗證…';
+
+  loginTimer=setTimeout(()=>{
+    const latest=$('passwordInput').value;
+    if(latest&&latest!==lastAttempt)login(latest);
+  },650);
+}
+
+function addUsage(map,key,value){
+  map.set(key,(map.get(key)||0)+Number(value||0));
+}
+
+function normalizeUsageKey(tool,event){
+  const t=String(tool||'').toLowerCase();
+  const e=String(event||'').toLowerCase();
+
+  if(t==='yijing'&&(e==='cast'||e==='reading')){
+    return'yijing/cast';
+  }
+
+  return `${t}/${e}`;
 }
 
 async function loadStats(){
   if(!token())return showLogin();
+
   $('status').textContent='讀取中…';
   $('status').classList.remove('error');
+
   try{
     const r=await fetch(API_BASE+'/admin/stats',{
       method:'GET',
       headers:{Authorization:'Bearer '+token(),Accept:'application/json'}
     });
+
     const j=await r.json().catch(()=>null);
+
     if(r.status===401){
       setToken('');
       showLogin('登入已過期，請重新輸入管理員密碼。');
       return;
     }
+
     if(!r.ok||!j?.success)throw Error(j?.error||'讀取失敗');
 
     const s=j.stats||{};
+
     $('totalMembers').textContent=s.totalMembers??0;
     $('todayLogin').textContent=s.todayLogin??0;
     $('monthNew').textContent=s.monthNew??0;
     $('active30').textContent=s.active30??0;
     $('savedBirthProfiles').textContent=s.savedBirthProfiles??0;
 
-    const usageKey=(tool,event)=>{
-      tool=String(tool||'').toLowerCase();
-      event=String(event||'').toLowerCase();
-      if(tool==='yijing'&&(event==='cast'||event==='reading'))return 'yijing/reading';
-      return `${tool}/${event}`;
-    };
-    const aggregateUsage=rows=>{
-      const map=new Map();
-      for(const x of (rows||[])){
-        const key=usageKey(x.tool,x.event);
-        map.set(key,(map.get(key)||0)+Number(x.total||0));
-      }
-      return map;
-    };
-
     const knownTools=[
       {tool:'bazi',event:'cast',label:'八字排盤'},
       {tool:'tarot',event:'draw',label:'塔羅抽牌'},
       {tool:'qimen',event:'cast',label:'奇門排盤'},
       {tool:'ziwei',event:'cast',label:'紫微排盤'},
-      {tool:'yijing',event:'reading',label:'易經占卜'}
+      {tool:'yijing',event:'cast',label:'易經占卜'}
     ];
-    const totals=aggregateUsage(s.toolUsage);
-    const todayTotals=aggregateUsage(s.toolUsageToday);
-    const knownKeys=new Set(knownTools.map(x=>usageKey(x.tool,x.event)));
-    const extras=[];
-    const extraKeys=new Set();
+
+    const totals=new Map();
     for(const x of (s.toolUsage||[])){
-      const key=usageKey(x.tool,x.event);
-      if(knownKeys.has(key)||extraKeys.has(key))continue;
-      extraKeys.add(key);
-      extras.push({tool:x.tool,event:x.event,label:`${x.tool} / ${x.event}`});
+      addUsage(totals,normalizeUsageKey(x.tool,x.event),x.total);
     }
 
-    $('toolCards').innerHTML=[...knownTools,...extras].map(x=>{
-      const key=usageKey(x.tool,x.event);
+    const todayTotals=new Map();
+    for(const x of (s.toolUsageToday||[])){
+      addUsage(todayTotals,normalizeUsageKey(x.tool,x.event),x.total);
+    }
+
+    const knownKeys=new Set(knownTools.map(x=>`${x.tool}/${x.event}`));
+    const extrasMap=new Map();
+
+    for(const x of (s.toolUsage||[])){
+      const key=normalizeUsageKey(x.tool,x.event);
+      if(knownKeys.has(key))continue;
+      if(!extrasMap.has(key)){
+        const [tool,event]=key.split('/');
+        extrasMap.set(key,{tool,event,label:`${tool} / ${event}`});
+      }
+    }
+
+    $('toolCards').innerHTML=[...knownTools,...extrasMap.values()].map(x=>{
+      const key=`${x.tool}/${x.event}`;
       return `<div class="card tool-card"><span>${esc(x.label)}</span><strong>${totals.get(key)??0}</strong><small>今日 ${todayTotals.get(key)??0} 次</small></div>`;
     }).join('');
 
+    $('supportTodayAmount').textContent=money(s.supportTodayAmount);
+    $('supportMonthAmount').textContent=money(s.supportMonthAmount);
+    $('supportPaidCount').textContent=Number(s.supportPaidCount||0);
+
+    $('supportRows').innerHTML=(s.recentSupports||[]).map(p=>`
+      <tr>
+        <td class="amount">${money(p.amount)}</td>
+        <td>${esc(providerLabel(p.provider))}</td>
+        <td>${esc(p.providerTradeNo||'—')}</td>
+        <td class="muted">${esc(p.merchantOrderNo||'—')}</td>
+        <td class="muted">${fmtPaymentTime(p.paidAt)}</td>
+      </tr>
+    `).join('')||'<tr><td colspan="5" class="muted">目前還沒有成功付款的支持紀錄。</td></tr>';
+
     $('updatedAt').textContent='更新：'+new Date().toLocaleString('zh-TW',{hour12:false});
+
     $('memberRows').innerHTML=(s.recentMembers||[]).map(m=>`
       <tr>
         <td>${esc(m.name||'—')}</td>
@@ -236,6 +353,7 @@ async function loadStats(){
     $('refreshBtn').hidden=false;
     $('logoutBtn').hidden=false;
     $('status').textContent='';
+
   }catch(e){
     const msg=e.message||String(e);
     $('status').textContent=msg;
@@ -243,40 +361,32 @@ async function loadStats(){
   }
 }
 
-$('passwordInput').addEventListener('input',()=>{
-  clearTimeout(autoLoginTimer);
-  const password=$('passwordInput').value;
-  $('loginStatus').classList.remove('error');
-  $('loginStatus').textContent=password?'':'';
-  if(!password){
-    lastTriedPassword='';
-    return;
-  }
-  autoLoginTimer=setTimeout(()=>{
-    const current=$('passwordInput').value;
-    if(!current||current===lastTriedPassword||loginBusy)return;
-    lastTriedPassword=current;
-    login(current);
-  },500);
-});
+$('passwordInput').addEventListener('input',scheduleAutoLogin);
 
 $('loginForm').addEventListener('submit',e=>{
   e.preventDefault();
+  clearTimeout(loginTimer);
   const password=$('passwordInput').value;
+
   if(!password){
     $('loginStatus').textContent='請輸入管理員密碼。';
     $('loginStatus').classList.add('error');
     return;
   }
+
   login(password);
 });
+
 $('refreshBtn').addEventListener('click',loadStats);
+
 $('logoutBtn').addEventListener('click',()=>{
   setToken('');
+  $('passwordInput').value='';
   showLogin('已登出。');
 });
 
-if(token()) loadStats(); else showLogin();
+if(token())loadStats();
+else showLogin();
 </script>
 </body>
 </html>
