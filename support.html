@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,follow">
+  <title>支持免費工具｜一念知機 Divination Hub</title>
+  <meta name="description" content="自由小額支持一念知機免費工具，協助網站、伺服器與持續開發。支持不解鎖任何付費內容，也不影響原有免費資格。">
+  <style>
+    :root {
+      --bg:#030408;
+      --panel:rgba(10,14,26,.78);
+      --panel-2:rgba(7,10,18,.92);
+      --line:rgba(255,255,255,.09);
+      --text:#f5f8fc;
+      --muted:#9aa5bc;
+      --subtle:#657087;
+      --cyan:#00f3ff;
+      --gold:#ffbe3b;
+      --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC",sans-serif;
+      --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font)}
+    body{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px 18px;
+      overflow-x:hidden;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(0,243,255,.08), transparent 30%),
+        radial-gradient(circle at 88% 18%, rgba(255,190,59,.07), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(122,61,255,.08), transparent 34%),
+        #030408;
+    }
+    body::before{
+      content:"";
+      position:fixed;inset:0;pointer-events:none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+      background-size:56px 56px;
+      mask-image:linear-gradient(to bottom,transparent,#000 15%,#000 85%,transparent);
+    }
+    .wrap{
+      width:min(760px,100%);
+      position:relative;
+      z-index:1;
+    }
+    .top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      margin-bottom:16px;
+      color:var(--subtle);
+      font-size:.78rem;
+    }
+    .brand{
+      font-family:var(--mono);
+      letter-spacing:.12em;
+      color:#c9d2e1;
+    }
+    .back{
+      color:var(--cyan);
+      text-decoration:none;
+      border:1px solid rgba(0,243,255,.24);
+      border-radius:999px;
+      padding:8px 12px;
+      background:rgba(0,243,255,.04);
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:28px;
+      background:
+        radial-gradient(circle 420px at 100% 0%, rgba(0,243,255,.08), transparent 66%),
+        linear-gradient(145deg,var(--panel),var(--panel-2));
+      box-shadow:0 30px 90px rgba(0,0,0,.38);
+      backdrop-filter:blur(18px);
+      padding:38px;
+    }
+    .kicker{
+      font-family:var(--mono);
+      font-size:.72rem;
+      letter-spacing:.18em;
+      color:var(--gold);
+      margin-bottom:12px;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(2rem,5vw,3.5rem);
+      letter-spacing:-.035em;
+      line-height:1.06;
+    }
+    .lead{
+      margin:18px 0 0;
+      color:var(--muted);
+      line-height:1.9;
+      font-size:.98rem;
+    }
+    .notice{
+      margin-top:24px;
+      padding:16px 18px;
+      border:1px solid rgba(0,243,255,.16);
+      border-radius:16px;
+      background:rgba(0,243,255,.035);
+      color:#c8d4df;
+      line-height:1.75;
+      font-size:.88rem;
+    }
+    .notice strong{color:#fff}
+    .amount-title{
+      margin:32px 0 14px;
+      font-size:.9rem;
+      color:#dbe3ee;
+      font-weight:700;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+    }
+    .pay{
+      display:flex;
+      min-height:72px;
+      align-items:center;
+      justify-content:center;
+      border-radius:16px;
+      border:1px solid rgba(255,190,59,.24);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,190,59,.09), transparent 65%),
+        rgba(255,255,255,.025);
+      color:#fff;
+      text-decoration:none;
+      font-size:1rem;
+      font-weight:800;
+      transition:.22s ease;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+    }
+    .pay:hover{
+      transform:translateY(-2px);
+      border-color:rgba(255,190,59,.62);
+      box-shadow:0 12px 30px rgba(0,0,0,.26),0 0 24px rgba(255,190,59,.08);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,190,59,.16), transparent 65%),
+        rgba(255,255,255,.04);
+    }
+    .pay small{
+      display:block;
+      margin-left:6px;
+      font-size:.7rem;
+      color:var(--gold);
+      font-weight:600;
+    }
+    .footer-note{
+      margin:22px 0 0;
+      color:var(--subtle);
+      font-size:.77rem;
+      line-height:1.75;
+      text-align:center;
+    }
+    .secure{
+      margin-top:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      color:#7f8da2;
+      font-family:var(--mono);
+      font-size:.66rem;
+      letter-spacing:.05em;
+    }
+    .dot{
+      width:6px;height:6px;border-radius:50%;
+      background:var(--cyan);
+      box-shadow:0 0 10px rgba(0,243,255,.75);
+    }
+    @media(max-width:640px){
+      .card{padding:28px 20px;border-radius:22px}
+      .grid{grid-template-columns:1fr 1fr}
+      .top{align-items:flex-start}
+      .brand{max-width:60%;line-height:1.5}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="top">
+      <div class="brand">一念知機 · DIVINATION HUB</div>
+      <a class="back" href="https://divinationhub.tw/">返回首頁</a>
+    </div>
+
+    <section class="card">
+      <div class="kicker">SUPPORT FREE TOOLS</div>
+      <h1>支持免費工具</h1>
+
+      <p class="lead">
+        一念知機希望讓基礎命理工具盡可能免費開放。<br>
+        如果這個網站曾經幫助到你，可以自由小額支持網站營運、伺服器、網域與持續開發。
+      </p>
+
+      <div class="notice">
+        <strong>這是自由支持，不是購買服務。</strong><br>
+        支持後不會解鎖任何付費功能，也不影響你原有的免費使用資格。
+      </div>
+
+      <div class="amount-title">選擇支持金額</div>
+
+      <div class="grid">
+        <a class="pay" href="https://payment-api.ezgocpu.workers.dev/pay?amount=50">NT$50</a>
+        <a class="pay" href="https://payment-api.ezgocpu.workers.dev/pay?amount=100">NT$100</a>
+        <a class="pay" href="https://payment-api.ezgocpu.workers.dev/pay?amount=199">NT$199</a>
+        <a class="pay" href="https://payment-api.ezgocpu.workers.dev/pay?amount=500">NT$500</a>
+        <a class="pay" href="https://payment-api.ezgocpu.workers.dev/pay?amount=1000">NT$1,000</a>
+        <a class="pay" href="https://payment-api.ezgocpu.workers.dev/pay?amount=2000">NT$2,000</a>
+      </div>
+
+      <p class="footer-note">
+        點選金額後，將前往藍新金流安全付款頁面。<br>
+        目前支援信用卡一次付清與 ATM 轉帳。
+      </p>
+
+      <div class="secure">
+        <span class="dot"></span>
+        SECURE PAYMENT · NEWEBPAY
+      </div>
+    </section>
+  </main>
+</body>
+</html>
