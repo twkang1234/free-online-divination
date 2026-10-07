@@ -938,6 +938,17 @@ html[data-theme="light"] .member-open,html[data-theme="light"] .yijing-access-ct
     </div>
   </div>
 
+  <div class="yijing-member-modal" id="yijingDeviceQuotaModal" aria-hidden="true">
+    <div class="yijing-member-card" role="dialog" aria-modal="true" aria-labelledby="yijingDeviceQuotaTitle">
+      <button class="yijing-member-close" id="yijingDeviceQuotaClose" type="button" aria-label="關閉">×</button>
+      <div class="yijing-member-kicker">DEVICE DAILY QUOTA</div>
+      <h3 id="yijingDeviceQuotaTitle">此裝置今日免費額度已用完</h3>
+      <p id="yijingDeviceQuotaText">這台裝置今天的免費額度已使用完畢。</p>
+      <div class="yijing-member-benefit" id="yijingDeviceQuotaMember"></div>
+      <div class="quota-note">免費額度依同一裝置共同計算，切換其他 Google 帳號不會重新增加次數。每日會自動補滿 3 次。</div>
+    </div>
+  </div>
+
   <div class="yijing-paid-modal" id="yijingPaidModal" aria-hidden="true">
     <div class="yijing-paid-card" role="dialog" aria-modal="true" aria-labelledby="yijingPaidTitle">
       <button class="yijing-paid-close" id="yijingPaidClose" type="button" aria-label="關閉">×</button>
@@ -1412,6 +1423,7 @@ function cardHTML(h, lines, label, movingLines=[]){
   const YIJING_LOCAL_MEMBER_KEY='divinationhub-yijing-local-member-preview';
   const YIJING_USAGE_KEY='divinationhub-yijing-daily-usage-v1';
   const YIJING_MEMBER_DEVICE_KEY='divinationhub-yijing-member-device-bound-v1';
+  const YIJING_LAST_MEMBER_KEY='divinationhub-yijing-last-member-v1';
   const MEMBER_API_BASE='https://member-api.ezgocpu.workers.dev';
   const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   let yijingGoogleInitialized=false, guestPolicyCache=null, memberPolicyCache=null;
@@ -1432,6 +1444,9 @@ function cardHTML(h, lines, label, movingLines=[]){
   function memberDeviceBound(){const v=safeRead(YIJING_MEMBER_DEVICE_KEY,null);return v===true||!!v?.bound}
   function bindMemberDevice(){if(memberDeviceBound())return;safeWrite(YIJING_MEMBER_DEVICE_KEY,{bound:true,firstBoundAt:new Date().toISOString()})}
   function memberDeviceLoginRequired(){return !isLogged()&&memberDeviceBound()}
+  function lastMemberProfile(){const v=safeRead(YIJING_LAST_MEMBER_KEY,null);return v&&typeof v==='object'?v:null}
+  function saveLastMemberProfile(p){if(!p)return;safeWrite(YIJING_LAST_MEMBER_KEY,{name:p.name||'會員',email:p.email||'',sub:p.sub||p.email||'',savedAt:new Date().toISOString()})}
+  function sameMember(a,b){if(!a||!b)return false;const ax=String(a.sub||a.email||''),bx=String(b.sub||b.email||'');return !!ax&&!!bx&&ax===bx}
   function hasFullPaidAccess(){return !!paidPreviewActive}
   function paidCredits(){return 0} // 正式版待串 payment-api；目前不假裝存在可用付費額度。
   function taiwanDateKey(){
@@ -1506,7 +1521,7 @@ function cardHTML(h, lines, label, movingLines=[]){
     const local=document.getElementById('yijingLocalLogin');
     if(location.protocol==='file:'){if(local)local.hidden=false;return;}
     if(!window.google?.accounts?.id){setTimeout(renderGoogleButton,250);return;}
-    if(!yijingGoogleInitialized){window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async response=>{const credential=response?.credential||'';if(!credential)return;setAuthToken(credential);await registerMember();memberLoginSucceeded();}});yijingGoogleInitialized=true;}
+    if(!yijingGoogleInitialized){window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async response=>{const credential=response?.credential||'';if(!credential)return;const previous=lastMemberProfile();setAuthToken(credential);await registerMember();memberLoginSucceeded(previous);}});yijingGoogleInitialized=true;}
     const mount=document.getElementById('yijingGoogleMount');if(mount&&mount.dataset.ready!=='1'){mount.dataset.ready='1';window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});}
   }
   function openPaidModal(reason=''){
@@ -1529,10 +1544,22 @@ function cardHTML(h, lines, label, movingLines=[]){
     updateMemberUI();modal?.classList.add('show');modal?.setAttribute('aria-hidden','false');if(!p)renderGoogleButton();
   }
   function closeMemberModal(){const modal=document.getElementById('yijingMemberModal');modal?.classList.remove('show');modal?.setAttribute('aria-hidden','true')}
-  function memberLoginSucceeded(){bindMemberDevice();updateMemberUI();closeMemberModal();refreshAccessUI()}
+  function openDeviceQuotaModal(previous,current){
+    const modal=document.getElementById('yijingDeviceQuotaModal'),txt=document.getElementById('yijingDeviceQuotaText'),member=document.getElementById('yijingDeviceQuotaMember');
+    const previousName=previous?.name||'先前登入的會員';
+    if(txt)txt.textContent=`這台裝置今天的 3 次免費額度已經使用完畢。你目前登入的是「${current?.name||'目前會員'}」。`;
+    if(member)member.innerHTML=`<strong>先前登入帳號：${esc(previousName)}</strong><br>此裝置今日免費額度已用完；更換 Google 帳號不會重新取得 3 次。`;
+    modal?.classList.add('show');modal?.setAttribute('aria-hidden','false');
+  }
+  function closeDeviceQuotaModal(){const modal=document.getElementById('yijingDeviceQuotaModal');modal?.classList.remove('show');modal?.setAttribute('aria-hidden','true')}
+  function memberLoginSucceeded(previous=null){
+    const current=authProfile();
+    bindMemberDevice();saveLastMemberProfile(current);updateMemberUI();closeMemberModal();refreshAccessUI();
+    if(previous&&!sameMember(previous,current)&&remainingUses()===0)setTimeout(()=>openDeviceQuotaModal(previous,current),120);
+  }
   function logoutMember(){setAuthToken('');safeWrite(YIJING_LOCAL_MEMBER_KEY,false);try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){};updateMemberUI();refreshAccessUI()}
   function updateMemberUI(){
-    const p=authProfile();if(p)bindMemberDevice();const bound=!p&&memberDeviceBound(),btn=document.getElementById('yijingMemberButton'),txt=document.getElementById('yijingMemberButtonText'),title=document.getElementById('yijingAccessTitle'),copy=document.getElementById('yijingAccessText'),cta=document.getElementById('yijingAccessLogin'),urgent=document.getElementById('yijingAccessUrgent'),benefit=document.getElementById('yijingMemberBenefit'),paidEntry=document.getElementById('yijingPaidEntry'),paidTitle=document.getElementById('yijingPaidEntryTitle'),paidText=document.getElementById('yijingPaidEntryText'),paidBalance=document.getElementById('yijingPaidBalance'),paidBtn=document.getElementById('yijingPaidEntryButton');
+    const p=authProfile();if(p){bindMemberDevice();saveLastMemberProfile(p)}const bound=!p&&memberDeviceBound(),btn=document.getElementById('yijingMemberButton'),txt=document.getElementById('yijingMemberButtonText'),title=document.getElementById('yijingAccessTitle'),copy=document.getElementById('yijingAccessText'),cta=document.getElementById('yijingAccessLogin'),urgent=document.getElementById('yijingAccessUrgent'),benefit=document.getElementById('yijingMemberBenefit'),paidEntry=document.getElementById('yijingPaidEntry'),paidTitle=document.getElementById('yijingPaidEntryTitle'),paidText=document.getElementById('yijingPaidEntryText'),paidBalance=document.getElementById('yijingPaidBalance'),paidBtn=document.getElementById('yijingPaidEntryButton');
     const rem=remainingUses(),full=hasFullPaidAccess();
     if(btn){btn.classList.toggle('logged',!!p)}if(txt)txt.textContent=p?p.name:(bound?'登入會員':'免費登入');
     if(title)title.textContent=full?'完整進階起卦預覽｜本次全部功能已開放':(p?'免費會員｜大部分限制已解除':(bound?'此裝置已使用過會員功能｜請登入':'未登入訪客｜每日輪替開放'));
@@ -2026,6 +2053,8 @@ function cardHTML(h, lines, label, movingLines=[]){
   document.getElementById('yijingAccessLogin')?.addEventListener('click',()=>openMemberModal());
   document.getElementById('yijingMemberClose')?.addEventListener('click',closeMemberModal);
   document.getElementById('yijingMemberModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closeMemberModal()});
+  document.getElementById('yijingDeviceQuotaClose')?.addEventListener('click',closeDeviceQuotaModal);
+  document.getElementById('yijingDeviceQuotaModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closeDeviceQuotaModal()});
   document.getElementById('yijingPaidEntryButton')?.addEventListener('click',()=>openPaidModal());
   document.getElementById('yijingPaidClose')?.addEventListener('click',closePaidModal);
   document.getElementById('yijingPaidModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closePaidModal()});
@@ -2033,7 +2062,7 @@ function cardHTML(h, lines, label, movingLines=[]){
   document.getElementById('yijingPaidLocalPreview')?.addEventListener('click',startPaidPreview);
   document.getElementById('yijingPaidPreviewStop')?.addEventListener('click',stopPaidPreview);
   document.getElementById('yijingMemberLogout')?.addEventListener('click',logoutMember);
-  document.getElementById('yijingLocalLogin')?.addEventListener('click',()=>{safeWrite(YIJING_LOCAL_MEMBER_KEY,true);memberLoginSucceeded()});
+  document.getElementById('yijingLocalLogin')?.addEventListener('click',()=>{const previous=lastMemberProfile();safeWrite(YIJING_LOCAL_MEMBER_KEY,true);memberLoginSucceeded(previous)});
   document.getElementById('yijingTopicGrid').addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b)return;if(b.dataset.accessLocked==='1'){openMemberModal(memberDeviceLoginRequired()?'這台瀏覽器已成功登入過會員，因此不再提供未登入訪客模式。請登入會員後繼續使用。':`「${topicBy(b.dataset.topic)?.name||'這個主題'}」今天未對未登入訪客開放；免費登入後 8 大主題全部開放。`);return;}state.topic=topicBy(b.dataset.topic);state.scenario=null;state.question=null;renderScenarios();showStep('scenario');});
   document.getElementById('yijingScenarioGrid').addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;renderQuestions();showStep('question');});
   document.getElementById('yijingQuestionGrid').addEventListener('click',e=>{const qbtn=e.target.closest('[data-question-index]');const custom=e.target.closest('[data-custom-question]');if(qbtn){if(qbtn.dataset.accessLocked==='1'){openMemberModal('這個固定問題今天未對未登入訪客開放；免費登入後此情境的所有固定問題全部開放。');return;}const qs=questionsFor(state.topic,state.scenario);state.question=qs[Number(qbtn.dataset.questionIndex)];state.custom=false;customGateConfirmed=false;renderReady();showStep('ready');}else if(custom){if(hasFullPaidAccess()){state.question='自訂問題｜AI 提示詞模式';state.custom=true;customGateConfirmed=false;renderReady();showStep('ready');return;}if(isLogged())openPaidModal('自訂問題屬完整進階功能；未來使用 1 個付費額度即可在本次完整解鎖自訂題、全部起卦方式與 AI 提示詞。');else openMemberModal('自訂問題屬完整進階功能；請先免費登入。');return;}});
