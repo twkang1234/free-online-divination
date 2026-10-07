@@ -575,7 +575,7 @@
     .tarot-access-mini{min-height:18px;margin:0 0 10px;text-align:right;color:#6f6477;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.04em}.tarot-access-mini:empty{display:none}
     .tarot-quota-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;margin:0 0 16px;padding:15px 17px;border:1px solid rgba(231,94,215,.16);border-radius:16px;background:linear-gradient(145deg,rgba(231,94,215,.035),rgba(154,114,255,.025))}
     .tarot-quota-panel[hidden]{display:none!important}.tarot-quota-copy b{display:block;color:#eadfea;font-size:.82rem}.tarot-quota-copy span{display:block;margin-top:4px;color:#796e80;font-size:.64rem;line-height:1.6}.tarot-quota-count{text-align:right}.tarot-quota-count small{display:block;color:#827488;font-family:var(--font-mono);font-size:.56rem;letter-spacing:.08em}.tarot-quota-count strong{display:block;margin-top:2px;color:#efd58f;font-size:1.34rem;line-height:1}.tarot-quota-panel.empty{border-color:rgba(232,198,122,.25);background:linear-gradient(145deg,rgba(232,198,122,.055),rgba(231,94,215,.02))}
-    .choice-card.guest-locked,.draw-mode-card.guest-locked{opacity:.42;filter:saturate(.62);cursor:pointer;transform:none!important}.choice-card.guest-locked:hover,.draw-mode-card.guest-locked:hover{opacity:.58;transform:translateY(-1px)!important;border-color:rgba(231,94,215,.28);box-shadow:0 0 22px rgba(231,94,215,.055)}
+    .choice-card.guest-locked,.draw-mode-card.guest-locked,.question-card.member-locked{opacity:.42;filter:saturate(.62);cursor:pointer;transform:none!important}.choice-card.guest-locked:hover,.draw-mode-card.guest-locked:hover,.question-card.member-locked:hover{opacity:.58;transform:translateY(-1px)!important;border-color:rgba(231,94,215,.28);box-shadow:0 0 22px rgba(231,94,215,.055)}
     .guest-lock-badge{position:absolute;left:14px;top:13px;z-index:3;padding:4px 7px;border:1px solid rgba(232,198,122,.18);border-radius:999px;background:rgba(232,198,122,.055);color:#b9a36e;font-family:var(--font-mono);font-size:.50rem;letter-spacing:.06em}
     .choice-card.guest-locked .choice-count{opacity:.45}.draw-mode-card.guest-locked .draw-mode-no{opacity:.50}
     .guest-feature-disabled{opacity:.42!important;cursor:not-allowed!important;filter:saturate(.6)}
@@ -2193,7 +2193,7 @@
   const MEMBER_API_BASE='https://member-api.ezgocpu.workers.dev';
   const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   const TAROT_DAILY_LIMIT=3, SAME_Q_MS=72*60*60*1000;
-  let tarotGoogleInitialized=false, guestNoticeAction=null, guestPolicyCache=null;
+  let tarotGoogleInitialized=false, guestNoticeAction=null, guestPolicyCache=null, memberPolicyCache=null;
 
   function safeRead(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(_){return fallback}}
   function safeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}}
@@ -2216,6 +2216,18 @@
     const reader=dailyPick(['b','c','d'],1,'tarot-reader-open')[0];
     guestPolicyCache={date:d,topics:new Set([hot,...other]),drawModes:new Set(drawModes),reader};
     return guestPolicyCache;
+  }
+  function taiwanDayIndex(){
+    const [y,m,d]=taiwanDateKey().split('-').map(Number);
+    return Math.floor(Date.UTC(y,m-1,d)/86400000);
+  }
+  function memberPolicy(){
+    const d=taiwanDateKey();
+    if(memberPolicyCache?.date===d)return memberPolicyCache;
+    const drawModes=dailyPick(['fan','scatter','flow','study','stop'],3,'tarot-member-draw-open');
+    const followupOpen=(taiwanDayIndex()%2===0);
+    memberPolicyCache={date:d,drawModes:new Set(drawModes),followupOpen};
+    return memberPolicyCache;
   }
   function usage(){
     const raw=safeRead(TAROT_USAGE_KEY,{});
@@ -2240,7 +2252,16 @@
   function isLogged(){return !!authProfile()}
   function guestReaderKey(){return guestPolicy().reader}
   function isTopicAllowed(id){return isLogged()||guestPolicy().topics.has(id)}
-  function isDrawModeAllowed(mode){if(isLogged())return true;if(mode==='physical')return false;return guestPolicy().drawModes.has(mode)}
+  function isDrawModeAllowed(mode){
+    if(isLogged()){
+      if(mode==='physical')return false;
+      return memberPolicy().drawModes.has(mode);
+    }
+    if(mode==='physical')return false;
+    return guestPolicy().drawModes.has(mode);
+  }
+  function isMemberFollowupAllowed(){return isLogged()&&memberPolicy().followupOpen}
+
   function isReaderAllowed(key){if(isLogged()||state.accessTier==='member')return true;return key==='a'||key===guestReaderKey()}
   function canAccessAllReaders(){return isLogged()||state.accessTier==='member'}
   function remaining(ms){const total=Math.max(0,Math.ceil(ms/60000));const h=Math.floor(total/60),m=total%60;return h?`${h} 小時${m?` ${m} 分鐘`:''}`:`${m} 分鐘`}
@@ -2307,6 +2328,21 @@
     }else if(kind==='topic'){
       title.textContent='這個主題今天未開放';confirm.textContent='返回今日可用主題';
       copy.innerHTML='<p>未登入訪客每天開放 4 / 8 個主題：感情與工作二選一，再從其餘六類輪替開放三類。</p>';
+    }else if(kind==='advanced'){
+      kicker.textContent='FULL ACCESS';
+      title.textContent='這項功能屬完整進階';
+      confirm.textContent='知道了';
+      copy.innerHTML='<p>免費會員目前仍無法使用這項功能。</p><div class="gate-highlight"><strong>完整進階功能</strong><br>正式付費額度與解鎖方式之後再依網站規則開放。</div>';
+    }else if(kind==='memberDraw'){
+      kicker.textContent='FREE MEMBER · DAILY ROTATION';
+      title.textContent='這種抽牌方式今天未開放';
+      confirm.textContent='知道了';
+      copy.innerHTML='<p>免費會員每天會從 5 種一般抽牌方式中輪替開放 3 種，另外 2 種隔日再輪替。</p>';
+    }else if(kind==='followupOff'){
+      kicker.textContent='FREE MEMBER · FOLLOW-UP';
+      title.textContent='今天的一次追問未開放';
+      confirm.textContent='知道了';
+      copy.innerHTML='<p>免費會員的一次追問採每日輪替：一天開放、一天暫停，隔天再切換。</p>';
     }else{
       title.textContent='此功能目前未對未登入訪客開放';confirm.textContent='知道了';
       copy.innerHTML='<p>請先使用今天開放的免費功能。</p>';
@@ -2344,7 +2380,14 @@
   }
   function renderScenarios(){const t=state.topic;$('scenarioTitle').textContent=`${t.name}｜你目前處在哪個階段？`;els.scenario.innerHTML=t.scenarios.map((s,i)=>`<button class="choice-card" data-scenario="${s[0]}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><b>${s[1]}</b><small>${s[2]}</small></button>`).join('');}
   async function questions(){const data=await tarotAPI('/questions',{topicId:state.topic.id,scenarioId:state.scenario.id});return data.questions||[];}
-  async function renderQuestions(){const qs=await questions();state.questions=qs;els.qctx.textContent=`${state.topic.name} → ${state.scenario.name}｜請選一個最想看清楚的方向。`;els.question.innerHTML=qs.map((q,i)=>`<button class="question-card" data-question="${q.id}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b></button>`).join('');}
+  async function renderQuestions(){
+    const qs=await questions();
+    state.questions=qs;
+    els.qctx.textContent=`${state.topic.name} → ${state.scenario.name}｜請選一個最想看清楚的方向。`;
+    const fixed=qs.map((q,i)=>`<button class="question-card" data-question="${q.id}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b></button>`).join('');
+    const custom=`<button class="question-card member-locked" data-custom-question="1" aria-disabled="true"><span>OTHER · AI PROMPT</span><b>自訂問題｜抽牌後產生 AI 提示詞</b><span class="guest-lock-badge">完整進階</span></button>`;
+    els.question.innerHTML=fixed+custom;
+  }
   function renderReady(){const q=state.question;$('readyCard').innerHTML=`<div class="crumb">${state.topic.name} → ${state.scenario.name}</div><h4>${esc(q.text)}</h4><p><b>${q.spread.name}</b><br>${q.spread.desc}<br><br>牌位：${q.spread.positions.join('／')}</p>`;}
 
   const RITUAL_DECK=[
@@ -2396,7 +2439,8 @@
       if(!allowed){
         const badge=document.createElement('span');
         badge.className='guest-lock-badge';
-        badge.textContent='免費登入';
+        if(isLogged()) badge.textContent=(mode==='physical'?'完整進階':'今日未開放');
+        else badge.textContent='免費登入';
         btn.appendChild(badge);
       }
     });
@@ -2480,7 +2524,11 @@
   async function beginDrawMode(mode){
     // 一局只能選一次抽牌方式；選定後不能因結果不喜歡而換另一種。
     if(state.drawMode && state.drawMode!==mode)return;
-    if(!isDrawModeAllowed(mode)){openMemberModal();return;}
+    if(!isDrawModeAllowed(mode)){
+      if(!isLogged()){openMemberModal();return;}
+      if(mode==='physical'){openGuestNotice('advanced');return;}
+      openGuestNotice('memberDraw');return;
+    }
 
     clearRitualTimers();
     state.drawMode=mode;
@@ -3003,10 +3051,11 @@
         btn.setAttribute('aria-disabled','true');
         btn.textContent='免費登入後進行一次追問 ↓';
       }else{
+        const followupOpen=isMemberFollowupAllowed();
         btn.disabled=false;
-        btn.classList.remove('guest-feature-disabled');
-        btn.setAttribute('aria-disabled','false');
-        btn.textContent='進行一次追問 ↓';
+        btn.classList.toggle('guest-feature-disabled',!followupOpen);
+        btn.setAttribute('aria-disabled',followupOpen?'false':'true');
+        btn.textContent=followupOpen?'進行一次追問 ↓':'今日追問未開放｜明日輪替';
       }
     });
   }
@@ -3044,6 +3093,7 @@
   
   async function renderFollowups(){
     if(!isLogged()){openMemberModal();return;}
+    if(!isMemberFollowupAllowed()){openGuestNotice('followupOff');return;}
     try{
       const pack=await tarotAPI('/followups',readingPayload());state.followupOptions=pack.options||[];
       els.follow.innerHTML=`<div class="phase-label"><span>02 · FOLLOW-UP</span><b>一次追問</b></div><h4>你現在最想再確認哪一件事？</h4><div class="followup-options">${state.followupOptions.map((o,i)=>`<button class="followup-option" data-followup="${i}">${esc(o.text)}<br><small>${o.cardCount} 張牌</small></button>`).join('')}</div>`;
@@ -3052,6 +3102,7 @@
   }
   async function followup(index){
     if(!isLogged()){openMemberModal();return;}
+    if(!isMemberFollowupAllowed()){openGuestNotice('followupOff');return;}
     if(state.followupUsed)return;
     try{
       state.followupUsed=true;els.follow.hidden=true;
@@ -3083,13 +3134,22 @@
   
   els.topic.addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b)return;if(!isTopicAllowed(b.dataset.topic)){openMemberModal();return;}state.topic=topicBy(b.dataset.topic);state.scenario=state.question=null;renderScenarios();showStep('scenario');});
   els.scenario.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;enterQuestionStage();});
-  els.question.addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;state.question=state.questions.find(q=>q.id===b.dataset.question);renderReady();showStep('ready');});
+  els.question.addEventListener('click',e=>{
+    const custom=e.target.closest('[data-custom-question]');
+    if(custom){openGuestNotice('advanced');return;}
+    const b=e.target.closest('[data-question]');if(!b)return;
+    state.question=state.questions.find(q=>q.id===b.dataset.question);renderReady();showStep('ready');
+  });
   document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.back)));
   $('startReading').addEventListener('click',requestStartReading);$('revealAllBtn').addEventListener('click',revealAll);
   $('drawModeGrid').addEventListener('click',e=>{
     if(state.drawMode)return;
     const b=e.target.closest('[data-draw-mode]');if(!b)return;
-    if(!isDrawModeAllowed(b.dataset.drawMode)){openMemberModal();return;}
+    if(!isDrawModeAllowed(b.dataset.drawMode)){
+      if(!isLogged()){openMemberModal();return;}
+      if(b.dataset.drawMode==='physical'){openGuestNotice('advanced');return;}
+      openGuestNotice('memberDraw');return;
+    }
     beginDrawMode(b.dataset.drawMode);
   });
   els.follow.addEventListener('click',e=>{const b=e.target.closest('[data-followup]');if(b)followup(Number(b.dataset.followup));});
@@ -3101,7 +3161,11 @@
     const go=e.target.closest('[data-reader-go]');if(go){activateReader(go.dataset.readerGo,true);return;}
     const next=e.target.closest('[data-reader-next]');if(next&&!next.disabled){activateReader(next.dataset.readerNext,true);return;}
     const scrollConsensus=e.target.closest('[data-scroll-consensus]');if(scrollConsensus){const c=els.analysis.querySelector('[data-consensus-panel]');if(c&&!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});return;}
-    const followGate=e.target.closest('[data-open-followup]');if(followGate){if(!isLogged()){openMemberModal();return;}if((state.readersViewed?.size||0)>=4)renderFollowups();}
+    const followGate=e.target.closest('[data-open-followup]');if(followGate){
+      if(!isLogged()){openMemberModal();return;}
+      if(!isMemberFollowupAllowed()){openGuestNotice('followupOff');return;}
+      if((state.readersViewed?.size||0)>=4)renderFollowups();
+    }
   });
   $('tarotMemberButton')?.addEventListener('click',()=>openMemberModal());
   $('tarotMemberClose')?.addEventListener('click',closeMemberModal);
