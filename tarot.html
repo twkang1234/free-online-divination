@@ -558,7 +558,7 @@
     .reader-bottom-nav-head{margin-bottom:9px}.reader-bottom-nav-head b{font-size:.72rem;color:#bdb2c1}.reader-bottom-nav-head span{font-family:var(--font-mono);color:rgba(var(--reader-accent),.82)}
     .reader-bottom-step{min-height:50px}.reader-bottom-step[data-reader-go="a"]{--step-accent:231,94,215}.reader-bottom-step[data-reader-go="b"]{--step-accent:132,126,255}.reader-bottom-step[data-reader-go="c"]{--step-accent:91,190,197}.reader-bottom-step[data-reader-go="d"]{--step-accent:218,164,88}.reader-bottom-step.current,.reader-bottom-step.done:not(.current){border-color:rgba(var(--step-accent),.34);background:rgba(var(--step-accent),.055)}.reader-bottom-step.current b{color:rgb(var(--step-accent))}
     .reader-next-cta{min-height:48px;font-size:.76rem;border-color:rgba(var(--reader-accent),.33);background:linear-gradient(90deg,rgba(var(--reader-accent),.11),rgba(var(--reader-accent),.04));color:#f2eaf3}.reader-finish-cta{border-color:rgba(218,164,88,.32);background:linear-gradient(90deg,rgba(218,164,88,.09),rgba(231,94,215,.045))}
-    .consensus-panel{max-width:1040px;margin:26px auto 0;padding:19px;border-color:rgba(232,198,122,.18);background:radial-gradient(circle at 10% 0%,rgba(232,198,122,.055),transparent 42%),linear-gradient(145deg,rgba(18,15,17,.82),rgba(9,8,15,.88));scroll-margin-top:86px}.phase-label{display:flex;align-items:center;gap:10px;margin-bottom:10px}.phase-label span{font-family:var(--font-mono);font-size:.56rem;letter-spacing:.1em;color:#9b895f}.phase-label b{font-size:.78rem;color:#e5d6b0}.consensus-head{display:none}.consensus-item{padding:12px 13px}.consensus-item p{font-size:.73rem;line-height:1.75;color:#afa2ae}.consensus-foot{font-family:var(--font-mono);text-align:center;color:#8f8068}.phase-next-cta{width:100%;min-height:48px;margin-top:14px;border:1px solid rgba(232,198,122,.28);border-radius:13px;background:linear-gradient(90deg,rgba(232,198,122,.08),rgba(231,94,215,.045));color:#eee0c0;font-weight:800}
+    .consensus-panel{max-width:1040px;margin:26px auto 0;padding:19px;border-color:rgba(232,198,122,.18);background:radial-gradient(circle at 10% 0%,rgba(232,198,122,.055),transparent 42%),linear-gradient(145deg,rgba(18,15,17,.82),rgba(9,8,15,.88));scroll-margin-top:86px}.phase-label{display:flex;align-items:center;gap:10px;margin-bottom:10px}.phase-label span{font-family:var(--font-mono);font-size:.56rem;letter-spacing:.1em;color:#9b895f}.phase-label b{font-size:.78rem;color:#e5d6b0}.consensus-head{display:none}.consensus-item{padding:12px 13px}.consensus-item p{font-size:.73rem;line-height:1.75;color:#afa2ae}.consensus-foot{font-family:var(--font-mono);text-align:center;color:#8f8068}.phase-next-cta{width:100%;min-height:48px;margin-top:14px;border:1px solid rgba(232,198,122,.28);border-radius:13px;background:linear-gradient(90deg,rgba(232,198,122,.08),rgba(231,94,215,.045));color:#eee0c0;font-weight:800}.consensus-panel .reader-lock-gate{margin-top:16px}.consensus-panel [data-open-followup][aria-disabled="true"]{cursor:pointer;border-color:rgba(231,94,215,.42);background:linear-gradient(90deg,rgba(231,94,215,.13),rgba(154,114,255,.09));color:#f5dff3;box-shadow:0 0 24px rgba(231,94,215,.06)}
     .guardrail-details{max-width:1040px;margin:12px auto 0;padding:0 4px;color:#766b7d;font-size:.64rem}.guardrail-details summary{cursor:pointer;color:#817486}.guardrail-details p{margin:8px 0 0;line-height:1.75}
     .followup-panel,.followup-result{max-width:1100px;margin:22px auto 0;padding:20px;border-color:rgba(132,126,255,.14);background:radial-gradient(circle at 8% 0%,rgba(132,126,255,.045),transparent 38%),rgba(255,255,255,.012)}
     .followup-panel h4,.followup-result h4{font-size:1rem;margin-bottom:14px}.followup-panel>p,.followup-result>p{display:none}.followup-option{min-height:68px;border-color:rgba(132,126,255,.16);background:rgba(132,126,255,.035);font-size:.74rem}.followup-option:hover{border-color:rgba(132,126,255,.34);background:rgba(132,126,255,.07)}
@@ -2880,8 +2880,11 @@
     }).join('');
     let nextButton='';
     if(!allOpen){
-      if(key==='a')nextButton=`<button type="button" class="reader-next-cta" data-reader-next="${todayGuest}">今日另一位開放老師｜${labels[todayGuest][0]} ↓</button>`;
-      else nextButton=`<div class="reader-lock-gate"><div><b>未登入訪客今天開放 2 / 4 位老師</b><span>A 首席固定開放；B／C／D 每天輪替開放 1 位。今天已開放 ${labels[todayGuest][0]}。</span></div><button type="button" class="reader-login-cta" data-member-login>免費登入</button></div>`;
+      if(key==='a'){
+        nextButton=`<button type="button" class="reader-next-cta" data-reader-next="${todayGuest}">今日另一位開放老師｜${labels[todayGuest][0]} ↓</button>`;
+      }else{
+        nextButton=`<button type="button" class="reader-next-cta reader-finish-cta" data-scroll-consensus>查看四鏡會診結論 ↓</button>`;
+      }
     }else{
       const idx=order.indexOf(key),next=order[idx+1];
       if(next)nextButton=`<button type="button" class="reader-next-cta" data-reader-next="${next}">下一篇｜${labels[next][0]} ↓</button>`;
@@ -2952,13 +2955,40 @@
         btn.setAttribute('aria-disabled',btn.disabled?'true':'false');
       }
     });
-    const consensus=els.analysis.querySelector('[data-consensus-panel]');if(consensus)consensus.hidden=!allOpen||n<4;
+    const consensus=els.analysis.querySelector('[data-consensus-panel]');
+    if(consensus){
+      const guestReady=!allOpen&&n>=2;
+      const memberReady=allOpen&&n>=4;
+      consensus.hidden=!(guestReady||memberReady);
+
+      // 未登入訪客可以看四鏡會診結論，但追問要登入。
+      let guestNote=consensus.querySelector('[data-guest-consensus-note]');
+      if(!allOpen&&guestReady){
+        if(!guestNote){
+          guestNote=document.createElement('div');
+          guestNote.setAttribute('data-guest-consensus-note','');
+          guestNote.className='reader-lock-gate';
+          guestNote.innerHTML='<div><b>本次免費解讀到這裡</b><span>你已看完今天開放的 2 位老師與四鏡會診結論。若要進行一次追問，請免費登入後繼續。</span></div><button type="button" class="reader-login-cta" data-member-login>免費登入繼續追問</button>';
+          const followBtn=consensus.querySelector('[data-open-followup]');
+          if(followBtn)consensus.insertBefore(guestNote,followBtn);
+          else consensus.appendChild(guestNote);
+        }
+      }else if(guestNote){
+        guestNote.remove();
+      }
+    }
+
     els.analysis.querySelectorAll('[data-open-followup]').forEach(btn=>{
       if(!isLogged()){
         btn.disabled=false;
-        btn.classList.add('guest-feature-disabled');
+        btn.classList.remove('guest-feature-disabled');
         btn.setAttribute('aria-disabled','true');
-        btn.textContent='一次追問｜免費登入後使用';
+        btn.textContent='免費登入後進行一次追問 ↓';
+      }else{
+        btn.disabled=false;
+        btn.classList.remove('guest-feature-disabled');
+        btn.setAttribute('aria-disabled','false');
+        btn.textContent='進行一次追問 ↓';
       }
     });
   }
