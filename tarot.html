@@ -1096,6 +1096,577 @@
     html[data-theme="light"] .reader-next-cta,
     html[data-theme="light"] .reader-login-cta{color:#251428}
 
+
+    /* ===== 六種塔羅抽牌方式：正式頁面樣式 ===== */
+    .draw-mode-shell{margin:16px 0 18px;padding:18px;border:1px solid rgba(175,131,255,.15);border-radius:20px;background:rgba(7,8,17,.64)}
+    .draw-mode-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:14px}
+    .draw-mode-head h4{margin:0 0 4px;font-size:1.05rem;color:#eee7f3}
+    .draw-mode-head p{margin:0;color:#7f7489;font-size:.72rem;line-height:1.7}
+    .draw-mode-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .draw-mode-card{position:relative;min-height:118px;padding:15px;border:1px solid rgba(255,255,255,.075);border-radius:15px;background:linear-gradient(145deg,rgba(17,13,28,.82),rgba(7,8,15,.86));color:#eee8f2;text-align:left;overflow:hidden;transition:.2s ease}
+    .draw-mode-card:hover{transform:translateY(-2px);border-color:rgba(231,94,215,.28)}
+    .draw-mode-card.active{border-color:rgba(231,94,215,.48);box-shadow:0 0 0 1px rgba(231,94,215,.08),0 15px 35px rgba(0,0,0,.20)}
+    .draw-mode-no{font-family:var(--font-mono);font-size:.54rem;letter-spacing:.12em;color:#c982bd}
+    .draw-mode-card b{display:block;margin:9px 0 5px;font-size:.86rem}
+    .draw-mode-card small{display:block;color:#786f82;font-size:.64rem;line-height:1.55}
+    .draw-mode-card::after{content:"";position:absolute;right:-26px;bottom:-32px;width:105px;height:105px;border-radius:50%;background:radial-gradient(circle,rgba(154,114,255,.10),transparent 70%)}
+
+    .ritual-host{position:relative;margin-bottom:18px;padding:18px;border:1px solid rgba(255,255,255,.075);border-radius:20px;background:radial-gradient(circle 520px at 50% 40%,rgba(143,107,255,.05),transparent 68%),rgba(5,8,17,.58);overflow:hidden}
+    .ritual-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:10px}
+    .ritual-top h4{margin:0 0 4px;font-size:1rem}.ritual-top p{margin:0;color:#7f7489;font-size:.68rem;line-height:1.65}
+    .ritual-count{flex:0 0 auto;padding:6px 10px;border:1px solid rgba(154,114,255,.18);border-radius:999px;color:#bba9d4;font-family:var(--font-mono);font-size:.58rem}
+    .ritual-board{position:relative;min-height:520px;border:1px solid rgba(255,255,255,.055);border-radius:18px;background:radial-gradient(circle at 50% 55%,rgba(143,107,255,.055),transparent 45%),rgba(4,6,13,.68);overflow:hidden}
+    .ritual-hint{position:absolute;z-index:20;left:50%;top:14px;transform:translateX(-50%);padding:8px 12px;border:1px solid rgba(154,114,255,.19);border-radius:999px;background:rgba(7,8,16,.82);color:#a99cb5;font-size:.62rem;white-space:nowrap}
+    .ritual-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .ritual-actions button{min-height:40px;padding:8px 14px}
+    .ritual-card{position:absolute;width:72px;height:116px;border-radius:10px;border:1px solid rgba(191,169,240,.30);background:radial-gradient(circle at center,rgba(224,36,195,.14),transparent 25%),repeating-radial-gradient(circle at center,transparent 0 13px,rgba(143,107,255,.07) 14px 15px),linear-gradient(145deg,#15112a,#090b18 58%,#140b1d);box-shadow:0 15px 30px rgba(0,0,0,.34);cursor:pointer;transition:transform .48s cubic-bezier(.16,1,.3,1),left .42s ease,top .42s ease,opacity .2s,filter .2s;display:grid;place-items:center;padding:0}
+    .ritual-card::before{content:"";position:absolute;inset:7px;border:1px solid rgba(232,150,219,.15);border-radius:7px}
+    .ritual-card::after{content:"✺";position:relative;z-index:2;color:#d892cf;font-size:1.2rem}
+    .ritual-card:hover{filter:brightness(1.18);z-index:500!important}
+    .ritual-card.chosen{outline:2px solid rgba(247,194,238,.92);box-shadow:0 0 0 5px rgba(231,94,215,.09),0 20px 40px rgba(0,0,0,.44)}
+    .ritual-card.faded{opacity:.28;pointer-events:none}
+    .ritual-slots{position:absolute;z-index:25;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:10px}
+    .ritual-slot{width:66px;height:104px;border:1px dashed rgba(154,114,255,.30);border-radius:9px;background:rgba(5,6,14,.65);display:grid;place-items:center;color:#625a72;font-family:var(--font-mono);font-size:.58rem}
+    .ritual-slot.filled{border-style:solid;border-color:rgba(231,94,215,.42);color:#cba7ca;background:rgba(38,15,39,.60)}
+    .ritual-fan-orbit{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);width:72%;height:265px;border:1px solid rgba(154,114,255,.055);border-radius:50%}
+    .ritual-scatter-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 20% 30%,rgba(231,94,215,.05),transparent 20%),radial-gradient(circle at 78% 60%,rgba(143,107,255,.055),transparent 24%)}
+    .ritual-flow-lane{position:absolute;left:0;right:0;height:112px;overflow:hidden}.ritual-flow-lane[data-lane="0"]{top:102px}.ritual-flow-lane[data-lane="1"]{top:216px}.ritual-flow-lane[data-lane="2"]{top:330px}
+    .ritual-flow-line{position:absolute;left:0;right:0;top:50%;height:1px;background:linear-gradient(90deg,transparent,rgba(154,114,255,.26),transparent)}
+    .ritual-flow-lane .ritual-card{top:50%;margin-top:-58px;animation:ritualFlow var(--flowdur) linear forwards}
+    @keyframes ritualFlow{from{transform:translateX(var(--from)) rotate(var(--rot))}to{transform:translateX(var(--to)) rotate(var(--rot))}}
+
+    .ritual-stop-wrap{min-height:450px;display:grid;place-items:center;text-align:center;padding:50px 18px 120px}
+    .ritual-stop-label{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.16em;color:#9b83aa}
+    .ritual-stop-number{font-size:clamp(4.2rem,9vw,7.4rem);font-weight:900;line-height:1;color:#e7a0dc;margin-top:8px}
+    .ritual-stop-name{font-size:clamp(1.5rem,3vw,2.4rem);font-weight:850;margin-top:8px}
+    .ritual-stop-orientation{margin-top:6px;color:#d8b45e;font-weight:750;font-size:.72rem}
+
+    .ritual-study-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-height:455px;overflow:auto;padding:4px}
+    .ritual-study-card{min-height:76px;padding:9px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.018);color:#dcd4e2;text-align:left}
+    .ritual-study-card:hover,.ritual-study-card.active{border-color:rgba(231,94,215,.32);background:rgba(231,94,215,.035)}
+    .ritual-study-card span{display:block;color:#8e7793;font-family:var(--font-mono);font-size:.52rem}.ritual-study-card b{display:block;margin-top:6px;font-size:.76rem}
+    .ritual-study-picked{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.ritual-study-picked span{padding:6px 9px;border:1px solid rgba(154,114,255,.16);border-radius:999px;color:#bbaec2;font-size:.62rem}
+    .ritual-study-output{margin-top:12px;padding:14px;border:1px solid rgba(255,255,255,.065);border-radius:13px;color:#9f94a5;font-size:.72rem;line-height:1.85;background:rgba(255,255,255,.015)}
+
+    .ritual-physical-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .ritual-physical-card{padding:14px;border:1px solid rgba(255,255,255,.07);border-radius:14px;background:rgba(255,255,255,.018)}
+    .ritual-physical-card b{display:block;margin-bottom:10px;font-size:.82rem}.ritual-physical-card label{display:block;margin:8px 0 4px;color:#84798c;font-size:.61rem}
+    .ritual-physical-card select{width:100%;min-height:40px;padding:7px 9px;border:1px solid rgba(154,114,255,.20);border-radius:9px;background:#0d0f1c;color:#ede9f0;color-scheme:dark}
+    .ritual-physical-result{margin-top:12px;padding:14px;border:1px solid rgba(255,255,255,.065);border-radius:13px;color:#9f94a5;font-size:.72rem;line-height:1.85;background:rgba(255,255,255,.015)}
+
+    .ritual-result-grid{display:grid;grid-template-columns:repeat(var(--result-count,3),minmax(130px,1fr));gap:13px;width:min(100%,1080px);margin:0 auto}
+    .ritual-result-slot{text-align:center}.ritual-result-pos{min-height:30px;margin-bottom:8px;color:#9d91ae;font-family:var(--font-mono);font-size:.62rem}
+    .ritual-result-card{position:relative;width:min(100%,185px);aspect-ratio:2/3.2;margin:0 auto;border:1px solid rgba(255,255,255,.14);border-radius:15px;overflow:hidden;background:linear-gradient(180deg,#17172b,#0b0d18);box-shadow:0 18px 45px rgba(0,0,0,.40)}
+    .ritual-result-art{position:absolute;inset:10px 10px 42px;border-radius:9px;overflow:hidden;border:1px solid rgba(232,198,122,.22);background:#22182b}.ritual-result-art svg{width:100%;height:100%;display:block}
+    .ritual-result-body{position:absolute;inset:0;transition:transform .35s}.ritual-result-body.reversed{transform:rotate(180deg)}
+    .ritual-result-name{position:absolute;left:8px;right:8px;bottom:21px;font-weight:850;font-size:.80rem}.ritual-result-ori{position:absolute;left:8px;right:8px;bottom:6px;color:#d8b35f;font-size:.56rem;font-weight:750}
+    .ritual-mode-back{border:0;background:none;color:#8e7c98;font-size:.66rem;padding:5px 0;min-height:auto!important}
+
+    html[data-theme="light"] .draw-mode-shell,
+    html[data-theme="light"] .ritual-host{background:rgba(255,252,255,.86);border-color:rgba(116,76,136,.16)}
+    html[data-theme="light"] .draw-mode-card,
+    html[data-theme="light"] .ritual-study-card,
+    html[data-theme="light"] .ritual-physical-card{background:linear-gradient(145deg,#fff,#f8f2fa);color:#382e3d;border-color:rgba(116,76,136,.15)}
+    html[data-theme="light"] .draw-mode-head h4,
+    html[data-theme="light"] .ritual-top h4{color:#352a3a}
+    html[data-theme="light"] .draw-mode-head p,
+    html[data-theme="light"] .ritual-top p,
+    html[data-theme="light"] .draw-mode-card small{color:#736878}
+    html[data-theme="light"] .ritual-board{background:radial-gradient(circle at 50% 55%,rgba(143,107,255,.06),transparent 45%),#fbf8fd}
+    html[data-theme="light"] .ritual-hint{background:rgba(255,255,255,.9);color:#6e6077}
+    html[data-theme="light"] .ritual-slot{background:rgba(255,255,255,.75)}
+
+    @media(max-width:900px){.draw-mode-grid{grid-template-columns:repeat(2,1fr)}.ritual-study-grid{grid-template-columns:repeat(4,1fr)}.ritual-result-grid{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+    @media(max-width:650px){.draw-mode-grid{grid-template-columns:1fr}.ritual-board{min-height:590px}.ritual-physical-grid{grid-template-columns:1fr}.ritual-study-grid{grid-template-columns:repeat(3,1fr)}.ritual-result-grid{grid-template-columns:1fr}.ritual-result-card{width:170px}.ritual-hint{white-space:normal;width:88%;text-align:center}}
+
+
+    /* ===== 修正：研讀確認、亂數停牌圖像、實體牌下一步 ===== */
+    .ritual-stop-preview{
+      position:relative;width:145px;aspect-ratio:2/3.2;margin:14px auto 8px;
+      border:1px solid rgba(255,255,255,.14);border-radius:14px;overflow:hidden;
+      background:linear-gradient(180deg,#17172b,#0b0d18);box-shadow:0 18px 44px rgba(0,0,0,.38)
+    }
+    .ritual-stop-preview .ritual-result-body{position:absolute;inset:0}
+    .ritual-stop-preview .ritual-result-art{inset:9px 9px 36px}
+    .ritual-stop-preview .ritual-result-name{font-size:.72rem;bottom:18px}
+    .ritual-stop-preview .ritual-result-ori{font-size:.50rem;bottom:5px}
+    .ritual-stop-picked{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .ritual-stop-picked-card{
+      position:relative;width:78px;aspect-ratio:2/3.2;border:1px solid rgba(231,94,215,.28);
+      border-radius:10px;overflow:hidden;background:#0d0e18;box-shadow:0 10px 25px rgba(0,0,0,.28)
+    }
+    .ritual-stop-picked-card .ritual-result-art{inset:5px 5px 24px;border-radius:6px}
+    .ritual-stop-picked-card .ritual-result-name{font-size:.48rem;bottom:11px}
+    .ritual-stop-picked-card .ritual-result-ori{font-size:.40rem;bottom:2px}
+    .ritual-study-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+    .ritual-study-confirmed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+    .ritual-study-confirmed .ritual-result-card{width:min(100%,160px)}
+    .ritual-next-note{margin-top:12px;padding:12px 14px;border:1px solid rgba(231,94,215,.12);border-radius:12px;background:rgba(231,94,215,.025);color:#9d90a5;font-size:.68rem;line-height:1.75}
+    @media(max-width:650px){.ritual-study-confirmed{grid-template-columns:1fr}.ritual-stop-preview{width:132px}}
+
+
+    /* ===== 抽牌進度框統一：四種抽牌方式都使用相同勾勾框 ===== */
+    .ritual-slots{
+      position:absolute;z-index:25;left:50%;bottom:14px;transform:translateX(-50%);
+      display:flex;gap:10px;align-items:center;justify-content:center
+    }
+    .ritual-slot{
+      width:66px;height:104px;border:1px solid rgba(231,94,215,.30);border-radius:9px;
+      background:rgba(36,11,34,.48);display:grid;place-items:center;
+      color:#75627c;font-family:var(--font-mono);font-size:.70rem
+    }
+    .ritual-slot.filled{
+      border-style:solid;border-color:rgba(231,94,215,.52);
+      color:#e9a7df;background:rgba(44,13,42,.64);
+      box-shadow:inset 0 0 0 1px rgba(231,94,215,.04)
+    }
+
+
+    /* ===== 抽牌過程：底部直接顯示已抽到的牌 ===== */
+    .ritual-slots{
+      position:absolute;z-index:25;left:50%;bottom:14px;transform:translateX(-50%);
+      display:flex;gap:10px;align-items:flex-end;justify-content:center
+    }
+    .ritual-slot{
+      width:78px;height:126px;border:1px solid rgba(231,94,215,.30);border-radius:10px;
+      background:rgba(36,11,34,.42);display:grid;place-items:center;
+      color:#75627c;font-family:var(--font-mono);font-size:.70rem;overflow:hidden;position:relative
+    }
+    .ritual-slot.empty{background:rgba(36,11,34,.34)}
+    .ritual-slot.filled{
+      border-style:solid;border-color:rgba(231,94,215,.52);
+      color:#e9a7df;background:rgba(44,13,42,.64);
+      box-shadow:inset 0 0 0 1px rgba(231,94,215,.04),0 8px 20px rgba(0,0,0,.18)
+    }
+    .ritual-slot-index{
+      position:absolute;top:5px;left:6px;font-family:var(--font-mono);font-size:.48rem;
+      color:#9d88a4;letter-spacing:.06em;z-index:4
+    }
+    .ritual-slot .ritual-result-body{position:absolute;inset:0}
+    .ritual-slot .ritual-result-art{position:absolute;inset:5px 5px 24px;border-radius:7px;overflow:hidden;border:1px solid rgba(232,198,122,.18);background:#22182b}
+    .ritual-slot .ritual-result-art svg{width:100%;height:100%;display:block}
+    .ritual-slot .ritual-result-name{
+      position:absolute;left:4px;right:4px;bottom:12px;text-align:center;
+      font-size:.47rem;font-weight:800;line-height:1.1;color:#f3e9f7
+    }
+    .ritual-slot .ritual-result-ori{
+      position:absolute;left:4px;right:4px;bottom:2px;text-align:center;
+      font-size:.40rem;font-weight:700;color:#d8b35f;line-height:1
+    }
+    .ritual-slot-empty-mark{
+      font-size:1rem;color:#d89ad0;opacity:.95;line-height:1
+    }
+    @media(max-width:650px){
+      .ritual-slot{width:68px;height:112px}
+      .ritual-slots{gap:8px}
+    }
+
+
+    /* ===== 本輪修正：牌流初始即有牌 / 亂數停牌留白 / 經典逐張抽牌 ===== */
+    .ritual-stop-wrap{
+      min-height:560px;
+      display:grid;
+      place-items:center;
+      text-align:center;
+      padding:44px 18px 34px;
+    }
+    .ritual-stop-slots-inline{margin-top:24px}
+    .ritual-stop-slots-inline .ritual-slots{
+      position:static!important;
+      left:auto!important;
+      bottom:auto!important;
+      transform:none!important;
+      margin:0 auto;
+    }
+    .ritual-stop-name{margin-top:2px}
+    .ritual-stop-orientation{margin-top:8px}
+    .ritual-stop-wrap .ritual-actions{margin-top:20px}
+
+    .classic-draw-board{
+      min-height:455px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:72px 24px 30px;
+    }
+    .classic-draw-row{
+      width:min(100%,900px);
+      display:grid;
+      grid-template-columns:repeat(var(--classic-count,3),minmax(150px,1fr));
+      gap:24px;
+      align-items:start;
+      justify-content:center;
+    }
+    .classic-draw-card{
+      border:0;
+      background:none;
+      padding:0;
+      color:#eee7f3;
+      text-align:center;
+      min-width:0;
+    }
+    .classic-draw-card:disabled{opacity:1}
+    .classic-position{
+      min-height:34px;
+      margin-bottom:10px;
+      color:#998ba6;
+      font-family:var(--font-mono);
+      font-size:.62rem;
+      line-height:1.45;
+    }
+    .classic-card-back{
+      width:132px;
+      aspect-ratio:2/3.2;
+      margin:0 auto;
+      border:1px solid rgba(231,94,215,.42);
+      border-radius:14px;
+      background:
+        radial-gradient(circle at center,rgba(224,36,195,.15),transparent 24%),
+        repeating-radial-gradient(circle at center,transparent 0 16px,rgba(143,107,255,.08) 17px 18px),
+        linear-gradient(145deg,#17132c,#090b18 60%,#160c20);
+      box-shadow:0 18px 36px rgba(0,0,0,.34);
+      display:grid;
+      place-items:center;
+      transition:.2s ease;
+    }
+    .classic-draw-card:not(:disabled):hover .classic-card-back{
+      transform:translateY(-5px);
+      border-color:rgba(242,166,229,.75);
+      box-shadow:0 24px 44px rgba(0,0,0,.42),0 0 24px rgba(231,94,215,.10);
+    }
+    .classic-card-back span{font-size:1.8rem;color:#dd94d1}
+    .classic-click-text{margin-top:10px;color:#756a80;font-size:.62rem}
+    .classic-draw-card.revealed .ritual-result-card{width:132px}
+    .classic-draw-card.revealed .ritual-result-pos{display:none}
+    @media(max-width:800px){
+      .classic-draw-row{grid-template-columns:repeat(2,minmax(130px,1fr))}
+    }
+    @media(max-width:520px){
+      .classic-draw-row{grid-template-columns:1fr}
+    }
+
+
+    /* ===== 白底模式修正：六種抽牌介面 ===== */
+    html[data-theme="light"] .ritual-host{
+      background:
+        radial-gradient(circle 520px at 50% 40%,rgba(133,91,185,.055),transparent 68%),
+        #fffdfd;
+      border-color:rgba(106,76,126,.17);
+    }
+    html[data-theme="light"] .ritual-board{
+      background:
+        radial-gradient(circle at 50% 55%,rgba(135,94,180,.055),transparent 45%),
+        #fffdfd;
+      border-color:rgba(106,76,126,.11);
+    }
+    html[data-theme="light"] .ritual-hint{
+      background:rgba(255,255,255,.96);
+      color:#65566f;
+      border-color:rgba(128,84,154,.19);
+      box-shadow:0 8px 22px rgba(92,62,112,.06);
+    }
+    html[data-theme="light"] .ritual-count{
+      color:#7d648b;
+      border-color:rgba(145,93,169,.18);
+      background:rgba(255,255,255,.78);
+    }
+
+    /* 牌背在白底仍維持深色，不要被洗成灰色 */
+    html[data-theme="light"] .ritual-card{
+      background:
+        radial-gradient(circle at center,rgba(224,36,195,.16),transparent 25%),
+        repeating-radial-gradient(circle at center,transparent 0 13px,rgba(143,107,255,.09) 14px 15px),
+        linear-gradient(145deg,#17132c,#0a0b18 58%,#160c20);
+      border-color:rgba(120,78,148,.36);
+      box-shadow:0 13px 28px rgba(53,38,68,.18);
+      opacity:1;
+    }
+    html[data-theme="light"] .ritual-card::before{
+      border-color:rgba(232,150,219,.20);
+    }
+    html[data-theme="light"] .ritual-card::after{
+      color:#d46bc2;
+    }
+    html[data-theme="light"] .ritual-card:hover{
+      filter:brightness(1.08);
+      box-shadow:0 18px 34px rgba(57,39,73,.22);
+    }
+
+    /* 抽完三張後其餘牌仍可辨識，不要在白底幾乎消失 */
+    html[data-theme="light"] .ritual-card.faded{
+      opacity:.52;
+      filter:saturate(.8);
+    }
+    html[data-theme="light"] .ritual-card.chosen{
+      opacity:1;
+      border-color:rgba(213,83,189,.72);
+      box-shadow:0 0 0 3px rgba(217,83,192,.09),0 15px 30px rgba(69,43,76,.20);
+    }
+
+    /* 底部已抽牌縮圖 */
+    html[data-theme="light"] .ritual-slot{
+      background:#fff;
+      border-color:rgba(198,76,177,.28);
+      color:#806a89;
+      box-shadow:0 8px 20px rgba(74,47,86,.05);
+    }
+    html[data-theme="light"] .ritual-slot.empty{
+      background:#fff;
+    }
+    html[data-theme="light"] .ritual-slot.filled{
+      background:#fff;
+      border-color:rgba(213,71,188,.48);
+      box-shadow:0 9px 22px rgba(82,48,91,.09);
+    }
+    html[data-theme="light"] .ritual-slot-index{
+      color:#7f6b87;
+    }
+    html[data-theme="light"] .ritual-slot-empty-mark{
+      color:#cd75bf;
+    }
+
+    /* 經典逐張抽牌 */
+    html[data-theme="light"] .classic-card-back{
+      background:
+        radial-gradient(circle at center,rgba(224,36,195,.16),transparent 24%),
+        repeating-radial-gradient(circle at center,transparent 0 16px,rgba(143,107,255,.09) 17px 18px),
+        linear-gradient(145deg,#17132c,#090b18 60%,#160c20);
+      border-color:rgba(198,72,177,.48);
+      box-shadow:0 16px 30px rgba(60,40,72,.18);
+    }
+    html[data-theme="light"] .classic-position{
+      color:#8b7395;
+    }
+    html[data-theme="light"] .classic-click-text{
+      color:#8c7895;
+    }
+
+    /* 實體牌輸入：白底模式下選單與展開清單都應是白底深字 */
+    html[data-theme="light"] .ritual-physical-card{
+      background:#fff;
+      color:#2f2634;
+      border-color:rgba(107,79,122,.14);
+      box-shadow:0 8px 22px rgba(80,56,91,.04);
+    }
+    html[data-theme="light"] .ritual-physical-card b{
+      color:#34283a;
+    }
+    html[data-theme="light"] .ritual-physical-card label{
+      color:#76647d;
+    }
+    html[data-theme="light"] .ritual-physical-card select{
+      background:#fff !important;
+      color:#2c2431 !important;
+      border-color:rgba(116,77,137,.25);
+      color-scheme:light !important;
+    }
+    html[data-theme="light"] .ritual-physical-card select option{
+      background:#fff !important;
+      color:#2c2431 !important;
+    }
+    html[data-theme="light"] .ritual-physical-result{
+      background:#fff;
+      color:#63576a;
+      border-color:rgba(107,79,122,.14);
+    }
+
+    /* 白底模式按鈕不要淡到像 disabled */
+    html[data-theme="light"] .ritual-actions .btn-ghost:not(:disabled),
+    html[data-theme="light"] .ritual-mode-back{
+      color:#7a5b8a;
+    }
+    html[data-theme="light"] .ritual-actions .btn-ghost:not(:disabled){
+      border-color:rgba(131,89,153,.28);
+      background:#fff;
+    }
+
+    /* 三條牌流線在白底稍微加深，避免太淡 */
+    html[data-theme="light"] .ritual-flow-line{
+      background:linear-gradient(90deg,transparent,rgba(132,86,158,.23),transparent);
+    }
+
+    /* 扇形輔助軌道不要過於突兀 */
+    html[data-theme="light"] .ritual-fan-orbit{
+      border-color:rgba(130,86,153,.10);
+    }
+
+
+    /* ===== 白底模式：牌背改成淺色系，不再使用黑色卡片 ===== */
+    html[data-theme="light"] .ritual-card,
+    html[data-theme="light"] .classic-card-back{
+      background:
+        radial-gradient(circle at center,rgba(216,112,200,.18),transparent 24%),
+        repeating-radial-gradient(circle at center,
+          transparent 0 13px,
+          rgba(181,133,206,.10) 14px 15px),
+        linear-gradient(145deg,#fffafd 0%,#f7edf9 58%,#efe2f4 100%) !important;
+      border-color:rgba(188,112,183,.42) !important;
+      box-shadow:
+        0 12px 28px rgba(130,88,139,.13),
+        inset 0 0 0 1px rgba(255,255,255,.82) !important;
+      color:#9d5a97 !important;
+    }
+
+    html[data-theme="light"] .ritual-card::before{
+      border-color:rgba(177,105,173,.24) !important;
+    }
+
+    html[data-theme="light"] .ritual-card::after,
+    html[data-theme="light"] .classic-card-back span{
+      color:#c45ab8 !important;
+      text-shadow:0 0 12px rgba(196,90,184,.16) !important;
+    }
+
+    html[data-theme="light"] .ritual-card:hover,
+    html[data-theme="light"] .classic-draw-card:not(:disabled):hover .classic-card-back{
+      background:
+        radial-gradient(circle at center,rgba(219,103,199,.23),transparent 25%),
+        repeating-radial-gradient(circle at center,
+          transparent 0 13px,
+          rgba(176,119,201,.13) 14px 15px),
+        linear-gradient(145deg,#fffdfd 0%,#f7e9f7 56%,#ecd9f1 100%) !important;
+      border-color:rgba(211,91,190,.65) !important;
+      box-shadow:
+        0 16px 34px rgba(133,79,139,.18),
+        0 0 0 2px rgba(221,107,201,.06) !important;
+      filter:none !important;
+    }
+
+    html[data-theme="light"] .ritual-card.chosen{
+      background:
+        radial-gradient(circle at center,rgba(221,98,199,.28),transparent 26%),
+        repeating-radial-gradient(circle at center,
+          transparent 0 13px,
+          rgba(181,115,204,.15) 14px 15px),
+        linear-gradient(145deg,#fff8fc 0%,#f5e3f4 55%,#ead3ef 100%) !important;
+      border-color:rgba(213,75,185,.75) !important;
+      box-shadow:
+        0 0 0 3px rgba(217,83,192,.09),
+        0 15px 30px rgba(111,72,118,.15) !important;
+    }
+
+    html[data-theme="light"] .ritual-card.faded{
+      opacity:.58 !important;
+      filter:saturate(.7) brightness(1.02) !important;
+    }
+
+    /* 空白進度卡也跟著走淺色系 */
+    html[data-theme="light"] .ritual-slot.empty{
+      background:linear-gradient(145deg,#fffafd,#f5ebf7) !important;
+      border-color:rgba(190,117,185,.34) !important;
+    }
+
+    html[data-theme="light"] .ritual-slot-empty-mark{
+      color:#bf68b5 !important;
+    }
+
+
+    /* ===== 深色模式：牌背不要全黑，改成更有層次的紫藍牌背 ===== */
+    html[data-theme="dark"] .ritual-card,
+    html[data-theme="dark"] .classic-card-back{
+      background:
+        radial-gradient(circle at center, rgba(244, 102, 210, .18), transparent 22%),
+        radial-gradient(circle at 50% 30%, rgba(92, 92, 203, .10), transparent 42%),
+        repeating-radial-gradient(circle at center,
+          transparent 0 13px,
+          rgba(129, 92, 210, .10) 14px 15px),
+        linear-gradient(145deg, #22163c 0%, #12142b 54%, #1f1030 100%) !important;
+      border-color: rgba(192, 119, 219, .34) !important;
+      box-shadow:
+        0 14px 30px rgba(0,0,0,.32),
+        inset 0 0 0 1px rgba(78, 61, 138, .34) !important;
+      color:#e09ad4 !important;
+    }
+
+    html[data-theme="dark"] .ritual-card::before{
+      border-color: rgba(232, 150, 219, .17) !important;
+    }
+
+    html[data-theme="dark"] .ritual-card::after,
+    html[data-theme="dark"] .classic-card-back span{
+      color: #e384d4 !important;
+      text-shadow: 0 0 14px rgba(227,132,212,.18);
+    }
+
+    html[data-theme="dark"] .ritual-card:hover,
+    html[data-theme="dark"] .classic-draw-card:not(:disabled):hover .classic-card-back{
+      background:
+        radial-gradient(circle at center, rgba(246, 110, 214, .24), transparent 23%),
+        radial-gradient(circle at 50% 30%, rgba(107, 110, 223, .13), transparent 44%),
+        repeating-radial-gradient(circle at center,
+          transparent 0 13px,
+          rgba(145, 104, 228, .13) 14px 15px),
+        linear-gradient(145deg, #2a1a46 0%, #171833 54%, #29133a 100%) !important;
+      border-color: rgba(226, 137, 231, .54) !important;
+      box-shadow:
+        0 18px 36px rgba(0,0,0,.38),
+        0 0 0 2px rgba(227,132,212,.05) !important;
+      filter:none !important;
+    }
+
+    html[data-theme="dark"] .ritual-card.chosen{
+      background:
+        radial-gradient(circle at center, rgba(250, 120, 220, .28), transparent 24%),
+        radial-gradient(circle at 50% 30%, rgba(119, 120, 232, .15), transparent 44%),
+        repeating-radial-gradient(circle at center,
+          transparent 0 13px,
+          rgba(157, 116, 235, .16) 14px 15px),
+        linear-gradient(145deg, #301c4d 0%, #191b39 54%, #31153d 100%) !important;
+      border-color: rgba(242, 157, 232, .72) !important;
+      box-shadow:
+        0 0 0 3px rgba(233, 112, 214, .08),
+        0 18px 34px rgba(0,0,0,.40) !important;
+    }
+
+    html[data-theme="dark"] .ritual-card.faded{
+      opacity:.34 !important;
+      filter:saturate(.86) brightness(.96) !important;
+    }
+
+    /* 深色模式底部未翻開的小框也不要純黑 */
+    html[data-theme="dark"] .ritual-slot.empty{
+      background: linear-gradient(145deg, #261131 0%, #180f29 55%, #22102e 100%) !important;
+      border-color: rgba(196, 95, 184, .34) !important;
+      box-shadow: inset 0 0 0 1px rgba(90, 55, 112, .20);
+    }
+
+    html[data-theme="dark"] .ritual-slot-empty-mark{
+      color:#d689ca !important;
+    }
+
+
+    /* ===== 這次修正：鎖定抽牌方式 / 移除重新開始 / 白底經典牌面不再黑底 ===== */
+    html[data-theme="light"] .classic-draw-card.revealed .ritual-result-card,
+    html[data-theme="light"] .formal-card-strip .ritual-result-card,
+    html[data-theme="light"] .ritual-result-slot .ritual-result-card{
+      background:linear-gradient(180deg,#fffefe 0%, #fbf4fb 100%) !important;
+      border:1px solid rgba(197,108,186,.30) !important;
+      box-shadow:0 10px 26px rgba(129,81,138,.10) !important;
+    }
+    html[data-theme="light"] .classic-draw-card.revealed .ritual-result-body,
+    html[data-theme="light"] .formal-card-strip .ritual-result-body,
+    html[data-theme="light"] .ritual-result-slot .ritual-result-body{
+      background:transparent !important;
+    }
+    html[data-theme="light"] .classic-draw-card.revealed .ritual-result-name,
+    html[data-theme="light"] .formal-card-strip .ritual-result-name,
+    html[data-theme="light"] .ritual-result-slot .ritual-result-name{
+      color:#2f2440 !important;
+    }
+    html[data-theme="light"] .classic-draw-card.revealed .ritual-result-pos,
+    html[data-theme="light"] .formal-card-strip .ritual-result-pos,
+    html[data-theme="light"] .ritual-result-slot .ritual-result-pos{
+      color:#8a6b91 !important;
+    }
+    html[data-theme="light"] .classic-draw-card.revealed .ritual-result-ori,
+    html[data-theme="light"] .formal-card-strip .ritual-result-ori,
+    html[data-theme="light"] .ritual-result-slot .ritual-result-ori{
+      color:#b48b25 !important;
+    }
+
+    /* 已鎖定抽牌方式後，不再顯示可切換模式的返回入口 */
+    .ritual-mode-back{display:none !important;}
+
 </style>
 </head>
 <body>
@@ -1177,19 +1748,37 @@
 
       <div class="flow-step" id="stepReady" data-step="ready">
         <button class="flow-back" data-back="question" type="button">← 返回問題</button>
-        <div class="flow-head"><div><span>STEP 04</span><h3>問題已經整理好了</h3><p>系統已依這道問題配置牌位。按下開始後才會洗牌；抽完牌後，重點會放在完整綜合解讀，而不是只列關鍵字。</p></div></div>
+        <div class="flow-head"><div><span>STEP 04</span><h3>問題已經整理好了</h3><p>系統已依這道問題配置牌位。下一步先選擇你想使用的抽牌方式，再完成抽牌與四鏡解讀。</p></div></div>
         <div class="ready-card" id="readyCard"></div>
         <div class="ready-rules"><span>依問題使用 3～5 張牌</span><span>完整綜合解讀</span><span>最多 1 次追問</span></div>
-        <button class="start-reading" id="startReading" type="button">洗牌並開始這一局</button>
+        <button class="start-reading" id="startReading" type="button">選擇抽牌方式</button>
       </div>
 
       <div class="reading-workspace" id="readingWorkspace" hidden>
         <div class="reading-topline"><div><span id="readingPath">—</span><h3 id="readingQuestion">—</h3></div><div class="reader-seal">✦ 四鏡解牌 · V9.1</div></div>
         <div class="spread-info guided-spread-info"><div class="spread-symbol">✺</div><div><strong id="spreadName">—</strong><p id="spreadDesc">—</p></div><div class="deck-count"><span id="deckCount">78</span> CARDS</div></div>
-        <div class="reading-zone" id="readingZone">
+
+        <section class="draw-mode-shell" id="drawModeShell">
+          <div class="draw-mode-head">
+            <div><h4>選擇這次的抽牌方式</h4><p>同一個問題，可以用不同方式完成抽牌；正式解讀仍使用同一套牌陣與四鏡解牌。</p></div>
+            <div class="ritual-count" id="drawModeNeed">需選 — 張</div>
+          </div>
+          <div class="draw-mode-grid" id="drawModeGrid">
+            <button class="draw-mode-card" type="button" data-draw-mode="fan"><span class="draw-mode-no">01 / FAN DECK</span><b>扇形選牌</b><small>洗牌後展開牌群，憑直覺親手選牌。</small></button>
+            <button class="draw-mode-card" type="button" data-draw-mode="scatter"><span class="draw-mode-no">02 / SCATTER TABLE</span><b>桌面散牌</b><small>牌散落在桌面，還可以再丟牌進來。</small></button>
+            <button class="draw-mode-card" type="button" data-draw-mode="flow"><span class="draw-mode-no">03 / CARD FLOW</span><b>命運牌流</b><small>牌持續流動，在有感覺的瞬間點下。</small></button>
+            <button class="draw-mode-card" type="button" data-draw-mode="study"><span class="draw-mode-no">04 / CLASSIC DRAW</span><b>經典逐張抽牌</b><small>三張牌依序點三次翻開，最簡單直接的抽牌方式。</small></button>
+            <button class="draw-mode-card" type="button" data-draw-mode="stop"><span class="draw-mode-no">05 / RANDOM STOP</span><b>亂數停牌</b><small>牌號與牌名快速跳動，在當下按停。</small></button>
+            <button class="draw-mode-card" type="button" data-draw-mode="physical"><span class="draw-mode-no">06 / YOUR CARDS</span><b>實體牌結果輸入</b><small>你已經用自己的實體牌抽好，再輸入牌名與正逆位。</small></button>
+          </div>
+        </section>
+
+        <section class="ritual-host" id="ritualHost" hidden></section>
+
+        <div class="reading-zone" id="readingZone" hidden>
           <div class="cards" id="cards"></div>
         </div>
-        <div class="bottom-actions"><button class="btn-ghost" id="revealAllBtn" type="button">全部翻牌</button></div>
+        <div class="bottom-actions" style="display:none"><button class="btn-ghost" id="revealAllBtn" type="button">全部翻牌</button></div>
         <div class="interpretation" id="interpretation"></div>
         <section class="reading-analysis" id="readingAnalysis" hidden></section>
         <section class="followup-panel" id="followupPanel" hidden></section>
@@ -1574,7 +2163,7 @@
   
   const $=id=>document.getElementById(id);
   const els={topic:$('topicGrid'),scenario:$('scenarioGrid'),question:$('questionGrid'),qctx:$('questionContext'),workspace:$('readingWorkspace'),cards:$('cards'),interp:$('interpretation'),analysis:$('readingAnalysis'),follow:$('followupPanel'),followResult:$('followupResult'),finish:$('readingFinish'),progress:$('flowProgress')};
-  let state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[]};
+  let state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[]};
   
   const esc=(s='')=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
   const topicBy=id=>TOPICS.find(x=>x.id===id);
@@ -1683,18 +2272,488 @@
   async function questions(){const data=await tarotAPI('/questions',{topicId:state.topic.id,scenarioId:state.scenario.id});return data.questions||[];}
   async function renderQuestions(){const qs=await questions();state.questions=qs;els.qctx.textContent=`${state.topic.name} → ${state.scenario.name}｜請選一個最想看清楚的方向。`;els.question.innerHTML=qs.map((q,i)=>`<button class="question-card" data-question="${q.id}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b></button>`).join('');}
   function renderReady(){const q=state.question;$('readyCard').innerHTML=`<div class="crumb">${state.topic.name} → ${state.scenario.name}</div><h4>${esc(q.text)}</h4><p><b>${q.spread.name}</b><br>${q.spread.desc}<br><br>牌位：${q.spread.positions.join('／')}</p>`;}
+
+  const RITUAL_DECK=[
+    ['愚者','Major'],['魔術師','Major'],['女祭司','Major'],['皇后','Major'],['皇帝','Major'],['教皇','Major'],['戀人','Major'],['戰車','Major'],['力量','Major'],['隱者','Major'],['命運之輪','Major'],['正義','Major'],['倒吊人','Major'],['死神','Major'],['節制','Major'],['惡魔','Major'],['高塔','Major'],['星星','Major'],['月亮','Major'],['太陽','Major'],['審判','Major'],['世界','Major'],
+    ['權杖首牌','Wands'],['權杖二','Wands'],['權杖三','Wands'],['權杖四','Wands'],['權杖五','Wands'],['權杖六','Wands'],['權杖七','Wands'],['權杖八','Wands'],['權杖九','Wands'],['權杖十','Wands'],['權杖侍者','Wands'],['權杖騎士','Wands'],['權杖皇后','Wands'],['權杖國王','Wands'],
+    ['聖杯首牌','Cups'],['聖杯二','Cups'],['聖杯三','Cups'],['聖杯四','Cups'],['聖杯五','Cups'],['聖杯六','Cups'],['聖杯七','Cups'],['聖杯八','Cups'],['聖杯九','Cups'],['聖杯十','Cups'],['聖杯侍者','Cups'],['聖杯騎士','Cups'],['聖杯皇后','Cups'],['聖杯國王','Cups'],
+    ['寶劍首牌','Swords'],['寶劍二','Swords'],['寶劍三','Swords'],['寶劍四','Swords'],['寶劍五','Swords'],['寶劍六','Swords'],['寶劍七','Swords'],['寶劍八','Swords'],['寶劍九','Swords'],['寶劍十','Swords'],['寶劍侍者','Swords'],['寶劍騎士','Swords'],['寶劍皇后','Swords'],['寶劍國王','Swords'],
+    ['錢幣首牌','Pentacles'],['錢幣二','Pentacles'],['錢幣三','Pentacles'],['錢幣四','Pentacles'],['錢幣五','Pentacles'],['錢幣六','Pentacles'],['錢幣七','Pentacles'],['錢幣八','Pentacles'],['錢幣九','Pentacles'],['錢幣十','Pentacles'],['錢幣侍者','Pentacles'],['錢幣騎士','Pentacles'],['錢幣皇后','Pentacles'],['錢幣國王','Pentacles']
+  ].map((x,i)=>({index:i+1,name:x[0],group:x[1]}));
+
+  let ritualStudyPicked=[],ritualScatterCount=0,ritualStopTimer=null,ritualStopPreview=RITUAL_DECK[0],ritualStopCount=0,ritualStopPicked=[],ritualSessionDeck=[],ritualFlowCursor=0,ritualClassicCursor=0;
+
+  function clearRitualTimers(){
+    (state.ritualFlowTimers||[]).forEach(clearInterval);state.ritualFlowTimers=[];
+    if(ritualStopTimer){clearInterval(ritualStopTimer);ritualStopTimer=null;}
+  }
+  function ritualTarget(){return Math.max(1,state.question?.spread?.positions?.length||3);}
+  function ritualSlotsHTML(){
+    const target=ritualTarget();
+    const picked=(state.current||[]).slice(0, Math.min(state.ritualSelected||0, target));
+    return `<div class="ritual-slots">${
+      Array.from({length:target},(_,i)=>{
+        const card=picked[i];
+        if(card){
+          return `<div class="ritual-slot filled">
+            <div class="ritual-slot-index">${i+1}</div>
+            <div class="ritual-result-body ${card.reversed?'reversed':''}">
+              <div class="ritual-result-art">${ritualCardArt(card)}</div>
+              <div class="ritual-result-name">${esc(card.name)}</div>
+              <div class="ritual-result-ori">${card.reversed?'逆位':'正位'}</div>
+            </div>
+          </div>`;
+        }
+        return `<div class="ritual-slot empty">
+          <div class="ritual-slot-index">${i+1}</div>
+          <div class="ritual-slot-empty-mark">✦</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  }
+  function resetRitualSelection(){state.ritualSelected=0;clearRitualTimers();}
+  function showModeSelector(){
+    clearRitualTimers();state.drawMode=null;state.ritualSelected=0;
+    $('drawModeShell').hidden=false;$('ritualHost').hidden=true;$('readingZone').hidden=true;
+    $('drawModeNeed').textContent=`需選 ${ritualTarget()} 張`;
+    document.querySelectorAll('[data-draw-mode]').forEach(x=>{x.classList.remove('active');x.disabled=false;});
+  }
+  function shuffleRitualDeck(source){
+    const a=source.map(x=>({...x}));
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+  function prepareRitualSessionDeck(){
+    const shuffled=shuffleRitualDeck(RITUAL_DECK);
+    ritualSessionDeck=shuffled.map(card=>manualCardObject(card,Math.random()<.5?'正位':'逆位',''));
+    ritualFlowCursor=0;
+    ritualClassicCursor=0;
+    ritualScatterCount=0;
+    ritualStopPicked=[];
+    ritualStopCount=0;
+    ritualStopPreview=ritualSessionDeck[0]||RITUAL_DECK[0];
+    state.current=[];
+    state.drawPackReady=true;
+    $('deckCount').textContent=78;
+    return true;
+  }
+  function cardWithPosition(card,ordinal){
+    const positions=state.question?.spread?.positions||[];
+    return {...card,position:positions[ordinal]||`第 ${ordinal+1} 張`};
+  }
+  function ritualCardEl(){
+    const el=document.createElement('button');el.type='button';el.className='ritual-card';return el;
+  }
+  function chooseRitualBack(el,card){
+    if(state.ritualSelected>=ritualTarget()||el.classList.contains('chosen')||!card)return;
+
+    const picked=cardWithPosition(card,state.ritualSelected);
+    state.current.push(picked);
+    state.ritualSelected++;
+
+    el.classList.add('chosen');
+    el.disabled=true;
+
+    const host=$('ritualHost');
+    const slots=host.querySelector('.ritual-slots');
+    if(slots)slots.outerHTML=ritualSlotsHTML();
+
+    const countEl=host.querySelector('.ritual-count');
+    if(countEl){
+      const verb=(state.drawMode==='study') ? '已翻' : '已選';
+      countEl.textContent=`${verb} ${state.ritualSelected} / ${ritualTarget()}`;
+    }
+
+    if(state.ritualSelected>=ritualTarget()){
+      host.querySelectorAll('.ritual-card:not(.chosen)').forEach(c=>c.classList.add('faded'));
+
+      // 命運牌流選滿後立即停止背景牌流，避免還在動。
+      if(state.drawMode==='flow'){
+        clearRitualTimers();
+        host.querySelectorAll('.ritual-flow-lane .ritual-card').forEach(c=>{
+          c.style.animationPlayState='paused';
+          if(!c.classList.contains('chosen'))c.classList.add('faded');
+        });
+      }
+
+      const btn=$('ritualFinishBtn');
+      if(btn)btn.disabled=false;
+
+      // 桌面散牌選滿後，不再允許繼續丟牌。
+      const scatterMoreBtn=$('ritualScatterMore');
+      if(scatterMoreBtn)scatterMoreBtn.remove();
+    }
+  }
+  async function beginDrawMode(mode){
+    // 一局只能選一次抽牌方式；選定後不能因結果不喜歡而換另一種。
+    if(state.drawMode && state.drawMode!==mode)return;
+
+    clearRitualTimers();
+    state.drawMode=mode;
+    state.ritualSelected=0;
+    ritualStopCount=0;
+    ritualStopPicked=[];
+    ritualStudyPicked=[];
+
+    $('drawModeShell').hidden=true;
+    $('ritualHost').hidden=false;
+    $('readingZone').hidden=true;
+
+    document.querySelectorAll('[data-draw-mode]').forEach(x=>{
+      x.classList.toggle('active',x.dataset.drawMode===mode);
+      x.disabled=true;
+    });
+
+    if(mode!=='physical')prepareRitualSessionDeck();
+    else{
+      state.current=[];
+      state.drawPackReady=true;
+    }
+
+    if(mode==='fan')renderFanRitual(true);
+    if(mode==='scatter')renderScatterRitual();
+    if(mode==='flow')renderFlowRitual();
+    if(mode==='stop')renderStopRitual();
+    if(mode==='study')renderStudyRitual();
+    if(mode==='physical')renderPhysicalRitual();
+
+    setTimeout(()=>$('ritualHost').scrollIntoView({behavior:'smooth',block:'start'}),40);
+  }
+  async function animateFanShuffle(){
+    const host=$('ritualHost'),board=host.querySelector('.ritual-board');if(!board)return;
+    const cx=board.clientWidth/2-36,cy=board.clientHeight/2-60,cards=[];
+    board.querySelectorAll('.ritual-card').forEach(x=>x.remove());
+    for(let i=0;i<18;i++){const c=ritualCardEl();c.style.left=(cx+i*.55)+'px';c.style.top=(cy-i*.45)+'px';c.style.zIndex=100+i;board.appendChild(c);cards.push(c);}
+    await new Promise(r=>setTimeout(r,140));
+    cards.forEach((c,i)=>{const left=i<9,n=left?i:i-9;c.style.left=(cx+(left?-86:86)+n*1.3)+'px';c.style.top=(cy+n*2.5)+'px';c.style.transform=`rotate(${left?-12:12}deg)`;});
+    await new Promise(r=>setTimeout(r,440));
+    cards.forEach((c,i)=>{const side=i%2?-1:1,row=Math.floor(i/2);c.style.left=(cx+side*(9+Math.random()*10)+row*.6)+'px';c.style.top=(cy+row*2)+'px';c.style.transform=`rotate(${(-7+Math.random()*14).toFixed(1)}deg)`;});
+    await new Promise(r=>setTimeout(r,440));
+    renderFanRitual(false);
+  }
+  function renderFanRitual(doShuffle=false){
+    const host=$('ritualHost');host.innerHTML=`<div class="ritual-top"><div><h4>扇形選牌</h4><p>牌先收攏洗牌，再展開成前後兩層。從牌群中選出 ${ritualTarget()} 張。</p></div><div class="ritual-count">已選 ${state.ritualSelected} / ${ritualTarget()}</div></div><div class="ritual-board"><div class="ritual-hint">憑第一直覺選牌，不需要找「看起來特別」的牌。</div><div class="ritual-fan-orbit"></div>${ritualSlotsHTML()}</div><div class="ritual-actions"><button class="btn-primary" id="ritualFinishBtn" type="button" disabled>完成抽牌，查看牌面</button></div>`;
+    const board=host.querySelector('.ritual-board'),cx=board.clientWidth/2;
+    const add=(count,offset,isBack,baseY,radius,spread,scale,z)=>{
+      for(let j=0;j<count;j++){
+        const actual=ritualSessionDeck[offset+j];
+        const c=ritualCardEl(),p=j/(count-1),deg=-spread/2+p*spread,rad=deg*Math.PI/180;
+        c.style.left=(cx+Math.sin(rad)*radius-36)+'px';
+        c.style.top=(baseY-Math.cos(rad)*(isBack?126:145))+'px';
+        c.style.transform=`rotate(${deg}deg) scale(${scale})`;
+        c.style.zIndex=z+j;
+        c.addEventListener('click',()=>chooseRitualBack(c,actual));
+        board.appendChild(c);
+      }
+    };
+    add(28,0,true,board.clientHeight-218,Math.min(board.clientWidth*.34,390),102,.88,30);
+    add(42,28,false,board.clientHeight-134,Math.min(board.clientWidth*.42,470),112,1,90);
+    $('ritualFinishBtn').onclick=showFormalResults;
+    if(doShuffle)setTimeout(animateFanShuffle,120);
+  }
+  function scatterAdd(amount=6,thrown=true){
+    const board=$('ritualHost').querySelector('.ritual-board');if(!board)return;
+    const W=board.clientWidth,H=board.clientHeight-110;
+    for(let n=0;n<amount&&ritualScatterCount<78;n++,ritualScatterCount++){
+      const actual=ritualSessionDeck[ritualScatterCount];
+      const c=ritualCardEl(),existing=[...board.querySelectorAll('.ritual-card')],cluster=Math.random()<.45&&existing.length>3;
+      let x,y;
+      if(cluster){const a=existing[Math.floor(Math.random()*existing.length)];x=(parseFloat(a.style.left)||40)+(-42+Math.random()*84);y=(parseFloat(a.style.top)||80)+(-34+Math.random()*68);}
+      else{x=14+Math.random()*Math.max(30,W-100);y=42+Math.random()*Math.max(30,H-140);}
+      x=Math.max(4,Math.min(W-82,x));y=Math.max(35,Math.min(H-112,y));const rot=-32+Math.random()*64;
+      c.style.left=x+'px';c.style.top=y+'px';c.style.zIndex=40+ritualScatterCount;c.style.transform=thrown?`translate(${(-160+Math.random()*320).toFixed(0)}px,${(-150-Math.random()*120).toFixed(0)}px) rotate(${rot-35}deg) scale(.84)`:`rotate(${rot}deg)`;
+      c.onclick=()=>chooseRitualBack(c,actual);board.appendChild(c);if(thrown)requestAnimationFrame(()=>requestAnimationFrame(()=>c.style.transform=`rotate(${rot}deg)`));
+    }
+    const addBtn=$('ritualScatterMore');if(addBtn)addBtn.textContent=ritualScatterCount>=78?'牌已全部丟上桌':`再丟 6 張（桌上 ${ritualScatterCount} 張）`;
+  }
+  function renderScatterRitual(){
+    ritualScatterCount=0;const host=$('ritualHost');host.innerHTML=`<div class="ritual-top"><div><h4>桌面散牌</h4><p>牌會自然散落、重疊；你也可以自己再把牌丟進桌面。</p></div><div class="ritual-count">選 ${ritualTarget()} 張</div></div><div class="ritual-board"><div class="ritual-hint">桌面越亂越像真實散牌，直接點有感覺的位置。</div><div class="ritual-scatter-glow"></div>${ritualSlotsHTML()}</div><div class="ritual-actions"><button class="btn-ghost" id="ritualScatterMore" type="button">再丟 6 張</button><button class="btn-primary" id="ritualFinishBtn" type="button" disabled>完成抽牌，查看牌面</button></div>`;
+    scatterAdd(38,false);$('ritualScatterMore').onclick=()=>scatterAdd(6,true);$('ritualFinishBtn').onclick=showFormalResults;
+  }
+  function flowSpawn(laneIndex,initialProgress=null){
+    if(state.ritualSelected>=ritualTarget())return;
+    const board=$('ritualHost').querySelector('.ritual-board'),lane=board?.querySelector(`[data-lane="${laneIndex}"]`);if(!lane)return;
+    if(!ritualSessionDeck.length)return;
+    const actual=ritualSessionDeck[ritualFlowCursor%ritualSessionDeck.length];
+    ritualFlowCursor++;
+    const c=ritualCardEl(),fromLeft=laneIndex%2===0,from=fromLeft?-100:board.clientWidth+20,to=fromLeft?board.clientWidth+20:-100;
+    const dur=4.6+Math.random()*1.4;
+    c.style.setProperty('--from',from+'px');
+    c.style.setProperty('--to',to+'px');
+    c.style.setProperty('--rot',(-7+Math.random()*14).toFixed(1)+'deg');
+    c.style.setProperty('--flowdur',dur.toFixed(1)+'s');
+    c.style.left='0';
+
+    // 初次開啟時用負延遲，讓牌直接分布在畫面內，不必從左右兩側慢慢等進場。
+    if(initialProgress!==null){
+      c.style.animationDelay=`-${(dur*initialProgress).toFixed(2)}s`;
+    }
+
+    c.onclick=()=>{
+      if(c.classList.contains('chosen'))return;
+      c.style.animationPlayState='paused';
+      const br=board.getBoundingClientRect(),cr=c.getBoundingClientRect();
+      c.style.animation='none';
+      c.style.left=(cr.left-br.left)+'px';
+      c.style.top=(cr.top-br.top)+'px';
+      lane.after(c);
+      chooseRitualBack(c,actual);
+    };
+    c.addEventListener('animationend',()=>c.remove());
+    lane.appendChild(c);
+  }
+  function renderFlowRitual(){
+    const host=$('ritualHost');host.innerHTML=`<div class="ritual-top"><div><h4>命運牌流</h4><p>三條牌流持續移動，看到有感覺的牌就直接點下。</p></div><div class="ritual-count">選 ${ritualTarget()} 張</div></div><div class="ritual-board"><div class="ritual-hint">不用等牌從兩側進來；一開始畫面裡就已經有牌在流動。</div>${[0,1,2].map(i=>`<div class="ritual-flow-lane" data-lane="${i}"><div class="ritual-flow-line"></div></div>`).join('')}${ritualSlotsHTML()}</div><div class="ritual-actions"><button class="btn-primary" id="ritualFinishBtn" type="button" disabled>完成抽牌，查看牌面</button></div>`;
+    // 每條線一開始就放 4 張在不同進度位置，進畫面即可立刻看到牌。
+    [0,1,2].forEach(i=>{
+      [0.14,0.36,0.60,0.82].forEach(progress=>flowSpawn(i,progress));
+      state.ritualFlowTimers.push(setInterval(()=>flowSpawn(i),760+i*100));
+    });
+        $('ritualFinishBtn').onclick=showFormalResults;
+  }
+  function renderStopRitual(){
+    const host=$('ritualHost');
+    const lastPicked=ritualStopPicked[ritualStopPicked.length-1]||null;
+    const displayCard=lastPicked||ritualStopPreview;
+    const displayOri=lastPicked?(lastPicked.reversed?'逆位 REVERSED':'正位 UPRIGHT'):'準備開始';
+
+    host.innerHTML=`
+      <div class="ritual-top">
+        <div>
+          <h4>亂數停牌</h4>
+          <p>牌號與牌名快速跳動，在有感覺的瞬間按停；連續完成 ${ritualTarget()} 張。</p>
+        </div>
+        <div class="ritual-count">已停 ${ritualStopPicked.length} / ${ritualTarget()}</div>
+      </div>
+      <div class="ritual-board">
+        <div class="ritual-stop-wrap">
+          <div>
+            <div class="ritual-stop-label">RANDOM TAROT CARD</div>
+            <div class="ritual-stop-number" id="ritualStopNumber">${lastPicked?esc(lastPicked.number||String(lastPicked.index).padStart(2,'0')):esc(ritualStopPreview.number||String(ritualStopPreview.index).padStart(2,'0'))}</div>
+            <div class="ritual-stop-name" id="ritualStopName">${esc(displayCard.name)}</div>
+            <div class="ritual-stop-orientation" id="ritualStopOri">${displayOri}</div>
+            <div class="ritual-actions">
+              <button class="btn-primary" id="ritualStopAction" type="button">${ritualStopPicked.length>=ritualTarget()?'完成，查看牌面':(ritualStopPicked.length?'繼續跳下一張':'開始跳牌')}</button>
+            </div>
+            <div class="ritual-stop-slots-inline">${ritualSlotsHTML()}</div>
+          </div>
+        </div>
+      </div>`;
+
+    
+    
+
+    const action=$('ritualStopAction');
+    let running=false;
+
+    function updatePreview(preview){
+      $('ritualStopNumber').textContent=preview.number||String(preview.index).padStart(2,'0');
+      $('ritualStopName').textContent=preview.name;
+      $('ritualStopOri').textContent='快速跳動中…';
+    }
+
+    action.onclick=()=>{
+      if(ritualStopPicked.length>=ritualTarget()){
+        showFormalResults();
+        return;
+      }
+
+      if(!running){
+        running=true;
+        action.textContent='現在停下';
+        ritualStopTimer=setInterval(()=>{
+          const used=new Set(ritualStopPicked.map(c=>c.id));
+          const available=ritualSessionDeck.filter(c=>!used.has(c.id));
+          if(!available.length)return;
+          ritualStopPreview=available[Math.floor(Math.random()*available.length)];
+          updatePreview(ritualStopPreview);
+        },45);
+      }else{
+        clearInterval(ritualStopTimer);
+        ritualStopTimer=null;
+        running=false;
+
+        const actual=cardWithPosition({...ritualStopPreview},ritualStopPicked.length);
+        ritualStopPicked.push(actual);
+        state.current.push(actual);
+
+        ritualStopCount=ritualStopPicked.length;
+        state.ritualSelected=ritualStopCount;
+        renderStopRitual();
+      }
+    };
+  }
+  function groupMeaning(g){return g==='Major'?'大阿爾克那：適合觀察人生主題、重大轉折與核心心理動力。':g==='Wands'?'權杖：行動、動機、創造力與推進。':g==='Cups'?'聖杯：情感、關係、感受與內在需求。':g==='Swords'?'寶劍：思考、溝通、壓力、判斷與衝突。':'錢幣：現實、資源、工作、金錢與長期累積。';}
+  function renderStudyRitual(){
+    const host=$('ritualHost');
+    const target=ritualTarget();
+    const positions=state.question?.spread?.positions||[];
+
+    host.innerHTML=`
+      <div class="ritual-top">
+        <div>
+          <h4>經典逐張抽牌</h4>
+          <p>最簡單的方式：依序點牌 ${target} 次。每點一次，就立即翻開那一張。</p>
+        </div>
+        <div class="ritual-count">已翻 ${state.ritualSelected} / ${target}</div>
+      </div>
+      <div class="ritual-board classic-draw-board">
+        <div class="ritual-hint">直接依序點牌；抽到什麼會立刻顯示，不需要猜。</div>
+        <div class="classic-draw-row" style="--classic-count:${target}">
+          ${Array.from({length:target},(_,i)=>{
+            const card=state.current?.[i];
+            const revealed=i<state.ritualSelected;
+            if(revealed&&card){
+              return `<button type="button" class="classic-draw-card revealed" data-classic-index="${i}" disabled>
+                <div class="classic-position">${esc(positions[i]||`第 ${i+1} 張`)}</div>
+                <div class="ritual-result-card">
+                  <div class="ritual-result-body ${card.reversed?'reversed':''}">
+                    <div class="ritual-result-art">${ritualCardArt(card)}</div>
+                    <div class="ritual-result-name">${esc(card.name)}</div>
+                    <div class="ritual-result-ori">${card.reversed?'逆位':'正位'}</div>
+                  </div>
+                </div>
+              </button>`;
+            }
+            return `<button type="button" class="classic-draw-card" data-classic-index="${i}" ${i===state.ritualSelected?'':'disabled'}>
+              <div class="classic-position">${esc(positions[i]||`第 ${i+1} 張`)}</div>
+              <div class="classic-card-back"><span>✺</span></div>
+              <div class="classic-click-text">${i===state.ritualSelected?'點一下翻牌':'等待前一張'}</div>
+            </button>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="ritual-actions">
+        <button class="btn-primary" id="classicFinishBtn" type="button" ${state.ritualSelected>=target?'':'disabled'}>完成抽牌，開始四鏡解讀</button>
+      </div>`;
+
+    
+    host.querySelectorAll('[data-classic-index]').forEach(btn=>{
+      btn.onclick=()=>{
+        const idx=Number(btn.dataset.classicIndex);
+        if(idx!==state.ritualSelected || state.ritualSelected>=target)return;
+        const actual=ritualSessionDeck[ritualClassicCursor++];
+        if(!actual)return;
+        state.current.push(cardWithPosition(actual,state.ritualSelected));
+        state.ritualSelected++;
+        renderStudyRitual();
+      };
+    });
+
+    
+    $('classicFinishBtn').onclick=showFormalResults;
+  }
+
+  function ritualIdForIndex(index){
+    if(index<=22)return `major-${index-1}`;
+    if(index<=36)return `wands-${index-22}`;
+    if(index<=50)return `cups-${index-36}`;
+    if(index<=64)return `swords-${index-50}`;
+    return `pentacles-${index-64}`;
+  }
+  function ritualSuitFor(card){
+    return card.group==='Major'?'大阿爾克那':card.group==='Wands'?'權杖':card.group==='Cups'?'聖杯':card.group==='Swords'?'寶劍':'錢幣';
+  }
+  function ritualNumberForIndex(index){
+    if(index<=22){
+      const nums=['0','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'];
+      return nums[index-1];
+    }
+    const n=((index-23)%14)+1;
+    return n===1?'Ace':n<=10?String(n):n===11?'Page':n===12?'Knight':n===13?'Queen':'King';
+  }
+  function manualCardObject(card,orientation,position){
+    return {
+      index:card.index,
+      group:card.group,
+      id:ritualIdForIndex(card.index),
+      name:card.name,
+      suit:ritualSuitFor(card),
+      number:ritualNumberForIndex(card.index),
+      symbol:card.group==='Major'?'✺':card.group==='Wands'?'✦':card.group==='Cups'?'◒':card.group==='Swords'?'◇':'⬡',
+      reversed:orientation==='逆位',
+      position,
+      meaning:`此牌由本次抽牌方式實際選出；${orientation}。正式解讀由四鏡解牌依問題、牌位與正逆位整合判讀。`
+    };
+  }
+
+  function physicalOptions(){return RITUAL_DECK.map(c=>`<option value="${c.index}">${String(c.index).padStart(2,'0')} · ${c.name}</option>`).join('');}
+  function renderPhysicalRitual(){
+    const host=$('ritualHost');
+    const need=Math.min(ritualTarget(),5);
+    host.innerHTML=`
+      <div class="ritual-top"><div><h4>實體牌結果輸入</h4><p>你已經在家用自己的塔羅牌抽好；這裡記錄牌名與正逆位，確認後直接進入同一套四鏡解讀。</p></div><div class="ritual-count">需輸入 ${need} 張</div></div>
+      <div class="ritual-physical-grid">${Array.from({length:need},(_,k)=>k+1).map(i=>`<div class="ritual-physical-card"><b>第 ${i} 張｜${esc(state.question?.spread?.positions?.[i-1]||'牌位')}</b><label>牌名</label><select id="manualCard${i}"><option value="">請選擇</option>${physicalOptions()}</select><label>正位／逆位</label><select id="manualOri${i}"><option value="正位">正位</option><option value="逆位">逆位</option></select></div>`).join('')}</div>
+      <div class="ritual-actions"><button class="btn-primary" id="manualPreview" type="button">確認這 ${need} 張</button></div>
+      <div class="ritual-physical-result" id="manualResult">尚未輸入。全部選完後按確認，下一步會顯示你輸入的牌面，並直接進入四鏡解讀。</div>`;
+
+    
+    $('manualPreview').onclick=()=>{
+      const rows=Array.from({length:need},(_,k)=>k+1).map(i=>{
+        const idx=Number($(`manualCard${i}`).value),c=RITUAL_DECK[idx-1],ori=$(`manualOri${i}`).value;
+        return {i,c,ori};
+      });
+
+      if(rows.some(r=>!r.c)){
+        $('manualResult').innerHTML='<b style="color:#e8b7df">還有牌沒有選。</b><br>請把每一個牌位都選好，再按一次確認。';
+        return;
+      }
+
+      const positions=state.question?.spread?.positions||[];
+      state.current=rows.map((r,index)=>manualCardObject(r.c,r.ori,positions[index]||`第 ${index+1} 張`));
+      state.drawPackReady=true;
+      state.ritualSelected=state.current.length;
+
+      $('manualResult').innerHTML=`
+        <b>已確認你的實體牌：</b><br>
+        ${state.current.map((c,i)=>`${i+1}. ${esc(c.position)}｜${esc(c.name)}｜${c.reversed?'逆位':'正位'}`).join('<br>')}
+        <div class="ritual-next-note">下一步會使用你剛剛輸入的這些牌，不會重新隨機抽牌。</div>
+        <div class="ritual-actions"><button class="btn-primary" id="manualContinue" type="button">下一步｜查看牌面並開始四鏡解讀</button></div>`;
+
+      $('manualContinue').onclick=showFormalResults;
+    };
+  }
+  function ritualPalette(card){
+    const suit=(card.suit||'').toLowerCase(),name=card.name||'';
+    if(suit.includes('cup')||name.includes('聖杯'))return ['#5a8eae','#a8d6df','#263954','#f0e1be'];
+    if(suit.includes('wand')||name.includes('權杖'))return ['#bb7040','#e6bd63','#573027','#f3dfb3'];
+    if(suit.includes('sword')||name.includes('寶劍'))return ['#7b8393','#c6ccd5','#313747','#edf0f3'];
+    if(suit.includes('pent')||name.includes('錢幣'))return ['#73884c','#c7b962','#3f5236','#f0e0aa'];
+    return ['#795d9c','#d3a9d0','#272f52','#efdcb8'];
+  }
+  function ritualCardArt(card){
+    const [a,b,c,d]=ritualPalette(card);return `<svg viewBox="0 0 100 150" aria-hidden="true"><defs><linearGradient id="rg${Math.random().toString(36).slice(2)}" x1="0" y1="0" x2="0" y2="1"><stop stop-color="${b}"/><stop offset="1" stop-color="${c}"/></linearGradient></defs><rect width="100" height="150" fill="${b}"/><circle cx="76" cy="27" r="14" fill="${d}" opacity=".82"/><path d="M0 115 L25 90 L44 106 L64 76 L100 112 V150 H0Z" fill="${a}" opacity=".82"/><circle cx="50" cy="75" r="13" fill="${d}" stroke="${c}" stroke-width="3"/><path d="M50 88 L50 119 M37 103 L63 103 M50 119 L39 138 M50 119 L61 138" stroke="${d}" stroke-width="5" stroke-linecap="round"/><g fill="${d}" opacity=".82"><circle cx="18" cy="23" r="2"/><circle cx="31" cy="16" r="2"/><circle cx="80" cy="48" r="2"/></g></svg>`;}
+  function formalResultCard(card,i){
+    return `<div class="ritual-result-slot"><div class="ritual-result-pos">${esc(card.position||`第 ${i+1} 張`)}</div><div class="ritual-result-card"><div class="ritual-result-body ${card.reversed?'reversed':''}"><div class="ritual-result-art">${ritualCardArt(card)}</div><div class="ritual-result-name">${esc(card.name)}</div><div class="ritual-result-ori">${card.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div></div></div></div>`;
+  }
+  async function showFormalResults(){
+    clearRitualTimers();$('drawModeShell').hidden=true;$('ritualHost').hidden=true;$('readingZone').hidden=false;
+    els.cards.style.setProperty('--count',Math.min(state.current.length,5));
+    els.cards.className='ritual-result-grid';els.cards.style.setProperty('--result-count',state.current.length);
+    els.cards.innerHTML=state.current.map(formalResultCard).join('');
+    state.revealed=new Set(state.current.map((_,i)=>i));renderMeanings();
+    els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
+    setTimeout(()=>$('readingZone').scrollIntoView({behavior:'smooth',block:'center'}),50);
+    await renderFullReading();
+  }
+
   function buildCard(card,index){const slot=document.createElement('div');slot.className='tarot-slot';slot.innerHTML=`<div class="position-label">${esc(card.position)}</div>`;const wrap=document.createElement('div');wrap.className='tarot-card';wrap.style.setProperty('--delay',`${index*90}ms`);wrap.dataset.index=index;wrap.tabIndex=0;wrap.setAttribute('role','button');wrap.setAttribute('aria-label',`${card.position}，點擊翻牌`);const frontClass=card.reversed?'card-front reversed-content':'card-front';wrap.innerHTML=`<div class="card-inner"><div class="card-face card-back"><div class="back-sigil">✺</div></div><div class="card-face ${frontClass}"><div class="card-content"><div class="card-number">${esc(card.number)} · ${esc(card.suit)}</div><div class="arcana-symbol">${esc(card.symbol)}</div><div class="card-name">${esc(card.name)}</div><div class="card-en">${esc(card.en)}</div><div class="orientation">${card.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div></div></div></div>`;const hint=document.createElement('div');hint.className='reveal-hint';hint.textContent='點擊翻牌';const reveal=()=>revealCard(index,wrap,hint);wrap.addEventListener('click',reveal);wrap.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();reveal();}});slot.append(wrap,hint);return slot;}
   async function drawReading(){
     const q=state.question,startBtn=$('startReading'),old=startBtn?.textContent;
     try{
-      if(startBtn){startBtn.disabled=true;startBtn.textContent='正在洗牌…';}
-      const pack=await tarotAPI('/draw',{topicId:state.topic.id,scenarioId:state.scenario.id,questionId:q.id});
-      state.current=pack.cards||[];state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.followupOptions=[];
-      $('revealAllBtn').disabled=false;state.revealed=new Set();state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
-      els.cards.innerHTML='';els.cards.style.setProperty('--count',state.current.length);state.current.forEach((c,i)=>els.cards.appendChild(buildCard(c,i)));
-      els.interp.innerHTML='';els.interp.classList.remove('show');els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
-      $('readingPath').textContent=`${state.topic.name} → ${state.scenario.name}`;$('readingQuestion').textContent=q.text;$('spreadName').textContent=q.spread.name;$('spreadDesc').textContent=q.spread.desc;$('deckCount').textContent=pack.cardCount||78;
-      els.workspace.hidden=false;document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));els.progress.querySelectorAll('button').forEach(x=>x.classList.remove('active'));setTimeout(()=>els.workspace.scrollIntoView({behavior:'smooth',block:'start'}),50);return true;
+      if(startBtn){startBtn.disabled=true;startBtn.textContent='正在準備抽牌方式…';}
+      state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;
+      state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.followupOptions=[];
+      state.revealed=new Set();state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
+      els.cards.innerHTML='';els.cards.className='cards';els.interp.innerHTML='';els.interp.classList.remove('show');els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
+      $('readingPath').textContent=`${state.topic.name} → ${state.scenario.name}`;$('readingQuestion').textContent=q.text;$('spreadName').textContent=q.spread.name;$('spreadDesc').textContent=q.spread.desc;$('deckCount').textContent=78;
+      els.workspace.hidden=false;document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));els.progress.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+      showModeSelector();
+      setTimeout(()=>els.workspace.scrollIntoView({behavior:'smooth',block:'start'}),50);
+      return true;
     }catch(e){showTarotApiError(e);return false;}finally{if(startBtn){startBtn.disabled=false;if(old)startBtn.textContent=old;}}
   }
   function revealCard(i,wrap,hint){if(!state.current[i]||state.revealed.has(i))return;state.revealed.add(i);wrap.classList.add('revealed');hint.textContent=state.current[i].reversed?'逆位':'正位';renderMeanings();if(state.revealed.size===state.current.length){$('revealAllBtn').disabled=true;renderFullReading();els.follow.hidden=true;els.followResult.hidden=true;}}
@@ -1839,8 +2898,8 @@
     }catch(e){state.followupUsed=false;showTarotApiError(e)}
   }
   
-  function renderFinish(){els.finish.innerHTML=`<h4>本次牌局完成</h4><div class="finish-actions"><button type="button" data-new-reading>換一個問題</button><button type="button" data-same-question>同一題重新測試</button></div>`;els.finish.hidden=false;}
-  function resetToTopic(){state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[]};els.workspace.hidden=true;renderTopics();showStep('topic');}
+  function renderFinish(){els.finish.innerHTML=`<h4>本次牌局完成</h4><div class="finish-actions"><button type="button" data-new-reading>換一個問題</button></div>`;els.finish.hidden=false;}
+  function resetToTopic(){state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[]};els.workspace.hidden=true;renderTopics();showStep('topic');}
   
   // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
   // 例：tarot.html?topic=love&scenario=single#worldSecond
@@ -1861,8 +2920,9 @@
   els.question.addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;state.question=state.questions.find(q=>q.id===b.dataset.question);renderReady();showStep('ready');});
   document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.back)));
   $('startReading').addEventListener('click',requestStartReading);$('revealAllBtn').addEventListener('click',revealAll);
+  $('drawModeGrid').addEventListener('click',e=>{if(state.drawMode)return;const b=e.target.closest('[data-draw-mode]');if(b)beginDrawMode(b.dataset.drawMode);});
   els.follow.addEventListener('click',e=>{const b=e.target.closest('[data-followup]');if(b)followup(Number(b.dataset.followup));});
-  els.finish.addEventListener('click',e=>{if(e.target.closest('[data-new-reading]'))resetToTopic();if(e.target.closest('[data-same-question]')){els.workspace.hidden=true;renderReady();showStep('ready');}});
+  els.finish.addEventListener('click',e=>{if(e.target.closest('[data-new-reading]'))resetToTopic();});
   document.addEventListener('click',e=>{
     const b=e.target.closest('[data-copy-ai-prompt]');if(b)copyAIPrompt(b);
     const memberLogin=e.target.closest('[data-member-login]');if(memberLogin){openMemberModal(memberLogin.dataset.targetReader||'b');return;}
