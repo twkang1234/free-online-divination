@@ -1518,7 +1518,7 @@ function cardHTML(h, lines, label, movingLines=[]){
   function adminToken(){try{return sessionStorage.getItem(YIJING_ADMIN_TOKEN_KEY)||''}catch(_){return ''}}
   function setAdminToken(token){try{if(token)sessionStorage.setItem(YIJING_ADMIN_TOKEN_KEY,token);else sessionStorage.removeItem(YIJING_ADMIN_TOKEN_KEY)}catch(_){}}
   function adminTestConfig(){return ADMIN_TEST_MODES[adminTestMode]||ADMIN_TEST_MODES.normal}
-  function isAdminTestActive(){return adminTestAuthorized&&adminTestMode!=='normal'}
+  function isAdminTestActive(){return adminEntryRequested()&&adminTestAuthorized&&adminTestMode!=='normal'}
   function adminTestProfile(){
     if(!isAdminTestActive()||!adminTestConfig().logged)return null;
     const names={'quota-empty':'額度用完測試會員','paid-credit':'付費額度測試會員','paid-full':'完整解鎖測試會員','paid-empty':'付費額度用完測試會員'};
@@ -1534,7 +1534,7 @@ function cardHTML(h, lines, label, movingLines=[]){
   }
   function renderAdminTestPanel(message='',error=false){
     const open=document.getElementById('yijingAdminTestOpen'),login=document.getElementById('yijingAdminTestLoginBlock'),modes=document.getElementById('yijingAdminTestModes'),status=document.getElementById('yijingAdminTestStatus');
-    if(open)open.hidden=!(adminEntryRequested()||adminTestAuthorized||!!adminToken());
+    if(open)open.hidden=!adminEntryRequested();
     if(login)login.hidden=adminTestAuthorized;if(modes)modes.hidden=!adminTestAuthorized;
     if(status){status.textContent=message||(adminTestAuthorized?'管理員驗證成功。請選擇要模擬的使用者狀態。':'');status.classList.toggle('error',!!error)}
     document.querySelectorAll('[data-admin-test-mode]').forEach(b=>b.classList.toggle('active',adminTestAuthorized&&b.dataset.adminTestMode===adminTestMode));
@@ -1560,7 +1560,8 @@ function cardHTML(h, lines, label, movingLines=[]){
   function restoreNormalMode(){adminTestMode='normal';adminTestUsage=0;paidPreviewActive=false;saveAdminTestState();renderAdminTestPanel();closeAdminTestModal();refreshAccessUI();if(typeof resetGuide==='function')resetGuide()}
   function forgetAdminTest(){adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;paidPreviewActive=false;setAdminToken('');try{sessionStorage.removeItem(YIJING_ADMIN_TEST_KEY)}catch(_){}renderAdminTestPanel('管理員測試登入已結束。');closeAdminTestModal();refreshAccessUI();if(typeof resetGuide==='function')resetGuide()}
   async function initAdminTestMode(){
-    renderAdminTestPanel();const has=await verifyAdminTestToken();if(adminEntryRequested()&&!has)setTimeout(()=>openAdminTestModal(),220);else if(adminEntryRequested()&&has)setTimeout(()=>openAdminTestModal(),180)
+    if(!adminEntryRequested()){adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;renderAdminTestPanel();renderAdminTestBanner();return;}
+    renderAdminTestPanel();const has=await verifyAdminTestToken();if(!has)setTimeout(()=>openAdminTestModal(),220);else setTimeout(()=>openAdminTestModal(),180)
   }
   function decodeJwt(token){try{const part=String(token||'').split('.')[1];if(!part)return null;const base=part.replace(/-/g,'+').replace(/_/g,'/');const json=decodeURIComponent(atob(base).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));return JSON.parse(json)}catch(_){return null}}
   function authToken(){try{return localStorage.getItem(YIJING_AUTH_KEY)||''}catch(_){return ''}}
