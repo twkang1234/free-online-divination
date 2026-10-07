@@ -575,7 +575,7 @@
     .tarot-access-mini{min-height:18px;margin:0 0 10px;text-align:right;color:#6f6477;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.04em}.tarot-access-mini:empty{display:none}
     .tarot-quota-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;margin:0 0 16px;padding:15px 17px;border:1px solid rgba(231,94,215,.16);border-radius:16px;background:linear-gradient(145deg,rgba(231,94,215,.035),rgba(154,114,255,.025))}
     .tarot-quota-panel[hidden]{display:none!important}.tarot-quota-copy b{display:block;color:#eadfea;font-size:.82rem}.tarot-quota-copy span{display:block;margin-top:4px;color:#796e80;font-size:.64rem;line-height:1.6}.tarot-quota-count{text-align:right}.tarot-quota-count small{display:block;color:#827488;font-family:var(--font-mono);font-size:.56rem;letter-spacing:.08em}.tarot-quota-count strong{display:block;margin-top:2px;color:#efd58f;font-size:1.34rem;line-height:1}.tarot-quota-panel.empty{border-color:rgba(232,198,122,.25);background:linear-gradient(145deg,rgba(232,198,122,.055),rgba(231,94,215,.02))}
-    .choice-card.guest-locked,.draw-mode-card.guest-locked{opacity:.38;filter:saturate(.62);cursor:not-allowed;transform:none!important}.choice-card.guest-locked:hover,.draw-mode-card.guest-locked:hover{transform:none;border-color:rgba(255,255,255,.075)}
+    .choice-card.guest-locked,.draw-mode-card.guest-locked{opacity:.42;filter:saturate(.62);cursor:pointer;transform:none!important}.choice-card.guest-locked:hover,.draw-mode-card.guest-locked:hover{opacity:.58;transform:translateY(-1px)!important;border-color:rgba(231,94,215,.28);box-shadow:0 0 22px rgba(231,94,215,.055)}
     .guest-lock-badge{position:absolute;left:14px;top:13px;z-index:3;padding:4px 7px;border:1px solid rgba(232,198,122,.18);border-radius:999px;background:rgba(232,198,122,.055);color:#b9a36e;font-family:var(--font-mono);font-size:.50rem;letter-spacing:.06em}
     .choice-card.guest-locked .choice-count{opacity:.45}.draw-mode-card.guest-locked .draw-mode-no{opacity:.50}
     .guest-feature-disabled{opacity:.42!important;cursor:not-allowed!important;filter:saturate(.6)}
@@ -2338,8 +2338,8 @@
   function renderTopics(){
     els.topic.innerHTML=TOPICS.map((t,i)=>{
       const allowed=isTopicAllowed(t.id);
-      const badge=!allowed?'<span class="guest-lock-badge">今日未開放</span>':'';
-      return `<button class="choice-card ${allowed?'':'guest-locked'}" data-topic="${t.id}" ${allowed?'':'disabled aria-disabled="true"'}>${badge}<span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small></button>`;
+      const badge=!allowed?'<span class="guest-lock-badge">免費登入</span>':'';
+      return `<button class="choice-card ${allowed?'':'guest-locked'}" data-topic="${t.id}" aria-disabled="${allowed?'false':'true'}">${badge}<span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small></button>`;
     }).join('');
   }
   function renderScenarios(){const t=state.topic;$('scenarioTitle').textContent=`${t.name}｜你目前處在哪個階段？`;els.scenario.innerHTML=t.scenarios.map((s,i)=>`<button class="choice-card" data-scenario="${s[0]}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><b>${s[1]}</b><small>${s[2]}</small></button>`).join('');}
@@ -2389,9 +2389,16 @@
   function applyDrawModeAccess(){
     document.querySelectorAll('[data-draw-mode]').forEach(btn=>{
       const mode=btn.dataset.drawMode,allowed=isDrawModeAllowed(mode);
-      btn.classList.toggle('guest-locked',!allowed);btn.disabled=!allowed;btn.setAttribute('aria-disabled',allowed?'false':'true');
+      btn.classList.toggle('guest-locked',!allowed);
+      btn.disabled=false;
+      btn.setAttribute('aria-disabled',allowed?'false':'true');
       btn.querySelector('.guest-lock-badge')?.remove();
-      if(!allowed){const badge=document.createElement('span');badge.className='guest-lock-badge';badge.textContent=mode==='physical'?'免費會員':'今日未開放';btn.appendChild(badge);}
+      if(!allowed){
+        const badge=document.createElement('span');
+        badge.className='guest-lock-badge';
+        badge.textContent='免費登入';
+        btn.appendChild(badge);
+      }
     });
   }
   function showModeSelector(){
@@ -2473,7 +2480,7 @@
   async function beginDrawMode(mode){
     // 一局只能選一次抽牌方式；選定後不能因結果不喜歡而換另一種。
     if(state.drawMode && state.drawMode!==mode)return;
-    if(!isDrawModeAllowed(mode)){openGuestNotice('feature');return;}
+    if(!isDrawModeAllowed(mode)){openMemberModal();return;}
 
     clearRitualTimers();
     state.drawMode=mode;
@@ -2852,7 +2859,7 @@
   9. 若能做到，請分別補充「內在視角」「理性證據視角」「行動策略視角」，但三者必須建立在同一副牌與同一核心判斷上。`;
   }
   async function copyAIPrompt(btn){
-    if(!isLogged()){openGuestNotice('feature');return;}
+    if(!isLogged()){openMemberModal();return;}
     const text=buildAIPrompt();
     try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);else{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}const old=btn.textContent;btn.textContent='✓ 已複製，可貼到其他 AI';setTimeout(()=>btn.textContent=old,1800);}catch(e){btn.textContent='複製失敗，請再試一次';setTimeout(()=>btn.textContent='複製 AI 解牌提示詞',1800);}
   }
@@ -2869,7 +2876,7 @@
     const allOpen=canAccessAllReaders(),todayGuest=guestReaderKey();
     const steps=order.map((k,i)=>{
       const allowed=isReaderAllowed(k);
-      return `<button type="button" class="reader-bottom-step ${k===key?'current':''} ${allowed?'':'locked'}" data-reader-go="${k}" data-reader-step-index="${i}" ${allowed?'':'disabled'}><b>${labels[k][0]}</b><small>${allowed?labels[k][1]:'今日未開放'}</small></button>`;
+      return `<button type="button" class="reader-bottom-step ${k===key?'current':''} ${allowed?'':'locked'}" data-reader-go="${k}" data-reader-step-index="${i}" aria-disabled="${allowed?'false':'true'}"><b>${labels[k][0]}</b><small>${allowed?labels[k][1]:'免費登入即可查看'}</small></button>`;
     }).join('');
     let nextButton='';
     if(!allOpen){
@@ -2926,7 +2933,7 @@
   }
   function safeFileStamp(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;}
   function downloadArchive(){
-    if(!isLogged()){openGuestNotice('feature');return;}
+    if(!isLogged()){openMemberModal();return;}
     if((state.readersViewed?.size||0)<4||!state.followupUsed||!state.followupQuestion||!state.followupCards?.length)return;
     const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=`tarot-four-lenses-v8-8-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
@@ -2937,10 +2944,23 @@
     els.analysis.querySelectorAll('[data-reader-go]').forEach(btn=>{
       const key=btn.dataset.readerGo,idx=order.indexOf(key),prev=order[idx-1],allowed=isReaderAllowed(key);
       btn.classList.toggle('done',state.readersViewed.has(key));btn.classList.toggle('locked',!allowed);
-      if(!allOpen)btn.disabled=!allowed;else btn.disabled=idx>0&&!state.readersViewed.has(prev);
+      if(!allOpen){
+        btn.disabled=false;
+        btn.setAttribute('aria-disabled',allowed?'false':'true');
+      }else{
+        btn.disabled=idx>0&&!state.readersViewed.has(prev);
+        btn.setAttribute('aria-disabled',btn.disabled?'true':'false');
+      }
     });
     const consensus=els.analysis.querySelector('[data-consensus-panel]');if(consensus)consensus.hidden=!allOpen||n<4;
-    els.analysis.querySelectorAll('[data-open-followup]').forEach(btn=>{if(!isLogged()){btn.disabled=true;btn.classList.add('guest-feature-disabled');btn.textContent='一次追問｜未登入不可使用';}});
+    els.analysis.querySelectorAll('[data-open-followup]').forEach(btn=>{
+      if(!isLogged()){
+        btn.disabled=false;
+        btn.classList.add('guest-feature-disabled');
+        btn.setAttribute('aria-disabled','true');
+        btn.textContent='一次追問｜免費登入後使用';
+      }
+    });
   }
   function scrollReaderIntoView(key){
     const pane=els.analysis.querySelector(`[data-reader-pane="${key}"]`);
@@ -2958,8 +2978,8 @@
   }
   function renderReaderShell(activeKey='a'){
     const bodies=state.readerBodies||{},guest=!isLogged();
-    const copyBtn=`<button class="copy-ai-prompt ${guest?'guest-feature-disabled':''}" type="button" data-copy-ai-prompt ${guest?'disabled title="未登入訪客不可使用"':''}>複製給其他 AI 比對</button>`;
-    const txtBtn=guest?`<button class="download-txt guest-feature-disabled" type="button" disabled title="未登入訪客不可使用">TXT 備份</button>`:'';
+    const copyBtn=`<button class="copy-ai-prompt ${guest?'guest-feature-disabled':''}" type="button" data-copy-ai-prompt aria-disabled="${guest?'true':'false'}">${guest?'複製給其他 AI｜免費登入':'複製給其他 AI 比對'}</button>`;
+    const txtBtn=guest?`<button class="download-txt guest-feature-disabled" type="button" data-download-txt aria-disabled="true">TXT 備份｜免費登入</button>`:'';
     els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">四鏡解牌｜V9.1</h3></div><div class="analysis-actions">${copyBtn}${txtBtn}</div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">01 · FOUR READERS</div><h4>四位老師，四種視角</h4></div><div class="same-cards-chip">1 SPREAD · 4 LENSES</div></div>${readerPane('a','A｜首席綜合老師','把整副牌串成完整故事，先回答「這一局到底在說什麼」。','✦',bodies.a||'',activeKey==='a')}${readerPane('b','B｜內在老師','專看保護方式、需求、界線與內在拉扯。','☾',bodies.b||'',activeKey==='b')}${readerPane('c','C｜理性老師','拆開牌面訊號與現實證據，控制過度解讀。','◇',bodies.c||'',activeKey==='c')}${readerPane('d','D｜行動老師','把同一副牌轉成可執行的下一步。','↗',bodies.d||'',activeKey==='d')}${state.consensusHTML||''}</div><details class="guardrail-details"><summary>解讀界線</summary><p>${esc(state.guardrailText||'')}</p></details>`;
     els.analysis.hidden=false;updateReaderJourney();
   }
@@ -2975,7 +2995,7 @@
   
   
   async function renderFollowups(){
-    if(!isLogged()){openGuestNotice('feature');return;}
+    if(!isLogged()){openMemberModal();return;}
     try{
       const pack=await tarotAPI('/followups',readingPayload());state.followupOptions=pack.options||[];
       els.follow.innerHTML=`<div class="phase-label"><span>02 · FOLLOW-UP</span><b>一次追問</b></div><h4>你現在最想再確認哪一件事？</h4><div class="followup-options">${state.followupOptions.map((o,i)=>`<button class="followup-option" data-followup="${i}">${esc(o.text)}<br><small>${o.cardCount} 張牌</small></button>`).join('')}</div>`;
@@ -2983,7 +3003,7 @@
     }catch(e){showTarotApiError(e)}
   }
   async function followup(index){
-    if(!isLogged()){openGuestNotice('feature');return;}
+    if(!isLogged()){openMemberModal();return;}
     if(state.followupUsed)return;
     try{
       state.followupUsed=true;els.follow.hidden=true;
@@ -3013,22 +3033,27 @@
     return true;
   };
   
-  els.topic.addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b)return;if(!isTopicAllowed(b.dataset.topic)){openGuestNotice('topic');return;}state.topic=topicBy(b.dataset.topic);state.scenario=state.question=null;renderScenarios();showStep('scenario');});
+  els.topic.addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b)return;if(!isTopicAllowed(b.dataset.topic)){openMemberModal();return;}state.topic=topicBy(b.dataset.topic);state.scenario=state.question=null;renderScenarios();showStep('scenario');});
   els.scenario.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;enterQuestionStage();});
   els.question.addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;state.question=state.questions.find(q=>q.id===b.dataset.question);renderReady();showStep('ready');});
   document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.back)));
   $('startReading').addEventListener('click',requestStartReading);$('revealAllBtn').addEventListener('click',revealAll);
-  $('drawModeGrid').addEventListener('click',e=>{if(state.drawMode)return;const b=e.target.closest('[data-draw-mode]');if(b&&!b.disabled&&isDrawModeAllowed(b.dataset.drawMode))beginDrawMode(b.dataset.drawMode);});
+  $('drawModeGrid').addEventListener('click',e=>{
+    if(state.drawMode)return;
+    const b=e.target.closest('[data-draw-mode]');if(!b)return;
+    if(!isDrawModeAllowed(b.dataset.drawMode)){openMemberModal();return;}
+    beginDrawMode(b.dataset.drawMode);
+  });
   els.follow.addEventListener('click',e=>{const b=e.target.closest('[data-followup]');if(b)followup(Number(b.dataset.followup));});
   els.finish.addEventListener('click',e=>{if(e.target.closest('[data-new-reading]'))resetToTopic();});
   document.addEventListener('click',e=>{
-    const b=e.target.closest('[data-copy-ai-prompt]');if(b&&!b.disabled)copyAIPrompt(b);
-    const memberLogin=e.target.closest('[data-member-login]');if(memberLogin){openMemberModal(memberLogin.dataset.targetReader||'b');return;}
-    const dl=e.target.closest('[data-download-txt]');if(dl&&!dl.disabled)downloadArchive();
-    const go=e.target.closest('[data-reader-go]');if(go&&!go.disabled)activateReader(go.dataset.readerGo,true);
-    const next=e.target.closest('[data-reader-next]');if(next&&!next.disabled)activateReader(next.dataset.readerNext,true);
-    const scrollConsensus=e.target.closest('[data-scroll-consensus]');if(scrollConsensus){const c=els.analysis.querySelector('[data-consensus-panel]');if(c&&!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});}
-    const followGate=e.target.closest('[data-open-followup]');if(followGate&&!followGate.disabled&&isLogged()&&(state.readersViewed?.size||0)>=4)renderFollowups();
+    const b=e.target.closest('[data-copy-ai-prompt]');if(b){if(!isLogged()){openMemberModal();return;}copyAIPrompt(b);return;}
+    const memberLogin=e.target.closest('[data-member-login]');if(memberLogin){openMemberModal(memberLogin.dataset.targetReader||null);return;}
+    const dl=e.target.closest('[data-download-txt]');if(dl){if(!isLogged()){openMemberModal();return;}downloadArchive();return;}
+    const go=e.target.closest('[data-reader-go]');if(go){activateReader(go.dataset.readerGo,true);return;}
+    const next=e.target.closest('[data-reader-next]');if(next&&!next.disabled){activateReader(next.dataset.readerNext,true);return;}
+    const scrollConsensus=e.target.closest('[data-scroll-consensus]');if(scrollConsensus){const c=els.analysis.querySelector('[data-consensus-panel]');if(c&&!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});return;}
+    const followGate=e.target.closest('[data-open-followup]');if(followGate){if(!isLogged()){openMemberModal();return;}if((state.readersViewed?.size||0)>=4)renderFollowups();}
   });
   $('tarotMemberButton')?.addEventListener('click',()=>openMemberModal());
   $('tarotMemberClose')?.addEventListener('click',closeMemberModal);
