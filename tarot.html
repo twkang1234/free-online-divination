@@ -1678,6 +1678,13 @@
     /* 已鎖定抽牌方式後，不再顯示可切換模式的返回入口 */
     .ritual-mode-back{display:none !important;}
 
+    /* 管理員測試模式：只由 admin.html 入口啟用，不影響正式會員資料 */
+    .admin-test-banner{position:sticky;top:64px;z-index:75;display:flex;align-items:center;justify-content:space-between;gap:12px;width:min(1120px,calc(100% - 28px));margin:0 auto 12px;padding:10px 14px;border:1px solid rgba(232,198,122,.34);border-radius:14px;background:linear-gradient(135deg,rgba(44,20,41,.96),rgba(27,19,49,.96));box-shadow:0 10px 30px rgba(0,0,0,.18);backdrop-filter:blur(14px)}
+    .admin-test-banner[hidden]{display:none}.admin-test-banner-copy{min-width:0}.admin-test-banner-copy b{display:block;color:#ffd98b;font-size:.74rem}.admin-test-banner-copy span{display:block;margin-top:2px;color:#cbb7cc;font-size:.64rem}.admin-test-banner-actions{display:flex;gap:7px;flex:0 0 auto}.admin-test-banner button{min-height:34px;padding:6px 10px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.05);color:#eee1ee;font-size:.64rem;font-weight:900;cursor:pointer}.admin-test-banner button:hover{background:rgba(255,255,255,.10)}
+    .admin-test-modal{position:fixed;inset:0;z-index:1400;display:grid;place-items:center;padding:20px;background:rgba(2,2,7,.82);backdrop-filter:blur(11px);opacity:0;visibility:hidden;pointer-events:none;transition:.18s}.admin-test-modal.show{opacity:1;visibility:visible;pointer-events:auto}.admin-test-card{position:relative;width:min(720px,96vw);max-height:90vh;overflow:auto;padding:26px;border:1px solid rgba(231,94,215,.30);border-radius:22px;background:linear-gradient(150deg,#0b0912,#17101c);box-shadow:0 28px 90px rgba(0,0,0,.42)}.admin-test-close{position:absolute;right:16px;top:14px;width:36px;height:36px;border:0;background:transparent;color:#a89baa;font-size:1.45rem;cursor:pointer}.admin-test-kicker{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.18em;color:#e9a6df}.admin-test-card h3{margin:10px 0 7px;color:#f7eff7;font-size:1.38rem}.admin-test-card>p{margin:0 0 16px;color:#b4a8b5;font-size:.72rem;line-height:1.7}.admin-test-status{min-height:20px;margin-top:8px;color:#c9aec7;font-size:.66rem}.admin-test-status.error{color:#ffaaa0}.admin-test-modes[hidden]{display:none}.admin-test-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}.admin-test-mode{display:block;width:100%;min-height:76px;padding:11px 12px;text-align:left;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.035);color:#ddd2dd;cursor:pointer;transition:.18s}.admin-test-mode:hover{transform:translateY(-1px);border-color:rgba(231,94,215,.35);background:rgba(231,94,215,.07)}.admin-test-mode.active{border-color:rgba(232,198,122,.70);background:linear-gradient(145deg,rgba(232,198,122,.13),rgba(154,114,255,.10));box-shadow:inset 0 0 0 1px rgba(232,198,122,.10)}.admin-test-mode b{display:block;color:#f4eaf3;font-size:.76rem}.admin-test-mode span{display:block;margin-top:4px;color:#a89aaa;font-size:.63rem;line-height:1.5}.admin-test-note{margin-top:13px;padding:10px 12px;border-left:3px solid #d978ce;background:rgba(231,94,215,.055);color:#b3a4b6;font-size:.66rem;line-height:1.65}.admin-test-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.admin-test-footer button{min-height:38px;padding:7px 12px;border:1px solid rgba(255,255,255,.10);border-radius:999px;background:rgba(255,255,255,.04);color:#d9ccd9;font-weight:900;font-size:.66rem;cursor:pointer}.admin-test-footer .danger{border-color:rgba(255,131,117,.24);color:#ffb6ac}
+    html[data-theme="light"] .admin-test-banner{background:linear-gradient(135deg,#fff7e4,#f8efff);border-color:rgba(151,112,41,.22)}html[data-theme="light"] .admin-test-banner-copy b{color:#855505}html[data-theme="light"] .admin-test-banner-copy span{color:#6e6170}html[data-theme="light"] .admin-test-modal{background:rgba(44,36,47,.42)}html[data-theme="light"] .admin-test-card{background:linear-gradient(150deg,#fff,#fcf7fc);border-color:rgba(177,70,163,.22)}html[data-theme="light"] .admin-test-card h3{color:#342d35}html[data-theme="light"] .admin-test-card>p{color:#716873}html[data-theme="light"] .admin-test-mode{background:#fff;color:#3d3540;border-color:rgba(77,47,75,.11)}html[data-theme="light"] .admin-test-mode b{color:#3a303b}html[data-theme="light"] .admin-test-mode span{color:#766a77}
+    @media(max-width:760px){.admin-test-banner{top:58px;align-items:flex-start;flex-direction:column}.admin-test-banner-actions{width:100%}.admin-test-banner-actions button{flex:1}.admin-test-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -1695,6 +1702,11 @@
       <button class="listing-open" id="openListing" type="button">申請刊登</button>
     </div>
   </header>
+
+  <div class="admin-test-banner" id="tarotAdminTestBanner" hidden>
+    <div class="admin-test-banner-copy"><b id="tarotAdminTestBannerTitle">🃏 管理員塔羅測試</b><span id="tarotAdminTestBannerText">測試資料與正式登入、裝置額度完全分開。</span></div>
+    <div class="admin-test-banner-actions"><button id="tarotAdminTestSwitch" type="button">切換模式</button><button id="tarotAdminTestExit" type="button">退出測試</button></div>
+  </div>
 
   <section class="tarot-hero" id="top">
     <div class="hero-copy">
@@ -1804,6 +1816,28 @@
     </section>
   </section>
 
+
+  <div class="admin-test-modal" id="tarotAdminTestModal" aria-hidden="true">
+    <div class="admin-test-card" role="dialog" aria-modal="true" aria-labelledby="tarotAdminTestTitle">
+      <button class="admin-test-close" id="tarotAdminTestClose" type="button" aria-label="關閉">×</button>
+      <div class="admin-test-kicker">ADMIN · TAROT TEST MODE</div>
+      <h3 id="tarotAdminTestTitle">管理員塔羅測試模式</h3>
+      <p>此頁只接受從已登入的管理員後台進入。測試狀態只存在本分頁的 sessionStorage，不會清除真正 Google 登入、正式裝置額度或會員資料，也不會建立測試會員。</p>
+      <div class="admin-test-status" id="tarotAdminTestStatus"></div>
+      <div class="admin-test-modes" id="tarotAdminTestModes" hidden>
+        <div class="admin-test-grid">
+          <button class="admin-test-mode" data-admin-test-mode="guest" type="button"><b>全新訪客</b><span>模擬未登入：3 / 3 次、4 / 8 主題、2 種抽牌、A＋每日 1 位老師。</span></button>
+          <button class="admin-test-mode" data-admin-test-mode="member" type="button"><b>免費會員</b><span>模擬已登入免費會員：3 / 3 次、一般抽牌每日開 3 種；完整進階仍鎖住。</span></button>
+          <button class="admin-test-mode" data-admin-test-mode="quota-empty" type="button"><b>免費額度用完</b><span>模擬免費會員今天已使用 3 / 3 次，測試額度用完提示。</span></button>
+          <button class="admin-test-mode" data-admin-test-mode="paid-credit" type="button"><b>付費額度 1 次</b><span>模擬已有 1 個付費額度，但尚未使用本次完整解鎖。</span></button>
+          <button class="admin-test-mode" data-admin-test-mode="paid-full" type="button"><b>完整付費解鎖</b><span>模擬本次已使用 1 個付費額度；現有進階功能可測試完整開放。</span></button>
+          <button class="admin-test-mode" data-admin-test-mode="paid-empty" type="button"><b>付費額度 0 次</b><span>模擬付費額度已用完；免費會員權限仍照常顯示。</span></button>
+        </div>
+        <div class="admin-test-note">測試模式不會寫入正式免費額度 localStorage；重新選擇模式會重設該模式的測試額度。塔羅自訂題目前仍只有入口，尚未實作完整自訂題流程，因此「完整付費解鎖」只開放目前已存在的進階功能。</div>
+        <div class="admin-test-footer"><button id="tarotAdminTestNormal" type="button">回管理後台</button><button class="danger" id="tarotAdminTestForget" type="button">登出管理員並返回</button></div>
+      </div>
+    </div>
+  </div>
 
   <div class="tarot-gate-modal" id="tarotGuestNotice" aria-hidden="true">
     <div class="tarot-gate-card" role="dialog" aria-modal="true" aria-labelledby="tarotGuestNoticeTitle">
@@ -2191,12 +2225,84 @@
   const TAROT_AUTH_KEY='divinationhub-bazi-google-credential';
   const TAROT_LOCAL_MEMBER_KEY='divinationhub-tarot-local-member-preview';
   const MEMBER_API_BASE='https://member-api.ezgocpu.workers.dev';
+  const ADMIN_API_BASE='https://admin-api.ezgocpu.workers.dev';
+  const TAROT_ADMIN_TOKEN_KEY='divinationhub-admin-session';
+  const TAROT_ADMIN_TEST_KEY='divinationhub-tarot-admin-test-v1';
   const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   const TAROT_DAILY_LIMIT=3, SAME_Q_MS=72*60*60*1000;
   let tarotGoogleInitialized=false, guestNoticeAction=null, guestPolicyCache=null, memberPolicyCache=null;
+  let adminTestAuthorized=false, adminTestMode='normal', adminTestUsage=0;
+  const ADMIN_TEST_MODES={
+    normal:{label:'正常模式',logged:null,startUsage:0,credits:0,full:false},
+    guest:{label:'全新訪客',logged:false,startUsage:0,credits:0,full:false},
+    member:{label:'免費會員',logged:true,startUsage:0,credits:0,full:false},
+    'quota-empty':{label:'免費額度用完',logged:true,startUsage:3,credits:0,full:false},
+    'paid-credit':{label:'付費額度 1 次',logged:true,startUsage:0,credits:1,full:false},
+    'paid-full':{label:'完整付費解鎖',logged:true,startUsage:0,credits:0,full:true},
+    'paid-empty':{label:'付費額度 0 次',logged:true,startUsage:0,credits:0,full:false}
+  };
 
   function safeRead(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(_){return fallback}}
   function safeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}}
+  function sessionRead(key,fallback){try{const v=sessionStorage.getItem(key);return v?JSON.parse(v):fallback}catch(_){return fallback}}
+  function sessionWrite(key,value){try{sessionStorage.setItem(key,JSON.stringify(value))}catch(_){}}
+  function adminToken(){try{return sessionStorage.getItem(TAROT_ADMIN_TOKEN_KEY)||''}catch(_){return ''}}
+  function setAdminToken(token){try{if(token)sessionStorage.setItem(TAROT_ADMIN_TOKEN_KEY,token);else sessionStorage.removeItem(TAROT_ADMIN_TOKEN_KEY)}catch(_){}}
+  function adminEntryRequested(){try{const q=new URLSearchParams(location.search);return q.get('admin')==='1'||q.get('admin-test')==='1'}catch(_){return false}}
+  function adminTestConfig(){return ADMIN_TEST_MODES[adminTestMode]||ADMIN_TEST_MODES.normal}
+  function isAdminTestActive(){return adminEntryRequested()&&adminTestAuthorized&&adminTestMode!=='normal'}
+  function isAdminPaidFull(){return isAdminTestActive()&&!!adminTestConfig().full}
+  function adminTestProfile(){
+    if(!isAdminTestActive()||!adminTestConfig().logged)return null;
+    const names={'quota-empty':'額度用完測試會員','paid-credit':'付費額度測試會員','paid-full':'完整解鎖測試會員','paid-empty':'付費額度用完測試會員'};
+    return {name:names[adminTestMode]||'管理員測試會員',email:'ADMIN TEST',sub:`admin-test-${adminTestMode}`};
+  }
+  function saveAdminTestState(){sessionWrite(TAROT_ADMIN_TEST_KEY,{mode:adminTestMode,usage:adminTestUsage})}
+  function loadAdminTestState(){const s=sessionRead(TAROT_ADMIN_TEST_KEY,null);if(!s||!ADMIN_TEST_MODES[s.mode])return;adminTestMode=s.mode;adminTestUsage=Math.max(0,Math.min(3,Number(s.usage||0)))}
+  function renderAdminTestBanner(){
+    const banner=$('tarotAdminTestBanner'),title=$('tarotAdminTestBannerTitle'),copy=$('tarotAdminTestBannerText');
+    const active=isAdminTestActive();if(banner)banner.hidden=!active;
+    if(title&&active)title.textContent=`🃏 管理員塔羅測試｜${adminTestConfig().label}`;
+    if(copy&&active){const c=adminTestConfig();copy.textContent=`測試免費額度：${Math.max(0,3-adminTestUsage)} / 3｜付費額度：${c.credits}｜完整解鎖：${c.full?'是':'否'}｜不影響正式資料。`;}
+  }
+  function renderAdminTestPanel(message='',error=false){
+    const modes=$('tarotAdminTestModes'),status=$('tarotAdminTestStatus');if(modes)modes.hidden=!adminTestAuthorized;
+    if(status){status.textContent=message||(adminTestAuthorized?'管理員驗證成功。請選擇要模擬的塔羅權限狀態。':'');status.classList.toggle('error',!!error)}
+    document.querySelectorAll('[data-admin-test-mode]').forEach(b=>b.classList.toggle('active',adminTestAuthorized&&b.dataset.adminTestMode===adminTestMode));
+    renderAdminTestBanner();
+  }
+  function openAdminTestModal(message=''){const modal=$('tarotAdminTestModal');renderAdminTestPanel(message);modal?.classList.add('show');modal?.setAttribute('aria-hidden','false')}
+  function closeAdminTestModal(){const modal=$('tarotAdminTestModal');modal?.classList.remove('show');modal?.setAttribute('aria-hidden','true')}
+  function refreshTarotAccessUI(){
+    updateMemberUI();renderTopics();
+    if(!$('drawModeShell').hidden)applyDrawModeAccess();
+    if(!els.analysis.hidden&&state.readerBodies)renderReaderShell('a');
+    renderAdminTestBanner();
+  }
+  async function verifyAdminTestToken(){
+    const token=adminToken();if(!token)return false;
+    try{
+      const r=await fetch(ADMIN_API_BASE+'/admin/stats',{headers:{Authorization:'Bearer '+token,Accept:'application/json'}});
+      const j=await r.json().catch(()=>null);if(!r.ok||!j?.success)throw Error('驗證失敗');
+      adminTestAuthorized=true;loadAdminTestState();renderAdminTestPanel();refreshTarotAccessUI();return true;
+    }catch(_){
+      adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;setAdminToken('');
+      try{sessionStorage.removeItem(TAROT_ADMIN_TEST_KEY)}catch(_){}renderAdminTestPanel();return false;
+    }
+  }
+  function setAdminTestMode(mode){
+    if(!adminTestAuthorized||!ADMIN_TEST_MODES[mode])return;
+    adminTestMode=mode;adminTestUsage=ADMIN_TEST_MODES[mode].startUsage||0;saveAdminTestState();closeAdminTestModal();resetToTopic();refreshTarotAccessUI();
+  }
+  function restoreNormalMode(){adminTestMode='normal';adminTestUsage=0;saveAdminTestState();closeAdminTestModal();location.href='/admin.html'}
+  function forgetAdminTest(){adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;setAdminToken('');try{sessionStorage.removeItem(TAROT_ADMIN_TEST_KEY)}catch(_){}location.href='/admin.html'}
+  async function initAdminTestMode(){
+    if(!adminEntryRequested()){adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;try{sessionStorage.removeItem(TAROT_ADMIN_TEST_KEY)}catch(_){}renderAdminTestPanel();renderAdminTestBanner();return;}
+    renderAdminTestPanel('正在確認管理員登入狀態…');
+    const ok=await verifyAdminTestToken();
+    if(!ok){alert('請先從管理員後台登入，再使用「塔羅測試」。');location.replace('/admin.html');return;}
+    setTimeout(()=>openAdminTestModal('管理員驗證成功。請選擇測試模式。'),120);
+  }
   function taiwanDateKey(){
     const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
     const get=t=>parts.find(x=>x.type===t)?.value||'';
@@ -2230,15 +2336,15 @@
     return memberPolicyCache;
   }
   function usage(){
+    if(isAdminTestActive())return {date:taiwanDateKey(),count:adminTestUsage,questionUses:{}};
     const raw=safeRead(TAROT_USAGE_KEY,{});
     const date=taiwanDateKey();
-    return {
-      date,
-      count:raw.date===date?Math.max(0,Math.min(TAROT_DAILY_LIMIT,Number(raw.count||0))):0,
-      questionUses:raw.questionUses&&typeof raw.questionUses==='object'?raw.questionUses:{}
-    };
+    return {date,count:raw.date===date?Math.max(0,Math.min(TAROT_DAILY_LIMIT,Number(raw.count||0))):0,questionUses:raw.questionUses&&typeof raw.questionUses==='object'?raw.questionUses:{}};
   }
-  function saveUsage(u){safeWrite(TAROT_USAGE_KEY,{date:taiwanDateKey(),count:Math.max(0,Math.min(TAROT_DAILY_LIMIT,Number(u?.count||0))),questionUses:u?.questionUses&&typeof u.questionUses==='object'?u.questionUses:{}})}
+  function saveUsage(u){
+    if(isAdminTestActive()){adminTestUsage=Math.max(0,Math.min(TAROT_DAILY_LIMIT,Number(u?.count||0)));saveAdminTestState();renderAdminTestBanner();return;}
+    safeWrite(TAROT_USAGE_KEY,{date:taiwanDateKey(),count:Math.max(0,Math.min(TAROT_DAILY_LIMIT,Number(u?.count||0))),questionUses:u?.questionUses&&typeof u.questionUses==='object'?u.questionUses:{}})
+  }
   function dailyUsage(){return usage().count}
   function dailyRemaining(){return Math.max(0,TAROT_DAILY_LIMIT-dailyUsage())}
   function questionKey(){return `${state.topic?.id||''}:${state.scenario?.id||''}:${state.question?.id||''}`}
@@ -2246,6 +2352,7 @@
   function authToken(){try{return localStorage.getItem(TAROT_AUTH_KEY)||''}catch(_){return ''}}
   function setAuthToken(token){try{if(token)localStorage.setItem(TAROT_AUTH_KEY,token);else localStorage.removeItem(TAROT_AUTH_KEY)}catch(_){}}
   function authProfile(){
+    if(isAdminTestActive())return adminTestProfile();
     if(location.protocol==='file:'&&safeRead(TAROT_LOCAL_MEMBER_KEY,false))return {name:'本機測試會員',email:'LOCAL PREVIEW'};
     const token=authToken();if(!token)return null;const p=decodeJwt(token);if(!p)return null;if(Number(p.exp||0)*1000<=Date.now()){setAuthToken('');return null}return {name:p.name||p.given_name||p.email||'會員',email:p.email||''};
   }
@@ -2253,36 +2360,40 @@
   function guestReaderKey(){return guestPolicy().reader}
   function isTopicAllowed(id){return isLogged()||guestPolicy().topics.has(id)}
   function isDrawModeAllowed(mode){
-    if(isLogged()){
-      if(mode==='physical')return false;
-      return memberPolicy().drawModes.has(mode);
-    }
-    if(mode==='physical')return false;
-    return guestPolicy().drawModes.has(mode);
+    if(isAdminPaidFull())return true;
+    if(isLogged()){if(mode==='physical')return false;return memberPolicy().drawModes.has(mode);}
+    if(mode==='physical')return false;return guestPolicy().drawModes.has(mode);
   }
-  function isMemberFollowupAllowed(){return false}
+  function isMemberFollowupAllowed(){return isAdminPaidFull()}
+  function hasFullPaidAccess(){return isAdminPaidFull()}
 
   function isReaderAllowed(key){if(isLogged()||state.accessTier==='member')return true;return key==='a'||key===guestReaderKey()}
   function canAccessAllReaders(){return isLogged()||state.accessTier==='member'}
   function remaining(ms){const total=Math.max(0,Math.ceil(ms/60000));const h=Math.floor(total/60),m=total%60;return h?`${h} 小時${m?` ${m} 分鐘`:''}`:`${m} 分鐘`}
   function updateAccessMini(){
     const el=$('tarotAccessMini');if(!el)return;
+    if(isAdminTestActive()){const c=adminTestConfig();el.textContent=`ADMIN TEST · ${c.label} · FREE ${dailyRemaining()}/3 · PAID ${c.credits}`;return;}
     if(isLogged())el.textContent='FREE MEMBER · 登入中';
     else el.textContent=`GUEST · ${dailyRemaining()}/${TAROT_DAILY_LIMIT} LEFT · A + ${guestReaderKey().toUpperCase()} TODAY`;
   }
   function updateQuotaUI(){
     const panel=$('tarotQuotaPanel');if(!panel)return;
+    if(isAdminTestActive()){
+      const c=adminTestConfig(),rem=dailyRemaining();panel.hidden=false;panel.classList.toggle('empty',rem===0&&!c.full&&!c.credits);
+      if($('tarotQuotaTitle'))$('tarotQuotaTitle').textContent=`管理員測試｜${c.label}`;
+      if($('tarotQuotaCount'))$('tarotQuotaCount').textContent=`${rem} / 3 次`;
+      if($('tarotQuotaNote'))$('tarotQuotaNote').textContent=`測試免費額度｜付費額度 ${c.credits} 次｜完整解鎖 ${c.full?'已啟用':'未啟用'}｜不寫入正式資料。`;
+      return;
+    }
     if(isLogged()){panel.hidden=true;return;}
-    panel.hidden=false;
-    const rem=dailyRemaining();
-    panel.classList.toggle('empty',rem===0);
+    panel.hidden=false;const rem=dailyRemaining();panel.classList.toggle('empty',rem===0);
     if($('tarotQuotaTitle'))$('tarotQuotaTitle').textContent='未登入訪客｜每日免費額度';
     if($('tarotQuotaCount'))$('tarotQuotaCount').textContent=`${rem} / ${TAROT_DAILY_LIMIT} 次`;
     if($('tarotQuotaNote'))$('tarotQuotaNote').textContent='每日台灣時間自動補滿 3 次｜同一裝置共用，切換 Google 帳號不會增加次數。';
   }
   function updateMemberUI(){
     const p=authProfile(),btn=$('tarotMemberButton'),txt=$('tarotMemberButtonText');if(!btn||!txt)return;
-    btn.classList.toggle('logged',!!p);txt.textContent=p?p.name:'免費登入';
+    btn.classList.toggle('logged',!!p);txt.textContent=isAdminTestActive()?`測試：${adminTestConfig().label}`:(p?p.name:'免費登入');
     updateAccessMini();updateQuotaUI();
     const prof=$('tarotMemberProfile');if(prof){prof.hidden=!p;$('tarotMemberName').textContent=p?.name||'會員';$('tarotMemberEmail').textContent=p?.email||''}
     const mount=$('tarotGoogleMount');if(mount)mount.hidden=!!p;
@@ -2292,13 +2403,14 @@
   }
   async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})}catch(_){}}
   function renderGoogleButton(){
+    if(isAdminTestActive())return;
     if(isLogged())return;
     if(location.protocol==='file:'){$('tarotLocalLogin').hidden=false;return;}
     if(!window.google?.accounts?.id){setTimeout(renderGoogleButton,250);return;}
     if(!tarotGoogleInitialized){window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async response=>{const credential=response?.credential||'';if(!credential)return;setAuthToken(credential);await registerMember();memberLoginSucceeded();}});tarotGoogleInitialized=true;}
     const mount=$('tarotGoogleMount');if(mount&&mount.dataset.ready!=='1'){mount.dataset.ready='1';window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});}
   }
-  function openMemberModal(targetReader=null){state.pendingReader=targetReader||null;updateMemberUI();const modal=$('tarotMemberModal');modal.classList.add('show');modal.setAttribute('aria-hidden','false');renderGoogleButton();}
+  function openMemberModal(targetReader=null){if(isAdminTestActive()){openAdminTestModal();return;}state.pendingReader=targetReader||null;updateMemberUI();const modal=$('tarotMemberModal');modal.classList.add('show');modal.setAttribute('aria-hidden','false');renderGoogleButton();}
   function closeMemberModal(){const modal=$('tarotMemberModal');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
   function memberLoginSucceeded(){
     state.accessTier='member';const target=state.pendingReader;state.pendingReader=null;
@@ -2308,6 +2420,7 @@
     if(target)setTimeout(()=>activateReader(target,true),100);
   }
   function logoutMember(){
+    if(isAdminTestActive()){openAdminTestModal();return;}
     setAuthToken('');safeWrite(TAROT_LOCAL_MEMBER_KEY,false);
     try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
     state.accessTier=state.current?.length?'guest':null;
@@ -2329,10 +2442,10 @@
       title.textContent='這個主題今天未開放';confirm.textContent='返回今日可用主題';
       copy.innerHTML='<p>未登入訪客每天開放 4 / 8 個主題：感情與工作二選一，再從其餘六類輪替開放三類。</p>';
     }else if(kind==='advanced'){
-      kicker.textContent='FULL ACCESS';
-      title.textContent='這項功能屬完整進階';
-      confirm.textContent='知道了';
-      copy.innerHTML='<p>免費會員目前仍無法使用這項功能。</p><div class="gate-highlight"><strong>完整進階功能</strong><br>正式付費額度與解鎖方式之後再依網站規則開放。</div>';
+      kicker.textContent='FULL ACCESS';title.textContent='這項功能屬完整進階';confirm.textContent='知道了';
+      if(isAdminTestActive()&&adminTestConfig().credits>0)copy.innerHTML='<p>目前測試狀態有 1 個付費額度，但尚未執行「本次完整解鎖」。</p><div class="gate-highlight"><strong>付費額度 1 次</strong><br>切換到「完整付費解鎖」即可測試解鎖後的現有進階功能。</div>';
+      else if(isAdminTestActive()&&adminTestMode==='paid-empty')copy.innerHTML='<p>目前測試狀態的付費額度為 0 次。</p><div class="gate-highlight"><strong>付費額度已用完</strong><br>免費會員權限仍維持，完整進階功能保持鎖定。</div>';
+      else copy.innerHTML='<p>免費會員目前仍無法使用這項功能。</p><div class="gate-highlight"><strong>完整進階功能</strong><br>正式付費額度與解鎖方式之後再依網站規則開放。</div>';
     }else if(kind==='memberDraw'){
       kicker.textContent='FREE MEMBER · DAILY ROTATION';
       title.textContent='這種抽牌方式今天未開放';
@@ -2351,15 +2464,24 @@
   }
   function closeGuestNotice(){const modal=$('tarotGuestNotice');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');guestNoticeAction=null;}
   function markFormalUse(){
-    if(isLogged()||state.accessTier!=='guest'||state.usageCounted)return;
-    const u=usage();u.count=Math.min(TAROT_DAILY_LIMIT,u.count+1);u.questionUses[questionKey()]=Date.now();saveUsage(u);
-    state.usageCounted=true;updateAccessMini();updateQuotaUI();
+    if(state.usageCounted)return;
+    if(isAdminTestActive()){
+      const c=adminTestConfig();if(c.full)return;
+      const u=usage();u.count=Math.min(TAROT_DAILY_LIMIT,u.count+1);saveUsage(u);state.usageCounted=true;updateAccessMini();updateQuotaUI();return;
+    }
+    if(isLogged()||state.accessTier!=='guest')return;
+    const u=usage();u.count=Math.min(TAROT_DAILY_LIMIT,u.count+1);u.questionUses[questionKey()]=Date.now();saveUsage(u);state.usageCounted=true;updateAccessMini();updateQuotaUI();
   }
   async function enterQuestionStage(){
     els.question.innerHTML='';if(els.qctx)els.qctx.textContent='';
     try{await renderQuestions();showStep('question');}catch(e){showTarotApiError(e)}
   }
   async function requestStartReading(){
+    if(isAdminTestActive()){
+      const c=adminTestConfig();
+      if(!c.full&&dailyRemaining()<=0){openGuestNotice('quota');return;}
+      state.accessTier=c.logged?'member':'guest';state.usageCounted=false;await drawReading();return;
+    }
     if(isLogged()){state.accessTier='member';await drawReading();return;}
     if(dailyRemaining()<=0){openGuestNotice('quota');return;}
     const u=usage(),now=Date.now(),qAt=Number(u.questionUses[questionKey()]||0),sameLeft=qAt?SAME_Q_MS-(now-qAt):0;
@@ -2907,7 +3029,7 @@
   9. 若能做到，請分別補充「內在視角」「理性證據視角」「行動策略視角」，但三者必須建立在同一副牌與同一核心判斷上。`;
   }
   async function copyAIPrompt(btn){
-    openGuestNotice('advanced');return;
+    if(!hasFullPaidAccess()){openGuestNotice('advanced');return;}
     const text=buildAIPrompt();
     try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);else{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}const old=btn.textContent;btn.textContent='✓ 已複製，可貼到其他 AI';setTimeout(()=>btn.textContent=old,1800);}catch(e){btn.textContent='複製失敗，請再試一次';setTimeout(()=>btn.textContent='複製 AI 解牌提示詞',1800);}
   }
@@ -2984,7 +3106,7 @@
   }
   function safeFileStamp(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;}
   function downloadArchive(){
-    openGuestNotice('advanced');return;
+    if(!hasFullPaidAccess()){openGuestNotice('advanced');return;}
     if((state.readersViewed?.size||0)<4||!state.followupUsed||!state.followupQuestion||!state.followupCards?.length)return;
     const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=`tarot-four-lenses-v8-8-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
@@ -3045,10 +3167,7 @@
     }
 
     els.analysis.querySelectorAll('[data-open-followup]').forEach(btn=>{
-      btn.disabled=false;
-      btn.classList.add('guest-feature-disabled');
-      btn.setAttribute('aria-disabled','true');
-      btn.textContent='完整進階｜進行一次追問 ↓';
+      const full=hasFullPaidAccess();btn.disabled=false;btn.classList.toggle('guest-feature-disabled',!full);btn.setAttribute('aria-disabled',full?'false':'true');btn.textContent=full?'進行一次追問 ↓':'完整進階｜進行一次追問 ↓';
     });
   }
   function scrollReaderIntoView(key){
@@ -3066,9 +3185,9 @@
     updateReaderJourney();if(doScroll)scrollReaderIntoView(key);
   }
   function renderReaderShell(activeKey='a'){
-    const bodies=state.readerBodies||{};
-    const copyBtn=`<button class="copy-ai-prompt guest-feature-disabled" type="button" data-copy-ai-prompt aria-disabled="true">完整進階｜複製給其他 AI</button>`;
-    const txtBtn=`<button class="download-txt guest-feature-disabled" type="button" data-download-txt aria-disabled="true">完整進階｜TXT 備份</button>`;
+    const bodies=state.readerBodies||{},full=hasFullPaidAccess();
+    const copyBtn=full?`<button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button>`:`<button class="copy-ai-prompt guest-feature-disabled" type="button" data-copy-ai-prompt aria-disabled="true">完整進階｜複製給其他 AI</button>`;
+    const txtBtn=full?`<button class="download-txt" type="button" data-download-txt>TXT 備份</button>`:`<button class="download-txt guest-feature-disabled" type="button" data-download-txt aria-disabled="true">完整進階｜TXT 備份</button>`;
     els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">四鏡解牌｜V9.1</h3></div><div class="analysis-actions">${copyBtn}${txtBtn}</div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">01 · FOUR READERS</div><h4>四位老師，四種視角</h4></div><div class="same-cards-chip">1 SPREAD · 4 LENSES</div></div>${readerPane('a','A｜首席綜合老師','把整副牌串成完整故事，先回答「這一局到底在說什麼」。','✦',bodies.a||'',activeKey==='a')}${readerPane('b','B｜內在老師','專看保護方式、需求、界線與內在拉扯。','☾',bodies.b||'',activeKey==='b')}${readerPane('c','C｜理性老師','拆開牌面訊號與現實證據，控制過度解讀。','◇',bodies.c||'',activeKey==='c')}${readerPane('d','D｜行動老師','把同一副牌轉成可執行的下一步。','↗',bodies.d||'',activeKey==='d')}${state.consensusHTML||''}</div><details class="guardrail-details"><summary>解讀界線</summary><p>${esc(state.guardrailText||'')}</p></details>`;
     els.analysis.hidden=false;updateReaderJourney();
   }
@@ -3084,7 +3203,7 @@
   
   
   async function renderFollowups(){
-    openGuestNotice('advanced');return;
+    if(!hasFullPaidAccess()){openGuestNotice('advanced');return;}
     try{
       const pack=await tarotAPI('/followups',readingPayload());state.followupOptions=pack.options||[];
       els.follow.innerHTML=`<div class="phase-label"><span>02 · FOLLOW-UP</span><b>一次追問</b></div><h4>你現在最想再確認哪一件事？</h4><div class="followup-options">${state.followupOptions.map((o,i)=>`<button class="followup-option" data-followup="${i}">${esc(o.text)}<br><small>${o.cardCount} 張牌</small></button>`).join('')}</div>`;
@@ -3092,14 +3211,14 @@
     }catch(e){showTarotApiError(e)}
   }
   async function followup(index){
-    openGuestNotice('advanced');return;
+    if(!hasFullPaidAccess()){openGuestNotice('advanced');return;}
     if(state.followupUsed)return;
     try{
       state.followupUsed=true;els.follow.hidden=true;
       const pack=await tarotAPI('/followup',{...readingPayload(),index});
       state.followupQuestion=pack.question||'';state.followupCards=pack.cards||[];state.followupText=pack.paragraphs||[];state.finalSynthesisHTML=pack.finalSynthesisHTML||'';state.finalSynthesisText=pack.finalSynthesisText||[];
       const cards=state.followupCards,paras=state.followupText;
-      els.followResult.innerHTML=`<div class="phase-label"><span>02 · RESULT</span><b>追問結果</b></div><h4>${esc(state.followupQuestion)}</h4><div class="followup-card-row">${cards.map(x=>`<div class="followup-mini"><b>${esc(x.name)}</b><span>${x.reversed?'逆位':'正位'} · ${esc(x.position)}</span><p>${esc(x.meaning)}</p></div>`).join('')}</div><div class="followup-answer">${paras.map(p=>`<p>${esc(p)}</p>`).join('')}</div>${state.finalSynthesisHTML}<div class="post-followup-download"><button class="download-txt guest-feature-disabled" type="button" data-download-txt aria-disabled="true">完整進階｜TXT 備份</button><button class="copy-ai-prompt guest-feature-disabled" type="button" data-copy-ai-prompt aria-disabled="true">完整進階｜複製給其他 AI</button></div>`;
+      els.followResult.innerHTML=`<div class="phase-label"><span>02 · RESULT</span><b>追問結果</b></div><h4>${esc(state.followupQuestion)}</h4><div class="followup-card-row">${cards.map(x=>`<div class="followup-mini"><b>${esc(x.name)}</b><span>${x.reversed?'逆位':'正位'} · ${esc(x.position)}</span><p>${esc(x.meaning)}</p></div>`).join('')}</div><div class="followup-answer">${paras.map(p=>`<p>${esc(p)}</p>`).join('')}</div>${state.finalSynthesisHTML}<div class="post-followup-download"><button class="download-txt" type="button" data-download-txt>TXT 備份</button><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button></div>`;
       els.followResult.hidden=false;renderFinish();
     }catch(e){state.followupUsed=false;showTarotApiError(e)}
   }
@@ -3126,7 +3245,10 @@
   els.scenario.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;enterQuestionStage();});
   els.question.addEventListener('click',e=>{
     const custom=e.target.closest('[data-custom-question]');
-    if(custom){openGuestNotice('advanced');return;}
+    if(custom){
+      if(isAdminPaidFull()){alert('塔羅自訂題目前尚未實作完整流程；此測試模式已確認付費權限可放行，但功能本體仍待下一階段製作。');return;}
+      openGuestNotice('advanced');return;
+    }
     const b=e.target.closest('[data-question]');if(!b)return;
     state.question=state.questions.find(q=>q.id===b.dataset.question);renderReady();showStep('ready');
   });
@@ -3145,16 +3267,14 @@
   els.follow.addEventListener('click',e=>{const b=e.target.closest('[data-followup]');if(b)followup(Number(b.dataset.followup));});
   els.finish.addEventListener('click',e=>{if(e.target.closest('[data-new-reading]'))resetToTopic();});
   document.addEventListener('click',e=>{
-    const b=e.target.closest('[data-copy-ai-prompt]');if(b){openGuestNotice('advanced');return;}
+    const b=e.target.closest('[data-copy-ai-prompt]');if(b){copyAIPrompt(b);return;}
     const memberLogin=e.target.closest('[data-member-login]');if(memberLogin){openMemberModal(memberLogin.dataset.targetReader||null);return;}
     const advanced=e.target.closest('[data-open-advanced]');if(advanced){openGuestNotice('advanced');return;}
-    const dl=e.target.closest('[data-download-txt]');if(dl){openGuestNotice('advanced');return;}
+    const dl=e.target.closest('[data-download-txt]');if(dl){downloadArchive();return;}
     const go=e.target.closest('[data-reader-go]');if(go){activateReader(go.dataset.readerGo,true);return;}
     const next=e.target.closest('[data-reader-next]');if(next&&!next.disabled){activateReader(next.dataset.readerNext,true);return;}
     const scrollConsensus=e.target.closest('[data-scroll-consensus]');if(scrollConsensus){const c=els.analysis.querySelector('[data-consensus-panel]');if(c&&!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});return;}
-    const followGate=e.target.closest('[data-open-followup]');if(followGate){
-      openGuestNotice('advanced');return;
-    }
+    const followGate=e.target.closest('[data-open-followup]');if(followGate){if(hasFullPaidAccess()&&(state.readersViewed?.size||0)>=4)renderFollowups();else openGuestNotice('advanced');return;}
   });
   $('tarotMemberButton')?.addEventListener('click',()=>openMemberModal());
   $('tarotMemberClose')?.addEventListener('click',closeMemberModal);
@@ -3165,6 +3285,13 @@
   $('tarotGuestNoticeConfirm')?.addEventListener('click',()=>{const fn=guestNoticeAction;if(fn)fn();});
   $('tarotMemberModal')?.addEventListener('click',e=>{if(e.target===$('tarotMemberModal'))closeMemberModal();});
   $('tarotGuestNotice')?.addEventListener('click',e=>{if(e.target===$('tarotGuestNotice'))closeGuestNotice();});
+  $('tarotAdminTestClose')?.addEventListener('click',closeAdminTestModal);
+  $('tarotAdminTestModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closeAdminTestModal()});
+  $('tarotAdminTestModes')?.addEventListener('click',e=>{const b=e.target.closest('[data-admin-test-mode]');if(b)setAdminTestMode(b.dataset.adminTestMode)});
+  $('tarotAdminTestSwitch')?.addEventListener('click',()=>openAdminTestModal());
+  $('tarotAdminTestExit')?.addEventListener('click',restoreNormalMode);
+  $('tarotAdminTestNormal')?.addEventListener('click',restoreNormalMode);
+  $('tarotAdminTestForget')?.addEventListener('click',forgetAdminTest);
   // 顯示模式切換：只控制前端外觀，並記住使用者最後一次選擇。
   const TAROT_THEME_KEY='divinationhub-color-theme';
   function syncThemeToggle(){
@@ -3202,8 +3329,9 @@
   syncThemeToggle();
   flashThemeToggle();
 
-  // 初始化主塔羅頁，並接住 SEO 子頁傳入的主題／情境。
-  renderTopics();$('deckCount').textContent=78;updateMemberUI();
+  // 初始化主塔羅頁；若由管理員後台進入，先驗證 session token 再開啟測試模式。
+  initAdminTestMode();
+  renderTopics();$('deckCount').textContent=78;updateMemberUI();renderAdminTestBanner();
 
   // SEO 子頁深層導流：例如 tarot-love.html 的「單身桃花」會帶入
   // tarot.html?topic=love&scenario=single#worldSecond。
