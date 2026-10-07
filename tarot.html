@@ -2260,7 +2260,7 @@
     if(mode==='physical')return false;
     return guestPolicy().drawModes.has(mode);
   }
-  function isMemberFollowupAllowed(){return isLogged()&&memberPolicy().followupOpen}
+  function isMemberFollowupAllowed(){return false}
 
   function isReaderAllowed(key){if(isLogged()||state.accessTier==='member')return true;return key==='a'||key===guestReaderKey()}
   function canAccessAllReaders(){return isLogged()||state.accessTier==='member'}
@@ -2907,7 +2907,7 @@
   9. 若能做到，請分別補充「內在視角」「理性證據視角」「行動策略視角」，但三者必須建立在同一副牌與同一核心判斷上。`;
   }
   async function copyAIPrompt(btn){
-    if(!isLogged()){openMemberModal();return;}
+    openGuestNotice('advanced');return;
     const text=buildAIPrompt();
     try{if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);else{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}const old=btn.textContent;btn.textContent='✓ 已複製，可貼到其他 AI';setTimeout(()=>btn.textContent=old,1800);}catch(e){btn.textContent='複製失敗，請再試一次';setTimeout(()=>btn.textContent='複製 AI 解牌提示詞',1800);}
   }
@@ -2984,7 +2984,7 @@
   }
   function safeFileStamp(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;}
   function downloadArchive(){
-    if(!isLogged()){openMemberModal();return;}
+    openGuestNotice('advanced');return;
     if((state.readersViewed?.size||0)<4||!state.followupUsed||!state.followupQuestion||!state.followupCards?.length)return;
     const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=`tarot-four-lenses-v8-8-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
@@ -3034,7 +3034,7 @@
           guestNote=document.createElement('div');
           guestNote.setAttribute('data-guest-consensus-note','');
           guestNote.className='reader-lock-gate';
-          guestNote.innerHTML='<div><b>本次免費解讀到這裡</b><span>你已看完今天開放的 2 位老師與四鏡會診結論。若要進行一次追問，請免費登入後繼續。</span></div><button type="button" class="reader-login-cta" data-member-login>免費登入繼續追問</button>';
+          guestNote.innerHTML='<div><b>本次免費解讀到這裡</b><span>你已看完今天開放的 2 位老師與四鏡會診結論。一次追問屬完整進階功能，目前先鎖定。</span></div><button type="button" class="reader-login-cta" data-open-advanced>查看完整進階說明</button>';
           const followBtn=consensus.querySelector('[data-open-followup]');
           if(followBtn)consensus.insertBefore(guestNote,followBtn);
           else consensus.appendChild(guestNote);
@@ -3045,18 +3045,10 @@
     }
 
     els.analysis.querySelectorAll('[data-open-followup]').forEach(btn=>{
-      if(!isLogged()){
-        btn.disabled=false;
-        btn.classList.remove('guest-feature-disabled');
-        btn.setAttribute('aria-disabled','true');
-        btn.textContent='免費登入後進行一次追問 ↓';
-      }else{
-        const followupOpen=isMemberFollowupAllowed();
-        btn.disabled=false;
-        btn.classList.toggle('guest-feature-disabled',!followupOpen);
-        btn.setAttribute('aria-disabled',followupOpen?'false':'true');
-        btn.textContent=followupOpen?'進行一次追問 ↓':'今日追問未開放｜明日輪替';
-      }
+      btn.disabled=false;
+      btn.classList.add('guest-feature-disabled');
+      btn.setAttribute('aria-disabled','true');
+      btn.textContent='完整進階｜進行一次追問 ↓';
     });
   }
   function scrollReaderIntoView(key){
@@ -3074,9 +3066,9 @@
     updateReaderJourney();if(doScroll)scrollReaderIntoView(key);
   }
   function renderReaderShell(activeKey='a'){
-    const bodies=state.readerBodies||{},guest=!isLogged();
-    const copyBtn=`<button class="copy-ai-prompt ${guest?'guest-feature-disabled':''}" type="button" data-copy-ai-prompt aria-disabled="${guest?'true':'false'}">${guest?'複製給其他 AI｜免費登入':'複製給其他 AI 比對'}</button>`;
-    const txtBtn=guest?`<button class="download-txt guest-feature-disabled" type="button" data-download-txt aria-disabled="true">TXT 備份｜免費登入</button>`:'';
+    const bodies=state.readerBodies||{};
+    const copyBtn=`<button class="copy-ai-prompt guest-feature-disabled" type="button" data-copy-ai-prompt aria-disabled="true">完整進階｜複製給其他 AI</button>`;
+    const txtBtn=`<button class="download-txt guest-feature-disabled" type="button" data-download-txt aria-disabled="true">完整進階｜TXT 備份</button>`;
     els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">四鏡解牌｜V9.1</h3></div><div class="analysis-actions">${copyBtn}${txtBtn}</div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">01 · FOUR READERS</div><h4>四位老師，四種視角</h4></div><div class="same-cards-chip">1 SPREAD · 4 LENSES</div></div>${readerPane('a','A｜首席綜合老師','把整副牌串成完整故事，先回答「這一局到底在說什麼」。','✦',bodies.a||'',activeKey==='a')}${readerPane('b','B｜內在老師','專看保護方式、需求、界線與內在拉扯。','☾',bodies.b||'',activeKey==='b')}${readerPane('c','C｜理性老師','拆開牌面訊號與現實證據，控制過度解讀。','◇',bodies.c||'',activeKey==='c')}${readerPane('d','D｜行動老師','把同一副牌轉成可執行的下一步。','↗',bodies.d||'',activeKey==='d')}${state.consensusHTML||''}</div><details class="guardrail-details"><summary>解讀界線</summary><p>${esc(state.guardrailText||'')}</p></details>`;
     els.analysis.hidden=false;updateReaderJourney();
   }
@@ -3092,8 +3084,7 @@
   
   
   async function renderFollowups(){
-    if(!isLogged()){openMemberModal();return;}
-    if(!isMemberFollowupAllowed()){openGuestNotice('followupOff');return;}
+    openGuestNotice('advanced');return;
     try{
       const pack=await tarotAPI('/followups',readingPayload());state.followupOptions=pack.options||[];
       els.follow.innerHTML=`<div class="phase-label"><span>02 · FOLLOW-UP</span><b>一次追問</b></div><h4>你現在最想再確認哪一件事？</h4><div class="followup-options">${state.followupOptions.map((o,i)=>`<button class="followup-option" data-followup="${i}">${esc(o.text)}<br><small>${o.cardCount} 張牌</small></button>`).join('')}</div>`;
@@ -3101,15 +3092,14 @@
     }catch(e){showTarotApiError(e)}
   }
   async function followup(index){
-    if(!isLogged()){openMemberModal();return;}
-    if(!isMemberFollowupAllowed()){openGuestNotice('followupOff');return;}
+    openGuestNotice('advanced');return;
     if(state.followupUsed)return;
     try{
       state.followupUsed=true;els.follow.hidden=true;
       const pack=await tarotAPI('/followup',{...readingPayload(),index});
       state.followupQuestion=pack.question||'';state.followupCards=pack.cards||[];state.followupText=pack.paragraphs||[];state.finalSynthesisHTML=pack.finalSynthesisHTML||'';state.finalSynthesisText=pack.finalSynthesisText||[];
       const cards=state.followupCards,paras=state.followupText;
-      els.followResult.innerHTML=`<div class="phase-label"><span>02 · RESULT</span><b>追問結果</b></div><h4>${esc(state.followupQuestion)}</h4><div class="followup-card-row">${cards.map(x=>`<div class="followup-mini"><b>${esc(x.name)}</b><span>${x.reversed?'逆位':'正位'} · ${esc(x.position)}</span><p>${esc(x.meaning)}</p></div>`).join('')}</div><div class="followup-answer">${paras.map(p=>`<p>${esc(p)}</p>`).join('')}</div>${state.finalSynthesisHTML}<div class="post-followup-download"><button class="download-txt" type="button" data-download-txt title="下載文字備份">TXT 備份</button><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button></div>`;
+      els.followResult.innerHTML=`<div class="phase-label"><span>02 · RESULT</span><b>追問結果</b></div><h4>${esc(state.followupQuestion)}</h4><div class="followup-card-row">${cards.map(x=>`<div class="followup-mini"><b>${esc(x.name)}</b><span>${x.reversed?'逆位':'正位'} · ${esc(x.position)}</span><p>${esc(x.meaning)}</p></div>`).join('')}</div><div class="followup-answer">${paras.map(p=>`<p>${esc(p)}</p>`).join('')}</div>${state.finalSynthesisHTML}<div class="post-followup-download"><button class="download-txt guest-feature-disabled" type="button" data-download-txt aria-disabled="true">完整進階｜TXT 備份</button><button class="copy-ai-prompt guest-feature-disabled" type="button" data-copy-ai-prompt aria-disabled="true">完整進階｜複製給其他 AI</button></div>`;
       els.followResult.hidden=false;renderFinish();
     }catch(e){state.followupUsed=false;showTarotApiError(e)}
   }
@@ -3155,16 +3145,15 @@
   els.follow.addEventListener('click',e=>{const b=e.target.closest('[data-followup]');if(b)followup(Number(b.dataset.followup));});
   els.finish.addEventListener('click',e=>{if(e.target.closest('[data-new-reading]'))resetToTopic();});
   document.addEventListener('click',e=>{
-    const b=e.target.closest('[data-copy-ai-prompt]');if(b){if(!isLogged()){openMemberModal();return;}copyAIPrompt(b);return;}
+    const b=e.target.closest('[data-copy-ai-prompt]');if(b){openGuestNotice('advanced');return;}
     const memberLogin=e.target.closest('[data-member-login]');if(memberLogin){openMemberModal(memberLogin.dataset.targetReader||null);return;}
-    const dl=e.target.closest('[data-download-txt]');if(dl){if(!isLogged()){openMemberModal();return;}downloadArchive();return;}
+    const advanced=e.target.closest('[data-open-advanced]');if(advanced){openGuestNotice('advanced');return;}
+    const dl=e.target.closest('[data-download-txt]');if(dl){openGuestNotice('advanced');return;}
     const go=e.target.closest('[data-reader-go]');if(go){activateReader(go.dataset.readerGo,true);return;}
     const next=e.target.closest('[data-reader-next]');if(next&&!next.disabled){activateReader(next.dataset.readerNext,true);return;}
     const scrollConsensus=e.target.closest('[data-scroll-consensus]');if(scrollConsensus){const c=els.analysis.querySelector('[data-consensus-panel]');if(c&&!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});return;}
     const followGate=e.target.closest('[data-open-followup]');if(followGate){
-      if(!isLogged()){openMemberModal();return;}
-      if(!isMemberFollowupAllowed()){openGuestNotice('followupOff');return;}
-      if((state.readersViewed?.size||0)>=4)renderFollowups();
+      openGuestNotice('advanced');return;
     }
   });
   $('tarotMemberButton')?.addEventListener('click',()=>openMemberModal());
