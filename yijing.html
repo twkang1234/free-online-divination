@@ -1498,10 +1498,28 @@ function cardHTML(h, lines, label, movingLines=[]){
     if(n>=1&&n<=4)return guestPolicy().pro.has(n);if(n===5)return true;if(n===6||n===7)return guestPolicy().open67===n;return false;
   }
   function usageIdentity(){const p=authProfile();return p?`member:${p.sub||p.email}`:'guest'}
-  function dailyUsage(){const all=safeRead(YIJING_USAGE_KEY,{}),d=taiwanDateKey(),id=usageIdentity();return Number(all?.[d]?.[id]||0)}
+  function usageRow(){const all=safeRead(YIJING_USAGE_KEY,{}),d=taiwanDateKey();return {all,d,row:(all?.[d]&&typeof all[d]==='object')?all[d]:{}}}
+  function identityUsage(){const {row}=usageRow(),id=usageIdentity();return Number(row?.[id]||0)}
+  function deviceUsage(){
+    const {row}=usageRow();
+    if(Object.prototype.hasOwnProperty.call(row,'__device__'))return Number(row.__device__||0);
+    // 舊版沒有裝置總額欄位時，以這個瀏覽器今天既有的訪客／會員紀錄加總做遷移，最多視為 3 次。
+    const legacy=Object.entries(row).filter(([k])=>k!=='__device__').reduce((sum,[,v])=>sum+Math.max(0,Number(v||0)),0);
+    return Math.min(3,legacy);
+  }
+  function dailyUsage(){return Math.max(identityUsage(),deviceUsage())}
   function dailyLimit(){return 3}
   function remainingUses(){return Math.max(0,dailyLimit()-dailyUsage())}
-  function markReadingUsed(){if(hasFullPaidAccess())return;const all=safeRead(YIJING_USAGE_KEY,{}),d=taiwanDateKey(),id=usageIdentity();all[d]=all[d]&&typeof all[d]==='object'?all[d]:{};all[d][id]=Number(all[d][id]||0)+1;for(const k of Object.keys(all)){if(k!==d&&Object.keys(all).length>12)delete all[k]}safeWrite(YIJING_USAGE_KEY,all);updateMemberUI()}
+  function markReadingUsed(){
+    if(hasFullPaidAccess())return;
+    const all=safeRead(YIJING_USAGE_KEY,{}),d=taiwanDateKey(),id=usageIdentity();
+    all[d]=all[d]&&typeof all[d]==='object'?all[d]:{};
+    const currentDevice=Object.prototype.hasOwnProperty.call(all[d],'__device__')?Number(all[d].__device__||0):Math.min(3,Object.entries(all[d]).filter(([k])=>k!=='__device__').reduce((sum,[,v])=>sum+Math.max(0,Number(v||0)),0));
+    all[d][id]=Number(all[d][id]||0)+1;
+    all[d].__device__=currentDevice+1;
+    for(const k of Object.keys(all)){if(k!==d&&Object.keys(all).length>12)delete all[k]}
+    safeWrite(YIJING_USAGE_KEY,all);updateMemberUI();
+  }
 
   async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{Authorization:'Bearer '+token,Accept:'application/json'}})}catch(_){}}
   function renderGoogleButton(){
@@ -1528,7 +1546,7 @@ function cardHTML(h, lines, label, movingLines=[]){
     const p=authProfile(),bound=memberDeviceLoginRequired(),modal=document.getElementById('yijingMemberModal'),title=document.getElementById('yijingMemberTitle'),intro=document.getElementById('yijingMemberIntro'),note=document.getElementById('yijingQuotaNote');
     if(title)title.textContent=p?(quota?'今日免費次數已用完':'免費會員'):(bound?'請登入會員':'免費登入解鎖');
     if(intro)intro.textContent=reason||(p?'你已登入免費會員。主題與固定題目已全開，但部分進階功能仍依每日輪替或進階權限保留。':(bound?'這台瀏覽器已成功登入過會員，因此不再提供未登入訪客模式。請登入會員後繼續使用。':'未登入每天會輪替開放部分主題、題目、起卦方式與解讀內容；免費登入後可解除大部分限制。'));
-    if(note)note.textContent=quota?(p?'免費會員每日可起卦 3 次；今日額度已使用完畢。':(bound?'此裝置已取消未登入訪客資格；登入後使用會員每日額度。':'未登入與免費會員目前皆為每日 3 次；登入可解除大部分內容限制，但不增加每日次數。')):'';
+    if(note)note.textContent=quota?(p?'免費會員每日可起卦 3 次；今日額度已使用完畢。':(bound?'此裝置已取消未登入訪客額度；登入後使用會員每日額度。':'未登入與免費會員目前皆為每日 3 次；登入可解除大部分內容限制，但不增加每日次數。')):'';
     updateMemberUI();modal?.classList.add('show');modal?.setAttribute('aria-hidden','false');if(!p)renderGoogleButton();
   }
   function closeMemberModal(){const modal=document.getElementById('yijingMemberModal');modal?.classList.remove('show');modal?.setAttribute('aria-hidden','true')}
@@ -1538,14 +1556,14 @@ function cardHTML(h, lines, label, movingLines=[]){
     const p=authProfile();if(p)bindMemberDevice();const bound=!p&&memberDeviceBound(),btn=document.getElementById('yijingMemberButton'),txt=document.getElementById('yijingMemberButtonText'),title=document.getElementById('yijingAccessTitle'),copy=document.getElementById('yijingAccessText'),cta=document.getElementById('yijingAccessLogin'),urgent=document.getElementById('yijingAccessUrgent'),benefit=document.getElementById('yijingMemberBenefit'),paidEntry=document.getElementById('yijingPaidEntry'),paidTitle=document.getElementById('yijingPaidEntryTitle'),paidText=document.getElementById('yijingPaidEntryText'),paidBalance=document.getElementById('yijingPaidBalance'),paidBtn=document.getElementById('yijingPaidEntryButton');
     const rem=remainingUses(),full=hasFullPaidAccess();
     if(btn){btn.classList.toggle('logged',!!p)}if(txt)txt.textContent=p?p.name:(bound?'登入會員':'免費登入');
-    if(title)title.textContent=full?'完整進階起卦預覽｜本次全部功能已開放':(p?'免費會員｜大部分限制已解除':(bound?'已綁定會員裝置｜請登入':'未登入訪客｜每日輪替開放'));
-    if(copy)copy.textContent=full?'本次視為完整進階起卦：所有題目、6 種起卦方式、1～7 解讀與 AI／TXT 全部開放。':(p?'主題與固定題目全開、一般起卦全開；03／06 每日輪替開 1 種、專業分析 1～4 每日鎖 1 區。':(bound?'這台瀏覽器已成功登入過會員，不再提供未登入訪客額度與訪客起卦模式。':'今日開放 4 / 8 主題、每情境 3 題、一般起卦 2 / 4 種；自訂題與進階方式受限。'));
+    if(title)title.textContent=full?'完整進階起卦預覽｜本次全部功能已開放':(p?'免費會員｜大部分限制已解除':(bound?'此裝置已使用過會員功能｜請登入':'未登入訪客｜每日輪替開放'));
+    if(copy)copy.textContent=full?'本次視為完整進階起卦：所有題目、6 種起卦方式、1～7 解讀與 AI／TXT 全部開放。':(p?'主題與固定題目全開、一般起卦全開；03／06 每日輪替開 1 種、專業分析 1～4 每日鎖 1 區。':(bound?'未登入訪客額度已停用；請登入會員後繼續使用。':'今日開放 4 / 8 主題、每情境 3 題、一般起卦 2 / 4 種；自訂題與進階方式受限。'));
     if(urgent){
       urgent.classList.toggle('quota-empty',!full&&(bound||rem===0));
-      if(full)urgent.innerHTML=`<span class="quota-label">完整進階模式</span><span class="quota-number">本次全部解鎖</span><span class="quota-refresh-note">每日自動補滿 3 次免費額度。</span>`;
-      else if(bound)urgent.innerHTML=`<span class="quota-label">未登入訪客資格</span><span class="quota-number">已取消</span><span class="quota-refresh-note">請登入會員後繼續起卦。</span>`;
-      else if(rem===0)urgent.innerHTML=`<span class="quota-label">今日免費額度</span><span class="quota-number">0 / 3 次｜已用完</span><span class="quota-refresh-note">每日自動補滿 3 次免費額度。</span>`;
-      else urgent.innerHTML=`<span class="quota-label">今日剩餘</span><span class="quota-number">${rem} / 3 次</span><span class="quota-refresh-note">每日自動補滿 3 次免費額度。</span>`;
+      if(full)urgent.innerHTML=`<span class="quota-label">完整進階模式</span><span class="quota-number">本次全部解鎖</span><span class="quota-refresh-note">每日自動補滿 3 次免費額度｜同一裝置所有帳號共用。</span>`;
+      else if(bound)urgent.innerHTML=`<span class="quota-label">未登入訪客額度</span><span class="quota-number">已取消</span><span class="quota-refresh-note">請登入會員後繼續起卦。</span>`;
+      else if(rem===0)urgent.innerHTML=`<span class="quota-label">今日免費額度</span><span class="quota-number">0 / 3 次｜已用完</span><span class="quota-refresh-note">每日自動補滿 3 次免費額度｜同一裝置所有帳號共用。</span>`;
+      else urgent.innerHTML=`<span class="quota-label">今日剩餘</span><span class="quota-number">${rem} / 3 次</span><span class="quota-refresh-note">每日自動補滿 3 次免費額度｜同一裝置所有帳號共用。</span>`;
       urgent.classList.toggle('guest-blink',!p&&!bound&&!full&&rem>0);
     }
     if(benefit)benefit.textContent='免費會員：每日 3 次；8 大主題與全部固定題目開放、4 種一般起卦方式全開；03／06 每日輪替開 1 種；專業分析 1～4 每日只鎖 1 區；第 5～7 區全開。自訂題、AI 提示詞與 TXT 仍屬完整進階功能。';
@@ -1557,7 +1575,7 @@ function cardHTML(h, lines, label, movingLines=[]){
     if(paidBtn)paidBtn.textContent=full?'查看說明':'查看解鎖方案';
     const profile=document.getElementById('yijingMemberProfile'),mount=document.getElementById('yijingGoogleMount'),local=document.getElementById('yijingLocalLogin');if(profile){profile.hidden=!p;document.getElementById('yijingMemberName').textContent=p?.name||'會員';document.getElementById('yijingMemberEmail').textContent=p?.email||''}if(mount)mount.hidden=!!p;if(local&&location.protocol!=='file:')local.hidden=true;
   }
-  function guardDailyQuota(){if(hasFullPaidAccess())return true;if(memberDeviceLoginRequired()){openMemberModal('這台瀏覽器已成功登入過會員，因此未登入訪客起卦資格已取消。請登入會員後繼續使用。');return false;}if(dailyUsage()<dailyLimit())return true;if(isLogged())openPaidModal('你今天的 3 次免費額度已使用完畢。完整進階起卦額度與免費額度分開計算；未來可用 1 個付費額度立即再起 1 卦並完整解鎖。');else openMemberModal('你今天未登入的 3 次免費起卦已使用完畢。免費登入後次數仍為每日 3 次，但可解除大部分內容限制。',true);return false}
+  function guardDailyQuota(){if(hasFullPaidAccess())return true;if(memberDeviceLoginRequired()){openMemberModal('這台瀏覽器已成功登入過會員，因此未登入訪客起卦資格已取消。請登入會員後繼續使用。');return false;}if(dailyUsage()<dailyLimit())return true;if(isLogged())openPaidModal('今天這台裝置的 3 次免費額度已使用完畢；同一裝置即使切換其他 Google 帳號也不會重新獲得 3 次。完整進階起卦額度與免費額度分開計算。');else openMemberModal('你今天未登入的 3 次免費起卦已使用完畢。免費登入後次數仍為每日 3 次，但可解除大部分內容限制。',true);return false}
   function lockedReadingHTML(n,title,detail='今日未登入訪客暫未開放這一區。'){
     if(hasFullPaidAccess())return '';
     if(isLogged())return `<section class="reading-access-lock" data-paid-lock="${esc(title)}"><div class="lock-kicker">FULL ACCESS · 1 CREDIT</div><h4>${esc(title)}</h4><p>${esc(detail)} <strong>使用 1 次完整進階起卦額度，本次即可全部解鎖。</strong></p></section>`;
