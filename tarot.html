@@ -2943,6 +2943,8 @@
   }
   function updateReaderJourney(){
     const order=['a','b','c','d'],n=state.readersViewed?.size||0,allOpen=canAccessAllReaders();
+    const guestReady=!allOpen&&n>=2;
+
     els.analysis.querySelectorAll('[data-reader-footer-progress]').forEach(x=>x.textContent=`${n}/4`);
     els.analysis.querySelectorAll('[data-reader-go]').forEach(btn=>{
       const key=btn.dataset.readerGo,idx=order.indexOf(key),prev=order[idx-1],allowed=isReaderAllowed(key);
@@ -2955,15 +2957,31 @@
         btn.setAttribute('aria-disabled',btn.disabled?'true':'false');
       }
     });
+
+    // 關鍵修正：
+    // 未登入訪客只要已看完 A + 當日輪替老師（2/4），
+    // 不管目前停在 A、B、C、D 哪一個頁面，底部下一步都改成「查看四鏡會診結論」。
+    if(guestReady){
+      els.analysis.querySelectorAll('[data-reader-footer]').forEach(footer=>{
+        const oldAction=footer.querySelector('.reader-next-cta,.reader-lock-gate');
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='reader-next-cta reader-finish-cta';
+        btn.setAttribute('data-scroll-consensus','');
+        btn.textContent='查看四鏡會診結論 ↓';
+        if(oldAction)oldAction.replaceWith(btn);
+        else footer.appendChild(btn);
+      });
+    }
+
     const consensus=els.analysis.querySelector('[data-consensus-panel]');
     if(consensus){
-      const guestReady=!allOpen&&n>=2;
       const memberReady=allOpen&&n>=4;
       consensus.hidden=!(guestReady||memberReady);
 
-      // 未登入訪客可以看四鏡會診結論，但追問要登入。
+      // 未登入訪客可以看四鏡會診結論，但追問必須登入。
       let guestNote=consensus.querySelector('[data-guest-consensus-note]');
-      if(!allOpen&&guestReady){
+      if(guestReady){
         if(!guestNote){
           guestNote=document.createElement('div');
           guestNote.setAttribute('data-guest-consensus-note','');
