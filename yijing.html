@@ -915,6 +915,13 @@ html[data-theme="light"] .device-quota-account-name{background:#fff3ee;border-co
 html[data-theme="light"] .device-quota-account-note{color:#6f564a}
 html[data-theme="light"] .device-quota-account-box.account-flash{animation-name:deviceQuotaBoxPulseLight}
 html[data-theme="light"] .device-quota-account-box.account-flash .device-quota-account-name{animation-name:deviceQuotaNameBlinkLight}
+.device-quota-more{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding:13px 14px;border:1px solid rgba(151,108,219,.30);border-radius:13px;background:linear-gradient(145deg,rgba(137,91,210,.10),rgba(102,79,184,.035));box-shadow:inset 0 0 0 1px rgba(151,108,219,.025)}
+.device-quota-more-copy{min-width:0}.device-quota-more-copy b{display:block;color:#decfff;font-size:.78rem}.device-quota-more-copy span{display:block;margin-top:3px;color:#b9adc9;font-size:.68rem;line-height:1.55}
+.device-quota-more button{flex:0 0 auto;min-height:38px;padding:7px 13px;border:1px solid rgba(161,117,225,.42);border-radius:999px;background:rgba(142,93,218,.12);color:#e4d4ff;font-weight:900;font-size:.68rem;cursor:pointer}
+.device-quota-more button:hover{transform:translateY(-1px);border-color:rgba(177,137,236,.70);background:rgba(142,93,218,.18)}
+html[data-theme="light"] .device-quota-more{background:linear-gradient(145deg,#f4efff,#fff);border-color:rgba(109,75,186,.24)}
+html[data-theme="light"] .device-quota-more-copy b{color:#5f45a8}html[data-theme="light"] .device-quota-more-copy span{color:#685f77}html[data-theme="light"] .device-quota-more button{background:#f6f1ff;border-color:rgba(109,75,186,.28);color:#5d42a5}
+@media(max-width:560px){.device-quota-more{align-items:flex-start;flex-direction:column}.device-quota-more button{width:100%}}
 @keyframes deviceQuotaBoxPulseLight{0%,100%{border-color:rgba(202,75,45,.40);box-shadow:0 8px 24px rgba(140,76,42,.10);transform:scale(1)}50%{border-color:rgba(211,49,31,.95);box-shadow:0 0 0 4px rgba(211,49,31,.10),0 0 24px rgba(211,49,31,.17);transform:scale(1.012)}}
 @keyframes deviceQuotaNameBlinkLight{0%,100%{background:#fff3ee;color:#a83d27;box-shadow:none}50%{background:#d8452f;color:#fff;box-shadow:0 0 0 4px rgba(216,69,47,.12),0 0 20px rgba(216,69,47,.20)}}
 @media(max-width:700px){.page-status{display:none}.yijing-access-bar{align-items:flex-start;flex-direction:column}.yijing-access-cta{width:100%}.member-feature-lock{align-items:flex-start;flex-direction:column}.member-feature-lock button{width:100%}.yijing-access-balances{grid-template-columns:1fr}.yijing-paid-entry{grid-template-columns:1fr}.yijing-paid-entry button{width:100%}.paid-unlock-grid{grid-template-columns:1fr}.paid-modal-actions{display:grid;grid-template-columns:1fr}.paid-modal-actions button{width:100%}}
@@ -963,6 +970,10 @@ html[data-theme="light"] .device-quota-account-box.account-flash .device-quota-a
       <div class="device-quota-account-box" id="yijingDeviceQuotaMember"></div>
       <p id="yijingDeviceQuotaText">這台裝置今天的免費額度已使用完畢。</p>
       <div class="quota-note">免費額度依同一裝置共同計算，切換其他 Google 帳號不會重新增加次數。每日會自動補滿 3 次。</div>
+      <div class="device-quota-more">
+        <div class="device-quota-more-copy"><b>需要更多使用次數？</b><span>可參考進階方案與付費額度。</span></div>
+        <button id="yijingDeviceQuotaMore" type="button">了解更多</button>
+      </div>
     </div>
   </div>
 
@@ -2075,6 +2086,7 @@ function cardHTML(h, lines, label, movingLines=[]){
   document.getElementById('yijingMemberModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closeMemberModal()});
   document.getElementById('yijingDeviceQuotaClose')?.addEventListener('click',closeDeviceQuotaModal);
   document.getElementById('yijingDeviceQuotaModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closeDeviceQuotaModal()});
+  document.getElementById('yijingDeviceQuotaMore')?.addEventListener('click',()=>{closeDeviceQuotaModal();setTimeout(()=>openPaidModal('需要更多使用次數時，可參考完整進階解鎖與付費額度。'),80);});
   document.getElementById('yijingPaidEntryButton')?.addEventListener('click',()=>openPaidModal());
   document.getElementById('yijingPaidClose')?.addEventListener('click',closePaidModal);
   document.getElementById('yijingPaidModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closePaidModal()});
