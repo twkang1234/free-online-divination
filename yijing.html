@@ -803,6 +803,17 @@ html[data-theme="light"] .yao-live::before,html[data-theme="light"] .yao-live::a
 .custom-question-gate h5{margin:0 0 10px;color:#f0ead4;font-size:1rem}
 .custom-question-gate p{margin:7px 0;color:#b9c6bd;font-size:.76rem;line-height:1.82}.custom-question-gate strong{color:#ead99d}
 .custom-gate-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.custom-gate-actions button{min-height:42px!important}
+
+/* ===== 自訂問題品質提醒｜只提醒，不強制封鎖 ===== */
+.custom-quality-warning{margin-top:12px;padding:16px 17px;border:1px solid rgba(225,197,110,.30);border-left:3px solid rgba(225,197,110,.72);border-radius:12px;background:linear-gradient(145deg,rgba(225,197,110,.075),rgba(225,197,110,.025))}
+.custom-quality-warning[hidden]{display:none!important}
+.custom-quality-warning h5{margin:0 0 7px;color:#f0dfaa;font-size:.88rem}
+.custom-quality-warning p{margin:0;color:#b8c5bc;font-size:.73rem;line-height:1.75}
+.custom-quality-reasons{display:grid;gap:5px;margin:10px 0 0;padding:0;list-style:none}.custom-quality-reasons li{position:relative;padding-left:16px;color:#c7b982;font-size:.70rem;line-height:1.65}.custom-quality-reasons li::before{content:"•";position:absolute;left:2px;color:#e1c56e}
+.custom-quality-examples{margin-top:10px;padding:10px 12px;border-radius:9px;background:rgba(255,255,255,.018);color:#aebdb3;font-size:.68rem;line-height:1.7}.custom-quality-examples b{color:#d9e6dd}
+.custom-quality-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px}.custom-quality-actions button{min-height:38px!important;padding:7px 12px!important;font-size:.69rem!important}
+html[data-theme="light"] .custom-quality-warning{background:linear-gradient(145deg,#fffaf0,#fff);border-color:rgba(151,119,45,.25);border-left-color:#b7953a}
+html[data-theme="light"] .custom-quality-warning h5{color:#6f5923}html[data-theme="light"] .custom-quality-warning p{color:#58685e}html[data-theme="light"] .custom-quality-reasons li{color:#725f2d}html[data-theme="light"] .custom-quality-examples{background:rgba(151,119,45,.05);color:#617167}
 .custom-prompt-wrap{max-width:1080px;margin:0 auto}
 .custom-prompt-hero{padding:22px 23px;border:1px solid rgba(225,197,110,.22);border-radius:17px;background:linear-gradient(145deg,rgba(225,197,110,.055),rgba(124,227,161,.025))}
 .custom-prompt-hero .custom-mode-tag{display:inline-flex;margin-bottom:9px;padding:5px 9px;border:1px solid rgba(225,197,110,.23);border-radius:999px;color:#ddc879;font-family:var(--mono);font-size:.59rem;letter-spacing:.08em}
@@ -949,7 +960,7 @@ html[data-theme="light"] .ai-provider-btn small{color:#63766a}
       <div class="custom-gate-kicker">CUSTOM QUESTION · AI PROMPT MODE</div>
       <h5>自訂問題可以起卦，但本站不直接解讀</h5>
       <p>固定題目是本站已針對主題、情境與問題意圖設計過的解讀範圍；若你改用自訂問題，本站只負責完成起卦、整理本卦／動爻／變卦與經典原文，<strong>不提供本站白話解卦</strong>。</p>
-      <p>起卦完成後，系統會替你產生一份完整的 <strong>AI 解卦提示詞</strong>。你可以複製後，自行前往 ChatGPT、Gemini、Claude 或 DeepSeek 進一步詢問。</p>
+      <p>起卦完成後，系統會替你產生一份完整的 <strong>AI 解卦提示詞</strong>。你可以複製後，自行前往 ChatGPT、Gemini、Claude 或 DeepSeek 進一步詢問。若問題看起來像測試、亂碼或過度模糊，本站會先提醒你修改，但仍保留繼續起卦的選擇。</p>
       <div class="custom-gate-actions">
         <button class="ghost" id="customQuestionBack" type="button">← 返回固定問題</button>
         <button class="primary" id="customQuestionContinue" type="button">我了解，繼續自訂問題</button>
@@ -958,6 +969,16 @@ html[data-theme="light"] .ai-provider-btn small{color:#63766a}
     <div class="field guide-extra-field">
       <label for="yijingExtraContext">補充背景（選填，不會儲存）</label>
       <input id="yijingExtraContext" type="text" maxlength="160" placeholder="例如：A＝留原公司，B＝接受新工作；可留白">
+    </div>
+    <div class="custom-quality-warning" id="customQualityWarning" hidden>
+      <h5>這個自訂問題目前比較模糊</h5>
+      <p>仍然可以起卦，但如果問題只是測試、隨意輸入或沒有明確想釐清的事情，外部 AI 可能會自行補足情境，產生「看起來合理、其實參考價值不高」的解讀。</p>
+      <ul class="custom-quality-reasons" id="customQualityReasons"></ul>
+      <div class="custom-quality-examples"><b>建議：</b>至少讓問題看得出「正在問什麼事情」以及「最想知道什麼」。例如「該離職嗎？」、「還能復合嗎？」這類短問題也可以，只要意思明確。</div>
+      <div class="custom-quality-actions">
+        <button class="ghost" id="customQualityEdit" type="button">← 回去修改問題</button>
+        <button class="primary" id="customQualityContinue" type="button">我知道，仍要繼續起卦</button>
+      </div>
     </div>
     <div class="cast-method-block">
       <div class="cast-method-heading"><b>選擇這次的起卦方式</b><span>同一個問題，可以用不同方式形成卦象；選你最有感覺的一種。</span></div>
@@ -1296,6 +1317,7 @@ function cardHTML(h, lines, label, movingLines=[]){
   let state={topic:null,scenario:null,question:null,custom:false};
   let castMode='coin3';
   let customGateConfirmed=false;
+  let customQualityApprovedText="";
   let selectedHex64=null;
   let manualSixValues=[];
   let coinThreeValues=[], coinThreeFaces=[], coinThreeLock=false;
@@ -1467,6 +1489,47 @@ function cardHTML(h, lines, label, movingLines=[]){
     clearCastTimers();castMode='coin3';selectedHex64=null;manualSixValues=[];coinThreeValues=[];coinThreeFaces=[];coinThreeLock=false;yinStopValues=[];yinStopCurrent=7;yinStopLock=false;
     renderHex64Grid();renderManualSix();renderCoinThree();renderYinStop();setCastMode('coin3');
   }
+  function evaluateCustomQuestionQuality(text=''){
+    const raw=String(text||'').trim();
+    const compact=raw.replace(/\s+/g,'');
+    const reasons=[];
+    if(!compact) return {ok:false,reasons:['尚未輸入自訂問題。']};
+
+    const obviousNoise=/^(?:隨便|隨便問問|亂打|亂打字|亂寫|測試|測試一下|試試|試試看|看看|不知道|沒想法|test|testing|asdf+|qwer+|hello)$/i;
+    const vagueOnly=/^(?:會怎樣|怎麼辦|如何|好不好|可以嗎|行嗎|會嗎|要不要|能不能|什麼)$/;
+    const clearIntent=/(?:該不該|要不要|能不能|是否|會不會|怎麼|怎樣|如何|為什麼|原因|哪個|哪一|何時|什麼時候|時機|未來|接下來|發展|趨勢|阻礙|卡住|選擇|決定|離職|轉職|復合|分手|感情|工作|財運|投資|創業|合作|關係|對方|主管|朋友|家人|情緒|職場|桃花|婚姻|事業|機會|風險|方向|值得)/;
+
+    if(obviousNoise.test(compact)||/(?:隨便.{0,4}亂打|亂打字|純測試|只是測試)/i.test(compact)) reasons.push('看起來像測試或隨意輸入，沒有明確的占問目標。');
+    if(vagueOnly.test(compact)) reasons.push('只有非常泛的問法，沒有說明正在問哪一件事。');
+    if(/^[\p{N}\p{P}\p{S}\s_]+$/u.test(compact)) reasons.push('內容幾乎只有數字或符號，無法看出實際想問的事情。');
+    if(/^[A-Za-z\d_\-]{4,}$/u.test(compact)&&!/^(?:job|love|work|money|career)$/i.test(compact)) reasons.push('內容看起來像英數亂碼或測試字串。');
+    if(/^(.)\1{4,}$/u.test(compact)) reasons.push('同一個字或符號重複太多，無法形成明確問題。');
+    if(compact.length<5&&!clearIntent.test(compact)) reasons.push('問題太短，而且看不出明確的事情或想知道的方向。');
+
+    return {ok:reasons.length===0,reasons};
+  }
+  function hideCustomQualityWarning(){
+    const box=document.getElementById('customQualityWarning');
+    if(box)box.hidden=true;
+  }
+  function guardCustomQuestionQuality(){
+    if(!state.custom)return true;
+    const input=document.getElementById('yijingExtraContext');
+    const text=input?.value.trim()||'';
+    if(!text){
+      input?.focus();
+      if(input){input.style.borderColor='rgba(225,197,110,.7)';setTimeout(()=>input.style.borderColor='',1100);}
+      return false;
+    }
+    if(customQualityApprovedText===text)return true;
+    const check=evaluateCustomQuestionQuality(text);
+    if(check.ok){hideCustomQualityWarning();return true;}
+    const box=document.getElementById('customQualityWarning');
+    const list=document.getElementById('customQualityReasons');
+    if(list)list.innerHTML=check.reasons.map(x=>`<li>${esc(x)}</li>`).join('');
+    if(box){box.hidden=false;setTimeout(()=>box.scrollIntoView({behavior:'smooth',block:'center'}),30);}
+    return false;
+  }
   function buildQuestionAndContext(cast){
     const extra=document.getElementById('yijingExtraContext')?.value.trim()||'';
     if(state.custom&&!extra){const input=document.getElementById('yijingExtraContext');input.focus();input.style.borderColor='rgba(225,197,110,.7)';setTimeout(()=>input.style.borderColor='',1100);return null;}
@@ -1474,6 +1537,7 @@ function cardHTML(h, lines, label, movingLines=[]){
     return {q,context:{topic:{id:state.topic.id,name:state.topic.name,focus:state.topic.focus},scenario:{id:state.scenario.id,name:state.scenario.name,desc:state.scenario.desc},questionIntent:state.custom?'custom':'guided',cast}};
   }
   async function runCast(cast,button=null){
+    if(!guardCustomQuestionQuality())return;
     const data=buildQuestionAndContext(cast);if(!data)return;
     clearCastTimers();
     const panel=document.querySelector(`[data-cast-panel="${cast.mode}"]`);panel?.classList.add('cast-working');
@@ -1505,6 +1569,7 @@ function cardHTML(h, lines, label, movingLines=[]){
     }
     const input=document.getElementById('yijingExtraContext');
     input.value='';
+    customQualityApprovedText='';hideCustomQualityWarning();
     input.placeholder=state.custom?'請輸入你真正想問的問題，例如：我們恢復聯絡後一直都是我主動，這段關係真正卡在哪裡？':'例如補充人物、A／B 代表什麼、事件進度；可留白';
     document.querySelector('label[for="yijingExtraContext"]').textContent=state.custom?'自訂問題（必填｜起卦後只產生 AI 提示詞）':'補充背景（選填，不會儲存）';
     const mA=document.getElementById('meihuaNumberA'),mB=document.getElementById('meihuaNumberB');if(mA)mA.value='';if(mB)mB.value='';
@@ -1514,6 +1579,7 @@ function cardHTML(h, lines, label, movingLines=[]){
     clearCastTimers();
     state={topic:null,scenario:null,question:null,custom:false};
     customGateConfirmed=false;
+    customQualityApprovedText="";hideCustomQualityWarning();
     currentReading=null;
     result.style.display='none'; result.innerHTML=''; empty.style.display='grid';
     showStep('topic');
@@ -1703,10 +1769,14 @@ function cardHTML(h, lines, label, movingLines=[]){
   document.getElementById('yijingQuestionGrid').addEventListener('click',e=>{const qbtn=e.target.closest('[data-question-index]');const custom=e.target.closest('[data-custom-question]');if(qbtn){const qs=questionsFor(state.topic,state.scenario);state.question=qs[Number(qbtn.dataset.questionIndex)];state.custom=false;customGateConfirmed=false;renderReady();showStep('ready');}else if(custom){state.question='自訂問題｜AI 提示詞模式';state.custom=true;customGateConfirmed=false;renderReady();showStep('ready');}});
   document.getElementById('customQuestionBack')?.addEventListener('click',()=>{state.custom=false;state.question=null;customGateConfirmed=false;showStep('question');});
   document.getElementById('customQuestionContinue')?.addEventListener('click',()=>{customGateConfirmed=true;document.getElementById('customQuestionGate').hidden=true;setCustomReadyAccess(true);const input=document.getElementById('yijingExtraContext');setTimeout(()=>input?.focus(),50);});
+  document.getElementById('customQualityEdit')?.addEventListener('click',()=>{customQualityApprovedText='';hideCustomQualityWarning();const input=document.getElementById('yijingExtraContext');setTimeout(()=>{input?.focus();input?.select();},40);});
+  document.getElementById('customQualityContinue')?.addEventListener('click',()=>{const input=document.getElementById('yijingExtraContext');customQualityApprovedText=input?.value.trim()||'';hideCustomQualityWarning();setTimeout(()=>document.querySelector('.cast-method-block')?.scrollIntoView({behavior:'smooth',block:'start'}),40);});
+  document.getElementById('yijingExtraContext')?.addEventListener('input',()=>{if(state.custom){customQualityApprovedText='';hideCustomQualityWarning();}});
   document.querySelectorAll('[data-guide-back]').forEach(b=>b.addEventListener('click',()=>showStep(b.dataset.guideBack)));
   document.querySelectorAll('[data-guide-jump]').forEach(b=>b.addEventListener('click',()=>{if(!b.disabled)showStep(b.dataset.guideJump)}));
   document.getElementById('castModeGrid')?.addEventListener('click',e=>{const b=e.target.closest('[data-cast-mode]');if(b)setCastMode(b.dataset.castMode);});
   document.getElementById('meihuaCastBtn')?.addEventListener('click',e=>{
+    if(!guardCustomQuestionQuality())return;
     const a=Number(document.getElementById('meihuaNumberA')?.value);
     const b=Number(document.getElementById('meihuaNumberB')?.value);
     const err=document.getElementById('meihuaError');
@@ -1715,19 +1785,19 @@ function cardHTML(h, lines, label, movingLines=[]){
     runCast({mode:'meihua2',label:`雙數起卦｜梅花易數｜${a}・${b}`,numbers:[a,b]},e.currentTarget);
   });
   document.getElementById('hex64Grid')?.addEventListener('click',e=>{const b=e.target.closest('[data-hex-no]');if(!b)return;selectedHex64=Number(b.dataset.hexNo);renderHex64Grid();});
-  document.getElementById('hex64Confirm')?.addEventListener('click',e=>{if(selectedHex64)runCast({mode:'select64',label:`64 卦指定研讀｜第 ${selectedHex64} 卦・${KING_WEN_NAMES[selectedHex64-1]}`,hexNumber:selectedHex64},e.currentTarget);});
-  document.getElementById('manualSixChoices')?.addEventListener('click',e=>{const b=e.target.closest('[data-manual-value]');if(!b||manualSixValues.length>=6)return;manualSixValues.push(Number(b.dataset.manualValue));renderManualSix();if(manualSixValues.length===6)setTimeout(()=>runCast({mode:'manual6',label:'實體硬幣輸入｜三枚硬幣結果',values:[...manualSixValues]}),420);});
+  document.getElementById('hex64Confirm')?.addEventListener('click',e=>{if(!guardCustomQuestionQuality())return;if(selectedHex64)runCast({mode:'select64',label:`64 卦指定研讀｜第 ${selectedHex64} 卦・${KING_WEN_NAMES[selectedHex64-1]}`,hexNumber:selectedHex64},e.currentTarget);});
+  document.getElementById('manualSixChoices')?.addEventListener('click',e=>{const b=e.target.closest('[data-manual-value]');if(!b||manualSixValues.length>=6)return;if(manualSixValues.length===0&&!guardCustomQuestionQuality())return;manualSixValues.push(Number(b.dataset.manualValue));renderManualSix();if(manualSixValues.length===6)setTimeout(()=>runCast({mode:'manual6',label:'實體硬幣輸入｜三枚硬幣結果',values:[...manualSixValues]}),420);});
   document.getElementById('manualSixReset')?.addEventListener('click',()=>{manualSixValues=[];renderManualSix();});
   document.getElementById('coinThreeBtn')?.addEventListener('click',e=>{
-    if(coinThreeLock||coinThreeValues.length>=6)return;coinThreeLock=true;e.currentTarget.disabled=true;
+    if(coinThreeLock||coinThreeValues.length>=6)return;if(coinThreeValues.length===0&&!guardCustomQuestionQuality())return;coinThreeLock=true;e.currentTarget.disabled=true;
     const faces=tossThreeCoins();coinThreeFaces=faces;const discs=[...document.querySelectorAll('#coinThreeRow .coin-disc')];
     discs.forEach((d,i)=>{d.classList.remove('flipping','tails');void d.offsetWidth;d.classList.add('flipping');setTimeout(()=>{const head=faces[i]===3;d.textContent=head?'正':'反';d.classList.toggle('tails',!head);},220);});
     const sum=faces.reduce((a,b)=>a+b,0);const result=document.getElementById('coinThreeResult');
     setTimeout(()=>{coinThreeValues.push(sum);const faceText=faces.map(v=>v===3?'正':'反').join('・');if(result)result.innerHTML=`${faceText} → <strong>${sum}｜${yaoShortLabel(sum)}</strong>`;renderCoinThree();coinThreeLock=false;const btn=document.getElementById('coinThreeBtn');if(btn)btn.disabled=coinThreeValues.length>=6;if(coinThreeValues.length===6)setTimeout(()=>runCast({mode:'coin3',label:'三枚硬幣起卦｜親手擲六次',values:[...coinThreeValues]}),650);},540);
   });
   document.getElementById('coinThreeReset')?.addEventListener('click',()=>{coinThreeValues=[];coinThreeFaces=[];coinThreeLock=false;renderCoinThree();});
-  document.getElementById('numberStopBtn')?.addEventListener('click',e=>{if(!numberSpinnerRunning)return;numberSpinnerRunning=false;if(numberSpinnerTimer){clearInterval(numberSpinnerTimer);numberSpinnerTimer=null;}document.getElementById('numberSpinner')?.classList.remove('running');const help=document.getElementById('numberSpinnerHelp');if(help)help.textContent=state.custom?`停在第 ${numberSpinnerValue} 卦，正在整理 AI 提示詞…`:`停在第 ${numberSpinnerValue} 卦，正在帶入解讀…`;e.currentTarget.disabled=true;e.currentTarget.textContent=`第 ${numberSpinnerValue} 卦`;setTimeout(()=>runCast({mode:'number64',label:`1～64 亂數停選｜第 ${numberSpinnerValue} 卦`,hexNumber:numberSpinnerValue}),450);});
-  document.getElementById('yinStopBtn')?.addEventListener('click',e=>{if(yinStopLock||yinStopValues.length>=6)return;yinStopLock=true;yinStopValues.push(yinStopCurrent);renderYinStop();if(yinStopValues.length===6){if(yinStopTimer){clearInterval(yinStopTimer);yinStopTimer=null;}setTimeout(()=>runCast({mode:'yinYangStop',label:'六爻陰陽停選',values:[...yinStopValues]}),500);}setTimeout(()=>{yinStopLock=false;},220);});
+  document.getElementById('numberStopBtn')?.addEventListener('click',e=>{if(!numberSpinnerRunning)return;if(!guardCustomQuestionQuality())return;numberSpinnerRunning=false;if(numberSpinnerTimer){clearInterval(numberSpinnerTimer);numberSpinnerTimer=null;}document.getElementById('numberSpinner')?.classList.remove('running');const help=document.getElementById('numberSpinnerHelp');if(help)help.textContent=state.custom?`停在第 ${numberSpinnerValue} 卦，正在整理 AI 提示詞…`:`停在第 ${numberSpinnerValue} 卦，正在帶入解讀…`;e.currentTarget.disabled=true;e.currentTarget.textContent=`第 ${numberSpinnerValue} 卦`;setTimeout(()=>runCast({mode:'number64',label:`1～64 亂數停選｜第 ${numberSpinnerValue} 卦`,hexNumber:numberSpinnerValue}),450);});
+  document.getElementById('yinStopBtn')?.addEventListener('click',e=>{if(yinStopLock||yinStopValues.length>=6)return;if(yinStopValues.length===0&&!guardCustomQuestionQuality())return;yinStopLock=true;yinStopValues.push(yinStopCurrent);renderYinStop();if(yinStopValues.length===6){if(yinStopTimer){clearInterval(yinStopTimer);yinStopTimer=null;}setTimeout(()=>runCast({mode:'yinYangStop',label:'六爻陰陽停選',values:[...yinStopValues]}),500);}setTimeout(()=>{yinStopLock=false;},220);});
   document.getElementById('yinStopReset')?.addEventListener('click',()=>{if(yinStopTimer)clearInterval(yinStopTimer);yinStopValues=[];yinStopCurrent=7;yinStopLock=false;const live=document.getElementById('yinYangLive');if(live){live.classList.add('yang');live.classList.remove('yin');}const name=document.getElementById('yinYangName');if(name)name.textContent='陽爻｜一整條';renderYinStop();startYinStop();});
 })();
 </script>
