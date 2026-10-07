@@ -17,6 +17,7 @@ body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-
 .nav{display:flex;gap:8px;flex-wrap:wrap}
 .nav a{border:1px solid #242b35;background:#0b0f15;color:#9eabba;text-decoration:none;border-radius:9px;padding:8px 11px;font-size:.78rem}
 .nav a:hover{border-color:#4a4130;color:#e2c574}
+.nav a[hidden]{display:none!important}.nav a.yijing-test-link{border-color:#4f3c6f;background:#130f1c;color:#d7c1ff}.nav a.yijing-test-link:hover{border-color:#8a68bf;background:#1a1228;color:#f0e7ff}
 .btn{border:1px solid #3b3321;background:#17140d;color:#e3c778;border-radius:10px;padding:9px 13px;cursor:pointer}
 .btn.secondary{border-color:#24313a;background:#0b1217;color:#a9cdd0}
 .login-card{max-width:520px;margin:80px auto 0;background:var(--panel);border:1px solid #282e37;border-radius:18px;padding:26px;text-align:center}
@@ -29,7 +30,7 @@ body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}
 .tool-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 18px 18px}
 .tool-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}
-.payment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px 12px}.provider-matrix{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:0 18px 18px}.provider-box{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#0a0e14}.provider-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}.provider-head strong{font-size:.95rem}.provider-status{font-size:.68rem;border:1px solid #34404d;border-radius:999px;padding:5px 9px;color:#aeb9c7}.provider-status.on{border-color:#245b4d;color:#83d8bd;background:rgba(49,136,108,.08)}.provider-status.off{border-color:#5d4d2a;color:#c9ae71;background:rgba(165,126,47,.07)}.provider-types{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px}.provider-type-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px}.provider-type-card span{display:block;color:var(--muted);font-size:.72rem;margin-bottom:8px}.provider-type-card strong{display:block;font-size:1.25rem;color:#f3e6bf}.provider-type-card small{display:block;margin-top:6px;color:var(--muted);font-size:.66rem}.subline{display:block;margin-top:4px;color:var(--muted);font-size:.68rem}.subline{display:block;margin-top:4px;color:var(--muted);font-size:.68rem}.payment-table{min-width:980px}
+.payment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px 12px}.payment-types{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 18px 18px}.payment-type-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}.subline{display:block;margin-top:4px;color:var(--muted);font-size:.68rem}.payment-table{min-width:980px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px}
 .card span{display:block;color:var(--muted);font-size:.76rem;margin-bottom:9px}
 .card strong{font-size:1.65rem;color:#f3e6bf}
@@ -48,12 +49,11 @@ td.muted{color:var(--muted)}
 .error{color:#e09a9a}
 @media(max-width:900px){
   .cards,.tool-cards{grid-template-columns:repeat(2,1fr)}
-  .payment-summary{grid-template-columns:1fr}.provider-matrix{grid-template-columns:1fr}.provider-types{grid-template-columns:1fr 1fr 1fr}
+  .payment-summary,.payment-types{grid-template-columns:1fr}
   .top{align-items:flex-start;flex-direction:column}
 }
 @media(max-width:560px){
   .cards,.tool-cards{grid-template-columns:1fr}
-  .provider-types{grid-template-columns:1fr}
   .section-head{align-items:flex-start;flex-direction:column}
   .section-head span{text-align:left}
 }
@@ -65,6 +65,7 @@ td.muted{color:var(--muted)}
     <div class="brand"><small>DIVINATIONHUB · ADMIN</small><h1>會員管理</h1></div>
     <div class="actions">
       <nav class="nav" aria-label="管理導覽">
+        <a class="yijing-test-link" id="yijingTestLink" href="/yijing.html?admin=1" hidden>🧪 易經測試</a>
         <a href="/">回首頁</a>
         <a href="/bazi.html">八字工具</a>
       </nav>
@@ -108,53 +109,21 @@ td.muted{color:var(--muted)}
         <div class="card"><span>已付款筆數</span><strong id="paymentPaidCount">—</strong></div>
       </div>
 
-      <div class="provider-matrix">
-        <div class="provider-box">
-          <div class="provider-head">
-            <strong>藍新金流</strong>
-            <span class="provider-status on">已啟用</span>
-          </div>
-          <div class="provider-types">
-            <div class="provider-type-card">
-              <span>自由支持</span>
-              <strong id="newebpaySupportAmount">NT$0</strong>
-              <small>累計 <b id="newebpaySupportCount">0</b> 筆</small>
-            </div>
-            <div class="provider-type-card">
-              <span>單次解鎖</span>
-              <strong id="newebpayUnlockAmount">NT$0</strong>
-              <small>累計 <b id="newebpayUnlockCount">0</b> 筆</small>
-            </div>
-            <div class="provider-type-card">
-              <span>訂閱</span>
-              <strong id="newebpaySubscriptionAmount">NT$0</strong>
-              <small>累計 <b id="newebpaySubscriptionCount">0</b> 筆</small>
-            </div>
-          </div>
+      <div class="payment-types">
+        <div class="card payment-type-card">
+          <span>自由支持</span>
+          <strong id="supportMonthAmount">—</strong>
+          <small>本月｜累計 <span id="supportPaidCount">0</span> 筆</small>
         </div>
-
-        <div class="provider-box">
-          <div class="provider-head">
-            <strong>綠界金流</strong>
-            <span class="provider-status off">尚未啟用</span>
-          </div>
-          <div class="provider-types">
-            <div class="provider-type-card">
-              <span>自由支持</span>
-              <strong id="ecpaySupportAmount">NT$0</strong>
-              <small>累計 <b id="ecpaySupportCount">0</b> 筆</small>
-            </div>
-            <div class="provider-type-card">
-              <span>單次解鎖</span>
-              <strong id="ecpayUnlockAmount">NT$0</strong>
-              <small>累計 <b id="ecpayUnlockCount">0</b> 筆</small>
-            </div>
-            <div class="provider-type-card">
-              <span>訂閱</span>
-              <strong id="ecpaySubscriptionAmount">NT$0</strong>
-              <small>累計 <b id="ecpaySubscriptionCount">0</b> 筆</small>
-            </div>
-          </div>
+        <div class="card payment-type-card">
+          <span>單次解鎖</span>
+          <strong id="unlockMonthAmount">—</strong>
+          <small>本月｜累計 <span id="unlockPaidCount">0</span> 筆</small>
+        </div>
+        <div class="card payment-type-card">
+          <span>訂閱</span>
+          <strong id="subscriptionMonthAmount">—</strong>
+          <small>本月｜累計 <span id="subscriptionPaidCount">0</span> 筆</small>
         </div>
       </div>
 
@@ -262,6 +231,7 @@ function showLogin(message=''){
   $('dashboard').hidden=true;
   $('refreshBtn').hidden=true;
   $('logoutBtn').hidden=true;
+  if($('yijingTestLink'))$('yijingTestLink').hidden=true;
   $('loginStatus').classList.remove('error');
   $('loginStatus').textContent=message;
   loggingIn=false;
@@ -407,29 +377,14 @@ async function loadStats(){
     $('paymentMonthAmount').textContent=money(s.paymentMonthAmount);
     $('paymentPaidCount').textContent=Number(s.paymentPaidCount||0);
 
-    const breakdown=new Map(
-      (s.paymentBreakdown||[]).map(x=>[
-        `${String(x.provider||'').toLowerCase()}/${String(x.purpose||'').toLowerCase()}`,
-        {
-          count:Number(x.paidCount||0),
-          amount:Number(x.totalAmount||0)
-        }
-      ])
-    );
+    $('supportMonthAmount').textContent=money(s.supportMonthAmount);
+    $('supportPaidCount').textContent=Number(s.supportPaidCount||0);
 
-    function setProviderCard(provider,purpose,prefix){
-      const row=breakdown.get(`${provider}/${purpose}`)||{count:0,amount:0};
-      $(`${prefix}Amount`).textContent=money(row.amount);
-      $(`${prefix}Count`).textContent=row.count;
-    }
+    $('unlockMonthAmount').textContent=money(s.unlockMonthAmount);
+    $('unlockPaidCount').textContent=Number(s.unlockPaidCount||0);
 
-    setProviderCard('newebpay','support','newebpaySupport');
-    setProviderCard('newebpay','unlock','newebpayUnlock');
-    setProviderCard('newebpay','subscription','newebpaySubscription');
-
-    setProviderCard('ecpay','support','ecpaySupport');
-    setProviderCard('ecpay','unlock','ecpayUnlock');
-    setProviderCard('ecpay','subscription','ecpaySubscription');
+    $('subscriptionMonthAmount').textContent=money(s.subscriptionMonthAmount);
+    $('subscriptionPaidCount').textContent=Number(s.subscriptionPaidCount||0);
 
     $('paymentRows').innerHTML=(s.recentPayments||[]).map(p=>`
       <tr>
@@ -465,6 +420,7 @@ async function loadStats(){
     $('dashboard').hidden=false;
     $('refreshBtn').hidden=false;
     $('logoutBtn').hidden=false;
+    if($('yijingTestLink'))$('yijingTestLink').hidden=false;
     $('status').textContent='';
 
   }catch(e){
