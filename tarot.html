@@ -575,9 +575,13 @@
     .tarot-access-mini{min-height:18px;margin:0 0 10px;text-align:right;color:#6f6477;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.04em}.tarot-access-mini:empty{display:none}
     .tarot-quota-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;margin:0 0 16px;padding:15px 17px;border:1px solid rgba(231,94,215,.16);border-radius:16px;background:linear-gradient(145deg,rgba(231,94,215,.035),rgba(154,114,255,.025))}
     .tarot-quota-panel[hidden]{display:none!important}.tarot-quota-copy b{display:block;color:#eadfea;font-size:.82rem}.tarot-quota-copy span{display:block;margin-top:4px;color:#796e80;font-size:.64rem;line-height:1.6}.tarot-quota-count{text-align:right}.tarot-quota-count small{display:block;color:#827488;font-family:var(--font-mono);font-size:.56rem;letter-spacing:.08em}.tarot-quota-count strong{display:block;margin-top:2px;color:#efd58f;font-size:1.34rem;line-height:1}.tarot-quota-panel.empty{border-color:rgba(232,198,122,.25);background:linear-gradient(145deg,rgba(232,198,122,.055),rgba(231,94,215,.02))}
-    .choice-card.guest-locked,.draw-mode-card.guest-locked,.question-card.member-locked{opacity:.42;filter:saturate(.62);cursor:pointer;transform:none!important}.choice-card.guest-locked:hover,.draw-mode-card.guest-locked:hover,.question-card.member-locked:hover{opacity:.58;transform:translateY(-1px)!important;border-color:rgba(231,94,215,.28);box-shadow:0 0 22px rgba(231,94,215,.055)}
-    .guest-lock-badge{position:absolute;left:14px;top:13px;z-index:3;padding:4px 7px;border:1px solid rgba(232,198,122,.18);border-radius:999px;background:rgba(232,198,122,.055);color:#b9a36e;font-family:var(--font-mono);font-size:.50rem;letter-spacing:.06em}
-    .choice-card.guest-locked .choice-count{opacity:.45}.draw-mode-card.guest-locked .draw-mode-no{opacity:.50}
+    .choice-card.guest-locked,.draw-mode-card.guest-locked,.question-card.member-locked{opacity:1;filter:none;cursor:pointer;transform:none!important;background-color:rgba(5,5,11,.66)}
+    .choice-card.guest-locked>*:not(.guest-lock-badge),.draw-mode-card.guest-locked>*:not(.guest-lock-badge),.question-card.member-locked>*:not(.guest-lock-badge){opacity:.34;transition:opacity .18s ease}
+    .choice-card.guest-locked:hover,.draw-mode-card.guest-locked:hover,.question-card.member-locked:hover{transform:translateY(-1px)!important;border-color:rgba(231,94,215,.34);box-shadow:0 0 24px rgba(231,94,215,.075)}
+    .choice-card.guest-locked:hover>*:not(.guest-lock-badge),.draw-mode-card.guest-locked:hover>*:not(.guest-lock-badge),.question-card.member-locked:hover>*:not(.guest-lock-badge){opacity:.48}
+    .guest-lock-badge{position:absolute;right:14px;left:auto;top:12px;z-index:8;padding:5px 9px;border:1px solid rgba(255,141,180,.72);border-radius:999px;background:linear-gradient(180deg,rgba(231,94,215,.34),rgba(154,114,255,.18));color:#fff0fb;font-family:var(--font-mono);font-size:.53rem;font-weight:900;letter-spacing:.05em;opacity:1!important;filter:none!important;box-shadow:0 0 0 1px rgba(255,255,255,.035) inset,0 0 18px rgba(231,94,215,.24);animation:loginBadgePulse 2.1s ease-in-out infinite}
+    @keyframes loginBadgePulse{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.035) inset,0 0 12px rgba(231,94,215,.16)}50%{box-shadow:0 0 0 1px rgba(255,255,255,.06) inset,0 0 26px rgba(231,94,215,.38)}}
+    .choice-card.guest-locked .choice-count{opacity:.28}.draw-mode-card.guest-locked .draw-mode-no{opacity:.32}
     .guest-feature-disabled{opacity:.42!important;cursor:not-allowed!important;filter:saturate(.6)}
     @media(max-width:620px){.tarot-quota-panel{grid-template-columns:1fr}.tarot-quota-count{text-align:left}}
     .tarot-gate-modal,.tarot-member-modal{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:22px;background:rgba(2,2,7,.82);backdrop-filter:blur(12px);opacity:0;visibility:hidden;pointer-events:none;transition:.18s}.tarot-gate-modal.show,.tarot-member-modal.show{opacity:1;visibility:visible;pointer-events:auto}
@@ -686,7 +690,7 @@
     html[data-theme="light"] .tarot-quota-panel{background:linear-gradient(145deg,#fff,#faf7fb);border-color:rgba(101,65,116,.15)}
     html[data-theme="light"] .tarot-quota-copy b{color:#3b2d41}html[data-theme="light"] .tarot-quota-copy span{color:#766b7b}
     html[data-theme="light"] .tarot-quota-count strong{color:#806626}
-    html[data-theme="light"] .guest-lock-badge{background:rgba(181,132,39,.07);border-color:rgba(153,112,33,.16);color:#7b6736}
+    html[data-theme="light"] .guest-lock-badge{background:linear-gradient(180deg,#fff0fb,#f5e9ff);border-color:rgba(183,69,167,.48);color:#8e2f81;box-shadow:0 0 18px rgba(183,69,167,.18)}
 
     html[data-theme="light"] .tarot-hero h1{background:linear-gradient(145deg,#261c2c 8%,#5a3b62 43%,#be57af 73%,#7957ca);-webkit-background-clip:text;background-clip:text;color:transparent}
     html[data-theme="light"] .hero-tagline{color:#3b2b42}
@@ -2231,7 +2235,7 @@
   const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   const TAROT_DAILY_LIMIT=3, SAME_Q_MS=72*60*60*1000;
   let tarotGoogleInitialized=false, guestNoticeAction=null, guestPolicyCache=null, memberPolicyCache=null;
-  let adminTestAuthorized=false, adminTestMode='normal', adminTestUsage=0;
+  let adminTestAuthorized=false, adminTestMode='normal', adminTestUsage=0, adminTestQuestionUses={};
   const ADMIN_TEST_MODES={
     normal:{label:'正常模式',logged:null,startUsage:0,credits:0,full:false},
     guest:{label:'全新訪客',logged:false,startUsage:0,credits:0,full:false},
@@ -2257,8 +2261,8 @@
     const names={'quota-empty':'額度用完測試會員','paid-credit':'付費額度測試會員','paid-full':'完整解鎖測試會員','paid-empty':'付費額度用完測試會員'};
     return {name:names[adminTestMode]||'管理員測試會員',email:'ADMIN TEST',sub:`admin-test-${adminTestMode}`};
   }
-  function saveAdminTestState(){sessionWrite(TAROT_ADMIN_TEST_KEY,{mode:adminTestMode,usage:adminTestUsage})}
-  function loadAdminTestState(){const s=sessionRead(TAROT_ADMIN_TEST_KEY,null);if(!s||!ADMIN_TEST_MODES[s.mode])return;adminTestMode=s.mode;adminTestUsage=Math.max(0,Math.min(3,Number(s.usage||0)))}
+  function saveAdminTestState(){sessionWrite(TAROT_ADMIN_TEST_KEY,{mode:adminTestMode,usage:adminTestUsage,questionUses:adminTestQuestionUses})}
+  function loadAdminTestState(){const s=sessionRead(TAROT_ADMIN_TEST_KEY,null);if(!s||!ADMIN_TEST_MODES[s.mode])return;adminTestMode=s.mode;adminTestUsage=Math.max(0,Math.min(3,Number(s.usage||0)));adminTestQuestionUses=s.questionUses&&typeof s.questionUses==='object'?s.questionUses:{}}
   function renderAdminTestBanner(){
     const banner=$('tarotAdminTestBanner'),title=$('tarotAdminTestBannerTitle'),copy=$('tarotAdminTestBannerText');
     const active=isAdminTestActive();if(banner)banner.hidden=!active;
@@ -2286,18 +2290,45 @@
       const j=await r.json().catch(()=>null);if(!r.ok||!j?.success)throw Error('驗證失敗');
       adminTestAuthorized=true;loadAdminTestState();renderAdminTestPanel();refreshTarotAccessUI();return true;
     }catch(_){
-      adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;setAdminToken('');
+      adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;adminTestQuestionUses={};setAdminToken('');
       try{sessionStorage.removeItem(TAROT_ADMIN_TEST_KEY)}catch(_){}renderAdminTestPanel();return false;
     }
   }
   function setAdminTestMode(mode){
     if(!adminTestAuthorized||!ADMIN_TEST_MODES[mode])return;
-    adminTestMode=mode;adminTestUsage=ADMIN_TEST_MODES[mode].startUsage||0;saveAdminTestState();closeAdminTestModal();resetToTopic();refreshTarotAccessUI();
+    adminTestMode=mode;
+    adminTestUsage=ADMIN_TEST_MODES[mode].startUsage||0;
+    adminTestQuestionUses={};
+    saveAdminTestState();closeAdminTestModal();resetToTopic();refreshTarotAccessUI();
+  }
+  function simulateAdminMemberLogin(){
+    if(!isAdminTestActive())return;
+    adminTestMode='member';
+    saveAdminTestState();
+    closeMemberModal();
+    state.accessTier='member';
+    refreshTarotAccessUI();
+    flashThemeToggle();
+  }
+  function simulateAdminMemberLogout(){
+    if(!isAdminTestActive())return;
+    adminTestMode='guest';
+    saveAdminTestState();
+    closeMemberModal();
+    state.accessTier=state.current?.length?'guest':null;
+    refreshTarotAccessUI();
+  }
+  function activateAdminPaidFull(){
+    if(!isAdminTestActive()||adminTestConfig().credits<=0)return;
+    adminTestMode='paid-full';
+    saveAdminTestState();
+    closeGuestNotice();
+    refreshTarotAccessUI();
   }
   function restoreNormalMode(){adminTestMode='normal';adminTestUsage=0;saveAdminTestState();closeAdminTestModal();location.href='/admin.html'}
   function forgetAdminTest(){adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;setAdminToken('');try{sessionStorage.removeItem(TAROT_ADMIN_TEST_KEY)}catch(_){}location.href='/admin.html'}
   async function initAdminTestMode(){
-    if(!adminEntryRequested()){adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;try{sessionStorage.removeItem(TAROT_ADMIN_TEST_KEY)}catch(_){}renderAdminTestPanel();renderAdminTestBanner();return;}
+    if(!adminEntryRequested()){adminTestAuthorized=false;adminTestMode='normal';adminTestUsage=0;adminTestQuestionUses={};try{sessionStorage.removeItem(TAROT_ADMIN_TEST_KEY)}catch(_){}renderAdminTestPanel();renderAdminTestBanner();return;}
     renderAdminTestPanel('正在確認管理員登入狀態…');
     const ok=await verifyAdminTestToken();
     if(!ok){alert('請先從管理員後台登入，再使用「塔羅測試」。');location.replace('/admin.html');return;}
@@ -2336,13 +2367,17 @@
     return memberPolicyCache;
   }
   function usage(){
-    if(isAdminTestActive())return {date:taiwanDateKey(),count:adminTestUsage,questionUses:{}};
+    if(isAdminTestActive())return {date:taiwanDateKey(),count:adminTestUsage,questionUses:adminTestQuestionUses};
     const raw=safeRead(TAROT_USAGE_KEY,{});
     const date=taiwanDateKey();
     return {date,count:raw.date===date?Math.max(0,Math.min(TAROT_DAILY_LIMIT,Number(raw.count||0))):0,questionUses:raw.questionUses&&typeof raw.questionUses==='object'?raw.questionUses:{}};
   }
   function saveUsage(u){
-    if(isAdminTestActive()){adminTestUsage=Math.max(0,Math.min(TAROT_DAILY_LIMIT,Number(u?.count||0)));saveAdminTestState();renderAdminTestBanner();return;}
+    if(isAdminTestActive()){
+      adminTestUsage=Math.max(0,Math.min(TAROT_DAILY_LIMIT,Number(u?.count||0)));
+      adminTestQuestionUses=u?.questionUses&&typeof u.questionUses==='object'?u.questionUses:{};
+      saveAdminTestState();renderAdminTestBanner();return;
+    }
     safeWrite(TAROT_USAGE_KEY,{date:taiwanDateKey(),count:Math.max(0,Math.min(TAROT_DAILY_LIMIT,Number(u?.count||0))),questionUses:u?.questionUses&&typeof u.questionUses==='object'?u.questionUses:{}})
   }
   function dailyUsage(){return usage().count}
@@ -2372,45 +2407,67 @@
   function remaining(ms){const total=Math.max(0,Math.ceil(ms/60000));const h=Math.floor(total/60),m=total%60;return h?`${h} 小時${m?` ${m} 分鐘`:''}`:`${m} 分鐘`}
   function updateAccessMini(){
     const el=$('tarotAccessMini');if(!el)return;
-    if(isAdminTestActive()){const c=adminTestConfig();el.textContent=`ADMIN TEST · ${c.label} · FREE ${dailyRemaining()}/3 · PAID ${c.credits}`;return;}
+    if(hasFullPaidAccess()){el.textContent='FULL ACCESS · 本次完整解鎖';return;}
     if(isLogged())el.textContent='FREE MEMBER · 登入中';
     else el.textContent=`GUEST · ${dailyRemaining()}/${TAROT_DAILY_LIMIT} LEFT · A + ${guestReaderKey().toUpperCase()} TODAY`;
   }
   function updateQuotaUI(){
     const panel=$('tarotQuotaPanel');if(!panel)return;
-    if(isAdminTestActive()){
-      const c=adminTestConfig(),rem=dailyRemaining();panel.hidden=false;panel.classList.toggle('empty',rem===0&&!c.full&&!c.credits);
-      if($('tarotQuotaTitle'))$('tarotQuotaTitle').textContent=`管理員測試｜${c.label}`;
-      if($('tarotQuotaCount'))$('tarotQuotaCount').textContent=`${rem} / 3 次`;
-      if($('tarotQuotaNote'))$('tarotQuotaNote').textContent=`測試免費額度｜付費額度 ${c.credits} 次｜完整解鎖 ${c.full?'已啟用':'未啟用'}｜不寫入正式資料。`;
+    const rem=dailyRemaining(),logged=isLogged(),full=hasFullPaidAccess();
+    panel.hidden=false;
+    panel.classList.toggle('empty',rem===0&&!full);
+    if(full){
+      if($('tarotQuotaTitle'))$('tarotQuotaTitle').textContent='完整進階｜本次已解鎖';
+      if($('tarotQuotaCount'))$('tarotQuotaCount').textContent='FULL';
+      if($('tarotQuotaNote'))$('tarotQuotaNote').textContent='本次完整進階功能已開放；不占用每日免費 3 次額度。';
       return;
     }
-    if(isLogged()){panel.hidden=true;return;}
-    panel.hidden=false;const rem=dailyRemaining();panel.classList.toggle('empty',rem===0);
-    if($('tarotQuotaTitle'))$('tarotQuotaTitle').textContent='未登入訪客｜每日免費額度';
+    if($('tarotQuotaTitle'))$('tarotQuotaTitle').textContent=logged?'免費會員｜每日免費額度':'未登入訪客｜每日免費額度';
     if($('tarotQuotaCount'))$('tarotQuotaCount').textContent=`${rem} / ${TAROT_DAILY_LIMIT} 次`;
-    if($('tarotQuotaNote'))$('tarotQuotaNote').textContent='每日台灣時間自動補滿 3 次｜同一裝置共用，切換 Google 帳號不會增加次數。';
+    if($('tarotQuotaNote')){
+      const paid=(isAdminTestActive()&&adminTestConfig().credits>0)?'｜另有付費額度 1 次':'';
+      $('tarotQuotaNote').textContent=`每日台灣時間自動補滿 3 次｜同一裝置共用，切換 Google 帳號不會增加次數${paid}。`;
+    }
   }
   function updateMemberUI(){
     const p=authProfile(),btn=$('tarotMemberButton'),txt=$('tarotMemberButtonText');if(!btn||!txt)return;
-    btn.classList.toggle('logged',!!p);txt.textContent=isAdminTestActive()?`測試：${adminTestConfig().label}`:(p?p.name:'免費登入');
+    btn.classList.toggle('logged',!!p);
+    txt.textContent=hasFullPaidAccess()?'完整進階':(p?'免費會員':'免費登入');
     updateAccessMini();updateQuotaUI();
-    const prof=$('tarotMemberProfile');if(prof){prof.hidden=!p;$('tarotMemberName').textContent=p?.name||'會員';$('tarotMemberEmail').textContent=p?.email||''}
+    const prof=$('tarotMemberProfile');
+    if(prof){
+      prof.hidden=!p;
+      $('tarotMemberName').textContent=p?(isAdminTestActive()?'免費會員':(p.name||'會員')):'會員';
+      $('tarotMemberEmail').textContent=p?(isAdminTestActive()?'測試模式｜不影響正式帳號':(p.email||'')):'';
+    }
     const mount=$('tarotGoogleMount');if(mount)mount.hidden=!!p;
     const title=$('tarotMemberTitle'),intro=$('tarotMemberIntro');
     if(title)title.textContent=p?'免費會員':'免費登入';
-    if(intro)intro.textContent=p?'你已登入免費會員。免費會員的詳細權限接下來再依正式規則設定。':'登入後會切換到免費會員狀態；免費會員的詳細權限將依正式規則設定。';
+    if(intro)intro.textContent=p?'你目前是免費會員；每日免費額度與進階功能仍依網站規則限制。':'免費登入後可解除訪客輪替限制，但完整進階功能仍需額外解鎖。';
   }
   async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})}catch(_){}}
   function renderGoogleButton(){
-    if(isAdminTestActive())return;
-    if(isLogged())return;
-    if(location.protocol==='file:'){$('tarotLocalLogin').hidden=false;return;}
+    const local=$('tarotLocalLogin'),mount=$('tarotGoogleMount');
+    if(isAdminTestActive()){
+      if(isLogged()){if(local)local.hidden=true;if(mount)mount.innerHTML='';return;}
+      if(mount){mount.innerHTML='';mount.hidden=true;}
+      if(local){local.hidden=false;local.textContent='測試模式｜模擬免費會員登入';}
+      return;
+    }
+    if(isLogged()){if(local)local.hidden=true;return;}
+    if(location.protocol==='file:'){if(local){local.hidden=false;local.textContent='本機預覽｜模擬免費登入';}return;}
+    if(local)local.hidden=true;
     if(!window.google?.accounts?.id){setTimeout(renderGoogleButton,250);return;}
     if(!tarotGoogleInitialized){window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async response=>{const credential=response?.credential||'';if(!credential)return;setAuthToken(credential);await registerMember();memberLoginSucceeded();}});tarotGoogleInitialized=true;}
-    const mount=$('tarotGoogleMount');if(mount&&mount.dataset.ready!=='1'){mount.dataset.ready='1';window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});}
+    if(mount&&mount.dataset.ready!=='1'){mount.hidden=false;mount.dataset.ready='1';window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});}
   }
-  function openMemberModal(targetReader=null){if(isAdminTestActive()){openAdminTestModal();return;}state.pendingReader=targetReader||null;updateMemberUI();const modal=$('tarotMemberModal');modal.classList.add('show');modal.setAttribute('aria-hidden','false');renderGoogleButton();}
+  function openMemberModal(targetReader=null){
+    state.pendingReader=targetReader||null;
+    updateMemberUI();
+    const modal=$('tarotMemberModal');
+    modal.classList.add('show');modal.setAttribute('aria-hidden','false');
+    renderGoogleButton();
+  }
   function closeMemberModal(){const modal=$('tarotMemberModal');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
   function memberLoginSucceeded(){
     state.accessTier='member';const target=state.pendingReader;state.pendingReader=null;
@@ -2420,7 +2477,7 @@
     if(target)setTimeout(()=>activateReader(target,true),100);
   }
   function logoutMember(){
-    if(isAdminTestActive()){openAdminTestModal();return;}
+    if(isAdminTestActive()){simulateAdminMemberLogout();return;}
     setAuthToken('');safeWrite(TAROT_LOCAL_MEMBER_KEY,false);
     try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
     state.accessTier=state.current?.length?'guest':null;
@@ -2443,8 +2500,12 @@
       copy.innerHTML='<p>未登入訪客每天開放 4 / 8 個主題：感情與工作二選一，再從其餘六類輪替開放三類。</p>';
     }else if(kind==='advanced'){
       kicker.textContent='FULL ACCESS';title.textContent='這項功能屬完整進階';confirm.textContent='知道了';
-      if(isAdminTestActive()&&adminTestConfig().credits>0)copy.innerHTML='<p>目前測試狀態有 1 個付費額度，但尚未執行「本次完整解鎖」。</p><div class="gate-highlight"><strong>付費額度 1 次</strong><br>切換到「完整付費解鎖」即可測試解鎖後的現有進階功能。</div>';
-      else if(isAdminTestActive()&&adminTestMode==='paid-empty')copy.innerHTML='<p>目前測試狀態的付費額度為 0 次。</p><div class="gate-highlight"><strong>付費額度已用完</strong><br>免費會員權限仍維持，完整進階功能保持鎖定。</div>';
+      if(isAdminTestActive()&&adminTestConfig().credits>0){
+        copy.innerHTML='<p>目前測試狀態有 1 個付費額度，可直接模擬使用這 1 次額度完成本次完整解鎖。</p><div class="gate-highlight"><strong>付費額度 1 次</strong><br>只改變本分頁測試狀態，不會扣除任何正式會員資料。</div>';
+        confirm.textContent='使用 1 個測試額度完整解鎖';
+        guestNoticeAction=()=>activateAdminPaidFull();
+      }else if(isAdminTestActive()&&adminTestMode==='paid-empty')copy.innerHTML='<p>目前測試狀態的付費額度為 0 次。</p><div class="gate-highlight"><strong>付費額度已用完</strong><br>免費會員權限仍維持，完整進階功能保持鎖定。</div>';
+      else if(!isLogged())copy.innerHTML='<p>這項功能屬完整進階。請先免費登入，再查看完整進階解鎖方式。</p><div class="gate-highlight"><strong>先免費登入</strong><br>登入本身不會自動解鎖完整進階功能。</div>';
       else copy.innerHTML='<p>免費會員目前仍無法使用這項功能。</p><div class="gate-highlight"><strong>完整進階功能</strong><br>正式付費額度與解鎖方式之後再依網站規則開放。</div>';
     }else if(kind==='memberDraw'){
       kicker.textContent='FREE MEMBER · DAILY ROTATION';
@@ -2464,34 +2525,35 @@
   }
   function closeGuestNotice(){const modal=$('tarotGuestNotice');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');guestNoticeAction=null;}
   function markFormalUse(){
-    if(state.usageCounted)return;
-    if(isAdminTestActive()){
-      const c=adminTestConfig();if(c.full)return;
-      const u=usage();u.count=Math.min(TAROT_DAILY_LIMIT,u.count+1);saveUsage(u);state.usageCounted=true;updateAccessMini();updateQuotaUI();return;
-    }
-    if(isLogged()||state.accessTier!=='guest')return;
-    const u=usage();u.count=Math.min(TAROT_DAILY_LIMIT,u.count+1);u.questionUses[questionKey()]=Date.now();saveUsage(u);state.usageCounted=true;updateAccessMini();updateQuotaUI();
+    if(state.usageCounted||hasFullPaidAccess())return;
+    if(state.accessTier!=='guest'&&state.accessTier!=='member')return;
+    const u=usage();
+    u.count=Math.min(TAROT_DAILY_LIMIT,u.count+1);
+    if(state.accessTier==='guest')u.questionUses[questionKey()]=Date.now();
+    saveUsage(u);
+    state.usageCounted=true;
+    updateAccessMini();updateQuotaUI();
   }
   async function enterQuestionStage(){
     els.question.innerHTML='';if(els.qctx)els.qctx.textContent='';
     try{await renderQuestions();showStep('question');}catch(e){showTarotApiError(e)}
   }
   async function requestStartReading(){
-    if(isAdminTestActive()){
-      const c=adminTestConfig();
-      if(!c.full&&dailyRemaining()<=0){openGuestNotice('quota');return;}
-      state.accessTier=c.logged?'member':'guest';state.usageCounted=false;await drawReading();return;
-    }
-    if(isLogged()){state.accessTier='member';await drawReading();return;}
+    if(hasFullPaidAccess()){state.accessTier='member';state.usageCounted=false;await drawReading();return;}
     if(dailyRemaining()<=0){openGuestNotice('quota');return;}
-    const u=usage(),now=Date.now(),qAt=Number(u.questionUses[questionKey()]||0),sameLeft=qAt?SAME_Q_MS-(now-qAt):0;
-    if(sameLeft>0){
-      openGuestNotice('same');
-      const copy=$('tarotGuestNoticeCopy');
-      if(copy)copy.innerHTML=`<p>這個核心問題仍在 72 小時整理期，約還有 <strong>${remaining(sameLeft)}</strong>。</p><p>先保留目前這一副牌，不要為了得到不同答案重抽。</p>`;
-      return;
+    const logged=isLogged(),u=usage(),now=Date.now();
+    if(!logged){
+      const qAt=Number(u.questionUses[questionKey()]||0),sameLeft=qAt?SAME_Q_MS-(now-qAt):0;
+      if(sameLeft>0){
+        openGuestNotice('same');
+        const copy=$('tarotGuestNoticeCopy');
+        if(copy)copy.innerHTML=`<p>這個核心問題仍在 72 小時整理期，約還有 <strong>${remaining(sameLeft)}</strong>。</p><p>先保留目前這一副牌，不要為了得到不同答案重抽。</p>`;
+        return;
+      }
     }
-    state.accessTier='guest';state.usageCounted=false;await drawReading();
+    state.accessTier=logged?'member':'guest';
+    state.usageCounted=false;
+    await drawReading();
   }
   function renderTopics(){
     els.topic.innerHTML=TOPICS.map((t,i)=>{
@@ -3247,6 +3309,7 @@
     const custom=e.target.closest('[data-custom-question]');
     if(custom){
       if(isAdminPaidFull()){alert('塔羅自訂題目前尚未實作完整流程；此測試模式已確認付費權限可放行，但功能本體仍待下一階段製作。');return;}
+      if(!isLogged()){openMemberModal();return;}
       openGuestNotice('advanced');return;
     }
     const b=e.target.closest('[data-question]');if(!b)return;
@@ -3279,7 +3342,7 @@
   $('tarotMemberButton')?.addEventListener('click',()=>openMemberModal());
   $('tarotMemberClose')?.addEventListener('click',closeMemberModal);
   $('tarotMemberLogout')?.addEventListener('click',logoutMember);
-  $('tarotLocalLogin')?.addEventListener('click',()=>{safeWrite(TAROT_LOCAL_MEMBER_KEY,true);memberLoginSucceeded();});
+  $('tarotLocalLogin')?.addEventListener('click',()=>{if(isAdminTestActive()){simulateAdminMemberLogin();return;}safeWrite(TAROT_LOCAL_MEMBER_KEY,true);memberLoginSucceeded();});
   $('tarotGuestNoticeClose')?.addEventListener('click',closeGuestNotice);
   $('tarotGuestNoticeBack')?.addEventListener('click',closeGuestNotice);
   $('tarotGuestNoticeConfirm')?.addEventListener('click',()=>{const fn=guestNoticeAction;if(fn)fn();});
