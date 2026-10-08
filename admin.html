@@ -26,6 +26,9 @@ body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-
 .login-form{display:grid;gap:12px;max-width:360px;margin:0 auto}
 .login-form input{width:100%;border:1px solid #2b323d;background:#090d13;color:#f1eadb;border-radius:10px;padding:12px 13px;font-size:1rem;outline:none}
 .login-form input:focus{border-color:#7d6840;box-shadow:0 0 0 3px rgba(217,182,93,.08)}
+.remember-row{display:flex;align-items:flex-start;gap:9px;text-align:left;color:#d8d6d2;font-size:.82rem;line-height:1.55;cursor:pointer}
+.remember-row input{width:17px;height:17px;flex:0 0 17px;margin:3px 0 0;accent-color:#d9b65d;cursor:pointer}
+.remember-help{color:var(--muted);font-size:.72rem;line-height:1.65;text-align:left;margin:-6px 0 0}
 .dashboard[hidden],.login-card[hidden]{display:none!important}
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}
 .tool-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 18px 18px}
@@ -80,6 +83,8 @@ td.muted{color:var(--muted)}
     <p>輸入正確密碼後會自動登入。密碼只會送到 Cloudflare Worker 驗證，不會寫在這個網頁檔案裡。</p>
     <form class="login-form" id="loginForm">
       <input id="passwordInput" type="password" autocomplete="current-password" placeholder="管理員密碼" required>
+      <label class="remember-row" for="rememberDevice"><input type="checkbox" id="rememberDevice" checked><span>記住這台裝置（最多 30 天）</span></label>
+      <div class="remember-help">適用於自己的電腦；共用裝置請取消勾選。按下「登出」會清除登入紀錄。</div>
     </form>
     <div class="status" id="loginStatus"></div>
   </section>
@@ -163,9 +168,45 @@ td.muted{color:var(--muted)}
 <script>
 const API_BASE='https://admin-api.ezgocpu.workers.dev';
 const TOKEN_KEY='divinationhub-admin-session';
+const REMEMBER_KEY='divinationhub-admin-remember-v1';
+const REMEMBER_MS=30*24*60*60*1000;
 const $=id=>document.getElementById(id);
-const token=()=>sessionStorage.getItem(TOKEN_KEY)||'';
-const setToken=v=>v?sessionStorage.setItem(TOKEN_KEY,v):sessionStorage.removeItem(TOKEN_KEY);
+
+// 只保存伺服器核發的登入憑證，不儲存管理員密碼。
+// 前端最長保留 30 天；若 Worker 憑證先過期，仍須重新登入。
+function rememberedToken(){
+  try{
+    const raw=localStorage.getItem(REMEMBER_KEY);
+    if(!raw)return '';
+    const data=JSON.parse(raw);
+    if(!data||typeof data.token!=='string'||!data.token||
+       !Number.isFinite(data.expiresAt)||data.expiresAt<=Date.now()){
+      localStorage.removeItem(REMEMBER_KEY);
+      return '';
+    }
+    return data.token;
+  }catch(_){
+    try{localStorage.removeItem(REMEMBER_KEY)}catch(_){}
+    return '';
+  }
+}
+function token(){
+  const saved=rememberedToken();
+  if(saved)return saved;
+  try{return sessionStorage.getItem(TOKEN_KEY)||''}catch(_){return ''}
+}
+function setToken(value){
+  try{localStorage.removeItem(REMEMBER_KEY)}catch(_){}
+  try{sessionStorage.removeItem(TOKEN_KEY)}catch(_){}
+  if(!value)return;
+  if($('rememberDevice')?.checked){
+    try{
+      localStorage.setItem(REMEMBER_KEY,JSON.stringify({token:value,expiresAt:Date.now()+REMEMBER_MS}));
+      return;
+    }catch(_){} // 若瀏覽器禁用持久儲存，退回本次工作階段
+  }
+  try{sessionStorage.setItem(TOKEN_KEY,value)}catch(_){}
+}
 
 let loginTimer=null;
 let loggingIn=false;
