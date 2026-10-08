@@ -2431,6 +2431,8 @@
   const MEMBER_API_BASE='https://member-api.ezgocpu.workers.dev';
   const ADMIN_API_BASE='https://admin-api.ezgocpu.workers.dev';
   const TAROT_ADMIN_TOKEN_KEY='divinationhub-admin-session';
+  // 與 admin.html 的「記住這台裝置」採用相同的儲存名稱與到期規則。
+  const TAROT_ADMIN_REMEMBER_KEY='divinationhub-admin-remember-v1';
   const TAROT_ADMIN_TEST_KEY='divinationhub-tarot-admin-test-v1';
   const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   const TAROT_DAILY_LIMIT=3, SAME_Q_MS=72*60*60*1000;
@@ -2450,8 +2452,33 @@
   function safeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}}
   function sessionRead(key,fallback){try{const v=sessionStorage.getItem(key);return v?JSON.parse(v):fallback}catch(_){return fallback}}
   function sessionWrite(key,value){try{sessionStorage.setItem(key,JSON.stringify(value))}catch(_){}}
-  function adminToken(){try{return sessionStorage.getItem(TAROT_ADMIN_TOKEN_KEY)||''}catch(_){return ''}}
-  function setAdminToken(token){try{if(token)sessionStorage.setItem(TAROT_ADMIN_TOKEN_KEY,token);else sessionStorage.removeItem(TAROT_ADMIN_TOKEN_KEY)}catch(_){}}
+  function rememberedAdminToken(){
+    try{
+      const raw=localStorage.getItem(TAROT_ADMIN_REMEMBER_KEY);
+      if(!raw)return '';
+      const saved=JSON.parse(raw);
+      if(!saved||typeof saved.token!=='string'||!saved.token||
+         !Number.isFinite(saved.expiresAt)||saved.expiresAt<=Date.now()){
+        localStorage.removeItem(TAROT_ADMIN_REMEMBER_KEY);
+        return '';
+      }
+      return saved.token;
+    }catch(_){
+      try{localStorage.removeItem(TAROT_ADMIN_REMEMBER_KEY)}catch(_){}
+      return '';
+    }
+  }
+  function adminToken(){
+    // 長期登入的 token 必須先於舊的分頁憑證；與管理後台一致。
+    const saved=rememberedAdminToken();
+    if(saved)return saved;
+    try{return sessionStorage.getItem(TAROT_ADMIN_TOKEN_KEY)||''}catch(_){return ''}
+  }
+  function setAdminToken(token){
+    try{if(token)sessionStorage.setItem(TAROT_ADMIN_TOKEN_KEY,token);else sessionStorage.removeItem(TAROT_ADMIN_TOKEN_KEY)}catch(_){}
+    // 只有明確登出或伺服器判定憑證無效才移除持久登入，不會動到一般會員登入。
+    if(!token){try{localStorage.removeItem(TAROT_ADMIN_REMEMBER_KEY)}catch(_){}}
+  }
   function adminEntryRequested(){try{const q=new URLSearchParams(location.search);return q.get('admin')==='1'||q.get('admin-test')==='1'}catch(_){return false}}
   function adminTestConfig(){return ADMIN_TEST_MODES[adminTestMode]||ADMIN_TEST_MODES.normal}
   function isAdminTestActive(){return adminEntryRequested()&&adminTestAuthorized&&adminTestMode!=='normal'}
