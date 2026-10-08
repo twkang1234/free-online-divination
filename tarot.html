@@ -1725,6 +1725,27 @@
     html[data-theme="light"] .admin-test-banner{background:linear-gradient(135deg,#fff7e4,#f8efff);border-color:rgba(151,112,41,.22)}html[data-theme="light"] .admin-test-banner-copy b{color:#855505}html[data-theme="light"] .admin-test-banner-copy span{color:#6e6170}html[data-theme="light"] .admin-test-modal{background:rgba(44,36,47,.42)}html[data-theme="light"] .admin-test-card{background:linear-gradient(150deg,#fff,#fcf7fc);border-color:rgba(177,70,163,.22)}html[data-theme="light"] .admin-test-card h3{color:#342d35}html[data-theme="light"] .admin-test-card>p{color:#716873}html[data-theme="light"] .admin-test-mode{background:#fff;color:#3d3540;border-color:rgba(77,47,75,.11)}html[data-theme="light"] .admin-test-mode b{color:#3a303b}html[data-theme="light"] .admin-test-mode span{color:#766a77}
     @media(max-width:760px){.admin-test-banner{top:58px;align-items:flex-start;flex-direction:column}.admin-test-banner-actions{width:100%}.admin-test-banner-actions button{flex:1}.admin-test-grid{grid-template-columns:1fr}}
 
+
+    /* 此區固定放在會診結論的進階追問下方，與網站原本的 AI 複製快捷鍵分開。 */
+    .tarot-ai-access{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;margin-top:13px;padding:17px 19px;border:1px solid rgba(142,175,107,.28);border-radius:16px;background:linear-gradient(110deg,rgba(19,36,23,.45),rgba(10,19,18,.42));text-align:left}
+    .tarot-ai-access-copy{flex:1 1 290px;min-width:0}
+    .tarot-ai-access-kicker{margin-bottom:7px;color:#b9a363;letter-spacing:.13em;font-family:var(--font-mono);font-size:.56rem}
+    .tarot-ai-access h4{margin:0;color:#e1eadb;font-size:.89rem;line-height:1.5}
+    .tarot-ai-access p{margin:5px 0 0;color:#a0ac9b;font-size:.69rem;line-height:1.7}
+    .tarot-ai-access-unlock,.tarot-ai-access-tools button{min-height:39px;padding:8px 15px;border:1px solid rgba(133,205,153,.45);border-radius:999px;background:rgba(43,110,68,.16);color:#a8e8be;font-size:.71rem;font-weight:800;cursor:pointer}
+    .tarot-ai-access-unlock:hover,.tarot-ai-access-tools button:hover{border-color:rgba(133,205,153,.8);background:rgba(43,110,68,.25)}
+    .tarot-ai-access-tools{display:flex;gap:9px;flex-wrap:wrap}
+    .tarot-ai-access-unlocked{border-color:rgba(133,205,153,.38)}
+    .tarot-ai-prompt-details{flex:1 0 100%;min-width:0;border-top:1px solid rgba(133,205,153,.12);padding-top:9px}
+    .tarot-ai-prompt-details summary{cursor:pointer;color:#b6d9c1;font-size:.75rem;font-weight:750}
+    .tarot-ai-prompt-details pre{margin:12px 0 0;padding:14px;max-height:400px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid rgba(133,205,153,.15);border-radius:10px;background:rgba(0,0,0,.20);color:#d6e1dc;font-family:var(--font-sans);font-size:.75rem;line-height:1.9}
+    html[data-theme="light"] .tarot-ai-access{background:linear-gradient(110deg,#f6fbf6,#f9fcfb);border-color:rgba(50,107,66,.27)}
+    html[data-theme="light"] .tarot-ai-access h4{color:#294b30}html[data-theme="light"] .tarot-ai-access p{color:#597361}
+    html[data-theme="light"] .tarot-ai-access-kicker{color:#806c32}
+    html[data-theme="light"] .tarot-ai-access-unlock,html[data-theme="light"] .tarot-ai-access-tools button{color:#28623d;border-color:rgba(50,107,66,.42);background:#eaf8ed}
+    html[data-theme="light"] .tarot-ai-prompt-details summary{color:#28623d}
+    html[data-theme="light"] .tarot-ai-prompt-details pre{color:#334d3c;background:#fff;border-color:rgba(50,107,66,.20)}
+    @media(max-width:630px){.tarot-ai-access{padding:15px}.tarot-ai-access-unlock{width:100%}.tarot-ai-access-tools{width:100%}.tarot-ai-access-tools button{flex:1 1 140px}}
 </style>
 </head>
 <body>
@@ -3213,9 +3234,30 @@
   function safeFileStamp(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;}
   function downloadArchive(){
     if(!hasFullPaidAccess()){openGuestNotice('advanced');return;}
-    if((state.readersViewed?.size||0)<4||!state.followupUsed||!state.followupQuestion||!state.followupCards?.length)return;
+    if(!state.current?.length||!state.readerBodies)return;
     const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=`tarot-four-lenses-v8-8-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+  }
+  function buildAIPromptAccessHTML(full){
+    if(!full){
+      return `<section class="tarot-ai-access tarot-ai-access-locked" data-ai-prompt-panel data-access="locked" aria-label="AI 解牌提示詞完整進階功能"><div class="tarot-ai-access-copy"><div class="tarot-ai-access-kicker">FULL ACCESS · LOCKED</div><h4>🔒 AI 解牌提示詞與 TXT 備份</h4><p>免費會員仍未開放 AI 解牌提示詞、複製與 TXT 備份。使用完整進階額度，本次即可解鎖。</p></div><button type="button" class="tarot-ai-access-unlock" data-open-advanced>完整進階解鎖</button></section>`;
+    }
+    return `<section class="tarot-ai-access tarot-ai-access-unlocked" data-ai-prompt-panel data-access="full" aria-label="AI 解牌提示詞"><div class="tarot-ai-access-copy"><div class="tarot-ai-access-kicker">FULL ACCESS · UNLOCKED</div><h4>AI 解牌提示詞與 TXT 備份</h4><p>依照本次已抽出的牌、正逆位與問題整理，可複製到其他 AI 進一步比較。</p></div><div class="tarot-ai-access-tools"><button type="button" data-ai-prompt-copy>複製 AI 解牌提示詞</button><button type="button" data-ai-prompt-txt>下載 TXT 備份</button></div><details class="tarot-ai-prompt-details"><summary>查看完整 AI 解牌提示詞</summary><pre data-ai-prompt-content>${esc(buildAIPrompt())}</pre></details></section>`;
+  }
+  function renderAIPromptAccess(consensus){
+    if(!consensus)return;
+    const followButton=consensus.querySelector('[data-open-followup]');
+    if(!followButton)return;
+    const full=hasFullPaidAccess(),access=full?'full':'locked';
+    const existing=consensus.querySelector('[data-ai-prompt-panel]');
+    if(existing?.dataset.access===access){
+      // If a follow-up was generated, refresh the displayed prompt without collapsing its details.
+      const content=existing.querySelector('[data-ai-prompt-content]');
+      if(content)content.textContent=buildAIPrompt();
+      return;
+    }
+    if(existing)existing.remove();
+    followButton.insertAdjacentHTML('afterend',buildAIPromptAccessHTML(full));
   }
   function updateReaderJourney(){
     const viewed=state.readersViewed||new Set();
@@ -3227,7 +3269,7 @@
       btn.classList.toggle('locked',!allowed);
       // 僅「已開放、但還沒被使用者親自點過」的老師高亮提醒。
       // 鎖定的老師保留原本的靜態鎖定外觀，不閃爍、不故意加深。
-      btn.classList.toggle('teacher-attention',allowed&&!clicked.has(key));
+      btn.classList.toggle('teacher-attention',allowed&&key!=='a'&&!clicked.has(key));
       btn.disabled=false;
       btn.setAttribute('aria-disabled',allowed?'false':'true');
     });
@@ -3236,22 +3278,10 @@
     const consensus=els.analysis.querySelector('[data-consensus-panel]');
     if(consensus){
       consensus.hidden=false;
-      let note=consensus.querySelector('[data-guest-consensus-note]');
-      const logged=isLogged(),dLocked=logged&&!isReaderAllowed('d');
-      if(!hasFullPaidAccess()&&(!logged||dLocked)){
-        if(!note){
-          note=document.createElement('div');
-          note.setAttribute('data-guest-consensus-note','');
-          note.className='reader-lock-gate';
-          const followBtn=consensus.querySelector('[data-open-followup]');
-          if(followBtn)consensus.insertBefore(note,followBtn);else consensus.appendChild(note);
-        }
-        if(dLocked){
-          note.innerHTML='<div><b>四鏡會診結論已開放</b><span>D 行動老師今天未開放，明天可免費閱讀；立即查看 D 老師與進行一次追問，需使用完整進階額度。</span></div><button type="button" class="reader-login-cta" data-open-advanced>了解完整進階</button>';
-        }else{
-          note.innerHTML='<div><b>四鏡會診結論免費開放</b><span>不必看完四位老師也能閱讀結論；一次追問屬完整進階功能。</span></div><button type="button" class="reader-login-cta" data-open-advanced>查看完整進階說明</button>';
-        }
-      }else if(note)note.remove();
+      // 會診結論永遠直接呈現，不額外插入引導說明卡。
+      const legacyNote=consensus.querySelector('[data-guest-consensus-note]');
+      if(legacyNote)legacyNote.remove();
+      renderAIPromptAccess(consensus);
     }
     els.analysis.querySelectorAll('[data-open-followup]').forEach(btn=>{
       const full=hasFullPaidAccess();
@@ -3312,7 +3342,7 @@
       state.followupQuestion=pack.question||'';state.followupCards=pack.cards||[];state.followupText=pack.paragraphs||[];state.finalSynthesisHTML=pack.finalSynthesisHTML||'';state.finalSynthesisText=pack.finalSynthesisText||[];
       const cards=state.followupCards,paras=state.followupText;
       els.followResult.innerHTML=`<div class="phase-label"><span>02 · RESULT</span><b>追問結果</b></div><h4>${esc(state.followupQuestion)}</h4><div class="followup-card-row">${cards.map(x=>`<div class="followup-mini"><b>${esc(x.name)}</b><span>${x.reversed?'逆位':'正位'} · ${esc(x.position)}</span><p>${esc(x.meaning)}</p></div>`).join('')}</div><div class="followup-answer">${paras.map(p=>`<p>${esc(p)}</p>`).join('')}</div>${state.finalSynthesisHTML}<div class="post-followup-download"><button class="download-txt" type="button" data-download-txt>TXT 備份</button><button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button></div>`;
-      els.followResult.hidden=false;renderFinish();
+      els.followResult.hidden=false;renderFinish();renderAIPromptAccess(els.analysis.querySelector('[data-consensus-panel]'));
     }catch(e){state.followupUsed=false;showTarotApiError(e)}
   }
   
@@ -3361,6 +3391,8 @@
   els.follow.addEventListener('click',e=>{const b=e.target.closest('[data-followup]');if(b)followup(Number(b.dataset.followup));});
   els.finish.addEventListener('click',e=>{if(e.target.closest('[data-new-reading]'))resetToTopic();});
   document.addEventListener('click',e=>{
+    const promptCopy=e.target.closest('[data-ai-prompt-copy]');if(promptCopy){copyAIPrompt(promptCopy);return;}
+    const promptTxt=e.target.closest('[data-ai-prompt-txt]');if(promptTxt){downloadArchive();return;}
     const b=e.target.closest('[data-copy-ai-prompt]');if(b){copyAIPrompt(b);return;}
     const memberLogin=e.target.closest('[data-member-login]');if(memberLogin){openMemberModal(memberLogin.dataset.targetReader||null);return;}
     const advanced=e.target.closest('[data-open-advanced]');if(advanced){openGuestNotice('advanced');return;}
