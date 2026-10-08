@@ -190,22 +190,28 @@ function rememberedToken(){
     return '';
   }
 }
-function token(){
+// 舊版塔羅與易經的管理員測試頁讀取 sessionStorage。
+// 記住登入則使用 localStorage，兩者必須同步，才能從後台直接進入測試頁。
+function syncAdminTestSession(){
   const saved=rememberedToken();
-  if(saved)return saved;
+  if(saved){
+    try{sessionStorage.setItem(TOKEN_KEY,saved)}catch(_){}
+    return saved;
+  }
   try{return sessionStorage.getItem(TOKEN_KEY)||''}catch(_){return ''}
 }
+function token(){return syncAdminTestSession()}
 function setToken(value){
   try{localStorage.removeItem(REMEMBER_KEY)}catch(_){}
   try{sessionStorage.removeItem(TOKEN_KEY)}catch(_){}
   if(!value)return;
+  // 不論是否勾選「記住登入」，同一分頁的測試頁都要能讀到憑證。
+  try{sessionStorage.setItem(TOKEN_KEY,value)}catch(_){}
   if($('rememberDevice')?.checked){
     try{
       localStorage.setItem(REMEMBER_KEY,JSON.stringify({token:value,expiresAt:Date.now()+REMEMBER_MS}));
-      return;
-    }catch(_){} // 若瀏覽器禁用持久儲存，退回本次工作階段
+    }catch(_){} // 若瀏覽器禁用持久儲存，仍可使用本次工作階段
   }
-  try{sessionStorage.setItem(TOKEN_KEY,value)}catch(_){}
 }
 
 let loginTimer=null;
@@ -491,6 +497,11 @@ $('loginForm').addEventListener('submit',e=>{
 });
 
 $('refreshBtn').addEventListener('click',loadStats);
+
+// 導覽前再同步一次，避免記住登入後只有 localStorage 有憑證。
+['yijingTestLink','tarotTestLink'].forEach(id=>{
+  $(id)?.addEventListener('click',()=>{syncAdminTestSession()});
+});
 
 $('logoutBtn').addEventListener('click',()=>{
   setToken('');
