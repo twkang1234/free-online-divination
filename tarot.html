@@ -1800,6 +1800,28 @@
     html[data-theme="light"] .reader-pane .tarot-pro-row p{color:#5e5245}
     @media(max-width:760px){.reader-pane .easy-summary{padding:18px 17px}.reader-pane .easy-summary p{font-size:.94rem}.reader-pane .easy-card{padding:15px 15px}.reader-pane .easy-section>p{font-size:.88rem}.reader-pane .easy-card>p{font-size:.85rem}.reader-pane .tarot-pro-details summary span{display:none}.reader-pane .easy-advice li{padding:14px 14px 14px 50px}}
 
+
+    /* V9.2.1 主牌整合：白話段落優先；牌位與專業資料保持可展開 */
+    .consensus-plain-panel .phase-label{margin-bottom:17px;align-items:baseline}
+    .consensus-plain-panel .phase-label b{font-size:1.14rem;letter-spacing:.02em;color:#f0dfba}
+    .consensus-plain{display:grid;grid-template-columns:1fr;gap:11px}
+    .consensus-plain-section{border:1px solid rgba(232,198,122,.09);border-radius:13px;padding:15px 17px;background:rgba(255,255,255,.013)}
+    .consensus-plain-section h4{margin:0 0 8px;font-size:.87rem;line-height:1.55;color:#e0c994}
+    .consensus-plain-section p{margin:0;font-size:.82rem;line-height:1.95;color:#d0c6cb}
+    .consensus-plain-lead{padding:18px 19px;border-color:rgba(232,198,122,.24);border-left:3px solid rgba(232,198,122,.78);background:linear-gradient(105deg,rgba(232,198,122,.075),rgba(232,198,122,.014) 70%)}
+    .consensus-plain-lead h4{color:#f0d9a2;font-size:.94rem}
+    .consensus-plain-lead p{font-size:.88rem;color:#eee2d7}
+    .consensus-plain-note{margin:15px 2px 0;color:#9a8b92;font-size:.7rem;line-height:1.7}
+    .consensus-plain-panel .tarot-pro-overview{margin-top:16px}
+    .consensus-plain-panel .consensus-foot{margin-top:16px}
+    html[data-theme="light"] .consensus-plain-panel .phase-label b{color:#624b27}
+    html[data-theme="light"] .consensus-plain-section{background:#fff;border-color:rgba(153,112,33,.13)}
+    html[data-theme="light"] .consensus-plain-section h4{color:#765721}
+    html[data-theme="light"] .consensus-plain-section p{color:#514451}
+    html[data-theme="light"] .consensus-plain-lead{border-color:rgba(153,112,33,.2);border-left:3px solid #a88447;background:linear-gradient(105deg,#fbf6e9,#fff 76%)}
+    html[data-theme="light"] .consensus-plain-lead p{color:#45362e}
+    html[data-theme="light"] .consensus-plain-note{color:#746678}
+    @media(max-width:620px){.consensus-plain-section{padding:13px 14px}.consensus-plain-section p{font-size:.79rem}.consensus-plain-lead p{font-size:.84rem}}
 </style>
 </head>
 <body>
@@ -3256,7 +3278,7 @@
   function buildArchiveText(){
     const now=new Date();
     const parts=[
-      'DivinationHub 塔羅四鏡解牌｜完整備份 V9.2',
+      'DivinationHub 塔羅四鏡解牌｜完整備份 V9.2.1',
       '==================================================',
       `備份時間：${now.toLocaleString('zh-TW',{hour12:false})}`,
       `主題：${state.topic?.name||''}`,
@@ -3274,7 +3296,7 @@
       '==================================================',
       '【D｜行動老師】',htmlToPlainReading(state.readerBodies?.d||''),'',
       '==================================================',
-      '【四鏡共識】',htmlToPlainReading(state.consensusHTML||''),'',
+      '【綜合白話解讀】',htmlToPlainReading(state.consensusHTML||''),'',
       `【解讀界線】${state.guardrailText||''}`
     ];
     if(state.followupQuestion&&state.followupCards?.length){
@@ -3365,7 +3387,7 @@
     const bodies=state.readerBodies||{},full=hasFullPaidAccess();
     const copyBtn=full?`<button class="copy-ai-prompt" type="button" data-copy-ai-prompt>複製給其他 AI 比對</button>`:`<button class="copy-ai-prompt guest-feature-disabled" type="button" data-copy-ai-prompt aria-disabled="true">完整進階｜複製給其他 AI</button>`;
     const txtBtn=full?`<button class="download-txt" type="button" data-download-txt>TXT 備份</button>`:`<button class="download-txt guest-feature-disabled" type="button" data-download-txt aria-disabled="true">完整進階｜TXT 備份</button>`;
-    els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">四鏡解牌｜V9.2</h3></div><div class="analysis-actions">${copyBtn}${txtBtn}</div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">01 · FOUR READERS</div><h4>四位老師，四種視角</h4></div><div class="same-cards-chip">1 SPREAD · 4 LENSES</div></div>${readerPane('a','A｜首席綜合老師','把整副牌串成完整故事，先回答「這一局到底在說什麼」。','✦',bodies.a||'',activeKey==='a')}${readerPane('b','B｜內在老師','專看保護方式、需求、界線與內在拉扯。','☾',bodies.b||'',activeKey==='b')}${readerPane('c','C｜理性老師','拆開牌面訊號與現實證據，控制過度解讀。','◇',bodies.c||'',activeKey==='c')}${readerPane('d','D｜行動老師','把同一副牌轉成可執行的下一步。','↗',isReaderAllowed('d')?(bodies.d||''):'<div class="reader-lock-gate"><div><b>此老師本次未開放</b><span>免費會員 D 行動老師隔天輪替；如需立即解鎖，請使用完整進階額度。</span></div></div>',activeKey==='d')}${state.consensusHTML||''}</div><details class="guardrail-details"><summary>解讀界線</summary><p>${esc(state.guardrailText||'')}</p></details>`;
+    els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">四鏡解牌｜V9.2.1</h3></div><div class="analysis-actions">${copyBtn}${txtBtn}</div></div><div class="reader-constellation"><div class="reader-constellation-head"><div><div class="analysis-kicker">01 · FOUR READERS</div><h4>四位老師，四種視角</h4></div><div class="same-cards-chip">1 SPREAD · 4 LENSES</div></div>${readerPane('a','A｜首席綜合老師','把整副牌串成完整故事，先回答「這一局到底在說什麼」。','✦',bodies.a||'',activeKey==='a')}${readerPane('b','B｜內在老師','專看保護方式、需求、界線與內在拉扯。','☾',bodies.b||'',activeKey==='b')}${readerPane('c','C｜理性老師','拆開牌面訊號與現實證據，控制過度解讀。','◇',bodies.c||'',activeKey==='c')}${readerPane('d','D｜行動老師','把同一副牌轉成可執行的下一步。','↗',isReaderAllowed('d')?(bodies.d||''):'<div class="reader-lock-gate"><div><b>此老師本次未開放</b><span>免費會員 D 行動老師隔天輪替；如需立即解鎖，請使用完整進階額度。</span></div></div>',activeKey==='d')}${state.consensusHTML||''}</div><details class="guardrail-details"><summary>解讀界線</summary><p>${esc(state.guardrailText||'')}</p></details>`;
     els.analysis.hidden=false;updateReaderJourney();
   }
   function readingPayload(){return {topicId:state.topic.id,scenarioId:state.scenario.id,questionId:state.question.id,cards:state.current.map(c=>({id:c.id,reversed:!!c.reversed}))};}
