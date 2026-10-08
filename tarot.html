@@ -1899,11 +1899,11 @@ a.phase-next-cta{display:flex;align-items:center;justify-content:center;text-dec
 @media(max-width:640px){.ab-paid-options{grid-template-columns:1fr}}
 
 /* V15: readable paragraphs; specialist detail stays closed unless selected. */
-.v16-reading .plain-card-part{margin-top:19px}
-.v16-reading h6{margin:0 0 8px;font-size:.83rem;color:#dbc2d5;line-height:1.7}
-.v16-reading .plain-recap{padding-left:22px;color:#c2b5c8;font-size:.84rem;line-height:2}
-.v16-reading .plain-recap li+li{margin-top:10px}
-.v16-reading .plain-full-summary{margin-top:24px}
+.v17-reading .plain-card-part{margin-top:19px}
+.v17-reading h6{margin:0 0 8px;font-size:.83rem;color:#dbc2d5;line-height:1.7}
+.v17-reading .plain-recap{padding-left:22px;color:#c2b5c8;font-size:.84rem;line-height:2}
+.v17-reading .plain-recap li+li{margin-top:10px}
+.v17-reading .plain-full-summary{margin-top:24px}
 .tarot-pro-details{margin-top:16px;overflow:hidden;border:1px solid rgba(232,198,122,.18);border-radius:12px;background:rgba(232,198,122,.025)}
 .tarot-pro-details>summary{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;list-style:none;color:#d9c694;font-size:.8rem;font-weight:750;line-height:1.6}
 .tarot-pro-details>summary::-webkit-details-marker{display:none}
@@ -1915,15 +1915,15 @@ a.phase-next-cta{display:flex;align-items:center;justify-content:center;text-dec
 .tarot-pro-row+.tarot-pro-row{margin-top:15px;padding-top:13px;border-top:1px solid rgba(255,255,255,.07)}
 .tarot-pro-row strong{font-size:.78rem;color:#d9c694}
 .tarot-pro-body p{font-size:.78rem!important;line-height:1.9!important}
-.v16-followup h5{font-size:.88rem;color:#dfc9e2;margin:0 0 12px}
+.v17-followup h5{font-size:.88rem;color:#dfc9e2;margin:0 0 12px}
 .meaning-card.tarot-pro-details{padding:0!important;margin-top:0}
-html[data-theme="light"] .v16-reading h6,html[data-theme="light"] .v16-followup h5{color:#5d3d5b}
-html[data-theme="light"] .v16-reading .plain-recap{color:#5c5063}
+html[data-theme="light"] .v17-reading h6,html[data-theme="light"] .v17-followup h5{color:#5d3d5b}
+html[data-theme="light"] .v17-reading .plain-recap{color:#5c5063}
 html[data-theme="light"] .tarot-pro-details{background:#fffaf0;border-color:rgba(151,113,45,.23)}
 html[data-theme="light"] .tarot-pro-details>summary,html[data-theme="light"] .tarot-pro-row strong{color:#745320}
 html[data-theme="light"] .tarot-pro-details>summary span{color:#857358}
 html[data-theme="light"] .tarot-pro-body{color:#665762}
-@media(max-width:640px){.v16-reading h6{font-size:.81rem}.tarot-pro-details>summary{padding:13px 12px}.tarot-pro-body{padding:0 12px 13px}}
+@media(max-width:640px){.v17-reading h6{font-size:.81rem}.tarot-pro-details>summary{padding:13px 12px}.tarot-pro-body{padding:0 12px 13px}}
 
 </style></head>
 <body>
@@ -3338,7 +3338,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     const q=state.question,startBtn=$('startReading'),old=startBtn?.textContent;
     try{
       if(startBtn){startBtn.disabled=true;startBtn.textContent='正在準備抽牌方式…';}
-      state.readingId='';state.advancedCards=[];state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v16',null);$('tarotAdvancedResult')?.remove();
+      state.readingId='';state.advancedCards=[];state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v17',null);$('tarotAdvancedResult')?.remove();
       state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;
       state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.singleReadingHTML='';state.followupOptions=[];
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
@@ -3357,8 +3357,8 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   function buildAIPrompt(){
     const list=(cards,offset=0)=>cards.map((c,i)=>`${i+1+offset}. ${c.position}：${c.name}｜${c.reversed?'逆位':'正位'}｜牌義參考：${c.meaning}`).join('\n');
     let extra='';
-    if(state.advancedCards?.length)extra+=`\n\n【B 進階牌陣｜另抽三張】\n${list(state.advancedCards,3)}\n請先各自完整解讀 B 的三個位置，再額外產生 A＋B 六張牌的整合結論。B 必須依其實際牌位深入探索原問題；比較兩組牌的支持、差異、矛盾及成立條件，不能把兩份文字拼接，不能讓 B 覆蓋 A，也不能把較正面的牌直接當作必然結果。`;
-    return `請用繁體中文，扮演一位親切、有經驗、但不武斷的塔羅老師，對不懂塔羅的一般人解說。依已抽出的牌、牌位與正逆位解讀，不重新抽牌、不更換牌位，不補出未提供的人物或事件。\n\n【主題】${state.topic.name}\n【目前情境】${state.scenario.name}\n【原問題】${state.question.text}\n【A 免費基礎牌陣｜三張牌】\n${list(state.current)}${extra}\n\n【解讀格式】\n開頭只銜接問題與情境，不先下結論。\n一、逐張白話解讀：每張牌依序使用「這張牌在說什麼」「放在『實際牌位』」「可能出現在生活裡的樣子」「你可以留意」四個小標。每張牌分清它在本次牌位的任務、正逆位的特定含意，配一個明確標示為可能情況的生活例子，以及可以核對的觀察。元素、花色、數字、宮廷牌等專業分析另以「牌義與專業解析（選讀）」整理；支援 HTML 時放在預設關閉的 details／summary，純文字時放在各張正文後獨立附錄。不要把關鍵字清單當作正文。\n二、三張如何連在一起：說出條件與因果，不依序重貼三張解讀；選擇題依實際三個位置比較，不增加第四或第五張。\n三、三個具體建議：每個包含能做的事及改善的觀察方式，貼合所選情境。\n最後以「一句話總結」及「更完整的總結」直接回答原問題，分清互動、承諾、短期變化與長期結果等不同層次。A 必須完整，不刻意保留重要結論要求付費。${state.advancedCards?.length?'\n接著完整解讀 B 三張；整份報告最後附 A＋B 六張的獨立整合結論。':''}\n\n【品質要求】\n- 自然白話，段落各提供新的理解，不重複同一句觀察或通用提醒，不為湊字數灌水。\n- 逆位逐張判讀，不能全部套成受阻或更糟；建議牌表示可嘗試的方向，不代表使用者已經做到。\n- 心意、第三者、欺騙、惡意、錄取、求婚與精準日期都不能當成已證實；不編造數字機率。涉及未知時，提出可核對的條件與界線。\n- 不把創業、工作選擇當成財務獲利保證。使用者沒有提到分手或舊關係，就不假設已分手。\n- 以上解讀另提供包含全部標題與正文的 UTF-8 TXT 檔；不能產生附件時，提供可完整儲存的純文字。\n\n【網站 A 解讀｜供同牌比較，不當作必須照抄的答案】\n${htmlToPlainReading(state.singleReadingHTML||'')}`;
+    if(state.advancedCards?.length)extra+=`\n\n【B 進階牌陣｜另抽三張】\n${list(state.advancedCards,3)}\n請先各自完整解讀 B 的三個位置，再額外產生 A＋B 六張牌的整合結論。B 必須依其實際牌位深入探索原問題；比較兩組牌的支持、差異、矛盾及成立條件。特別分清發展位與行動建議位：好的做法不等於必然得到理想結果。整合中需指出 B 哪個原因解釋 A 的卡點、哪個條件能回應 A 的風險，以及哪些未知仍未解除。不能把兩份文字拼接，不能讓 B 覆蓋 A，也不能把較正面的牌直接當作必然結果。`;
+    return `請用繁體中文，扮演一位親切、有經驗、但不武斷的塔羅老師，對不懂塔羅的一般人解說。依已抽出的牌、牌位與正逆位解讀，不重新抽牌、不更換牌位，不補出未提供的人物或事件。\n\n【主題】${state.topic.name}\n【目前情境】${state.scenario.name}\n【原問題】${state.question.text}\n【A 免費基礎牌陣｜三張牌】\n${list(state.current)}${extra}\n\n【解讀格式】\n開頭只銜接問題與情境，不先下結論。\n一、逐張白話解讀：每張牌依序使用「這張牌在說什麼」「放在『實際牌位』」「可能出現在生活裡的樣子」「你可以留意」四個小標。每張牌分清它在本次牌位的任務、正逆位的特定含意，配一個明確標示為可能情況的生活例子，以及可以核對的觀察。元素、花色、數字、宮廷牌等專業分析另以「牌義與專業解析（選讀）」整理；支援 HTML 時放在預設關閉的 details／summary，純文字時放在各張正文後獨立附錄。不要把關鍵字清單當作正文。\n二、三張如何連在一起：逐一說清前一張的問題如何影響下一張的條件；後一張如何回應或限制前一張。不能只加「前後需要一起看」等通用句，不依序重貼三張解讀；選擇題依實際三個位置比較，不增加第四或第五張。\n三、三個具體建議：每個寫明一件可做的事、適用條件與可核對的改善訊號，避免「調整自己」「做一件小事」等空泛建議。不得為製造接觸而編出共同寵物、費用或物品；若對方拒絕或不願接觸，不要求繼續聯絡。\n最後以「一句話總結」及「更完整的總結」直接回答原問題，分清互動、承諾、短期變化與長期結果等不同層次。A 必須完整，不刻意保留重要結論要求付費。${state.advancedCards?.length?'\n接著完整解讀 B 三張；整份報告最後附 A＋B 六張的獨立整合結論。':''}\n\n【品質要求】\n- 不必寫滿固定篇幅；三牌串聯與六牌整合每段都要增加一個新的判斷，避免在總結中再逐張重述。\n- 自然白話，段落各提供新的理解，不重複同一句觀察或通用提醒，不為湊字數灌水。\n- 逆位逐張判讀，不能全部套成受阻或更糟；建議牌表示可嘗試的方向，不代表使用者已經做到。\n- 心意、第三者、欺騙、惡意、錄取、求婚與精準日期都不能當成已證實；不編造數字機率。涉及未知時，提出可核對的條件與界線。\n- 不把創業、工作選擇當成財務獲利保證。使用者沒有提到分手或舊關係，就不假設已分手。\n- 以上解讀另提供包含全部標題與正文的 UTF-8 TXT 檔；不能產生附件時，提供可完整儲存的純文字。\n\n【網站 A 解讀｜供同牌比較，不當作必須照抄的答案】\n${htmlToPlainReading(state.singleReadingHTML||'')}`;
   }
   async function copyAIPrompt(btn){
     if(!hasFullPaidAccess()){els.analysis.querySelector('[data-consensus-panel]')?.scrollIntoView({behavior:'smooth'});return;}
@@ -3382,7 +3382,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   function buildArchiveText(){
     const now=new Date();
     const parts=[
-      '一念知機｜塔羅 A／B｜完整備份 V16.0',
+      '一念知機｜塔羅 A／B｜完整備份 V17.0',
       '==================================================',
       `備份時間：${now.toLocaleString('zh-TW',{hour12:false})}`,
       `主題：${state.topic?.name||''}`,
@@ -3405,12 +3405,12 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     if(!hasFullPaidAccess()){els.analysis.querySelector('[data-consensus-panel]')?.scrollIntoView({behavior:'smooth'});return;}
     if(!state.current?.length||!state.readerBodies)return;
     const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download=`tarot-reading-v16-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+    a.href=url;a.download=`tarot-reading-v17-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
   function downloadAIPrompt(){
     if(!hasFullPaidAccess()||!state.current?.length||!state.readerBodies)return;
     const blob=new Blob(['\ufeff'+buildAIPrompt()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download=`tarot-ai-prompt-v16-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+    a.href=url;a.download=`tarot-ai-prompt-v17-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
   function buildAIPromptAccessHTML(full){
     if(!full){
@@ -3443,7 +3443,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   }
   function saveReadingProgress(){
     if(!state.readingId)return;
-    sessionWrite('divinationhub-tarot-reading-v16',{
+    sessionWrite('divinationhub-tarot-reading-v17',{
       topicId:state.topic.id,scenarioId:state.scenario.id,question:state.question,current:state.current,
       readingId:state.readingId,singleReadingHTML:state.singleReadingHTML,guardrailText:state.guardrailText,
       followupUsed:state.followupUsed,followupQuestion:state.followupQuestion,followupText:state.followupText,followupReadingHTML:state.followupReadingHTML||'',
@@ -3540,7 +3540,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     }finally{if(state.readingId===readingId){state.advancedBusy=false;updateReaderJourney();}}
   }
   function restoreReadingProgress(){
-    const p=sessionRead('divinationhub-tarot-reading-v16',null);
+    const p=sessionRead('divinationhub-tarot-reading-v17',null);
     if(!p||Date.now()-p.savedAt>7*86400000||!p.readingId)return false;
     const t=topicBy(p.topicId),sc=t&&scenarioBy(t,p.scenarioId);
     if(!t||!sc||p.current?.length!==3)return false;
@@ -3564,7 +3564,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   
   
   function renderFinish(){els.finish.innerHTML=`<h4>本次牌局完成</h4><div class="finish-actions"><button type="button" data-new-reading>換一個問題</button></div>`;els.finish.hidden=false;}
-  function resetToTopic(){restoreDrawHosts();sessionWrite('divinationhub-tarot-reading-v16',null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();showStep('topic');}
+  function resetToTopic(){restoreDrawHosts();sessionWrite('divinationhub-tarot-reading-v17',null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();showStep('topic');}
   
   // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
   // 例：tarot.html?topic=love&scenario=single#worldSecond
