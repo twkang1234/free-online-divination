@@ -614,6 +614,24 @@
     @media(max-width:620px){.tarot-gate-actions{grid-template-columns:1fr}.reader-lock-gate{align-items:flex-start;flex-direction:column}.reader-login-cta{width:100%}.tarot-member-chip{padding:6px 9px}.post-followup-download{align-items:stretch}.post-followup-download .download-txt{align-self:flex-end;width:auto!important}}
 
 
+
+    /* 老師切換可點提示：只有已開放且尚未實際點擊的按鈕高亮。 */
+    @keyframes teacherAttentionPulse{
+      0%,100%{border-color:rgba(var(--step-accent),.38);background:rgba(var(--step-accent),.07);box-shadow:0 0 4px rgba(var(--step-accent),.06)}
+      50%{border-color:rgba(var(--step-accent),.92);background:rgba(var(--step-accent),.17);box-shadow:0 0 23px rgba(var(--step-accent),.28),inset 0 0 16px rgba(var(--step-accent),.05)}
+    }
+    .reader-bottom-step.teacher-attention:not(.locked){animation:teacherAttentionPulse 2.25s ease-in-out infinite;cursor:pointer}
+    .reader-bottom-step.teacher-attention:not(.locked)::after{content:'點擊查看';display:inline-flex;align-items:center;margin-top:6px;padding:3px 7px;border-radius:999px;border:1px solid rgba(var(--step-accent),.43);background:rgba(var(--step-accent),.14);color:rgb(var(--step-accent));font-size:.53rem;font-weight:800;letter-spacing:.03em}
+    .reader-bottom-step.locked{animation:none!important}
+    .reader-bottom-step.has-day-status{position:relative;padding-top:25px}
+    .teacher-day-status{position:absolute;right:8px;top:7px;padding:2px 7px;border-radius:999px;font-size:.50rem;font-weight:800;white-space:nowrap;border:1px solid rgba(218,164,88,.34);background:rgba(218,164,88,.11);color:#efd4a5;animation:none!important}
+    .teacher-day-status.off{border-color:rgba(154,114,255,.24);background:rgba(154,114,255,.055);color:#b4a6c6}
+    .teacher-day-status.full{color:#a6e9c8;border-color:rgba(89,199,142,.36);background:rgba(89,199,142,.09)}
+    html[data-theme="light"] .reader-bottom-step.teacher-attention:not(.locked)::after{color:#594067;background:rgba(var(--step-accent),.11)}
+    html[data-theme="light"] .teacher-day-status.on{color:#7b551d}
+    html[data-theme="light"] .teacher-day-status.off{color:#66567c}
+    @media(prefers-reduced-motion:reduce){.reader-bottom-step.teacher-attention:not(.locked){animation:none;border-color:rgba(var(--step-accent),.68)!important;box-shadow:0 0 13px rgba(var(--step-accent),.14)}}
+
     /* V9.1 SEO content architecture */
     .seo-jump-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px;padding:14px;border:1px solid rgba(231,94,215,.12);border-radius:16px;background:rgba(231,94,215,.025)}
     .seo-jump-nav a{display:inline-flex;align-items:center;min-height:34px;padding:6px 11px;border:1px solid rgba(154,114,255,.15);border-radius:999px;color:#b7a9c1;text-decoration:none;font-size:.68rem;transition:.2s}
@@ -2240,7 +2258,7 @@
   
   const $=id=>document.getElementById(id);
   const els={topic:$('topicGrid'),scenario:$('scenarioGrid'),question:$('questionGrid'),qctx:$('questionContext'),workspace:$('readingWorkspace'),cards:$('cards'),interp:$('interpretation'),analysis:$('readingAnalysis'),follow:$('followupPanel'),followResult:$('followupResult'),finish:$('readingFinish'),progress:$('flowProgress')};
-  let state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};
+  let state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};
   
   const esc=(s='')=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
   const topicBy=id=>TOPICS.find(x=>x.id===id);
@@ -3137,20 +3155,18 @@
   function readerJourneyFooter(key){
     const order=['a','b','c','d'];
     const labels={a:['A｜首席綜合','主線判讀'],b:['B｜內在老師','看見你的保護模式'],c:['C｜理性老師','哪些能信、哪些不能斷言'],d:['D｜行動老師','接下來到底怎麼做']};
-    const logged=isLogged(),todayGuest=guestReaderKey();
+    const logged=isLogged();
     const steps=order.map((k,i)=>{
       const allowed=isReaderAllowed(k),paidD=logged&&k==='d'&&!allowed;
       const why=allowed?labels[k][1]:(paidD?'明天免費｜完整進階立即看':'免費登入即可查看');
-      return `<button type="button" class="reader-bottom-step ${k===key?'current':''} ${allowed?'':'locked'}" data-reader-go="${k}" data-lock-kind="${paidD?'paid':'login'}" data-reader-step-index="${i}" aria-disabled="${allowed?'false':'true'}"><b>${labels[k][0]}</b><small>${why}</small></button>`;
+      // D 的每日輪替狀態只對已登入會員顯示；訪客仍維持訪客身分的鎖定提示。
+      const dayStatus=k==='d'&&logged
+        ? `<span class="teacher-day-status ${paidD?'off':(hasFullPaidAccess()?'full':'on')}">${paidD?'明日免費':(hasFullPaidAccess()?'已解鎖':'今日開放')}</span>`
+        : '';
+      return `<button type="button" class="reader-bottom-step ${k===key?'current':''} ${allowed?'':'locked'} ${dayStatus?'has-day-status':''}" data-reader-go="${k}" data-lock-kind="${paidD?'paid':'login'}" data-reader-step-index="${i}" aria-disabled="${allowed?'false':'true'}"><b>${labels[k][0]}</b><small>${why}</small>${dayStatus}</button>`;
     }).join('');
-    let nextButton='';
-    if(!logged){
-      nextButton=key==='a'?`<button type="button" class="reader-next-cta" data-reader-next="${todayGuest}">今日另一位開放老師｜${labels[todayGuest][0]} ↓</button>`:`<button type="button" class="reader-next-cta reader-finish-cta" data-scroll-consensus>查看四鏡會診結論 ↓</button>`;
-    }else{
-      const idx=order.indexOf(key),next=order.slice(idx+1).find(k=>isReaderAllowed(k));
-      nextButton=next?`<button type="button" class="reader-next-cta" data-reader-next="${next}">下一篇｜${labels[next][0]} ↓</button>`:`<button type="button" class="reader-next-cta reader-finish-cta" data-scroll-consensus>查看四鏡會診結論 ↓</button>`;
-    }
-    return `<div class="reader-bottom-nav" data-reader-footer="${key}"><div class="reader-bottom-nav-head"><b>閱讀進度</b><span data-reader-footer-progress>1/4</span></div><div class="reader-bottom-steps">${steps}</div>${nextButton}</div>`;
+    // 老師按鈕就是導覽；不再依閱讀順序生成「下一篇／查看會診」按鈕。
+    return `<div class="reader-bottom-nav" data-reader-footer="${key}"><div class="reader-bottom-nav-head"><b>閱讀進度</b><span data-reader-footer-progress>1/4</span></div><div class="reader-bottom-steps">${steps}</div></div>`;
   }
   function readerPane(key,title,subtitle,icon,body,active=false){
     const meta=readingMeta(body);return `<section class="reader-pane ${active?'active':''}" data-reader-pane="${key}"><div class="reader-view-head"><div class="identity"><div class="reader-avatar">${icon}</div><div><h3>${title}</h3><p>${subtitle}</p></div></div><div class="reading-meta"><span>約 ${meta.mins} 分鐘</span></div></div>${body}${readerJourneyFooter(key)}</section>`;
@@ -3202,53 +3218,47 @@
     a.href=url;a.download=`tarot-four-lenses-v8-8-${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
   function updateReaderJourney(){
-    const order=['a','b','c','d'],n=state.readersViewed?.size||0;
-    const logged=isLogged(),done=requiredReadersDone(),earlyDone=done&&!canAccessAllReaders();
-    const target=requiredReaders().length;
-    els.analysis.querySelectorAll('[data-reader-footer-progress]').forEach(x=>x.textContent=`${n}/4`);
+    const viewed=state.readersViewed||new Set();
+    const clicked=state.readerClicked||new Set();
+    els.analysis.querySelectorAll('[data-reader-footer-progress]').forEach(x=>x.textContent=`${viewed.size}/4`);
     els.analysis.querySelectorAll('[data-reader-go]').forEach(btn=>{
-      const key=btn.dataset.readerGo,idx=order.indexOf(key),allowed=isReaderAllowed(key);
-      const prevRequired=order.slice(0,idx).filter(isReaderAllowed);
-      btn.classList.toggle('done',state.readersViewed.has(key));
+      const key=btn.dataset.readerGo,allowed=isReaderAllowed(key);
+      btn.classList.toggle('done',viewed.has(key));
       btn.classList.toggle('locked',!allowed);
+      // 僅「已開放、但還沒被使用者親自點過」的老師高亮提醒。
+      // 鎖定的老師保留原本的靜態鎖定外觀，不閃爍、不故意加深。
+      btn.classList.toggle('teacher-attention',allowed&&!clicked.has(key));
+      btn.disabled=false;
       btn.setAttribute('aria-disabled',allowed?'false':'true');
-      // 未登入與被鎖的 D 仍可點擊查看登入／付費說明，不當成失效按鈕。
-      btn.disabled=allowed&&logged&&!prevRequired.every(k=>state.readersViewed.has(k));
     });
-    if(earlyDone){
-      els.analysis.querySelectorAll('[data-reader-footer]').forEach(footer=>{
-        const oldAction=footer.querySelector('.reader-next-cta,.reader-lock-gate');
-        if(oldAction?.hasAttribute('data-scroll-consensus'))return;
-        const btn=document.createElement('button');
-        btn.type='button';btn.className='reader-next-cta reader-finish-cta';
-        btn.setAttribute('data-scroll-consensus','');
-        btn.textContent='查看四鏡會診結論 ↓';
-        if(oldAction)oldAction.replaceWith(btn);else footer.appendChild(btn);
-      });
-    }
+
+    // 四鏡會診結論在主牌解讀完成後就直接顯示；不綁定 A/B/C/D 閱讀進度。
     const consensus=els.analysis.querySelector('[data-consensus-panel]');
     if(consensus){
-      consensus.hidden=!done;
+      consensus.hidden=false;
       let note=consensus.querySelector('[data-guest-consensus-note]');
-      if(earlyDone){
+      const logged=isLogged(),dLocked=logged&&!isReaderAllowed('d');
+      if(!hasFullPaidAccess()&&(!logged||dLocked)){
         if(!note){
-          note=document.createElement('div');note.setAttribute('data-guest-consensus-note','');
+          note=document.createElement('div');
+          note.setAttribute('data-guest-consensus-note','');
           note.className='reader-lock-gate';
           const followBtn=consensus.querySelector('[data-open-followup]');
           if(followBtn)consensus.insertBefore(note,followBtn);else consensus.appendChild(note);
         }
-        if(logged){
-          note.innerHTML='<div><b>A、B、C 已閱讀完畢｜四鏡會診結論開放</b><span>D 行動老師今天仍屬鎖定，明天可免費查看；想立即查看，或繼續一次追問，需使用完整進階額度。</span></div><button type="button" class="reader-login-cta" data-open-advanced>了解完整進階</button>';
+        if(dLocked){
+          note.innerHTML='<div><b>四鏡會診結論已開放</b><span>D 行動老師今天未開放，明天可免費閱讀；立即查看 D 老師與進行一次追問，需使用完整進階額度。</span></div><button type="button" class="reader-login-cta" data-open-advanced>了解完整進階</button>';
         }else{
-          note.innerHTML='<div><b>本次免費解讀到這裡</b><span>你已看完今天開放的 2 位老師與四鏡會診結論。一次追問屬完整進階功能，目前先鎖定。</span></div><button type="button" class="reader-login-cta" data-open-advanced>查看完整進階說明</button>';
+          note.innerHTML='<div><b>四鏡會診結論免費開放</b><span>不必看完四位老師也能閱讀結論；一次追問屬完整進階功能。</span></div><button type="button" class="reader-login-cta" data-open-advanced>查看完整進階說明</button>';
         }
-      }else if(note){note.remove()}
+      }else if(note)note.remove();
     }
     els.analysis.querySelectorAll('[data-open-followup]').forEach(btn=>{
       const full=hasFullPaidAccess();
-      btn.disabled=false;btn.classList.toggle('guest-feature-disabled',!full);
+      btn.disabled=false;
+      btn.classList.toggle('guest-feature-disabled',!full);
       btn.setAttribute('aria-disabled',full?'false':'true');
-      btn.textContent=full?'進行一次追問 ↓':'完整進階｜進行一次追問 ↓';
+      btn.textContent=full?'進行一次追問 ↓':'🔒 完整進階｜解鎖一次追問';
     });
   }
   function scrollReaderIntoView(key){
@@ -3260,6 +3270,8 @@
     if(!['a','b','c','d'].includes(key))return;
     if(!isReaderAllowed(key)){if(isLogged()&&key==='d')openGuestNotice('dTeacher');else openMemberModal(key);return;}
     state.readersViewed.add(key);
+    if(!state.readerClicked)state.readerClicked=new Set();
+    state.readerClicked.add(key);
     els.analysis.querySelectorAll('[data-reader-pane]').forEach(x=>x.classList.toggle('active',x.dataset.readerPane===key));
     const pane=els.analysis.querySelector(`[data-reader-pane="${key}"]`);
     if(pane){pane.classList.add('reader-switch-flash');setTimeout(()=>pane.classList.remove('reader-switch-flash'),700);}
@@ -3277,7 +3289,7 @@
     try{
       els.analysis.hidden=false;els.analysis.innerHTML='<div class="analysis-headrow"><div><div class="analysis-kicker">FOUR LENSES · ONE SPREAD</div><h3 class="analysis-title">正在整理四鏡解讀…</h3></div></div>';
       const pack=await tarotAPI('/interpret',readingPayload());
-      state.readerBodies=pack.readerBodies||{a:'',b:'',c:'',d:''};state.consensusHTML=pack.consensusHTML||'';state.guardrailText=pack.guardrail||'';state.readersViewed=new Set(['a']);renderReaderShell('a');return true;
+      state.readerBodies=pack.readerBodies||{a:'',b:'',c:'',d:''};state.consensusHTML=pack.consensusHTML||'';state.guardrailText=pack.guardrail||'';state.readersViewed=new Set(['a']);state.readerClicked=new Set();renderReaderShell('a');return true;
     }catch(e){showTarotApiError(e);els.analysis.hidden=true;return false;}
   }
   
@@ -3305,7 +3317,7 @@
   }
   
   function renderFinish(){els.finish.innerHTML=`<h4>本次牌局完成</h4><div class="finish-actions"><button type="button" data-new-reading>換一個問題</button></div>`;els.finish.hidden=false;}
-  function resetToTopic(){state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();showStep('topic');}
+  function resetToTopic(){state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();showStep('topic');}
   
   // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
   // 例：tarot.html?topic=love&scenario=single#worldSecond
@@ -3354,9 +3366,7 @@
     const advanced=e.target.closest('[data-open-advanced]');if(advanced){openGuestNotice('advanced');return;}
     const dl=e.target.closest('[data-download-txt]');if(dl){downloadArchive();return;}
     const go=e.target.closest('[data-reader-go]');if(go){activateReader(go.dataset.readerGo,true);return;}
-    const next=e.target.closest('[data-reader-next]');if(next&&!next.disabled){activateReader(next.dataset.readerNext,true);return;}
-    const scrollConsensus=e.target.closest('[data-scroll-consensus]');if(scrollConsensus){const c=els.analysis.querySelector('[data-consensus-panel]');if(c&&!c.hidden)c.scrollIntoView({behavior:'smooth',block:'start'});return;}
-    const followGate=e.target.closest('[data-open-followup]');if(followGate){if(hasFullPaidAccess()&&(state.readersViewed?.size||0)>=4)renderFollowups();else openGuestNotice('advanced');return;}
+    const followGate=e.target.closest('[data-open-followup]');if(followGate){if(hasFullPaidAccess())renderFollowups();else openGuestNotice('advanced');return;}
   });
   $('tarotPaidQuotaMore')?.addEventListener('click',()=>{
     if(hasFullPaidAccess()){openGuestNotice('advanced');return;}
