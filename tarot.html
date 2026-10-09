@@ -2075,8 +2075,9 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
 .v285-stage-two-result h4{font-size:.98rem;color:#f5e0f4;margin:0 0 12px}
 .v285-stage-two-result .ritual-result-grid{margin:12px auto;max-width:1000px}
 .v285-stage-two-note{font-size:.76rem;color:#bdaacc;line-height:1.8}
-.v285-stage-two-result details{margin:8px 0;padding:8px;border:1px solid rgba(207,163,225,.18);border-radius:9px;font-size:.75rem;color:#ddc3e5}
-.v285-stage-two-result summary{cursor:pointer}
+/* V28.9：第二輪與第一輪共用三欄「基礎牌義」卡片，沿用原本手機斷點 */
+.v285-stage-two-result .v289-second-meanings{margin-top:18px}
+.v285-stage-two-result .v289-second-meanings>.meaning-card.tarot-pro-details{margin:0;padding:0;font-size:inherit}
 html[data-theme="light"] .v285-journey-desc,html[data-theme="light"] .v285-stage-form label{color:#5b4969!important}
 html[data-theme="light"] .v285-journey-progress{background:#faf1fd;color:#473051;border-color:#e4c2e8}
 html[data-theme="light"] .v285-journey-em{color:#563565}
@@ -3981,7 +3982,11 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
   }
   function revealCard(i,wrap,hint){if(!state.current[i]||state.revealed.has(i))return;state.revealed.add(i);wrap.classList.add('revealed');hint.textContent=state.current[i].reversed?'逆位':'正位';renderMeanings();if(state.revealed.size===state.current.length){$('revealAllBtn').disabled=true;renderFullReading();els.follow.hidden=true;els.followResult.hidden=true;}}
   function revealAll(){els.cards.querySelectorAll('.tarot-card').forEach((w,i)=>{const h=w.parentElement.querySelector('.reveal-hint');revealCard(i,w,h);});}
-  function renderMeanings(){els.interp.innerHTML=state.current.map((c,i)=>state.revealed.has(i)?`<details class="meaning-card tarot-pro-details"><summary>第 ${i+1} 張｜${esc(c.name)}：基礎牌義（選讀）</summary><div class="tarot-pro-body"><div class="meaning-index">${String(i+1).padStart(2,'0')} // ${esc(c.position)}</div><h3>${esc(c.name)}</h3><div class="ori">${c.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div><p>${esc(c.meaning)}</p></div></details>`:'').join('');els.interp.classList.toggle('show',state.revealed.size>0);}
+  // V28.9：兩輪三張牌共用同一組卡片 HTML，避免折疊區塊版面不一致。
+  function meaningCardHTML(c,index){
+    return `<details class="meaning-card tarot-pro-details"><summary>第 ${index+1} 張｜${esc(c.name)}：基礎牌義（選讀）</summary><div class="tarot-pro-body"><div class="meaning-index">${String(index+1).padStart(2,'0')} // ${esc(c.position)}</div><h3>${esc(c.name)}</h3><div class="ori">${c.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div><p>${esc(c.meaning||'請以傳統塔羅牌義搭配牌位解讀。')}</p></div></details>`;
+  }
+  function renderMeanings(){els.interp.innerHTML=state.current.map((c,i)=>state.revealed.has(i)?meaningCardHTML(c,i):'').join('');els.interp.classList.toggle('show',state.revealed.size>0);}
   
   // V28.3：解讀格式（報告架構）與老師風格（敘事口吻）分開選擇。
   // 注意：此處 A/B/C 為「AI 解讀格式」，不是 A/B/C 抽牌階段。
@@ -4004,6 +4009,32 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
     B:{name:'事件脈絡與發展推演',short:'聚焦轉折與不同走向',hint:'整合六張牌的事件脈絡、關鍵轉折、條件性分支及實際觀察訊號。'},
     C:{name:'問題拆解與行動策略',short:'聚焦選擇與實際作法',hint:'由六張牌辨認核心問題、可控制因素、不同選擇與可落實的行動。'}
   };
+  // V28.9：六張牌共同交叉整合原則，不因 A/B/C 報告格式或老師風格而改變。
+  // 各牌陣的責任依使用者實際選擇的順序決定，不能預設第一輪一定是時間牌陣。
+  const SIX_SPREAD_ROLES={
+    past:'時間脈絡：過去的可能影響、目前的狀態、未來的條件性趨勢；未來牌不是保證發生的預言。',
+    advice:'當下問題結構：現況、值得檢視的阻礙、可以考慮的調整與建議；建議牌不是已發生的事件。',
+    relation:'互動或關係結構：自己的立場、相關對象的可觀察面向、雙方互動；如問題沒有明確「對方」，不可憑空創造人物，須指出此牌位的適用限制。'
+  };
+  function sharedSixCardRules(){
+    const first=firstSpreadKey();
+    const second=state.advanceSpreadKey;
+    const related=state.followChoice==='related';
+    return `【3＋3 六張牌共同交叉整合規則｜所有解讀格式與風格必須遵守】
+這兩組牌不是互相取代，也不代表第二輪抽牌後現實已經過了一段時間；它們是對${related?'原問題及其相關延伸問題':'同一個原始問題'}的兩個觀察層次。
+第一組「${SPREAD_OPTIONS[first]?.name||'第一個牌陣'}」的責任：${SIX_SPREAD_ROLES[first]||'依照實際牌位理解第一組所能回答的範圍。'}
+第二組「${SPREAD_OPTIONS[second]?.name||'第二個牌陣'}」的責任：${SIX_SPREAD_ROLES[second]||'依照實際牌位理解第二組新增的觀察角度。'}
+
+交叉整合時，依下列邏輯進行：
+1. 先各自站穩：先依第一組三個牌位建立原問題的完整基礎，再依第二組三個牌位獨立理解補充層次；不能把兩組硬湊成另一種六牌牌陣，也不能把非時間牌位改成先後事件。
+2. 再找有根據的交集：只挑真正值得連結的跨組牌面，具體指出牌名、正逆位、各自牌位、呼應或張力的理由。可以比較不同位置的牌，但不可機械式將第一張配第四張、第二張配第五張，亦不必強迫每張牌都成對。
+3. 最後保留差異：若兩組指向不同面向，先檢查是否源自牌位功能、問題層次或成立條件不同；無法合理連結時就保留未解之處，不得強行消除矛盾、以正逆位或好壞牌數量投票。
+4. 明確交代新增價值：指出第二組加入後究竟增加了什麼線索、哪些對第一組的原有推測需修正、哪些判斷仍須現實驗證；不能聲稱知道第一次 AI 實際給過什麼結論。
+5. 避免無根據的推演：不同牌陣只是不同觀察角度，不等於事情已發展至下一階段；不得捏造人物、他人內心、具體日期、事實或必然因果。任何情境例子需標為假設。
+6. 分清本次提問方式：${related?'本次是相關延伸問題；請在最終一節區分回答原問題與新的延伸問題，最後合併成一個六牌整體結論，不要寫兩份彼此重複的完整報告。':'本次是延續原問題；前後問題相同，最終只需一次六張牌整合結論，不要分別重複回答兩遍。'}
+7. 各種 A/B/C 格式僅影響報告的組織與側重、五種老師風格僅影響語氣；以上共同交叉整合規則一律優先適用，正文的完整結論放在最後。`;
+  }
+
   const SIX_FORMAT_INSTRUCTIONS={
     A:`【六張牌解讀格式 A｜專業深度整合解讀：請依下列順序】
 開場：用 1～2 段指出兩組牌面的核心矛盾或待釐清的地方，像真人老師面對面解說；先不公布最後結論。
@@ -4013,7 +4044,7 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
 四、從三個視角重新看問題：內在需求、理性證據、行動策略；各提出一個新洞察與現實核對方法，不得重述上一節。
 五、三項具體生活建議：各包含簡潔標題、可採取的作法、觀察重點與改善判準；建議要回扣六張牌。
 六、老師的提醒：指出最容易忽略的界線，語氣有溫度、白話而不說教。
-最後、六張牌最終完整結論：用 1～2 段整合回答原始問題與第二階段問題，清楚分辨可能發展與已知現實；結論只放在全文最後。`,
+最後、六張牌最終完整結論：依照上述共同規則處理延續原題或相關追問，整合新的洞察與尚待驗證的條件；結論只放在全文最後。`,
     B:`【六張牌解讀格式 B｜事件脈絡與發展推演：請依下列順序】
 開場：揭示兩個牌陣提供的不同局勢線索與待判斷的轉折點，不急著預告結果。
 一、第一組三張牌的事件基礎：不依賴前次 AI 回答，按實際牌位逐張深入解讀原問題，說明各張牌呈現的條件、推力、阻力及可能的其他讀法；生活例子都要標為假設。
@@ -4022,7 +4053,7 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
 四、至少三條條件性可能走向：比較維持現況、關鍵條件改善與阻力加重；每條寫明觸發條件、後果、仍不可確定的資訊，不捏造日期或機率。
 五、轉折訊號與現實核對：提出三到四項實際可觀察的徵兆，並解釋不同跡象代表什麼，避免用塔羅充當事實證據。
 六、面對局勢的準備：提出三個有優先順序的行動與備案，包含何時等待、何時推進及風險界線。
-最後、六張牌事件整合結論：獨立回答原始問題與第二階段問題，指出新三張牌如何影響判斷，最終結論放全文最後。`,
+最後、六張牌事件整合結論：按上述共同規則回答本次提問，指出新增三張牌如何影響判斷，並保留不可確定之處；結論放全文最後。`,
     C:`【六張牌解讀格式 C｜問題拆解與行動策略：請依下列順序】
 開場：說明真正需要作出的判斷與兩組牌陣各負責解開的問題，暫不公布最終答案。
 一、第一組三張牌：在沒有前次 AI 對話的情況下，逐張深入說明原始問題的核心、限制、盲點及可以利用的條件，生活例子須明確標為假設。
@@ -4031,7 +4062,7 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
 四、比較兩至三條實際選擇：對每種選擇說明適用條件、可能利益、代價、風險及尚需驗證的事實，不能虛構人物或事件。
 五、具體行動路線：分為現在能做、接下來觀察、若出現警訊如何調整三層；每層有實際做法與成效檢查方式。
 六、三個自我核對問題：幫使用者以自身經驗驗證關鍵假設，分清牌面象徵與現實證據，不用占卜取代重要決策。
-最後、六張牌策略結論：以清楚、有方向而不武斷的方式，分別回答原始問題與第二階段問題，並說明下一步與需要滿足的條件；完整結論放最後。`
+最後、六張牌策略結論：按上述共同規則給出一次完整而有方向的整合判斷，說明下一步及條件；只有確實提出相關延伸問題時才分別照顧兩個問題，結論放最後。`
   };
   let selectedPromptFormat='A',selectedSixPromptFormat='A',selectedPromptStyle='warm';
   const COMMON_PROMPT_RULES=`【文字與品質標準】
@@ -4129,6 +4160,8 @@ ${state.current.map(keywordsOf).join('\n')}
 牌陣：${SPREAD_OPTIONS[state.advanceSpreadKey]?.name||state.question.advancedSpread?.name||''}（${state.advancedCards.map(c=>c.position).join('／')}）
 ${state.advancedCards.map(keywordsOf).join('\n')}
 
+${sharedSixCardRules()}
+
 ${SIX_FORMAT_INSTRUCTIONS[selectedSixPromptFormat]||SIX_FORMAT_INSTRUCTIONS.A}
 
 【品質規則】
@@ -4181,7 +4214,7 @@ ${SIX_FORMAT_INSTRUCTIONS[selectedSixPromptFormat]||SIX_FORMAT_INSTRUCTIONS.A}
     document.getElementById('tarotSixExtraCards')?.remove();
     if(state.advancedCards?.length!==3)return;
     const div=document.createElement('section');div.id='tarotSixExtraCards';div.className='v285-stage-two-result';
-    div.innerHTML=`<h4>第二階段｜新抽三張牌・${esc(state.question.advancedSpread?.name||'進階牌陣')}</h4><p class="v285-stage-two-note">第一輪原本三張牌完整保留，上方是第一組，下方是第二組；六張牌將合併生成全新的 AI 提示詞。</p><div class="ritual-result-grid" style="--result-count:3">${state.advancedCards.map(formalResultCard).join('')}</div>${state.advancedCards.map((c,i)=>`<details><summary>第 ${i+4} 張｜${esc(c.name)}：基礎牌義（選讀）</summary><p>${esc(c.position)}｜${c.reversed?'逆位':'正位'}｜${esc(c.meaning||'請以傳統牌義搭配牌位解讀。')}</p></details>`).join('')}`;
+    div.innerHTML=`<h4>第二階段｜新抽三張牌・${esc(state.question.advancedSpread?.name||'進階牌陣')}</h4><p class="v285-stage-two-note">第一輪原本三張牌完整保留，上方是第一組，下方是第二組；六張牌將合併生成全新的 AI 提示詞。</p><div class="ritual-result-grid" style="--result-count:3">${state.advancedCards.map(formalResultCard).join('')}</div><div class="interpretation show v289-second-meanings">${state.advancedCards.map((c,i)=>meaningCardHTML(c,i+3)).join('')}</div>`;
     els.interp.after(div);
   }
   function followupConfigHTML(){
