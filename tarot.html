@@ -2083,6 +2083,23 @@ html[data-theme="light"] .v285-journey-em{color:#563565}
 html[data-theme="light"] .v285-journey-title{color:#35243e!important}
 html[data-theme="light"] .v285-stage-form textarea{background:#fff;color:#35243e}
 @media(max-width:580px){.reading-finish{padding:17px!important}.v285-stage-two-result{padding:10px}.finish-actions button.v285-continue{font-size:.82rem}}
+/* V28.8 · six-card membership call-to-action */
+.v288-member-cta{margin:17px 0 5px;padding:17px 19px;text-align:center;border:1px solid rgba(221,151,230,.37);border-radius:14px;background:linear-gradient(115deg,rgba(200,103,194,.105),rgba(134,105,205,.08))}
+.v288-member-cta strong{display:block;color:#f3d7f4;font-size:.95rem;line-height:1.6}
+.reading-finish .v288-member-cta p{display:block!important;font-size:.75rem;line-height:1.8;color:#bfaecb;margin:7px 0 12px}
+.v288-member-login,.v288-member-saved{box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:100%;min-height:51px;border:1px solid rgba(245,188,249,.6);border-radius:12px;background:linear-gradient(110deg,#d67ac9,#a48ce9);color:#261529;font-family:inherit;font-size:.92rem;font-weight:850;letter-spacing:.01em;cursor:pointer;text-decoration:none}
+.v288-member-login:hover{filter:brightness(1.08)}
+.v288-member-login:focus-visible,.v288-member-saved:focus-visible{outline:2px solid #f6d4f8;outline-offset:3px}
+.v288-member-saved{border-color:rgba(201,167,227,.48);background:rgba(189,156,224,.15);color:#e7d3f3}
+@keyframes v288-member-breathe{0%,100%{box-shadow:0 0 0 0 rgba(209,130,235,.04);filter:brightness(1)}50%{box-shadow:0 0 0 5px rgba(209,130,235,.17),0 0 26px rgba(211,137,234,.36);filter:brightness(1.10)}}
+.reading-finish .v288-member-login{animation:v288-member-breathe 3.2s ease-in-out infinite}
+.v288-six-length{margin-top:-6px!important;margin-bottom:15px!important}
+html[data-theme="light"] .v288-member-cta{background:#fff5fe;border-color:#d8aede}
+html[data-theme="light"] .v288-member-cta strong{color:#542a5e}
+html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
+@media(prefers-reduced-motion:reduce){.reading-finish .v288-member-login{animation:none;outline:2px solid #bc80cf;outline-offset:2px}}
+@media(max-width:580px){.v288-member-cta{padding:14px}.v288-member-login{font-size:.82rem}}
+
 </style></head>
 <body>
   <header class="page-topbar">
@@ -3191,6 +3208,7 @@ html[data-theme="light"] .v285-stage-form textarea{background:#fff;color:#35243e
     if(!els.analysis.hidden&&state.readerBodies)renderReaderShell();
     if(target)setTimeout(()=>activateReader(target,true),100);
     syncPendingTarotRecord();
+    if(state.stage3x3==='complete'&&state.current?.length===3)renderFinish();
   }
   function logoutMember(){
     if(isAdminTestActive()){simulateAdminMemberLogout();return;}
@@ -3201,6 +3219,7 @@ html[data-theme="light"] .v285-stage-form textarea{background:#fff;color:#35243e
     if(!$('drawModeShell').hidden)applyDrawModeAccess();
     if(!els.analysis.hidden&&state.readerBodies){state.readersViewed=new Set(['a']);renderReaderShell();}
     closeMemberModal();
+    if(state.stage3x3==='complete'&&state.current?.length===3)renderFinish();
   }
   function openGuestNotice(kind,confirmFn){
     const title=$('tarotGuestNoticeTitle'),kicker=$('tarotGuestNoticeKicker'),copy=$('tarotGuestNoticeCopy'),confirm=$('tarotGuestNoticeConfirm');
@@ -3948,7 +3967,7 @@ html[data-theme="light"] .v285-stage-form textarea{background:#fff;color:#35243e
     const q=state.question,startBtn=$('startReading'),old=startBtn?.textContent;
     try{
       if(startBtn){startBtn.disabled=true;startBtn.textContent='正在準備抽牌方式…';}
-      document.getElementById('tarotSixExtraCards')?.remove();clear3x3();state.stage3x3='first';state.firstPromptSnapshot='';state.sixPromptSnapshot='';state.followFormOpen=false;state.followChoice='same';state.followText='';state.advanceSpreadKey='';state.archiveRecordId='';state.readingId='';state.advancedCards=[];state.firstDrawMode='';state.aiGuidanceStage='idle';state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();
+      document.getElementById('tarotSixExtraCards')?.remove();clear3x3();state.stage3x3='first';state.firstPromptSnapshot='';state.sixPromptSnapshot='';state.followFormOpen=false;state.followChoice='same';state.followText='';state.advanceSpreadKey='';state.archiveRecordId='';state.readingId='';state.advancedCards=[];selectedSixPromptFormat='A';state.firstDrawMode='';state.aiGuidanceStage='idle';state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();
       state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;
       state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.singleReadingHTML='';state.followupOptions=[];
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
@@ -3978,7 +3997,43 @@ html[data-theme="light"] .v285-stage-form textarea{background:#fff;color:#35243e
     logical:{name:'理性分析',hint:'條理清晰，重視可核對的事實、因果關係、替代解釋、判斷條件和具體步驟；塔羅象徵不當成客觀證據。'},
     mystic:{name:'神秘儀式感',hint:'用塔羅象徵、牌面意象與富有氛圍的敘事增加儀式感，但語句仍要白話、具體；不得聲稱神諭、命定或必然預知。'}
   };
-  let selectedPromptFormat='A',selectedPromptStyle='warm';
+  // V28.8: A/B/C here are AI report structures, unrelated to the first/second card spreads.
+  // Six-card format is independent of the format chosen for the original three-card reading.
+  const SIX_PROMPT_FORMATS={
+    A:{name:'專業深度整合解讀',short:'六牌完整深入報告',hint:'兩組各自完整解讀、六牌交叉印證、多視角洞察與生活建議，結論放最後。'},
+    B:{name:'事件脈絡與發展推演',short:'聚焦轉折與不同走向',hint:'整合六張牌的事件脈絡、關鍵轉折、條件性分支及實際觀察訊號。'},
+    C:{name:'問題拆解與行動策略',short:'聚焦選擇與實際作法',hint:'由六張牌辨認核心問題、可控制因素、不同選擇與可落實的行動。'}
+  };
+  const SIX_FORMAT_INSTRUCTIONS={
+    A:`【六張牌解讀格式 A｜專業深度整合解讀：請依下列順序】
+開場：用 1～2 段指出兩組牌面的核心矛盾或待釐清的地方，像真人老師面對面解說；先不公布最後結論。
+一、回看第一組三張牌：即使沒看過前次 AI 回答，也要獨立重建原問題的完整解讀，逐張解釋牌位、正逆位與牌義；可舉明確標示為假設的生活例子，指出容易誤判之處。
+二、完整解讀第二組三張牌：逐張分析新牌如何深化本次探索，說清新線索、阻礙、助力及成立條件；不要把非時間牌位硬套過去、現在與未來。
+三、六張牌深入交叉整合：比較兩組如何支持、補充、修正或看似矛盾，解釋為什麼能同時成立，指出第二次比第一次真正新增的洞察；不得按好牌壞牌數量投票。
+四、從三個視角重新看問題：內在需求、理性證據、行動策略；各提出一個新洞察與現實核對方法，不得重述上一節。
+五、三項具體生活建議：各包含簡潔標題、可採取的作法、觀察重點與改善判準；建議要回扣六張牌。
+六、老師的提醒：指出最容易忽略的界線，語氣有溫度、白話而不說教。
+最後、六張牌最終完整結論：用 1～2 段整合回答原始問題與第二階段問題，清楚分辨可能發展與已知現實；結論只放在全文最後。`,
+    B:`【六張牌解讀格式 B｜事件脈絡與發展推演：請依下列順序】
+開場：揭示兩個牌陣提供的不同局勢線索與待判斷的轉折點，不急著預告結果。
+一、第一組三張牌的事件基礎：不依賴前次 AI 回答，按實際牌位逐張深入解讀原問題，說明各張牌呈現的條件、推力、阻力及可能的其他讀法；生活例子都要標為假設。
+二、第二組三張牌帶來的新訊號：逐張解讀第二階段問題及各自牌位，說出哪些事被補強、修正或呈現新的不確定性。
+三、兩組牌交叉推演事件脈絡：分段解釋問題的形成、持續條件、推進或停滯因素、可能轉折；把前後兩組當作不同觀察角度，不能把「你／對方／關係」硬編成時間順序。
+四、至少三條條件性可能走向：比較維持現況、關鍵條件改善與阻力加重；每條寫明觸發條件、後果、仍不可確定的資訊，不捏造日期或機率。
+五、轉折訊號與現實核對：提出三到四項實際可觀察的徵兆，並解釋不同跡象代表什麼，避免用塔羅充當事實證據。
+六、面對局勢的準備：提出三個有優先順序的行動與備案，包含何時等待、何時推進及風險界線。
+最後、六張牌事件整合結論：獨立回答原始問題與第二階段問題，指出新三張牌如何影響判斷，最終結論放全文最後。`,
+    C:`【六張牌解讀格式 C｜問題拆解與行動策略：請依下列順序】
+開場：說明真正需要作出的判斷與兩組牌陣各負責解開的問題，暫不公布最終答案。
+一、第一組三張牌：在沒有前次 AI 對話的情況下，逐張深入說明原始問題的核心、限制、盲點及可以利用的條件，生活例子須明確標為假設。
+二、第二組三張牌：逐張分析延續原題或新追問的關鍵線索，指出增加的機會、阻礙、需要核對的現實條件，尊重原牌位與正逆位。
+三、六張牌找出真正問題：交叉整合兩組訊息，區分表面現象、關鍵根源、自己可控制、他人或環境不可控制、兩組表面矛盾如何解釋，不要只是六張牌的摘要。
+四、比較兩至三條實際選擇：對每種選擇說明適用條件、可能利益、代價、風險及尚需驗證的事實，不能虛構人物或事件。
+五、具體行動路線：分為現在能做、接下來觀察、若出現警訊如何調整三層；每層有實際做法與成效檢查方式。
+六、三個自我核對問題：幫使用者以自身經驗驗證關鍵假設，分清牌面象徵與現實證據，不用占卜取代重要決策。
+最後、六張牌策略結論：以清楚、有方向而不武斷的方式，分別回答原始問題與第二階段問題，並說明下一步與需要滿足的條件；完整結論放最後。`
+  };
+  let selectedPromptFormat='A',selectedSixPromptFormat='A',selectedPromptStyle='warm';
   const COMMON_PROMPT_RULES=`【文字與品質標準】
 - 全篇以繁體中文撰寫，讀者是不懂塔羅的一般人；使用自然、清楚、有生活畫面的白話，不把抽象玄學名詞直接丟給讀者。
 - 整體目標約 3,000～3,600 個中文字，以實際洞察的深度為優先，不為湊字數反覆說同一件事；每段帶來新理解。
@@ -4035,7 +4090,7 @@ html[data-theme="light"] .v285-stage-form textarea{background:#fff;color:#35243e
       firstPromptSnapshot:state.firstPromptSnapshot||'',sixPromptSnapshot:state.sixPromptSnapshot||'',
       firstDrawMode:state.firstDrawMode||'',aiGuidanceStage:state.aiGuidanceStage||'idle',
       stage:state.stage3x3==='complete'?'complete':'first',recordId:state.archiveRecordId||'',
-      selectedPromptFormat,selectedPromptStyle,followChoice:state.followChoice||'same',
+      selectedPromptFormat,selectedSixPromptFormat,selectedPromptStyle,followChoice:state.followChoice||'same',
       followText:state.followText||'',advanceSpreadKey:state.advanceSpreadKey||''});
   }
   function clear3x3(){try{localStorage.removeItem(TAROT_3X3_SESSION)}catch(_){}}
@@ -4074,15 +4129,7 @@ ${state.current.map(keywordsOf).join('\n')}
 牌陣：${SPREAD_OPTIONS[state.advanceSpreadKey]?.name||state.question.advancedSpread?.name||''}（${state.advancedCards.map(c=>c.position).join('／')}）
 ${state.advancedCards.map(keywordsOf).join('\n')}
 
-【六張牌完整深度解讀｜請依照順序】
-開場：指出兩組牌共同揭示的核心議題、尚待釐清的張力，不急著宣布結論。
-一、回看第一組三張牌：在完全沒看過前次 AI 對話的情況下，獨立、完整重建第一組牌如何回答原始問題。逐張解釋牌位、正逆位及牌義對原問題的作用，說明當時重要線索，不得假設你已經解讀過。
-二、深入解讀新抽的三張牌：逐張詳解第二組牌如何探討「${followQuestion}」，指出新增的訊息、推力、阻礙與判讀限制；舉貼近生活但明確標成「假設」的情境。若第二組是「你／對方／關係」，不把這三張硬說成時間順序，也不斷言他人想法。
-三、六張牌交叉整合：比較兩組牌相互支持、補充、修正或看似矛盾的地方，解釋為何能同時存在，區分第一組已有的訊息與第二組帶來的新洞察。不要只是把六張牌各說一次，更不可依好牌壞牌數量投票。
-四、針對原問題與本次探索，完整推演可能走向：依不同現實條件分析兩三種可能結果、轉折因素和可核對的跡象，避免編造事件、日期或精確機率。
-五、行動與觀察：從內在需求、現實證據與可實行策略三個角度給出新洞察；提供三項具體行動及觀察方式，說清楚應注意什麼、如何知道情況改變。
-六、老師的提醒：指出容易誤判或過度解讀的地方，像真人塔羅老師一樣有溫度但不粉飾問題。
-最後、六張牌最終整合結論：必須在全文最後才完整回答原始問題與第二階段問題；清楚指出比第一次三張牌增加的理解、成立條件及現實界線，不要在開頭就宣布結論。
+${SIX_FORMAT_INSTRUCTIONS[selectedSixPromptFormat]||SIX_FORMAT_INSTRUCTIONS.A}
 
 【品質規則】
 - 以 4,500～5,500 個中文字的完整深度報告為目標，內容深度優先，不為湊字數重複。
@@ -4115,6 +4162,7 @@ ${state.advancedCards.map(keywordsOf).join('\n')}
     state.advanceSpreadKey=saved.advanceSpreadKey||'';state.archiveRecordId=saved.recordId||'';
     if(state.advanceSpreadKey&&SPREAD_OPTIONS[state.advanceSpreadKey])state.question.advancedSpread={...SPREAD_OPTIONS[state.advanceSpreadKey]};
     selectedPromptFormat=PROMPT_FORMATS[saved.selectedPromptFormat]?saved.selectedPromptFormat:'A';
+    selectedSixPromptFormat=SIX_PROMPT_FORMATS[saved.selectedSixPromptFormat]?saved.selectedSixPromptFormat:'A';
     selectedPromptStyle=PROMPT_STYLES[saved.selectedPromptStyle]?saved.selectedPromptStyle:'warm';
     restoreDrawHosts();
     $('readingPath').textContent=`${topic.name} → ${scenario.name}`;
@@ -4151,7 +4199,8 @@ ${state.advancedCards.map(keywordsOf).join('\n')}
   }
   function renderFinish(){
     if(state.stage3x3==='complete'){
-      els.finish.innerHTML=`<h4 class="v285-journey-title">本次 3＋3 六張牌已完成</h4><p class="v285-journey-desc">你已完成兩種不同牌陣的探索。請在上方選擇老師風格並複製或下載<strong>六張牌完整整合提示詞</strong>，交給你喜歡的 AI；這次占卜到此完整結束。</p><div class="v285-journey-progress">第一組：${esc(state.question.spread.name)}　＋　第二組：${esc(state.question.advancedSpread?.name||'進階牌陣')}<small>已保存兩組六張牌，會員登入後可保存原版提示詞，日後再提取及回顧。</small></div><div class="finish-actions v285-actions"><button type="button" class="v285-new" data-new-reading>開始另一個全新問題 ↗</button></div>`;
+      const logged=isLogged()&&!isAdminTestActive();
+      els.finish.innerHTML=`<h4 class="v285-journey-title">本次 3＋3 六張牌已完成</h4><p class="v285-journey-desc">兩組不同牌陣已完成。請在上方選擇<strong>解讀格式及老師風格</strong>，複製或下載六張牌完整提示詞，再交給喜歡的 AI。這次占卜到此完整結束。</p><div class="v285-journey-progress">第一組：${esc(state.question.spread.name)}　＋　第二組：${esc(state.question.advancedSpread?.name||'進階牌陣')}<small>保留原本兩組牌，方便會員取回當時的提示詞及日後回顧。</small></div><div class="v288-member-cta"><strong>✦ 保存這次六張牌的占卜紀錄</strong><p>${logged?'你已登入會員。取得提示詞後會自動嘗試儲存，可至紀錄頁確認。':'免費登入後，可保存題目、六張牌及當時兩份原版提示詞，未來再次提取，並留下 50 字心得。'}</p>${logged?'<a class="v288-member-saved" href="tarot-records.html">我的塔羅占卜紀錄 ↗</a>':'<button type="button" class="v288-member-login" data-member-login>免費登入｜保存六張牌紀錄 →</button>'}</div><div class="finish-actions v285-actions"><button type="button" class="v285-new" data-new-reading>開始另一個全新問題 ↗</button></div>`;
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }else{
@@ -4197,7 +4246,7 @@ ${state.advancedCards.map(keywordsOf).join('\n')}
       firstSpread:state.question.spread?.positions.join('／')||'',
       secondSpread:six?(state.question.advancedSpread?.positions.join('／')||''):'',
       followupMode:six?(state.followChoice==='related'?'related':'same'):'',followupQuestion:six?(state.followChoice==='related'?state.followText:state.question.text):'',
-      format:six?'六張整合':selectedPromptFormat,style:PROMPT_STYLES[selectedPromptStyle]?.name||'溫和陪伴',
+      format:six?`六張整合-${selectedSixPromptFormat}`:selectedPromptFormat,style:PROMPT_STYLES[selectedPromptStyle]?.name||'溫和陪伴',
       cards:[...state.current,...(six?state.advancedCards:[])].map((c,i)=>({name:c.name,position:c.position||`第${i+1}張`,reversed:!!c.reversed})),
       prompt3:state.firstPromptSnapshot||buildFirstAIPrompt(),prompt6:six?prompt:''};
   }
@@ -4282,11 +4331,11 @@ ${RETURN_GUIDANCE_3}`;
   function refreshAIPromptSelection(){
     const panel=els.analysis.querySelector('.tarot-ai-entry');if(!panel)return;
     panel.querySelectorAll('[data-prompt-format]').forEach(btn=>{
-      const active=btn.dataset.promptFormat===selectedPromptFormat;
+      const active=btn.dataset.promptFormat===(state.stage3x3==='complete'?selectedSixPromptFormat:selectedPromptFormat);
       btn.classList.toggle('is-selected',active);btn.setAttribute('aria-pressed',String(active));
     });
     const styleSel=panel.querySelector('[data-prompt-style]');if(styleSel)styleSel.value=selectedPromptStyle;
-    const formatHint=panel.querySelector('[data-format-hint]');if(formatHint)formatHint.textContent=PROMPT_FORMATS[selectedPromptFormat].hint;
+    const formatHint=panel.querySelector('[data-format-hint]');if(formatHint)formatHint.textContent=state.stage3x3==='complete'?SIX_PROMPT_FORMATS[selectedSixPromptFormat].hint:PROMPT_FORMATS[selectedPromptFormat].hint;
     const styleHint=panel.querySelector('[data-style-hint]');if(styleHint)styleHint.textContent=PROMPT_STYLES[selectedPromptStyle].hint;
     const preview=panel.querySelector('[data-ai-prompt-content]');if(preview)preview.textContent=buildAIPrompt();
     const copyBtn=panel.querySelector('[data-ai-prompt-copy]');if(copyBtn)copyBtn.textContent='獲得並複製提示詞';
@@ -4512,11 +4561,13 @@ ${RETURN_GUIDANCE_3}`;
     const prompt=buildAIPrompt();
     const providers=[['ChatGPT','https://chatgpt.com/'],['Gemini','https://gemini.google.com/'],['Claude','https://claude.ai/'],['DeepSeek','https://chat.deepseek.com/']];
     const six=state.stage3x3==='complete';
-    const formatButtons=Object.entries(PROMPT_FORMATS).map(([key,val])=>`<button type="button" class="tarot-prompt-format${key===selectedPromptFormat?' is-selected':''}" data-prompt-format="${key}" aria-pressed="${key===selectedPromptFormat}" aria-label="解讀格式 ${key}：${esc(val.name)}"><b>${key}｜${esc(val.name)}</b><small>${esc(val.short)}</small></button>`).join('');
+    const activeFormats=six?SIX_PROMPT_FORMATS:PROMPT_FORMATS;
+    const activeFormatKey=six?selectedSixPromptFormat:selectedPromptFormat;
+    const formatButtons=Object.entries(activeFormats).map(([key,val])=>`<button type="button" class="tarot-prompt-format${key===activeFormatKey?' is-selected':''}" data-prompt-format="${key}" aria-pressed="${key===activeFormatKey}" aria-label="解讀格式 ${key}：${esc(val.name)}"><b>${key}｜${esc(val.name)}</b><small>${esc(val.short)}</small></button>`).join('');
     const styleOptions=Object.entries(PROMPT_STYLES).map(([key,val])=>`<option value="${key}"${key===selectedPromptStyle?' selected':''}>${esc(val.name)}${key==='warm'?'（預設）':''}</option>`).join('');
-    els.analysis.innerHTML=`<section class="tarot-ai-entry"><div class="analysis-kicker">${six?'FREE · SIX CARDS · FULL AI PROMPT':'FREE · THREE CARDS · AI PROMPT'}</div><h3>${six?'六張牌完成｜完整整合解讀提示詞':'三張牌已完成｜選擇你的 AI 解讀方式'}</h3><p>${six?'兩組牌各三張，已經整合為一份完全獨立、可交給任何 AI 的六張牌解讀提示詞。無需貼上第一次 AI 回答，可依喜好的老師風格調整語氣。':'三張牌不變，你可以切換解讀格式與老師風格，產生不同的專屬提示詞，再交給自己選擇的 AI 深入解讀。'}</p>
-      <div class="tarot-prompt-choices">${six?'<p class="tarot-prompt-hint"><strong>專屬六張牌深度整合格式</strong>｜約 4,500～5,500 中文字，交叉解讀前後兩組牌，最終完整結論放最後。</p>':`<div class="tarot-prompt-label">① 解讀格式 <span>選一種報告架構</span></div><div class="tarot-prompt-format-grid" role="group" aria-label="選擇 AI 解讀格式">${formatButtons}</div><p class="tarot-prompt-hint" data-format-hint>${esc(PROMPT_FORMATS[selectedPromptFormat].hint)}</p>`}
-      <label class="tarot-prompt-label" for="tarotPromptStyle">${six?'老師風格':'② 老師風格'} <span>每次只選一種</span></label><select id="tarotPromptStyle" class="tarot-prompt-style" data-prompt-style aria-label="選擇 AI 解讀風格">${styleOptions}</select><p class="tarot-prompt-hint" data-style-hint>${esc(PROMPT_STYLES[selectedPromptStyle].hint)}</p></div>
+    els.analysis.innerHTML=`<section class="tarot-ai-entry"><div class="analysis-kicker">${six?'FREE · SIX CARDS · FULL AI PROMPT':'FREE · THREE CARDS · AI PROMPT'}</div><h3>${six?'六張牌完成｜完整整合解讀提示詞':'三張牌已完成｜選擇你的 AI 解讀方式'}</h3><p>${six?'兩組牌各三張，已經整合為一份完全獨立、可交給任何 AI 的六張牌解讀提示詞。無需貼上第一次 AI 回答，可自行選擇解讀格式與老師風格。':'三張牌不變，你可以切換解讀格式與老師風格，產生不同的專屬提示詞，再交給自己選擇的 AI 深入解讀。'}</p>
+      <div class="tarot-prompt-choices"><div class="tarot-prompt-label">① 解讀格式 <span>選一種報告架構</span></div><div class="tarot-prompt-format-grid" role="group" aria-label="選擇 AI 解讀格式">${formatButtons}</div><p class="tarot-prompt-hint" data-format-hint>${esc(activeFormats[activeFormatKey].hint)}</p>${six?'<p class="tarot-prompt-hint v288-six-length">六張牌專用完整報告｜約 4,500～5,500 中文字，兩組交叉整合，結論放最後。</p>':''}
+      <label class="tarot-prompt-label" for="tarotPromptStyle">② 老師風格 <span>每次只選一種</span></label><select id="tarotPromptStyle" class="tarot-prompt-style" data-prompt-style aria-label="選擇 AI 解讀風格">${styleOptions}</select><p class="tarot-prompt-hint" data-style-hint>${esc(PROMPT_STYLES[selectedPromptStyle].hint)}</p></div>
       <div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><button type="button" class="tarot-prompt-download" data-ai-prompt-txt>↓ 下載提示詞 TXT</button></div>
       <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">選好格式與風格後，可複製或下載同一份完整提示詞。</p><div class="tarot-record-invite"><b>✦ 保存這次的塔羅占卜</b><p>免費登入會員即可保存當時的問題、${six?'六張牌及三張／六張兩份':'三張牌與'}原版 AI 提示詞。未來可在專屬紀錄頁再次複製、下載，並設定三個月後回顧。</p><div class="tarot-record-invite-actions"><button type="button" data-member-login>免費登入保存</button><a href="tarot-records.html">我的塔羅占卜紀錄 ↗</a></div><p data-record-status class="tarot-record-status" role="status" aria-live="polite">完成複製或 TXT 下載後，將準備保存本次紀錄。</p></div>
       <details><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt)}</pre></details><h4 style="font-size:.87rem;margin:14px 0 2px">取得提示詞後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer" data-ai-provider-link="${name}">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">${six?'各平台均為外部服務，可直接貼上六張牌完整提示詞，不必提供第一次 AI 的對話紀錄。':'各平台均為外部服務，使用者自行貼上提示詞；切換解讀格式或風格不需要重新抽牌。'}</p></section>`;
@@ -4596,7 +4647,7 @@ ${RETURN_GUIDANCE_3}`;
     const batch=e.target.closest('[data-download-batch]');if(batch){downloadSameCards26(batch);return;}
     const sameCase=e.target.closest('[data-run-fixed-case]');if(sameCase){runFixedCase20(sameCase);return;}
     const promptFormat=e.target.closest('[data-prompt-format]');
-    if(promptFormat&&PROMPT_FORMATS[promptFormat.dataset.promptFormat]){selectedPromptFormat=promptFormat.dataset.promptFormat;refreshAIPromptSelection();return;}
+    if(promptFormat){const key=promptFormat.dataset.promptFormat;if(state.stage3x3==='complete'&&SIX_PROMPT_FORMATS[key]){selectedSixPromptFormat=key;refreshAIPromptSelection();persist3x3();return;}if(state.stage3x3!=='complete'&&PROMPT_FORMATS[key]){selectedPromptFormat=key;refreshAIPromptSelection();persist3x3();return;}}
     const promptCopy=e.target.closest('[data-ai-prompt-copy]');if(promptCopy){copyAIPrompt(promptCopy);return;}
     const promptTxt=e.target.closest('[data-ai-prompt-txt]');if(promptTxt){downloadAIPrompt();return;}
     const b=e.target.closest('[data-copy-ai-prompt]');if(b){copyAIPrompt(b);return;}
