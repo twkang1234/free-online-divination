@@ -1977,6 +1977,38 @@ html[data-theme="light"] .question-custom-drawer{background:#fff;border-color:rg
 html[data-theme="light"] .question-custom-drawer>summary{color:#59395b}
 html[data-theme="light"] .question-custom-drawer>summary small{color:#756578}
 @media(max-width:620px){.question-custom-drawer>summary{align-items:flex-start;flex-direction:column;gap:2px}.question-custom-drawer>summary small{text-align:left}.question-custom-drawer>summary::after{position:absolute;right:20px}}
+/* V28.7 · next-step guidance: 4 AI providers light up from left to right,
+   then the second-stage button softly draws attention. */
+@keyframes v287-ai-chase {
+  0%,24%,100% { border-color:rgba(158,130,220,.3);background:rgba(158,130,220,.07);box-shadow:0 0 0 rgba(211,131,238,0);transform:translateY(0); }
+  9%,15% { border-color:rgba(247,166,241,.93);background:rgba(208,139,235,.26);box-shadow:0 0 17px rgba(211,131,238,.34),inset 0 0 12px rgba(211,131,238,.09);transform:translateY(-1px); }
+}
+@keyframes v287-step-pulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(213,124,229,.04);filter:brightness(1); }
+  50% { box-shadow:0 0 0 4px rgba(214,136,230,.13),0 0 24px rgba(207,129,229,.30);filter:brightness(1.08); }
+}
+@keyframes v287-heading-glow {
+  0%,100% {text-shadow:0 0 0 rgba(231,170,236,0);opacity:1}
+  50% {text-shadow:0 0 18px rgba(246,171,245,.58);opacity:.88}
+}
+.v287-await-ai .ai-provider-grid a{animation:v287-ai-chase 6s ease-in-out infinite;will-change:box-shadow}
+.v287-await-ai .ai-provider-grid a:nth-child(1){animation-delay:0s}
+.v287-await-ai .ai-provider-grid a:nth-child(2){animation-delay:1.5s}
+.v287-await-ai .ai-provider-grid a:nth-child(3){animation-delay:3s}
+.v287-await-ai .ai-provider-grid a:nth-child(4){animation-delay:4.5s}
+.v287-await-ai .ai-provider-grid a:focus-visible,
+.v287-await-ai .ai-provider-grid a:hover{animation-play-state:paused;border-color:#eaa3df;outline-offset:3px}
+.reading-finish.v287-await-ai .v285-journey-title,
+.reading-finish.v287-await-return .v285-journey-title{animation:v287-heading-glow 3.4s ease-in-out infinite}
+.reading-finish.v287-await-return .v285-continue{animation:v287-step-pulse 2.8s ease-in-out infinite}
+html[data-theme="light"] .v287-await-ai .ai-provider-grid a{animation-name:v287-ai-chase}
+@media(prefers-reduced-motion:reduce){
+  .v287-await-ai .ai-provider-grid a,.reading-finish.v287-await-ai .v285-journey-title,
+  .reading-finish.v287-await-return .v285-journey-title,
+  .reading-finish.v287-await-return .v285-continue{animation:none!important;will-change:auto}
+  .v287-await-ai .ai-provider-grid a{border-color:#bc81ce;background:rgba(210,143,226,.13)}
+  .reading-finish.v287-await-return .v285-continue{outline:2px solid #c88fdf;outline-offset:3px}
+}
 </style>
 <style>
 .ab-paid-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
@@ -3554,6 +3586,7 @@ html[data-theme="light"] .v285-stage-form textarea{background:#fff;color:#35243e
 
     clearRitualTimers();
     state.drawMode=mode;
+    if(state.drawPhase!=='b')state.firstDrawMode=mode; // only first round chooses the method
     state.ritualSelected=0;
     ritualStopCount=0;
     ritualStopPicked=[];
@@ -3915,7 +3948,7 @@ html[data-theme="light"] .v285-stage-form textarea{background:#fff;color:#35243e
     const q=state.question,startBtn=$('startReading'),old=startBtn?.textContent;
     try{
       if(startBtn){startBtn.disabled=true;startBtn.textContent='正在準備抽牌方式…';}
-      document.getElementById('tarotSixExtraCards')?.remove();clear3x3();state.stage3x3='first';state.firstPromptSnapshot='';state.sixPromptSnapshot='';state.followFormOpen=false;state.followChoice='same';state.followText='';state.advanceSpreadKey='';state.archiveRecordId='';state.readingId='';state.advancedCards=[];state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();
+      document.getElementById('tarotSixExtraCards')?.remove();clear3x3();state.stage3x3='first';state.firstPromptSnapshot='';state.sixPromptSnapshot='';state.followFormOpen=false;state.followChoice='same';state.followText='';state.advanceSpreadKey='';state.archiveRecordId='';state.readingId='';state.advancedCards=[];state.firstDrawMode='';state.aiGuidanceStage='idle';state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();
       state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;
       state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.singleReadingHTML='';state.followupOptions=[];
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
@@ -4000,6 +4033,7 @@ html[data-theme="light"] .v285-stage-form textarea{background:#fff;color:#35243e
       scenario:state.scenario,question:state.question,spreadChoice:state.spreadChoice,
       firstCards:state.current,secondCards:state.advancedCards||[],
       firstPromptSnapshot:state.firstPromptSnapshot||'',sixPromptSnapshot:state.sixPromptSnapshot||'',
+      firstDrawMode:state.firstDrawMode||'',aiGuidanceStage:state.aiGuidanceStage||'idle',
       stage:state.stage3x3==='complete'?'complete':'first',recordId:state.archiveRecordId||'',
       selectedPromptFormat,selectedPromptStyle,followChoice:state.followChoice||'same',
       followText:state.followText||'',advanceSpreadKey:state.advanceSpreadKey||''});
@@ -4075,6 +4109,8 @@ ${state.advancedCards.map(keywordsOf).join('\n')}
     state.current=saved.firstCards;state.revealed=new Set([0,1,2]);state.advancedCards=saved.secondCards||[];
     state.stage3x3=saved.stage==='complete'&&state.advancedCards.length===3?'complete':'first';
     state.firstPromptSnapshot=saved.firstPromptSnapshot||'';state.sixPromptSnapshot=saved.sixPromptSnapshot||'';
+    state.firstDrawMode=['fan','scatter','flow','study','stop','physical'].includes(saved.firstDrawMode)?saved.firstDrawMode:'';
+    state.aiGuidanceStage=['choose-ai','return'].includes(saved.aiGuidanceStage)?saved.aiGuidanceStage:'idle';
     state.followChoice=saved.followChoice||'same';state.followText=saved.followText||'';
     state.advanceSpreadKey=saved.advanceSpreadKey||'';state.archiveRecordId=saved.recordId||'';
     if(state.advanceSpreadKey&&SPREAD_OPTIONS[state.advanceSpreadKey])state.question.advancedSpread={...SPREAD_OPTIONS[state.advanceSpreadKey]};
@@ -4119,14 +4155,14 @@ ${state.advancedCards.map(keywordsOf).join('\n')}
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }else{
-      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc">請先複製或下載上方的提示詞，前往 ChatGPT、Gemini、Claude 或 DeepSeek 完成第一次三張牌解讀。</p><p class="v285-journey-desc"><strong class="v285-journey-em">解讀完成後，記得回到這個頁面，繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，合併產生完整六張牌 AI 解讀提示詞。</small></div><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second>已完成 AI 解讀｜繼續第二階段 →</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
+      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">解讀完成後，記得回到這個頁面，繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，合併產生完整六張牌 AI 解讀提示詞。</small></div><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second>已完成 AI 解讀｜繼續第二階段 →</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }
     els.finish.hidden=false;
   }
   async function completeSixPromptDraw(){
     if(state.bDraft?.current?.length!==3)return;
     const duplicates=state.bDraft.current.some(c=>state.current.some(first=>first.id===c.id));
-    if(duplicates){alert('第二輪的牌不能和第一輪重複，請重新抽第二組三張牌。');showModeSelector();return;}
+    if(duplicates){alert('第二輪的牌不能和第一輪重複，請重新抽第二組三張牌。');state.bDraft={current:[]};state.drawMode=null;if(state.firstDrawMode)beginDrawMode(state.firstDrawMode);else showModeSelector();return;}
     state.advancedCards=state.bDraft.current.map(c=>({...c}));
     restoreDrawHosts();$('readingZone').hidden=false;
     state.stage3x3='complete';state.followFormOpen=false;
@@ -4144,10 +4180,12 @@ ${state.advancedCards.map(keywordsOf).join('\n')}
     }
     state.question.advancedSpread={...SPREAD_OPTIONS[spread]};
     state.stage3x3='first';state.drawPhase='b';state.bDraft={current:[]};state.ritualSelected=0;state.drawMode=null;
-    state.followFormOpen=false;state.advancedCards=[];
-    persist3x3();
-    showModeSelector();els.finish.hidden=true;
-    $('drawModeShell').scrollIntoView({behavior:'smooth',block:'start'});
+    state.followFormOpen=false;state.advancedCards=[];state.aiGuidanceStage='idle';
+    persist3x3();els.finish.hidden=true;
+    // For V28.7 games, skip the method menu and enter the exact same ritual immediately.
+    // For an older saved game that did not store the original method, offer the menu once.
+    if(state.firstDrawMode)beginDrawMode(state.firstDrawMode);
+    else{showModeSelector();$('drawModeShell').scrollIntoView({behavior:'smooth',block:'start'});}
   }
 
   const TAROT_RECORD_PENDING='divinationhub-tarot-pending-record-v1';
@@ -4227,6 +4265,20 @@ ${COMMON_PROMPT_RULES}
 ${RETURN_GUIDANCE_3}`;
   }
   function buildAIPrompt(){return state.stage3x3==='complete'?buildSixAIPrompt():buildFirstAIPrompt();}
+  // V28.7 · visual guide is kept with the active 3-card reading so it
+  // survives returning to the same browser tab. Does not imply AI completion.
+  function applyAIGuidance(){
+    const phase=state.stage3x3==='complete'?'idle':(state.aiGuidanceStage||'idle');
+    els.analysis.classList.toggle('v287-await-ai',phase==='choose-ai');
+    els.finish.classList.toggle('v287-await-ai',phase==='choose-ai');
+    els.analysis.classList.toggle('v287-await-return',phase==='return');
+    els.finish.classList.toggle('v287-await-return',phase==='return');
+  }
+  function setAIGuidanceStage(phase){
+    state.aiGuidanceStage=phase;
+    applyAIGuidance();
+    persist3x3();
+  }
   function refreshAIPromptSelection(){
     const panel=els.analysis.querySelector('.tarot-ai-entry');if(!panel)return;
     panel.querySelectorAll('[data-prompt-format]').forEach(btn=>{
@@ -4239,6 +4291,7 @@ ${RETURN_GUIDANCE_3}`;
     const preview=panel.querySelector('[data-ai-prompt-content]');if(preview)preview.textContent=buildAIPrompt();
     const copyBtn=panel.querySelector('[data-ai-prompt-copy]');if(copyBtn)copyBtn.textContent='獲得並複製提示詞';
     const status=panel.querySelector('[data-ai-copy-status]');if(status)status.textContent='已更新提示詞設定，請重新複製或下載。';
+    setAIGuidanceStage('idle');
   }
   async function copyAIPrompt(btn){
     const value=buildAIPrompt(),status=els.analysis.querySelector('[data-ai-copy-status]');
@@ -4254,6 +4307,7 @@ ${RETURN_GUIDANCE_3}`;
       if(btn)btn.textContent='✓ 提示詞已複製';
       if(status)status.textContent=state.stage3x3==='complete'?'六張牌完整提示詞已複製！請前往 AI 解讀，完成後可免費登入保存歷史紀錄。':'提示詞已複製！請先到 AI 完成解讀，記得回來繼續抽牌。';
       rememberIssuedPrompt(value);
+      if(state.stage3x3!=='complete')setAIGuidanceStage('choose-ai');
     }else{
       if(status)status.textContent='自動複製沒有成功，請展開完整提示詞，長按或選取文字後手動複製。';
       els.analysis.querySelector('.tarot-ai-entry details')?.setAttribute('open','');
@@ -4309,6 +4363,7 @@ ${RETURN_GUIDANCE_3}`;
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
     const status=els.analysis.querySelector('[data-ai-copy-status]');if(status)status.textContent=state.stage3x3==='complete'?'已下載六張牌整合提示詞 TXT，解讀完歡迎回來免費保存紀錄。':'已下載完整提示詞 TXT，記得完成 AI 解讀後回來繼續探索。';
     rememberIssuedPrompt(prompt);
+    if(state.stage3x3!=='complete')setAIGuidanceStage('choose-ai');
   }
   function buildAIPromptAccessHTML(full){
     if(!full){
@@ -4464,8 +4519,8 @@ ${RETURN_GUIDANCE_3}`;
       <label class="tarot-prompt-label" for="tarotPromptStyle">${six?'老師風格':'② 老師風格'} <span>每次只選一種</span></label><select id="tarotPromptStyle" class="tarot-prompt-style" data-prompt-style aria-label="選擇 AI 解讀風格">${styleOptions}</select><p class="tarot-prompt-hint" data-style-hint>${esc(PROMPT_STYLES[selectedPromptStyle].hint)}</p></div>
       <div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><button type="button" class="tarot-prompt-download" data-ai-prompt-txt>↓ 下載提示詞 TXT</button></div>
       <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">選好格式與風格後，可複製或下載同一份完整提示詞。</p><div class="tarot-record-invite"><b>✦ 保存這次的塔羅占卜</b><p>免費登入會員即可保存當時的問題、${six?'六張牌及三張／六張兩份':'三張牌與'}原版 AI 提示詞。未來可在專屬紀錄頁再次複製、下載，並設定三個月後回顧。</p><div class="tarot-record-invite-actions"><button type="button" data-member-login>免費登入保存</button><a href="tarot-records.html">我的塔羅占卜紀錄 ↗</a></div><p data-record-status class="tarot-record-status" role="status" aria-live="polite">完成複製或 TXT 下載後，將準備保存本次紀錄。</p></div>
-      <details><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt)}</pre></details><h4 style="font-size:.87rem;margin:14px 0 2px">取得提示詞後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">${six?'各平台均為外部服務，可直接貼上六張牌完整提示詞，不必提供第一次 AI 的對話紀錄。':'各平台均為外部服務，使用者自行貼上提示詞；切換解讀格式或風格不需要重新抽牌。'}</p></section>`;
-    renderFinish();if(state.stage3x3!=='complete')persist3x3();return true;
+      <details><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt)}</pre></details><h4 style="font-size:.87rem;margin:14px 0 2px">取得提示詞後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer" data-ai-provider-link="${name}">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">${six?'各平台均為外部服務，可直接貼上六張牌完整提示詞，不必提供第一次 AI 的對話紀錄。':'各平台均為外部服務，使用者自行貼上提示詞；切換解讀格式或風格不需要重新抽牌。'}</p></section>`;
+    renderFinish();applyAIGuidance();if(state.stage3x3!=='complete')persist3x3();return true;
   }
     function resetToTopic(){clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();showStep('topic');}
   
@@ -4533,6 +4588,11 @@ ${RETURN_GUIDANCE_3}`;
   });
   els.finish.addEventListener('input',e=>{if(e.target.matches('[data-follow-question]')){state.followText=e.target.value;persist3x3();}});
   document.addEventListener('click',e=>{
+    const chosenAI=e.target.closest('[data-ai-provider-link]');
+    if(chosenAI&&state.stage3x3!=='complete'&&state.aiGuidanceStage==='choose-ai'){
+      // The site knows only that a platform link was clicked, not whether an AI answered.
+      setAIGuidanceStage('return');
+    }
     const batch=e.target.closest('[data-download-batch]');if(batch){downloadSameCards26(batch);return;}
     const sameCase=e.target.closest('[data-run-fixed-case]');if(sameCase){runFixedCase20(sameCase);return;}
     const promptFormat=e.target.closest('[data-prompt-format]');
