@@ -885,6 +885,8 @@ body.overlay-open{overflow:hidden}
   .birth-date-direct .date-part span{font-size:.68rem}
 }
 
+.shensha-legend{margin-top:10px;color:#a9b3bf;font-size:12px;line-height:1.8}
+.shensha-inline .stage-shensha-name{font-size:14px;line-height:1.65;overflow-wrap:anywhere}
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -1800,6 +1802,218 @@ body.overlay-open{overflow:hidden}
     '天赦':['德曜／緩衝','依季節與特定日柱查得的傳統德曜，仍需配合整體命局。']
   };
 
+  const SHENSHA_DISPLAY={
+  "天乙貴人": [
+    "🟢",
+    "貴人／助力",
+    "命理中最強貴人，代表逢凶化吉、遇難呈祥，一生多遇貴人提攜。"
+  ],
+  "天德貴人": [
+    "🟢",
+    "貴人／緩衝",
+    "暗示早年或祖輩有庇蔭，能逢凶化吉，心地善良，有福報。"
+  ],
+  "月德貴人": [
+    "🟢",
+    "貴人／緩衝",
+    "代表心地慈悲、人緣佳，能化解災厄，一生較為平順。"
+  ],
+  "太極貴人": [
+    "🟢",
+    "貴人／思維",
+    "代表好學深思、領悟力強，對哲學、宗教、玄學有濃厚興趣，晚年有福。"
+  ],
+  "國印貴人": [
+    "🟢",
+    "責任／制度",
+    "代表責任心強、有管理才能，適合擔任公職或進入制度完善的企業。"
+  ],
+  "福星貴人": [
+    "🟢",
+    "福氣／安穩",
+    "代表一生福祿壽俱全，生活安逸，能得長輩或上司喜愛。"
+  ],
+  "文昌貴人": [
+    "🟢",
+    "智慧／文書",
+    "代表聰明好學、氣質文雅，有利於考試、升學、文書與學術發展。"
+  ],
+  "學堂貴人": [
+    "🟢",
+    "學習／求知",
+    "代表求知慾強，學習能力佳，適合從事教育、研究或學術工作。"
+  ],
+  "詞館貴人": [
+    "🟢",
+    "文采／表達",
+    "與文昌類似，代表文采飛揚，擅長寫作、演講或藝術創作。"
+  ],
+  "德秀貴人": [
+    "🟢",
+    "品德／氣質",
+    "代表品貌端正、氣質出眾，為人正直，有良好的品德與修養。"
+  ],
+  "驛馬": [
+    "🟢",
+    "變動／奔波",
+    "代表奔波、變動、遠行。吉則升遷、發財、出國；凶則勞碌、漂泊。"
+  ],
+  "祿神": [
+    "🟢",
+    "資源／穩定",
+    "代表有先天的福氣或資源，象徵財祿、食祿，一生衣食無憂。"
+  ],
+  "天醫": [
+    "🟢",
+    "健康／醫療",
+    "代表身體健康、有醫療緣分，適合從事醫療、保健或宗教相關行業。"
+  ],
+  "將星": [
+    "🟢",
+    "領導／權威",
+    "代表領導才能、威嚴與決斷力，適合擔任管理職務或創業。"
+  ],
+  "金輿": [
+    "🟢",
+    "財富／地位",
+    "代表財富與地位，象徵能擁有豪車、房產，生活富裕。"
+  ],
+  "華蓋": [
+    "🟢",
+    "藝術／孤高",
+    "代表孤高、藝術才華與宗教緣分，性格較為獨立，不喜隨波逐流。"
+  ],
+  "亡神": [
+    "🔴",
+    "變動／注意",
+    "提示可能有一些變動或需注意的事項，容易有意外、官非或破財，需謹慎行事。"
+  ],
+  "劫煞": [
+    "🔴",
+    "變動／破壞",
+    "代表突發的變動、破壞或掠奪，容易遇到意外、破財或小人暗算。"
+  ],
+  "災煞": [
+    "🔴",
+    "變動／壓力",
+    "提示可能面臨一些挑戰、壓力或災難，需注意身體健康與意外事故。"
+  ],
+  "天羅": [
+    "🔴",
+    "束縛／停滯",
+    "代表束縛、限制與停滯，容易感到有志難伸，或陷入困境。"
+  ],
+  "地網": [
+    "🔴",
+    "阻礙／糾纏",
+    "代表阻礙、糾纏與是非，容易遇到人際糾紛或法律問題。"
+  ],
+  "羊刃": [
+    "🔴",
+    "剛烈／衝動",
+    "代表極端的剛烈與衝動，容易受傷、破財或與人發生衝突，但若制化得宜則主大貴。"
+  ],
+  "飛刃": [
+    "🔴",
+    "意外／血光",
+    "與羊刃類似，但破壞力較隱蔽，容易有突發的血光之災或意外。"
+  ],
+  "孤辰": [
+    "🔴",
+    "孤獨／寂寞",
+    "代表孤獨、寂寞，性格較為孤僻，與親友緣分較薄。"
+  ],
+  "寡宿": [
+    "🔴",
+    "孤寡／冷清",
+    "代表孤寡、冷清，女性尤需注意婚姻感情，容易有孤獨感。"
+  ],
+  "陰差陽錯": [
+    "🔴",
+    "婚姻／波折",
+    "代表婚姻感情容易出現波折、誤會或遲婚，需多加溝通。"
+  ],
+  "紅艷煞": [
+    "🔴",
+    "多情／桃花",
+    "代表多情、浪漫，容易有桃花劫，需注意感情糾紛與人際關係。"
+  ],
+  "流霞": [
+    "🔴",
+    "血光／意外",
+    "代表血光之災，女性需注意生產安全，男性需注意意外傷害。"
+  ],
+  "元辰": [
+    "🔴",
+    "耗損／阻礙",
+    "代表耗損、阻礙與不順，容易遇到小人、破財或健康問題。"
+  ],
+  "披麻": [
+    "🔴",
+    "孝服／悲傷",
+    "代表孝服、悲傷，容易遇到親友離世或家中變故。"
+  ],
+  "喪門": [
+    "🔴",
+    "哀傷／低落",
+    "代表哀傷、哭泣，容易遇到不幸之事或情緒低落。"
+  ],
+  "桃花": [
+    "🟡",
+    "人緣／吸引",
+    "又稱咸池，代表異性緣佳、人際關係活躍，但需防範爛桃花或感情糾紛。"
+  ],
+  "紅鸞": [
+    "🟡",
+    "喜慶／婚姻",
+    "代表喜慶、婚姻與桃花，主有結婚、訂婚或添丁之喜。"
+  ],
+  "天喜": [
+    "🟡",
+    "歡樂／喜慶",
+    "代表歡樂、喜慶，與紅鸞類似，主有喜事臨門，心情愉悅。"
+  ],
+  "天姚": [
+    "🟡",
+    "風流／多情",
+    "代表風流、多情，異性緣極佳，但也容易陷入感情糾葛。"
+  ],
+  "天刑": [
+    "🟡",
+    "刑罰／紀律",
+    "代表刑罰、約束與紀律，適合從事法律、醫療或軍警工作。"
+  ],
+  "天哭": [
+    "🟡",
+    "悲傷／憂鬱",
+    "代表悲傷、憂鬱，容易情緒低落，需注意心理健康。"
+  ],
+  "天虛": [
+    "🟡",
+    "虛弱／空虛",
+    "代表虛弱、空虛，容易感到疲憊或無力，需注意身體調養。"
+  ],
+  "孤鸞煞": [
+    "🟡",
+    "婚姻／孤獨",
+    "代表婚姻不順、感情孤獨，女性尤需注意，容易與伴侶分離。"
+  ],
+  "魁罡": [
+    "🟡",
+    "剛毅／原則",
+    "代表個性剛毅、原則性強，有決斷與承擔能力；也需留意過於強硬，影響溝通與人際關係。"
+  ],
+  "天赦": [
+    "🟢",
+    "轉圜／解厄",
+    "代表化解困境、修補關係與重新開始的機會，有利於和解、改過與走出低潮。"
+  ]
+};
+  function shenshaDisplay(hit){
+    const [icon,category,meaning]=SHENSHA_DISPLAY[hit.name]||["🟡",hit.category,hit.meaning];
+    return {title:icon+" "+hit.name+"（"+category+"）",category,meaning};
+  }
+
   function computeShensha(data){
     const ps=data.pillars||[]; if(ps.length<4)return[];
     const posName={year:'年柱',month:'月柱',day:'日柱',time:'時柱'};
@@ -1873,9 +2087,10 @@ body.overlay-open{overflow:hidden}
   }
 
   function inlineShenshaCard(hit,data){
+    const display=shenshaDisplay(hit);
     const m=shenshaDetailModel(hit,data);
     const rows=[['傳統意象',m.image],['白話意思',m.meaning],['在這張命盤中的展現',m.chart],['較能發揮的優勢',m.good],['容易出現的盲點',m.blind],['生活中可能像這樣',m.scene]];
-    return '<details class="stage-shensha-item shensha-inline" data-shensha-name="'+esc(hit.name)+'"><summary><span class="stage-shensha-item-head"><span class="stage-shensha-name">'+esc(hit.name)+'</span><span class="stage-shensha-category">'+esc(hit.category)+'</span></span><span class="stage-shensha-meaning">'+esc(hit.meaning)+'</span><span class="shensha-inline-hint"><span class="when-closed">＋ 點此看詳細解釋</span><span class="when-open">－ 點此收起解釋</span></span></summary><div class="shensha-inline-body"><p class="shensha-inline-tone">傳統傾向：'+esc(m.tone)+'｜'+esc(m.positions.join('、'))+'</p>'+rows.map(([title,text])=>'<p><b>'+esc(title)+'</b>'+esc(text)+'</p>').join('')+'<p class="shensha-inline-basis">查表依據：'+esc(m.basis.join('；'))+'</p><button type="button" class="shensha-inline-close">收起'+esc(hit.name)+'解釋 ↑</button></div></details>';
+    return '<details class="stage-shensha-item shensha-inline" data-shensha-name="'+esc(hit.name)+'"><summary><span class="stage-shensha-item-head"><span class="stage-shensha-name">'+esc(display.title)+'</span></span><span class="stage-shensha-meaning">'+esc(display.meaning)+'</span><span class="shensha-inline-hint"><span class="when-closed">＋ 點此看詳細解釋</span><span class="when-open">－ 點此收起解釋</span></span></summary><div class="shensha-inline-body"><p class="shensha-inline-tone">傳統傾向：'+esc(m.tone)+'｜'+esc(m.positions.join('、'))+'</p>'+rows.map(([title,text])=>'<p><b>'+esc(title)+'</b>'+esc(text)+'</p>').join('')+'<p class="shensha-inline-basis">查表依據：'+esc(m.basis.join('；'))+'</p><button type="button" class="shensha-inline-close">收起'+esc(hit.name)+'解釋 ↑</button></div></details>';
   }
   function bindInlineShensha(){
     document.querySelectorAll('#shenshaPillars .shensha-inline').forEach(card=>{
@@ -1905,6 +2120,8 @@ body.overlay-open{overflow:hidden}
       ? `本命辨識到 <b>${hits.length}</b> 種常用神煞。以下依 <b>年柱／月柱／日柱／時柱</b> 整理；柱位主要用來看它落在哪個人生領域，<b>不是神煞的有效期限</b>。${peakText?`目前神煞在 <b>${peakText}</b> 較集中（各 ${maxCount} 項）。`:''}${repeated.length?`另有 <b>${repeated.length}</b> 種神煞跨兩柱以上重複出現。`:''}`
       : '依本站採用的常用查表規則，本命目前未辨識到明顯神煞；這不影響八字主體判讀。';
 
+    $('shenshaHeadline').innerHTML += '<div class="shensha-legend">🟢 吉神貴人：助力與資源　🔴 凶煞警示：壓力與提醒　🟡 中性／特殊：性格、人際與桃花</div>';
+
     $('shenshaPillars').innerHTML=pillarMeta.map(([name,stage,domain,key],i)=>{
       const p=data.pillars?.[i],arr=byPillar[name]||[];
       const items=arr.length
@@ -1925,8 +2142,8 @@ body.overlay-open{overflow:hidden}
     $('shenshaGrid') && ($('shenshaGrid').innerHTML=hits.length
       ? hits.map(x=>`<article class="shensha-card">
           <small><span>${esc(x.category)}</span><span>${x.positions.length} 柱</span></small>
-          <h4>${esc(x.name)}</h4>
-          <p>${esc(x.meaning)}</p>
+          <h4>${esc(shenshaDisplay(x).title)}</h4>
+          <p>${esc(shenshaDisplay(x).meaning)}</p>
           <em>${esc(x.positions.join('、'))} · ${esc(x.basis[0]||'常用查法')}</em>
         </article>`).join('')
       : '<div class="shensha-empty">目前未辨識到常用神煞；請以四柱、五行、十神與干支互動為主要判讀基礎。</div>');
