@@ -2101,6 +2101,25 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
 @media(prefers-reduced-motion:reduce){.reading-finish .v288-member-login{animation:none;outline:2px solid #bc80cf;outline-offset:2px}}
 @media(max-width:580px){.v288-member-cta{padding:14px}.v288-member-login{font-size:.82rem}}
 
+/* V28.10｜顯示與 TXT 共用提示詞版本；登入後隱藏整個引導登入區塊。 */
+.v2810-prompt-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.v2810-prompt-version{display:inline-flex;align-items:center;white-space:nowrap;border:1px solid rgba(217,162,230,.35);border-radius:999px;padding:4px 10px;font-size:.69rem;font-weight:700;color:#e9c7f2;background:rgba(194,127,218,.09);line-height:1.4;vertical-align:middle}
+html[data-theme="light"] .v2810-prompt-version{color:#653c75;border-color:#d5b4df;background:#f8ebfb}
+html.v2810-member-signed-in .tarot-record-invite,
+html.v2810-member-signed-in .v288-member-cta{display:none!important}
+/* Only AFTER completing all six cards is starting a new question a primary action. */
+.finish-actions.v285-actions button.v285-new.v2810-new-main{
+  box-sizing:border-box;display:block;align-self:stretch;width:100%;min-height:48px;
+  border:1px solid rgba(225,166,238,.55)!important;border-radius:12px;
+  background:linear-gradient(110deg,rgba(173,102,184,.22),rgba(139,101,211,.20))!important;
+  color:#f5dff8!important;opacity:1!important;font-size:.9rem!important;font-weight:800!important;
+  padding:11px 18px!important;text-decoration:none!important;cursor:pointer;
+}
+.finish-actions.v285-actions button.v285-new.v2810-new-main:hover{filter:brightness(1.17);border-color:rgba(247,195,250,.9)!important}
+.finish-actions.v285-actions button.v285-new.v2810-new-main:focus-visible{outline:2px solid #f4b9ef;outline-offset:3px}
+html[data-theme="light"] .finish-actions.v285-actions button.v285-new.v2810-new-main{background:#f3e3f9!important;color:#5b306a!important;border-color:#cfa7dd!important}
+@media(max-width:580px){.v2810-prompt-title{gap:8px}.v2810-prompt-version{font-size:.65rem}}
+
 </style></head>
 <body>
   <header class="page-topbar">
@@ -2154,7 +2173,7 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
         <h2 class="tarot-stage-title">引導式塔羅占卜</h2>
         <p class="tarot-stage-desc">選題目、挑選三張牌陣、用喜歡的方式抽牌；複製提示詞後，再由你選擇的 AI 進行完整解讀。</p>
       </div>
-      <div class="tarot-engine-chip"><i></i><span>AI 提示詞版 V28.5 · 78 CARDS · 3＋3 SPREAD</span></div>
+      <div class="tarot-engine-chip"><i></i><span>AI 提示詞版 V28.10 · 78 CARDS · 3＋3 SPREAD</span></div>
     </header>
 
     <section class="guided-shell" aria-label="引導式塔羅占卜">
@@ -2204,7 +2223,7 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
       </div>
 
       <div class="reading-workspace" id="readingWorkspace" hidden>
-        <div class="reading-topline"><div><span id="readingPath">—</span><h3 id="readingQuestion">—</h3></div><div class="reader-seal">✦ AI 提示詞 · V28.6</div></div>
+        <div class="reading-topline"><div><span id="readingPath">—</span><h3 id="readingQuestion">—</h3></div><div class="reader-seal">✦ AI 提示詞 · V28.10</div></div>
         <div class="spread-info guided-spread-info"><div class="spread-symbol">✺</div><div><strong id="spreadName">—</strong><p id="spreadDesc">—</p></div><div class="deck-count"><span id="deckCount">78</span> CARDS</div></div>
 
         <section class="draw-mode-shell" id="drawModeShell">
@@ -3162,6 +3181,14 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
     }
     if($('tarotPaidQuotaMore'))$('tarotPaidQuotaMore').textContent=state.current?.length?'查看 B 抽牌':'了解進階方案';
   }
+  function syncMemberSaveInvites(){
+    const logged=isLogged();
+    document.documentElement.classList.toggle('v2810-member-signed-in',logged);
+    document.querySelectorAll('.tarot-record-invite,.v288-member-cta').forEach(panel=>{
+      panel.hidden=logged;
+      panel.setAttribute('aria-hidden',String(logged));
+    });
+  }
   function updateMemberUI(){
     const p=authProfile(),btn=$('tarotMemberButton'),txt=$('tarotMemberButtonText');if(!btn||!txt)return;
     btn.classList.toggle('logged',!!p);
@@ -3177,6 +3204,7 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
     const title=$('tarotMemberTitle'),intro=$('tarotMemberIntro');
     if(title)title.textContent=p?'免費會員':'免費登入';
     if(intro)intro.textContent=p?'已登入一念知機會員。完成抽牌並取得 AI 提示詞後，可自動保存到我的塔羅紀錄。':'抽牌和 AI 提示詞免費使用。登入會員可自動保存當次紀錄，日後重新取得原版提示詞並設定回顧提醒。';
+    syncMemberSaveInvites();
   }
   async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})}catch(_){}}
   function renderGoogleButton(){
@@ -3990,6 +4018,8 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
   
   // V28.3：解讀格式（報告架構）與老師風格（敘事口吻）分開選擇。
   // 注意：此處 A/B/C 為「AI 解讀格式」，不是 A/B/C 抽牌階段。
+  // V28.10：網站版本與實際 AI 提示詞內容版本獨立管理。
+  const TAROT_PROMPT_VERSIONS=Object.freeze({three:'V1.0',six:'V1.0'});
   const PROMPT_FORMATS={
     A:{name:'專業深度解讀',short:'舊版經典完整報告',hint:'逐張深入分析、三牌整合、多角度洞察、生活建議，最後才給結論。'},
     B:{name:'事件脈絡與發展推演',short:'聚焦演變與轉折',hint:'把三張牌串成事件脈絡，分析轉折與條件、可能走向及觀察訊號。'},
@@ -4049,7 +4079,7 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
 開場：揭示兩個牌陣提供的不同局勢線索與待判斷的轉折點，不急著預告結果。
 一、第一組三張牌的事件基礎：不依賴前次 AI 回答，按實際牌位逐張深入解讀原問題，說明各張牌呈現的條件、推力、阻力及可能的其他讀法；生活例子都要標為假設。
 二、第二組三張牌帶來的新訊號：逐張解讀第二階段問題及各自牌位，說出哪些事被補強、修正或呈現新的不確定性。
-三、兩組牌交叉推演事件脈絡：分段解釋問題的形成、持續條件、推進或停滯因素、可能轉折；把前後兩組當作不同觀察角度，不能把「你／對方／關係」硬編成時間順序。
+三、兩組牌交叉推演條件性脈絡：分段整理可能的形成背景、持續條件、推進或停滯因素與轉折；前後兩組是不同觀察角度，不等於事件發生的先後順序，不可把牌面象徵當成已被證實的事實或因果，也不能把「你／對方／關係」硬編成時間順序。
 四、至少三條條件性可能走向：比較維持現況、關鍵條件改善與阻力加重；每條寫明觸發條件、後果、仍不可確定的資訊，不捏造日期或機率。
 五、轉折訊號與現實核對：提出三到四項實際可觀察的徵兆，並解釋不同跡象代表什麼，避免用塔羅充當事實證據。
 六、面對局勢的準備：提出三個有優先順序的行動與備案，包含何時等待、何時推進及風險界線。
@@ -4058,7 +4088,7 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
 開場：說明真正需要作出的判斷與兩組牌陣各負責解開的問題，暫不公布最終答案。
 一、第一組三張牌：在沒有前次 AI 對話的情況下，逐張深入說明原始問題的核心、限制、盲點及可以利用的條件，生活例子須明確標為假設。
 二、第二組三張牌：逐張分析延續原題或新追問的關鍵線索，指出增加的機會、阻礙、需要核對的現實條件，尊重原牌位與正逆位。
-三、六張牌找出真正問題：交叉整合兩組訊息，區分表面現象、關鍵根源、自己可控制、他人或環境不可控制、兩組表面矛盾如何解釋，不要只是六張牌的摘要。
+三、六張牌辨識最值得檢視的可能卡點：交叉整合兩組訊息，區分表面現象、可能的深層原因、自己可控制及環境不可控制的部分，並說明兩組表面張力如何理解；不得把可能性說成已確認的唯一根源，也不要只是六張牌的摘要。
 四、比較兩至三條實際選擇：對每種選擇說明適用條件、可能利益、代價、風險及尚需驗證的事實，不能虛構人物或事件。
 五、具體行動路線：分為現在能做、接下來觀察、若出現警訊如何調整三層；每層有實際做法與成效檢查方式。
 六、三個自我核對問題：幫使用者以自身經驗驗證關鍵假設，分清牌面象徵與現實證據，不用占卜取代重要決策。
@@ -4138,7 +4168,10 @@ html[data-theme="light"] .reading-finish .v288-member-cta p{color:#695774}
     const style=PROMPT_STYLES[selectedPromptStyle]||PROMPT_STYLES.warm;
     const mode=state.followChoice==='related'?'相關延伸問題':'延續原問題';
     const followQuestion=state.followChoice==='related'?state.followText:state.question.text;
-    return `【角色設定】
+    return `【一念知機｜六張牌 AI 提示詞 ${TAROT_PROMPT_VERSIONS.six}】
+報告格式：${selectedSixPromptFormat}｜${SIX_PROMPT_FORMATS[selectedSixPromptFormat]?.name||SIX_PROMPT_FORMATS.A.name}
+
+【角色設定】
 請用繁體中文，扮演有多年經驗、解讀細膩、不武斷的真人塔羅老師。讀者是不懂塔羅的一般人，請以生活化白話解說。
 
 【老師風格｜${style.name}】
@@ -4233,13 +4266,14 @@ ${SIX_FORMAT_INSTRUCTIONS[selectedSixPromptFormat]||SIX_FORMAT_INSTRUCTIONS.A}
   function renderFinish(){
     if(state.stage3x3==='complete'){
       const logged=isLogged()&&!isAdminTestActive();
-      els.finish.innerHTML=`<h4 class="v285-journey-title">本次 3＋3 六張牌已完成</h4><p class="v285-journey-desc">兩組不同牌陣已完成。請在上方選擇<strong>解讀格式及老師風格</strong>，複製或下載六張牌完整提示詞，再交給喜歡的 AI。這次占卜到此完整結束。</p><div class="v285-journey-progress">第一組：${esc(state.question.spread.name)}　＋　第二組：${esc(state.question.advancedSpread?.name||'進階牌陣')}<small>保留原本兩組牌，方便會員取回當時的提示詞及日後回顧。</small></div><div class="v288-member-cta"><strong>✦ 保存這次六張牌的占卜紀錄</strong><p>${logged?'你已登入會員。取得提示詞後會自動嘗試儲存，可至紀錄頁確認。':'免費登入後，可保存題目、六張牌及當時兩份原版提示詞，未來再次提取，並留下 50 字心得。'}</p>${logged?'<a class="v288-member-saved" href="tarot-records.html">我的塔羅占卜紀錄 ↗</a>':'<button type="button" class="v288-member-login" data-member-login>免費登入｜保存六張牌紀錄 →</button>'}</div><div class="finish-actions v285-actions"><button type="button" class="v285-new" data-new-reading>開始另一個全新問題 ↗</button></div>`;
+      els.finish.innerHTML=`<h4 class="v285-journey-title">本次 3＋3 六張牌已完成</h4><p class="v285-journey-desc">兩組不同牌陣已完成。請在上方選擇<strong>解讀格式及老師風格</strong>，複製或下載六張牌完整提示詞，再交給喜歡的 AI。這次占卜到此完整結束。</p><div class="v285-journey-progress">第一組：${esc(state.question.spread.name)}　＋　第二組：${esc(state.question.advancedSpread?.name||'進階牌陣')}<small>保留原本兩組牌，方便會員取回當時的提示詞及日後回顧。</small></div><div class="v288-member-cta"><strong>✦ 保存這次六張牌的占卜紀錄</strong><p>${logged?'你已登入會員。取得提示詞後會自動嘗試儲存，可至紀錄頁確認。':'免費登入後，可保存題目、六張牌及當時兩份原版提示詞，未來再次提取，並留下 50 字心得。'}</p>${logged?'<a class="v288-member-saved" href="tarot-records.html">我的塔羅占卜紀錄 ↗</a>':'<button type="button" class="v288-member-login" data-member-login>免費登入｜保存六張牌紀錄 →</button>'}</div><div class="finish-actions v285-actions"><button type="button" class="v285-new v2810-new-main" data-new-reading>開始另一個全新問題 →</button></div>`;
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }else{
       els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">解讀完成後，記得回到這個頁面，繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，合併產生完整六張牌 AI 解讀提示詞。</small></div><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second>已完成 AI 解讀｜繼續第二階段 →</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }
     els.finish.hidden=false;
+    syncMemberSaveInvites();
   }
   async function completeSixPromptDraw(){
     if(state.bDraft?.current?.length!==3)return;
@@ -4324,7 +4358,10 @@ ${SIX_FORMAT_INSTRUCTIONS[selectedSixPromptFormat]||SIX_FORMAT_INSTRUCTIONS.A}
       const orientation=c.reversed?'逆位':'正位',terms=AI_KEYWORDS[c.name]?.[orientation];
       return `${c.position||SPREAD_OPTIONS[state.spreadChoice]?.positions[i]||`第${i+1}張`}：${c.name}（${orientation}）｜關鍵字：${terms?terms.join('、'):'請依傳統塔羅牌義判讀'}`;
     }).join('\n');
-    return `【角色設定】
+    return `【一念知機｜三張牌 AI 提示詞 ${TAROT_PROMPT_VERSIONS.three}】
+報告格式：${selectedPromptFormat}｜${format.name}
+
+【角色設定】
 請用繁體中文，扮演有多年經驗、判讀細膩但不武斷的真人塔羅老師；讀者是不懂塔羅的一般人，不是學牌義的學生。
 
 【這次選擇的解讀風格｜${style.name}】
@@ -4598,13 +4635,13 @@ ${RETURN_GUIDANCE_3}`;
     const activeFormatKey=six?selectedSixPromptFormat:selectedPromptFormat;
     const formatButtons=Object.entries(activeFormats).map(([key,val])=>`<button type="button" class="tarot-prompt-format${key===activeFormatKey?' is-selected':''}" data-prompt-format="${key}" aria-pressed="${key===activeFormatKey}" aria-label="解讀格式 ${key}：${esc(val.name)}"><b>${key}｜${esc(val.name)}</b><small>${esc(val.short)}</small></button>`).join('');
     const styleOptions=Object.entries(PROMPT_STYLES).map(([key,val])=>`<option value="${key}"${key===selectedPromptStyle?' selected':''}>${esc(val.name)}${key==='warm'?'（預設）':''}</option>`).join('');
-    els.analysis.innerHTML=`<section class="tarot-ai-entry"><div class="analysis-kicker">${six?'FREE · SIX CARDS · FULL AI PROMPT':'FREE · THREE CARDS · AI PROMPT'}</div><h3>${six?'六張牌完成｜完整整合解讀提示詞':'三張牌已完成｜選擇你的 AI 解讀方式'}</h3><p>${six?'兩組牌各三張，已經整合為一份完全獨立、可交給任何 AI 的六張牌解讀提示詞。無需貼上第一次 AI 回答，可自行選擇解讀格式與老師風格。':'三張牌不變，你可以切換解讀格式與老師風格，產生不同的專屬提示詞，再交給自己選擇的 AI 深入解讀。'}</p>
+    els.analysis.innerHTML=`<section class="tarot-ai-entry"><div class="analysis-kicker">${six?'FREE · SIX CARDS · FULL AI PROMPT':'FREE · THREE CARDS · AI PROMPT'}</div><h3 class="v2810-prompt-title">${six?'六張牌完成｜完整整合解讀提示詞':'三張牌已完成｜選擇你的 AI 解讀方式'} <span class="v2810-prompt-version">提示詞 ${six?TAROT_PROMPT_VERSIONS.six:TAROT_PROMPT_VERSIONS.three}</span></h3><p>${six?'兩組牌各三張，已經整合為一份完全獨立、可交給任何 AI 的六張牌解讀提示詞。無需貼上第一次 AI 回答，可自行選擇解讀格式與老師風格。':'三張牌不變，你可以切換解讀格式與老師風格，產生不同的專屬提示詞，再交給自己選擇的 AI 深入解讀。'}</p>
       <div class="tarot-prompt-choices"><div class="tarot-prompt-label">① 解讀格式 <span>選一種報告架構</span></div><div class="tarot-prompt-format-grid" role="group" aria-label="選擇 AI 解讀格式">${formatButtons}</div><p class="tarot-prompt-hint" data-format-hint>${esc(activeFormats[activeFormatKey].hint)}</p>${six?'<p class="tarot-prompt-hint v288-six-length">六張牌專用完整報告｜約 4,500～5,500 中文字，兩組交叉整合，結論放最後。</p>':''}
       <label class="tarot-prompt-label" for="tarotPromptStyle">② 老師風格 <span>每次只選一種</span></label><select id="tarotPromptStyle" class="tarot-prompt-style" data-prompt-style aria-label="選擇 AI 解讀風格">${styleOptions}</select><p class="tarot-prompt-hint" data-style-hint>${esc(PROMPT_STYLES[selectedPromptStyle].hint)}</p></div>
       <div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><button type="button" class="tarot-prompt-download" data-ai-prompt-txt>↓ 下載提示詞 TXT</button></div>
       <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">選好格式與風格後，可複製或下載同一份完整提示詞。</p><div class="tarot-record-invite"><b>✦ 保存這次的塔羅占卜</b><p>免費登入會員即可保存當時的問題、${six?'六張牌及三張／六張兩份':'三張牌與'}原版 AI 提示詞。未來可在專屬紀錄頁再次複製、下載，並設定三個月後回顧。</p><div class="tarot-record-invite-actions"><button type="button" data-member-login>免費登入保存</button><a href="tarot-records.html">我的塔羅占卜紀錄 ↗</a></div><p data-record-status class="tarot-record-status" role="status" aria-live="polite">完成複製或 TXT 下載後，將準備保存本次紀錄。</p></div>
       <details><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt)}</pre></details><h4 style="font-size:.87rem;margin:14px 0 2px">取得提示詞後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer" data-ai-provider-link="${name}">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">${six?'各平台均為外部服務，可直接貼上六張牌完整提示詞，不必提供第一次 AI 的對話紀錄。':'各平台均為外部服務，使用者自行貼上提示詞；切換解讀格式或風格不需要重新抽牌。'}</p></section>`;
-    renderFinish();applyAIGuidance();if(state.stage3x3!=='complete')persist3x3();return true;
+    renderFinish();applyAIGuidance();syncMemberSaveInvites();if(state.stage3x3!=='complete')persist3x3();return true;
   }
     function resetToTopic(){clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();showStep('topic');}
   
