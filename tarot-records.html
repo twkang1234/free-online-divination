@@ -27,27 +27,27 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
 .recordhead-right{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
 .remove-record{border:1px solid transparent;background:transparent;color:#b7a4bc;border-radius:8px;padding:7px;line-height:1;font-size:1rem;min-width:36px;min-height:36px}
 .remove-record:hover,.remove-record:focus-visible{border-color:#b45e80;color:#ffc5d2;background:rgba(184,69,108,.13)}
-.note-preview{background:rgba(184,123,206,.085);border:1px solid rgba(174,132,193,.23);padding:9px 12px;border-radius:11px;margin-top:12px;overflow-wrap:anywhere}
-.note-preview-label{font-size:.72rem;color:#ddb5e6;display:flex;align-items:center;justify-content:space-between;gap:8px}
-.note-preview-value{font-size:.86rem;white-space:pre-wrap;margin-top:3px;color:var(--ink)}
-.note-add{background:transparent;border:1px dashed #665077;color:#c7add4;padding:8px 11px;border-radius:10px;margin-top:11px;font-size:.82rem}
+.record-main{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(275px,.88fr);align-items:start;gap:18px;margin-top:8px}
+.record-main:not(.has-note){display:block}
+.record-main-content{min-width:0}
+.record-main-content h3{margin:0 0 8px}
+.record-note{min-width:0;align-self:stretch;background:rgba(184,123,206,.105);border:1px solid rgba(191,142,215,.37);border-left:3px solid #ca8fdb;padding:14px 17px;border-radius:12px;overflow-wrap:anywhere}
+.record-note-label{font-size:.76rem;color:#e9bbeb;font-weight:700;margin-bottom:7px;display:flex;gap:7px;align-items:center}
+.record-note-value{font-size:.95rem;white-space:pre-wrap;line-height:1.75;color:var(--ink)}
 .note-edit{background:transparent;border:0;color:#d5abdf;font-size:.75rem;text-decoration:underline;text-underline-offset:3px;padding:2px 4px}
-.inline-note-editor{border:1px solid var(--line);background:rgba(11,7,20,.4);padding:12px;border-radius:10px;margin-top:10px}
-.inline-note-editor textarea{min-height:64px;resize:vertical}
-.inline-note-editor .actions{margin-top:7px}
 .reminder-card{margin-top:12px;font-size:.82rem;display:flex;flex-wrap:wrap;gap:7px 13px;align-items:center;color:#e1cfe9}
 .reminder-card .muted{font-size:.76rem}
 .reminder-card.is-due{color:#ffd59c}
 .record .actions{margin-top:12px}
 #googleLoginMount{margin:15px 0;min-height:42px}.status-space{min-height:22px}.timeline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-@media(max-width:700px){main{padding:22px 13px 65px}.sitebar{padding:12px 14px}.panel{padding:16px}.summary{grid-template-columns:1fr 1fr}.columns,.settings{grid-template-columns:1fr}.recordhead{align-items:flex-start}.record{padding:15px}.actions .btn{flex:1}.sitebar-links{gap:8px}}
+@media(max-width:700px){main{padding:22px 13px 65px}.sitebar{padding:12px 14px}.panel{padding:16px}.summary{grid-template-columns:1fr 1fr}.columns,.settings{grid-template-columns:1fr}.recordhead{align-items:flex-start}.record{padding:15px}.record-main.has-note{grid-template-columns:1fr;gap:12px}.record-note{padding:12px 14px}.actions .btn{flex:1}.sitebar-links{gap:8px}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <header class="sitebar"><a class="brand" href="tarot.html">✺ 一念知機・塔羅</a><nav class="sitebar-links"><a href="tarot.html" class="top-link">返回抽牌</a><button id="shareSiteButton" class="btn ghost" type="button" title="只分享網站，不包含占卜私人資料">分享好友</button><span id="accountName" class="small"></span><button class="btn ghost" type="button" id="logoutButton" hidden>登出</button></nav></header>
 <main>
-  <div class="eyebrow">MEMBER · TAROT ARCHIVE · V28.11</div>
+  <div class="eyebrow">MEMBER · TAROT ARCHIVE · V28.12</div>
   <h1>我的塔羅占卜紀錄</h1>
   <p class="lead">記住每次的問題與牌面，隨時取回當時真正產生的 AI 提示詞。你也可以留下 50 字心得，設定日後的回顧時間。</p>
   <section id="loginPanel" class="panel" hidden>
@@ -145,23 +145,6 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
     return {primary:dueIn<0?`🔔 已到期 ${-dueIn} 天`:dueIn===0?'🔔 今天該回顧了':dueIn<=7?`🔔 還有 ${dueIn} 天回顧`:`🔔 ${period}`,
       secondary:`${r.reminderDate.replaceAll('-','/')} ${dueIn>7?`｜剩餘 ${dueIn} 天`:''}`,due:dueIn<=0};
   }
-  function makeNoteEditor(record,row){
-    const editor=dom('div','inline-note-editor');editor.hidden=true;
-    const field=dom('textarea');field.value=record.note||'';field.maxLength=50;field.rows=2;field.placeholder='用幾句話記下這次特別的感受（最多 50 字）';field.setAttribute('aria-label','這次占卜心得');
-    const counter=dom('span','small',`${[...field.value].length}/50 字`);
-    field.addEventListener('input',()=>{if([...field.value].length>50)field.value=[...field.value].slice(0,50).join('');counter.textContent=`${[...field.value].length}/50 字`});
-    const footer=dom('div','actions');const status=dom('span','small');
-    const close=button('取消',()=>{editor.hidden=true;field.value=record.note||''},'ghost');
-    const save=button('儲存心得',async()=>{
-      save.disabled=true;close.disabled=true;status.textContent='正在儲存……';
-      try{
-        const data=await api('/member/records/'+record.id+'/settings',{note:field.value,reminderDate:record.reminderDate||null});
-        record.note=data.note;editor.hidden=true;renderList();message('這筆占卜的 50 字心得已保存。');
-      }catch(e){status.textContent=e.message}finally{save.disabled=false;close.disabled=false}
-    },'primary');
-    put(footer,save,close,counter,status);put(editor,field,footer);
-    return {editor,open(){editor.hidden=false;field.focus()}};
-  }
   async function markAsReviewed(record){
     try{
       const data=await api('/member/records/'+record.id+'/reviewed',{});
@@ -196,17 +179,24 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
       const remove=dom('button','remove-record','♲');remove.type='button';remove.textContent='🗑';remove.title='刪除這筆占卜';remove.setAttribute('aria-label',`刪除：${r.question}`);remove.addEventListener('click',()=>deleteRecord(r));
       put(right,dom('span','pill',r.stage===6?'已完成 6 張':'已完成 3 張'),remove);
       put(head,dom('span','small',formatDate(r.createdAt)),right);
-      put(row,head,dom('h3','',r.question),dom('div','small',`${r.topic||'自由提問'}｜${r.scenario||'自行提問'}`));
-      const {editor,open}=makeNoteEditor(r,row);
-      if(r.note){const box=dom('div','note-preview');const label=dom('div','note-preview-label');label.append(dom('span','','✎ 我的占卜心得'));label.append(button('修改',open,'note-edit'));put(box,label,dom('div','note-preview-value',r.note));row.append(box)}
-      else row.append(button('＋ 寫下這次占卜心得（最多 50 字）',open,'note-add'));
-      row.append(editor);
+      row.append(head);
+      const main=dom('div','record-main'+(String(r.note||'').trim()?' has-note':''));
+      const content=dom('div','record-main-content');
+      put(content,dom('h3','',r.question),dom('div','small',`${r.topic||'自由提問'}｜${r.scenario||'自行提問'}`));
       const reminder=reminderLabel(r);const info=dom('div','reminder-card'+(reminder.due?' is-due':''));
       info.append(dom('span','',reminder.primary),dom('span','muted',reminder.secondary));
       if(reminder.due)info.append(button('✓ 標記已回顧',()=>markAsReviewed(r),'note-edit'));
       info.append(button('調整提醒',()=>openRecord(r.id),'note-edit'));
-      row.append(info);
-      const actions=dom('div','actions');actions.append(button('查看牌面、提示詞與記事 ↗',()=>openRecord(r.id),'primary'));row.append(actions);root.append(row);
+      content.append(info);
+      const actions=dom('div','actions');actions.append(button('查看牌面、提示詞與記事 ↗',()=>openRecord(r.id),'primary'));content.append(actions);
+      main.append(content);
+      // 紀錄卡片只顯示心得；新增與修改一律在詳細紀錄頁進行。
+      if(String(r.note||'').trim()){
+        const box=dom('aside','record-note');box.setAttribute('aria-label','我的占卜心得');
+        put(box,dom('div','record-note-label','✎ 我的占卜心得'),dom('div','record-note-value',r.note));
+        main.append(box);
+      }
+      row.append(main);root.append(row);
     }
     $('pager').hidden=!more;
   }
