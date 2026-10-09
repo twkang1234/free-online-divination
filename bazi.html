@@ -887,6 +887,29 @@ body.overlay-open{overflow:hidden}
 
 .shensha-legend{margin-top:10px;color:#a9b3bf;font-size:12px;line-height:1.8}
 .shensha-inline .stage-shensha-name{font-size:14px;line-height:1.65;overflow-wrap:anywhere}
+
+/* 四柱與全局神煞綜合解析 */
+.shensha-pillar-synthesis{margin-top:18px;padding:15px 0 2px;border-top:1px solid color-mix(in srgb,var(--pillar-accent) 35%,transparent)}
+.shensha-pillar-synthesis h4{margin:0 0 9px;color:var(--pillar-accent);font-size:14px;line-height:1.5}
+.shensha-pillar-synthesis p{margin:0;color:#b5bdc8;font-size:13px;line-height:1.95;overflow-wrap:anywhere}
+.shensha-global-analysis{margin-top:18px;border:1px solid rgba(233,189,88,.24);border-radius:15px;background:linear-gradient(135deg,rgba(233,189,88,.045),rgba(117,220,228,.018));overflow:hidden}
+.shensha-global-analysis>summary{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:19px 21px;cursor:pointer;list-style:none;color:#ecd592;font-size:16px;font-weight:800}
+.shensha-global-analysis>summary::-webkit-details-marker{display:none}
+.shensha-global-analysis>summary:focus-visible{outline:2px solid #e9bd58;outline-offset:-4px;border-radius:12px}
+.shensha-global-analysis>summary small{display:block;margin-top:6px;color:#8b96a6;font-size:12px;font-weight:400;line-height:1.6}
+.shensha-global-toggle{flex-shrink:0;color:#b6a16a;font-size:12px;font-weight:500}
+.shensha-global-analysis:not([open]) .when-open,.shensha-global-analysis[open] .when-closed{display:none}
+.shensha-global-analysis[open]>summary{border-bottom:1px solid rgba(233,189,88,.14)}
+.shensha-global-body{padding:24px;max-width:1100px;margin:0 auto}
+.shensha-global-body h3{margin:0 0 13px;color:#f0e2ba;font-size:21px;line-height:1.6}
+.shensha-global-body p{margin:0;color:#b8c2cf;font-size:14px;line-height:2;overflow-wrap:anywhere}
+.shensha-global-body section{margin-top:24px}
+.shensha-global-body h4{margin:0 0 10px;color:#e0c781;font-size:16px;line-height:1.6}
+.shensha-global-advice{padding:18px 20px;border:1px solid rgba(233,189,88,.16);border-radius:12px;background:rgba(233,189,88,.035)}
+.shensha-global-body .shensha-global-note{margin-top:20px;color:#7b8798;font-size:12px;line-height:1.8}
+@media(max-width:760px){.shensha-global-analysis>summary{padding:16px;gap:10px;font-size:15px}.shensha-global-toggle{font-size:11px}.shensha-global-body{padding:18px 16px}.shensha-global-body h3{font-size:18px}.shensha-global-body p{font-size:13px}.shensha-global-advice{padding:14px}}
+@media(max-width:980px){.shensha-pillar-grid.integrated{grid-template-columns:repeat(2,minmax(0,1fr))}.shensha-pillar-grid.integrated .shensha-pillar:nth-child(odd){border-left:0}.shensha-pillar-grid.integrated .shensha-pillar:nth-child(n+3){border-top:1px solid rgba(255,255,255,.08)}}
+@media(max-width:600px){.shensha-pillar-grid.integrated{grid-template-columns:minmax(0,1fr)}.shensha-pillar-grid.integrated .shensha-pillar{border-left:0}.shensha-pillar-grid.integrated .shensha-pillar:nth-child(n+2){border-top:1px solid rgba(255,255,255,.08)}}
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -1150,6 +1173,7 @@ body.overlay-open{overflow:hidden}
             <div class="shensha-pillar-title stage-title"><h4>依四柱位置看神煞</h4><span>年柱 · 月柱 · 日柱 · 時柱</span></div>
             <p class="shensha-stage-guide"><b>四欄仍保留人生階段提示，但以「四柱位置」為主：</b>年柱看家族與早年背景、月柱看成長環境與工作社會關係、日柱看自身與伴侶、時柱看子女與後續發展。神煞落在哪一柱，<b>不等於只在那個年齡階段作用</b>；真正應期仍需結合大運、流年判讀。</p>
             <div class="shensha-pillar-grid integrated" id="shenshaPillars"></div>
+            <div id="shenshaGlobalAnalysis"></div>
 </div>
         </details>
 
@@ -2099,8 +2123,130 @@ body.overlay-open{overflow:hidden}
     });
   }
 
+  // 綜合摘要僅使用本盤實際查得的神煞；柱位表示領域，不當成事件發生年齡。
+  const SHENSHA_THEMES={
+    support:['天乙貴人','天德貴人','月德貴人','天赦'],
+    insight:['華蓋','太極貴人','文昌貴人'],
+    resource:['金輿','祿神'],
+    resolve:['魁罡','將星','國印貴人','羊刃'],
+    social:['桃花','紅鸞','天喜'],
+    distance:['孤辰','寡宿'],
+    change:['驛馬','劫煞','亡神','災煞'],
+    constraint:['天羅','地網'],
+    care:['天醫']
+  };
+  function shenshaThemeNames(hits,theme){
+    return hits.filter(h=>SHENSHA_THEMES[theme].includes(h.name)).map(h=>h.name);
+  }
+  function shenshaNamesText(names){return names.length>2?names.slice(0,-1).join('、')+'與'+names[names.length-1]:names.join('與');}
+  function shenshaPillarSynthesis(hits,key){
+    const areas={year:'家庭與早年背景',month:'工作與社會生活',day:'自我性格與親密關係',time:'長期規劃、子女與後續生活'};
+    if(!hits.length)return `這一柱沒有查到本站收錄的常用神煞，因此不額外推定${areas[key]}的吉凶；可回到這一柱的干支、十神與整體命盤看主要線索。`;
+    const names=new Set(hits.map(h=>h.name)),has=n=>names.has(n);
+    const groups=Object.fromEntries(Object.keys(SHENSHA_THEMES).map(t=>[t,shenshaThemeNames(hits,t)]));
+    const parts=[];
+    if(groups.support.length){
+      const helper=has('天德貴人')&&has('月德貴人')?'天德與月德同見，讓貴人助力、善意與轉圜成為這一柱的共同主題':`${shenshaNamesText(groups.support)}帶出協助、信任與化解僵局的主題`;
+      const line={year:'放在家庭與早年背景中，可留意長輩的引導、家族累積的信用，以及遇到困難時能借用的支持。',month:'放在職場與社會環境中，可留意主管、前輩與合作夥伴的引導；願意溝通、累積信用，更能把助力變成實際機會。',day:'放在自身與伴侶關係中，重點是善意、體諒與修補關係的能力；遇到分歧時，仍有機會透過溝通找到轉圜。',time:'放在長期生活中，重點是持續經營能互相照應的關係，讓往後的規劃有人商量、有資源可以借力。'}[key];
+      parts.push(helper+'。'+line);
+    }
+    if(has('華蓋')){
+      if(has('魁罡'))parts.push('華蓋的獨立思考與魁罡的剛毅原則放在一起，呈現「有自己的想法，也不輕易退讓」的傾向。'+(key==='day'?'你可能很重視被理解，但表達時又容易先堅持自己的標準；在親密關係裡，讓對方參與決定會比直接替對方定案更順。':'這份專注適合磨練專業，同時也需要替不同意見留一點空間。'));
+      else if(has('金輿'))parts.push('華蓋與金輿同見，把專業、品味與生活品質連在一起。'+(key==='month'?'在工作上，適合觀察能否把獨特眼光、技術或創作做成有價值的成果；資源與收入仍需靠實際累積。':key==='day'?'你對自己的生活方式與關係品質可能有較清楚的期待；保有品味，也要讓伴侶知道你真正重視的是什麼。':'獨立興趣與現實資源可以互相支持，重點是把想法轉成能持續累積的成果。'));
+      else if(has('國印貴人'))parts.push('華蓋與國印貴人同見，讓獨立思考與責任感並存：你可以有自己的理解方式，同時在意承諾、規則與事情是否有人負責。'+(key==='year'?'放在家庭背景中，可留意早年對規矩、責任與個人興趣的學習。':'適合在清楚的責任範圍裡發揮專業，避免把所有事情都扛在自己身上。'));
+      else parts.push('華蓋讓'+areas[key]+'帶有獨立、專注與精神追求的色彩。'+(key==='day'?'你可能需要自己的安靜空間，也希望關係能有深度；主動說明需求，能減少別人把獨處理解成冷淡。':key==='month'?'在工作上可發展專門技能、研究或創作，同時練習把自己的想法說得讓人容易理解。':key==='year'?'早年的興趣與思考方式可能較有個人特色，適合保留探索與學習的空間。':'長期生活可保留有深度的興趣與個人空間，也要持續與家人朋友往來。'));
+      const extra=groups.insight.filter(n=>n!=='華蓋');
+      if(extra.length)parts.push(`${shenshaNamesText(extra)}又補上學習、理解與表達的線索，讓這份專注有機會透過研究、文字或分享被看見。`);
+    }else if(groups.insight.length)parts.push(`${shenshaNamesText(groups.insight)}把重點帶到學習、理解與表達。${key==='month'?'在職場上可透過整理知識、文書、教學或專業溝通建立價值。':key==='day'?'你較值得留意自己如何理解問題、說明想法；把道理講清楚，也要照顧彼此的感受。':'持續學習與有條理地表達，可以成為這個領域的可用資源。'}`);
+    const pairedResource=has('華蓋')&&has('金輿')&&!has('魁罡');
+    if(groups.resource.length&&!pairedResource){
+      const words=has('金輿')&&has('祿神')?'金輿與祿神同見，兼有生活品質與穩定資源的主題':has('金輿')?'金輿帶出對生活品質、資源與地位的重視':'祿神帶出穩定收入、可用資源與生活基礎的主題';
+      parts.push(words+'。'+({year:'可留意家庭如何看待物質條件與資源分配，把已有的支持轉成自己的能力。',month:'在工作上宜把能力做成能長期交付的成果，再逐步累積收入與信用。',day:'在日常與伴侶關係中，適合把金錢安排、生活期待與責任分工談清楚。',time:'適合提早安排長期收支與資源使用，讓往後生活有穩定的基礎。'}[key]));
+    }
+    const extraResolve=groups.resolve.filter(n=>!(n==='魁罡'&&has('華蓋'))&&!(n==='國印貴人'&&has('華蓋')&&!has('魁罡')&&!has('金輿')));
+    if(extraResolve.length)parts.push(`${shenshaNamesText(extraResolve)}補上原則、責任與行動力。${has('羊刃')?'遇事敢承擔是一面，急著爭輸贏或把語氣說重則是另一面，重要決定宜多留一道確認。':'把責任範圍講清楚，能讓決斷力成為可靠的執行，而不是一個人承受所有壓力。'}`);
+    if(groups.social.length||groups.distance.length){
+      if(groups.social.length&&groups.distance.length)parts.push(`${shenshaNamesText(groups.social)}與${shenshaNamesText(groups.distance)}同見，表示人際連結與個人空間都是這一柱的主題。${key==='time'?'往後生活可以有歡聚與喜事，也需要保留自己的節奏；提早經營陪伴與支持，能減少把事情都自己扛的習慣。':'你可以享受互動，也可能需要獨處；主動說明這兩種需要，能減少關係中的誤會。'}`);
+      else if(groups.social.length)parts.push(`${shenshaNamesText(groups.social)}帶來人際吸引、關係連結或喜慶的主題。${key==='day'?'在感情中可留意互動與吸引力，也要把承諾與界線說清楚。':key==='time'?'長期生活值得保留與晚輩、家人及朋友相聚的機會，讓喜悅有能分享的對象。':'善用互動與合作機會，同時分清人情、感情與實際責任。'}`);
+      else parts.push(`${shenshaNamesText(groups.distance)}提醒你留意独處需求與關係距離。${key==='time'?'提早安排退休後的社交、興趣與互助圈，讓獨立生活仍有支持。':'保有自己的空間沒有問題，但需要幫忙或陪伴時，也可以清楚地說出來。'}`.replace('独','獨'));
+    }
+    if(groups.change.length||groups.constraint.length){
+      const warnings=groups.change.filter(n=>n!=='驛馬').concat(groups.constraint);
+      if(has('驛馬'))parts.push('驛馬把移動、外出與環境變化帶進'+areas[key]+'，可把調整環境、拓展見聞視為機會，同時保留時間與資源上的彈性。');
+      if(warnings.length){
+        const caution=warnings.includes('地網')||warnings.includes('天羅')?'責任牽連、承諾與難以抽身的安排':'臨時變動、資源耗損與倉促決定';
+        parts.push(`${groups.support.length||groups.social.length?'不過，':'另外，'}${shenshaNamesText(warnings)}${warnings.length>1?'共同':''}提醒你留意${caution}。${key==='time'?'長期財務、重要文件與照應方式宜提早規劃，面對變動多留緩衝。':key==='year'?'家庭金錢、分工與合約宜把條件講清楚，避免因人情而承擔不明確的責任。':key==='day'?'與伴侶或合作對象談清金錢、界線與責任，比靠猜測或一時情緒處理更有幫助。':'合作條件與工作分工宜留下明確紀錄，重要決定別因催促就省略確認。'}`);
+      }
+    }
+    if(groups.care.length)parts.push('天醫补上照護、修復與健康管理的主題，適合培養規律作息、照顧自己與他人的能力。'.replace('补','補'));
+    return parts.join('');
+  }
+  function buildShenshaSynthesis(data,hits){
+    const positionKeys={年柱:'year',月柱:'month',日柱:'day',時柱:'time'};
+    const byPillar=Object.fromEntries(Object.keys(positionKeys).map(p=>[p,hits.filter(h=>h.positions.includes(p))]));
+    const pillars=Object.fromEntries(Object.entries(positionKeys).map(([p,k])=>[k,shenshaPillarSynthesis(byPillar[p],k)]));
+    if(!hits.length)return {pillars,title:'從四柱與十神找回主要線索',intro:'本盤未查到本站收錄的常用神煞，因此這裡不額外建立性格、財富或事件結論。',sections:[],advice:'可先閱讀四柱、五行與十神的主要結構，再結合大運、流年理解不同階段的變化。'};
+    const get=n=>hits.find(h=>h.name===n),has=n=>!!get(n),loc=n=>get(n)?.positions.join('、')||'';
+    const themes=Object.fromEntries(Object.keys(SHENSHA_THEMES).map(t=>[t,shenshaThemeNames(hits,t)]));
+    const repeated=hits.filter(h=>h.positions.length>1).sort((a,b)=>b.positions.length-a.positions.length);
+    const title=has('華蓋')&&has('魁罡')?'獨立與剛毅並存，在專業與關係之間找到平衡':has('華蓋')&&themes.resource.length?'以專業與品味累積資源，讓獨立也能連結他人':themes.support.length&&themes.change.length?'助力與變動交織，善用支持也保留轉身空間':themes.resolve.length&&themes.support.length?'責任與助力相伴，把決斷化為可靠的成果':themes.insight.length?'從學習與理解出發，把自己的想法做成價值':themes.social.length&&themes.distance.length?'人際連結與個人空間並存，建立合適的相處節奏':themes.resource.length?'重視資源與生活基礎，逐步累積長期的安穩':themes.change.length||themes.constraint.length?'在變動與責任之間，保留選擇與調整的餘地':'從神煞落點，認識自己的優勢與生活課題';
+    let intro=`這張命盤的神煞重點落在${[themes.insight.length?'獨立思考與學習':null,themes.resolve.length?'原則與責任':null,themes.resource.length?'資源與生活品質':null,themes.support.length?'人際助力':null,themes.social.length?'關係連結':null,themes.change.length||themes.constraint.length?'變動與界線':null,themes.distance.length?'個人空間':null,themes.care.length?'照護與修復':null].filter(Boolean).slice(0,4).join('、')}。`;
+    if(has('華蓋')&&get('華蓋').positions.length>1)intro+=`華蓋出現在${loc('華蓋')}，共 ${get('華蓋').positions.length} 柱，讓專注、獨立與自己的理解方式成為跨領域的共同線索。`;
+    else if(repeated.length){const r=repeated[0];intro+=`${r.name}同見於${r.positions.join('、')}，其主題橫跨不同生活領域，值得一起觀察。`;}
+    if(themes.support.length&&(themes.change.length||themes.constraint.length))intro+='助力與警示同時存在，重點是善用支持、處理風險，不能把兩者直接相加抵銷。';
+    const sections=[];
+    let career='';
+    const workHits=hits.filter(h=>h.positions.includes('月柱')||h.positions.includes('日柱'));
+    const workNames=new Set(workHits.map(h=>h.name)),wh=n=>workNames.has(n);
+    if(wh('魁罡')&&wh('金輿'))career=`魁罡在${loc('魁罡')}、金輿在${loc('金輿')}，把決斷、原則與資源意識連在一起：你可能不只想把事情完成，也在意成果是否能換成較好的收入與生活條件。`;
+    else if(wh('華蓋')&&(wh('金輿')||wh('祿神')))career=`華蓋與${shenshaNamesText(['金輿','祿神'].filter(wh))}出現在工作或核心生活位置，重點是把獨特理解、專業與品味轉成可累積的成果。`;
+    else if(shenshaThemeNames(workHits,'resolve').length)career=`${shenshaNamesText(shenshaThemeNames(workHits,'resolve'))}落在月柱或日柱，工作上的可用優勢是原則、責任與執行；在能說清楚目標、權責與成果標準的環境中，這些特質較容易發揮。`;
+    else if(shenshaThemeNames(workHits,'insight').length)career=`${shenshaNamesText(shenshaThemeNames(workHits,'insight'))}落在月柱或日柱，適合從理解、研究、文字、創作或專門技能累積價值，先把自己的方法做深，再讓他人看懂。`;
+    else if(shenshaThemeNames(workHits,'resource').length)career=`${shenshaNamesText(shenshaThemeNames(workHits,'resource'))}落在月柱或日柱，可把穩定交付、資源管理與長期收入當成工作的重要方向。`;
+    else if(shenshaThemeNames(workHits,'support').length)career=`${shenshaNamesText(shenshaThemeNames(workHits,'support'))}落在月柱或日柱，職場與合作中的助力值得經營：先建立信用，再把前輩引導、人脈與合作轉成自己的能力。`;
+    else if(workHits.length)career=`月柱與日柱查到${workHits.map(h=>h.name).join('、')}，這些神煞在工作上的提醒主要是協調人際、安排彈性與釐清責任；單靠它們尚不足以指定適合的職業。`;
+    else career='月柱與日柱沒有查到本站收錄的常用神煞，職業與收入的主要判讀宜回到十神、五行及實際技能與環境。';
+    if(wh('華蓋')&&wh('魁罡'))career+='華蓋再補上獨立研究的色彩，較值得嘗試需要深度、品質與自主判斷的工作方式；合作時則要避免把高標準變成凡事只能照自己的做法。';
+    if(wh('華蓋')&&wh('國印貴人'))career+='華蓋的自主與國印的制度意識同時存在，表示專業與規則可以配合：可在清楚權責下爭取自主，而非直接判定你不適合任何組織。';
+    if(wh('金輿')||wh('祿神'))career+='財富仍需透過能力、收入與資源管理落實；重視品質時，也要分清必要投入與面子消費。';
+    sections.push({title:'事業與財富｜把優勢轉成實際成果',text:career});
+    let relation='';
+    if(has('華蓋')&&has('魁罡'))relation=`華蓋在${loc('華蓋')}；魁罡在${loc('魁罡')}，帶出「想得深，也有自己的底線」的組合。你可能很希望別人理解你的用心，卻在表達時先呈現出堅定或難商量的一面。關係中的重點不是放棄原則，而是把需求說出來，也聽懂對方為什麼不同意。`;
+    else if(has('華蓋'))relation=`華蓋在${loc('華蓋')}，使獨立、專注與精神交流成為人際上的觀察重點。你可以保有自己的空間，同時讓重要的人知道你仍在乎這段關係，避免沉默被理解成冷淡。`;
+    else if(themes.distance.length)relation=`${shenshaNamesText(themes.distance)}見於${[...new Set(hits.filter(h=>themes.distance.includes(h.name)).flatMap(h=>h.positions))].join('、')}，提示獨處需求與關係距離。這不等於一定孤獨；重點是需要陪伴或協助時，能否清楚開口。`;
+    else if(themes.social.length)relation=`${shenshaNamesText(themes.social)}帶出吸引、互動與喜慶的主題。善用相遇與合作機會，也要把感情期待與承諾講清楚，讓熱絡的互動有穩定的基礎。`;
+    else if(themes.resolve.length)relation=`${shenshaNamesText(themes.resolve)}的原則與責任感，也可能影響相處方式。你可以有清楚的立場，同時讓對方參與討論，避免把「我來負責」變成「只能照我的意思」。`;
+    else relation='人際與感情宜先觀察日柱及實際相處方式。從這組神煞無法直接判定婚姻好壞，較有幫助的是把需要、承諾與界線說清楚。';
+    if(themes.social.length&&(has('華蓋')||themes.distance.length))relation+=`${shenshaNamesText(themes.social)}又補上連結與互動，所以這張盤同時有「想與人靠近」與「需要自己的空間」兩種線索；安排合適的相處節奏，比勉強自己一直熱絡更自然。`;
+    sections.push({title:'人際與感情｜在原則與靠近之間取得平衡',text:relation});
+    let later='';
+    const late=byPillar['時柱'],early=byPillar['年柱'];
+    const lateWarnings=late.filter(h=>['劫煞','亡神','災煞','天羅','地網'].includes(h.name)).map(h=>h.name);
+    if(get('地網')?.positions.includes('年柱')&&get('地網')?.positions.includes('時柱'))later='地網同見年柱與時柱，把家庭根基與後續生活連到同一個主題：責任、承諾與資源安排要留意彼此牽連。它不代表早年與晚年一定發生糾紛，而是提醒你別把複雜條件拖到無法調整才處理。';
+    else if(early.some(h=>SHENSHA_THEMES.support.includes(h.name)))later=`年柱的${shenshaNamesText(shenshaThemeNames(early,'support'))}帶出長輩、家庭信用與支持的線索。把得到的引導轉成自己的能力，能讓早年的助力延伸為長期可用的資源。`;
+    if(lateWarnings.length)later+=`時柱同見${shenshaNamesText(lateWarnings)}，長期規劃宜留意臨時變動、責任牽連與資源耗損；退休收支、重要文件、照應方式與合作條件，適合提早安排並保留調整空間。`;
+    if(late.some(h=>h.name==='孤辰'||h.name==='寡宿'))later+='時柱的獨處線索提醒你，往後生活除了錢與住處，也要有能持續往來的家人、朋友與興趣圈。';
+    if(late.some(h=>h.name==='天喜'))later+='天喜也在時柱，則保留了喜慶、相聚與生活樂趣的主題；安排好資源與陪伴，能讓歡樂與安穩一起被照顧。';
+    if(!later&&late.length)later='時柱的神煞把觀察帶到後續發展、子女與長期投入。'+shenshaPillarSynthesis(late,'time');
+    if(!later)later=themes.change.length?`${shenshaNamesText(themes.change)}帶出移動與變動的題材。人生安排適合保留彈性，但是否何時出現轉折，仍需結合大運、流年與當時情境。`:'這組神煞沒有足夠的時點資訊可指定某個人生轉折。長期安排仍可從穩定收入、持續學習與支持關係三方面累積。';
+    sections.push({title:'人生轉折與後續生活｜提早安排，保留餘地',text:later});
+    const advice=[];
+    if(themes.insight.length||themes.resolve.length)advice.push('把專注與原則投入能累積的專業，也練習把想法說得讓人容易理解');
+    
+    if(has('華蓋')||themes.distance.length)advice.push('保有個人空間，同時主動維繫家人、伴侶與朋友的連結');
+    if(themes.change.length||themes.constraint.length)advice.push('重要承諾與金錢安排先釐清条件，面對變動預留緩衝'.replace('条件','條件'));
+    if(themes.support.length)advice.push('善用前輩與合作的助力，把信用經營成雙向支持');
+    if(themes.resource.length)advice.push('用穩定交付與收支規劃累積資源，讓生活品質有可持續的基礎');
+    if(!advice.length)advice.push('把照顧自己、溝通需求與可持續的生活安排放在一起考量');
+    return {pillars,title,intro,sections,advice:'這張盤可以先從三件事著手：'+advice.slice(0,3).map((s,i)=>`${i+1}、${s}`).join('；')+'。'};
+  }
+  function renderShenshaSynthesis(model){
+    return `<details class="shensha-global-analysis"><summary><span>全局神煞綜合解析<small>整合四柱組合、重複神煞與生活重點</small></span><span class="shensha-global-toggle"><span class="when-closed">＋ 展開解析</span><span class="when-open">－ 收合解析</span></span></summary><div class="shensha-global-body"><h3>${esc(model.title)}</h3><p class="shensha-global-intro">${esc(model.intro)}</p>${model.sections.map(s=>`<section><h4>${esc(s.title)}</h4><p>${esc(s.text)}</p></section>`).join('')}<section class="shensha-global-advice"><h4>💡 總結建議</h4><p>${esc(model.advice)}</p></section><p class="shensha-global-note">依本盤神煞與柱位整理的綜合摘要；神煞是輔助線索，實際吉凶與應期仍需結合五行、十神、大運及流年判讀。</p></div></details>`;
+  }
+
   function renderShensha(data){
     const hits=computeShensha(data);data._shensha=hits;
+    const synthesis=buildShenshaSynthesis(data,hits);data._shenshaSynthesis=synthesis;
     const repeated=hits.filter(x=>x.positions.length>1);
     const pillarMeta=[
       ['年柱','早年','家族、根基與早年背景','year'],
@@ -2136,6 +2282,7 @@ body.overlay-open{overflow:hidden}
         <div class="shensha-gz">命理位置 · ${esc(p?.ganZhi||'—')}</div>
         <div class="stage-shensha-title"><span>此柱辨識到的神煞</span><b>${arr.length} 項</b></div>
         <div class="stage-shensha-list">${items}</div>
+        <section class="shensha-pillar-synthesis"><h4>💡 綜合解析</h4><p>${esc(synthesis.pillars[key])}</p></section>
       </article>`;
     }).join('');
 
@@ -2147,6 +2294,7 @@ body.overlay-open{overflow:hidden}
           <em>${esc(x.positions.join('、'))} · ${esc(x.basis[0]||'常用查法')}</em>
         </article>`).join('')
       : '<div class="shensha-empty">目前未辨識到常用神煞；請以四柱、五行、十神與干支互動為主要判讀基礎。</div>');
+    $('shenshaGlobalAnalysis').innerHTML=renderShenshaSynthesis(synthesis);
     bindInlineShensha();
   }
 
