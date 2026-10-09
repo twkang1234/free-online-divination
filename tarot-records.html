@@ -47,7 +47,7 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
 <body>
 <header class="sitebar"><a class="brand" href="tarot.html">✺ 一念知機・塔羅</a><nav class="sitebar-links"><a href="tarot.html" class="top-link">返回抽牌</a><button id="shareSiteButton" class="btn ghost" type="button" title="只分享網站，不包含占卜私人資料">分享好友</button><span id="accountName" class="small"></span><button class="btn ghost" type="button" id="logoutButton" hidden>登出</button></nav></header>
 <main>
-  <div class="eyebrow">MEMBER · TAROT ARCHIVE · V28.13</div>
+  <div class="eyebrow">MEMBER · TAROT ARCHIVE · V28.14</div>
   <h1>我的塔羅占卜紀錄</h1>
   <p class="lead">記住每次的問題與牌面，隨時取回當時真正產生的 AI 提示詞。你也可以留下 50 字心得，設定日後的回顧時間。</p>
   <section id="loginPanel" class="panel" hidden>
@@ -61,7 +61,7 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
       <div class="panel"><small>已儲存紀錄</small><b><span id="recordCount">0</span> <small>/ 10 筆</small></b></div>
       <div class="panel"><small>待回顧提醒</small><b id="dueCount">0</b></div>
     </div>
-    <p class="archive-cap">免費會員保留最近 10 筆占卜紀錄；第 11 筆存入時，系統會自動刪除最舊的一筆（包含牌面、提示詞、心得與提醒）。重要提示詞請先下載 TXT 留存。3＋3 六張牌算同一筆。</p>
+    <p class="archive-cap">免費會員保留最近 10 筆占卜紀錄；第 11 筆存入時，系統會自動刪除最舊的一筆（包含牌面、提示詞、心得與提醒）。重要提示詞可先複製另行留存；TXT 一鍵下載保留給未來完整進階。3＋3 六張牌算同一筆。</p>
     <section id="duePanel" class="panel" hidden><h2>🔔 值得回顧的占卜</h2><div id="dueList"></div></section>
     <h2>歷史占卜</h2>
     <div id="recordsList"></div>
@@ -176,7 +176,7 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
     $('dueCount').textContent=String(due.length);
     const dueEl=$('dueList');dueEl.replaceChildren();$('duePanel').hidden=due.length===0;
     for(const r of due){const row=dom('div','record');put(row,dom('b','',r.question),dom('p','small',`原占卜：${formatDate(r.createdAt)}｜原訂回顧：${r.reminderDate}`),button('查看回顧',()=>openRecord(r.id)));dueEl.append(row)}
-    if(!items.length)root.append(dom('div','empty','目前沒有已保存的紀錄。回塔羅頁完成三張牌並登入後，複製或下載提示詞即可自動保存。'));
+    if(!items.length)root.append(dom('div','empty','目前沒有已保存的紀錄。回塔羅頁完成三張牌並登入後，複製提示詞即可自動保存。'));
     for(const r of items){
       const row=dom('article','record');const head=dom('div','recordhead');const right=dom('div','recordhead-right');
       const remove=dom('button','remove-record','♲');remove.type='button';remove.textContent='🗑';remove.title='刪除這筆占卜';remove.setAttribute('aria-label',`刪除：${r.question}`);remove.addEventListener('click',()=>deleteRecord(r));
@@ -234,9 +234,8 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
       try{await navigator.clipboard.writeText(text);$('settingStatus').textContent='已複製當時保存的原版提示詞。'}
       catch(_){pre.hidden=false;$('settingStatus').textContent='複製失敗，請在展開的文字中手動複製。'}
     }));
-    actions.append(button('下載 TXT',()=>{
-      const url=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}));
-      const a=document.createElement('a');a.href=url;a.download=`tarot-ai-prompt-${stage}-${selected.id.slice(0,8)}.txt`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+    actions.append(button('🔒 下載 TXT｜完整進階',()=>{
+      $('settingStatus').textContent='TXT 一鍵下載屬未來完整進階功能，正式付費解鎖尚未開放。現在可使用「重新複製原版提示詞」保留文字。';
     },'ghost'));
     actions.append(button('展開／收合',()=>{pre.hidden=!pre.hidden},'ghost'));
     put(area,h,actions,pre);container.append(area);
