@@ -2827,7 +2827,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   function cancelFixedCase20(){fixedCaseRun20++;fixedCaseBusy20=false;state.fixedCaseLoading=false;}
   function fixedCaseControls20(){
     const pending=state.fixedCaseLoading,message=!openTesting?'固定案例測試目前已關閉。':pending?'正在使用這組固定六張牌，產生目前版本的完整解讀…':state.fixedCaseError||'這次使用固定六張牌，可下載完整解讀與六牌提示詞比對。';
-    return `<section class="solo-after-report" data-consensus-panel><div class="phase-label"><span>固定六牌測試 · ${esc(state.fixedCaseVersion||'V23.0')}</span><b>同題同牌，比較每一版的解讀</b></div><p role="status">${esc(message)}</p><button type="button" class="phase-next-cta" data-run-fixed-case ${pending||!openTesting?'disabled':''}>${pending?'正在輸出固定案例…':state.fixedCaseError?'重試同一組固定六牌':'重新輸出同一組固定六牌'}</button></section>`;
+    return `<section class="solo-after-report" data-consensus-panel><div class="phase-label"><span>固定六牌測試 · ${esc(state.fixedCaseVersion||'V24.0')}</span><b>同題同牌，比較每一版的解讀</b></div><p role="status">${esc(message)}</p><button type="button" class="phase-next-cta" data-run-fixed-case ${pending||!openTesting?'disabled':''}>${pending?'正在輸出固定案例…':state.fixedCaseError?'重試同一組固定六牌':'重新輸出同一組固定六牌'}</button></section>`;
   }
   function validFixedCase20(pack){
     const expected=[['major-13',false],['wands-1',true],['pentacles-6',true],['wands-13',false],['swords-4',false],['major-14',false]],cards=[...(pack.aCards||[]),...(pack.bCards||[])];
@@ -2872,7 +2872,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
       els.follow.hidden=true;els.followResult.hidden=true;renderMeanings();renderReaderShell();saveReadingProgress();renderFinish();
     }catch(e){
       if(!active())return;
-      source.fixedCaseLoading=false;source.fixedCaseError=e.message==='NOT_FOUND'?'固定案例尚未啟用，請確認 tarot.html 與 worker.js 都已更新到 V23。':e.message==='FIXED_CASE_DISABLED'?'固定案例測試目前已關閉。':'固定案例輸出未完成，請重試；題目與六張牌保持相同。';
+      source.fixedCaseLoading=false;source.fixedCaseError=e.message==='NOT_FOUND'?'固定案例尚未啟用，請確認 tarot.html 與 worker.js 都已更新到 V24。':e.message==='FIXED_CASE_DISABLED'?'固定案例測試目前已關閉。':'固定案例輸出未完成，請重試；題目與六張牌保持相同。';
       if(source.singleReadingHTML)renderReaderShell();else{els.analysis.hidden=false;els.analysis.innerHTML=fixedCaseControls20();}
     }finally{
       if(active()){fixedCaseBusy20=false;source.fixedCaseLoading=false;if(button){button.disabled=false;button.textContent=old;}if(source.fixedCaseId){if(source.singleReadingHTML)renderReaderShell();else els.analysis.innerHTML=fixedCaseControls20();}}
@@ -3394,7 +3394,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     const q=state.question,startBtn=$('startReading'),old=startBtn?.textContent;
     try{
       if(startBtn){startBtn.disabled=true;startBtn.textContent='正在準備抽牌方式…';}
-      state.readingId='';state.advancedCards=[];state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v23',null);$('tarotAdvancedResult')?.remove();
+      state.readingId='';state.advancedCards=[];state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();
       state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;
       state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.singleReadingHTML='';state.followupOptions=[];
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
@@ -3415,7 +3415,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     const fixedNote=state.fixedCaseId?'【固定案例測試】這是同題同六牌的網站版本比較案例，牌位、牌名與正逆位固定；請依下列資料解讀。\n\n':'';
     let extra='';
     if(state.advancedCards?.length)extra+=`\n\n【B 進階牌陣｜另抽三張】\n${list(state.advancedCards,3)}\n請先各自完整解讀 B 的三個位置，再額外產生 A＋B 六張牌的整合結論。B 必須依其實際牌位深入探索原問題；比較兩組牌的支持、差異、矛盾及成立條件。逐一辨認實際牌位用途：「第一個實際步驟」「練習」「準備」「可以先談清的事」屬於使用者可採取的方向；「對關係的行動傾向」則在觀察對方可能行為，不能混成使用者的行動。A 最後一張若是行動，整合就比較兩項做法如何配合；若是發展、查證、訊號或選擇判準，則依各自任務比較。整合中指出 B 哪個原因解釋 A 的卡點、哪個條件能回應 A 的要求，以及哪些未知仍未解除。依真正的關係跨牌位比較，不固定把第一張只配第四張、第二張只配第五張；選擇題尤其要讓 A 的判準對照 B 的條件，並讓選項的代價對照 B 的行動。不能把兩份文字拼接，不能讓 B 覆蓋 A，也不能把較正面的牌直接當成必然結果。`;
-    return `請用繁體中文，扮演一位親切、有經驗、但不武斷的塔羅老師，對不懂塔羅的一般人解說。依已抽出的牌、牌位與正逆位解讀，不重新抽牌、不更換牌位，不補出未提供的人物或事件。\n\n${fixedNote}【主題】${state.topic.name}\n【目前情境】${state.scenario.name}\n【原問題】${state.question.text}\n【A 免費基礎牌陣｜三張牌】\n${list(state.current)}${extra}\n\n【解讀格式】\n開頭只銜接問題與情境，不先下結論。\n一、逐張白話解讀：每張牌依序使用「這張牌在說什麼」「放在『實際牌位』」「可能出現在生活裡的樣子」「你可以留意」四個小標。每張牌分清它在本次牌位的任務、正逆位的特定含意，配一個明確標示為可能情況的生活例子，以及可以核對的觀察。元素、花色、數字、宮廷牌等專業分析另以「牌義與專業解析（選讀）」整理；支援 HTML 時放在預設關閉的 details／summary，純文字時放在各張正文後獨立附錄。不要把關鍵字清單當作正文。\n二、三張如何連在一起：逐一說清前一張的問題如何影響下一張的條件；後一張如何回應或限制前一張。不能只加「前後需要一起看」等通用句，不依序重貼三張解讀；選擇題先分辨是在比較兩條路，還是在衡量同一個選擇的價值與代價。比較兩條路時，說明各自的短期感受、後續代價與成立條件；衡量價值與代價時，不把第二張說成另一個選項。不重貼逐張解讀，也不增加第四或第五張。\n三、至多三個具體建議：相同做法合併，不為湊三項重複；每個寫明一件可做的事、適用條件與可核對的改善訊號，避免「調整自己」「做一件小事」等空泛建議。不得為製造接觸而編出共同寵物、費用或物品；若對方拒絕或不願接觸，不要求繼續聯絡。\n最後以「一句話總結」及「更完整的總結」直接回答原問題，分清互動、承諾、短期變化與長期結果等不同層次。選擇題要給有條件的方向，例如先停止無限等待、先查證再承諾，並說明什麼新行為或資訊足以重新評估；不能只以「自己決定」收尾，也不能保證結果。A 必須完整，不刻意保留重要結論要求付費。${state.advancedCards?.length?'\n接著完整解讀 B 三張；整份報告最後附 A＋B 六張的獨立整合結論。':''}\n\n【品質要求】\n- 牌義與建議要一一對應，不把不同牌都套進少數通用模板。原因位說明可能怎樣形成問題，不只寫好處；正位也不必硬解成缺點。例如寶劍王牌可核對各自清楚卻理解不同，這是回顧假設，不是已知事實。\n- 條件位要說明條件如何成立，不當成已成立；滿足相關牌應談自己的需要與自願改變，不能套成查證猜測。戀人相關行動應先釐清自己的價值與選擇，再確認共同方向。和解相關牌要分辨真正理解與壓下不滿，不能只說停止爭執。\n- 個人接納失落、原諒或恢復生活，不等於雙方修復或應該繼續等待。聖杯五逆位等復原線索可以支持各自往前走；值得等待仍要有雙方自願、持續行為與相容未來。\n- 行動要符合實際牌位。照顧自己或保護界線時，提供自己能開始的生活安排，不要要求先取得對方同意；錢幣王牌逆位可補基本作息、餐食、工作或必要資源，已穩定的部分維持即可。\n- 改變初期更難過，不表示該回到原來的投入；例如逐漸放下的聖杯皇后逆位，要分清情緒適應與長期不適合。原因位涉及自我肯定時，維持回顧假設，不替使用者下心理診斷。\n- 權杖皇后正位在原因或阻礙位時，可核對自主與共同決定是否失衡；健康獨立本身不是錯，不指定誰自私或推測第三者。其他牌位依其任務解讀，不把所有權杖皇后都當成同一種問題。\n- 權杖王牌逆位須保留意願不足、準備不足或熱度無法持續等可能，不一律斷定其實想復合只是害怕；以持續而自願的行為確認。\n- 六牌整合優先挑真正相關的跨牌位：原因如何牽動發展、條件如何回應基礎、行動能否改善原限制。暫停既可能幫助整理，也可能延長停滯，要說清楚區分兩者的新訊號，不靠固定欄位配對或重複通用提醒。\n- 六牌故事先串起 A 的主線，再讓 B 的可能原因解釋前面的風險，接著說改善條件與做法如何回應它。用連貫段落說清因果、支持與拉扯，依問題調整；行動題保留做法，查證題保留資訊缺口。不要把五組牌卡配對各寫一次就當作整合，也不為了故事完整而補出未發生的事件。\n- 正文只有需要辨認時才點出牌名與正逆位，不在每段重複兩張牌的完整牌位名稱；完整對照放在逐張解讀或折疊的專業比較。觀察句直接說明要核對什麼，避免「接下來看看有交流時」等拼接語句。\n- A 的完整總結要指出牌面支持的具體進展層次，以及尚未支持的部分；例如有限互動與穩定復合要分開。說明哪些新行為或明確資訊足以重新評估，不只以「保留可能性」收尾；依實際牌面判斷，不把所有結果一律寫成悲觀。\n- 分手情境的行動須分清尚無聯絡與雙方自願交流：無聯絡時先照顧生活與界線；雙方願意時才協調具體安排。平靜與耐心不等於互惠，觀察兩人是否都有實際調整。\n- 不必寫滿固定篇幅；三牌串聯與六牌整合每段都要增加一個新的判斷，避免在總結中再逐張重述。\n- 逐張觀察、建議與總結分工清楚：觀察辨認牌位訊號；建議說明可做的事、適用條件與具體檢查點；總結回答何時值得維持或增加投入。不要在三處重複同一段「雙方自願、持續參與」提醒，也不把 A 的完整串聯段落原文貼到六牌整合。A 仍須獨立完整，重要限制不能因精簡而省略。\n- B 的三牌串聯依實際牌位，說清可能的原因或阻礙為什麼需要中間的改善條件，再讓行動回應最初的問題；不要只把兩組相鄰牌配對各講一次。未提供的分手原因仍是回顧假設，不替任何人定錯。\n- 分手後談不對等安排時，尚無聯絡就先自行回顧、寫下可接受的新方式與界線，不為討論公平而創造聯絡；已有雙方自願交流才商量一項具體調整。找不到符合經歷的安排，就保留未知；對方拒絕接觸時，不要求繼續聯絡。\n- 六牌的進展檢查應把 B 的原因、條件與行動放回 A 的卡點，增加可核對的變化，不原樣重貼 A 的階段說明或 B 每張牌的觀察。結尾用完整而精簡的段落說明有條件的方向，不再重述整份行動清單。\n- 自然白話，段落各提供新的理解，不重複同一句觀察或通用提醒，不為湊字數灌水。\n- 逆位逐張判讀，不能全部套成受阻或更糟；建議牌表示可嘗試的方向，不代表使用者已經做到。\n- 心意、第三者、欺騙、惡意、錄取、求婚與精準日期都不能當成已證實；不編造數字機率。涉及未知時，提出可核對的條件與界線。\n- 不把創業、工作選擇當成財務獲利保證。使用者沒有提到分手或舊關係，就不假設已分手。\n- 以上解讀另提供包含全部標題與正文的 UTF-8 TXT 檔；不能產生附件時，提供可完整儲存的純文字。\n\n【網站 A 解讀｜供同牌比較，不當作必須照抄的答案】\n${htmlToPlainReading(state.singleReadingHTML||'')}`;
+    return `請用繁體中文，扮演一位親切、有經驗、但不武斷的塔羅老師，對不懂塔羅的一般人解說。依已抽出的牌、牌位與正逆位解讀，不重新抽牌、不更換牌位，不補出未提供的人物或事件。\n\n${fixedNote}【主題】${state.topic.name}\n【目前情境】${state.scenario.name}\n【原問題】${state.question.text}\n【A 免費基礎牌陣｜三張牌】\n${list(state.current)}${extra}\n\n【解讀格式】\n開頭只銜接問題與情境，不先下結論。\n一、逐張白話解讀：每張牌依序使用「這張牌在說什麼」「放在『實際牌位』」「可能出現在生活裡的樣子」「你可以留意」四個小標。每張牌分清它在本次牌位的任務、正逆位的特定含意，配一個明確標示為可能情況的生活例子，以及可以核對的觀察。元素、花色、數字、宮廷牌等專業分析另以「牌義與專業解析（選讀）」整理；支援 HTML 時放在預設關閉的 details／summary，純文字時放在各張正文後獨立附錄。不要把關鍵字清單當作正文。\n二、三張如何連在一起：逐一說清前一張的問題如何影響下一張的條件；後一張如何回應或限制前一張。不能只加「前後需要一起看」等通用句，不依序重貼三張解讀；選擇題先分辨是在比較兩條路，還是在衡量同一個選擇的價值與代價。比較兩條路時，說明各自的短期感受、後續代價與成立條件；衡量價值與代價時，不把第二張說成另一個選項。不重貼逐張解讀，也不增加第四或第五張。\n三、至多三個具體建議：相同做法合併，不為湊三項重複；每個寫明一件可做的事、適用條件與可核對的改善訊號，避免「調整自己」「做一件小事」等空泛建議。不得為製造接觸而編出共同寵物、費用或物品；若對方拒絕或不願接觸，不要求繼續聯絡。\n最後以「一句話總結」及「更完整的總結」直接回答原問題，分清互動、承諾、短期變化與長期結果等不同層次。選擇題要給有條件的方向，例如先停止無限等待、先查證再承諾，並說明什麼新行為或資訊足以重新評估；不能只以「自己決定」收尾，也不能保證結果。A 必須完整，不刻意保留重要結論要求付費。${state.advancedCards?.length?'\n接著完整解讀 B 三張；整份報告最後附 A＋B 六張的獨立整合結論。':''}\n\n【品質要求】\n- 先辨認每個牌位的解讀對象與任務：「對方的行動傾向」描述對方可能怎麼做，不變成使用者主動接觸的指令；「自己的相處界線」保留自己的時間、需要與決定權，不預設要增加互動。這些規則也適用同事心態題。\n- 「容易誤讀／誤判的訊號」須說清哪些表現容易被看錯，以及至少一個其他合理解釋；不直接套成阻礙。友善、直接、激動或防衛各有不同目的，不能單獨當成感情或惡意證據。\n- 求職題依履歷、能力實例、職缺匹配、甄選要求與正式回覆解讀，不套成在職專案或分工問題。「尚未確認的要求」先查是否真的適用，不把未知當成自己的缺點；「等待期間的行動」安排等待、準備與其他選擇，不假定能控制公司的決定。\n- 牌義與建議要一一對應，不把不同牌都套進少數通用模板。原因位說明可能怎樣形成問題，不只寫好處；正位也不必硬解成缺點。例如寶劍王牌可核對各自清楚卻理解不同，這是回顧假設，不是已知事實。\n- 條件位要說明條件如何成立，不當成已成立；滿足相關牌應談自己的需要與自願改變，不能套成查證猜測。戀人相關行動應先釐清自己的價值與選擇，再確認共同方向。和解相關牌要分辨真正理解與壓下不滿，不能只說停止爭執。\n- 個人接納失落、原諒或恢復生活，不等於雙方修復或應該繼續等待。聖杯五逆位等復原線索可以支持各自往前走；值得等待仍要有雙方自願、持續行為與相容未來。\n- 行動要符合實際牌位。照顧自己或保護界線時，提供自己能開始的生活安排，不要要求先取得對方同意；錢幣王牌逆位可補基本作息、餐食、工作或必要資源，已穩定的部分維持即可。\n- 改變初期更難過，不表示該回到原來的投入；例如逐漸放下的聖杯皇后逆位，要分清情緒適應與長期不適合。原因位涉及自我肯定時，維持回顧假設，不替使用者下心理診斷。\n- 權杖皇后正位在原因或阻礙位時，可核對自主與共同決定是否失衡；健康獨立本身不是錯，不指定誰自私或推測第三者。其他牌位依其任務解讀，不把所有權杖皇后都當成同一種問題。\n- 權杖王牌逆位須保留意願不足、準備不足或熱度無法持續等可能，不一律斷定其實想復合只是害怕；以持續而自願的行為確認。\n- 六牌整合優先挑真正相關的跨牌位：原因如何牽動發展、條件如何回應基礎、行動能否改善原限制。暫停既可能幫助整理，也可能延長停滯，要說清楚區分兩者的新訊號，不靠固定欄位配對或重複通用提醒。\n- 六牌故事先串起 A 的主線，再讓 B 的可能原因解釋前面的風險，接著說改善條件與做法如何回應它。用連貫段落說清因果、支持與拉扯，依問題調整；行動題保留做法，查證題保留資訊缺口。不要把五組牌卡配對各寫一次就當作整合，也不為了故事完整而補出未發生的事件。\n- 正文只有需要辨認時才點出牌名與正逆位，不在每段重複兩張牌的完整牌位名稱；完整對照放在逐張解讀或折疊的專業比較。觀察句直接說明要核對什麼，避免「接下來看看有交流時」等拼接語句。\n- A 的完整總結要指出牌面支持的具體進展層次，以及尚未支持的部分；例如有限互動與穩定復合要分開。說明哪些新行為或明確資訊足以重新評估，不只以「保留可能性」收尾；依實際牌面判斷，不把所有結果一律寫成悲觀。\n- 分手情境的行動須分清尚無聯絡與雙方自願交流：無聯絡時先照顧生活與界線；雙方願意時才協調具體安排。平靜與耐心不等於互惠，觀察兩人是否都有實際調整。\n- 不必寫滿固定篇幅；三牌串聯與六牌整合每段都要增加一個新的判斷，避免在總結中再逐張重述。\n- 逐張觀察、建議與總結分工清楚：觀察辨認牌位訊號；建議說明可做的事、適用條件與具體檢查點；總結回答何時值得維持或增加投入。不要在三處重複同一段「雙方自願、持續參與」提醒，也不把 A 的完整串聯段落原文貼到六牌整合。A 仍須獨立完整，重要限制不能因精簡而省略。\n- B 的三牌串聯依實際牌位，說清可能的原因或阻礙為什麼需要中間的改善條件，再讓行動回應最初的問題；不要只把兩組相鄰牌配對各講一次。未提供的分手原因仍是回顧假設，不替任何人定錯。\n- 分手後談不對等安排時，尚無聯絡就先自行回顧、寫下可接受的新方式與界線，不為討論公平而創造聯絡；已有雙方自願交流才商量一項具體調整。找不到符合經歷的安排，就保留未知；對方拒絕接觸時，不要求繼續聯絡。\n- 六牌的進展檢查應把 B 的原因、條件與行動放回 A 的卡點，增加可核對的變化，不原樣重貼 A 的階段說明或 B 每張牌的觀察。結尾用完整而精簡的段落說明有條件的方向，不再重述整份行動清單。\n- 自然白話，段落各提供新的理解，不重複同一句觀察或通用提醒，不為湊字數灌水。\n- 逆位逐張判讀，不能全部套成受阻或更糟；建議牌表示可嘗試的方向，不代表使用者已經做到。\n- 心意、第三者、欺騙、惡意、錄取、求婚與精準日期都不能當成已證實；不編造數字機率。涉及未知時，提出可核對的條件與界線。\n- 不把創業、工作選擇當成財務獲利保證。使用者沒有提到分手或舊關係，就不假設已分手。\n- 以上解讀另提供包含全部標題與正文的 UTF-8 TXT 檔；不能產生附件時，提供可完整儲存的純文字。\n\n【網站 A 解讀｜供同牌比較，不當作必須照抄的答案】\n${htmlToPlainReading(state.singleReadingHTML||'')}`;
   }
   async function copyAIPrompt(btn){
     if(!hasFullPaidAccess()){els.analysis.querySelector('[data-consensus-panel]')?.scrollIntoView({behavior:'smooth'});return;}
@@ -3439,14 +3439,14 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   function buildArchiveText(){
     const now=new Date();
     const parts=[
-      '一念知機｜塔羅 A／B｜完整備份 V23.0',
+      '一念知機｜塔羅 A／B｜完整備份 V24.0',
       '==================================================',
       `備份時間：${now.toLocaleString('zh-TW',{hour12:false})}`,
       `主題：${state.topic?.name||''}`,
       `目前情境：${state.scenario?.name||''}`,
       `原問題：${state.question?.text||''}`,
       `牌陣：${state.question?.spread?.name||''}`,
-      ...(state.fixedCaseId?['測試案例：固定六牌｜三個月復合（同題、同牌位、同正逆位）',`解讀核心版本：${state.fixedCaseVersion||'V23.0'}`]:[]),'', '【主牌】',archiveCardsText(state.current),'',
+      ...(state.fixedCaseId?['測試案例：固定六牌｜三個月復合（同題、同牌位、同正逆位）',`解讀核心版本：${state.fixedCaseVersion||'V24.0'}`]:[]),'', '【主牌】',archiveCardsText(state.current),'',
       '==================================================',
       '【塔羅老師｜完整解讀】',htmlToPlainReading(state.singleReadingHTML||state.readerBodies?.a||''),'',
       `【解讀界線】${state.guardrailText||''}`
@@ -3462,12 +3462,12 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     if(!hasFullPaidAccess()){els.analysis.querySelector('[data-consensus-panel]')?.scrollIntoView({behavior:'smooth'});return;}
     if(!state.current?.length||!state.readerBodies)return;
     const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download=`tarot-reading-v23-${state.fixedCaseId?'fixed-reunion-':''}${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+    a.href=url;a.download=`tarot-reading-v24-${state.fixedCaseId?'fixed-reunion-':''}${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
   function downloadAIPrompt(){
     if(!hasFullPaidAccess()||!state.current?.length||!state.readerBodies)return;
     const blob=new Blob(['\ufeff'+buildAIPrompt()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download=`tarot-ai-prompt-v23-${state.fixedCaseId?'fixed-reunion-':''}${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+    a.href=url;a.download=`tarot-ai-prompt-v24-${state.fixedCaseId?'fixed-reunion-':''}${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
   function buildAIPromptAccessHTML(full){
     if(!full){
@@ -3500,7 +3500,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   }
   function saveReadingProgress(){
     if(!state.readingId)return;
-    sessionWrite('divinationhub-tarot-reading-v23',{
+    sessionWrite('divinationhub-tarot-reading-v24',{
       topicId:state.topic.id,scenarioId:state.scenario.id,question:state.question,current:state.current,fixedCaseId:state.fixedCaseId||'',fixedCaseVersion:state.fixedCaseVersion||'',
       readingId:state.readingId,singleReadingHTML:state.singleReadingHTML,guardrailText:state.guardrailText,
       followupUsed:state.followupUsed,followupQuestion:state.followupQuestion,followupText:state.followupText,followupReadingHTML:state.followupReadingHTML||'',
@@ -3598,7 +3598,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     }finally{if(state.readingId===readingId){state.advancedBusy=false;updateReaderJourney();}}
   }
   function restoreReadingProgress(){
-    const p=sessionRead('divinationhub-tarot-reading-v23',null);
+    const p=sessionRead('divinationhub-tarot-reading-v24',null);
     if(!p||Date.now()-p.savedAt>7*86400000||!p.readingId)return false;
     const t=topicBy(p.topicId),sc=t&&scenarioBy(t,p.scenarioId);
     if(!t||!sc||p.current?.length!==3)return false;
@@ -3622,7 +3622,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   
   
   function renderFinish(){els.finish.innerHTML=`<h4>${state.fixedCaseId?'固定案例輸出完成':'本次牌局完成'}</h4><div class="finish-actions"><button type="button" data-new-reading>換一個問題</button></div>`;els.finish.hidden=false;}
-  function resetToTopic(){cancelFixedCase20();restoreDrawHosts();sessionWrite('divinationhub-tarot-reading-v23',null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();showStep('topic');}
+  function resetToTopic(){cancelFixedCase20();restoreDrawHosts();sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();showStep('topic');}
   
   // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
   // 例：tarot.html?topic=love&scenario=single#worldSecond
