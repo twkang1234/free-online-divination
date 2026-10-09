@@ -2170,16 +2170,87 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
 .finish-actions.v285-actions button.v285-new.v2810-new-main.v2818-six-prompt-copied{animation:v2818-next-question-pulse 4s ease-in-out infinite!important}
 @media(prefers-reduced-motion:reduce){.finish-actions.v285-actions button.v285-new.v2810-new-main.v2818-six-prompt-copied{animation:none!important;outline:2px solid rgba(225,166,238,.75);outline-offset:3px}}
 
+
+/* V28.19 | keep "new question" within reach even when restoring or scrolling. */
+.v2819-top-new[hidden],.v2819-resume-notice[hidden]{display:none!important}
+.v2819-top-new{
+  flex:0 0 auto;min-height:35px;border:1px solid rgba(236,161,234,.56);border-radius:999px;
+  background:linear-gradient(125deg,rgba(115,45,120,.35),rgba(102,58,159,.31));
+  color:#ffe5f9;font-size:.74rem;font-weight:850;padding:6px 13px;white-space:nowrap;
+  box-shadow:0 0 14px rgba(228,126,218,.13);cursor:pointer;
+}
+.v2819-top-new:hover,.v2819-top-new:focus-visible{border-color:#f7c1ed;background:rgba(219,104,209,.24);outline-offset:3px}
+.v2819-resume-notice{
+  position:fixed;z-index:95;top:77px;left:50%;transform:translateX(-50%);
+  width:min(550px,calc(100vw - 24px));padding:19px 22px 17px;
+  border:1px solid rgba(240,164,244,.65);border-radius:17px;
+  background:linear-gradient(128deg,rgba(28,17,39,.98),rgba(14,10,26,.98));
+  color:#f9ebfc;box-shadow:0 20px 65px rgba(0,0,0,.57),0 0 32px rgba(204,121,226,.18);
+  backdrop-filter:blur(16px);text-align:left;
+}
+.v2819-resume-title{font-size:.98rem;font-weight:900;color:#fce3fd;padding-right:26px;line-height:1.55}
+.v2819-resume-notice p{font-size:.76rem;color:#cdbdd4;margin:6px 0 13px;line-height:1.75}
+.v2819-resume-actions{display:grid;grid-template-columns:1.15fr 1fr;gap:10px}
+.v2819-resume-actions button{min-height:43px;cursor:pointer;padding:8px 12px;border-radius:10px;font-weight:800;font-size:.79rem}
+#tarotResumeNew{background:linear-gradient(110deg,#e788d4,#ac92ef);color:#261427;border:1px solid rgba(246,207,248,.6)}
+#tarotResumeContinue{background:rgba(239,203,255,.07);color:#efd3f5;border:1px solid rgba(239,203,255,.26)}
+.v2819-resume-actions button:hover{filter:brightness(1.12)}
+.v2819-resume-dismiss{position:absolute;right:12px;top:9px;border:0;background:transparent;color:#d1b9d5;padding:3px 7px;font-size:1.3rem;cursor:pointer}
+/* High visibility pulse, including letters; only after the complete six-card prompt was copied. */
+@keyframes v2819-new-button-bright{
+  0%,100%{filter:brightness(.92);transform:scale(1);box-shadow:0 0 0 0 rgba(235,137,245,.04),0 0 12px rgba(214,102,233,.22)}
+  50%{filter:brightness(1.33);transform:scale(1.01);box-shadow:0 0 0 5px rgba(248,157,247,.18),0 0 42px rgba(237,130,252,.68)}
+}
+@keyframes v2819-new-letter-bright{
+  0%,100%{opacity:.82;text-shadow:0 0 1px rgba(255,255,255,.4);transform:scale(1)}
+  50%{opacity:1;text-shadow:0 0 14px rgba(255,255,255,.91),0 0 26px rgba(253,222,255,.82);transform:scale(1.035)}
+}
+/* Deliberately saturated in both themes; the label stays readable throughout the fast pulse. */
+.finish-actions.v285-actions button.v285-new.v2810-new-main.v2818-six-prompt-copied,
+html[data-theme="light"] .finish-actions.v285-actions button.v285-new.v2810-new-main.v2818-six-prompt-copied{
+  background:linear-gradient(105deg,#c447a3,#8355c4)!important;
+  color:#fff!important;border:1px solid #ed9cfa!important;
+  animation:v2819-new-button-bright 1.35s ease-in-out infinite!important;
+  opacity:1!important;
+}
+.finish-actions.v285-actions button.v285-new.v2810-new-main.v2818-six-prompt-copied .v2819-new-label{
+  display:inline-block;color:#fff!important;animation:v2819-new-letter-bright 1.35s ease-in-out infinite!important;
+  font-weight:900;letter-spacing:.025em;
+}
+html[data-theme="light"] .v2819-top-new{background:#fbebff;color:#64336e;border-color:#c990da}
+html[data-theme="light"] .v2819-resume-notice{background:linear-gradient(135deg,#fffaff,#f9f0fc);border-color:#ca8cda;color:#442b4d;box-shadow:0 15px 46px rgba(77,37,88,.25)}
+html[data-theme="light"] .v2819-resume-title{color:#553065}
+html[data-theme="light"] .v2819-resume-notice p{color:#614c6b}
+html[data-theme="light"] #tarotResumeContinue{color:#664372;border-color:#cfb1d8;background:#fff}
+html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
+@media(max-width:1170px){.page-topbar .tool-switcher{display:none}}
+@media(max-width:600px){
+  .page-topbar{gap:7px;flex-wrap:wrap;justify-content:space-between}
+  .page-topbar .topbar-left{gap:5px;min-width:0}
+  .page-topbar .topbar-right{gap:5px;min-width:0}
+  .page-topbar .back-home{padding:7px 10px;font-size:.68rem}
+  .page-topbar .v2819-home-detail{display:none}
+  .v2819-top-new{font-size:.69rem;min-height:33px;padding:6px 9px}
+  .v2819-resume-notice{top:105px;padding:17px 16px}
+  .v2819-resume-actions{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .finish-actions.v285-actions button.v285-new.v2810-new-main.v2818-six-prompt-copied,
+  .finish-actions.v285-actions button.v285-new.v2810-new-main.v2818-six-prompt-copied .v2819-new-label{animation:none!important}
+  .finish-actions.v285-actions button.v285-new.v2810-new-main.v2818-six-prompt-copied{outline:3px solid #e296ea!important;outline-offset:3px!important;background:#85488c!important}
+}
+
 </style></head>
 <body>
   <header class="page-topbar">
     <div class="topbar-left">
-      <a class="back-home" href="index.html">← 免費線上占卜</a>
+      <a class="back-home" href="index.html" aria-label="回一念知機免費線上占卜首頁"><span>← 一念知機</span><span class="v2819-home-detail">｜免費線上占卜</span></a>
       <nav class="tool-switcher" aria-label="其他免費占卜工具">
         <a href="qimen.html">奇門</a><a class="active" href="tarot.html">塔羅</a><a href="bazi.html">八字</a><a href="ziwei.html">紫微</a><a href="meihua.html">梅花</a><a href="liuyao.html">六爻</a><a href="yijing.html">易經64卦</a>
       </nav>
     </div>
     <div class="topbar-right">
+      <button type="button" id="tarotTopNewQuestion" class="v2819-top-new" hidden title="重新開始｜選擇新的問題">↻ 新問題</button>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換顯示模式"><span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">☀</span><span class="theme-toggle-text" id="themeToggleText">淺色</span></button>
       
       <a class="tarot-records-toplink" href="tarot-records.html" id="tarotRecordsLink">我的塔羅紀錄</a>
@@ -2187,6 +2258,17 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
       <button class="listing-open" id="openListing" type="button">申請刊登</button>
     </div>
   </header>
+
+  <!-- V28.19: restored reading reminder; appears only when a saved reading is reopened. -->
+  <section class="v2819-resume-notice" id="tarotResumeNotice" role="status" aria-live="polite" aria-label="已恢復上次抽牌" hidden>
+    <div class="v2819-resume-title">✓ 上一次的抽牌結果已保留</div>
+    <p id="tarotResumeText">重新整理不會清除牌面。你可以繼續原來的占卜，或選擇全新問題。</p>
+    <div class="v2819-resume-actions">
+      <button type="button" id="tarotResumeNew">重新開始｜選擇新問題 →</button>
+      <button type="button" id="tarotResumeContinue">繼續查看上次抽牌</button>
+    </div>
+    <button class="v2819-resume-dismiss" type="button" id="tarotResumeDismiss" aria-label="關閉提醒">×</button>
+  </section>
 
   <div class="admin-test-banner" id="tarotAdminTestBanner" hidden>
     <div class="admin-test-banner-copy"><b id="tarotAdminTestBannerTitle">🃏 管理員塔羅測試</b><span id="tarotAdminTestBannerText">測試資料與正式登入、裝置額度完全分開。</span></div>
@@ -2223,7 +2305,7 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
         <h2 class="tarot-stage-title">引導式塔羅占卜</h2>
         <p class="tarot-stage-desc">選題目、挑選三張牌陣、用喜歡的方式抽牌；複製提示詞後，再由你選擇的 AI 進行完整解讀。</p>
       </div>
-      <div class="tarot-engine-chip"><i></i><span>AI 提示詞版 V28.18 · 78 CARDS · 3＋3 SPREAD</span></div>
+      <div class="tarot-engine-chip"><i></i><span>AI 提示詞版 V28.19 · 78 CARDS · 3＋3 SPREAD</span></div>
     </header>
 
     <section class="guided-shell" aria-label="引導式塔羅占卜">
@@ -3130,6 +3212,10 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
     renderAdminTestPanel('正在確認管理員登入狀態…');
     const ok=await verifyAdminTestToken();
     if(!ok){alert('請先從管理員後台登入，再使用「塔羅測試」。');location.replace('/admin.html');return;}
+    // Admin preview uses only its isolated session snapshot; never restores member data.
+    if(!new URLSearchParams(location.search).has('topic')){
+      try{if(restore3x3())openResumeNotice()}catch(e){console.warn('Admin tarot resume skipped',e)}
+    }
     setTimeout(()=>openAdminTestModal('管理員驗證成功。請選擇測試模式。'),120);
   }
   function taiwanDateKey(){
@@ -4146,7 +4232,7 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
       els.cards.innerHTML='';els.cards.className='cards';els.interp.innerHTML='';els.interp.classList.remove('show');els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
       $('readingPath').textContent=`${state.topic.name} → ${state.scenario.name}`;$('readingQuestion').textContent=(state.batchTest?'測試抽牌｜示範題：':'')+q.text;$('spreadName').textContent=q.spread.name;$('spreadDesc').textContent=q.spread.desc;$('deckCount').textContent=78;
-      els.workspace.hidden=false;document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));els.progress.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+      els.workspace.hidden=false;document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));els.progress.querySelectorAll('button').forEach(x=>x.classList.remove('active'));syncNewQuestionUI();
       showModeSelector();
       setTimeout(()=>els.workspace.scrollIntoView({behavior:'smooth',block:'start'}),50);
       return true;
@@ -4240,7 +4326,7 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
     els.cards.className='ritual-result-grid';els.cards.style.setProperty('--result-count',3);
     els.cards.innerHTML=state.current.map(formalResultCard).join('');renderMeanings();
     if(state.stage3x3==='complete')renderSixCards();
-    renderFullReading();
+    renderFullReading();syncNewQuestionUI();
     setTimeout(()=>els.finish.scrollIntoView({behavior:'smooth',block:'center'}),110);
     return true;
   }
@@ -4267,7 +4353,7 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
   function renderFinish(){
     if(state.stage3x3==='complete'){
       const logged=isLogged()&&!isAdminTestActive();
-      els.finish.innerHTML=`<h4 class="v285-journey-title">本次 3＋3 六張牌已完成</h4><p class="v285-journey-desc">兩組不同牌陣已完成。請在上方選擇<strong>解讀格式及老師風格</strong>，複製完整六張牌提示詞，再交給喜歡的 AI。這次占卜到此完整結束。</p><div class="v285-journey-progress">第一組：${esc(state.question.spread.name)}　＋　第二組：${esc(state.question.advancedSpread?.name||'進階牌陣')}<small>保留原本兩組牌，方便會員取回當時的提示詞及日後回顧。</small></div><div class="v288-member-cta"><strong>✦ 保存這次六張牌的占卜紀錄</strong><p>${logged?'你已登入會員。取得提示詞後會自動嘗試儲存，可至紀錄頁確認。':'免費登入後，可保存題目、六張牌及當時兩份原版提示詞，未來再次提取，並留下 50 字心得。'}</p>${logged?'<a class="v288-member-saved" href="tarot-records.html">我的塔羅占卜紀錄 ↗</a>':'<button type="button" class="v288-member-login" data-member-login>免費登入｜保存六張牌紀錄 →</button>'}</div><div class="finish-actions v285-actions"><button type="button" class="v285-new v2810-new-main ${state.sixPromptCopied?'v2818-six-prompt-copied':''}" data-new-reading>開始另一個全新問題 →</button></div>`;
+      els.finish.innerHTML=`<h4 class="v285-journey-title">本次 3＋3 六張牌已完成</h4><p class="v285-journey-desc">兩組不同牌陣已完成。請在上方選擇<strong>解讀格式及老師風格</strong>，複製完整六張牌提示詞，再交給喜歡的 AI。這次占卜到此完整結束。</p><div class="v285-journey-progress">第一組：${esc(state.question.spread.name)}　＋　第二組：${esc(state.question.advancedSpread?.name||'進階牌陣')}<small>保留原本兩組牌，方便會員取回當時的提示詞及日後回顧。</small></div><div class="v288-member-cta"><strong>✦ 保存這次六張牌的占卜紀錄</strong><p>${logged?'你已登入會員。取得提示詞後會自動嘗試儲存，可至紀錄頁確認。':'免費登入後，可保存題目、六張牌及當時兩份原版提示詞，未來再次提取，並留下 50 字心得。'}</p>${logged?'<a class="v288-member-saved" href="tarot-records.html">我的塔羅占卜紀錄 ↗</a>':'<button type="button" class="v288-member-login" data-member-login>免費登入｜保存六張牌紀錄 →</button>'}</div><div class="finish-actions v285-actions"><button type="button" class="v285-new v2810-new-main ${state.sixPromptCopied?'v2818-six-prompt-copied':''}" data-new-reading><span class="v2819-new-label">開始另一個全新問題 →</span></button></div>`;
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }else{
@@ -4283,7 +4369,7 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
     state.advancedCards=state.bDraft.current.map(c=>({...c}));
     restoreDrawHosts();$('readingZone').hidden=false;
     state.stage3x3='complete';state.followFormOpen=false;
-    renderSixCards();renderFullReading();persist3x3();
+    renderSixCards();renderFullReading();persist3x3();syncNewQuestionUI();
     setTimeout(()=>document.getElementById('tarotSixExtraCards')?.scrollIntoView({behavior:'smooth',block:'start'}),100);
   }
   function beginFollowupDraw(){
@@ -4465,7 +4551,7 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
       if(status)status.textContent=state.stage3x3==='complete'?'六張牌完整提示詞已複製！請前往 AI 解讀，完成後可免費登入保存歷史紀錄。':'提示詞已複製！請先到 AI 完成解讀，記得回來繼續抽牌。';
       if(state.stage3x3==='complete')state.sixPromptCopied=true;
       rememberIssuedPrompt(value);
-      if(state.stage3x3==='complete')renderFinish();
+      if(state.stage3x3==='complete'){renderFinish();syncNewQuestionUI();}
       else setAIGuidanceStage('choose-ai');
     }else{
       if(status)status.textContent=tarotFullPrivilege()?'自動複製未成功，可展開完整提示詞手動複製。':'自動複製未成功，請允許剪貼簿權限後再重試。';
@@ -4690,7 +4776,33 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
     void loadV1PromptPreview();
     renderFinish();applyAIGuidance();syncMemberSaveInvites();if(state.stage3x3!=='complete')persist3x3();return true;
   }
-    function resetToTopic(){clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();showStep('topic');}
+    // V28.19: one restart action for top navigation, restored-progress reminder and bottom buttons.
+  function syncNewQuestionUI(){
+    const btn=$('tarotTopNewQuestion');if(!btn)return;
+    const active=!!state.question && !els.workspace.hidden;
+    btn.hidden=!active;
+    btn.classList.toggle('v2819-six-copied',active&&state.stage3x3==='complete'&&!!state.sixPromptCopied);
+  }
+  function closeResumeNotice(){const notice=$('tarotResumeNotice');if(notice)notice.hidden=true;}
+  function openResumeNotice(){
+    const notice=$('tarotResumeNotice');if(!notice||!state.question||state.current?.length!==3)return;
+    const txt=$('tarotResumeText');
+    if(txt)txt.textContent=state.stage3x3==='complete'
+      ?'六張牌的結果已完整保留。重新整理不會清除；你可以繼續複製提示詞，或開始全新問題。'
+      :'第一輪三張牌已為你保留。重新整理不會重新抽牌；你可以繼續 3＋3，或開始全新問題。';
+    notice.hidden=false;syncNewQuestionUI();
+  }
+  function confirmNewTarotReading(){
+    // This explicit confirmation is the ONLY way these controls clear the saved 3+3 result.
+    const msg=state.stage3x3==='complete'&&!state.sixPromptCopied
+      ?'六張牌提示詞尚未複製。確定放棄這次占卜，改問一個全新問題嗎？'
+      :state.stage3x3!=='complete'&&!state.firstPromptSnapshot
+      ?'這次抽牌提示詞尚未複製。確定放棄目前的牌，重新選擇問題嗎？'
+      :'確定結束目前的牌局，開始一個全新的問題嗎？';
+    if(!window.confirm(msg))return false;
+    resetToTopic();return true;
+  }
+  function resetToTopic(){closeResumeNotice();clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();syncNewQuestionUI();showStep('topic');}
   
   // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
   // 例：tarot.html?topic=love&scenario=single#worldSecond
@@ -4753,9 +4865,7 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
       state.followFormOpen=true;state.followChoice=state.followChoice||'same';renderFinish();persist3x3();return;
     }
     if(e.target.closest('[data-start-follow]')){beginFollowupDraw();return;}
-    if(e.target.closest('[data-new-reading]')){
-      if(confirm('要放棄目前這組牌的接續進度，開始全新的問題嗎？'))resetToTopic();return;
-    }
+    if(e.target.closest('[data-new-reading]')){confirmNewTarotReading();return;}
   });
   els.finish.addEventListener('change',e=>{
     if(e.target.name==='tarot-follow-choice'){if(e.target.value==='related'&&!tarotFullPrivilege()){openGuestNotice('advanced');renderFinish();return;}state.followChoice=e.target.value;renderFinish();persist3x3();}
@@ -4786,6 +4896,10 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
     if(e.target.closest('[data-retry-b]')){completeAdvancedDraw();return;}
     if(e.target.closest('[data-open-b]')){startAdvanced();return;}
   });
+  $('tarotTopNewQuestion')?.addEventListener('click',confirmNewTarotReading);
+  $('tarotResumeNew')?.addEventListener('click',confirmNewTarotReading);
+  $('tarotResumeContinue')?.addEventListener('click',()=>{closeResumeNotice();els.finish?.scrollIntoView({behavior:'smooth',block:'center'});});
+  $('tarotResumeDismiss')?.addEventListener('click',closeResumeNotice);
   $('tarotPaidQuotaMore')?.addEventListener('click',()=>{
     const options=els.analysis.querySelector('[data-consensus-panel]');
     if(options){options.scrollIntoView({behavior:'smooth',block:'center'});return;}
@@ -4860,7 +4974,7 @@ html[data-theme="light"] .tarot-ai-entry .v2818-preview-locked span{color:#9b622
   }else{
     updateMemberUI();tryGoogleAutoSignIn();
     // 正式訪客與會員僅恢復自己的 3＋3 紀錄，測試絕不覆寫此資料。
-    if(!new URLSearchParams(location.search).has('topic')){try{restore3x3()}catch(e){console.warn('3+3 resume skipped',e)}}
+    if(!new URLSearchParams(location.search).has('topic')){try{if(restore3x3())openResumeNotice();}catch(e){console.warn('3+3 resume skipped',e)}}
   }
 
   // SEO 子頁深層導流：例如 tarot-love.html 的「單身桃花」會帶入
