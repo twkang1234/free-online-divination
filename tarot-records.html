@@ -47,7 +47,7 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
 <body>
 <header class="sitebar"><a class="brand" href="tarot.html">✺ 一念知機・塔羅</a><nav class="sitebar-links"><a href="tarot.html" class="top-link">返回抽牌</a><button id="shareSiteButton" class="btn ghost" type="button" title="只分享網站，不包含占卜私人資料">分享好友</button><span id="accountName" class="small"></span><button class="btn ghost" type="button" id="logoutButton" hidden>登出</button></nav></header>
 <main>
-  <div class="eyebrow">MEMBER · TAROT ARCHIVE · V28.12</div>
+  <div class="eyebrow">MEMBER · TAROT ARCHIVE · V28.13</div>
   <h1>我的塔羅占卜紀錄</h1>
   <p class="lead">記住每次的問題與牌面，隨時取回當時真正產生的 AI 提示詞。你也可以留下 50 字心得，設定日後的回顧時間。</p>
   <section id="loginPanel" class="panel" hidden>
@@ -159,12 +159,15 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
     const ok=window.confirm(`確定永久刪除這筆占卜？\n\n「${record.question}」\n\n牌面、原版提示詞、50 字心得及回顧提醒會一併刪除，無法復原。`);
     if(!ok)return;
     try{
-      await api('/member/records/'+record.id,undefined,'DELETE');
+      await api('/member/records/'+record.id+'/delete',{});
       items=items.filter(x=>x.id!==record.id);dueItems=dueItems.filter(x=>x.id!==record.id);
       totalRecords=Math.max(0,totalRecords-1);
       if(selected?.id===record.id){selected=null;$('detailPanel').hidden=true;$('dashboard').hidden=false}
       renderList();message('已刪除這筆占卜紀錄及其保存的資料。');
-    }catch(err){message('刪除未成功：'+err.message,true)}
+    }catch(err){
+      const network=err instanceof TypeError||/Failed to fetch|NetworkError|Load failed/i.test(err.message||'');
+      message(network?'刪除請求未能連上後端，請重新整理確認紀錄是否仍在。若持續發生，請確認已部署新版 tarot-api。':'刪除未成功：'+err.message,true);
+    }
   }
   function renderList(){
     const root=$('recordsList');root.replaceChildren();
