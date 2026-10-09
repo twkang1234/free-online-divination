@@ -1888,7 +1888,18 @@
 .batch-test-entry{grid-column:1/-1;border:2px solid #e0ad58!important;background:linear-gradient(110deg,#3d2b16,#201b29)!important;box-shadow:0 0 0 3px #e0ad5820;text-align:left}.batch-test-entry b{font-size:1.2rem;color:#ffe2a8}.batch-test-entry span{color:#efd8af}.batch-test-panel{margin:20px 0;padding:22px;border:2px solid #e0ad58;border-radius:18px;background:#312719;color:#f7ecd8}.batch-test-tag{display:inline-block;padding:5px 10px;background:#e0ad58;color:#231b10;border-radius:7px;font-weight:800}.batch-test-panel h4{margin:12px 0}.batch-test-panel p{line-height:1.7}.batch-test-panel button{width:100%}.batch-test-panel [role=status]{overflow-wrap:anywhere}
 
 /* V28: 基礎 A 三張牌全免費；隱藏舊版配額、金流及付費介面，程式保留供後續權限改版。 */
-#tarotQuotaPanel,#tarotAccessMini,#tarotMemberButton,#tarotAdminTestBanner{display:none !important}
+#tarotQuotaPanel,#tarotAccessMini,#tarotAdminTestBanner{display:none !important}
+.tarot-records-toplink{display:inline-flex;align-items:center;justify-content:center;padding:7px 11px;min-height:34px;color:#f0c5e8;border:1px solid rgba(230,160,226,.26);background:rgba(202,127,218,.065);border-radius:999px;text-decoration:none;font-size:.7rem;font-weight:750}
+.tarot-records-toplink:hover{background:rgba(202,127,218,.15)}
+.tarot-record-status{margin:10px 0 0;font-size:.73rem;color:#cbbee0;line-height:1.7}
+.tarot-record-status a{color:#efb5ed}
+.tarot-record-invite{margin-top:15px;padding:15px;border-radius:12px;border:1px solid rgba(210,144,223,.24);background:rgba(190,119,202,.06)}
+.tarot-record-invite b{display:block;margin-bottom:4px;color:#ead1ef;font-size:.86rem}
+.tarot-record-invite p{font-size:.74rem;color:#bcacca;line-height:1.8;margin:4px 0 10px}
+.tarot-record-invite .tarot-record-invite-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.tarot-record-invite .tarot-record-invite-actions button,.tarot-record-invite .tarot-record-invite-actions a{font-size:.74rem;padding:9px 13px;border-radius:10px;border:1px solid rgba(239,161,231,.45);color:#f3d8ed;text-decoration:none;background:rgba(206,132,208,.13);cursor:pointer}
+html[data-theme="light"] .tarot-record-invite{background:#fff6ff;border-color:#e0c6e8}html[data-theme="light"] .tarot-record-invite b{color:#54365e}html[data-theme="light"] .tarot-record-invite p{color:#695477}html[data-theme="light"] .tarot-record-status{color:#634e70}
+@media(max-width:520px){.tarot-records-toplink{font-size:.64rem;padding:6px 8px}.tarot-record-invite .tarot-record-invite-actions>a,.tarot-record-invite .tarot-record-invite-actions>button{flex:1}}
 .spread-pick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
 .spread-pick{padding:13px 12px;text-align:left;cursor:pointer;color:#dacee0;background:rgba(255,255,255,.035);border:1px solid rgba(231,94,215,.20);border-radius:13px;min-height:100px}
 .spread-pick b{display:block;font-size:.84rem;line-height:1.5}.spread-pick small{display:block;margin-top:7px;color:#96879e;font-size:.68rem;line-height:1.5}
@@ -2001,6 +2012,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     <div class="topbar-right">
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換顯示模式"><span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">☀</span><span class="theme-toggle-text" id="themeToggleText">淺色</span></button>
       
+      <a class="tarot-records-toplink" href="tarot-records.html" id="tarotRecordsLink">我的塔羅紀錄</a>
       <button class="tarot-member-chip" id="tarotMemberButton" type="button"><span class="tarot-member-dot"></span><span id="tarotMemberButtonText">免費登入</span></button>
       <button class="listing-open" id="openListing" type="button">申請刊登</button>
     </div>
@@ -2170,6 +2182,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
       <button class="tarot-local-login" id="tarotLocalLogin" type="button" hidden>本機預覽｜模擬免費登入</button>
       <div class="tarot-member-profile" id="tarotMemberProfile" hidden>
         <b id="tarotMemberName">會員</b><span id="tarotMemberEmail"></span>
+        <a href="tarot-records.html" class="tarot-records-toplink" style="margin:9px 0">查看我的塔羅紀錄</a>
         <button id="tarotMemberLogout" type="button">登出</button>
       </div>
     </div>
@@ -2745,7 +2758,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   function updateMemberUI(){
     const p=authProfile(),btn=$('tarotMemberButton'),txt=$('tarotMemberButtonText');if(!btn||!txt)return;
     btn.classList.toggle('logged',!!p);
-    txt.textContent=openTesting?(p?'會員':'免費登入'):hasFullPaidAccess()?'完整進階':(p?'免費會員':'免費登入');
+    txt.textContent=p?(p.name||'會員'):'免費登入';
     updateAccessMini();updateQuotaUI();
     const prof=$('tarotMemberProfile');
     if(prof){
@@ -2756,7 +2769,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     const mount=$('tarotGoogleMount');if(mount)mount.hidden=!!p;
     const title=$('tarotMemberTitle'),intro=$('tarotMemberIntro');
     if(title)title.textContent=p?'免費會員':'免費登入';
-    if(intro)intro.textContent=openTesting?'目前功能已開放測試，不需要登入或付款即可使用。':p?'你目前是免費會員；每日免費額度與進階功能仍依網站規則限制。':'免費登入後可解除訪客輪替限制，但完整進階功能仍需額外解鎖。';
+    if(intro)intro.textContent=p?'已登入一念知機會員。完成抽牌並取得 AI 提示詞後，可自動保存到我的塔羅紀錄。':'抽牌和 AI 提示詞免費使用。登入會員可自動保存當次紀錄，日後重新取得原版提示詞並設定回顧提醒。';
   }
   async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})}catch(_){}}
   function renderGoogleButton(){
@@ -2788,6 +2801,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     if(!$('drawModeShell').hidden)applyDrawModeAccess();
     if(!els.analysis.hidden&&state.readerBodies)renderReaderShell();
     if(target)setTimeout(()=>activateReader(target,true),100);
+    syncPendingTarotRecord();
   }
   function logoutMember(){
     if(isAdminTestActive()){simulateAdminMemberLogout();return;}
@@ -3544,7 +3558,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
     const q=state.question,startBtn=$('startReading'),old=startBtn?.textContent;
     try{
       if(startBtn){startBtn.disabled=true;startBtn.textContent='正在準備抽牌方式…';}
-      state.readingId='';state.advancedCards=[];state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();
+      state.archiveRecordId='';state.readingId='';state.advancedCards=[];state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite('divinationhub-tarot-reading-v24',null);$('tarotAdvancedResult')?.remove();
       state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;
       state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.singleReadingHTML='';state.followupOptions=[];
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
@@ -3610,6 +3624,49 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
 五、決策前的自我核對：提出三個貼近此題的具體問題，協助讀者對照自身經驗；區分牌面提示與現實證據，不把占卜代替重大決策。
 最後、直接回答原問題：用 1～2 段綜合三張牌，提出有方向、有條件的建議與下一步，清楚說明什麼情況下值得採取或暫緩行動；完整結論放在全文最後。`
   };
+  // V28.4: member archive. Nothing is sent unless a prompt was actually
+  // copied/downloaded. Anonymous visitors may continue using tarot for free.
+  const TAROT_RECORD_PENDING='divinationhub-tarot-pending-record-v1';
+  function activeTarotRecord(prompt){
+    if(!prompt||!state.question||state.current?.length!==3)return null;
+    if(!state.archiveRecordId)state.archiveRecordId=(window.crypto?.randomUUID?.()||('00000000-0000-4000-8000-'+Math.random().toString(16).slice(2).padEnd(12,'0')));
+    return {id:state.archiveRecordId,stage:3,topic:state.topic?.name||'自由提問',scenario:state.scenario?.name||'自行提問',question:state.question.text,
+      firstSpread:(state.question.spread?.positions||SPREAD_OPTIONS[state.spreadChoice]?.positions||[]).join('／'),
+      secondSpread:'',followupMode:'',followupQuestion:'',
+      format:selectedPromptFormat,style:PROMPT_STYLES[selectedPromptStyle]?.name||'溫和陪伴',
+      cards:state.current.map((c,i)=>({name:c.name,position:c.position||`第${i+1}張`,reversed:!!c.reversed})),
+      prompt3:prompt,prompt6:''};
+  }
+  function archiveNotice(text){
+    const el=els.analysis.querySelector('[data-record-status]');if(el)el.textContent=text;
+  }
+  async function submitTarotRecord(record){
+    const token=authToken();if(!token||isAdminTestActive()||location.protocol==='file:')return false;
+    const response=await fetch(TAROT_API_BASE+'/member/records',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({record}),cache:'no-store'});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||!data.ok)throw Error(data.error||'SAVE_FAILED');
+    const queued=safeRead(TAROT_RECORD_PENDING,null);
+    if(queued?.record?.id===record.id){try{localStorage.removeItem(TAROT_RECORD_PENDING)}catch(_){}}
+    archiveNotice('✓ 已保存會員紀錄。你可以在「我的塔羅紀錄」重新複製或下載當時的提示詞。');
+    return true;
+  }
+  async function syncPendingTarotRecord(){
+    const saved=safeRead(TAROT_RECORD_PENDING,null);
+    if(!saved?.record||!saved.at||Date.now()-saved.at>7*86400000||!authToken()||isAdminTestActive())return;
+    if(saved.ownerHint&&saved.ownerHint!==String(authProfile()?.email||'').toLowerCase())return;
+    try{await submitTarotRecord(saved.record)}
+    catch(err){archiveNotice('尚未成功同步會員紀錄（'+String(err.message).slice(0,55)+'），請稍後重試或重新複製提示詞。')}
+  }
+  function rememberIssuedPrompt(prompt){
+    const record=activeTarotRecord(prompt);if(!record)return;
+    safeWrite(TAROT_RECORD_PENDING,{record,at:Date.now(),ownerHint:authProfile()?.email?.toLowerCase()||''});
+    if(authToken()&&!isAdminTestActive()){
+      archiveNotice('正在將本次占卜保存到會員紀錄……');
+      submitTarotRecord(record).catch(err=>archiveNotice('會員紀錄尚未保存成功（'+String(err.message).slice(0,55)+'），可以稍後再試。'));
+    }else{
+      archiveNotice('提示詞已備妥。免費登入會員即可自動保存本次題目、三張牌和完整提示詞。');
+    }
+  }
   function buildAIPrompt(){
     if(!state.question||state.current?.length!==3)return '';
     const format=PROMPT_FORMATS[selectedPromptFormat]||PROMPT_FORMATS.A;
@@ -3663,7 +3720,8 @@ ${COMMON_PROMPT_RULES}`;
     }catch(err){success=false;}
     if(success){
       if(btn)btn.textContent='✓ 提示詞已複製';
-      if(status)status.textContent='提示詞已複製！請選擇下方 AI 平台，貼上即可開始解讀。';
+      if(status)status.textContent='提示詞已複製！請先到 AI 完成解讀，記得回來繼續抽牌。';
+      rememberIssuedPrompt(value);
     }else{
       if(status)status.textContent='自動複製沒有成功，請展開完整提示詞，長按或選取文字後手動複製。';
       els.analysis.querySelector('.tarot-ai-entry details')?.setAttribute('open','');
@@ -3717,7 +3775,8 @@ ${COMMON_PROMPT_RULES}`;
     const blob=new Blob(['\ufeff'+prompt],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=`tarot-ai-prompt-${selectedPromptFormat}-${selectedPromptStyle}-${safeFileStamp()}.txt`;
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
-    const status=els.analysis.querySelector('[data-ai-copy-status]');if(status)status.textContent='已下載完整提示詞 TXT；也可以選擇下方 AI 平台貼上使用。';
+    const status=els.analysis.querySelector('[data-ai-copy-status]');if(status)status.textContent='已下載完整提示詞 TXT，記得完成 AI 解讀後回來繼續探索。';
+    rememberIssuedPrompt(prompt);
   }
   function buildAIPromptAccessHTML(full){
     if(!full){
@@ -3871,7 +3930,7 @@ ${COMMON_PROMPT_RULES}`;
       <div class="tarot-prompt-choices"><div class="tarot-prompt-label">① 解讀格式 <span>選一種報告架構</span></div><div class="tarot-prompt-format-grid" role="group" aria-label="選擇 AI 解讀格式">${formatButtons}</div><p class="tarot-prompt-hint" data-format-hint>${esc(PROMPT_FORMATS[selectedPromptFormat].hint)}</p>
       <label class="tarot-prompt-label" for="tarotPromptStyle">② 老師風格 <span>每次只選一種</span></label><select id="tarotPromptStyle" class="tarot-prompt-style" data-prompt-style aria-label="選擇 AI 解讀風格">${styleOptions}</select><p class="tarot-prompt-hint" data-style-hint>${esc(PROMPT_STYLES[selectedPromptStyle].hint)}</p></div>
       <div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><button type="button" class="tarot-prompt-download" data-ai-prompt-txt>↓ 下載提示詞 TXT</button></div>
-      <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">選好格式與風格後，可複製或下載同一份完整提示詞。</p>
+      <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">選好格式與風格後，可複製或下載同一份完整提示詞。</p><div class="tarot-record-invite"><b>✦ 保存這次的塔羅占卜</b><p>免費登入會員即可保存當時的問題、三張牌與原版 AI 提示詞。未來可在專屬紀錄頁再次複製、下載，並設定三個月後回顧。</p><div class="tarot-record-invite-actions"><button type="button" data-member-login>免費登入保存</button><a href="tarot-records.html">我的塔羅占卜紀錄 ↗</a></div><p data-record-status class="tarot-record-status" role="status" aria-live="polite">完成複製或 TXT 下載後，將準備保存本次紀錄。</p></div>
       <details><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt)}</pre></details><h4 style="font-size:.87rem;margin:14px 0 2px">取得提示詞後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">各平台均為外部服務，使用者自行貼上提示詞；切換解讀格式或風格不需要重新抽牌。</p></section>`;
     renderFinish();return true;
   }
