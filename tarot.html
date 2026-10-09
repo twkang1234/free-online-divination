@@ -1921,6 +1921,33 @@ html[data-theme="light"] .tarot-ai-entry summary,html[data-theme="light"] .ai-pr
 html[data-theme="light"] .tarot-ai-entry pre{color:#473a50;background:#faf7fc}
 html[data-theme="light"] .ai-provider-grid a{background:#fcf8ff;border-color:#e1cee6}
 @media(max-width:670px){.spread-pick-grid{grid-template-columns:1fr}.spread-pick{min-height:auto}.ai-provider-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* V28.3：三種報告格式 × 五種單選風格；保留舊版抽牌介面。 */
+.tarot-prompt-choices{margin:18px 0 16px;padding:16px;border-radius:14px;border:1px solid rgba(226,174,229,.18);background:rgba(18,12,32,.37)}
+.tarot-prompt-label{display:block;color:#f1e0f3;font-size:.86rem;font-weight:850;line-height:1.6;margin:0 0 10px}
+.tarot-prompt-label span{margin-left:7px;font-size:.7rem;font-weight:500;color:#b9aac4}
+.tarot-prompt-format-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.tarot-prompt-format{min-height:92px;display:flex;flex-direction:column;gap:6px;text-align:left;padding:12px 11px;border-radius:11px;cursor:pointer;border:1px solid rgba(177,152,194,.32);color:#e1d2e9;background:rgba(255,255,255,.035);font-family:inherit}
+.tarot-prompt-format b{font-size:.77rem;line-height:1.5;color:inherit}.tarot-prompt-format small{font-size:.66rem;line-height:1.55;color:#b6a7c2}
+.tarot-prompt-format.is-selected{border-color:#ef9adc;background:rgba(212,107,208,.2);box-shadow:inset 0 0 0 1px rgba(235,150,230,.28)}
+.tarot-prompt-format:focus-visible,.tarot-prompt-style:focus-visible,.tarot-prompt-download:focus-visible{outline:2px solid #ffd0f1;outline-offset:2px}
+.tarot-prompt-choices .tarot-prompt-hint{font-size:.72rem;margin:8px 0 16px;color:#bbb0c7;line-height:1.65}
+.tarot-prompt-style{width:100%;padding:11px 12px;border-radius:10px;border:1px solid rgba(177,152,194,.42);background:#20172f;color:#f1e0f3;font:inherit;font-size:.84rem}
+.tarot-prompt-style option{background:#20172f;color:#f1e0f3}
+.tarot-prompt-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.tarot-prompt-actions button{width:100%;min-height:49px;line-height:1.5}
+.tarot-prompt-download{padding:11px 13px;border:1px solid rgba(222,183,244,.56);border-radius:12px;background:rgba(173,133,215,.12);color:#e8cff6;font-size:.85rem;font-weight:800;cursor:pointer}
+.tarot-prompt-download:hover{background:rgba(173,133,215,.23)}
+html[data-theme="light"] .tarot-prompt-choices{background:#fcf8fd;border-color:#e5d0e9}
+html[data-theme="light"] .tarot-prompt-label{color:#47344d}
+html[data-theme="light"] .tarot-prompt-label span,html[data-theme="light"] .tarot-prompt-choices .tarot-prompt-hint{color:#6e5c76}
+html[data-theme="light"] .tarot-prompt-format{color:#514057;background:#fff;border-color:#ddc8df}
+html[data-theme="light"] .tarot-prompt-format small{color:#6f6075}
+html[data-theme="light"] .tarot-prompt-format.is-selected{background:#fce5f8;border-color:#c378b7}
+html[data-theme="light"] .tarot-prompt-style{background:#fff;color:#4b3a54;border-color:#d2b8d7}
+html[data-theme="light"] .tarot-prompt-style option{background:#fff;color:#4b3a54}
+html[data-theme="light"] .tarot-prompt-download{background:#fbf3ff;color:#553269;border-color:#c2a3cc}
+@media(max-width:670px){.tarot-prompt-choices{padding:13px}.tarot-prompt-format-grid{grid-template-columns:1fr}.tarot-prompt-format{min-height:0;gap:2px}.tarot-prompt-actions{grid-template-columns:1fr}}
+
 </style>
 <style>
 .ab-paid-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
@@ -2014,7 +2041,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
         <h2 class="tarot-stage-title">引導式塔羅占卜</h2>
         <p class="tarot-stage-desc">選題目、挑選三張牌陣、用喜歡的方式抽牌；複製提示詞後，再由你選擇的 AI 進行完整解讀。</p>
       </div>
-      <div class="tarot-engine-chip"><i></i><span>AI 提示詞版 V28.1 · 78 CARDS · 3-CARD SPREAD</span></div>
+      <div class="tarot-engine-chip"><i></i><span>AI 提示詞版 V28.3 · 78 CARDS · 3-CARD SPREAD</span></div>
     </header>
 
     <section class="guided-shell" aria-label="引導式塔羅占卜">
@@ -2064,7 +2091,7 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
       </div>
 
       <div class="reading-workspace" id="readingWorkspace" hidden>
-        <div class="reading-topline"><div><span id="readingPath">—</span><h3 id="readingQuestion">—</h3></div><div class="reader-seal">✦ AI 提示詞 · V28.1</div></div>
+        <div class="reading-topline"><div><span id="readingPath">—</span><h3 id="readingQuestion">—</h3></div><div class="reader-seal">✦ AI 提示詞 · V28.3</div></div>
         <div class="spread-info guided-spread-info"><div class="spread-symbol">✺</div><div><strong id="spreadName">—</strong><p id="spreadDesc">—</p></div><div class="deck-count"><span id="deckCount">78</span> CARDS</div></div>
 
         <section class="draw-mode-shell" id="drawModeShell">
@@ -3533,31 +3560,96 @@ html[data-theme="light"] .tarot-pro-body{color:#665762}
   function revealAll(){els.cards.querySelectorAll('.tarot-card').forEach((w,i)=>{const h=w.parentElement.querySelector('.reveal-hint');revealCard(i,w,h);});}
   function renderMeanings(){els.interp.innerHTML=state.current.map((c,i)=>state.revealed.has(i)?`<details class="meaning-card tarot-pro-details"><summary>第 ${i+1} 張｜${esc(c.name)}：基礎牌義（選讀）</summary><div class="tarot-pro-body"><div class="meaning-index">${String(i+1).padStart(2,'0')} // ${esc(c.position)}</div><h3>${esc(c.name)}</h3><div class="ori">${c.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div><p>${esc(c.meaning)}</p></div></details>`:'').join('');els.interp.classList.toggle('show',state.revealed.size>0);}
   
+  // V28.3：解讀格式（報告架構）與老師風格（敘事口吻）分開選擇。
+  // 注意：此處 A/B/C 為「AI 解讀格式」，不是 A/B/C 抽牌階段。
+  const PROMPT_FORMATS={
+    A:{name:'專業深度解讀',short:'舊版經典完整報告',hint:'逐張深入分析、三牌整合、多角度洞察、生活建議，最後才給結論。'},
+    B:{name:'事件脈絡與發展推演',short:'聚焦演變與轉折',hint:'把三張牌串成事件脈絡，分析轉折與條件、可能走向及觀察訊號。'},
+    C:{name:'問題拆解與行動策略',short:'聚焦選擇與下一步',hint:'釐清問題根源、有利與不利因素、選擇取捨及可實行的行動方案。'}
+  };
+  const PROMPT_STYLES={
+    warm:{name:'溫和陪伴',hint:'親切、有耐心、細膩而有溫度，像經驗豐富的真人塔羅老師面對面說明；不過度安慰，也不迴避困難事實。'},
+    mentor:{name:'心靈導師',hint:'重視內在需求、自我覺察與成長課題，以溫暖而不說教的提問，引導讀者理解自己與關係。'},
+    direct:{name:'直白犀利',hint:'清楚、直接、不粉飾問題，直指矛盾與不合理期待；不得冷嘲熱諷、羞辱讀者或把不確定的猜測說成事實。'},
+    logical:{name:'理性分析',hint:'條理清晰，重視可核對的事實、因果關係、替代解釋、判斷條件和具體步驟；塔羅象徵不當成客觀證據。'},
+    mystic:{name:'神秘儀式感',hint:'用塔羅象徵、牌面意象與富有氛圍的敘事增加儀式感，但語句仍要白話、具體；不得聲稱神諭、命定或必然預知。'}
+  };
+  let selectedPromptFormat='A',selectedPromptStyle='warm';
+  const COMMON_PROMPT_RULES=`【文字與品質標準】
+- 全篇以繁體中文撰寫，讀者是不懂塔羅的一般人；使用自然、清楚、有生活畫面的白話，不把抽象玄學名詞直接丟給讀者。
+- 整體目標約 3,000～3,600 個中文字，以實際洞察的深度為優先，不為湊字數反覆說同一件事；每段帶來新理解。
+- 必須綜合原問題、情境、三個牌位、正逆位和前後牌的關係；關鍵字僅供參考，不限制你的專業知識，禁止只重述關鍵字或三張各說各話。
+- 請維持本次實際抽出的牌和牌位，不能換牌、不能重新抽牌，也不能臆造使用者經歷、第三者、對方內心想法或已發生的故事。
+- 可以舉貼近日常的例子，但必須明確標示「例如／假設／可能的情況」，不能把例子當作已知事實；若牌義有不同讀法，要說明成立條件。
+- 不給無根據的精準機率或預言；對未來只談可能趨勢。涉及感情、工作、健康、法律、財務等重大問題時，應提醒以可核對的現實資訊決策。
+- 不要在文章一開頭宣布最終答案；先帶領讀者逐層理解，將「直接回答原問題的完整結論」放在全文最後。
+- 避免贅述格式規則、模型身分或說教式免責聲明；保持讀者真正得到專業而有溫度的解讀。`;
+  const FORMAT_INSTRUCTIONS={
+    A:`【解讀格式 A｜專業深度解讀：請依以下順序】
+開場：用 1～2 段帶出本次牌面的核心矛盾或值得留意的訊號，像老師坐在面前對話；先引導讀者看問題，不要提前揭曉最後結論。
+一、逐張牌深入解讀：依牌位逐張解釋，每張約 300～450 個中文字。先說這張牌在「這個問題」代表什麼，再解釋正逆位、牌位與前後牌如何改變其意義；每張至少給一個明確標成假設的貼近日常例子，並指出常見誤判，不可重複堆疊牌義。
+二、把三張牌串成完整故事：用 3～4 段連結三牌形成的脈絡、衝突、轉折與條件性走向，找出因果及互相影響，不能只是換句話說重複逐張解讀。若牌陣不是時間牌位（如「你／對方／關係」），按實際牌位說明關係，不硬編時間順序。
+三、從三個角度看清楚：分成「內在視角」「理性證據視角」「行動策略視角」，各提出一個新的洞察與現實核對方式，不能重複前面的故事。
+四、給三個具體建議：每個有易懂的小標題、可立刻嘗試的生活做法，以及「可以觀察什麼、怎麼判斷有沒有改善」。建議必須呼應本次牌面，不做空泛勵志。
+五、老師的提醒：用 1～2 段溫暖、具體的話提醒讀者最容易忽略的關鍵與判斷界線，但先不做最終定論。
+最後、直接回答我的原問題：清楚整合三張牌，用 1～2 段給出有方向、但不武斷的完整結論；必要時區分看似相同但實質不同的狀態。將這一節放在全文最後。`,
+    B:`【解讀格式 B｜事件脈絡與發展推演：請依以下順序】
+開場：用 1～2 段指出牌面呈現的「局勢線索」與待釐清的關鍵轉折，不要直接預言結果或先給結論。
+一、三張牌各自提供什麼線索：按照原牌位深入解釋每張約 300～450 個中文字，特別指出它反映的事件條件、推力或阻力，以及牌義可能的不同讀法；每張至少一個標示為假設的生活場景。
+二、事件如何形成、如何轉折：用 4～5 段把三牌的作用連接成一段真正有前因後果的推演，交代起點、當前關鍵、轉折觸發條件及影響，而不是把三張牌的個別解釋再重複一次。若牌位是「你／對方／關係」等非時間牌陣，應推演互動關係的動態，不將牌位硬套成過去／現在／未來。
+三、兩到三條可能走向：分別說明「若維持現況」「若關鍵因素改善」「若阻力加重」等實際適用的條件性分支；每條交代觸發因素、合理後果及不確定處，不捏造具體事件、日期與機率。
+四、最該留意的轉折訊號：整理三到四個使用者在現實中能觀察或核對的跡象，說明各訊號代表怎樣的變化、什麼事情仍不能僅靠牌來判定。
+五、怎樣回應局勢：提供三個優先順序明確的行動與備案，解釋何時應等待、何時能推進、哪些風險需要防備；避免只是情緒安慰。
+最後、回到原問題的完整判斷：把牌面最重要的事件脈絡、轉折條件與可能發展整合成 1～2 段清晰的結論，放在全文最後。`,
+    C:`【解讀格式 C｜問題拆解與行動策略：請依以下順序】
+開場：用 1～2 段釐清使用者在這個問題上真正需要做的判斷、面對的取捨，不先給結論。
+一、逐張看問題的不同層次：每張約 300～450 個中文字，依照實際牌位分析其代表的困難、有利條件、盲點或行動機會；交代正逆位與前後牌如何改變判讀，並以標示為假設的生活例子幫助理解。
+二、找出最重要的核心問題：把三張牌整合，區分「表面現象」「真正阻礙」「可以控制的部分」「無法直接控制的部分」，指出關聯與可能誤判，不要各張牌獨立下結論。
+三、比較可行的選擇與取捨：根據原問題，分析兩到三種現實中可能的做法（例如繼續、調整、暫停）；每個選擇都要列出適用條件、潛在代價、風險及哪些事尚需查證，不能憑空認定必有某個人或事件。
+四、擬定具體行動策略：提出「現在就能做」「接下來需要觀察」「如果出現警訊如何調整」三個層次；每層至少給一項具體做法、觀察指標與檢查成效的方法，避免抽象口號。
+五、決策前的自我核對：提出三個貼近此題的具體問題，協助讀者對照自身經驗；區分牌面提示與現實證據，不把占卜代替重大決策。
+最後、直接回答原問題：用 1～2 段綜合三張牌，提出有方向、有條件的建議與下一步，清楚說明什麼情況下值得採取或暫緩行動；完整結論放在全文最後。`
+  };
   function buildAIPrompt(){
     if(!state.question||state.current?.length!==3)return '';
+    const format=PROMPT_FORMATS[selectedPromptFormat]||PROMPT_FORMATS.A;
+    const style=PROMPT_STYLES[selectedPromptStyle]||PROMPT_STYLES.warm;
     const cards=state.current.map((c,i)=>{
       const orientation=c.reversed?'逆位':'正位',terms=AI_KEYWORDS[c.name]?.[orientation];
       return `${c.position||SPREAD_OPTIONS[state.spreadChoice]?.positions[i]||`第${i+1}張`}：${c.name}（${orientation}）｜關鍵字：${terms?terms.join('、'):'請依傳統塔羅牌義判讀'}`;
     }).join('\n');
     return `【角色設定】
-你是一位經驗豐富、親切而不武斷的專業塔羅解讀師，請使用自然、易懂的繁體中文，對不熟悉塔羅的一般人解說。
+請用繁體中文，扮演有多年經驗、判讀細膩但不武斷的真人塔羅老師；讀者是不懂塔羅的一般人，不是學牌義的學生。
+
+【這次選擇的解讀風格｜${style.name}】
+${style.hint}
+這只是說話語氣與敘事側重；不降低解讀深度、不改變牌義、牌位或原問題。
 
 【占卜背景】
-主題：${state.topic.name}
-目前情境：${state.scenario.name}
+主題：${state.topic?.name||'自由提問'}
+目前情境：${state.scenario?.name||'自行提問'}
 使用者問題：${state.question.text}
 牌陣：三張牌（${state.question.spread.positions.join('／')}）
 
 【牌面資訊】
 ${cards}
 
-【解讀要求】
-1. 依照實際問題、三個牌位、牌名與正逆位，逐張解釋每張牌在此問題中的意義；不重新抽牌、不任意更換牌位。
-2. 上述關鍵字只是基本參考，請運用你的塔羅專業知識延伸，不必受限於關鍵字，也不要只是把關鍵字重述一次。
-3. 整合三張牌之間的呼應、差異與發展脈絡，針對原問題提出有條件的觀察與實際建議。
-4. 使用親切自然的白話，讓沒有塔羅背景的人也看得懂；可以提出可能情境，但不可虛構已發生的人物、事件或對方的真實心意。
-5. 對未來或他人的想法只做可能性分析，不預言必然結果，不捏造精確機率；涉及重大感情、工作或財務決定時，提醒核對現實資訊。
-6. 先逐張解讀，再整合牌面與提出建議；最後才直接回應使用者的原問題，給出整體結論，不要一開始就下結論。`;
+${FORMAT_INSTRUCTIONS[selectedPromptFormat]||FORMAT_INSTRUCTIONS.A}
+
+${COMMON_PROMPT_RULES}`;
+  }
+  function refreshAIPromptSelection(){
+    const panel=els.analysis.querySelector('.tarot-ai-entry');if(!panel)return;
+    panel.querySelectorAll('[data-prompt-format]').forEach(btn=>{
+      const active=btn.dataset.promptFormat===selectedPromptFormat;
+      btn.classList.toggle('is-selected',active);btn.setAttribute('aria-pressed',String(active));
+    });
+    const styleSel=panel.querySelector('[data-prompt-style]');if(styleSel)styleSel.value=selectedPromptStyle;
+    const formatHint=panel.querySelector('[data-format-hint]');if(formatHint)formatHint.textContent=PROMPT_FORMATS[selectedPromptFormat].hint;
+    const styleHint=panel.querySelector('[data-style-hint]');if(styleHint)styleHint.textContent=PROMPT_STYLES[selectedPromptStyle].hint;
+    const preview=panel.querySelector('[data-ai-prompt-content]');if(preview)preview.textContent=buildAIPrompt();
+    const copyBtn=panel.querySelector('[data-ai-prompt-copy]');if(copyBtn)copyBtn.textContent='獲得並複製提示詞';
+    const status=panel.querySelector('[data-ai-copy-status]');if(status)status.textContent='已更新提示詞設定，請重新複製或下載。';
   }
   async function copyAIPrompt(btn){
     const value=buildAIPrompt(),status=els.analysis.querySelector('[data-ai-copy-status]');
@@ -3619,10 +3711,13 @@ ${cards}
     const blob=new Blob(['\ufeff'+buildArchiveText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=`tarot-reading-v27-${state.fixedCaseId?'fixed-reunion-':''}${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
   }
+  // 免費的基礎三張牌提示詞；複製、預覽與 TXT 下載共用 buildAIPrompt()。
   function downloadAIPrompt(){
-    if(!hasFullPaidAccess()||!state.current?.length||!state.readerBodies)return;
-    const blob=new Blob(['\ufeff'+buildAIPrompt()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download=`tarot-ai-prompt-v27-${state.fixedCaseId?'fixed-reunion-':''}${safeFileStamp()}.txt`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+    const prompt=buildAIPrompt();if(!prompt)return;
+    const blob=new Blob(['\ufeff'+prompt],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=`tarot-ai-prompt-${selectedPromptFormat}-${selectedPromptStyle}-${safeFileStamp()}.txt`;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);
+    const status=els.analysis.querySelector('[data-ai-copy-status]');if(status)status.textContent='已下載完整提示詞 TXT；也可以選擇下方 AI 平台貼上使用。';
   }
   function buildAIPromptAccessHTML(full){
     if(!full){
@@ -3770,7 +3865,14 @@ ${cards}
     els.analysis.hidden=false;
     const prompt=buildAIPrompt();
     const providers=[['ChatGPT','https://chatgpt.com/'],['Gemini','https://gemini.google.com/'],['Claude','https://claude.ai/'],['DeepSeek','https://chat.deepseek.com/']];
-    els.analysis.innerHTML=`<section class="tarot-ai-entry"><div class="analysis-kicker">A · FREE · THREE CARDS</div><h3>三張牌已完成｜取得 AI 解牌提示詞</h3><p>網站不預先替你解讀結論。請複製這份依原問題與三張牌整理的提示詞，再選擇你慣用的 AI 進行深入解讀。</p><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">按下按鈕會複製完整提示詞。</p><details><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt)}</pre></details><h4 style="font-size:.87rem;margin:14px 0 2px">複製後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">以上平台為外部服務，使用者自行貼上提示詞，實際解讀與使用限制依各平台規定。</p></section>`;
+    const formatButtons=Object.entries(PROMPT_FORMATS).map(([key,val])=>`<button type="button" class="tarot-prompt-format${key===selectedPromptFormat?' is-selected':''}" data-prompt-format="${key}" aria-pressed="${key===selectedPromptFormat}" aria-label="解讀格式 ${key}：${esc(val.name)}"><b>${key}｜${esc(val.name)}</b><small>${esc(val.short)}</small></button>`).join('');
+    const styleOptions=Object.entries(PROMPT_STYLES).map(([key,val])=>`<option value="${key}"${key===selectedPromptStyle?' selected':''}>${esc(val.name)}${key==='warm'?'（預設）':''}</option>`).join('');
+    els.analysis.innerHTML=`<section class="tarot-ai-entry"><div class="analysis-kicker">FREE · THREE CARDS · AI PROMPT</div><h3>三張牌已完成｜選擇你的 AI 解讀方式</h3><p>三張牌不變，你可以切換解讀格式與老師風格，產生不同的專屬提示詞，再交給自己選擇的 AI 深入解讀。</p>
+      <div class="tarot-prompt-choices"><div class="tarot-prompt-label">① 解讀格式 <span>選一種報告架構</span></div><div class="tarot-prompt-format-grid" role="group" aria-label="選擇 AI 解讀格式">${formatButtons}</div><p class="tarot-prompt-hint" data-format-hint>${esc(PROMPT_FORMATS[selectedPromptFormat].hint)}</p>
+      <label class="tarot-prompt-label" for="tarotPromptStyle">② 老師風格 <span>每次只選一種</span></label><select id="tarotPromptStyle" class="tarot-prompt-style" data-prompt-style aria-label="選擇 AI 解讀風格">${styleOptions}</select><p class="tarot-prompt-hint" data-style-hint>${esc(PROMPT_STYLES[selectedPromptStyle].hint)}</p></div>
+      <div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><button type="button" class="tarot-prompt-download" data-ai-prompt-txt>↓ 下載提示詞 TXT</button></div>
+      <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">選好格式與風格後，可複製或下載同一份完整提示詞。</p>
+      <details><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt)}</pre></details><h4 style="font-size:.87rem;margin:14px 0 2px">取得提示詞後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">各平台均為外部服務，使用者自行貼上提示詞；切換解讀格式或風格不需要重新抽牌。</p></section>`;
     renderFinish();return true;
   }
     function renderFinish(){
@@ -3821,10 +3923,17 @@ ${cards}
     beginDrawMode(b.dataset.drawMode);
   });
   els.follow.addEventListener('click',e=>{const b=e.target.closest('[data-followup]');if(b){$('tarotFollowupQuestion').value=state.followupOptions[Number(b.dataset.followup)]?.text||'';return;}if(e.target.closest('[data-submit-followup]'))followup();});
+  els.analysis.addEventListener('change',e=>{
+    if(e.target.matches('[data-prompt-style]')&&PROMPT_STYLES[e.target.value]){
+      selectedPromptStyle=e.target.value;refreshAIPromptSelection();
+    }
+  });
   els.finish.addEventListener('click',e=>{if(e.target.closest('[data-repeat-draw]')){drawReading();return;}if(e.target.closest('[data-new-reading]'))resetToTopic();});
   document.addEventListener('click',e=>{
     const batch=e.target.closest('[data-download-batch]');if(batch){downloadSameCards26(batch);return;}
     const sameCase=e.target.closest('[data-run-fixed-case]');if(sameCase){runFixedCase20(sameCase);return;}
+    const promptFormat=e.target.closest('[data-prompt-format]');
+    if(promptFormat&&PROMPT_FORMATS[promptFormat.dataset.promptFormat]){selectedPromptFormat=promptFormat.dataset.promptFormat;refreshAIPromptSelection();return;}
     const promptCopy=e.target.closest('[data-ai-prompt-copy]');if(promptCopy){copyAIPrompt(promptCopy);return;}
     const promptTxt=e.target.closest('[data-ai-prompt-txt]');if(promptTxt){downloadAIPrompt();return;}
     const b=e.target.closest('[data-copy-ai-prompt]');if(b){copyAIPrompt(b);return;}
