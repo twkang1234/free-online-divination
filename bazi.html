@@ -2288,6 +2288,24 @@ html[data-theme="light"] .daily-flow-score-guide .neutral{color:#85551c}
 html[data-theme="light"] .daily-flow-score-guide .caution{color:#a23542}
 html[data-theme="light"] .daily-flow-help-panel .daily-flow-help-note{color:#52657b;border-top-color:#ccdce2}
 @media(max-width:600px){.daily-flow-profile{gap:6px}.daily-flow-help{font-size:11px}.daily-flow-energy{flex-wrap:wrap;gap:6px}.daily-flow-energy>span{white-space:nowrap;flex-shrink:0}.daily-flow-energy b{font-size:17px;letter-spacing:1px;white-space:nowrap}.daily-flow-help-panel{padding:12px;width:330px;max-width:calc(100vw - 88px)}.daily-flow-score-guide>div{grid-template-columns:78px minmax(0,1fr)}.daily-flow-score-guide p{font-size:12px}}
+
+/* V4.4 曆日與工具入口：填入既有日期與宜忌標題留白。 */
+.daily-flow-date>.daily-flow-date-top{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;letter-spacing:2px}
+.daily-flow-date-top>span:first-child{flex-shrink:0}
+.daily-flow-date-top>.daily-flow-calendar{font-size:12px;letter-spacing:0;color:#a9c9d4;line-height:1.3;text-align:right}
+.daily-flow-advice-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.daily-flow-advice-head h4{margin:0;flex-shrink:0}
+.daily-flow-tool{display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:0;width:72%;box-sizing:border-box;padding:4px 12px;border:1px solid #534562;border-radius:7px;background:#221c30;color:#d6c3ef;font-size:13px;line-height:1.5;text-decoration:none;white-space:nowrap}
+.daily-flow-tool b{font-size:13px;color:inherit;flex-shrink:0}
+.daily-flow-tool-yijing{border-color:#315a66;background:#132a33;color:#9ddde4}
+.daily-flow-tool:hover{filter:brightness(1.16);border-color:currentColor}
+.daily-flow-tool:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+html[data-theme="light"] .daily-flow-date-top>.daily-flow-calendar{color:#365c70}
+html[data-theme="light"] .daily-flow-tool-tarot{background:#eee5f6;border-color:#c0a2d5;color:#623886}
+html[data-theme="light"] .daily-flow-tool-yijing{background:#dfefef;border-color:#8fbfc6;color:#155b6c}
+@media(max-width:1100px){.daily-flow-tool{gap:8px;width:auto;padding:4px 7px}.daily-flow-tool,.daily-flow-tool b{font-size:12px}}
+@media(max-width:600px){.daily-flow-date>.daily-flow-date-top{position:relative}.daily-flow-date-top>.daily-flow-calendar{position:absolute;right:0;top:29px;max-width:155px;font-size:10px;transform:translateY(68px);white-space:nowrap}.daily-flow-date{position:relative;padding-bottom:16px}.daily-flow-advice-head{gap:6px}.daily-flow-advice-head h4{font-size:18px}.daily-flow-tool{gap:6px;padding:3px 6px}.daily-flow-tool,.daily-flow-tool b{font-size:11px}}
+@media(max-width:380px){.daily-flow-date-top>.daily-flow-calendar{transform:translateY(56px)}.daily-flow-tool{gap:4px;padding:3px 4px}.daily-flow-tool,.daily-flow-tool b{font-size:10px}}
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -5207,6 +5225,14 @@ ${source}
     const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date||''));
     return m?`${m[1]}年${Number(m[2])}月${Number(m[3])}日`:'日期更新中';
   }
+  function dailyCalendarLabel(date){
+    try{
+      const [y,m,d]=date.split('-').map(Number);
+      const lunar=Solar.fromYmd(y,m,d).getLunar();
+      const current=lunar.getJieQi()||lunar.getPrevJieQi(true)?.getName();
+      return `農曆${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}${current?'｜'+current+(lunar.getJieQi()?'':'時節'):''}`;
+    }catch(_){return '';}
+  }
   function renderDailyFlowView(){
     const mount=$('dailyFlowContent');if(!mount)return;
     const day=dailyFlowState.day,full=dailyFullAccess(day),member=!!baziAuthProfile();
@@ -5223,7 +5249,7 @@ ${source}
     const stars=clampDailyStars(overview.stars);
     const dateParts=date.split('-');
     const weekday='星期'+['日','一','二','三','四','五','六'][new Date(date+'T12:00:00Z').getUTCDay()];
-    const bigDate=`<time class="daily-flow-date" datetime="${esc(date)}" aria-label="${esc(dailyDateLabel(date)+' '+weekday)}"><span>${Number(dateParts[1])}月</span><div><strong>${Number(dateParts[2])}</strong><small>日</small><em>${esc(weekday)}</em></div></time>`;
+    const bigDate=`<time class="daily-flow-date" datetime="${esc(date)}" aria-label="${esc(dailyDateLabel(date)+' '+weekday)}"><span class="daily-flow-date-top"><span>${Number(dateParts[1])}月</span><span class="daily-flow-calendar">${esc(dailyCalendarLabel(date))}</span></span><div><strong>${Number(dateParts[2])}</strong><small>日</small><em>${esc(weekday)}</em></div></time>`;
     const masterCharacter=String(overview.dayMaster||'').charAt(0);
     const masterElement={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'}[masterCharacter];
     const strengthMeaning={
@@ -5249,7 +5275,7 @@ ${source}
     const basis=f.basis||{};
     const interactions=(basis.relations||[]).map(r=>`${r.label}（${r.position}）`).join('、')||'未見本區採用的常見合沖刑害破組合';
     const repeats=(basis.repeated||[]).join('、');
-    const privateContent=`<div class="daily-flow-bottom-grid"><section class="daily-flow-fortune"><div class="daily-flow-fortune-head"><div class="daily-flow-card-label">${label}運勢</div>${scoreGuide}</div>${metrics}</section><div class="daily-flow-advice"><section class="daily-flow-good"><h4>✅ ${label}宜</h4><ul>${list(f.good,'✓')}</ul></section><section class="daily-flow-watch"><h4>⚠️ ${label}忌</h4><ul>${list(f.watch,'!')}</ul></section></div></div><dialog class="daily-flow-basis" id="dailyFlowBasisDialog" aria-labelledby="dailyFlowBasisTitle"><div class="daily-flow-basis-head"><h4 id="dailyFlowBasisTitle">流日判讀依據</h4><button type="button" data-daily-basis-close aria-label="關閉判讀依據">✕</button></div><div><p>你的日主支持方向：${esc(basis.supportLabel)}。流日天干五行：${esc(basis.stemElement)}；地支五行：${esc(basis.branchElement)}。</p><p>流日藏干十神：${esc((basis.hiddenStems||[]).map(h=>`${h.gan}（${h.god}）`).join('、'))}。</p><p>與原局互動：${esc(interactions)}。${repeats?'流日與'+esc(repeats)+'干支相同；重複表示主題呼應，不直接等同吉凶。':''}</p><p>${esc(basis.method)}</p><p>本區以台灣民用日期每天 00:00 更新，提供今天與明天的整日提醒。</p></div></dialog>`;
+    const privateContent=`<div class="daily-flow-bottom-grid"><section class="daily-flow-fortune"><div class="daily-flow-fortune-head"><div class="daily-flow-card-label">${label}運勢</div>${scoreGuide}</div>${metrics}</section><div class="daily-flow-advice"><section class="daily-flow-good"><div class="daily-flow-advice-head"><h4>✅ ${label}宜</h4><a class="daily-flow-tool daily-flow-tool-tarot" href="/tarot.html" title="抽一張塔羅，看看今天值得留意什麼。"><span>🔮 塔羅每日指引</span><b>抽一張 ›</b></a></div><ul>${list(f.good,'✓')}</ul></section><section class="daily-flow-watch"><div class="daily-flow-advice-head"><h4>⚠️ ${label}忌</h4><a class="daily-flow-tool daily-flow-tool-yijing" href="/yijing.html" title="今天有件事拿不定主意？帶著問題起一卦。"><span>☯ 心中有疑問？</span><b>起一卦 ›</b></a></div><ul>${list(f.watch,'!')}</ul></section></div></div><dialog class="daily-flow-basis" id="dailyFlowBasisDialog" aria-labelledby="dailyFlowBasisTitle"><div class="daily-flow-basis-head"><h4 id="dailyFlowBasisTitle">流日判讀依據</h4><button type="button" data-daily-basis-close aria-label="關閉判讀依據">✕</button></div><div><p>你的日主支持方向：${esc(basis.supportLabel)}。流日天干五行：${esc(basis.stemElement)}；地支五行：${esc(basis.branchElement)}。</p><p>流日藏干十神：${esc((basis.hiddenStems||[]).map(h=>`${h.gan}（${h.god}）`).join('、'))}。</p><p>與原局互動：${esc(interactions)}。${repeats?'流日與'+esc(repeats)+'干支相同；重複表示主題呼應，不直接等同吉凶。':''}</p><p>${esc(basis.method)}</p><p>本區以台灣民用日期每天 00:00 更新，提供今天與明天的整日提醒。</p></div></dialog>`;
     mount.innerHTML=header+cards+privateContent;
   }
   function clampDailyStars(n){return Math.max(1,Math.min(5,Math.round(Number(n)||3)));}
