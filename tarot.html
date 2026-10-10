@@ -2059,6 +2059,20 @@ html[data-theme="light"] .v287-await-ai .ai-provider-grid a{animation-name:v287-
 .reading-finish.v5-next-ready [data-open-second]{animation:tarot-v5-soft-pulse 2.8s ease-in-out infinite!important;box-shadow:0 0 0 2px rgba(186,127,238,.45)}
 @media(prefers-reduced-motion:reduce){.tarot-ai-entry.v5-pick-route .tarot-site-ai-run,.tarot-ai-entry.v5-pick-route .tarot-copy-main,.reading-finish.v5-next-ready [data-open-second]{animation:none!important}}
 
+
+/* V6: independent three-card and six-card on-site AI readings */
+.tarot-ai-phase{border:1px solid rgba(194,153,234,.36);border-radius:13px;padding:16px;margin:15px 0;background:rgba(130,88,170,.09)}
+.tarot-ai-phase h4{font-size:1rem;margin:0 0 5px}
+.tarot-ai-phase .tarot-site-ai-toggle{margin-top:10px}
+.tarot-ai-phase .tarot-site-ai-actions{margin-top:10px}
+.tarot-site-ai-run.v6-busy{position:relative;opacity:1;cursor:progress;padding-left:48px}
+.tarot-site-ai-run.v6-busy:before{content:"";position:absolute;left:17px;top:50%;width:18px;height:18px;margin-top:-10px;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:tarot-v6-spin .85s linear infinite}
+@keyframes tarot-v6-spin{to{transform:rotate(360deg)}}
+.tarot-ai-phase-wait[hidden]{display:none!important}
+.tarot-ai-phase-wait{display:flex;align-items:center;gap:11px;padding:13px;margin:12px 0;border:1px dashed rgba(197,154,236,.5);border-radius:10px}
+.tarot-ai-phase-wait:before{content:"";width:18px;height:18px;flex:none;border:3px solid rgba(191,150,229,.28);border-top-color:#d6aaff;border-radius:50%;animation:tarot-v6-spin .85s linear infinite}
+@media(prefers-reduced-motion:reduce){.tarot-site-ai-run.v6-busy:before,.tarot-ai-phase-wait:before{animation:none}}
+
 /* Tarot on-site AI dual mode V1 */
 .tarot-site-ai{margin:16px 0;padding:18px;border:1px solid rgba(197,154,236,.4);border-radius:15px;background:rgba(124,73,175,.095)}
 .tarot-site-ai h4{margin:0 0 9px;font-size:1.05rem}.tarot-site-ai p{font-size:.87rem;line-height:1.8;margin:6px 0}
@@ -4801,6 +4815,8 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
   function readingPayload(){return {topicId:state.topic.id,scenarioId:state.scenario.id,questionId:state.question.id,cards:state.current.map(c=>({id:c.id,reversed:!!c.reversed}))};}
   let onsiteAiBusy=false;
   let onsiteAiAnswer='';
+  let onsiteAiPhaseResults={three:null,six:null};
+  let onsiteAiRequestSerial=0;
   async function refreshOnsiteAiQuota(){
     const root=els.analysis.querySelector('[data-site-ai]');if(!root)return;
     const display=root.querySelector('[data-site-ai-quota]');
@@ -4866,48 +4882,90 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     }
     flushParagraph();host.replaceChildren(frag);
   }
+  function aiPhaseName(phase){return phase==='six'?'第二階段｜六張牌 AI 整合解讀':'第一階段｜三張牌 AI 解讀';}
+  function renderOnsiteAiPhaseCards(root){
+    if(!root)return;
+    const host=root.querySelector('[data-site-ai-output]');if(!host)return;
+    const six=state.stage3x3==='complete';
+    const phases=six?['three','six']:['three'];
+    host.replaceChildren();
+    let shown=0;
+    for(const phase of phases){
+      const result=onsiteAiPhaseResults[phase];
+      if(!result)continue;
+      shown++;
+      const section=document.createElement('section');section.className='tarot-ai-phase';section.dataset.siteAiPhase=phase;
+      section.innerHTML=`<h4>${aiPhaseName(phase)}</h4><div class="tarot-site-ai-stats" data-site-ai-metrics></div>
+      <button type="button" class="tarot-site-ai-toggle" data-site-ai-toggle="top" aria-expanded="false">↓ 展開閱讀${phase==='six'?'六張牌':'三張牌'}完整解讀</button>
+      <div class="tarot-site-ai-article-body" data-site-ai-article-body hidden>
+        <article class="tarot-site-ai-result" data-site-ai-answer></article>
+        <button type="button" class="tarot-site-ai-toggle tarot-site-ai-toggle-bottom" data-site-ai-toggle="bottom">↑ 收合完整解讀｜回到操作按鈕</button>
+      </div><div class="tarot-site-ai-actions"><button type="button" data-site-ai-copy="${phase}">複製${phase==='six'?'六':'三'}張牌解讀</button><button type="button" data-site-ai-txt="${phase}">下載${phase==='six'?'六':'三'}張牌解讀 TXT</button></div>`;
+      section.querySelector('[data-site-ai-metrics]').textContent=`完整解讀已產生｜約 ${result.seconds} 秒`;
+      renderOnsiteAiArticle(section.querySelector('[data-site-ai-answer]'),result.answer);
+      host.appendChild(section);
+    }
+    host.hidden=shown===0;
+  }
+  function setOnsiteAiArticleExpanded(section,expanded){
+    if(!section)return;
+    const body=section.querySelector('[data-site-ai-article-body]');if(!body)return;
+    body.hidden=!expanded;
+    const phase=section.dataset.siteAiPhase==='six'?'六張牌':'三張牌';
+    section.querySelectorAll('[data-site-ai-toggle]').forEach(btn=>{
+      btn.setAttribute('aria-expanded',String(expanded));
+      btn.textContent=expanded?(btn.dataset.siteAiToggle==='bottom'?'↑ 收合完整解讀｜回到操作按鈕':`↑ 收合${phase}完整解讀`):`↓ 展開閱讀${phase}完整解讀`;
+    });
+    if(!expanded)section.scrollIntoView({behavior:'smooth',block:'start'});
+  }
   async function runOnsiteAi(btn){
     if(onsiteAiBusy)return;
     const root=els.analysis.querySelector('[data-site-ai]');if(!root)return;
+    const phase=state.stage3x3==='complete'?'six':'three';
     const key=promptRequestKey(),payload=v1PromptPayload();if(!payload)return;
-    onsiteAiBusy=true;btn.disabled=true;
-    const status=root.querySelector('[data-site-ai-status]');status.textContent='正在使用本次牌面進行 AI 解讀，請稍候…';
+    const serial=++onsiteAiRequestSerial;
+    onsiteAiBusy=true;btn.disabled=true;btn.classList.add('v6-busy');
+    btn.textContent=phase==='six'?'AI 正在整合六張牌…':'AI 正在解讀三張牌…';
+    const status=root.querySelector('[data-site-ai-status]');
+    status.textContent=phase==='six'?'第二階段六張牌正在重新整合解讀；第一階段的結果仍保留在下方。':'第一階段三張牌正在進行 AI 解讀，請稍候…';
+    const pending=root.querySelector('[data-site-ai-pending]');
+    if(pending){pending.hidden=false;pending.textContent=phase==='six'?'第二階段｜六張牌 AI 解讀中，請等待新結果…':'第一階段｜三張牌 AI 解讀中，請等待新結果…';}
+    // If retrying, never show a prior response for the same phase as this request's new result.
+    onsiteAiPhaseResults[phase]=null;
+    renderOnsiteAiPhaseCards(root);
     try{
       const data=await tarotAPI('/ai/public-interpret',payload);
       const answer=data.answer||data.response||data?.result?.response||data?.choices?.[0]?.message?.content||'';
       if(!answer||typeof answer!=='string')throw Error('AI 未傳回完整解讀');
-      if(key!==promptRequestKey()||!root.isConnected)return;
+      if(serial!==onsiteAiRequestSerial||key!==promptRequestKey()||!root.isConnected)return;
       onsiteAiAnswer=answer;
-      renderOnsiteAiArticle(root.querySelector('[data-site-ai-answer]'),answer);
-      root.querySelector('[data-site-ai-output]').hidden=false;
-      setOnsiteAiArticleExpanded(root,false);
-      root.querySelector('[data-site-ai-metrics]').textContent=`完整解讀已產生｜約 ${data.seconds||data.elapsedSeconds||'—'} 秒`;
-      status.textContent='已完成站內 AI 解讀。現在可以繼續第二階段，也可以複製下方專業提示詞與其他 AI 比較。';
-      if(state.stage3x3!=='complete'){
+      onsiteAiPhaseResults[phase]={answer,seconds:data.seconds||data.elapsedSeconds||'—'};
+      renderOnsiteAiPhaseCards(root);
+      status.textContent=phase==='six'?'第二階段六張牌整合解讀已完成。三張牌與六張牌的結果可分別展開、複製或下載。':'第一階段三張牌 AI 解讀已完成，可以繼續第二階段，也可以複製提示詞比較。';
+      if(phase==='three'){
         state.firstAiInterpretationCompleted=true;
-        persist3x3();
-        renderFinish();
-        setAIGuidanceStage('return');
+        persist3x3();renderFinish();setAIGuidanceStage('return');
       }
     }catch(e){
-      status.textContent='站內 AI 暫時無法解讀（'+String(e.message||e).slice(0,60)+'）。仍可使用下方複製提示詞功能。';
-    }finally{onsiteAiBusy=false;void refreshOnsiteAiQuota();}
+      if(serial!==onsiteAiRequestSerial||!root.isConnected)return;
+      status.textContent=`${aiPhaseName(phase)}暫時失敗（${String(e.message||e).slice(0,60)}）。先前其他階段的解讀仍保留，也可以使用複製提示詞。`;
+    }finally{
+      if(serial===onsiteAiRequestSerial){
+        onsiteAiBusy=false;
+        const current=els.analysis.querySelector('[data-site-ai]');
+        const currentBtn=current?.querySelector('[data-site-ai-run]');
+        if(currentBtn){currentBtn.classList.remove('v6-busy');currentBtn.textContent='✦ 開始站內 AI 解讀';}
+        const waiting=current?.querySelector('[data-site-ai-pending]');if(waiting)waiting.hidden=true;
+        void refreshOnsiteAiQuota();
+      }
+    }
   }
-  function setOnsiteAiArticleExpanded(root,expanded){
-    if(!root)return;
-    const body=root.querySelector('[data-site-ai-article-body]');
-    if(!body)return;
-    body.hidden=!expanded;
-    root.querySelectorAll('[data-site-ai-toggle]').forEach(btn=>{
-      btn.setAttribute('aria-expanded',String(expanded));
-      btn.textContent=expanded?(btn.dataset.siteAiToggle==='bottom'?'↑ 收合完整解讀｜回到操作按鈕':'↑ 收合 AI 完整解讀'):'↓ 展開閱讀 AI 完整解讀';
-    });
-    if(!expanded){root.querySelector('[data-site-ai-output]')?.scrollIntoView({behavior:'smooth',block:'start'});}
-  }
-  function downloadOnsiteAi(){
-    if(!onsiteAiAnswer)return;
-    const blob=new Blob(['\ufeff'+onsiteAiAnswer],{type:'text/plain;charset=utf-8'});
-    const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='tarot-ai-reading-'+safeFileStamp()+'.txt';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000);
+  function downloadOnsiteAi(phase){
+    const result=onsiteAiPhaseResults[phase];if(!result)return;
+    const blob=new Blob(['\ufeff'+result.answer],{type:'text/plain;charset=utf-8'});
+    const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;
+    a.download=`tarot-ai-${phase==='six'?'6cards':'3cards'}-${safeFileStamp()}.txt`;
+    a.click();setTimeout(()=>URL.revokeObjectURL(u),2000);
   }
   async function renderFullReading(){
     els.analysis.hidden=false;
@@ -4931,16 +4989,13 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
         <div class="tarot-site-ai-meter"><div class="tarot-site-ai-fill" data-site-ai-fill></div></div>
         <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>✦ 開始站內 AI 解讀</button>
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite">額度用完或服務忙碌時，請使用下方複製提示詞功能。</p>
-        <div data-site-ai-output hidden><h4>AI 解讀結果</h4><div class="tarot-site-ai-stats" data-site-ai-metrics></div>
-        <button type="button" class="tarot-site-ai-toggle" data-site-ai-toggle="top" aria-expanded="false">↓ 展開閱讀 AI 完整解讀</button>
-        <div class="tarot-site-ai-article-body" data-site-ai-article-body hidden>
-        <article class="tarot-site-ai-result" data-site-ai-answer aria-label="AI 塔羅解讀文章"></article>
-        <button type="button" class="tarot-site-ai-toggle tarot-site-ai-toggle-bottom" data-site-ai-toggle="bottom" aria-expanded="false">↑ 收合完整解讀｜回到操作按鈕</button></div><div class="tarot-site-ai-actions">
-        <button type="button" data-site-ai-copy>複製解讀</button><button type="button" data-site-ai-txt>下載解讀 TXT</button></div></div>
+        <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
+        <div data-site-ai-output hidden></div>
         </section><div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><button type="button" class="tarot-prompt-download ${tarotFullPrivilege()?'':'v2814-paid-btn'}" data-ai-prompt-txt>${tarotFullPrivilege()?'↓ 下載提示詞 TXT':'↓ 下載提示詞 TXT｜🔒 完整進階'}</button></div>
       <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">${tarotFullPrivilege()?'選好格式與風格後可複製或下載完整提示詞。':'選好格式與風格後可免費複製提示詞；TXT 一鍵下載保留給未來完整進階。'}</p><div class="tarot-record-invite"><b>✦ 保存這次的塔羅占卜</b><p>免費登入會員即可保存當時的問題、${six?'六張牌及三張／六張兩份':'三張牌與'}原版 AI 提示詞。未來可在專屬紀錄頁再次複製原版提示詞，並設定三個月後回顧；TXT 一鍵下載保留給進階功能。</p><div class="tarot-record-invite-actions"><button type="button" data-member-login>免費登入保存</button><a href="tarot-records.html">我的塔羅占卜紀錄 ↗</a></div><p data-record-status class="tarot-record-status" role="status" aria-live="polite">完成複製或 TXT 下載後，將準備保存本次紀錄。</p></div>
       ${tarotFullPrivilege()?`<details class="v2818-paid-preview"><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt||'正在由伺服器準備提示詞…')}</pre></details>`:`<button type="button" class="v2818-preview-locked" data-v2818-locked-preview aria-label="展開查看完整提示詞，僅完整進階會員可用">▸ 展開查看完整提示詞 <span>🔒 完整進階</span></button>`}<h4 style="font-size:.87rem;margin:14px 0 2px">取得提示詞後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer" data-ai-provider-link="${name}">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">${six?'各平台均為外部服務，可直接貼上六張牌完整提示詞，不必提供第一次 AI 的對話紀錄。':'各平台均為外部服務，使用者自行貼上提示詞；切換解讀格式或風格不需要重新抽牌。'}</p></section>`;
     void loadV1PromptPreview();
+    renderOnsiteAiPhaseCards(els.analysis.querySelector('[data-site-ai]'));
     void refreshOnsiteAiQuota();
     renderFinish();applyAIGuidance();syncMemberSaveInvites();if(state.stage3x3!=='complete')persist3x3();return true;
   }
@@ -4970,7 +5025,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     if(!window.confirm(msg))return false;
     resetToTopic();return true;
   }
-  function resetToTopic(){closeResumeNotice();clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,firstAiInterpretationCompleted:false,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();syncNewQuestionUI();showStep('topic');}
+  function resetToTopic(){onsiteAiRequestSerial++;onsiteAiPhaseResults={three:null,six:null};onsiteAiAnswer='';closeResumeNotice();clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,firstAiInterpretationCompleted:false,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();syncNewQuestionUI();showStep('topic');}
   
   // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
   // 例：tarot.html?topic=love&scenario=single#worldSecond
@@ -5053,14 +5108,14 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     const promptFormat=e.target.closest('[data-prompt-format]');
     if(promptFormat){const key=promptFormat.dataset.promptFormat;if(!formatAllowedForCurrentUser(key)){showRotationNotice();return;}if(state.stage3x3==='complete'&&SIX_PROMPT_FORMATS[key]){selectedSixPromptFormat=key;refreshAIPromptSelection();persist3x3();return;}if(state.stage3x3!=='complete'&&PROMPT_FORMATS[key]){selectedPromptFormat=key;refreshAIPromptSelection();persist3x3();return;}}
     const toggleAI=e.target.closest('[data-site-ai-toggle]');if(toggleAI){
-      const root=toggleAI.closest('[data-site-ai]');
+      const root=toggleAI.closest('[data-site-ai-phase]');
       const body=root?.querySelector('[data-site-ai-article-body]');
       if(body)setOnsiteAiArticleExpanded(root,body.hidden);
       return;
     }
     const runAI=e.target.closest('[data-site-ai-run]');if(runAI){void runOnsiteAi(runAI);return;}
-    if(e.target.closest('[data-site-ai-copy]')){if(onsiteAiAnswer)void navigator.clipboard.writeText(onsiteAiAnswer);return;}
-    if(e.target.closest('[data-site-ai-txt]')){downloadOnsiteAi();return;}
+    const aiCopy=e.target.closest('[data-site-ai-copy]');if(aiCopy){const result=onsiteAiPhaseResults[aiCopy.dataset.siteAiCopy];if(result)void navigator.clipboard.writeText(result.answer);return;}
+    const aiTxt=e.target.closest('[data-site-ai-txt]');if(aiTxt){downloadOnsiteAi(aiTxt.dataset.siteAiTxt);return;}
     const promptCopy=e.target.closest('[data-ai-prompt-copy]');if(promptCopy){copyAIPrompt(promptCopy);return;}
     const promptTxt=e.target.closest('[data-ai-prompt-txt]');if(promptTxt){downloadAIPrompt();return;}
     const b=e.target.closest('[data-copy-ai-prompt]');if(b){copyAIPrompt(b);return;}
