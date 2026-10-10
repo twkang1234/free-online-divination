@@ -2045,6 +2045,20 @@ html[data-theme="light"] .v287-await-ai .ai-provider-grid a{animation-name:v287-
   .reading-finish.v287-await-return .v285-continue{outline:2px solid #c88fdf;outline-offset:3px}
 }
 
+
+/* V5: reading controls and gentle next-step guidance */
+.tarot-site-ai-output [hidden],.tarot-site-ai-article-body[hidden]{display:none!important}
+.tarot-site-ai-toggle{display:block;width:100%;max-width:100%;margin:12px 0;padding:13px 17px;border:1px solid rgba(203,164,242,.58);border-radius:11px;color:var(--text,#f6edff);background:rgba(147,95,205,.18);font:inherit;font-weight:750;cursor:pointer;text-align:center}
+.tarot-site-ai-toggle:hover{background:rgba(162,108,217,.27)}
+.tarot-site-ai-toggle-bottom{margin:20px 0 2px}
+.tarot-site-ai-article-body{margin-top:8px}
+@keyframes tarot-v5-soft-pulse{0%,100%{box-shadow:0 0 0 0 rgba(186,127,238,0);filter:brightness(1)}50%{box-shadow:0 0 0 5px rgba(186,127,238,.30),0 0 24px rgba(186,127,238,.21);filter:brightness(1.09)}}
+.tarot-ai-entry.v5-pick-route .tarot-site-ai-run:not(:disabled),
+.tarot-ai-entry.v5-pick-route .tarot-copy-main:not(:disabled){animation:tarot-v5-soft-pulse 2.8s ease-in-out infinite}
+.tarot-ai-entry.v5-pick-route .tarot-copy-main:not(:disabled){animation-delay:1.3s}
+.reading-finish.v5-next-ready [data-open-second]{animation:tarot-v5-soft-pulse 2.8s ease-in-out infinite!important;box-shadow:0 0 0 2px rgba(186,127,238,.45)}
+@media(prefers-reduced-motion:reduce){.tarot-ai-entry.v5-pick-route .tarot-site-ai-run,.tarot-ai-entry.v5-pick-route .tarot-copy-main,.reading-finish.v5-next-ready [data-open-second]{animation:none!important}}
+
 /* Tarot on-site AI dual mode V1 */
 .tarot-site-ai{margin:16px 0;padding:18px;border:1px solid rgba(197,154,236,.4);border-radius:15px;background:rgba(124,73,175,.095)}
 .tarot-site-ai h4{margin:0 0 9px;font-size:1.05rem}.tarot-site-ai p{font-size:.87rem;line-height:1.8;margin:6px 0}
@@ -4371,6 +4385,12 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       </fieldset><p role="status" aria-live="polite" class="v285-error" data-follow-error></p></div>`;
   }
   function firstStageReadyForFollowup(){return !!state.firstPromptSnapshot||!!state.firstAiInterpretationCompleted;}
+  function syncV5StepCues(){
+    const first=state.stage3x3!=='complete'&&!state.followFormOpen;
+    const ready=firstStageReadyForFollowup();
+    els.analysis.querySelector('.tarot-ai-entry')?.classList.toggle('v5-pick-route',first&&!ready);
+    els.finish.classList.toggle('v5-next-ready',first&&ready);
+  }
   function renderFinish(){
     if(state.stage3x3==='complete'){
       const logged=isLogged()&&!isAdminTestActive();
@@ -4382,6 +4402,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     }
     els.finish.hidden=false;
     syncMemberSaveInvites();
+    syncV5StepCues();
   }
   async function completeSixPromptDraw(){
     if(state.bDraft?.current?.length!==3)return;
@@ -4453,6 +4474,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     else state.firstPromptSnapshot=prompt;
     const record=activeTarotRecord(prompt);if(!record)return;
     persist3x3();
+    syncV5StepCues();
     if(isIsolatedAdminTest()){
       archiveNotice('管理員模擬：提示詞已產生，但不會寫入正式會員紀錄或待儲存佇列。');
       return;
@@ -4533,6 +4555,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     els.finish.classList.toggle('v287-await-ai',phase==='choose-ai');
     els.analysis.classList.toggle('v287-await-return',phase==='return');
     els.finish.classList.toggle('v287-await-return',phase==='return');
+    syncV5StepCues();
   }
   function setAIGuidanceStage(phase){
     state.aiGuidanceStage=phase;
@@ -4857,6 +4880,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       onsiteAiAnswer=answer;
       renderOnsiteAiArticle(root.querySelector('[data-site-ai-answer]'),answer);
       root.querySelector('[data-site-ai-output]').hidden=false;
+      setOnsiteAiArticleExpanded(root,false);
       root.querySelector('[data-site-ai-metrics]').textContent=`完整解讀已產生｜約 ${data.seconds||data.elapsedSeconds||'—'} 秒`;
       status.textContent='已完成站內 AI 解讀。現在可以繼續第二階段，也可以複製下方專業提示詞與其他 AI 比較。';
       if(state.stage3x3!=='complete'){
@@ -4868,6 +4892,17 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     }catch(e){
       status.textContent='站內 AI 暫時無法解讀（'+String(e.message||e).slice(0,60)+'）。仍可使用下方複製提示詞功能。';
     }finally{onsiteAiBusy=false;void refreshOnsiteAiQuota();}
+  }
+  function setOnsiteAiArticleExpanded(root,expanded){
+    if(!root)return;
+    const body=root.querySelector('[data-site-ai-article-body]');
+    if(!body)return;
+    body.hidden=!expanded;
+    root.querySelectorAll('[data-site-ai-toggle]').forEach(btn=>{
+      btn.setAttribute('aria-expanded',String(expanded));
+      btn.textContent=expanded?(btn.dataset.siteAiToggle==='bottom'?'↑ 收合完整解讀｜回到操作按鈕':'↑ 收合 AI 完整解讀'):'↓ 展開閱讀 AI 完整解讀';
+    });
+    if(!expanded){root.querySelector('[data-site-ai-output]')?.scrollIntoView({behavior:'smooth',block:'start'});}
   }
   function downloadOnsiteAi(){
     if(!onsiteAiAnswer)return;
@@ -4897,7 +4932,10 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
         <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>✦ 開始站內 AI 解讀</button>
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite">額度用完或服務忙碌時，請使用下方複製提示詞功能。</p>
         <div data-site-ai-output hidden><h4>AI 解讀結果</h4><div class="tarot-site-ai-stats" data-site-ai-metrics></div>
-        <article class="tarot-site-ai-result" data-site-ai-answer aria-label="AI 塔羅解讀文章"></article><div class="tarot-site-ai-actions">
+        <button type="button" class="tarot-site-ai-toggle" data-site-ai-toggle="top" aria-expanded="false">↓ 展開閱讀 AI 完整解讀</button>
+        <div class="tarot-site-ai-article-body" data-site-ai-article-body hidden>
+        <article class="tarot-site-ai-result" data-site-ai-answer aria-label="AI 塔羅解讀文章"></article>
+        <button type="button" class="tarot-site-ai-toggle tarot-site-ai-toggle-bottom" data-site-ai-toggle="bottom" aria-expanded="false">↑ 收合完整解讀｜回到操作按鈕</button></div><div class="tarot-site-ai-actions">
         <button type="button" data-site-ai-copy>複製解讀</button><button type="button" data-site-ai-txt>下載解讀 TXT</button></div></div>
         </section><div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><button type="button" class="tarot-prompt-download ${tarotFullPrivilege()?'':'v2814-paid-btn'}" data-ai-prompt-txt>${tarotFullPrivilege()?'↓ 下載提示詞 TXT':'↓ 下載提示詞 TXT｜🔒 完整進階'}</button></div>
       <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">${tarotFullPrivilege()?'選好格式與風格後可複製或下載完整提示詞。':'選好格式與風格後可免費複製提示詞；TXT 一鍵下載保留給未來完整進階。'}</p><div class="tarot-record-invite"><b>✦ 保存這次的塔羅占卜</b><p>免費登入會員即可保存當時的問題、${six?'六張牌及三張／六張兩份':'三張牌與'}原版 AI 提示詞。未來可在專屬紀錄頁再次複製原版提示詞，並設定三個月後回顧；TXT 一鍵下載保留給進階功能。</p><div class="tarot-record-invite-actions"><button type="button" data-member-login>免費登入保存</button><a href="tarot-records.html">我的塔羅占卜紀錄 ↗</a></div><p data-record-status class="tarot-record-status" role="status" aria-live="polite">完成複製或 TXT 下載後，將準備保存本次紀錄。</p></div>
@@ -5014,6 +5052,12 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     const sameCase=e.target.closest('[data-run-fixed-case]');if(sameCase){runFixedCase20(sameCase);return;}
     const promptFormat=e.target.closest('[data-prompt-format]');
     if(promptFormat){const key=promptFormat.dataset.promptFormat;if(!formatAllowedForCurrentUser(key)){showRotationNotice();return;}if(state.stage3x3==='complete'&&SIX_PROMPT_FORMATS[key]){selectedSixPromptFormat=key;refreshAIPromptSelection();persist3x3();return;}if(state.stage3x3!=='complete'&&PROMPT_FORMATS[key]){selectedPromptFormat=key;refreshAIPromptSelection();persist3x3();return;}}
+    const toggleAI=e.target.closest('[data-site-ai-toggle]');if(toggleAI){
+      const root=toggleAI.closest('[data-site-ai]');
+      const body=root?.querySelector('[data-site-ai-article-body]');
+      if(body)setOnsiteAiArticleExpanded(root,body.hidden);
+      return;
+    }
     const runAI=e.target.closest('[data-site-ai-run]');if(runAI){void runOnsiteAi(runAI);return;}
     if(e.target.closest('[data-site-ai-copy]')){if(onsiteAiAnswer)void navigator.clipboard.writeText(onsiteAiAnswer);return;}
     if(e.target.closest('[data-site-ai-txt]')){downloadOnsiteAi();return;}
