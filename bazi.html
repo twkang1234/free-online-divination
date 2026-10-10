@@ -2253,6 +2253,41 @@ html[data-theme="light"] .topic-card:nth-child(3n) .topic-no{color:#704298}
 html[data-theme="light"] .listing-panel,html[data-theme="light"] .faq-list details{background:#fff;border-color:#c2d3cc}
 html[data-theme="light"] .site-info-box,html[data-theme="light"] .listing-contact-panel{background:#e5f1ea;border-color:#abc8b5}
 html[data-theme="light"] :is(button,a,summary,input,select,textarea):focus-visible{outline-color:#a84330}
+
+/* V4.3 流日說明：原地展開，不增加收合時的卡片高度。 */
+.daily-flow-profile{position:relative}
+.daily-flow-help{display:inline-block;font-size:12px;font-weight:500;line-height:1.6}
+.daily-flow-help>summary{list-style:none;cursor:pointer;white-space:nowrap;color:#adcdd8;border-radius:5px;padding:2px 3px}
+.daily-flow-help>summary::-webkit-details-marker{display:none}
+.daily-flow-help>summary:hover{color:#e3f5ff;text-decoration:underline;text-underline-offset:3px}
+.daily-flow-help>summary:focus-visible{outline:2px solid #9ddde4;outline-offset:3px}
+.daily-flow-help[open]>summary{color:#e3f5ff}
+.daily-flow-help-panel{position:absolute;left:0;top:calc(100% + 8px);z-index:15;box-sizing:border-box;width:350px;max-width:calc(100vw - 88px);padding:15px 16px;border:1px solid #52667e;border-radius:12px;background:#121d2b;color:#c8d3de;box-shadow:0 12px 32px rgba(0,0,0,.3);font-size:13px;font-weight:400;line-height:1.8;white-space:normal;letter-spacing:0}
+.daily-flow-help-panel p{margin:0 0 9px;font-size:13px;line-height:1.8;color:inherit}
+.daily-flow-help-panel p:last-child{margin-bottom:0}
+.daily-flow-help-panel strong,.daily-flow-help-panel b{color:#e6eef7;font-size:13px;font-weight:750}
+.daily-flow-help-panel p>b{display:block;margin-top:4px}
+.daily-flow-fortune-head{position:relative;display:flex;align-items:center;justify-content:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.daily-flow-fortune-head .daily-flow-card-label{margin-bottom:0}
+.daily-flow-score-guide{margin:10px 0}
+.daily-flow-score-guide>div{display:grid;grid-template-columns:88px minmax(0,1fr);gap:6px;align-items:start;padding:7px 0;border-bottom:1px solid rgba(160,183,207,.17)}
+.daily-flow-score-guide>div:last-child{border-bottom:0}
+.daily-flow-score-guide p{margin:0;display:flex;gap:7px;align-items:baseline}
+.daily-flow-score-guide p i{flex-shrink:0;width:9px;height:9px;border-radius:50%;background:currentColor}
+.daily-flow-score-guide .positive{color:#83d8b7}
+.daily-flow-score-guide .neutral{color:#f2cf7d}
+.daily-flow-score-guide .caution{color:#ffacb2}
+.daily-flow-help-panel .daily-flow-help-note{font-size:12px;color:#b3c1d1;border-top:1px solid rgba(160,183,207,.22);padding-top:9px}
+html[data-theme="light"] .daily-flow-help>summary{color:#176575}
+html[data-theme="light"] .daily-flow-help>summary:hover,html[data-theme="light"] .daily-flow-help[open]>summary{color:#104957}
+html[data-theme="light"] .daily-flow-help-panel{background:#fff;color:#425466;border-color:#9ab6c4;box-shadow:0 12px 32px rgba(32,67,83,.18)}
+html[data-theme="light"] .daily-flow-help-panel strong,html[data-theme="light"] .daily-flow-help-panel b{color:#203b50}
+html[data-theme="light"] .daily-flow-score-guide>div{border-bottom-color:#d7e2e6}
+html[data-theme="light"] .daily-flow-score-guide .positive{color:#24694c}
+html[data-theme="light"] .daily-flow-score-guide .neutral{color:#85551c}
+html[data-theme="light"] .daily-flow-score-guide .caution{color:#a23542}
+html[data-theme="light"] .daily-flow-help-panel .daily-flow-help-note{color:#52657b;border-top-color:#ccdce2}
+@media(max-width:600px){.daily-flow-profile{gap:6px}.daily-flow-help{font-size:11px}.daily-flow-energy{flex-wrap:wrap;gap:6px}.daily-flow-energy>span{white-space:nowrap;flex-shrink:0}.daily-flow-energy b{font-size:17px;letter-spacing:1px;white-space:nowrap}.daily-flow-help-panel{padding:12px;width:330px;max-width:calc(100vw - 88px)}.daily-flow-score-guide>div{grid-template-columns:78px minmax(0,1fr)}.daily-flow-score-guide p{font-size:12px}}
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -5189,7 +5224,18 @@ ${source}
     const dateParts=date.split('-');
     const weekday='星期'+['日','一','二','三','四','五','六'][new Date(date+'T12:00:00Z').getUTCDay()];
     const bigDate=`<time class="daily-flow-date" datetime="${esc(date)}" aria-label="${esc(dailyDateLabel(date)+' '+weekday)}"><span>${Number(dateParts[1])}月</span><div><strong>${Number(dateParts[2])}</strong><small>日</small><em>${esc(weekday)}</em></div></time>`;
-    const cards=`<div class="daily-flow-top-grid"><article class="daily-flow-overview"><div class="daily-flow-overview-top"><div><div class="daily-flow-card-label">${label}速覽</div><div class="daily-flow-profile">${esc(overview.dayMaster)}<span>${esc(overview.strength)}</span></div><div class="daily-flow-energy"><span>${label}能量</span><b aria-label="${stars}顆星，共5顆">${'★'.repeat(stars)}<i>${'☆'.repeat(5-stars)}</i></b></div></div>${bigDate}</div><h4>${esc(overview.theme)}</h4><p>${esc(overview.intro)}</p></article><article class="daily-flow-gods"><div class="daily-flow-card-label">${label}十神</div><div class="daily-flow-god"><span>流日天干</span><div><b>${esc(tg.stem?.character)}</b><span>→</span><strong>${esc(tg.stem?.god)}</strong></div><p>${esc(tg.stem?.words)}</p></div><div class="daily-flow-god"><span>流日地支</span><div><b>${esc(tg.branch?.character)}</b><span>→</span><strong>${esc(tg.branch?.god)}</strong></div><p>${esc(tg.branch?.words)}</p><small>依本氣藏干「${esc(tg.branch?.mainStem)}」對應</small></div></article></div>`;
+    const masterCharacter=String(overview.dayMaster||'').charAt(0);
+    const masterElement={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'}[masterCharacter];
+    const strengthMeaning={
+      '偏強傾向':'你的本命八字中，支持日主的力量較多。',
+      '稍強傾向':'你的本命八字中，支持日主的力量稍多。',
+      '中和附近':'你的本命八字中，支持日主與耗洩、制約日主的力量較接近平衡。',
+      '稍弱傾向':'你的本命八字中，支持日主的力量稍少。',
+      '偏弱傾向':'你的本命八字中，支持日主的力量較少。'
+    }[overview.strength]||'這是網站依本命八字的五行權重估算的日主強弱傾向。';
+    const profileHelp=`<details class="daily-flow-help daily-flow-profile-help"><summary>ⓘ 說明</summary><div class="daily-flow-help-panel"><p><strong>${esc(overview.dayMaster)}：</strong>${masterElement?'你的出生日天干是「'+esc(masterCharacter)+'」，五行屬'+esc(masterElement)+'，是八字分析自身特質的起點。':'日主是出生日的天干，是八字分析自身特質的起點。'}</p><p><strong>${esc(overview.strength)}：</strong>${esc(strengthMeaning)}<b>不是身體虛弱，也不代表今天運勢差。</b></p></div></details>`;
+    const scoreGuide=`<details class="daily-flow-help daily-flow-score-help"><summary>ⓘ 分數怎麼看</summary><div class="daily-flow-help-panel"><strong class="daily-flow-help-title">運勢分數對照</strong><div class="daily-flow-score-guide"><div><b>85 分以上</b><p class="positive"><i aria-hidden="true"></i>特別順利｜值得把握</p></div><div><b>70～84 分</b><p class="positive"><i aria-hidden="true"></i>較有助力｜適合推進</p></div><div><b>50～69 分</b><p class="neutral"><i aria-hidden="true"></i>平穩普通｜照常安排</p></div><div><b>35～49 分</b><p class="caution"><i aria-hidden="true"></i>阻力偏多｜放慢腳步</p></div><div><b>34 分以下</b><p class="caution"><i aria-hidden="true"></i>特別需留意｜保守安排</p></div></div><p class="daily-flow-help-note">各項分開判讀：財運高、感情低，表示財務方向較有助力，感情互動宜放慢。分數是傾向指標，不是事件發生機率。</p></div></details>`;
+    const cards=`<div class="daily-flow-top-grid"><article class="daily-flow-overview"><div class="daily-flow-overview-top"><div><div class="daily-flow-card-label">${label}速覽</div><div class="daily-flow-profile">${esc(overview.dayMaster)}<span>${esc(overview.strength)}</span>${profileHelp}</div><div class="daily-flow-energy"><span>${label}整體運勢</span><b aria-label="${stars}顆星，共5顆">${'★'.repeat(stars)}<i>${'☆'.repeat(5-stars)}</i></b></div></div>${bigDate}</div><h4>${esc(overview.theme)}</h4><p>${esc(overview.intro)}</p></article><article class="daily-flow-gods"><div class="daily-flow-card-label">${label}十神</div><div class="daily-flow-god"><span>流日天干</span><div><b>${esc(tg.stem?.character)}</b><span>→</span><strong>${esc(tg.stem?.god)}</strong></div><p>${esc(tg.stem?.words)}</p></div><div class="daily-flow-god"><span>流日地支</span><div><b>${esc(tg.branch?.character)}</b><span>→</span><strong>${esc(tg.branch?.god)}</strong></div><p>${esc(tg.branch?.words)}</p><small>依本氣藏干「${esc(tg.branch?.mainStem)}」對應</small></div></article></div>`;
     if(!full){
       mount.innerHTML=header+cards+`<div class="daily-flow-unlock"><div><strong>每天，看看你的生活節奏</strong><p>免費登入，查看完整五項運勢、宜忌與每日箴言，也能先看明天。</p></div><button type="button" data-daily-login>免費登入看完整流日 →</button></div>`;
       return;
@@ -5203,7 +5249,7 @@ ${source}
     const basis=f.basis||{};
     const interactions=(basis.relations||[]).map(r=>`${r.label}（${r.position}）`).join('、')||'未見本區採用的常見合沖刑害破組合';
     const repeats=(basis.repeated||[]).join('、');
-    const privateContent=`<div class="daily-flow-bottom-grid"><section class="daily-flow-fortune"><div class="daily-flow-card-label">${label}運勢</div>${metrics}</section><div class="daily-flow-advice"><section class="daily-flow-good"><h4>✅ ${label}宜</h4><ul>${list(f.good,'✓')}</ul></section><section class="daily-flow-watch"><h4>⚠️ ${label}忌</h4><ul>${list(f.watch,'!')}</ul></section></div></div><dialog class="daily-flow-basis" id="dailyFlowBasisDialog" aria-labelledby="dailyFlowBasisTitle"><div class="daily-flow-basis-head"><h4 id="dailyFlowBasisTitle">流日判讀依據</h4><button type="button" data-daily-basis-close aria-label="關閉判讀依據">✕</button></div><div><p>你的日主支持方向：${esc(basis.supportLabel)}。流日天干五行：${esc(basis.stemElement)}；地支五行：${esc(basis.branchElement)}。</p><p>流日藏干十神：${esc((basis.hiddenStems||[]).map(h=>`${h.gan}（${h.god}）`).join('、'))}。</p><p>與原局互動：${esc(interactions)}。${repeats?'流日與'+esc(repeats)+'干支相同；重複表示主題呼應，不直接等同吉凶。':''}</p><p>${esc(basis.method)}</p><p>本區以台灣民用日期每天 00:00 更新，提供今天與明天的整日提醒。</p></div></dialog>`;
+    const privateContent=`<div class="daily-flow-bottom-grid"><section class="daily-flow-fortune"><div class="daily-flow-fortune-head"><div class="daily-flow-card-label">${label}運勢</div>${scoreGuide}</div>${metrics}</section><div class="daily-flow-advice"><section class="daily-flow-good"><h4>✅ ${label}宜</h4><ul>${list(f.good,'✓')}</ul></section><section class="daily-flow-watch"><h4>⚠️ ${label}忌</h4><ul>${list(f.watch,'!')}</ul></section></div></div><dialog class="daily-flow-basis" id="dailyFlowBasisDialog" aria-labelledby="dailyFlowBasisTitle"><div class="daily-flow-basis-head"><h4 id="dailyFlowBasisTitle">流日判讀依據</h4><button type="button" data-daily-basis-close aria-label="關閉判讀依據">✕</button></div><div><p>你的日主支持方向：${esc(basis.supportLabel)}。流日天干五行：${esc(basis.stemElement)}；地支五行：${esc(basis.branchElement)}。</p><p>流日藏干十神：${esc((basis.hiddenStems||[]).map(h=>`${h.gan}（${h.god}）`).join('、'))}。</p><p>與原局互動：${esc(interactions)}。${repeats?'流日與'+esc(repeats)+'干支相同；重複表示主題呼應，不直接等同吉凶。':''}</p><p>${esc(basis.method)}</p><p>本區以台灣民用日期每天 00:00 更新，提供今天與明天的整日提醒。</p></div></dialog>`;
     mount.innerHTML=header+cards+privateContent;
   }
   function clampDailyStars(n){return Math.max(1,Math.min(5,Math.round(Number(n)||3)));}
