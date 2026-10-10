@@ -4246,7 +4246,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     const q=state.question,startBtn=$('startReading'),old=startBtn?.textContent;
     try{
       if(startBtn){startBtn.disabled=true;startBtn.textContent='正在準備抽牌方式…';}
-      document.getElementById('tarotSixExtraCards')?.remove();clear3x3();state.stage3x3='first';state.firstPromptSnapshot='';state.sixPromptSnapshot='';state.sixPromptCopied=false;state.followFormOpen=false;state.followChoice='same';state.followText='';state.advanceSpreadKey='';state.archiveRecordId='';state.readingId='';state.advancedCards=[];selectedSixPromptFormat='A';state.firstDrawMode='';state.aiGuidanceStage='idle';state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();
+      document.getElementById('tarotSixExtraCards')?.remove();clear3x3();state.stage3x3='first';state.firstPromptSnapshot='';state.firstAiInterpretationCompleted=false;state.sixPromptSnapshot='';state.sixPromptCopied=false;state.followFormOpen=false;state.followChoice='same';state.followText='';state.advanceSpreadKey='';state.archiveRecordId='';state.readingId='';state.advancedCards=[];selectedSixPromptFormat='A';state.firstDrawMode='';state.aiGuidanceStage='idle';state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();
       state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;
       state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.singleReadingHTML='';state.followupOptions=[];
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
@@ -4309,7 +4309,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     (isIsolatedAdminTest()?sessionWrite:safeWrite)(isIsolatedAdminTest()?TAROT_3X3_ADMIN_SESSION:TAROT_3X3_SESSION,{at:Date.now(),topicId:state.topic?.id,scenarioId:state.scenario?.id,
       scenario:state.scenario,question:state.question,spreadChoice:state.spreadChoice,
       firstCards:state.current,secondCards:state.advancedCards||[],
-      firstPromptSnapshot:state.firstPromptSnapshot||'',sixPromptSnapshot:state.sixPromptSnapshot||'',sixPromptCopied:!!state.sixPromptCopied,
+      firstPromptSnapshot:state.firstPromptSnapshot||'',firstAiInterpretationCompleted:!!state.firstAiInterpretationCompleted,sixPromptSnapshot:state.sixPromptSnapshot||'',sixPromptCopied:!!state.sixPromptCopied,
       firstDrawMode:state.firstDrawMode||'',aiGuidanceStage:state.aiGuidanceStage||'idle',
       stage:state.stage3x3==='complete'?'complete':'first',recordId:state.archiveRecordId||'',
       selectedPromptFormat,selectedSixPromptFormat,selectedPromptStyle,followChoice:state.followChoice||'same',
@@ -4328,7 +4328,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     state.topic=topic;state.scenario=scenario;state.question=qq;state.spreadChoice=saved.spreadChoice;
     state.current=saved.firstCards;state.revealed=new Set([0,1,2]);state.advancedCards=saved.secondCards||[];
     state.stage3x3=saved.stage==='complete'&&state.advancedCards.length===3?'complete':'first';
-    state.firstPromptSnapshot=saved.firstPromptSnapshot||'';state.sixPromptSnapshot=saved.sixPromptSnapshot||'';state.sixPromptCopied=!!saved.sixPromptCopied&&state.stage3x3==='complete';
+    state.firstPromptSnapshot=saved.firstPromptSnapshot||'';state.firstAiInterpretationCompleted=!!saved.firstAiInterpretationCompleted;state.sixPromptSnapshot=saved.sixPromptSnapshot||'';state.sixPromptCopied=!!saved.sixPromptCopied&&state.stage3x3==='complete';
     state.firstDrawMode=['fan','scatter','flow','study','stop','physical'].includes(saved.firstDrawMode)?saved.firstDrawMode:'';
     state.aiGuidanceStage=['choose-ai','return'].includes(saved.aiGuidanceStage)?saved.aiGuidanceStage:'idle';
     state.followChoice=saved.followChoice||'same';state.followText=saved.followText||'';
@@ -4370,6 +4370,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       ${spread.map(([key,s])=>{const allowed=spreadAllowedForCurrentUser(key);return `<label class="${allowed?'':'v2814-locked'}"><input type="radio" name="tarot-follow-spread" value="${key}" ${chosen===key?'checked':''}>${esc(s.name)}${allowed?'':isLogged()?'　🔒 今日輪替｜明日開放':'　🔒 免費登入解鎖'}<small style="display:block;margin-left:20px;color:#a89ab6">${esc(s.desc)}</small></label>`}).join('')}
       </fieldset><p role="status" aria-live="polite" class="v285-error" data-follow-error></p></div>`;
   }
+  function firstStageReadyForFollowup(){return !!state.firstPromptSnapshot||!!state.firstAiInterpretationCompleted;}
   function renderFinish(){
     if(state.stage3x3==='complete'){
       const logged=isLogged()&&!isAdminTestActive();
@@ -4377,7 +4378,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }else{
-      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">解讀完成後，記得回到這個頁面，繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，合併產生完整六張牌 AI 解讀提示詞。</small></div><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second>已完成 AI 解讀｜繼續第二階段 →</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
+      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">成功複製專業提示詞，或完成站內 AI 解讀，任一方式即可繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，合併產生完整六張牌 AI 解讀提示詞。</small></div><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second ${firstStageReadyForFollowup()?'':'disabled aria-disabled="true"'}>${firstStageReadyForFollowup()?'繼續第二階段 →':'先完成其中一種解讀方式，開啟第二階段'}</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }
     els.finish.hidden=false;
     syncMemberSaveInvites();
@@ -4394,7 +4395,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
   }
   function beginFollowupDraw(){
     if(isGuestLoginRequired()){openMemberModal();return;}
-    if(!state.firstPromptSnapshot){const hint=els.finish.querySelector('[data-follow-error]');if(hint)hint.textContent='請先複製或下載第一階段提示詞，前往 AI 取得完整解讀，再回來進行第二階段。';else alert('請先複製或下載第一階段提示詞，再回來繼續。');els.analysis.scrollIntoView({behavior:'smooth',block:'start'});return;}
+    if(!firstStageReadyForFollowup()){const hint=els.finish.querySelector('[data-follow-error]');if(hint)hint.textContent='請先成功複製第一階段提示詞，或完成站內 AI 解讀，再繼續第二階段。';else alert('請先複製第一階段提示詞，或完成站內 AI 解讀。');els.analysis.scrollIntoView({behavior:'smooth',block:'start'});return;}
     const spread=remainingSpreads().some(([k])=>k===state.advanceSpreadKey)?state.advanceSpreadKey:'';
     if(!spread){alert('請選擇第一次沒有使用過的牌陣。');return;}
     if(!spreadAllowedForCurrentUser(spread)){openMemberModal();return;}
@@ -4572,7 +4573,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       if(state.stage3x3==='complete')state.sixPromptCopied=true;
       rememberIssuedPrompt(value);
       if(state.stage3x3==='complete'){renderFinish();syncNewQuestionUI();}
-      else setAIGuidanceStage('choose-ai');
+      else {setAIGuidanceStage('choose-ai');renderFinish();}
     }else{
       if(status)status.textContent=tarotFullPrivilege()?'自動複製未成功，可展開完整提示詞手動複製。':'自動複製未成功，請允許剪貼簿權限後再重試。';
       if(tarotFullPrivilege())els.analysis.querySelector('.v2818-paid-preview')?.setAttribute('open','');
@@ -4857,7 +4858,13 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       renderOnsiteAiArticle(root.querySelector('[data-site-ai-answer]'),answer);
       root.querySelector('[data-site-ai-output]').hidden=false;
       root.querySelector('[data-site-ai-metrics]').textContent=`完整解讀已產生｜約 ${data.seconds||data.elapsedSeconds||'—'} 秒`;
-      status.textContent='已完成站內 AI 解讀。你也可以複製下方專業提示詞與其他 AI 比較。';
+      status.textContent='已完成站內 AI 解讀。現在可以繼續第二階段，也可以複製下方專業提示詞與其他 AI 比較。';
+      if(state.stage3x3!=='complete'){
+        state.firstAiInterpretationCompleted=true;
+        persist3x3();
+        renderFinish();
+        setAIGuidanceStage('return');
+      }
     }catch(e){
       status.textContent='站內 AI 暫時無法解讀（'+String(e.message||e).slice(0,60)+'）。仍可使用下方複製提示詞功能。';
     }finally{onsiteAiBusy=false;void refreshOnsiteAiQuota();}
@@ -4919,13 +4926,13 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     // This explicit confirmation is the ONLY way these controls clear the saved 3+3 result.
     const msg=state.stage3x3==='complete'&&!state.sixPromptCopied
       ?'六張牌提示詞尚未複製。確定放棄這次占卜，改問一個全新問題嗎？'
-      :state.stage3x3!=='complete'&&!state.firstPromptSnapshot
+      :state.stage3x3!=='complete'&&!firstStageReadyForFollowup()
       ?'這次抽牌提示詞尚未複製。確定放棄目前的牌，重新選擇問題嗎？'
       :'確定結束目前的牌局，開始一個全新的問題嗎？';
     if(!window.confirm(msg))return false;
     resetToTopic();return true;
   }
-  function resetToTopic(){closeResumeNotice();clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();syncNewQuestionUI();showStep('topic');}
+  function resetToTopic(){closeResumeNotice();clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,firstAiInterpretationCompleted:false,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();syncNewQuestionUI();showStep('topic');}
   
   // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
   // 例：tarot.html?topic=love&scenario=single#worldSecond
@@ -4984,7 +4991,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
   });
   els.finish.addEventListener('click',e=>{
     if(e.target.closest('[data-open-second]')){
-      if(!state.firstPromptSnapshot){els.analysis.scrollIntoView({behavior:'smooth',block:'start'});const s=els.analysis.querySelector('[data-ai-copy-status]');if(s)s.textContent='請先複製或下載第一輪提示詞，完成 AI 解讀後再返回第二階段。';return;}
+      if(!firstStageReadyForFollowup()){els.analysis.scrollIntoView({behavior:'smooth',block:'start'});const s=els.analysis.querySelector('[data-ai-copy-status]');if(s)s.textContent='請先成功複製提示詞，或完成站內 AI 解讀，再繼續第二階段。';return;}
       state.followFormOpen=true;state.followChoice=state.followChoice||'same';renderFinish();persist3x3();return;
     }
     if(e.target.closest('[data-start-follow]')){beginFollowupDraw();return;}
