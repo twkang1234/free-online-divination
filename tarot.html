@@ -4430,6 +4430,8 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     state.advancedCards=state.bDraft.current.map(c=>({...c}));
     restoreDrawHosts();$('readingZone').hidden=false;
     state.stage3x3='complete';state.followFormOpen=false;
+    // V9: 進入六牌階段時移除三牌提示詞快取，杜絕舊預覽／剪貼簿內容混入。
+    cachedV1Prompt={key:'',text:''};inflightV1Prompt=null;
     renderSixCards();renderFullReading();persist3x3();syncNewQuestionUI();
     setTimeout(()=>document.getElementById('tarotSixExtraCards')?.scrollIntoView({behavior:'smooth',block:'start'}),100);
   }
@@ -4538,7 +4540,12 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     if(inflightV1Prompt?.key===key)return inflightV1Prompt.promise;
     const task=tarotAPI('/prompt/v1',payload).then(res=>{
       if(typeof res.prompt!=='string'||res.prompt.length<100)throw Error('提示詞內容不完整');
-      cachedV1Prompt={key,text:res.prompt};return res.prompt;
+      if(Number(res.stage)!==payload.stage)throw Error('伺服器提示詞階段與目前抽牌不一致，請重新取得');
+      if(payload.stage===6 && (!res.prompt.includes('六張牌')||!payload.secondCards.every(c=>res.prompt.includes(c.name))))
+        throw Error('收到的不是完整六張牌提示詞，請重新取得');
+      // 先前的三牌非同步回應不能覆寫目前的六牌提示詞。
+      if(key===promptRequestKey())cachedV1Prompt={key,text:res.prompt};
+      return res.prompt;
     });
     inflightV1Prompt={key,promise:task};
     try{return await task}finally{if(inflightV1Prompt?.key===key)inflightV1Prompt=null;}
@@ -4557,7 +4564,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       const value=await ensureV1Prompt();
       if(!els.analysis.contains(panel)||key!==promptRequestKey())return;
       if(preview)preview.textContent=value;
-      if(copy){copy.disabled=false;copy.textContent='獲得並複製提示詞';}
+      if(copy){copy.disabled=false;copy.textContent=state.stage3x3==='complete'?'獲得並複製六張牌提示詞':'獲得並複製三張牌提示詞';}
     }catch(err){
       if(!els.analysis.contains(panel)||key!==promptRequestKey())return;
       if(preview)preview.textContent='伺服器連線暫時失敗，請稍後再試。';
@@ -4598,8 +4605,12 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     if(isGuestLoginRequired()){openMemberModal();return;}
     const status=els.analysis.querySelector('[data-ai-copy-status]');
     let value='';
+    const requestedKey=promptRequestKey();
     try{value=await ensureV1Prompt();}catch(err){showV1PromptStatus('無法取得提示詞：'+String(err?.message||err));return;}
-    if(!value){if(status)status.textContent='尚未完成三張抽牌。';return;}
+    if(requestedKey!==promptRequestKey()){
+      showV1PromptStatus('抽牌階段已更新，請再次按下按鈕取得最新六張牌提示詞。');return;
+    }
+    if(!value){if(status)status.textContent='尚未完成抽牌。';return;}
     const currentKey=state.stage3x3==='complete'?selectedSixPromptFormat:selectedPromptFormat;
     if(!formatAllowedForCurrentUser(currentKey)){openMemberModal();return;}
     let success=false;
@@ -5007,7 +5018,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite">額度用完或服務忙碌時，請使用下方複製提示詞功能。</p>
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
         <div data-site-ai-output hidden></div>
-        </section><div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><button type="button" class="tarot-prompt-download ${tarotFullPrivilege()?'':'v2814-paid-btn'}" data-ai-prompt-txt>${tarotFullPrivilege()?'↓ 下載提示詞 TXT':'↓ 下載提示詞 TXT｜🔒 完整進階'}</button></div>
+        </section><div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>${six?'獲得並複製六張牌提示詞':'獲得並複製三張牌提示詞'}</button><button type="button" class="tarot-prompt-download ${tarotFullPrivilege()?'':'v2814-paid-btn'}" data-ai-prompt-txt>${tarotFullPrivilege()?'↓ 下載提示詞 TXT':'↓ 下載提示詞 TXT｜🔒 完整進階'}</button></div>
       <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">${tarotFullPrivilege()?'選好格式與風格後可複製或下載完整提示詞。':'選好格式與風格後可免費複製提示詞；TXT 一鍵下載保留給未來完整進階。'}</p><div class="tarot-record-invite"><b>✦ 保存這次的塔羅占卜</b><p>免費登入會員即可保存當時的問題、${six?'六張牌及三張／六張兩份':'三張牌與'}原版 AI 提示詞。未來可在專屬紀錄頁再次複製原版提示詞，並設定三個月後回顧；TXT 一鍵下載保留給進階功能。</p><div class="tarot-record-invite-actions"><button type="button" data-member-login>免費登入保存</button><a href="tarot-records.html">我的塔羅占卜紀錄 ↗</a></div><p data-record-status class="tarot-record-status" role="status" aria-live="polite">完成複製或 TXT 下載後，將準備保存本次紀錄。</p></div>
       ${tarotFullPrivilege()?`<details class="v2818-paid-preview"><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt||'正在由伺服器準備提示詞…')}</pre></details>`:`<button type="button" class="v2818-preview-locked" data-v2818-locked-preview aria-label="展開查看完整提示詞，僅完整進階會員可用">▸ 展開查看完整提示詞 <span>🔒 完整進階</span></button>`}<h4 style="font-size:.87rem;margin:14px 0 2px">取得提示詞後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer" data-ai-provider-link="${name}">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">${six?'各平台均為外部服務，可直接貼上六張牌完整提示詞，不必提供第一次 AI 的對話紀錄。':'各平台均為外部服務，使用者自行貼上提示詞；切換解讀格式或風格不需要重新抽牌。'}</p></section>`;
     void loadV1PromptPreview();
