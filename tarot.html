@@ -2078,6 +2078,11 @@ html[data-theme="light"] .v287-await-ai .ai-provider-grid a{animation-name:v287-
 .tarot-site-ai h4{margin:0 0 9px;font-size:1.05rem}.tarot-site-ai p{font-size:.87rem;line-height:1.8;margin:6px 0}
 .tarot-site-ai-stats{font-size:.81rem;opacity:.9;padding:8px 0}.tarot-site-ai-meter{height:8px;border-radius:12px;background:rgba(160,160,160,.2);overflow:hidden}
 .tarot-site-ai-fill{height:100%;background:#a978e5;width:0;transition:width .4s}
+.tarot-ai-shared-note{font-size:.73rem!important;opacity:.78;line-height:1.75!important;margin:9px 0 13px!important}
+.tarot-ai-shared-help{border:1px solid rgba(197,154,236,.27);border-radius:10px;background:rgba(124,73,175,.055);padding:11px 13px;margin:12px 0 8px;line-height:1.75}
+.tarot-ai-shared-help b{font-size:.85rem}
+.tarot-ai-shared-help p{font-size:.79rem!important;margin:5px 0 0!important;opacity:.86}
+
 .tarot-site-ai-run{border:0;border-radius:10px;background:#9062e7;color:white;padding:12px 20px;font-weight:700;cursor:pointer;margin:12px 0}
 .tarot-site-ai-run:disabled{opacity:.45;cursor:not-allowed}.tarot-site-ai-status{font-size:.86rem;min-height:1.4em}
 .tarot-site-ai-result{overflow-wrap:anywhere;line-height:1.95;font-family:inherit;font-size:clamp(.95rem,1.4vw,1.04rem);padding:clamp(14px,2.8vw,26px);border-radius:12px;background:rgba(95,75,135,.12);max-height:none;overflow:visible;color:inherit}
@@ -4829,13 +4834,13 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       const remain=Math.max(0,Number(q.remaining)||0),limit=Math.max(1,Number(q.limit)||30);
       const reset=new Date(q.resetAt);
       const date=Number.isNaN(reset.getTime())?'依系統公告':reset.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour:'2-digit',minute:'2-digit',hour12:false});
-      display.textContent=`今日剩餘 ${remain}／${limit} 次站內解讀；台灣時間 ${date} 重置（網站預留次數，非 Cloudflare 即時額度）`;
+      display.textContent=`今日免費站內 AI 共用額度：剩餘 ${remain}／${limit} 次｜台灣時間 ${date} 重置`;
       fill.style.width=Math.min(100,remain/limit*100)+'%';
       btn.disabled=remain<=0||onsiteAiBusy;
-      if(remain<=0)root.querySelector('[data-site-ai-status]').textContent='今日 AI 額度已用完。請使用下方「複製提示詞」，改由其他 AI 解讀。';
+      if(remain<=0)root.querySelector('[data-site-ai-status]').textContent='今日免費 AI 共用額度已用完。請改用「獲得並複製提示詞」，交給其他 AI 解讀，或等明日上午 08:00 重置。';
     } catch(e){
       if(!root.isConnected)return;
-      display.textContent='暫時無法確認站內 AI 額度';
+      display.textContent='目前無法確認免費站內 AI 共用額度';
       root.querySelector('[data-site-ai-status]').textContent='目前可繼續使用專業提示詞，稍後再試站內解讀。';
     }
   }
@@ -4948,7 +4953,16 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       }
     }catch(e){
       if(serial!==onsiteAiRequestSerial||!root.isConnected)return;
-      status.textContent=`${aiPhaseName(phase)}暫時失敗（${String(e.message||e).slice(0,60)}）。先前其他階段的解讀仍保留，也可以使用複製提示詞。`;
+      const code=String(e.message||e);
+      const friendly={
+        SOURCE_LIMIT:'這個網路來源今日的免費站內 AI 使用次數已達上限（每天最多 6 次）。',
+        AI_QUOTA_EXHAUSTED:'今日免費 AI 共用額度已用完。',
+        AI_BUSY:'目前免費 AI 使用人數較多，請稍後再試。',
+        QUOTA_UNAVAILABLE:'目前無法確認免費 AI 額度，請稍後再試。',
+        SOURCE_UNAVAILABLE:'目前無法確認網路來源額度，請稍後再試。'
+      };
+      const info=friendly[code]||'站內 AI 暫時無法完成這次解讀。';
+      status.textContent=`${aiPhaseName(phase)}未完成。${info}可改用「獲得並複製提示詞」交給其他 AI 解讀，或等明日上午 08:00 重置。先前已完成的解讀仍會保留。`;
     }finally{
       if(serial===onsiteAiRequestSerial){
         onsiteAiBusy=false;
@@ -4983,10 +4997,12 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       <div class="tarot-prompt-choices"><div class="tarot-prompt-label">① 解讀格式 <span>選一種報告架構</span></div><div class="tarot-prompt-format-grid" role="group" aria-label="選擇 AI 解讀格式">${formatButtons}</div><p class="tarot-prompt-hint" data-format-hint>${esc(activeFormats[currentKey].hint)}</p>${six?'<p class="tarot-prompt-hint v288-six-length">六張牌專用完整報告｜約 4,500～5,500 中文字，兩組交叉整合，結論放最後。</p>':''}
       <label class="tarot-prompt-label" for="tarotPromptStyle">② 老師風格 <span>每次只選一種</span></label><select id="tarotPromptStyle" class="tarot-prompt-style" data-prompt-style aria-label="選擇 AI 解讀風格">${styleOptions}</select><p class="tarot-prompt-hint" data-style-hint>${esc(PROMPT_STYLES[selectedPromptStyle].hint)}</p></div>
       <section class="tarot-site-ai" aria-label="站內 AI 塔羅解讀" data-site-ai>
-        <h4>✦ 站內 AI 完整解讀 <small>每日額度有限</small></h4>
-        <p>由本站直接解讀這次抽出的牌；也可以繼續複製專業提示詞，交給自己喜歡的 AI。</p>
-        <div class="tarot-site-ai-stats" data-site-ai-quota>正在查詢今日可用額度…</div>
+        <h4>✦ 免費站內 AI 解讀 <small>所有訪客共用額度</small></h4>
+        <p>由本站 AI 直接解讀這次抽出的牌；也可以複製專業提示詞，交給自己喜歡的 AI 解讀。</p>
+        <div class="tarot-site-ai-stats" data-site-ai-quota>正在查詢今日免費 AI 共用額度…</div>
         <div class="tarot-site-ai-meter"><div class="tarot-site-ai-fill" data-site-ai-fill></div></div>
+        <p class="tarot-ai-shared-note">免費額度由全站訪客共用，並非個人專屬次數；同一網路來源另設每日使用上限。以上為網站預留額度，不是 Cloudflare 即時餘額。</p>
+        <div class="tarot-ai-shared-help"><b>免費額度用完怎麼辦？</b><p>你可以使用下方「獲得並複製提示詞」，前往 ChatGPT、Gemini 等 AI 服務解讀；也可以等隔日台灣時間 08:00 額度重置。</p><p>未來本站規劃提供「付費 AI 額度池」，供需要更多站內解讀次數的使用者選擇，目前尚未開放。</p></div>
         <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>✦ 開始站內 AI 解讀</button>
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite">額度用完或服務忙碌時，請使用下方複製提示詞功能。</p>
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
