@@ -2052,7 +2052,17 @@ html[data-theme="light"] .v287-await-ai .ai-provider-grid a{animation-name:v287-
 .tarot-site-ai-fill{height:100%;background:#a978e5;width:0;transition:width .4s}
 .tarot-site-ai-run{border:0;border-radius:10px;background:#9062e7;color:white;padding:12px 20px;font-weight:700;cursor:pointer;margin:12px 0}
 .tarot-site-ai-run:disabled{opacity:.45;cursor:not-allowed}.tarot-site-ai-status{font-size:.86rem;min-height:1.4em}
-.tarot-site-ai-result{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;font-family:inherit;font-size:.95rem;padding:14px;border-radius:12px;background:rgba(95,75,135,.12);max-height:750px;overflow-y:auto}
+.tarot-site-ai-result{overflow-wrap:anywhere;line-height:1.95;font-family:inherit;font-size:clamp(.95rem,1.4vw,1.04rem);padding:clamp(14px,2.8vw,26px);border-radius:12px;background:rgba(95,75,135,.12);max-height:none;overflow:visible;color:inherit}
+.tarot-site-ai-result h3{font-size:1.22rem;line-height:1.55;margin:2em 0 .85em;color:var(--text,#eee)}
+.tarot-site-ai-result h4{font-size:1.08rem;line-height:1.6;margin:1.6em 0 .7em;color:var(--text,#eee)}
+.tarot-site-ai-result h3:first-child,.tarot-site-ai-result h4:first-child{margin-top:0}
+.tarot-site-ai-result p{font-size:inherit;line-height:inherit;margin:0 0 1.15em;white-space:pre-wrap}
+.tarot-site-ai-result p:last-child{margin-bottom:0}
+.tarot-site-ai-result strong{font-weight:750;color:var(--text,#fff)}
+.tarot-site-ai-result ul,.tarot-site-ai-result ol{padding-left:1.65em;margin:.35em 0 1.2em}
+.tarot-site-ai-result li{line-height:1.9;padding-left:.25em;margin-bottom:.45em}
+.tarot-site-ai-result hr{border:0;border-top:1px solid rgba(190,159,223,.28);margin:1.8em 0}
+.tarot-site-ai-actions{margin-top:14px}
 .tarot-site-ai-actions{display:flex;gap:10px;flex-wrap:wrap}.tarot-site-ai-actions button{padding:8px 12px;border-radius:9px}
 </style>
 <style>
@@ -4789,6 +4799,49 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       root.querySelector('[data-site-ai-status]').textContent='目前可繼續使用專業提示詞，稍後再試站內解讀。';
     }
   }
+  // V3: render a small, safe Markdown subset with DOM APIs, never via untrusted innerHTML.
+  function renderOnsiteAiArticle(host, source){
+    const frag=document.createDocumentFragment();
+    const lines=String(source||'').replace(/\r\n?/g,'\n').split('\n');
+    let paragraph=[],list=null,listType='';
+    function inline(parent,text){
+      const parts=String(text).split(/(\*\*[^*\n]+\*\*)/g);
+      for(const part of parts){
+        if(part.startsWith('**')&&part.endsWith('**')&&part.length>4){
+          const strong=document.createElement('strong');strong.textContent=part.slice(2,-2);parent.appendChild(strong);
+        }else if(part){parent.appendChild(document.createTextNode(part));}
+      }
+    }
+    function flushParagraph(){
+      if(!paragraph.length)return;
+      const p=document.createElement('p');inline(p,paragraph.join('\n'));frag.appendChild(p);paragraph=[];
+    }
+    function flushList(){list=null;listType='';}
+    for(const raw of lines){
+      const line=raw.trim();
+      if(!line){flushParagraph();flushList();continue;}
+      if(/^(-{3,}|\*{3,}|_{3,})$/.test(line)){
+        flushParagraph();flushList();frag.appendChild(document.createElement('hr'));continue;
+      }
+      const heading=line.match(/^(#{1,4})\s+(.+)$/);
+      const boldHeading=line.match(/^\*\*(.+?)\*\*$/);
+      if(heading||boldHeading){
+        flushParagraph();flushList();
+        const h=document.createElement(heading&&heading[1].length<=2?'h3':'h4');
+        inline(h,heading?heading[2]:boldHeading[1]);frag.appendChild(h);continue;
+      }
+      const bullet=line.match(/^[-*]\s+(.+)$/);
+      const numbered=line.match(/^\d+[.、．]\s*(.+)$/);
+      if(bullet||numbered){
+        flushParagraph();
+        const kind=bullet?'ul':'ol';
+        if(!list||listType!==kind){list=document.createElement(kind);frag.appendChild(list);listType=kind;}
+        const li=document.createElement('li');inline(li,(bullet||numbered)[1]);list.appendChild(li);continue;
+      }
+      flushList();paragraph.push(line);
+    }
+    flushParagraph();host.replaceChildren(frag);
+  }
   async function runOnsiteAi(btn){
     if(onsiteAiBusy)return;
     const root=els.analysis.querySelector('[data-site-ai]');if(!root)return;
@@ -4801,10 +4854,9 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       if(!answer||typeof answer!=='string')throw Error('AI 未傳回完整解讀');
       if(key!==promptRequestKey()||!root.isConnected)return;
       onsiteAiAnswer=answer;
-      root.querySelector('[data-site-ai-answer]').textContent=answer;
+      renderOnsiteAiArticle(root.querySelector('[data-site-ai-answer]'),answer);
       root.querySelector('[data-site-ai-output]').hidden=false;
-      const usage=data.usage||{};
-      root.querySelector('[data-site-ai-metrics]').textContent=`Qwen3｜${data.seconds||data.elapsedSeconds||'—'} 秒｜輸入 ${usage.prompt_tokens??'—'} Tokens｜輸出 ${usage.completion_tokens??'—'} Tokens`;
+      root.querySelector('[data-site-ai-metrics]').textContent=`完整解讀已產生｜約 ${data.seconds||data.elapsedSeconds||'—'} 秒`;
       status.textContent='已完成站內 AI 解讀。你也可以複製下方專業提示詞與其他 AI 比較。';
     }catch(e){
       status.textContent='站內 AI 暫時無法解讀（'+String(e.message||e).slice(0,60)+'）。仍可使用下方複製提示詞功能。';
@@ -4838,7 +4890,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
         <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>✦ 開始站內 AI 解讀</button>
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite">額度用完或服務忙碌時，請使用下方複製提示詞功能。</p>
         <div data-site-ai-output hidden><h4>AI 解讀結果</h4><div class="tarot-site-ai-stats" data-site-ai-metrics></div>
-        <div class="tarot-site-ai-result" data-site-ai-answer></div><div class="tarot-site-ai-actions">
+        <article class="tarot-site-ai-result" data-site-ai-answer aria-label="AI 塔羅解讀文章"></article><div class="tarot-site-ai-actions">
         <button type="button" data-site-ai-copy>複製解讀</button><button type="button" data-site-ai-txt>下載解讀 TXT</button></div></div>
         </section><div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>獲得並複製提示詞</button><button type="button" class="tarot-prompt-download ${tarotFullPrivilege()?'':'v2814-paid-btn'}" data-ai-prompt-txt>${tarotFullPrivilege()?'↓ 下載提示詞 TXT':'↓ 下載提示詞 TXT｜🔒 完整進階'}</button></div>
       <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">${tarotFullPrivilege()?'選好格式與風格後可複製或下載完整提示詞。':'選好格式與風格後可免費複製提示詞；TXT 一鍵下載保留給未來完整進階。'}</p><div class="tarot-record-invite"><b>✦ 保存這次的塔羅占卜</b><p>免費登入會員即可保存當時的問題、${six?'六張牌及三張／六張兩份':'三張牌與'}原版 AI 提示詞。未來可在專屬紀錄頁再次複製原版提示詞，並設定三個月後回顧；TXT 一鍵下載保留給進階功能。</p><div class="tarot-record-invite-actions"><button type="button" data-member-login>免費登入保存</button><a href="tarot-records.html">我的塔羅占卜紀錄 ↗</a></div><p data-record-status class="tarot-record-status" role="status" aria-live="polite">完成複製或 TXT 下載後，將準備保存本次紀錄。</p></div>
