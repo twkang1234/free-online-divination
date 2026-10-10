@@ -910,6 +910,18 @@ body.overlay-open{overflow:hidden}
 @media(max-width:760px){.shensha-global-analysis>summary{padding:16px;gap:10px;font-size:15px}.shensha-global-toggle{font-size:11px}.shensha-global-body{padding:18px 16px}.shensha-global-body h3{font-size:18px}.shensha-global-body p{font-size:13px}.shensha-global-advice{padding:14px}}
 @media(max-width:980px){.shensha-pillar-grid.integrated{grid-template-columns:repeat(2,minmax(0,1fr))}.shensha-pillar-grid.integrated .shensha-pillar:nth-child(odd){border-left:0}.shensha-pillar-grid.integrated .shensha-pillar:nth-child(n+3){border-top:1px solid rgba(255,255,255,.08)}}
 @media(max-width:600px){.shensha-pillar-grid.integrated{grid-template-columns:minmax(0,1fr)}.shensha-pillar-grid.integrated .shensha-pillar{border-left:0}.shensha-pillar-grid.integrated .shensha-pillar:nth-child(n+2){border-top:1px solid rgba(255,255,255,.08)}}
+
+/* 柱內綜合解析：標題與展開按鈕靠近，預設收合。 */
+.shensha-pillar-synthesis>summary{display:flex;align-items:center;justify-content:flex-start;gap:8px;cursor:pointer;list-style:none;color:var(--pillar-accent);font-size:14px;font-weight:800;line-height:1.6;flex-wrap:wrap}
+.shensha-pillar-synthesis>summary::-webkit-details-marker{display:none}
+.shensha-pillar-synthesis>summary:focus-visible{outline:2px solid var(--pillar-accent);outline-offset:4px;border-radius:4px}
+.shensha-pillar-toggle{font-size:12px;font-weight:500;white-space:nowrap;opacity:.85}
+.shensha-pillar-synthesis:not([open]) .when-open,.shensha-pillar-synthesis[open] .when-closed{display:none}
+.shensha-pillar-synthesis>p{margin-top:10px}
+.smart-prompt-question-label{display:block;margin:13px 0;color:#b4bfcc;font-size:13px;line-height:1.6}
+.smart-prompt-question{display:block;width:100%;box-sizing:border-box;margin-top:7px;padding:11px 12px;border:1px solid rgba(233,189,88,.22);border-radius:10px;background:rgba(0,0,0,.22);color:#dce3ec;font:inherit;font-size:14px;line-height:1.8;resize:vertical;min-height:95px}
+.smart-prompt-question:focus{outline:2px solid rgba(233,189,88,.45);outline-offset:1px}
+.smart-prompt-question::placeholder{color:#738094}
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -1174,6 +1186,7 @@ body.overlay-open{overflow:hidden}
             <p class="shensha-stage-guide"><b>四欄仍保留人生階段提示，但以「四柱位置」為主：</b>年柱看家族與早年背景、月柱看成長環境與工作社會關係、日柱看自身與伴侶、時柱看子女與後續發展。神煞落在哪一柱，<b>不等於只在那個年齡階段作用</b>；真正應期仍需結合大運、流年判讀。</p>
             <div class="shensha-pillar-grid integrated" id="shenshaPillars"></div>
             <div id="shenshaGlobalAnalysis"></div>
+            <div class="smart-prompt-mount" data-smart-prompt="shenshaGlobal"></div>
 </div>
         </details>
 
@@ -2282,7 +2295,7 @@ body.overlay-open{overflow:hidden}
         <div class="shensha-gz">命理位置 · ${esc(p?.ganZhi||'—')}</div>
         <div class="stage-shensha-title"><span>此柱辨識到的神煞</span><b>${arr.length} 項</b></div>
         <div class="stage-shensha-list">${items}</div>
-        <section class="shensha-pillar-synthesis"><h4>💡 綜合解析</h4><p>${esc(synthesis.pillars[key])}</p></section>
+        <details class="shensha-pillar-synthesis"><summary><span>💡 綜合解析</span><span class="shensha-pillar-toggle"><span class="when-closed">＋ 展開</span><span class="when-open">－ 收合</span></span></summary><p>${esc(synthesis.pillars[key])}</p></details>
       </article>`;
     }).join('');
 
@@ -2295,6 +2308,8 @@ body.overlay-open{overflow:hidden}
         </article>`).join('')
       : '<div class="shensha-empty">目前未辨識到常用神煞；請以四柱、五行、十神與干支互動為主要判讀基礎。</div>');
     $('shenshaGlobalAnalysis').innerHTML=renderShenshaSynthesis(synthesis);
+    const promptMount=document.querySelector('[data-smart-prompt="shenshaGlobal"]');
+    if(promptMount)promptMount.innerHTML='';
     bindInlineShensha();
   }
 
@@ -3478,6 +3493,7 @@ body.overlay-open{overflow:hidden}
     relations:{id:'report-relations',title:'天干地支互動',promptTitle:'天干地支互動'},
     luck:{id:'report-luck',title:'十年大運',promptTitle:'十年大運與人生階段'},
     years:{id:'report-years',title:'三年流年',promptTitle:'去年、今年與明年三年流年'},
+    shenshaGlobal:{id:'report-shensha',title:'全局神煞',promptTitle:'全局神煞綜合解析'},
     full:{id:'ai-prompt-zone',title:'完整命盤',promptTitle:'完整命盤'}
   };
   const SMART_TOPICS = ['工作事業','正財收入','偏財投資','感情關係','健康壓力','人生方向'];
@@ -3496,7 +3512,74 @@ body.overlay-open{overflow:hidden}
 【流年】\n${formatYears(data)}`;
   }
 
-  function buildSmartPrompt(data,key,topic,mode){
+  function buildShenshaGlobalPrompt(data,topic,mode,question=''){
+    const hits=data._shensha||computeShensha(data);
+    const model=buildShenshaSynthesis(data,hits);
+    const positions=['年柱','月柱','日柱','時柱'];
+    const pillarKeys={年柱:'year',月柱:'month',日柱:'day',時柱:'time'};
+    const starData=positions.map(p=>{
+      const stars=hits.filter(h=>h.positions.includes(p));
+      return `【${p}實際查得的神煞】\n`+(stars.length?stars.map(h=>{
+        const d=shenshaDisplay(h);
+        return `- ${d.title}\n  傳統含義參考：${d.meaning}\n  查表依據：${h.basis.join('；')}`;
+      }).join('\n'):'本站常用規則未辨識到神煞；不代表沒有其他命盤線索。');
+    }).join('\n\n');
+    const repeated=hits.filter(h=>h.positions.length>1).map(h=>`${h.name}：${h.positions.join('、')}（共 ${h.positions.length} 柱）`).join('\n')||'沒有跨柱重複的已辨識神煞。';
+    const pillarSummaries=positions.map(p=>`【${p}網站摘要】\n${model.pillars[pillarKeys[p]]}`).join('\n\n');
+    const globalSummary=[model.title,model.intro,...model.sections.map(s=>s.title+'\n'+s.text),'總結建議\n'+model.advice].join('\n\n');
+    const query=String(question||'').trim().slice(0,500);
+    const tasks=mode==='discover'
+      ? `請先檢視網站摘要的依據，再從實際四柱與神煞組合找出 6～10 個值得追問的具體問題。每題說明它來自哪些柱位、神煞或原局線索，以及回答前還需要知道什麼。最後挑出最值得先問的 3 題；若我填了問題，也請先回應該問題，不能只提供題目清單。`
+      : `請重新整合四柱神煞，依序解讀：各柱的生活重點、跨柱重複與重要組合、事業與財務、人際與感情、長期發展與可觀察的轉折條件。把我選的主題與自訂問題放在分析重心。每一段都要說出實際依據，最後再給總結與具體建議；不要把單顆神煞解釋串接成一篇文章。`;
+    return `【角色與目的】
+請使用繁體中文，扮演一位熟悉八字與神煞、說話白話而不武斷的解讀老師。
+我已在網站建立命盤，希望你根據下列出生資料、四柱、實際查得的神煞與原局背景，重新檢視並補充「全局神煞綜合解析」。網站摘要由規則整理，不是已證實的結論；你的任務是獨立檢視依據，不要照著網站文字合理化，也不要預設你的答案一定較準。
+
+【本次主要方向】${topic}
+【我的自訂問題】
+${query?JSON.stringify(query):'未填寫；請依所選方向分析，並補充值得追問的問題。'}
+
+【出生資料與排盤設定】
+${formatBasic(data)}
+
+【四柱與藏干十神】
+${formatPillars(data)}
+
+【原局背景：五行、陰陽、十神與干支互動】
+${formatElements(data)}
+${formatTenGods(data)}
+${formatRelations(data)}
+以上五行、支持度與十神比例是本站規則式計算指標，不等於正式喜用神、吉凶分數或事件機率。
+
+【神煞與柱位：本站實際辨識結果】
+${starData}
+
+【跨柱重複】
+${repeated}
+重複表示同一題材在不同位置出現，不代表力量可以直接倍增；同一查表規則造成的重複也不能當成多份獨立證據。
+
+【以下為網站待檢視的參考摘要，不是命盤事實】
+${pillarSummaries}
+
+【網站全局神煞綜合解析：待檢視】
+${globalSummary}
+【參考摘要結束】
+
+【先檢視，再深入解讀】
+1. 保留已提供的出生資料、四柱與原局資訊，不自行改盤。神煞列表是本站採用查法的結果；若你能指出查法或落點存在具體疑問，請另列「可能的查法差異／待核對」，說明依據，不要默默替換或補造神煞。
+2. 先簡短檢視網站摘要：哪些有組合與原局支持，哪些只是神煞的傳統象徵，哪些可能推論過度或證據不足。針對有疑問的原句給出更合適的白話說法，不必把網站每句都判成對或錯。
+3. 不只逐顆解釋，要分清同柱組合、跨柱呼應、重複與相反需求如何並存；吉神與警示神煞不能簡單相加抵銷。
+4. 神煞需配合月令、日主、五行、十神與干支互動。沒有足夠依據時，說明需補哪些資料；不要只憑神煞判定致富、婚姻失敗、意外、疾病、法律糾紛或特定職業。
+5. 年、月、日、時柱主要提示不同生活領域，不等於只在早年、青年、中年或晚年生效。沒有大運、流年與具體時間資料時，不指定事件年份或斷定某階段一定發生什麼。
+6. 不要假設我經歷過未提供的事件。若需要出生地、真太陽時、家族背景、實際工作或關係情況，請清楚列出需要補充的資訊。
+
+【本次輸出任務】
+${tasks}
+使用一般人容易理解的完整段落；專業依據放在對應段落中簡短說明。提出可以用真實經歷核對的觀察問題；結論與行動建議放在最後。`;
+  }
+
+  function buildSmartPrompt(data,key,topic,mode,question=''){
+    if(key==='shenshaGlobal')return buildShenshaGlobalPrompt(data,topic,mode,question);
     const def=SMART_PROMPT_SECTIONS[key]||SMART_PROMPT_SECTIONS.full;
     const source=smartPromptDataText(key,data);
     const common=`以下資料已由網站排盤系統整理完成，請把它視為本次分析的既定資料，不要自行改寫四柱或重新排盤。若資料不足，請明確指出，不要自行補造事件。請使用繁體中文，並把命理術語翻成一般人看得懂的白話。命理解讀請以傾向、條件與可能性表達，不要把單一訊號說成必然事件。`;
@@ -3535,24 +3618,26 @@ ${source}
   function smartPromptBoxHtml(key){
     const def=SMART_PROMPT_SECTIONS[key];
     const full=key==='full';
+    const shenshaGlobal=key==='shenshaGlobal';
     const locked=!baziAuthProfile();
 
     const inner=`<div class="smart-prompt-inner">
       <div class="smart-prompt-head">
         <div>
-          <strong>${full?'完整命盤 AI 深入分析':'選擇分析方式與主題'}</strong>
-          <span>${full?'整合重要命盤資料，再依你最在意的方向深入。':'命盤本身不變；主題只會改變提示詞的分析重心。'}</span>
+          <strong>${shenshaGlobal?'用 AI 深入解讀你的全局神煞':full?'完整命盤 AI 深入分析':'選擇分析方式與主題'}</strong>
+          <span>${shenshaGlobal?'整合出生資料、四柱神煞與網站摘要，讓 AI 檢視依據、補充解析，並回應你的問題。':full?'整合重要命盤資料，再依你最在意的方向深入。':'命盤本身不變；主題只會改變提示詞的分析重心。'}</span>
         </div>
       </div>
       <div class="smart-prompt-mode">
-        <button type="button" class="active" data-prompt-mode="deep">深入分析${full?'完整命盤':'這一區'}</button>
+        <button type="button" class="active" data-prompt-mode="deep">${shenshaGlobal?'深入解析與檢視摘要':'深入分析'+(full?'完整命盤':'這一區')}</button>
         <button type="button" data-prompt-mode="discover">我還可以問什麼？</button>
       </div>
       <div class="smart-prompt-label">最想深入哪個方向？</div>
       <div class="smart-topic-row">
         ${SMART_TOPICS.map((x,i)=>`<button type="button" class="smart-topic-chip${i===0?' active':''}" data-topic="${x}">${x}</button>`).join('')}
       </div>
-      <button type="button" class="smart-prompt-generate">產生並複製專屬提示詞</button>
+      ${shenshaGlobal?`<label class="smart-prompt-question-label">你想深入了解什麼？（選填）<textarea class="smart-prompt-question" maxlength="500" rows="3" placeholder="例如：華蓋重複出現，會如何影響我的工作與感情？"></textarea></label>`:''}
+      <button type="button" class="smart-prompt-generate">${shenshaGlobal?'獲得並複製提示詞':'產生並複製專屬提示詞'}</button>
       <pre class="smart-prompt-preview"></pre>
       <div class="smart-ai-links">
         <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT ↗</a>
@@ -3576,11 +3661,11 @@ ${source}
       </div>`;
     }
 
-    return `<details class="smart-prompt-collapse${locked?' is-locked-teaser':''}" data-prompt-collapse="${key}" ${locked?'open':''}>
+    return `<details class="smart-prompt-collapse${locked?' is-locked-teaser':''}" data-prompt-collapse="${key}" ${locked&&!shenshaGlobal?'open':''}>
       <summary>
         <span class="smart-prompt-summary-copy">
-          <strong>AI 深入這一區</strong>
-          <span>深入分析／幫我找問題／6 種主題</span>
+          <strong>${shenshaGlobal?'全局神煞 AI 提示詞設定':'AI 深入這一區'}</strong>
+          <span>${shenshaGlobal?'出生資料＋四柱神煞＋檢視網站摘要＋自訂問題':'深入分析／幫我找問題／6 種主題'}</span>
         </span>
       </summary>
       <div class="smart-prompt-collapse-body">
@@ -3621,12 +3706,17 @@ ${source}
       box.querySelector('.smart-ai-links')?.classList.remove('show');
     }));
 
+    box.querySelector('.smart-prompt-question')?.addEventListener('input',()=>{
+      box.querySelector('.smart-prompt-preview')?.classList.remove('show');
+      box.querySelector('.smart-ai-links')?.classList.remove('show');
+    });
     box.querySelector('.smart-prompt-login')?.addEventListener('click',baziOpenAuth);
     box.querySelector('.smart-prompt-generate')?.addEventListener('click',async()=>{
       if(!baziAuthProfile()){ baziOpenAuth(); return; }
       if(!lastData){ toast('請先建立命盤'); return; }
       const key=box.dataset.promptKey||'full';
-      const prompt=buildSmartPrompt(lastData,key,topic,mode);
+      const question=box.querySelector('.smart-prompt-question')?.value||'';
+      const prompt=buildSmartPrompt(lastData,key,topic,mode,question);
       const preview=box.querySelector('.smart-prompt-preview');
       const links=box.querySelector('.smart-ai-links');
       if(preview){preview.textContent=prompt;preview.classList.add('show');}
@@ -3653,6 +3743,11 @@ ${source}
       body.appendChild(mount);
       bindSmartPromptBox(mount.querySelector('.smart-prompt-box'));
     });
+    const globalMount=document.querySelector('[data-smart-prompt="shenshaGlobal"]');
+    if(globalMount && !globalMount.querySelector('.smart-prompt-box')){
+      globalMount.innerHTML=smartPromptBoxHtml('shenshaGlobal');
+      bindSmartPromptBox(globalMount.querySelector('.smart-prompt-box'));
+    }
     const fullMount=document.querySelector('[data-smart-prompt="full"]');
     if(fullMount && !fullMount.querySelector('.smart-prompt-box')){
       fullMount.innerHTML=smartPromptBoxHtml('full');
@@ -3667,7 +3762,7 @@ ${source}
     });
     document.querySelectorAll('.smart-prompt-collapse').forEach(collapse=>{
       collapse.classList.toggle('is-locked-teaser',!loggedIn);
-      if(loggedIn){
+      if(loggedIn || collapse.dataset.promptCollapse==='shenshaGlobal'){
         collapse.open=false;
       }else{
         collapse.open=true;
