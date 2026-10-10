@@ -4511,9 +4511,10 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
   // V28.17 · server-generated AI prompts; never silently fall back to client templates.
   let cachedV1Prompt={key:'',text:''};
   let inflightV1Prompt=null;
-  function v1PromptPayload(){
+  function v1PromptPayload(requestedStage){
     if(!state.question||state.current?.length!==3)return null;
-    const six=state.stage3x3==='complete'&&state.advancedCards?.length===3;
+    const six=requestedStage===3?false:requestedStage===6?true:state.stage3x3==='complete'&&state.advancedCards?.length===3;
+    if(six&&(state.stage3x3!=='complete'||state.advancedCards?.length!==3))return null;
     return {
       stage:six?6:3,
       format:six?selectedSixPromptFormat:selectedPromptFormat,
@@ -4533,8 +4534,8 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
   }
   function promptRequestKey(){const p=v1PromptPayload();return p?JSON.stringify(p):'';}
   function buildAIPrompt(){return cachedV1Prompt.key===promptRequestKey()?cachedV1Prompt.text:'';}
-  async function ensureV1Prompt(){
-    const payload=v1PromptPayload();if(!payload)throw Error('請先完成三張牌抽牌');
+  async function ensureV1Prompt(requestedStage){
+    const payload=v1PromptPayload(requestedStage);if(!payload)throw Error('請先完成三張牌抽牌');
     const key=JSON.stringify(payload);
     if(cachedV1Prompt.key===key&&cachedV1Prompt.text)return cachedV1Prompt.text;
     if(inflightV1Prompt?.key===key)return inflightV1Prompt.promise;
@@ -4557,7 +4558,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     if(!panel)return;
     const key=promptRequestKey();
     const preview=panel.querySelector('[data-ai-prompt-content]');
-    const copy=panel.querySelector('[data-ai-prompt-copy]');
+    const copy=panel.querySelector('[data-ai-prompt-copy]:not(.tarot-copy-three)');
     if(preview)preview.textContent='正在向塔羅伺服器取得專業提示詞…';
     if(copy){copy.disabled=true;copy.textContent='正在準備提示詞…';}
     try{
@@ -4605,13 +4606,15 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     if(isGuestLoginRequired()){openMemberModal();return;}
     const status=els.analysis.querySelector('[data-ai-copy-status]');
     let value='';
-    const requestedKey=promptRequestKey();
-    try{value=await ensureV1Prompt();}catch(err){showV1PromptStatus('無法取得提示詞：'+String(err?.message||err));return;}
-    if(requestedKey!==promptRequestKey()){
+    const requestedStage=Number(btn?.dataset?.promptStage)|| (state.stage3x3==='complete'?6:3);
+    const requestedKey=JSON.stringify(v1PromptPayload(requestedStage));
+    const isSix=requestedStage===6;
+    try{value=await ensureV1Prompt(requestedStage);}catch(err){showV1PromptStatus('無法取得'+(isSix?'六':'三')+'張牌提示詞：'+String(err?.message||err));return;}
+    if(requestedKey!==JSON.stringify(v1PromptPayload(requestedStage))){
       showV1PromptStatus('抽牌階段已更新，請再次按下按鈕取得最新六張牌提示詞。');return;
     }
     if(!value){if(status)status.textContent='尚未完成抽牌。';return;}
-    const currentKey=state.stage3x3==='complete'?selectedSixPromptFormat:selectedPromptFormat;
+    const currentKey=isSix?selectedSixPromptFormat:selectedPromptFormat;
     if(!formatAllowedForCurrentUser(currentKey)){openMemberModal();return;}
     let success=false;
     try{
@@ -4622,9 +4625,10 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     }catch(err){success=false;}
     if(success){
       if(btn)btn.textContent='✓ 提示詞已複製';
-      if(status)status.textContent=state.stage3x3==='complete'?'六張牌完整提示詞已複製！請前往 AI 解讀，完成後可免費登入保存歷史紀錄。':'提示詞已複製！請先到 AI 完成解讀，記得回來繼續抽牌。';
-      if(state.stage3x3==='complete')state.sixPromptCopied=true;
-      rememberIssuedPrompt(value);
+      if(status)status.textContent=isSix?'六張牌完整提示詞已複製！請前往 AI 解讀，完成後可免費登入保存歷史紀錄。':'三張牌提示詞已複製，可與六張牌提示詞分別使用。';
+      if(isSix)state.sixPromptCopied=true;
+      if(isSix || state.stage3x3!=='complete')rememberIssuedPrompt(value);
+      else {state.firstPromptSnapshot=value;persist3x3();}
       if(state.stage3x3==='complete'){renderFinish();syncNewQuestionUI();}
       else {setAIGuidanceStage('choose-ai');renderFinish();}
     }else{
@@ -5018,7 +5022,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite">額度用完或服務忙碌時，請使用下方複製提示詞功能。</p>
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
         <div data-site-ai-output hidden></div>
-        </section><div class="tarot-prompt-actions"><button type="button" class="tarot-copy-main" data-ai-prompt-copy>${six?'獲得並複製六張牌提示詞':'獲得並複製三張牌提示詞'}</button><button type="button" class="tarot-prompt-download ${tarotFullPrivilege()?'':'v2814-paid-btn'}" data-ai-prompt-txt>${tarotFullPrivilege()?'↓ 下載提示詞 TXT':'↓ 下載提示詞 TXT｜🔒 完整進階'}</button></div>
+        </section><div class="tarot-prompt-actions">${six?'<button type="button" class="tarot-copy-main tarot-copy-three" data-ai-prompt-copy data-prompt-stage="3">獲得並複製三張牌提示詞</button>':''}<button type="button" class="tarot-copy-main" data-ai-prompt-copy data-prompt-stage="${six?'6':'3'}">${six?'獲得並複製六張牌提示詞':'獲得並複製三張牌提示詞'}</button><button type="button" class="tarot-prompt-download ${tarotFullPrivilege()?'':'v2814-paid-btn'}" data-ai-prompt-txt>${tarotFullPrivilege()?'↓ 下載提示詞 TXT':'↓ 下載提示詞 TXT｜🔒 完整進階'}</button></div>
       <p class="tarot-copy-status" data-ai-copy-status role="status" aria-live="polite">${tarotFullPrivilege()?'選好格式與風格後可複製或下載完整提示詞。':'選好格式與風格後可免費複製提示詞；TXT 一鍵下載保留給未來完整進階。'}</p><div class="tarot-record-invite"><b>✦ 保存這次的塔羅占卜</b><p>免費登入會員即可保存當時的問題、${six?'六張牌及三張／六張兩份':'三張牌與'}原版 AI 提示詞。未來可在專屬紀錄頁再次複製原版提示詞，並設定三個月後回顧；TXT 一鍵下載保留給進階功能。</p><div class="tarot-record-invite-actions"><button type="button" data-member-login>免費登入保存</button><a href="tarot-records.html">我的塔羅占卜紀錄 ↗</a></div><p data-record-status class="tarot-record-status" role="status" aria-live="polite">完成複製或 TXT 下載後，將準備保存本次紀錄。</p></div>
       ${tarotFullPrivilege()?`<details class="v2818-paid-preview"><summary>展開查看完整提示詞</summary><pre data-ai-prompt-content>${esc(prompt||'正在由伺服器準備提示詞…')}</pre></details>`:`<button type="button" class="v2818-preview-locked" data-v2818-locked-preview aria-label="展開查看完整提示詞，僅完整進階會員可用">▸ 展開查看完整提示詞 <span>🔒 完整進階</span></button>`}<h4 style="font-size:.87rem;margin:14px 0 2px">取得提示詞後，自行選擇 AI 平台</h4><div class="ai-provider-grid">${providers.map(([name,url])=>`<a href="${url}" target="_blank" rel="noopener noreferrer" data-ai-provider-link="${name}">${name} ↗</a>`).join('')}</div><p style="font-size:.7rem;margin:14px 0 0">${six?'各平台均為外部服務，可直接貼上六張牌完整提示詞，不必提供第一次 AI 的對話紀錄。':'各平台均為外部服務，使用者自行貼上提示詞；切換解讀格式或風格不需要重新抽牌。'}</p></section>`;
     void loadV1PromptPreview();
