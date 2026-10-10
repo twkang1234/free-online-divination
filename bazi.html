@@ -2319,6 +2319,14 @@ body.has-bazi-chart .bazi-seo,body.show-bazi-intro .bazi-seo{display:block}
 html[data-theme="light"] .daily-flow-demo-note{background:#f0f5fc;border-color:#a4b9cf;color:#39516b}
 html[data-theme="light"] .daily-flow-demo-note strong{color:#1c536b}
 @media(max-width:600px){#worldSecond{padding-top:24px}.daily-flow-demo-note{align-items:flex-start;gap:8px;font-size:11px}}
+
+.bazi-save-dialog{width:min(420px,calc(100vw - 36px));box-sizing:border-box;background:#13202d;color:#dbe7f1;border:1px solid #52677a;border-radius:18px;padding:24px}
+.bazi-save-dialog::backdrop{background:rgba(0,0,0,.6)}
+.bazi-save-dialog h3{margin:0 0 18px}.bazi-save-dialog label{display:block;font-size:14px}.bazi-save-dialog #baziSaveNickname{width:100%;box-sizing:border-box;margin:8px 0 16px;padding:10px;border:1px solid #617286;border-radius:8px;background:#0c1520;color:inherit;font:inherit}
+.bazi-save-dialog .bazi-default-check{display:flex;align-items:center;gap:8px}.bazi-save-dialog p{font-size:12px;line-height:1.8;color:#aabac9}.bazi-save-dialog form>div{display:flex;justify-content:flex-end;gap:8px}.bazi-save-dialog button{padding:8px 16px;border:1px solid #688b94;border-radius:8px;background:#244957;color:#d6eff3;cursor:pointer}
+.saved-item-main small{color:#91d2c6;font-size:11px}.saved-item-actions{flex-wrap:wrap;justify-content:flex-end}.saved-item-actions button:disabled{opacity:.7;cursor:default}
+html[data-theme="light"] .bazi-save-dialog{background:#fff;color:#244356;border-color:#94b4c2}html[data-theme="light"] .bazi-save-dialog #baziSaveNickname{background:#f3f8fa;border-color:#a1bcc9}html[data-theme="light"] .bazi-save-dialog p{color:#51687b}html[data-theme="light"] .saved-item-main small{color:#25684d}
+@media(max-width:600px){.saved-item{align-items:flex-start;flex-direction:column}.saved-item-actions{justify-content:flex-start}}
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -2761,6 +2769,10 @@ html[data-theme="light"] .daily-flow-demo-note strong{color:#1c536b}
     </div>
   </div>
 
+  <dialog class="bazi-save-dialog" id="baziSaveDialog" aria-labelledby="baziSaveTitle">
+    <form id="baziSaveForm"><h3 id="baziSaveTitle">儲存八字</h3><label for="baziSaveNickname">命盤名稱</label><input id="baziSaveNickname" maxlength="40" required placeholder="例如：自己、太太、兒子"><label class="bazi-default-check"><input type="checkbox" id="baziSaveDefault">設為我的預設命盤</label><p>下次登入會帶入預設命盤並更新當天流日；查詢家人的命盤不會覆蓋此設定。</p><div><button type="button" id="baziSaveCancel">取消</button><button type="submit" id="baziSaveSubmit">儲存</button></div></form>
+  </dialog>
+
   <!-- 曆法核心：MIT 授權 lunar-javascript 1.7.7 -->
   <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
   <script>
@@ -3107,6 +3119,8 @@ html[data-theme="light"] .daily-flow-demo-note strong{color:#1c536b}
   const emptyState = $('emptyState');
   const results = $('results');
   let lastData = null;
+  let lastSuccessfulBirthInput=null;
+  let memberRestoreSequence=0;
   let selectedPeriods = {};
 
   const labels = {year:['年柱','YEAR'],month:['月柱','MONTH'],day:['日柱','DAY MASTER'],time:['時柱','HOUR']};
@@ -5209,7 +5223,7 @@ ${source}
   }
 
   let dailyFlowDemo=true;
-  const dailyFlowExample={"date":"2026-10-10","ganZhi":"丁巳","overview":{"stars":3,"theme":"按流程推進，把責任與期限交代清楚","intro":"今天外在重點是責任、規範、秩序，實際互動則帶著期限、競爭、決斷的節奏。你原局支持較足，今天適合把主動性轉成具體成果。","dayMaster":"庚金日主","strength":"偏強傾向"},"tenGods":{"stem":{"character":"丁","god":"正官","words":"責任、規範、秩序"},"branch":{"character":"巳","mainStem":"丙","god":"七殺","words":"期限、競爭、決斷"}},"full":{"domains":[{"key":"money","label":"財運","score":66,"tone":"穩步安排","note":"核對責任、期限與需要負擔的成本，今天把資源安排清楚，比急著增加投入合適。"},{"key":"work","label":"事業","score":81,"tone":"較有助力","note":"照要求完成重點，急件拆成小步驟，把握今天的推進感，先完成最重要的一件。"},{"key":"love","label":"感情","score":62,"tone":"穩步安排","note":"別把工作上的急躁帶進親密對話，平常的小互動，比急著討論結果更能照顧關係。"},{"key":"health","label":"健康","score":56,"tone":"穩步安排","note":"固定休息，任務再急也留一點緩衝，把吃飯與休息照常安排，不因忙碌往後挪。"},{"key":"social","label":"人際","score":64,"tone":"穩步安排","note":"重要約定講明白，用紀錄減少誤會，互動保持自然，重要承諾另外確認。"}],"good":["核對文件與工作要求，確認重要事項留下紀錄","拆解急件，先處理最重要的一步並預留緩衝","把多出的主動性用在一件能完成的成果上"],"watch":["太在意他人評價，或規則沒弄清楚就急著承諾","被期限推著跑，把行程塞滿或把焦躁帶進對話","因為一時順手，就把承諾或行程排得太滿"],"quote":"把該做的事做好，不必替所有期待負責。","basis":{"support":73,"supportLabel":"偏強傾向","stemElement":"火","branchElement":"火","hiddenStems":[{"gan":"丙","god":"七殺","weight":0.6},{"gan":"戊","god":"偏印","weight":0.3},{"gan":"庚","god":"比肩","weight":0.1}],"relations":[],"repeated":[],"connections":0,"method":"依日主支持度、流日天干與藏干十神、原局主題集中度及干支互動整理。分數表達相對生活節奏；健康項目指作息與精神體力。未完整判定喜用神，不計個人吉時。"}},"access":{"full":true,"tomorrow":false},"offset":0};
+
   let dailyFlowState={offset:0,day:null,loading:false,error:'',requestId:0,token:'',chartKey:''};
   const dailyFlowCache=new Map();
   function dailyFrontendDate(offset=0,now=new Date()){
@@ -5334,8 +5348,24 @@ ${source}
     dailyFlowState.day=day?.offset===0?{version:day.version,date:day.date,offset:0,ganZhi:day.ganZhi,overview:day.overview,tenGods:day.tenGods,access:{full:false,tomorrow:false}}:null;
     dailyFlowState.token=baziAuthToken();renderDailyFlowView();
   }
+  async function loadDailyFlowExample(){
+    if(!dailyFlowDemo||dailyFlowState.loading)return;
+    const id=++dailyFlowState.requestId;
+    dailyFlowState.loading=true;dailyFlowState.error='';dailyFlowState.day=null;renderDailyFlowView();
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+    try{
+      const res=await fetch(BAZI_API_BASE+'/daily-example',{cache:'no-store',signal:controller.signal});const json=await res.json();
+      if(!dailyFlowDemo||id!==dailyFlowState.requestId)return;
+      if(!res.ok||!json.success||!json.example||json.dailyFlow?.date!==dailyFrontendDate()||!json.dailyFlow.full)throw Error('當日流日示範尚未取得，請重新整理或重試。');
+      dailyFlowState.day=json.dailyFlow;
+    }catch(err){if(dailyFlowDemo&&id===dailyFlowState.requestId)dailyFlowState.error=err.name==='AbortError'?'流日示範讀取逾時，請重試。':err.message;}
+    finally{clearTimeout(timer);if(dailyFlowDemo&&id===dailyFlowState.requestId){dailyFlowState.loading=false;renderDailyFlowView();}}
+  }
+
   function syncDailyFlowClock(){
-    if(!lastData||document.hidden)return;
+    if(document.hidden)return;
+    if(dailyFlowDemo){if(!dailyFlowState.loading&&dailyFlowState.day?.date!==dailyFrontendDate())loadDailyFlowExample();return;}
+    if(!lastData)return;
     const token=baziAuthProfile()?baziAuthToken():'';
     if(token!==dailyFlowState.token){resetDailyFlowAccess();loadDailyFlow(0,true);return;}
     if(dailyFlowState.loading)return;
@@ -5349,12 +5379,16 @@ ${source}
       if(e.target.closest('[data-daily-basis]')){dialog?.showModal();return;}
       if(e.target.closest('[data-daily-basis-close]')||e.target===dialog){dialog?.close();return;}
       if(e.target.closest('[data-daily-login]'))return baziOpenAuth();
-      if(e.target.closest('[data-daily-retry]'))return loadDailyFlow(dailyFlowState.offset,true);
+      if(e.target.closest('[data-daily-retry]'))return dailyFlowDemo?loadDailyFlowExample():loadDailyFlow(dailyFlowState.offset,true);
       const btn=e.target.closest('[data-daily-offset]');if(btn)loadDailyFlow(Number(btn.dataset.dailyOffset));
     });
     document.addEventListener('visibilitychange',syncDailyFlowClock);
     window.addEventListener('storage',e=>{if(e.key===BAZI_AUTH_KEY)syncDailyFlowClock();});
     setInterval(syncDailyFlowClock,60000);
+    window.addEventListener('focus',syncDailyFlowClock);
+    window.addEventListener('pageshow',syncDailyFlowClock);
+    const midnight=()=>{const now=Date.now(),delay=86400000-((now+8*3600000)%86400000)+100;setTimeout(()=>{syncDailyFlowClock();midnight();},delay)};
+    midnight();
   }
 
 
@@ -5784,72 +5818,104 @@ ${source}
     return json;
   }
 
-  async function saveCurrentBazi(){
+  function memberBirthKey(){const p=baziDecodeJwt(baziAuthToken());return p?.sub||p?.email||'';}
+  function localMemberBirth(){try{return JSON.parse(localStorage.getItem('divinationhub-bazi-member:'+memberBirthKey())||'null')}catch(_){return null}}
+  function writeLocalMemberBirth(patch){const key=memberBirthKey();if(!key)return;try{localStorage.setItem('divinationhub-bazi-member:'+key,JSON.stringify({...localMemberBirth(),...patch}))}catch(_){}}
+  function captureBirthInput(){return {birth_date:birthTime.value,time_slot:$('useExactTime').checked?null:Number($('birthSlot').value),exact_time:$('useExactTime').checked?$('exactBirthTime').value:'',use_exact:$('useExactTime').checked,gender:gender.value,sect:sect.value};}
+  function applyBirthInput(r){
+    if(!r?.birth_date||!/^\d{4}-\d{2}-\d{2}$/.test(r.birth_date))return false;
+    setBirthCalendarMode('solar',false);birthTime.value=r.birth_date;syncBirthPartsFromHidden();
+    gender.value=String(r.gender);sect.value=String(r.sect);$('useExactTime').checked=!!Number(r.use_exact);
+    $('exactBirthTime').hidden=!$('useExactTime').checked;
+    $('exactBirthTime').value=r.exact_time||'12:00';$('birthSlot').value=String(r.use_exact?slotForTime($('exactBirthTime').value):r.time_slot??0);
+    return true;
+  }
+  async function rememberMemberBirth(input){
+    if(!baziAuthProfile())return;
+    writeLocalMemberBirth({last_input:input});
+    try{await savedBaziRequest('/bazi-preferences',{method:'POST',body:JSON.stringify({last_input:input})})}
+    catch(_){toast('出生資料已記住於此瀏覽器，帳號同步暫未完成');}
+  }
+  async function restoreMemberBazi(){
+    if(!baziAuthProfile())return;
+    const token=baziAuthToken(),id=++memberRestoreSequence,before=JSON.stringify(captureBirthInput());
+    let pref=localMemberBirth();
+    try{const json=await savedBaziRequest('/bazi-preferences');pref={default_profile:json.default_profile||null,last_input:json.last_input||pref?.last_input||null};if(token===baziAuthToken())writeLocalMemberBirth(pref)}catch(_){}
+    if(token!==baziAuthToken()||id!==memberRestoreSequence||lastData||castBtn.disabled||JSON.stringify(captureBirthInput())!==before)return;
+    const input=pref?.default_profile||pref?.last_input;
+    if(input&&applyBirthInput(input)){await cast(false,false,false);}
+  }
+  function refreshDefaultBadges(list,records){
+    list.querySelectorAll('[data-profile-id]').forEach(el=>{const r=records.find(x=>String(x.id)===el.dataset.profileId);const active=!!Number(r?.is_default);el.querySelector('[data-default-badge]').textContent=active?' ⭐ 預設命盤':'';const btn=el.querySelector('[data-default]');btn.disabled=active;btn.textContent=active?'目前預設':'設為預設';});
+  }
+  function saveCurrentBazi(){
     if(!baziAuthProfile())return baziOpenAuth();
-    if(!lastData)return toast('請先排出一張八字');
-    const nickname=(prompt('幫這張八字取一個名稱，例如：我的、媽媽、小孩','我的八字')||'').trim();
-    if(!nickname)return;
-    const exact=$('useExactTime').checked;
-    const payload={
-      nickname,
-      birth_date:birthTime.value,
-      time_slot:exact?null:Number($('birthSlot').value),
-      exact_time:exact?$('exactBirthTime').value:'',
-      use_exact:exact,
-      gender:gender.value,
-      sect:sect.value
-    };
+    if(!lastData||!lastSuccessfulBirthInput)return toast('請先排出一張八字');
+    const dialog=$('baziSaveDialog');dialog.birthInput={...lastSuccessfulBirthInput};dialog.ownerToken=baziAuthToken();
+    $('baziSaveNickname').value='我的八字';$('baziSaveDefault').checked=false;
+    dialog.showModal();$('baziSaveNickname').focus();
+  }
+  async function submitSavedBazi(e){
+    e.preventDefault();if(!baziAuthProfile())return baziOpenAuth();
+    const dialog=$('baziSaveDialog'),btn=$('baziSaveSubmit');const token=baziAuthToken();
+    if(token!==dialog.ownerToken){dialog.close();return toast('登入帳號已切換，請重新儲存');}
+    const nickname=$('baziSaveNickname').value.trim();if(!nickname)return;
+    const payload={...dialog.birthInput,nickname,is_default:$('baziSaveDefault').checked};
+    btn.disabled=true;
     try{
-      await savedBaziRequest('/saved-bazi',{method:'POST',body:JSON.stringify(payload)});
-      toast('已儲存到我的八字');
-    }catch(err){toast(err?.message||'儲存失敗');}
+      const json=await savedBaziRequest('/saved-bazi',{method:'POST',body:JSON.stringify(payload)});
+      if(token!==baziAuthToken()){dialog.close();return;}
+      if(payload.is_default)writeLocalMemberBirth({default_profile:{...payload,id:json.saved?.id,is_default:1}});
+      dialog.close();toast(payload.is_default?'已儲存並設為預設命盤':'已儲存到我的八字');
+    }catch(err){toast(err?.message||'儲存失敗');}finally{btn.disabled=false;}
   }
 
   async function openMyBazi(){
     if(!baziAuthProfile())return baziOpenAuth();
-    const modal=$('baziSavedModal'),list=$('baziSavedList');
+    const modal=$('baziSavedModal'),list=$('baziSavedList'),ownerToken=baziAuthToken();
     modal?.classList.add('show');modal?.setAttribute('aria-hidden','false');
     if(list)list.innerHTML='<div style="color:var(--bazi-text-70,#778596);font-size:.7rem;padding:8px 0;">讀取中…</div>';
     try{
       const json=await savedBaziRequest('/saved-bazi');
+      if(ownerToken!==baziAuthToken())return;
       const records=json.records||[];
       if(!records.length){
         list.innerHTML='<div style="color:var(--bazi-text-70,#778596);font-size:.7rem;padding:8px 0;">目前還沒有儲存任何八字。</div>';
         return;
       }
       list.innerHTML=records.map(r=>`
-        <div class="saved-item">
+        <div class="saved-item" data-profile-id="${esc(r.id)}">
           <div class="saved-item-main">
-            <b>${esc(r.nickname)}</b>
+            <b>${esc(r.nickname)}<small data-default-badge>${Number(r.is_default)?' ⭐ 預設命盤':''}</small></b>
             <span>${esc(r.birth_date)} · ${r.use_exact?esc(r.exact_time||''):esc(BAZI_HOUR_SLOTS[Number(r.time_slot)]?.[0]||'時辰')} · ${String(r.gender)==='1'?'男':'女'}</span>
           </div>
           <div class="saved-item-actions">
-            <button type="button" data-load="${r.id}">載入</button>
+            <button type="button" data-load="${r.id}">載入</button><button type="button" data-default="${r.id}" ${Number(r.is_default)?'disabled':''}>${Number(r.is_default)?'目前預設':'設為預設'}</button>
             <button type="button" class="danger" data-delete="${r.id}">刪除</button>
           </div>
         </div>`).join('');
 
       const byId=id=>records.find(x=>String(x.id)===String(id));
       list.querySelectorAll('[data-load]').forEach(btn=>btn.addEventListener('click',()=>{
+        if(ownerToken!==baziAuthToken())return;
         const r=byId(btn.dataset.load);if(!r)return;
-        birthTime.value=r.birth_date; syncBirthPartsFromHidden();
-        gender.value=String(r.gender);
-        sect.value=String(r.sect);
-        $('useExactTime').checked=!!r.use_exact;
-        $('exactBirthTime').hidden=!r.use_exact;
-        if(r.use_exact){
-          $('exactBirthTime').value=r.exact_time||'12:00';
-          $('birthSlot').value=slotForTime($('exactBirthTime').value);
-        }else{
-          $('birthSlot').value=String(r.time_slot??0);
-        }
+        applyBirthInput(r);
         modal.classList.remove('show');modal.setAttribute('aria-hidden','true');
         cast();
       }));
+      list.querySelectorAll('[data-default]').forEach(btn=>btn.addEventListener('click',async()=>{
+        if(ownerToken!==baziAuthToken())return;
+        const r=byId(btn.dataset.default);if(!r)return;const token=baziAuthToken();btn.disabled=true;
+        try{await savedBaziRequest('/saved-bazi/'+r.id+'/default',{method:'POST'});if(token!==baziAuthToken())return;
+          records.forEach(x=>x.is_default=String(x.id)===String(r.id)?1:0);writeLocalMemberBirth({default_profile:{...r,is_default:1}});refreshDefaultBadges(list,records);toast('已設為預設命盤，下次進入自動帶入');
+        }catch(err){btn.disabled=false;toast(err?.message||'設定失敗');}
+      }));
       list.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',async()=>{
+        if(ownerToken!==baziAuthToken())return;
         if(!confirm('刪除這筆已儲存八字？'))return;
         try{
           await savedBaziRequest('/saved-bazi/'+btn.dataset.delete,{method:'DELETE'});
+          if(String(localMemberBirth()?.default_profile?.id)===String(btn.dataset.delete))writeLocalMemberBirth({default_profile:null});
           btn.closest('.saved-item')?.remove();
           toast('已刪除');
         }catch(err){toast(err?.message||'刪除失敗');}
@@ -6078,17 +6144,21 @@ ${source}
   }
   function timeInputNote(data){return data.timeInput?'時間輸入：'+data.timeInput.label+' '+data.timeInput.range+'；以 '+data.timeInput.representative+' 代表時間估算。起運日期為估算。':'時間輸入：精確民用時間。';}
 
-  async function cast(scroll = true, countUsage = false){
+  async function cast(scroll = true, countUsage = false, reveal = true){
     const originalText=castBtn?.textContent;
     try{
       if(castBtn){castBtn.disabled=true;castBtn.textContent='後端排盤中…';}
-      const data=await requestBaziApi(birthOptions(), countUsage);
+      const options=birthOptions(),input=captureBirthInput(),token=baziAuthToken();
+      const data=await requestBaziApi(options, countUsage);
+      if(token!==baziAuthToken())return;
+      lastSuccessfulBirthInput=input;
+      if(reveal)rememberMemberBirth(input);
       $('birthTimeNotice').textContent=timeInputNote(data);
       lastData=data;
       selectedPeriods={};
       setDailyFlowChart(data);
       renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);initSectionDecodeUI();resetExploration();
-      emptyState.style.display='none';results.classList.add('show');document.body.classList.add('has-bazi-chart');
+      emptyState.style.display='none';if(reveal){results.classList.add('show');document.body.classList.add('has-bazi-chart');}
       if (scroll) setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
     }catch(err){
       console.error('[Bazi API]',err);
@@ -6102,7 +6172,7 @@ ${source}
     window.baziUpdateTopbarMember?.();
     refreshSmartPromptLocks?.();
     resetDailyFlowAccess();
-    if(!lastData) return;
+    if(!lastData){restoreMemberBazi();return;}
     try{
       toast('登入成功，正在解鎖三年戰略…');
       const data = await requestBaziApi(birthOptions());
@@ -6127,6 +6197,8 @@ ${source}
     document.getElementById('baziTopbarUnlockBtn')?.addEventListener('click',baziOpenAuth);
     document.getElementById('birthMemberLoginBtn')?.addEventListener('click',baziOpenAuth);
     document.getElementById('birthMemberSaveBtn')?.addEventListener('click',saveCurrentBazi);
+    $('baziSaveForm')?.addEventListener('submit',submitSavedBazi);
+    $('baziSaveCancel')?.addEventListener('click',()=>$('baziSaveDialog').close());
     document.getElementById('birthMemberLoadBtn')?.addEventListener('click',openMyBazi);
     document.getElementById('baziAuthClose')?.addEventListener('click',baziCloseAuth);
     document.getElementById('baziAuthModal')?.addEventListener('click',e=>{if(e.target.id==='baziAuthModal')baziCloseAuth();});
@@ -6166,8 +6238,8 @@ ${source}
     setupDirectBirthDate();
     setupBirthSlots();
     initSectionDecodeUI();
-    dailyFlowState.day=JSON.parse(JSON.stringify(dailyFlowExample));
-    renderDailyFlowView();
+    loadDailyFlowExample();
+    restoreMemberBazi();
     castBtn.addEventListener('click', () => cast(true, true));
     setupReportActions();
 
