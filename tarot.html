@@ -3865,6 +3865,19 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
   function ritualCardEl(){
     const el=document.createElement('button');el.type='button';el.className='ritual-card';return el;
   }
+  // V11: 選滿第三張就自動確認，不需要另外按「完成抽牌」。
+  let ritualAutoFinishPending=false;
+  function scheduleRitualAutoFinish(){
+    if(ritualAutoFinishPending || state.ritualSelected!==ritualTarget() || drawState().current?.length!==ritualTarget())return;
+    ritualAutoFinishPending=true;
+    const currentPhase=state.drawPhase, currentReading=state.readingId;
+    setTimeout(async()=>{
+      try{
+        if(state.drawPhase!==currentPhase || state.readingId!==currentReading || drawState().current?.length!==ritualTarget())return;
+        await showFormalResults();
+      }finally{ritualAutoFinishPending=false;}
+    },220);
+  }
   function chooseRitualBack(el,card){
     if(state.ritualSelected>=ritualTarget()||el.classList.contains('chosen')||!card)return;
     if(drawState().current.some(c=>c.id===card.id))return;
@@ -3898,8 +3911,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
         });
       }
 
-      const btn=$('ritualFinishBtn');
-      if(btn)btn.disabled=false;
+      scheduleRitualAutoFinish();
 
       // 桌面散牌選滿後，不再允許繼續丟牌。
       const scatterMoreBtn=$('ritualScatterMore');
@@ -3966,7 +3978,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     renderFanRitual(false);
   }
   function renderFanRitual(doShuffle=false){
-    const host=$('ritualHost');host.innerHTML=`<div class="ritual-top"><div><h4>扇形選牌</h4><p>牌先收攏洗牌，再展開成前後兩層。從牌群中選出 ${ritualTarget()} 張。</p></div><div class="ritual-count">已選 ${state.ritualSelected} / ${ritualTarget()}</div></div><div class="ritual-board"><div class="ritual-hint">憑第一直覺選牌，不需要找「看起來特別」的牌。</div><div class="ritual-fan-orbit"></div>${ritualSlotsHTML()}</div><div class="ritual-actions"><button class="btn-primary" id="ritualFinishBtn" type="button" disabled>完成抽牌，查看牌面</button></div>`;
+    const host=$('ritualHost');host.innerHTML=`<div class="ritual-top"><div><h4>扇形選牌</h4><p>牌先收攏洗牌，再展開成前後兩層。從牌群中選出 ${ritualTarget()} 張。</p></div><div class="ritual-count">已選 ${state.ritualSelected} / ${ritualTarget()}</div></div><div class="ritual-board"><div class="ritual-hint">憑第一直覺選牌，不需要找「看起來特別」的牌。</div><div class="ritual-fan-orbit"></div>${ritualSlotsHTML()}</div>`;
     const board=host.querySelector('.ritual-board'),cx=board.clientWidth/2;
     const add=(count,offset,isBack,baseY,radius,spread,scale,z)=>{
       for(let j=0;j<count;j++){
@@ -3982,7 +3994,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     };
     add(28,0,true,board.clientHeight-218,Math.min(board.clientWidth*.34,390),102,.88,30);
     add(42,28,false,board.clientHeight-134,Math.min(board.clientWidth*.42,470),112,1,90);
-    $('ritualFinishBtn').onclick=showFormalResults;
+
     if(doShuffle)setTimeout(animateFanShuffle,120);
   }
   function scatterAdd(amount=6,thrown=true){
@@ -4001,8 +4013,8 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     const addBtn=$('ritualScatterMore');if(addBtn)addBtn.textContent=ritualScatterCount>=ritualSessionDeck.length?'牌已全部丟上桌':`再丟 6 張（桌上 ${ritualScatterCount} 張）`;
   }
   function renderScatterRitual(){
-    ritualScatterCount=0;const host=$('ritualHost');host.innerHTML=`<div class="ritual-top"><div><h4>桌面散牌</h4><p>牌會自然散落、重疊；你也可以自己再把牌丟進桌面。</p></div><div class="ritual-count">選 ${ritualTarget()} 張</div></div><div class="ritual-board"><div class="ritual-hint">桌面越亂越像真實散牌，直接點有感覺的位置。</div><div class="ritual-scatter-glow"></div>${ritualSlotsHTML()}</div><div class="ritual-actions"><button class="btn-ghost" id="ritualScatterMore" type="button">再丟 6 張</button><button class="btn-primary" id="ritualFinishBtn" type="button" disabled>完成抽牌，查看牌面</button></div>`;
-    scatterAdd(38,false);$('ritualScatterMore').onclick=()=>scatterAdd(6,true);$('ritualFinishBtn').onclick=showFormalResults;
+    ritualScatterCount=0;const host=$('ritualHost');host.innerHTML=`<div class="ritual-top"><div><h4>桌面散牌</h4><p>牌會自然散落、重疊；你也可以自己再把牌丟進桌面。</p></div><div class="ritual-count">選 ${ritualTarget()} 張</div></div><div class="ritual-board"><div class="ritual-hint">桌面越亂越像真實散牌，直接點有感覺的位置。</div><div class="ritual-scatter-glow"></div>${ritualSlotsHTML()}</div><div class="ritual-actions"><button class="btn-ghost" id="ritualScatterMore" type="button">再丟 6 張</button></div>`;
+    scatterAdd(38,false);$('ritualScatterMore').onclick=()=>scatterAdd(6,true);
   }
   function flowSpawn(laneIndex,initialProgress=null){
     if(state.ritualSelected>=ritualTarget())return;
@@ -4037,13 +4049,13 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     lane.appendChild(c);
   }
   function renderFlowRitual(){
-    const host=$('ritualHost');host.innerHTML=`<div class="ritual-top"><div><h4>命運牌流</h4><p>三條牌流持續移動，看到有感覺的牌就直接點下。</p></div><div class="ritual-count">選 ${ritualTarget()} 張</div></div><div class="ritual-board"><div class="ritual-hint">不用等牌從兩側進來；一開始畫面裡就已經有牌在流動。</div>${[0,1,2].map(i=>`<div class="ritual-flow-lane" data-lane="${i}"><div class="ritual-flow-line"></div></div>`).join('')}${ritualSlotsHTML()}</div><div class="ritual-actions"><button class="btn-primary" id="ritualFinishBtn" type="button" disabled>完成抽牌，查看牌面</button></div>`;
+    const host=$('ritualHost');host.innerHTML=`<div class="ritual-top"><div><h4>命運牌流</h4><p>三條牌流持續移動，看到有感覺的牌就直接點下。</p></div><div class="ritual-count">選 ${ritualTarget()} 張</div></div><div class="ritual-board"><div class="ritual-hint">不用等牌從兩側進來；一開始畫面裡就已經有牌在流動。</div>${[0,1,2].map(i=>`<div class="ritual-flow-lane" data-lane="${i}"><div class="ritual-flow-line"></div></div>`).join('')}${ritualSlotsHTML()}</div>`;
     // 每條線一開始就放 4 張在不同進度位置，進畫面即可立刻看到牌。
     [0,1,2].forEach(i=>{
       [0.14,0.36,0.60,0.82].forEach(progress=>flowSpawn(i,progress));
       state.ritualFlowTimers.push(setInterval(()=>flowSpawn(i),760+i*100));
     });
-        $('ritualFinishBtn').onclick=showFormalResults;
+    
   }
   function renderStopRitual(){
     const host=$('ritualHost');
@@ -4067,7 +4079,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
             <div class="ritual-stop-name" id="ritualStopName">${esc(displayCard.name)}</div>
             <div class="ritual-stop-orientation" id="ritualStopOri">${displayOri}</div>
             <div class="ritual-actions">
-              <button class="btn-primary" id="ritualStopAction" type="button">${ritualStopPicked.length>=ritualTarget()?'完成，查看牌面':(ritualStopPicked.length?'繼續跳下一張':'開始跳牌')}</button>
+              <button class="btn-primary" id="ritualStopAction" type="button">${ritualStopPicked.length>=ritualTarget()?'抽牌完成':(ritualStopPicked.length?'繼續跳下一張':'開始跳牌')}</button>
             </div>
             <div class="ritual-stop-slots-inline">${ritualSlotsHTML()}</div>
           </div>
@@ -4087,10 +4099,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     }
 
     action.onclick=()=>{
-      if(ritualStopPicked.length>=ritualTarget()){
-        showFormalResults();
-        return;
-      }
+      if(ritualStopPicked.length>=ritualTarget())return;
 
       if(!running){
         running=true;
@@ -4114,6 +4123,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
         ritualStopCount=ritualStopPicked.length;
         state.ritualSelected=ritualStopCount;
         renderStopRitual();
+        if(state.ritualSelected>=ritualTarget())scheduleRitualAutoFinish();
       }
     };
   }
@@ -4157,9 +4167,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
           }).join('')}
         </div>
       </div>
-      <div class="ritual-actions">
-        <button class="btn-primary" id="classicFinishBtn" type="button" ${state.ritualSelected>=target?'':'disabled'}>完成抽牌，查看牌面</button>
-      </div>`;
+`;
 
     
     host.querySelectorAll('[data-classic-index]').forEach(btn=>{
@@ -4171,11 +4179,12 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
         drawState().current.push(cardWithPosition(actual,state.ritualSelected));
         state.ritualSelected++;
         renderStudyRitual();
+        if(state.ritualSelected>=target)scheduleRitualAutoFinish();
       };
     });
 
     
-    $('classicFinishBtn').onclick=showFormalResults;
+
   }
 
   function ritualIdForIndex(index){
@@ -4239,13 +4248,8 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       state.drawPackReady=true;
       state.ritualSelected=drawState().current.length;
 
-      $('manualResult').innerHTML=`
-        <b>已確認你的實體牌：</b><br>
-        ${drawState().current.map((c,i)=>`${i+1}. ${esc(c.position)}｜${esc(c.name)}｜${c.reversed?'逆位':'正位'}`).join('<br>')}
-        <div class="ritual-next-note">下一步會使用你剛剛輸入的這些牌，不會重新隨機抽牌。</div>
-        <div class="ritual-actions"><button class="btn-primary" id="manualContinue" type="button">下一步｜查看牌面並取得提示詞</button></div>`;
-
-      $('manualContinue').onclick=showFormalResults;
+      $('manualResult').textContent='三張牌已確認，正在開啟牌面與提示詞…';
+      scheduleRitualAutoFinish();
     };
   }
   function ritualPalette(card){
