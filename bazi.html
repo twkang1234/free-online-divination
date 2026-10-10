@@ -2306,6 +2306,19 @@ html[data-theme="light"] .daily-flow-tool-yijing{background:#dfefef;border-color
 @media(max-width:1100px){.daily-flow-tool{gap:8px;width:auto;padding:4px 7px}.daily-flow-tool,.daily-flow-tool b{font-size:12px}}
 @media(max-width:600px){.daily-flow-date>.daily-flow-date-top{position:relative}.daily-flow-date-top>.daily-flow-calendar{position:absolute;right:0;top:29px;max-width:155px;font-size:10px;transform:translateY(68px);white-space:nowrap}.daily-flow-date{position:relative;padding-bottom:16px}.daily-flow-advice-head{gap:6px}.daily-flow-advice-head h4{font-size:18px}.daily-flow-tool{gap:6px;padding:3px 6px}.daily-flow-tool,.daily-flow-tool b{font-size:11px}}
 @media(max-width:380px){.daily-flow-date-top>.daily-flow-calendar{transform:translateY(56px)}.daily-flow-tool{gap:4px;padding:3px 4px}.daily-flow-tool,.daily-flow-tool b{font-size:10px}}
+
+/* V4.5 直接呈現輸入與流日示範，完整報告由使用者排盤後展開。 */
+#worldSecond{padding-top:36px}
+#worldSecond>.stage-header{display:none}
+#castBtn{scroll-margin-top:130px}
+.bazi-seo{display:none}
+body.has-bazi-chart .bazi-seo,body.show-bazi-intro .bazi-seo{display:block}
+#report-daily-flow{margin-bottom:18px}
+.daily-flow-demo-note{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:9px 12px;border:1px solid #496573;border-radius:9px;background:#152832;color:#b9d9e1;font-size:12px;line-height:1.6}
+.daily-flow-demo-note strong{flex-shrink:0;color:#c4edf0}
+html[data-theme="light"] .daily-flow-demo-note{background:#f0f5fc;border-color:#a4b9cf;color:#39516b}
+html[data-theme="light"] .daily-flow-demo-note strong{color:#1c536b}
+@media(max-width:600px){#worldSecond{padding-top:24px}.daily-flow-demo-note{align-items:flex-start;gap:8px;font-size:11px}}
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -2351,7 +2364,7 @@ html[data-theme="light"] .daily-flow-tool-yijing{background:#dfefef;border-color
       <div class="hero-tagline">看底牌・識性格・觀週期・找人生節奏</div>
       <p class="hero-desc">八字以出生年月日時建立四柱命盤，從日主、五行、十神與大運觀察一個人的先天結構與長期人生節奏。本頁提供免費線上八字排盤與命盤分析，除了四柱、日主、五行與十神，也可查看藏干、納音、十二長生、干支互動、大運、流年與流月，並整理性格、事業、財運與感情等基礎結構。</p>
       <div class="hero-actions">
-        <a class="hero-primary" href="#prepare">開始排盤 ↓</a>
+        <a class="hero-primary" href="#castBtn">開始排盤 ↓</a>
         <a class="hero-secondary" href="#about-bazi">先了解八字</a>
       </div>
     </div>
@@ -2368,19 +2381,7 @@ html[data-theme="light"] .daily-flow-tool-yijing{background:#dfefef;border-color
     </div>
   </section>
 
-  <section class="quiet-section" id="prepare">
-    <div class="quiet-kicker">BEFORE THE CHART · CHECK YOUR BIRTH DATA</div>
-    <h2>排盤之前，先確認出生資料</h2>
-    <p class="quiet-lead">八字和事件型占卜不同，它直接以出生年月日時建立本命四柱。資料越接近真實出生時間，命盤就越完整；若出生時間接近交節、23:00 或時辰交界，更要先確認採用的規則。</p>
-    <div class="quiet-rules">
-      <article class="quiet-rule"><i>01 / DATE & TIME</i><b>確認出生年月日時</b><span>盡量使用實際出生時間；若只知道大概時辰，也要知道時柱資訊可能因此產生差異。</span></article>
-      <article class="quiet-rule"><i>02 / LATE ZI HOUR</i><b>留意晚子時換日</b><span>23:00 前後出生的人，需確認採用「當日」還是「次日」規則。本工具提供兩種設定。</span></article>
-      <article class="quiet-rule"><i>03 / CIVIL TIME</i><b>本工具使用民用時間</b><span>目前不另外套用真太陽時。若出生時間接近時辰交界，正式解盤前可再核對出生地與流派規則。</span></article>
-    </div>
-    <button class="begin-bazi" id="beginBazi" type="button">資料已確認，開始排八字</button>
-  </section>
-
-  <section id="worldSecond" aria-hidden="true">
+  <section id="worldSecond" class="is-open" aria-hidden="false">
     <header class="stage-header">
       <div>
         <div class="stage-kicker">FREE ONLINE BAZI CHART</div>
@@ -2471,13 +2472,8 @@ html[data-theme="light"] .daily-flow-tool-yijing{background:#dfefef;border-color
         </div>
       </div>
 
-      <div class="empty" id="emptyState">
-        <div>
-          <div class="empty-orbit"></div>
-          <h3>命盤尚未建立</h3>
-          <p>輸入出生年月日、時間與性別後按下「排八字」。目前版本以你輸入的當地民用時間直接起盤，未另外套用真太陽時修正。</p>
-        </div>
-      </div>
+      <div id="emptyState" hidden></div>
+      <section class="daily-flow-section" id="report-daily-flow" aria-label="每日流日"><div class="daily-flow-content" id="dailyFlowContent"></div></section>
 
       <div class="results" id="results">
 <section class="report-hero" id="report-overview">
@@ -2494,7 +2490,7 @@ html[data-theme="light"] .daily-flow-tool-yijing{background:#dfefef;border-color
           <details class="method-details"><summary>查看結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">加權方式：每個天干 1 份，地支按藏干比例分配；月支乘 1.35，其餘支乘 1.05。十神占比不計日干本身；支持度另看同類、生扶、通根與月支。此處未完整判定格局、調候與喜用神。</p><p class="micro-note">歲運比較：支持較足時，以食傷、財星與官殺作為發揮方向；支持較少時，以比劫與印星作為承接方向。原局已集中的主題與沖刑害破增加負擔；合只代表連結，不一律加分。分項說明另外看十神主題及日支、月柱互動。</p></details>
         </section>
 
-        <section class="daily-flow-section" id="report-daily-flow" aria-label="每日流日"><div class="daily-flow-content" id="dailyFlowContent"></div></section>
+
 
         <details class="report-section" id="report-pillars" open>
           <summary><span><b>01</b> 四柱命盤</span><small>FOUR PILLARS · HIDDEN STEMS · TEN GODS</small></summary>
@@ -5212,6 +5208,8 @@ ${source}
     $('meta').classList.add('show');
   }
 
+  let dailyFlowDemo=true;
+  const dailyFlowExample={"date":"2026-10-10","ganZhi":"丁巳","overview":{"stars":3,"theme":"按流程推進，把責任與期限交代清楚","intro":"今天外在重點是責任、規範、秩序，實際互動則帶著期限、競爭、決斷的節奏。你原局支持較足，今天適合把主動性轉成具體成果。","dayMaster":"庚金日主","strength":"偏強傾向"},"tenGods":{"stem":{"character":"丁","god":"正官","words":"責任、規範、秩序"},"branch":{"character":"巳","mainStem":"丙","god":"七殺","words":"期限、競爭、決斷"}},"full":{"domains":[{"key":"money","label":"財運","score":66,"tone":"穩步安排","note":"核對責任、期限與需要負擔的成本，今天把資源安排清楚，比急著增加投入合適。"},{"key":"work","label":"事業","score":81,"tone":"較有助力","note":"照要求完成重點，急件拆成小步驟，把握今天的推進感，先完成最重要的一件。"},{"key":"love","label":"感情","score":62,"tone":"穩步安排","note":"別把工作上的急躁帶進親密對話，平常的小互動，比急著討論結果更能照顧關係。"},{"key":"health","label":"健康","score":56,"tone":"穩步安排","note":"固定休息，任務再急也留一點緩衝，把吃飯與休息照常安排，不因忙碌往後挪。"},{"key":"social","label":"人際","score":64,"tone":"穩步安排","note":"重要約定講明白，用紀錄減少誤會，互動保持自然，重要承諾另外確認。"}],"good":["核對文件與工作要求，確認重要事項留下紀錄","拆解急件，先處理最重要的一步並預留緩衝","把多出的主動性用在一件能完成的成果上"],"watch":["太在意他人評價，或規則沒弄清楚就急著承諾","被期限推著跑，把行程塞滿或把焦躁帶進對話","因為一時順手，就把承諾或行程排得太滿"],"quote":"把該做的事做好，不必替所有期待負責。","basis":{"support":73,"supportLabel":"偏強傾向","stemElement":"火","branchElement":"火","hiddenStems":[{"gan":"丙","god":"七殺","weight":0.6},{"gan":"戊","god":"偏印","weight":0.3},{"gan":"庚","god":"比肩","weight":0.1}],"relations":[],"repeated":[],"connections":0,"method":"依日主支持度、流日天干與藏干十神、原局主題集中度及干支互動整理。分數表達相對生活節奏；健康項目指作息與精神體力。未完整判定喜用神，不計個人吉時。"}},"access":{"full":true,"tomorrow":false},"offset":0};
   let dailyFlowState={offset:0,day:null,loading:false,error:'',requestId:0,token:'',chartKey:''};
   const dailyFlowCache=new Map();
   function dailyFrontendDate(offset=0,now=new Date()){
@@ -5219,7 +5217,7 @@ ${source}
   }
   function dailyChartKey(data){return (data?.pillars||[]).map(p=>p.gan+p.zhi).join('|');}
   function dailyFullAccess(day=dailyFlowState.day){
-    return !!(day?.access?.full&&baziAuthProfile()&&dailyFlowState.token===baziAuthToken());
+    return dailyFlowDemo||!!(day?.access?.full&&baziAuthProfile()&&dailyFlowState.token===baziAuthToken());
   }
   function dailyDateLabel(date){
     const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(date||''));
@@ -5238,8 +5236,8 @@ ${source}
     const day=dailyFlowState.day,full=dailyFullAccess(day),member=!!baziAuthProfile();
     const label=dailyFlowState.offset===1?'明日':'今日';
     const date=day?.date||dailyFrontendDate(dailyFlowState.offset);
-    const tabs=member?`<div class="daily-flow-tabs" role="group" aria-label="選擇流日日期"><button type="button" data-daily-offset="0" class="${dailyFlowState.offset===0?'active':''}" aria-pressed="${dailyFlowState.offset===0}">今天</button><button type="button" data-daily-offset="1" class="${dailyFlowState.offset===1?'active':''}" aria-pressed="${dailyFlowState.offset===1}">查看明天</button></div>`:'';
-    const header=`<div class="daily-flow-heading"><div><span class="daily-flow-kicker">DAILY FLOW · 每天的生活提醒</span><div class="daily-flow-title-row"><h3>📅 每日流日</h3>${tabs}</div><p>${esc(dailyDateLabel(date))}${day?'　｜　'+esc(day.ganZhi)+'日':''}<small>台灣時間</small></p></div>${full&&!dailyFlowState.loading?`<div class="daily-flow-quote"><span>${label}箴言</span><p>「${esc(day.full?.quote||'')}」</p></div><button class="daily-flow-basis-link" type="button" data-daily-basis>判讀依據 ↗</button>`:''}</div>`;
+    const tabs=member&&!dailyFlowDemo?`<div class="daily-flow-tabs" role="group" aria-label="選擇流日日期"><button type="button" data-daily-offset="0" class="${dailyFlowState.offset===0?'active':''}" aria-pressed="${dailyFlowState.offset===0}">今天</button><button type="button" data-daily-offset="1" class="${dailyFlowState.offset===1?'active':''}" aria-pressed="${dailyFlowState.offset===1}">查看明天</button></div>`:'';
+    const header=`${dailyFlowDemo?'<div class="daily-flow-demo-note"><strong>流日示範</strong><span>以下為範例命盤，非你的個人運勢。輸入出生資料並點「免費排八字」，查看你的專屬流日。</span></div>':''}<div class="daily-flow-heading"><div><span class="daily-flow-kicker">DAILY FLOW · 每天的生活提醒</span><div class="daily-flow-title-row"><h3>📅 每日流日</h3>${tabs}</div><p>${esc(dailyDateLabel(date))}${day?'　｜　'+esc(day.ganZhi)+'日':''}<small>台灣時間</small></p></div>${full&&!dailyFlowState.loading?`<div class="daily-flow-quote"><span>${label}箴言</span><p>「${esc(day.full?.quote||'')}」</p></div><button class="daily-flow-basis-link" type="button" data-daily-basis>判讀依據 ↗</button>`:''}</div>`;
     mount.setAttribute('aria-busy',String(dailyFlowState.loading));
     if(dailyFlowState.loading||!day){
       mount.innerHTML=header+`<div class="daily-flow-message" role="status">${dailyFlowState.loading?'正在整理你的'+label+'流日…':esc(dailyFlowState.error||'命盤建立後，這裡會呈現你的今日流日。')}${dailyFlowState.error?'<button type="button" data-daily-retry>重新取得流日</button>':''}</div>`;
@@ -5280,6 +5278,7 @@ ${source}
   }
   function clampDailyStars(n){return Math.max(1,Math.min(5,Math.round(Number(n)||3)));}
   function setDailyFlowChart(data){
+    dailyFlowDemo=false;
     baziAuthProfile();
     const id=dailyFlowState.requestId+1;
     dailyFlowCache.clear();
@@ -5329,6 +5328,7 @@ ${source}
     }
   }
   function resetDailyFlowAccess(){
+    if(dailyFlowDemo){renderDailyFlowView();return;}
     dailyFlowCache.clear();dailyFlowState.requestId++;dailyFlowState.offset=0;dailyFlowState.loading=false;
     const day=dailyFlowState.day;
     dailyFlowState.day=day?.offset===0?{version:day.version,date:day.date,offset:0,ganZhi:day.ganZhi,overview:day.overview,tenGods:day.tenGods,access:{full:false,tomorrow:false}}:null;
@@ -6088,7 +6088,7 @@ ${source}
       selectedPeriods={};
       setDailyFlowChart(data);
       renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);initSectionDecodeUI();resetExploration();
-      emptyState.style.display='none';results.classList.add('show');
+      emptyState.style.display='none';results.classList.add('show');document.body.classList.add('has-bazi-chart');
       if (scroll) setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
     }catch(err){
       console.error('[Bazi API]',err);
@@ -6166,16 +6166,18 @@ ${source}
     setupDirectBirthDate();
     setupBirthSlots();
     initSectionDecodeUI();
-    cast(false, false);
+    dailyFlowState.day=JSON.parse(JSON.stringify(dailyFlowExample));
+    renderDailyFlowView();
     castBtn.addEventListener('click', () => cast(true, true));
     setupReportActions();
 
-    const worldSecond = document.getElementById('worldSecond');
-    document.getElementById('beginBazi')?.addEventListener('click', () => {
-      worldSecond?.classList.add('is-open');
-      worldSecond?.setAttribute('aria-hidden','false');
-      setTimeout(() => worldSecond?.scrollIntoView({behavior:'smooth',block:'start'}), 40);
+    document.querySelector('.hero-primary')?.addEventListener('click',e=>{
+      e.preventDefault();
+      castBtn.scrollIntoView({behavior:'smooth',block:'center'});
+      castBtn.focus({preventScroll:true});
     });
+
+    document.querySelector('.hero-secondary')?.addEventListener('click',()=>document.body.classList.add('show-bazi-intro'));
 
     const hero = document.getElementById('baziHeroVisual');
     if (hero) {
