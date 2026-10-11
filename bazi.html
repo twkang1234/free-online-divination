@@ -2634,8 +2634,8 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
           </div>
           <div class="smart-prompt-mount" data-smart-prompt="full"></div>
           <div class="bazi-gemini" id="baziGeminiPanel">
-            <div class="bazi-gemini-head"><strong>✦ 站內 Gemini AI｜完整命盤深度解讀</strong><span id="baziGeminiQuota">正在查詢免費額度…</span></div>
-            <p>不必離開網站，將已排出的命盤交給 Gemini 以繁體中文分析。仍可沿用上方「專業提示詞」功能。免費 API 資料由 Google 處理，請勿輸入不必要的個人敏感資訊。</p>
+            <div class="bazi-gemini-head"><strong>✦ 站內 Gemini AI｜免費測試模式</strong><span id="baziGeminiQuota">正在查詢免費額度…</span></div>
+            <p>測試期間完成排盤即可使用，不需登入或付費解鎖提示詞。既有付費提示詞權限維持不變。資料會送交 Google 免費 API 處理，請勿輸入不必要的個人敏感資訊。</p>
             <label for="baziGeminiTopic">這次主要想了解</label>
             <select id="baziGeminiTopic"><option>整體命盤</option><option>工作事業</option><option>感情婚姻</option><option>財運理財</option><option>性格天賦</option><option>十年大運與流年</option></select>
             <div class="bazi-gemini-actions"><button type="button" id="baziGeminiRun">✦ 開始站內 AI 深度解讀</button><button type="button" id="baziGeminiCopy" hidden>複製解讀</button><button type="button" id="baziGeminiDownload" hidden>下載 TXT</button></div>
@@ -4998,6 +4998,7 @@ ${tasks}
 
   // Gemini AI full-chart: uses the same grounded professional prompt as external AI.
   let baziGeminiLastReading='';
+  // TEST MODE: 只開放站內 Gemini AI，不變動會員儲存及既有付費提示詞權限。
   async function baziGeminiRefreshQuota(){
     const target=document.getElementById('baziGeminiQuota');
     if(!target)return;
@@ -5013,11 +5014,13 @@ ${tasks}
     btn.dataset.bound='1';
     baziGeminiRefreshQuota();
     btn.addEventListener('click',async()=>{
-      if(!baziAuthProfile()){baziOpenAuth();return;}
-      if(!lastData){toast('請先排八字');return;}
       const msg=document.getElementById('baziGeminiMessage');
+      if(!lastData){msg.textContent='請先完成八字排盤，再進行免費 AI 解讀。';toast('請先排八字');return;}
       const topic=document.getElementById('baziGeminiTopic').value;
-      const prompt=buildSmartPrompt(lastData,'full',topic,'deep');
+      let prompt='';
+      try { prompt=buildSmartPrompt(lastData,'full',topic,'deep'); }
+      catch(err){msg.textContent='命盤提示詞產生失敗：'+(err?.message||'請重新排盤');return;}
+      if(!prompt||prompt.length<250){msg.textContent='命盤提示詞尚未準備完成，請重新排盤。';return;}
       btn.disabled=true;btn.textContent='AI 解讀中，請稍候…';
       msg.textContent='正在依你的四柱、十神、五行、大運與流年分析命盤…';
       try{
@@ -5200,7 +5203,6 @@ ${source}
   }
 
   function initSmartPromptUI(){
-    baziGeminiSetup();
     ['tengods','relations','luck','years'].forEach(key=>{
       const def=SMART_PROMPT_SECTIONS[key];
       const body=document.querySelector(`#${def.id} .report-body`);
@@ -6309,6 +6311,7 @@ ${source}
       }
     });
 
+    baziGeminiSetup(); // Gemini AI 測試模式：獨立初始化，不受付費提示詞區塊影響
     initDailyFlowUI();
     setupDirectBirthDate();
     setupBirthSlots();
