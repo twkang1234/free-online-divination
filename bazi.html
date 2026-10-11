@@ -5089,11 +5089,13 @@ ${tasks}
   // Gemini AI full-chart: uses the same grounded professional prompt as external AI.
   let baziGeminiLastReading='';
   // TEST MODE: 只開放站內 Gemini AI，不變動會員儲存及既有付費提示詞權限。
+  let baziLatestQuota=null;
   function baziAiHeaders(){const token=baziAuthToken();return token?{Authorization:'Bearer '+token}:{}}
   function baziPersonalQuotaText(j){return '今日 AI 剩餘 '+Math.max(0,Number(j.personalRemaining||0))+' / '+Number(j.personalLimit||1)+' 次';}
   function baziAiUpdateVisible(j){
     if(!j||!j.ok)return;
     if(location.search.includes('admin=1'))return; // 管理員測試顯示由模擬器接管
+    baziLatestQuota=j;
     const who=j.visitorType==='member'?'免費會員':'未登入訪客';
     const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent=who+'｜每日免費 AI 解讀';
     const count=document.getElementById('baziQuotaDailyCount');if(count)count.textContent=Math.max(0,j.personalRemaining)+' / '+j.personalLimit+' 次';
@@ -5106,7 +5108,7 @@ ${tasks}
     try{
       const r=await fetch(BAZI_API_BASE+'/ai/status',{cache:'no-store',headers:baziAiHeaders()}),j=await r.json();
       if(!j.ok)throw Error(j.error||'UNKNOWN');
-      target.textContent=`${baziPersonalQuotaText(j)}｜全站剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} 次｜08:00 重置`;
+      target.textContent=`${baziPersonalQuotaText(j)}｜全站共用剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} 次｜08:00 重置`;
       baziAiUpdateVisible(j);
     }catch(_){target.textContent='免費額度暫時無法取得';}
   }
@@ -5273,6 +5275,8 @@ ${intent}
       globalMount.innerHTML=smartPromptBoxHtml('shenshaGlobal');
       bindSmartPromptBox(globalMount.querySelector('.smart-prompt-box'));
     }
+    // 新分區是在排盤後動態插入，若額度早已載入，須立即更新新節點。
+    if(baziLatestQuota)baziAiUpdateVisible(baziLatestQuota);
     // 完整命盤由最下方既有的 Gemini 主面板獨立處理，避免重複入口。
   }
 
@@ -6548,7 +6552,7 @@ ${intent}
       const j=await r.json();if(!r.ok||!j?.ok)throw Error('暫時無法取得');
       const remaining=Number(j.globalLimit)-Number(j.globalUsed);
       const limit=j.globalLimit;
-      el.textContent=Number.isFinite(Number(remaining))?'全站剩餘 '+remaining+' / '+limit+' 次｜08:00 重置':'全站 AI 額度依服務端查詢';if(!location.search.includes('admin=1')){const c=$('baziQuotaDailyCount');if(c)c.textContent=j.personalRemaining+' / '+j.personalLimit+' 次';const l=$('baziQuotaAccountLabel');if(l)l.textContent=(j.visitorType==='member'?'免費會員':'未登入訪客')+'｜每日免費 AI 解讀';document.querySelectorAll('.bazi-personal-quota').forEach(x=>x.textContent='今日 AI 剩餘 '+j.personalRemaining+' / '+j.personalLimit+' 次');}
+      el.textContent=Number.isFinite(Number(remaining))?'全站共用剩餘 '+remaining+' / '+limit+' 次｜08:00 重置':'全站 AI 額度依服務端查詢';if(!location.search.includes('admin=1')){const c=$('baziQuotaDailyCount');if(c)c.textContent=j.personalRemaining+' / '+j.personalLimit+' 次';const l=$('baziQuotaAccountLabel');if(l)l.textContent=(j.visitorType==='member'?'免費會員':'未登入訪客')+'｜每日免費 AI 解讀';if(typeof baziAiUpdateVisible==='function')baziAiUpdateVisible(j);}
     }catch(_){el.textContent='全站 AI 額度暫時無法取得';}
   }
   document.addEventListener('DOMContentLoaded',liveQuota,{once:true});
