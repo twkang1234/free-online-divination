@@ -3295,7 +3295,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     const blockedDraw=new Set([modes[(day*2)%5],modes[(day*2+1)%5]]);
     guestPolicyCache={date,topics,
       lockedQuestions:day%2,
-      lockedSpread:['past','advice','relation'][day%3],
+      lockedSpread:null,
       lockedFormat:['A','B','C'][day%3],
       drawModes:new Set(modes.filter(x=>!blockedDraw.has(x))),
       reader:'b'};
@@ -3311,10 +3311,17 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
   function guestTopicAvailable(id){return tarotFullPrivilege()||isLogged()||guestPolicy().topics.has(id)}
   function topicAllowedForCurrentUser(id){return id==='free'?tarotFullPrivilege():guestTopicAvailable(id)}
   function questionAllowedForCurrentUser(index){return tarotFullPrivilege()||isLogged()||(index%2!==guestPolicy().lockedQuestions)}
+  // 牌陣不再受訪客或會員每日輪替鎖定；僅依題目是否涉及雙方互動決定關係牌陣。
+  function questionHasTwoPartyInteraction(q=state.question){
+    const value=String(q?.text||'').normalize('NFKC').replace(/\s+/g,'');
+    if(!value)return false;
+    // 必須能從題目看出雙方關係，而不是單憑「感情」或「工作」主題開放。
+    if(/我們|咱們|我(?:和|與|跟)(?:他|她|對方|前任|男友|女友|伴侶|丈夫|妻子|老公|老婆|主管|上司|老闆|同事|朋友|家人|父母|客戶|合夥人|某人|這個人|那個人)|(?:他|她|對方|前任|男友|女友|伴侶|主管|老闆|同事)(?:對我|跟我|和我|與我)|彼此|雙方|兩人|兩個人|互相/.test(value))return true;
+    if(/復合|分手|交往|曖昧|告白|求婚|婚姻|結婚|離婚|冷戰|第三者|劈腿|伴侶關係|人際關係|合作關係|相處模式|感情關係|信任重建|職場人際|關係改善/.test(value))return true;
+    return false;
+  }
   function spreadAllowedForCurrentUser(key){
-    if(tarotFullPrivilege())return true;
-    if(isLogged())return key==='past'||key!==memberPolicy().lockedSpread;
-    return key!==guestPolicy().lockedSpread;
+    return key==='past'||key==='advice'||(key==='relation'&&questionHasTwoPartyInteraction());
   }
   function formatAllowedForCurrentUser(key){
     if(tarotFullPrivilege())return true;
@@ -3351,8 +3358,8 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     // 免費會員：五種一般抽牌每天開三種、鎖兩種，隔天被鎖的兩種都會開放。
     const blockedDraw=new Set([modes[(day*2+1)%5],modes[(day*2+2)%5]]);
     const drawModes=new Set(modes.filter(mode=>!blockedDraw.has(mode)));
-    // 免費會員：時間牌陣（past）固定開放，其餘兩種隔日輪替鎖一種。
-    const lockedSpread=day%2===0?'advice':'relation';
+    // 牌陣已解除輪替鎖定，保留其他權限的每日規則。
+    const lockedSpread=null;
     // 三張牌及六張牌的「基礎牌義（選讀）」同日一併開放／鎖定，次日反轉。
     const meaningOpen=day%2===0;
     const followupOpen=day%2===0;
@@ -3449,7 +3456,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     const mount=$('tarotGoogleMount');if(mount)mount.hidden=!!p;
     const title=$('tarotMemberTitle'),intro=$('tarotMemberIntro');
     if(title)title.textContent=p?'免費會員':'免費登入';
-    if(intro)intro.textContent=p?'已登入一念知機免費會員。一般主題與固定題目全開；牌陣、抽牌方式、解讀格式與基礎牌義依每日規則輪替。自訂問題、實體牌輸入、TXT 下載保留未來完整進階。':isGuestLoginRequired()?'此瀏覽器曾登入過會員，訪客每日 3 次已停用；請重新登入繼續使用。':'訪客每日 3 次，主題、問題、牌陣、抽牌方式與解讀格式每日輪替。免費登入可解除一般限制並保存紀錄。';
+    if(intro)intro.textContent=p?'已登入一念知機免費會員。一般主題與固定題目全開；抽牌方式、解讀格式與基礎牌義依每日規則輪替；牌陣依題目適用性開放。自訂問題、實體牌輸入、TXT 下載保留未來完整進階。':isGuestLoginRequired()?'此瀏覽器曾登入過會員，訪客每日 3 次已停用；請重新登入繼續使用。':'訪客每日 3 次，主題、問題、抽牌方式與解讀格式每日輪替；牌陣依題目適用性開放。免費登入可解除一般限制並保存紀錄。';
     syncMemberSaveInvites();
   }
   async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})}catch(_){}}
@@ -3530,7 +3537,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     }else if(kind==='memberRotation'){
       kicker.textContent='FREE MEMBER · DAILY ROTATION';
       title.textContent='免費會員｜此功能今天暫未開放';confirm.textContent='知道了';
-      copy.innerHTML='<p>免費會員的部分牌陣、一般抽牌方式、A／B／C 解讀格式及基礎牌義，依台灣日期每日輪替開放。</p><div class="gate-highlight"><strong>明日再回來即可查看當日開放項目</strong><br>原本完成的占卜進度不會因今日輪替而更換牌面；完整進階權限將來開放。</div>';
+      copy.innerHTML='<p>免費會員的部分一般抽牌方式、A／B／C 解讀格式及基礎牌義，依台灣日期每日輪替開放。</p><div class="gate-highlight"><strong>明日再回來即可查看當日開放項目</strong><br>原本完成的占卜進度不會因今日輪替而更換牌面；完整進階權限將來開放。</div>';
     }else if(kind==='memberDraw'){
       kicker.textContent='FREE MEMBER · DAILY ROTATION';
       title.textContent='這種抽牌方式今天未開放';
@@ -3581,7 +3588,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
   function questions(){return LOCAL_QUESTIONS[`${state.topic.id}:${state.scenario.id}`]||[];}
   function recommendedSpread(q){
     if(q.custom)return 'past';
-    if(q.type==='feelings'||(state.topic.id==='love'&&/對方.*(想法|感受|態度)|彼此.*關係|我們.*(相處|關係)/.test(q.text)))return 'relation';
+    if(questionHasTwoPartyInteraction(q)&&(q.type==='feelings'||/對方.*(想法|感受|態度)|彼此.*關係|我們.*(相處|關係)/.test(q.text)))return 'relation';
     if(['obstacle','action','choice','external'].includes(q.type))return 'advice';
     return 'past';
   }
@@ -3758,9 +3765,10 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     if(!spreadAllowedForCurrentUser(state.spreadChoice))state.spreadChoice=Object.keys(SPREAD_OPTIONS).find(spreadAllowedForCurrentUser)||'past';
     q.spread={...SPREAD_OPTIONS[state.spreadChoice]};
     $('readyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)} → ${esc(state.scenario.name)}</div><h4>${esc(q.text)}</h4><p><b>三張牌｜${esc(q.spread.name)}</b><br>${esc(q.spread.desc)}<br>牌位：${q.spread.positions.map(esc).join('／')}</p>`;
-    $('spreadSelector').innerHTML=`<p style="font-size:.8rem;color:#baadc2;margin:12px 0 4px">${isLogged()?'免費會員：過去・現在・未來固定開放，其餘兩種每天輪替鎖一種。':'訪客每日輪替鎖定一種牌陣。'} 推薦牌陣已選好，也可以自行切換：</p><div class="spread-pick-grid">${Object.entries(SPREAD_OPTIONS).map(([key,option])=>{
+    $('spreadSelector').innerHTML=`<p style="font-size:.8rem;color:#baadc2;margin:12px 0 4px">過去・現在・未來、現況・阻礙・建議為通用牌陣；你・對方・關係只適用雙方互動題目。推薦牌陣已選好，也可以自行切換：</p><div class="spread-pick-grid">${Object.entries(SPREAD_OPTIONS).map(([key,option])=>{
       const allowed=spreadAllowedForCurrentUser(key);
-      return `<button type="button" class="spread-pick ${state.spreadChoice===key?'is-selected':''} ${allowed?'':'v2814-locked'}" data-spread-pick="${key}" aria-pressed="${state.spreadChoice===key}"><b>${esc(option.name)}</b><small>${esc(option.desc)}</small>${allowed?'':rotatingBadgeForCurrentUser('明日開放')}</button>`;
+      if(!allowed)return '';
+      return `<button type="button" class="spread-pick ${state.spreadChoice===key?'is-selected':''}" data-spread-pick="${key}" aria-pressed="${state.spreadChoice===key}"><b>${esc(option.name)}</b><small>${esc(option.desc)}</small></button>`;
     }).join('')}</div>`;
   }
 
@@ -4354,7 +4362,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
   }
   function clear3x3(){try{if(isIsolatedAdminTest())sessionStorage.removeItem(TAROT_3X3_ADMIN_SESSION);else localStorage.removeItem(TAROT_3X3_SESSION)}catch(_){}}
   function firstSpreadKey(){return state.spreadChoice||'past';}
-  function remainingSpreads(){return Object.entries(SPREAD_OPTIONS).filter(([key])=>key!==firstSpreadKey());}
+  function remainingSpreads(){return Object.entries(SPREAD_OPTIONS).filter(([key])=>key!==firstSpreadKey()&&spreadAllowedForCurrentUser(key));}
   function restore3x3(){
     const saved=get3x3Snapshot();
     if(!saved||Date.now()-saved.at>60*86400000||saved.firstCards?.length!==3||!saved.question?.text)return false;
@@ -4362,7 +4370,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
     const scenario=saved.scenarioId==='free'?{id:'free',name:'自由提問'}:scenarioBy(topic,saved.scenarioId);
     if(!scenario||!SPREAD_OPTIONS[saved.spreadChoice])return false;
     const qq={...saved.question,spread:{...SPREAD_OPTIONS[saved.spreadChoice]}};
-    state.topic=topic;state.scenario=scenario;state.question=qq;state.spreadChoice=saved.spreadChoice;
+    state.topic=topic;state.scenario=scenario;state.question=qq;state.spreadChoice=spreadAllowedForCurrentUser(saved.spreadChoice)?saved.spreadChoice:recommendedSpread(qq);
     state.current=saved.firstCards;state.revealed=new Set([0,1,2]);state.advancedCards=saved.secondCards||[];
     state.stage3x3=saved.stage==='complete'&&state.advancedCards.length===3?'complete':'first';
     state.firstPromptSnapshot=saved.firstPromptSnapshot||'';state.firstAiInterpretationCompleted=!!saved.firstAiInterpretationCompleted;state.sixPromptSnapshot=saved.sixPromptSnapshot||'';state.sixPromptCopied=!!saved.sixPromptCopied&&state.stage3x3==='complete';
@@ -4404,7 +4412,7 @@ html[data-theme="light"] .v2819-resume-dismiss{color:#6a4a76}
       <div data-related-question ${state.followChoice==='related'?'':'hidden'}><textarea data-follow-question maxlength="120" placeholder="例如：這段關係最需要注意什麼？">${esc(state.followText||'')}</textarea><small>請輸入與第一次相關的具體問題，不能填入亂碼。</small></div>
       </fieldset><fieldset><legend>第二步｜選擇第一次還沒有使用過的牌陣</legend>
       <p style="font-size:.72rem;color:#bcaace;display:block">第一輪已使用：${esc(state.question.spread.name)}</p>
-      ${spread.map(([key,s])=>{const allowed=spreadAllowedForCurrentUser(key);return `<label class="${allowed?'':'v2814-locked'}"><input type="radio" name="tarot-follow-spread" value="${key}" ${chosen===key?'checked':''}>${esc(s.name)}${allowed?'':isLogged()?'　🔒 今日輪替｜明日開放':'　🔒 免費登入解鎖'}<small style="display:block;margin-left:20px;color:#a89ab6">${esc(s.desc)}</small></label>`}).join('')}
+      ${spread.map(([key,s])=>`<label><input type="radio" name="tarot-follow-spread" value="${key}" ${chosen===key?'checked':''}>${esc(s.name)}<small style="display:block;margin-left:20px;color:#a89ab6">${esc(s.desc)}</small></label>`).join('')}
       </fieldset><p role="status" aria-live="polite" class="v285-error" data-follow-error></p></div>`;
   }
   function firstStageReadyForFollowup(){return !!state.firstPromptSnapshot||!!state.firstAiInterpretationCompleted;}
