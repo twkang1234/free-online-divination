@@ -3738,6 +3738,19 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
   function formatShensha(data){const hs=data._shensha||computeShensha(data);return hs.length?hs.map(x=>`${x.name}｜${x.positions.join('、')}｜${x.basis.join('；')}`).join('\n'):'未辨識到本站收錄的常用神煞';}
   function currentLuckOf(data){return BaziCore.currentLuck(data);}
   function formatLuck(data){const c=currentLuckOf(data);const all=(data.daYun?.cycles||[]).map(x=>`${x.ganZhi}：${x.startAge}～${x.endAge}歲（${x.startYear}～${x.endYear}）｜${x.tenGodGan||'—'}／${x.tenGodZhi||'—'}｜互動 ${(x.interactions||[]).join('、')||'無明顯常見項'}`).join('\n');return `${c?`目前：${c.ganZhi}大運｜${c.startAge}～${c.endAge}歲｜${c.tenGodGan||'—'}／${c.tenGodZhi||'—'}｜互動 ${(c.interactions||[]).join('、')||'無明顯常見項'}\n\n`:''}${all}`;}
+  // 流年／流月提示詞共用格式化：只引用已排出的資料，不自行推造事件。
+  function periodPromptLine(data,period){
+    if(!period||typeof period!=='object')return '流年／流月資料暫缺';
+    const kind=period.kind==='month'?'月':'年';
+    const date=kind==='月'?`${period.year||'—'}年${period.month||'—'}月`:`${period.year||'—'}年`;
+    const gz=period.ganZhi||'—';
+    const parts=[`${date}｜${gz}`];
+    if(period.startSolar||period.endSolar)parts.push(`節氣區間：${period.startSolar||'未提供'} ～ ${period.endSolar||'未提供'}`);
+    if(period.startJie||period.endJie)parts.push(`節氣：${period.startJie||'—'} ～ ${period.endJie||'—'}`);
+    if(period.tenGodGan||period.tenGodZhi)parts.push(`十神：${period.tenGodGan||'—'}／${period.tenGodZhi||'—'}`);
+    if(Array.isArray(period.interactions)&&period.interactions.length)parts.push(`互動：${period.interactions.join('、')}`);
+    return parts.join('｜');
+  }
   function formatYears(data){return (data.yearFlows||[]).map(y=>periodPromptLine(data,y)).join('\n');}
   function formatMonths(data){return (data.monthFlows||[]).map(m=>periodPromptLine(data,m)).join('\n');}
 
