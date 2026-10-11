@@ -6397,5 +6397,101 @@ ${intent}
   sync();
 })();
 </script>
+<style>
+#baziAdminTestLauncher{position:fixed;bottom:18px;right:18px;z-index:20001;padding:10px 17px;background:#24170c;color:#f5d88a;border:1px solid #b18b4c;border-radius:999px;font-weight:700;cursor:pointer;box-shadow:0 7px 22px #000a}
+#baziAdminTestOverlay{position:fixed;inset:0;z-index:21000;background:#000c;display:none;align-items:center;justify-content:center;padding:18px}
+#baziAdminTestOverlay.show{display:flex}
+#baziAdminTestDialog{width:min(720px,100%);max-height:90vh;overflow:auto;border:1px solid #65426e;border-radius:20px;background:#130f19;color:#f3eaf1;padding:24px;box-shadow:0 25px 90px #000c;font-family:system-ui,'Noto Sans TC',sans-serif}
+#baziAdminTestDialog h2{margin:0 0 10px;font-size:1.5rem}#baziAdminTestDialog p{color:#b4aabb;line-height:1.7;font-size:.9rem}
+#baziAdminTestChoices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0}
+#baziAdminTestChoices button{color:#f7e8f1;background:#201a29;border:1px solid #393044;border-radius:13px;padding:13px;text-align:left;cursor:pointer;line-height:1.6}
+#baziAdminTestChoices button.active{border-color:#db99db;background:#382044}#baziAdminTestChoices button b{display:block;margin-bottom:4px}
+#baziAdminTestNotice{padding:12px;background:#291928;border-left:3px solid #c67bc6;color:#e5c9dd;font-size:.85rem;line-height:1.7}
+.bazi-admin-test-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:18px}.bazi-admin-test-actions button{padding:9px 15px;border-radius:10px;background:#302332;border:1px solid #604364;color:#f1e6f0;cursor:pointer}
+#baziAdminTestOverlay [hidden]{display:none!important}
+@media(max-width:560px){#baziAdminTestChoices{grid-template-columns:1fr}#baziAdminTestDialog{padding:16px}}
+</style>
+<div id="baziAdminTestOverlay" aria-hidden="true">
+  <div id="baziAdminTestDialog" role="dialog" aria-modal="true" aria-label="管理員八字測試模式">
+    <div style="font-size:.75rem;letter-spacing:.18em;color:#e8a8de;margin-bottom:13px">ADMIN · BAZI TEST MODE</div>
+    <h2>管理員八字測試模式</h2>
+    <p id="baziAdminTestAuth">管理員驗證中…</p>
+    <div id="baziAdminTestChoices" hidden>
+      <button data-mode="guest"><b>全新訪客</b>模擬每日免費 2／2 次。</button>
+      <button data-mode="member"><b>免費會員</b>模擬每日免費 5／5 次。</button>
+      <button data-mode="exhausted"><b>免費額度用完</b>模擬免費會員已使用 5／5 次。</button>
+      <button data-mode="paid1"><b>付費額度 1 次</b>免費額度用完，模擬付費額度剩 1 次。</button>
+      <button data-mode="paid"><b>完整付費解鎖</b>模擬每日免費 15／15 次（未來規劃）。</button>
+      <button data-mode="paid0"><b>付費額度 0 次</b>免費與付費均用完。</button>
+    </div>
+    <div id="baziAdminTestNotice">僅模擬八字 AI 額度與測試回應。測試不呼叫 Gemini，不修改正式會員登入、購買額度、資料庫或正式使用次數。尚未實作的付費功能不會因此開通。</div>
+    <div class="bazi-admin-test-actions"><button id="baziAdminTestBack">回管理後台</button><button id="baziAdminTestReset">退出測試</button><button id="baziAdminTestClose">套用並關閉</button></div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  const PREFIX='divinationhub-bazi-admin-test-v1',ADMIN_TOKEN='divinationhub-admin-session';
+  const modes={guest:{label:'全新訪客',limit:2,used:0,paid:0},member:{label:'免費會員',limit:5,used:0,paid:0},exhausted:{label:'免費額度用完',limit:5,used:5,paid:0},paid1:{label:'付費額度 1 次',limit:5,used:5,paid:1},paid:{label:'完整付費解鎖',limit:15,used:0,paid:0},paid0:{label:'付費額度 0 次',limit:5,used:5,paid:0}};
+  let active=false,mode='member',used=0,paid=0;
+  const $=id=>document.getElementById(id),overlay=$('baziAdminTestOverlay');
+  const status=$('baziAdminTestAuth');
+  function quotaText(){const m=modes[mode];return `管理員測試：${m.label}｜免費剩餘 ${Math.max(0,m.limit-used)} / ${m.limit} 次｜模擬付費剩餘 ${paid} 次｜正式額度不扣除`;}
+  function display(){if(!active)return;
+    const q=$('baziGeminiQuota');if(q)q.textContent=quotaText();
+    const b=$('baziAdminTestLauncher');if(b)b.textContent='🧪 八字測試 · '+modes[mode].label;
+    document.querySelectorAll('[data-bazi-test-quota]').forEach(el=>el.textContent=quotaText());
+    document.querySelectorAll('#baziAdminTestChoices button').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+  }
+  function setMode(next){if(!modes[next])return;active=true;mode=next;used=modes[next].used;paid=modes[next].paid;sessionStorage.setItem(PREFIX,JSON.stringify({mode,used,paid}));display();}
+  function show(){overlay.classList.add('show');overlay.setAttribute('aria-hidden','false');display();}
+  function hide(){overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true');}
+  function exit(){active=false;sessionStorage.removeItem(PREFIX);location.replace('/bazi.html');}
+  function useOne(){const lim=modes[mode].limit;if(used<lim){used++;}else if(paid>0){paid--;}else return false;sessionStorage.setItem(PREFIX,JSON.stringify({mode,used,paid}));display();return true;}
+  function fakeReading(){return '【管理員測試回應】\n這是八字 AI 測試模式的介面示範，未呼叫 Google Gemini，沒有消耗正式額度。\n\n請使用各分區專屬問題，確認點擊、額度變化、訊息與文字呈現是否正常。正式命理解讀仍需在退出測試模式後使用。';}
+  async function init(){if(!location.search.includes('admin=1'))return;
+    show();
+    const token=sessionStorage.getItem(ADMIN_TOKEN)||'';
+    if(!token){status.textContent='沒有管理員測試憑證。請從已登入的管理後台按「八字測試」進入。';return;}
+    try{
+      const resp=await fetch('https://admin-api.ezgocpu.workers.dev/admin/stats',{headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'});
+      if(!resp.ok)throw Error('驗證失敗或已過期');
+      const payload=await resp.json();if(!payload.success)throw Error('管理員驗證失敗');
+      status.textContent='管理員驗證成功。可選擇模擬狀態；僅本分頁有效，不影響正式額度與會員資料。';
+      $('baziAdminTestChoices').hidden=false;
+      const launcher=document.createElement('button');launcher.id='baziAdminTestLauncher';launcher.type='button';launcher.textContent='🧪 八字測試';launcher.addEventListener('click',show);document.body.appendChild(launcher);
+      let previous=null;try{previous=JSON.parse(sessionStorage.getItem(PREFIX)||'null')}catch(_){}
+      setMode(modes[previous?.mode]?previous.mode:'member');if(previous){used=Math.max(0,Math.min(1000,Number(previous.used)||0));paid=Math.max(0,Math.min(1000,Number(previous.paid)||0));display();}
+      // Capture test AI clicks before live handlers. No network request, no quota usage.
+      document.addEventListener('click',e=>{
+        if(!active)return;
+        const button=e.target.closest('#baziGeminiRun,.smart-prompt-generate');if(!button)return;
+        e.preventDefault();e.stopImmediatePropagation();
+        const target=button.id==='baziGeminiRun'? $('baziGeminiMessage'):button.closest('.smart-prompt-box,.section-ai-box,details')?.querySelector('.section-ai-message');
+        if(!useOne()){if(target)target.textContent='【管理員模擬】今日額度已用完。';alert('【管理員模擬】今日免費與付費額度都已用完。');return;}
+        const reading=fakeReading();
+        if(button.id==='baziGeminiRun'){
+          const output=$('baziGeminiOutput'),view=$('baziGeminiReading');if(output&&view){output.hidden=false;output.open=true;view.textContent=reading;}
+          if($('baziGeminiCopy'))$('baziGeminiCopy').hidden=false;
+          if($('baziGeminiDownload'))$('baziGeminiDownload').hidden=false;
+        }else{
+          const box=button.closest('.smart-prompt-box')||button.closest('details');
+          const answer=box?.querySelector('.section-ai-answer'),view=box?.querySelector('.section-ai-reading');
+          if(answer&&view){answer.hidden=false;view.textContent=reading;}
+        }
+        if(target)target.textContent='【管理員模擬】成功，未呼叫 Gemini、未扣正式額度。';display();
+      },true);
+      // Live quota refresh can run in original scripts; keep simulated display after updates.
+      const q=$('baziGeminiQuota');if(q)new MutationObserver(()=>{if(active&&q.textContent!==quotaText())q.textContent=quotaText()}).observe(q,{childList:true,characterData:true,subtree:true});
+    }catch(err){status.textContent='無法啟用管理員測試：'+err.message+'。請返回後台重新登入。';}
+  }
+  document.querySelectorAll('#baziAdminTestChoices [data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+  $('baziAdminTestClose').addEventListener('click',hide);
+  $('baziAdminTestBack').addEventListener('click',()=>location.assign('/admin.html'));
+  $('baziAdminTestReset').addEventListener('click',exit);
+  document.addEventListener('DOMContentLoaded',init,{once:true});
+})();
+</script>
+
 </body>
 </html>
