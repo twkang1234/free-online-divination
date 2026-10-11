@@ -2344,6 +2344,17 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
 .section-ai-reading{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;font-size:.88rem}
 .section-ai-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
 .section-ai-actions button{border:1px solid rgba(233,189,88,.32);background:rgba(233,189,88,.09);color:var(--gold);padding:9px 14px;border-radius:9px;cursor:pointer}
+
+/* Gemini AI 可讀性：模型 Markdown 安全呈現為段落與標題 */
+#baziGeminiReading,.section-ai-reading{white-space:normal;overflow-wrap:anywhere;line-height:1.9}
+#baziGeminiReading p,.section-ai-reading p{margin:.55rem 0 1rem}
+#baziGeminiReading h3,.section-ai-reading h3{font-size:1.06rem;line-height:1.55;color:var(--gold);margin:1.45rem 0 .55rem;font-weight:750}
+#baziGeminiReading h4,.section-ai-reading h4{font-size:.98rem;line-height:1.55;color:var(--gold);margin:1.2rem 0 .45rem;font-weight:700}
+#baziGeminiReading ul,#baziGeminiReading ol,.section-ai-reading ul,.section-ai-reading ol{padding-left:1.55rem;margin:.55rem 0 1rem}
+#baziGeminiReading li,.section-ai-reading li{margin:.35rem 0;padding-left:.15rem}
+#baziGeminiReading strong,.section-ai-reading strong{font-weight:750;color:#f1e1bd}
+#baziGeminiReading hr,.section-ai-reading hr{border:0;border-top:1px solid rgba(185,153,83,.22);margin:1.1rem 0}
+
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -4932,7 +4943,25 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     shenshaGlobal:{id:'report-shensha',title:'全局神煞',promptTitle:'全局神煞綜合解析'},
     full:{id:'ai-prompt-zone',title:'完整命盤',promptTitle:'完整命盤'}
   };
-  const SMART_TOPICS = ['工作事業','正財收入','偏財投資','感情關係','健康壓力','人生方向'];
+  // 每區僅呈現該區的判讀任務；以下選項不是全命盤共用的六大人生主題。
+  const SECTION_AI_TOPICS = {
+    tengods:['最突出的十神','十神強弱與性格','十神之間的拉扯','優勢與盲點','人際互動方式','如何調整行為'],
+    relations:['最重要的合沖','天干合化條件','地支沖刑害','哪些柱位受影響','衝突與轉化','如何觀察應期'],
+    luck:['目前這步大運','下一步大運','不同大運比較','十年階段轉折','原局與大運互動','哪些時期需留意'],
+    years:['今年流年重點','去年與今年比較','明年流年方向','流年與大運互動','流年引動的干支','年度變化與觀察'],
+    shenshaGlobal:['最值得注意的神煞','神煞所在柱位','同柱神煞組合','跨柱重複與呼應','神煞與原局交叉','象徵的限制與核對']
+  };
+  const SECTION_AI_RULES = {
+    tengods:'只回答十神分布及其組合：說清日主與十神定位、最突出的十神、比例偏高偏低所能支持的性格或行為傾向，以及十神之間的制衡。十神百分比是本站估算指標，不是性格測驗分數或吉凶機率；不由單一十神推斷疾病、財富或具體事件。',
+    relations:'只聚焦使用者命盤實際列出的天干合、地支合沖刑害等關係，指出涉及哪兩柱及哪些干支、相互牽動的象徵意義。區分確實存在的關係與需要條件才可能成立的合化，不把合、沖一概視作吉凶；沒有歲運資料時不預測事件發生年份。',
+    luck:'聚焦已排出的十年大運，說出使用者所選的運程、干支與原局哪些十神五行或干支互動。分清原局長期特質與大運階段變化；若問兩步運，應逐項比較，不擅自聲稱一定發生升遷、結婚、財富或事故。',
+    years:'聚焦網站已列出的去年、今年、明年流年及當前大運，依使用者選擇年份說明流年干支如何觸及原局與大運、哪些變化值得觀察。若沒有某月資料，不能自行捏造流月內容；明確區分已過去、正在進行與未來的年份，不能斷言事件必然發生。',
+    shenshaGlobal:'只分析網站實際查出的神煞、所在柱位、同柱與跨柱組合，先辨明查表結果與傳統象徵的不同，必要時參照日主、月令與干支；不把單一神煞當成疾病、財富、婚姻或意外的定論，遇到不同流派查法時明確說明不確定性。'
+  };
+  function sectionAiSpecificInstruction(key,topic,question,mode){
+    const target=String(question||'').trim();
+    return `【本區專屬職責：${SMART_PROMPT_SECTIONS[key]?.promptTitle||key}】\n${SECTION_AI_RULES[key]||''}\n【使用者選的本區細節】${topic}\n【具體追問】${target||'未填寫，請直接就所選細節與本區實際命盤資料解讀。'}\n【回答邊界】\n這不是完整命盤分析，不得把全命盤依工作、財運、感情、健康逐一寫成大報告。請優先回答所選細節；只有必要時才引用其他分區的一兩個事實輔助，不要跳題。${mode==='discover'?'請提供此分區最值得追問的具體問題與原因，不寫大篇幅結論。':'如有明確自訂問題，第一段直接回答問題；其後解釋命盤中哪些實際資料支持，哪些仍不確定，再給貼題的觀察方法或建議。'}\n【表達方式】以繁體中文白話、2～4個短段落為主；必要時用少量條列，避免固定套用「核心訊號、性格、原局與大運、現實驗證、五項建議、三個追問」等六大章節。涉及身心健康只談壓力應對傾向，不作醫療診斷。總結放最後。`;
+  }
 
   function smartPromptDataText(key,data){
     if(key==='tengods') return `【十神結構】\n${formatTenGods(data)}\n\n【必要背景】\n${formatBasic(data)}\n${formatElements(data)}`;
@@ -5015,6 +5044,33 @@ ${tasks}
   }
 
 
+  // 將 Gemini 的 Markdown 排版安全地顯示成段落、標題、列表和粗體。
+  // 僅用 textContent 建立節點；不將模型文字當成 HTML 執行。
+  function renderBaziAiMarkdown(target,source){
+    if(!target)return;
+    target.replaceChildren();
+    const lines=String(source||'').replace(/\r\n?/g,'\n').split('\n');
+    let list=null;
+    function inline(node,str){
+      const segments=String(str).split(/(\*\*[^*\n]+\*\*)/g);
+      segments.forEach(piece=>{
+        if(piece.startsWith('**')&&piece.endsWith('**')&&piece.length>4){
+          const b=document.createElement('strong');b.textContent=piece.slice(2,-2);node.appendChild(b);
+        }else if(piece){node.appendChild(document.createTextNode(piece));}
+      });
+    }
+    for(const original of lines){
+      const line=original.trim();
+      if(!line){list=null;continue;}
+      const heading=line.match(/^(#{1,5})\s+(.+)$/);
+      if(heading){list=null;const el=document.createElement(heading[1].length<=2?'h3':'h4');inline(el,heading[2]);target.appendChild(el);continue;}
+      if(/^[-—_]{3,}$/.test(line)){list=null;target.appendChild(document.createElement('hr'));continue;}
+      const item=line.match(/^(?:[-*•]\s+|\d+[.)]\s+)(.+)$/);
+      if(item){const type=/^\d/.test(line)?'ol':'ul';if(!list||list.tagName.toLowerCase()!==type){list=document.createElement(type);target.appendChild(list);}const li=document.createElement('li');inline(li,item[1]);list.appendChild(li);continue;}
+      list=null;const paragraph=document.createElement('p');inline(paragraph,line);target.appendChild(paragraph);
+    }
+  }
+
   // Gemini AI full-chart: uses the same grounded professional prompt as external AI.
   let baziGeminiLastReading='';
   // TEST MODE: 只開放站內 Gemini AI，不變動會員儲存及既有付費提示詞權限。
@@ -5050,7 +5106,7 @@ ${tasks}
           throw Error(messages[j.error]||'AI 服務暫時無法解讀，稍後再試。');
         }
         baziGeminiLastReading=j.reading;
-        document.getElementById('baziGeminiReading').textContent=j.reading;
+        renderBaziAiMarkdown(document.getElementById('baziGeminiReading'),j.reading);
         document.getElementById('baziGeminiOutput').hidden=false;
         document.getElementById('baziGeminiOutput').open=true;
         document.getElementById('baziGeminiCopy').hidden=false;
@@ -5074,37 +5130,26 @@ ${tasks}
     const source=smartPromptDataText(key,data);
     const common=`以下資料已由網站排盤系統整理完成，請把它視為本次分析的既定資料，不要自行改寫四柱或重新排盤。若資料不足，請明確指出，不要自行補造事件。請使用繁體中文，並把命理術語翻成一般人看得懂的白話。命理解讀請以傾向、條件與可能性表達，不要把單一訊號說成必然事件。`;
 
-    if(mode==='discover'){
-      return `${common}
-
-我正在查看【${def.promptTitle}】，目前最想了解的方向是【${topic}】。
-【使用者指定的分區細問】${String(question||'').trim()||'尚未填寫，請從本區最突出的資料尋找具體問題'}
-
-${source}
-
-【你的任務】
-先不要急著替我下人生結論。請像一位「命盤翻譯員＋提問教練」：
-1. 從這一區找出 3～5 個最突出、反差最大或最值得注意的訊號。
-2. 說明每個訊號為什麼值得追問，以及它可能牽動哪些現實面向。
-3. 針對【${topic}】替我設計 6～10 個具體、可以繼續追問 AI 或命理師的問題。
-4. 如果這一區單獨不足以下判斷，告訴我下一步最值得一起看的命盤資料是什麼。
-5. 最後選出「最值得先問的 3 題」，並說明理由。`;
-    }
-
+    const focus=String(question||'').trim();
+    const intent=mode==='discover'
+      ? `只根據這個分區的實際資料，提出 4～6 個具體而不重複、值得深入追問的問題；每題指出相關的十神／干支／大運／流年證據及為何值得問。不要順帶分析所有人生面向。${focus?'如果使用者已有具體提問，先簡短回答該問題，再提供後續追問。':''}`
+      : `先直接回答「${focus||topic}」，再從本區實際顯示的資料挑出 2～4 條與此問題最相關的依據，分清確定的排盤結果、傳統象徵與不確定的推論；最後給 1～3 項貼近問題的觀察或建議。不要補造未提供的生活事件，也不要擴寫成全命盤報告。`;
     return `${common}
 
-我正在查看【${def.promptTitle}】，請把【${topic}】當成這次的主要分析目標。
-【使用者指定的分區細問】${String(question||'').trim()||'尚未填寫，請根據本區資料聚焦分析'}
+【正在查看的分區】${def.promptTitle}
+【本次細問方向】${topic}
+【使用者真正想問的細節】${focus||'尚未另外填寫，請聚焦本區選定的細問方向'}
 
 ${source}
 
-【你的任務】
-1. 先用 3～5 點整理這一區與【${topic}】最有關的核心訊號。
-2. 把命盤結構翻譯成具體的性格、行為模式、機會、壓力或時間節奏，不要只重複術語。
-3. 區分「命盤原局本身」與「大運／流年帶來的動態變化」，不要混在一起。
-4. 提出可觀察、可驗證的現實問題，幫我對照自己的真實經歷。
-5. 最後給我 3～5 個務實的行動方向；若無法由此區判斷，請直接說明需要補看哪些資料。
-6. 再補充 3 個我可能沒有想到、但值得繼續追問的問題。`;
+【專屬分區判讀規則】
+${SECTION_AI_RULES[key]||''}
+
+【本次唯一任務】
+${intent}
+
+請用一般讀者能理解的繁體中文，少量段落與必要的短清單即可。重點是回答這一個細節而不是描述整份命盤；命理推論僅供參考，不能視為事件預言、醫療或財務結論。結論放最後。`;
+
   }
 
   // All local section questions invoke Gemini directly; only the bottom panel is full-chart AI.
@@ -5119,8 +5164,8 @@ ${source}
           <span>AI 會聚焦本區數據與問題；其他命盤資訊只作必要的輔助。</span></div></div>
           <div class="smart-prompt-mode"><button type="button" class="active" data-prompt-mode="deep">深入回答我的問題</button><button type="button" data-prompt-mode="discover">我還可以問什麼？</button></div>
           <div class="smart-prompt-label">本次想了解的方向</div>
-          <div class="smart-topic-row">${SMART_TOPICS.map((x,i)=>`<button type="button" class="smart-topic-chip${i===0?' active':''}" data-topic="${x}">${x}</button>`).join('')}</div>
-          <label class="smart-prompt-question-label">想追問這一區的哪個細節？（選填）<textarea class="smart-prompt-question" maxlength="500" rows="3" placeholder="例如：上方比例最高的十神對我有什麼影響？請結合本區數據回答。"></textarea></label>
+          <div class="smart-topic-row">${(SECTION_AI_TOPICS[key]||[]).map((x,i)=>`<button type="button" class="smart-topic-chip${i===0?' active':''}" data-topic="${x}">${x}</button>`).join('')}</div>
+          <label class="smart-prompt-question-label">想追問這一區的哪個細節？（選填）<textarea class="smart-prompt-question" maxlength="500" rows="3" placeholder="可補充你想追問的具體情況；未填寫就針對上方選項回答。"></textarea></label>
           <button type="button" class="smart-prompt-generate">✦ 由站內 Gemini AI 回答</button>
           <div class="section-ai-message" role="status" aria-live="polite"></div>
           <div class="section-ai-answer" hidden><div class="section-ai-reading"></div><div class="section-ai-actions"><button type="button" class="section-ai-copy">複製解讀</button><button type="button" class="section-ai-download">下載 TXT</button></div></div>
@@ -5132,7 +5177,7 @@ ${source}
     if(!box||box.dataset.bound==='1')return;
     box.dataset.bound='1';
     let mode='deep';
-    let topic='工作事業';
+    let topic=(SECTION_AI_TOPICS[box.dataset.promptKey]||['本區重點'])[0];
     let lastAnswer='';
     const run=box.querySelector('.smart-prompt-generate');
     const msg=box.querySelector('.section-ai-message');
@@ -5153,6 +5198,7 @@ ${source}
       let prompt='';
       try{
         prompt=buildSmartPrompt(lastData,key,topic,mode,question);
+        prompt+='\n\n'+sectionAiSpecificInstruction(key,topic,question,mode);
         // Make section focus explicit even when other natal data is provided as supporting context.
         prompt+='\n\n【本站分區 AI 的重要限制】\n這是「'+SMART_PROMPT_SECTIONS[key].promptTitle+'」的局部深入追問，不是整體命盤報告。請直接回答使用者選定的細節或本分區最值得追問的線索；不要逐區介紹五行、十神、感情、財富、大運等所有領域。若使用者提供自訂問題，請優先明確回答：'+(question||'（未填寫，聚焦本區與選定方向）')+'。如需別區資料，只能簡短用作佐證。請以白話自然段落呈現，把總結放在最後。';
       }catch(err){msg.textContent='分區分析資料準備失敗：'+(err?.message||'未知錯誤');return;}
@@ -5167,7 +5213,7 @@ ${source}
           throw Error(errors[j.error]||'AI 解讀暫時失敗，請稍後再試。');
         }
         lastAnswer=String(j.reading||'');if(!lastAnswer)throw Error('AI 未回傳有效內容，請稍後再試。');
-        reading.textContent=lastAnswer;answer.hidden=false;msg.textContent='此分區的 AI 解讀已完成。';
+        renderBaziAiMarkdown(reading,lastAnswer);answer.hidden=false;msg.textContent='此分區的 AI 解讀已完成。';
         baziGeminiRefreshQuota();
         answer.scrollIntoView({behavior:'smooth',block:'nearest'});
         trackAction(`section-gemini-${key}-${mode}`);
