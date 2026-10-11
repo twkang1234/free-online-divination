@@ -2430,8 +2430,8 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     <section class="bazi-ai-quota-shell" id="baziAiQuotaPanel" aria-label="八字 AI 額度資訊">
       <div class="bazi-ai-quota-grid">
         <article class="bazi-ai-free-card">
-          <div class="bazi-ai-quota-title"> <strong id="baziQuotaAccountLabel">八字 AI｜每日免費額度</strong><div class="bazi-ai-quota-right"><small>今日剩餘</small><b id="baziQuotaDailyCount">額度規劃中</b></div></div>
-          <p id="baziQuotaDailyHint">每日台灣時間 08:00 重置｜訪客 2 次、免費會員 5 次的後端計次尚待啟用。</p>
+          <div class="bazi-ai-quota-title"> <strong id="baziQuotaAccountLabel">免費排八字｜AI 解讀額度</strong><div class="bazi-ai-quota-right"><small>今日剩餘</small><b id="baziQuotaDailyCount">查詢中…</b></div></div>
+          <p id="baziQuotaDailyHint">八字排盤不限次數｜訪客每日 AI 1 次、免費會員 4 次｜08:00 重置。</p>
         </article>
         <article class="bazi-ai-paid-card">
           <div class="bazi-ai-paid-head"><strong>付費額度池</strong><a href="/" title="了解一念知機後續進階方案">了解進階方案</a></div>
@@ -5089,13 +5089,25 @@ ${tasks}
   // Gemini AI full-chart: uses the same grounded professional prompt as external AI.
   let baziGeminiLastReading='';
   // TEST MODE: 只開放站內 Gemini AI，不變動會員儲存及既有付費提示詞權限。
+  function baziAiHeaders(){const token=baziAuthToken();return token?{Authorization:'Bearer '+token}:{}}
+  function baziPersonalQuotaText(j){return '今日 AI 剩餘 '+Math.max(0,Number(j.personalRemaining||0))+' / '+Number(j.personalLimit||1)+' 次';}
+  function baziAiUpdateVisible(j){
+    if(!j||!j.ok)return;
+    if(location.search.includes('admin=1'))return; // 管理員測試顯示由模擬器接管
+    const who=j.visitorType==='member'?'免費會員':'未登入訪客';
+    const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent=who+'｜每日免費 AI 解讀';
+    const count=document.getElementById('baziQuotaDailyCount');if(count)count.textContent=Math.max(0,j.personalRemaining)+' / '+j.personalLimit+' 次';
+    const hint=document.getElementById('baziQuotaDailyHint');if(hint)hint.textContent='八字排盤不限次數｜只有站內 AI 解讀才扣次數｜每日 08:00 重置';
+    document.querySelectorAll('.bazi-personal-quota').forEach(el=>el.textContent=baziPersonalQuotaText(j));
+  }
   async function baziGeminiRefreshQuota(){
     const target=document.getElementById('baziGeminiQuota');
     if(!target)return;
     try{
-      const r=await fetch(BAZI_API_BASE+'/ai/status',{cache:'no-store'}),j=await r.json();
+      const r=await fetch(BAZI_API_BASE+'/ai/status',{cache:'no-store',headers:baziAiHeaders()}),j=await r.json();
       if(!j.ok)throw Error(j.error||'UNKNOWN');
-      target.textContent=`全站剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} / ${j.globalLimit} 次｜本網路剩餘 ${Math.max(0,j.sourceLimit-j.sourceUsed)} 次｜08:00 重置`;
+      target.textContent=`${baziPersonalQuotaText(j)}｜全站剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} 次｜08:00 重置`;
+      baziAiUpdateVisible(j);
     }catch(_){target.textContent='免費額度暫時無法取得';}
   }
   function baziGeminiSetup(){
@@ -5114,7 +5126,7 @@ ${tasks}
       btn.disabled=true;btn.textContent='AI 解讀中，請稍候…';
       msg.textContent='正在依你的四柱、十神、五行、大運與流年分析命盤…';
       try{
-        const r=await fetch(BAZI_API_BASE+'/ai/reading',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+        const r=await fetch(BAZI_API_BASE+'/ai/reading',{method:'POST',headers:{'Content-Type':'application/json',...baziAiHeaders()},body:JSON.stringify({prompt})});
         const j=await r.json();
         if(!j.ok){
           const messages={GLOBAL_DAILY_LIMIT:'全站今日 Gemini 額度已用完，請明日再試。',SOURCE_DAILY_LIMIT:'此網路來源今日使用次數已達上限。',DAILY_LIMIT:'今日免費次數已達上限。',PROVIDER_RATE_LIMIT:'Google 免費 API 暫時忙碌或額度已滿，稍後再試。',MODEL_NOT_FOUND:'此 Gemini 模型暫時無法使用，請管理員確認模型名稱。',API_PERMISSION_DENIED:'Google API 權限不允許此次呼叫。',GEMINI_NOT_CONFIGURED:'網站尚未設定 Gemini API Secret。',AI_QUOTA_DATABASE_UNAVAILABLE:'免費額度服務暫時不可用。',INVALID_BAZI_PROMPT:'命盤提示詞不完整，請重新排盤。'};
@@ -5172,7 +5184,7 @@ ${intent}
     const def=SMART_PROMPT_SECTIONS[key];
     const shenshaGlobal=key==='shenshaGlobal';
     return `<details class="smart-prompt-collapse" data-prompt-collapse="${key}">
-      <summary><span class="smart-prompt-summary-copy"><strong>${shenshaGlobal?'AI 深入全局神煞':'AI 深入這一區'}</strong><span>針對這個分區的細節提問，不重新解讀整份命盤</span></span></summary>
+      <summary><span class="smart-prompt-summary-copy"><strong>${shenshaGlobal?'AI 深入全局神煞':'AI 深入這一區'}</strong><span>針對這個分區的細節提問，不重新解讀整份命盤</span></span><small class="bazi-personal-quota">AI 額度查詢中…</small></summary>
       <div class="smart-prompt-collapse-body"><div class="smart-prompt-box" data-prompt-key="${key}">
         <div class="smart-prompt-inner">
           <div class="smart-prompt-head"><div><strong>針對「${def.promptTitle}」深入追問</strong>
@@ -5181,7 +5193,7 @@ ${intent}
           <div class="smart-prompt-label">本次想了解的方向</div>
           <div class="smart-topic-row">${(SECTION_AI_TOPICS[key]||[]).map((x,i)=>`<button type="button" class="smart-topic-chip${i===0?' active':''}" data-topic="${x}">${x}</button>`).join('')}</div>
           <label class="smart-prompt-question-label">想追問這一區的哪個細節？（選填）<textarea class="smart-prompt-question" maxlength="500" rows="3" placeholder="可補充你想追問的具體情況；未填寫就針對上方選項回答。"></textarea></label>
-          <button type="button" class="smart-prompt-generate">✦ 由站內 Gemini AI 回答</button>
+          <button type="button" class="smart-prompt-generate">✦ 由站內 Gemini AI 回答</button><div class="bazi-personal-quota bazi-ai-inline-notice">每次新解讀扣 1 次｜額度查詢中…</div>
           <div class="section-ai-message" role="status" aria-live="polite"></div>
           <div class="section-ai-answer" hidden><div class="section-ai-reading"></div><div class="section-ai-actions"><button type="button" class="section-ai-copy">複製解讀</button><button type="button" class="section-ai-download">下載 TXT</button></div></div>
         </div></div></div>
@@ -5221,10 +5233,10 @@ ${intent}
       if(prompt.length<250){msg.textContent='命盤資料尚未準備完成，請重新排盤。';return;}
       run.disabled=true;run.textContent='Gemini 分析中，請稍候…';msg.textContent='正在針對這個分區分析…';
       try{
-        const r=await fetch(BAZI_API_BASE+'/ai/reading',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+        const r=await fetch(BAZI_API_BASE+'/ai/reading',{method:'POST',headers:{'Content-Type':'application/json',...baziAiHeaders()},body:JSON.stringify({prompt})});
         const j=await r.json();
         if(!r.ok||!j.ok){
-          const errors={GLOBAL_DAILY_LIMIT:'全站今日免費額度已用完，請明日再試。',SOURCE_DAILY_LIMIT:'本網路來源今日額度已用完。',PROVIDER_RATE_LIMIT:'Google AI 暫時忙碌或免費額度已滿，請稍後再試。',INVALID_BAZI_PROMPT:'命盤資料不完整或太長，請重新排盤。',AI_QUOTA_DATABASE_UNAVAILABLE:'額度服務暫時不可用。',GEMINI_NOT_CONFIGURED:'Gemini API 尚未設定。',MODEL_NOT_FOUND:'Gemini 模型暫時無法使用。'};
+          const errors={GLOBAL_DAILY_LIMIT:'全站今日免費額度已用完，請明日再試。',SOURCE_DAILY_LIMIT:'本網路來源今日額度已用完。',PERSONAL_DAILY_LIMIT:'今日個人免費 AI 額度已用完，明日 08:00 重置。',PROVIDER_RATE_LIMIT:'Google AI 暫時忙碌或免費額度已滿，請稍後再試。',INVALID_BAZI_PROMPT:'命盤資料不完整或太長，請重新排盤。',AI_QUOTA_DATABASE_UNAVAILABLE:'額度服務暫時不可用。',GEMINI_NOT_CONFIGURED:'Gemini API 尚未設定。',MODEL_NOT_FOUND:'Gemini 模型暫時無法使用。'};
           throw Error(errors[j.error]||'AI 解讀暫時失敗，請稍後再試。');
         }
         lastAnswer=String(j.reading||'');if(!lastAnswer)throw Error('AI 未回傳有效內容，請稍後再試。');
@@ -6414,6 +6426,7 @@ ${intent}
 </script>
 <style>
 
+.bazi-ai-inline-notice{margin:8px 0 4px;color:#d6c293;font-size:.79rem}.smart-prompt-collapse summary .bazi-personal-quota{font-size:.75rem;color:#ddc47d;margin-left:auto;margin-right:14px;white-space:nowrap}@media(max-width:600px){.smart-prompt-collapse summary .bazi-personal-quota{font-size:.66rem;white-space:normal}}
 .bazi-ai-quota-shell{border:1px solid #3b2c4f;background:linear-gradient(125deg,#10101f,#170e1d);border-radius:27px;padding:20px;margin:20px 0 22px;color:#f2e9dc}
 .bazi-ai-quota-grid{display:grid;grid-template-columns:1.58fr 1fr;gap:10px}
 .bazi-ai-free-card,.bazi-ai-paid-card{min-width:0;border:1px solid #524239;border-radius:14px;padding:18px 20px;background:rgba(33,30,37,.82)}
@@ -6427,7 +6440,8 @@ ${intent}
 .bazi-ai-paid-card>b{color:#d5b4ff;display:block;font-size:1.6rem;margin-top:5px;line-height:1.4}
 .bazi-ai-quota-foot{display:flex;gap:12px;justify-content:space-between;color:#ad9aab;font-size:.72rem;margin-top:12px;flex-wrap:wrap}
 .bazi-ai-quota-shell.test-active{border-color:#926195}.bazi-ai-quota-shell.test-active .bazi-ai-quota-foot #baziQuotaTestBanner{color:#f0b3df;font-weight:700}
-@media(max-width:720px){.bazi-ai-quota-grid{grid-template-columns:1fr}.bazi-ai-quota-title strong{font-size:.88rem}.bazi-ai-quota-shell{padding:12px;border-radius:18px}.bazi-ai-free-card,.bazi-ai-paid-card{padding:15px}}
+@media(max-width:720px){.bazi-ai-quota-grid{grid-template-columns:1fr}.bazi-ai-quota-title strong{font-size:.88rem}.bazi-ai-inline-notice{margin:8px 0 4px;color:#d6c293;font-size:.79rem}.smart-prompt-collapse summary .bazi-personal-quota{font-size:.75rem;color:#ddc47d;margin-left:auto;margin-right:14px;white-space:nowrap}@media(max-width:600px){.smart-prompt-collapse summary .bazi-personal-quota{font-size:.66rem;white-space:normal}}
+.bazi-ai-quota-shell{padding:12px;border-radius:18px}.bazi-ai-free-card,.bazi-ai-paid-card{padding:15px}}
 
 #baziAdminTestLauncher{position:fixed;bottom:18px;right:18px;z-index:20001;padding:10px 17px;background:#24170c;color:#f5d88a;border:1px solid #b18b4c;border-radius:999px;font-weight:700;cursor:pointer;box-shadow:0 7px 22px #000a}
 #baziAdminTestOverlay{position:fixed;inset:0;z-index:21000;background:#000c;display:none;align-items:center;justify-content:center;padding:18px}
@@ -6448,9 +6462,9 @@ ${intent}
     <h2>管理員八字測試模式</h2>
     <p id="baziAdminTestAuth">管理員驗證中…</p>
     <div id="baziAdminTestChoices" hidden>
-      <button data-mode="guest"><b>全新訪客</b>模擬每日免費 2／2 次。</button>
-      <button data-mode="member"><b>免費會員</b>模擬每日免費 5／5 次。</button>
-      <button data-mode="exhausted"><b>免費額度用完</b>模擬免費會員已使用 5／5 次。</button>
+      <button data-mode="guest"><b>全新訪客</b>模擬每日免費 1／1 次。</button>
+      <button data-mode="member"><b>免費會員</b>模擬每日免費 4／4 次。</button>
+      <button data-mode="exhausted"><b>免費額度用完</b>模擬免費會員已使用 4／4 次。</button>
       <button data-mode="paid1"><b>付費額度 1 次</b>免費額度用完，模擬付費額度剩 1 次。</button>
       <button data-mode="paid"><b>完整付費解鎖</b>模擬每日免費 15／15 次（未來規劃）。</button>
       <button data-mode="paid0"><b>付費額度 0 次</b>免費與付費均用完。</button>
@@ -6463,7 +6477,7 @@ ${intent}
 (function(){
   'use strict';
   const PREFIX='divinationhub-bazi-admin-test-v1',ADMIN_TOKEN='divinationhub-admin-session';
-  const modes={guest:{label:'全新訪客',limit:2,used:0,paid:0},member:{label:'免費會員',limit:5,used:0,paid:0},exhausted:{label:'免費額度用完',limit:5,used:5,paid:0},paid1:{label:'付費額度 1 次',limit:5,used:5,paid:1},paid:{label:'完整付費解鎖',limit:15,used:0,paid:0},paid0:{label:'付費額度 0 次',limit:5,used:5,paid:0}};
+  const modes={guest:{label:'全新訪客',limit:1,used:0,paid:0},member:{label:'免費會員',limit:4,used:0,paid:0},exhausted:{label:'免費額度用完',limit:4,used:4,paid:0},paid1:{label:'付費額度 1 次',limit:4,used:4,paid:1},paid:{label:'完整付費解鎖',limit:15,used:0,paid:0},paid0:{label:'付費額度 0 次',limit:4,used:4,paid:0}};
   let active=false,mode='member',used=0,paid=0;
   const $=id=>document.getElementById(id),overlay=$('baziAdminTestOverlay');
   const status=$('baziAdminTestAuth');
@@ -6478,7 +6492,7 @@ ${intent}
     if($('baziQuotaTestBanner'))$('baziQuotaTestBanner').textContent='🧪 管理員八字測試模式｜僅模擬介面，不扣 Gemini 額度';
     const q=$('baziGeminiQuota');if(q)q.textContent=quotaText();
     const b=$('baziAdminTestLauncher');if(b)b.textContent='🧪 八字測試 · '+modes[mode].label;
-    document.querySelectorAll('[data-bazi-test-quota]').forEach(el=>el.textContent=quotaText());
+    document.querySelectorAll('[data-bazi-test-quota],.bazi-personal-quota').forEach(el=>el.textContent=quotaText());
     document.querySelectorAll('#baziAdminTestChoices button').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
   }
   function setMode(next){if(!modes[next])return;active=true;mode=next;used=modes[next].used;paid=modes[next].paid;sessionStorage.setItem(PREFIX,JSON.stringify({mode,used,paid}));display();}
@@ -6530,11 +6544,11 @@ ${intent}
   async function liveQuota(){
     const el=$('baziQuotaGlobalCount');if(!el)return;
     try{
-      const r=await fetch('https://bazi-api.ezgocpu.workers.dev/ai/status',{cache:'no-store'});
+      const r=await fetch('https://bazi-api.ezgocpu.workers.dev/ai/status',{cache:'no-store',headers:typeof baziAuthToken==='function'?baziAiHeaders():{}});
       const j=await r.json();if(!r.ok||!j?.ok)throw Error('暫時無法取得');
       const remaining=Number(j.globalLimit)-Number(j.globalUsed);
       const limit=j.globalLimit;
-      el.textContent=Number.isFinite(Number(remaining))?'全站剩餘 '+remaining+' / '+limit+' 次｜08:00 重置':'全站 AI 額度依服務端查詢';
+      el.textContent=Number.isFinite(Number(remaining))?'全站剩餘 '+remaining+' / '+limit+' 次｜08:00 重置':'全站 AI 額度依服務端查詢';if(!location.search.includes('admin=1')){const c=$('baziQuotaDailyCount');if(c)c.textContent=j.personalRemaining+' / '+j.personalLimit+' 次';const l=$('baziQuotaAccountLabel');if(l)l.textContent=(j.visitorType==='member'?'免費會員':'未登入訪客')+'｜每日免費 AI 解讀';document.querySelectorAll('.bazi-personal-quota').forEach(x=>x.textContent='今日 AI 剩餘 '+j.personalRemaining+' / '+j.personalLimit+' 次');}
     }catch(_){el.textContent='全站 AI 額度暫時無法取得';}
   }
   document.addEventListener('DOMContentLoaded',liveQuota,{once:true});
