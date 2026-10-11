@@ -2327,6 +2327,17 @@ html[data-theme="light"] .daily-flow-demo-note strong{color:#1c536b}
 .saved-item-main small{color:#91d2c6;font-size:11px}.saved-item-actions{flex-wrap:wrap;justify-content:flex-end}.saved-item-actions button:disabled{opacity:.7;cursor:default}
 html[data-theme="light"] .bazi-save-dialog{background:#fff;color:#244356;border-color:#94b4c2}html[data-theme="light"] .bazi-save-dialog #baziSaveNickname{background:#f3f8fa;border-color:#a1bcc9}html[data-theme="light"] .bazi-save-dialog p{color:#51687b}html[data-theme="light"] .saved-item-main small{color:#25684d}
 @media(max-width:600px){.saved-item{align-items:flex-start;flex-direction:column}.saved-item-actions{justify-content:flex-start}}
+
+/* On-site Gemini Bazi (self-contained; does not change chart layout) */
+.bazi-gemini{margin-top:20px;padding:20px;border:1px solid rgba(233,189,88,.28);border-radius:17px;background:rgba(233,189,88,.045);color:var(--text)}
+.bazi-gemini-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.bazi-gemini-head strong{font-size:1rem;color:var(--gold)}
+.bazi-gemini-head span,.bazi-gemini p{font-size:.75rem;color:var(--dim)}.bazi-gemini p{margin:10px 0 16px}
+.bazi-gemini label{font-size:.77rem;display:block;margin-bottom:6px}.bazi-gemini select{width:min(360px,100%);min-height:42px;padding:8px;border-radius:9px;background:#151612;color:#f8edcf;border:1px solid rgba(233,189,88,.3)}
+.bazi-gemini-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.bazi-gemini-actions button{min-height:40px;padding:8px 13px;border:1px solid rgba(233,189,88,.4);border-radius:10px;color:#f4e2b4;background:rgba(233,189,88,.13);cursor:pointer}.bazi-gemini-actions button:disabled{opacity:.5;cursor:wait}
+#baziGeminiMessage{color:var(--dim);font-size:.75rem;margin-top:10px}#baziGeminiOutput{margin-top:16px;border:1px solid rgba(233,189,88,.15);padding:14px;border-radius:12px}
+#baziGeminiOutput summary{cursor:pointer;color:var(--gold);font-weight:700}#baziGeminiReading{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.85;font-size:.9rem;margin-top:16px}
+html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
+
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -2622,6 +2633,15 @@ html[data-theme="light"] .bazi-save-dialog{background:#fff;color:#244356;border-
             <p>網站先整理命盤事實，你再選最想了解的方向。登入後可產生個人化提示詞；不知道該問什麼，也可以讓 AI 先替你找出最值得追問的地方。</p>
           </div>
           <div class="smart-prompt-mount" data-smart-prompt="full"></div>
+          <div class="bazi-gemini" id="baziGeminiPanel">
+            <div class="bazi-gemini-head"><strong>✦ 站內 Gemini AI｜完整命盤深度解讀</strong><span id="baziGeminiQuota">正在查詢免費額度…</span></div>
+            <p>不必離開網站，將已排出的命盤交給 Gemini 以繁體中文分析。仍可沿用上方「專業提示詞」功能。免費 API 資料由 Google 處理，請勿輸入不必要的個人敏感資訊。</p>
+            <label for="baziGeminiTopic">這次主要想了解</label>
+            <select id="baziGeminiTopic"><option>整體命盤</option><option>工作事業</option><option>感情婚姻</option><option>財運理財</option><option>性格天賦</option><option>十年大運與流年</option></select>
+            <div class="bazi-gemini-actions"><button type="button" id="baziGeminiRun">✦ 開始站內 AI 深度解讀</button><button type="button" id="baziGeminiCopy" hidden>複製解讀</button><button type="button" id="baziGeminiDownload" hidden>下載 TXT</button></div>
+            <div id="baziGeminiMessage" role="status" aria-live="polite"></div>
+            <details id="baziGeminiOutput" hidden open><summary>展開／收合完整 AI 解讀</summary><div id="baziGeminiReading"></div></details>
+          </div>
         </section>
 
         <section class="qimen-bridge" id="qimen-bridge">
@@ -4975,6 +4995,57 @@ ${tasks}
 使用一般人容易理解的完整段落；專業依據放在對應段落中簡短說明。提出可以用真實經歷核對的觀察問題；結論與行動建議放在最後。`;
   }
 
+
+  // Gemini AI full-chart: uses the same grounded professional prompt as external AI.
+  let baziGeminiLastReading='';
+  async function baziGeminiRefreshQuota(){
+    const target=document.getElementById('baziGeminiQuota');
+    if(!target)return;
+    try{
+      const r=await fetch(BAZI_API_BASE+'/ai/status',{cache:'no-store'}),j=await r.json();
+      if(!j.ok)throw Error(j.error||'UNKNOWN');
+      target.textContent=`全站剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} / ${j.globalLimit} 次｜本網路剩餘 ${Math.max(0,j.sourceLimit-j.sourceUsed)} 次｜08:00 重置`;
+    }catch(_){target.textContent='免費額度暫時無法取得';}
+  }
+  function baziGeminiSetup(){
+    const btn=document.getElementById('baziGeminiRun');
+    if(!btn||btn.dataset.bound)return;
+    btn.dataset.bound='1';
+    baziGeminiRefreshQuota();
+    btn.addEventListener('click',async()=>{
+      if(!baziAuthProfile()){baziOpenAuth();return;}
+      if(!lastData){toast('請先排八字');return;}
+      const msg=document.getElementById('baziGeminiMessage');
+      const topic=document.getElementById('baziGeminiTopic').value;
+      const prompt=buildSmartPrompt(lastData,'full',topic,'deep');
+      btn.disabled=true;btn.textContent='AI 解讀中，請稍候…';
+      msg.textContent='正在依你的四柱、十神、五行、大運與流年分析命盤…';
+      try{
+        const r=await fetch(BAZI_API_BASE+'/ai/reading',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+        const j=await r.json();
+        if(!j.ok){
+          const messages={GLOBAL_DAILY_LIMIT:'全站今日 Gemini 額度已用完，請明日再試。',SOURCE_DAILY_LIMIT:'此網路來源今日使用次數已達上限。',DAILY_LIMIT:'今日免費次數已達上限。',PROVIDER_RATE_LIMIT:'Google 免費 API 暫時忙碌或額度已滿，稍後再試。',MODEL_NOT_FOUND:'此 Gemini 模型暫時無法使用，請管理員確認模型名稱。',API_PERMISSION_DENIED:'Google API 權限不允許此次呼叫。',GEMINI_NOT_CONFIGURED:'網站尚未設定 Gemini API Secret。',AI_QUOTA_DATABASE_UNAVAILABLE:'免費額度服務暫時不可用。',INVALID_BAZI_PROMPT:'命盤提示詞不完整，請重新排盤。'};
+          throw Error(messages[j.error]||'AI 服務暫時無法解讀，稍後再試。');
+        }
+        baziGeminiLastReading=j.reading;
+        document.getElementById('baziGeminiReading').textContent=j.reading;
+        document.getElementById('baziGeminiOutput').hidden=false;
+        document.getElementById('baziGeminiOutput').open=true;
+        document.getElementById('baziGeminiCopy').hidden=false;
+        document.getElementById('baziGeminiDownload').hidden=false;
+        msg.textContent='Gemini AI 完整解讀已產生。';
+        baziGeminiRefreshQuota();
+        document.getElementById('baziGeminiOutput').scrollIntoView({behavior:'smooth',block:'nearest'});
+      }catch(err){msg.textContent=err?.message||'AI 解讀失敗';baziGeminiRefreshQuota()}
+      finally{btn.disabled=false;btn.textContent='✦ 開始站內 AI 深度解讀';}
+    });
+    document.getElementById('baziGeminiCopy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(baziGeminiLastReading);toast('已複製 Gemini 解讀')}catch(_){toast('複製失敗')}});
+    document.getElementById('baziGeminiDownload')?.addEventListener('click',()=>{
+      const url=URL.createObjectURL(new Blob([baziGeminiLastReading],{type:'text/plain;charset=utf-8'}));
+      const a=document.createElement('a');a.href=url;a.download='bazi-gemini-reading.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
+    });
+  }
+
   function buildSmartPrompt(data,key,topic,mode,question=''){
     if(key==='shenshaGlobal')return buildShenshaGlobalPrompt(data,topic,mode,question);
     const def=SMART_PROMPT_SECTIONS[key]||SMART_PROMPT_SECTIONS.full;
@@ -5129,6 +5200,7 @@ ${source}
   }
 
   function initSmartPromptUI(){
+    baziGeminiSetup();
     ['tengods','relations','luck','years'].forEach(key=>{
       const def=SMART_PROMPT_SECTIONS[key];
       const body=document.querySelector(`#${def.id} .report-body`);
@@ -6155,6 +6227,9 @@ ${source}
       if(reveal)rememberMemberBirth(input);
       $('birthTimeNotice').textContent=timeInputNote(data);
       lastData=data;
+      baziGeminiLastReading='';
+      const gemOut=document.getElementById('baziGeminiOutput');if(gemOut)gemOut.hidden=true;
+      ['baziGeminiCopy','baziGeminiDownload'].forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=true;});
       selectedPeriods={};
       setDailyFlowChart(data);
       renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);initSectionDecodeUI();resetExploration();
