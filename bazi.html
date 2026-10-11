@@ -55,7 +55,7 @@ button,a{font:inherit}button{cursor:pointer}
 .tool-switcher a{padding:6px 10px;border-radius:999px;color:var(--bazi-text-21,#746f65);text-decoration:none;font-size:.70rem;white-space:nowrap}
 .tool-switcher a:hover{color:var(--bazi-text-22,#ded6c5)}.tool-switcher a.active{background:var(--bazi-bg-23,rgba(233,189,88,.10));color:var(--bazi-text-16,#e5c778)}
 .page-status{color:var(--bazi-text-24,#756f62);font-family:var(--mono);font-size:.62rem;letter-spacing:.13em;white-space:nowrap}
-.listing-open,.resource-apply-btn{min-height:36px;padding:7px 13px;border:1px solid var(--bazi-line-25,rgba(233,189,88,.27));border-radius:999px;background:var(--bazi-bg-26,rgba(57,37,6,.48));color:var(--bazi-text-27,#e7c779);font-weight:800;font-size:.70rem}
+.listing-open,.resource-apply-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap;min-height:36px;padding:7px 13px;border:1px solid var(--bazi-line-25,rgba(233,189,88,.27));border-radius:999px;background:var(--bazi-bg-26,rgba(57,37,6,.48));color:var(--bazi-text-27,#e7c779);font-weight:800;font-size:.70rem}
 .listing-open:hover,.resource-apply-btn:hover{border-color:var(--bazi-line-17,rgba(233,189,88,.58));background:var(--bazi-bg-28,rgba(233,189,88,.09))}
 
 .member-entry{position:relative;display:flex;align-items:center}
@@ -222,7 +222,7 @@ button,a{font:inherit}button{cursor:pointer}
 .faq-brief{padding:0 18px 17px}.faq-brief p{margin:0;max-width:940px;color:var(--bazi-text-217,#928978);font-size:.77rem;line-height:1.75}.standard-notice{margin-top:28px;padding:15px 17px;border:1px solid var(--bazi-line-218,rgba(233,189,88,.11));border-left:2px solid var(--bazi-line-82,rgba(233,189,88,.50));border-radius:12px;background:var(--bazi-bg-219,rgba(233,189,88,.025));color:var(--bazi-text-220,#7f7868);font-size:.70rem;line-height:1.75}
 
 /* Resources */
-.resource-section{margin-top:74px;padding-top:72px;border-top:1px solid var(--bazi-line-19,rgba(255,255,255,.055))}.resource-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px}.resource-head h2{margin-bottom:0}.resource-intro{margin-top:22px}
+.resource-section{margin-top:74px;padding-top:72px;border-top:1px solid var(--bazi-line-19,rgba(255,255,255,.055))}.resource-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px}.resource-head h2{margin:12px 0 0;font-size:clamp(2rem,3.6vw,3.15rem);line-height:1.08;letter-spacing:-.03em}.resource-intro{margin-top:22px}
 .resource-basic-listing{margin-top:24px;padding:22px 24px;border-top:1px solid var(--bazi-line-67,rgba(255,255,255,.07));border-bottom:1px solid var(--bazi-line-67,rgba(255,255,255,.07));color:var(--bazi-text-221,#928a79);font-size:.78rem;line-height:1.8}.resource-basic-listing p{margin:7px 0}.resource-basic-listing strong{color:var(--bazi-text-222,#d7c28b)}.resource-note{margin-top:12px;color:var(--bazi-text-223,#625e53);font-size:.66rem}
 
 /* Modals */
@@ -2447,7 +2447,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
           <button id="baziLogoutBtn" type="button">登出</button>
         </div>
       </div>
-      <button class="listing-open" id="openListing" type="button">申請刊登</button>
+      <a class="listing-open" id="openListing" href="/apply-listing.html">申請刊登</a>
     </div>
   </header>
 
@@ -2886,12 +2886,15 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
       <div class="seo-cta-row"><a class="seo-cta" href="#castBtn">返回專業八字排盤工具 ↑</a></div>
     </section>
 
-    <section class="resource-section" id="bazi-resources">
+    <section class="resource-section" id="bazi-resources" aria-labelledby="baziResourceTitle">
       <div class="resource-head">
-        <div><div class="seo-kicker">BAZI RESOURCES</div><h2>八字專業資源與延伸閱讀</h2></div>
-        <button class="resource-apply-btn" id="openListingInline" type="button">申請刊登 →</button>
+        <div><div class="seo-kicker">TEACHERS &amp; ADVANCED RESOURCES</div><h2 id="baziResourceTitle">推薦八字命理老師與資源</h2></div>
+        <a class="resource-apply-btn" id="openListingInline" href="/apply-listing.html">申請刊登 →</a>
       </div>
-      <div class="seo-copy resource-intro"><p>排盤工具提供基礎命盤、互動分析及依權限開放的深入解讀。若有其他命理學習需求，也可以參考相關八字教學與專業資源。</p></div>
+      <div class="seo-copy resource-intro">
+        <p>如果您希望進一步了解八字命理，或針對感情、工作、合作、事業決策與其他重要問題獲得更完整的分析，可以參考以下真人老師與相關資源。<br>
+        本區整理提供八字命理諮詢、解盤、教學與相關服務的網站，方便依需求進一步了解與聯繫。</p>
+      </div>
     </section>
   </main>
 
@@ -6544,8 +6547,6 @@ ${intent}
 
     const openListing=()=>{listingWorld?.classList.add('is-active');listingWorld?.setAttribute('aria-hidden','false');if(listingWorld)listingWorld.scrollTop=0;setOverlay();};
     const closeListing=()=>{listingWorld?.classList.remove('is-active');listingWorld?.setAttribute('aria-hidden','true');setOverlay();};
-    document.getElementById('openListing')?.addEventListener('click',openListing);
-    document.getElementById('openListingInline')?.addEventListener('click',openListing);
     document.getElementById('closeListing')?.addEventListener('click',closeListing);
     document.getElementById('closeListingBottom')?.addEventListener('click',closeListing);
 
