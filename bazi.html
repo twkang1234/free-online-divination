@@ -2356,7 +2356,16 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
 #baziGeminiReading hr,.section-ai-reading hr{border:0;border-top:1px solid rgba(185,153,83,.22);margin:1.1rem 0}
 
 </style>
-<script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
+<script src="/_aistudio-iframe.js?v=2c34bde1"></script><style>
+#baziGeminiOutput .bazi-ai-output-bottom{display:flex;justify-content:center;padding:18px 6px 6px;margin-top:18px;border-top:1px solid rgba(233,189,88,.18)}
+#baziGeminiCollapse,.section-ai-collapse{border:1px solid rgba(233,189,88,.38);color:#eed28a;background:#241d14;border-radius:9px;padding:10px 18px;cursor:pointer;font:inherit}
+#baziGeminiOutput>summary{cursor:pointer;padding:12px 8px;color:#e3c47b;font-weight:700}
+#report-months .month-flow-grid{margin:12px 0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+#report-months .month-card{min-width:0}
+@media(max-width:750px){#report-months .month-flow-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:460px){#report-months .month-flow-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
 <body>
 <header class="page-topbar">
     <div class="topbar-left">
@@ -2658,6 +2667,17 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
           </div>
         </details>
 
+        <details class="report-section" id="report-months" open>
+          <summary><span><b>09</b> 十二流月｜今年每個節氣月的變化</span><small>12 SOLAR-TERM MONTHS · MONTHLY FLOW</small></summary>
+          <div class="report-body">
+            <div class="time-explain"><strong>十二流月｜逐月查看短期節奏</strong><span id="monthFlowIntro">排出八字後，顯示今年各節氣月的干支與相對變化。流月依節氣換月，並非每月一日換月。</span></div>
+            <div class="fortune-summary-grid" id="monthSummary"></div>
+            <div class="month-flow-grid" id="monthFlowGrid"></div>
+            <div class="detail-console fortune-detail" id="monthDetail">請選擇月份，查看該節氣段的相關命盤線索。</div>
+            <div class="smart-prompt-mount" data-smart-prompt="months"></div>
+          </div>
+        </details>
+
         <section class="ai-unlock-zone smart-prompt-full" id="ai-prompt-zone">
           <div class="ai-unlock-head">
             <span class="report-eyebrow">AI DEEP DIVE · FULL CHART</span>
@@ -2672,7 +2692,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
             <select id="baziGeminiTopic"><option>整體命盤</option><option>工作事業</option><option>感情婚姻</option><option>財運理財</option><option>性格天賦</option><option>十年大運與流年</option></select>
             <div class="bazi-gemini-actions"><button type="button" id="baziGeminiRun">✦ 開始站內 AI 深度解讀</button><button type="button" id="baziGeminiCopy" hidden>複製解讀</button><button type="button" id="baziGeminiDownload" hidden>下載 TXT</button></div>
             <div id="baziGeminiMessage" role="status" aria-live="polite"></div>
-            <details id="baziGeminiOutput" hidden open><summary>展開／收合完整 AI 解讀</summary><div id="baziGeminiReading"></div></details>
+            <details id="baziGeminiOutput" hidden><summary>展開／收合完整 AI 解讀</summary><div id="baziGeminiReading"></div><div class="bazi-ai-output-bottom"><button type="button" id="baziGeminiCollapse">▲ 收合這篇 AI 解讀</button></div></details>
           </div>
         </section>
 
@@ -2845,6 +2865,8 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
       if(token) localStorage.setItem(BAZI_AUTH_KEY, token);
       else localStorage.removeItem(BAZI_AUTH_KEY);
     }catch(_){}
+    // 登入、登出後立即更新站內 AI 額度，無須重整網頁。
+    if(typeof baziGeminiRefreshQuota==='function')baziGeminiRefreshQuota();
   }
   let baziGoogleInitialized=false;
 
@@ -4955,6 +4977,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     relations:{id:'report-relations',title:'天干地支互動',promptTitle:'天干地支互動'},
     luck:{id:'report-luck',title:'十年大運',promptTitle:'十年大運與人生階段'},
     years:{id:'report-years',title:'三年流年',promptTitle:'去年、今年與明年三年流年'},
+    months:{id:'report-months',title:'十二流月',promptTitle:'今年十二流月與節氣月'},
     shenshaGlobal:{id:'report-shensha',title:'全局神煞',promptTitle:'全局神煞綜合解析'},
     full:{id:'ai-prompt-zone',title:'完整命盤',promptTitle:'完整命盤'}
   };
@@ -4964,6 +4987,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     relations:['最重要的合沖','天干合化條件','地支沖刑害','哪些柱位受影響','衝突與轉化','如何觀察應期'],
     luck:['目前這步大運','下一步大運','不同大運比較','十年階段轉折','原局與大運互動','哪些時期需留意'],
     years:['今年流年重點','去年與今年比較','明年流年方向','流年與大運互動','流年引動的干支','年度變化與觀察'],
+    months:['目前這個節氣月','下一個節氣月','哪幾月較有利','哪幾月需留意','流月與大運流年','指定月份的干支互動'],
     shenshaGlobal:['最值得注意的神煞','神煞所在柱位','同柱神煞組合','跨柱重複與呼應','神煞與原局交叉','象徵的限制與核對']
   };
   const SECTION_AI_RULES = {
@@ -4971,6 +4995,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     relations:'只聚焦使用者命盤實際列出的天干合、地支合沖刑害等關係，指出涉及哪兩柱及哪些干支、相互牽動的象徵意義。區分確實存在的關係與需要條件才可能成立的合化，不把合、沖一概視作吉凶；沒有歲運資料時不預測事件發生年份。',
     luck:'聚焦已排出的十年大運，說出使用者所選的運程、干支與原局哪些十神五行或干支互動。分清原局長期特質與大運階段變化；若問兩步運，應逐項比較，不擅自聲稱一定發生升遷、結婚、財富或事故。',
     years:'聚焦網站已列出的去年、今年、明年流年及當前大運，依使用者選擇年份說明流年干支如何觸及原局與大運、哪些變化值得觀察。若沒有某月資料，不能自行捏造流月內容；明確區分已過去、正在進行與未來的年份，不能斷言事件必然發生。',
+    months:'僅聚焦本站實際排出的十二個節氣月及使用者選定的月份。引用月份干支、節氣起訖、十神以及與原局、大運、流年的關聯；月份不是國曆每月一日至月底。只做階段性觀察與應對，不斷言某月必然發生具體事件。不憑空補出未提供的未來年份流月。',
     shenshaGlobal:'只分析網站實際查出的神煞、所在柱位、同柱與跨柱組合，先辨明查表結果與傳統象徵的不同，必要時參照日主、月令與干支；不把單一神煞當成疾病、財富、婚姻或意外的定論，遇到不同流派查法時明確說明不確定性。'
   };
   function sectionAiSpecificInstruction(key,topic,question,mode){
@@ -4982,6 +5007,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     if(key==='tengods') return `【十神結構】\n${formatTenGods(data)}\n\n【必要背景】\n${formatBasic(data)}\n${formatElements(data)}`;
     if(key==='relations') return `【天干地支互動】\n${formatRelations(data)}\n\n【必要背景】\n${formatBasic(data)}\n${formatPillars(data)}`;
     if(key==='luck') return `【十年大運】\n${formatLuck(data)}\n\n【必要背景】\n${formatBasic(data)}\n${formatTenGods(data)}\n${formatRelations(data)}`;
+    if(key==='months') return `【今年十二節氣流月（網站已排出）】\n${formatMonths(data)}\n\n【目前選擇的節氣月】\n${selectedPeriods.months?periodPromptLine(data,selectedPeriods.months):'尚未選定'}\n\n【今年流年背景】\n${formatYears(data)}\n\n【四柱】\n${formatBasic(data)}\n${formatPillars(data)}`;
     if(key==='years') return `【三年／流年資料】\n${formatYears(data)}\n\n【目前大運】\n${formatLuck(data).split('\n\n')[0]}\n\n【必要背景】\n${formatBasic(data)}\n${formatTenGods(data)}\n${formatRelations(data)}`;
     return `【基本資料】\n${formatBasic(data)}
 【四柱】\n${formatPillars(data)}
@@ -5090,6 +5116,7 @@ ${tasks}
   let baziGeminiLastReading='';
   // TEST MODE: 只開放站內 Gemini AI，不變動會員儲存及既有付費提示詞權限。
   let baziLatestQuota=null;
+  let baziQuotaRequestSequence=0;
   function baziAiHeaders(){const token=baziAuthToken();return token?{Authorization:'Bearer '+token}:{}}
   function baziPersonalQuotaText(j){return '今日 AI 剩餘 '+Math.max(0,Number(j.personalRemaining||0))+' / '+Number(j.personalLimit||1)+' 次';}
   function baziAiUpdateVisible(j){
@@ -5103,14 +5130,17 @@ ${tasks}
     document.querySelectorAll('.bazi-personal-quota').forEach(el=>el.textContent=baziPersonalQuotaText(j));
   }
   async function baziGeminiRefreshQuota(){
+    const requestSequence=++baziQuotaRequestSequence;
+    const authAtStart=baziAuthToken();
     const target=document.getElementById('baziGeminiQuota');
     if(!target)return;
     try{
       const r=await fetch(BAZI_API_BASE+'/ai/status',{cache:'no-store',headers:baziAiHeaders()}),j=await r.json();
+      if(requestSequence!==baziQuotaRequestSequence||authAtStart!==baziAuthToken())return;
       if(!j.ok)throw Error(j.error||'UNKNOWN');
       target.textContent=`${baziPersonalQuotaText(j)}｜全站共用剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} 次｜08:00 重置`;
       baziAiUpdateVisible(j);
-    }catch(_){target.textContent='免費額度暫時無法取得';}
+    }catch(_){if(requestSequence===baziQuotaRequestSequence)target.textContent='免費額度暫時無法取得';}
   }
   function baziGeminiSetup(){
     const btn=document.getElementById('baziGeminiRun');
@@ -5146,6 +5176,7 @@ ${tasks}
       }catch(err){msg.textContent=err?.message||'AI 解讀失敗';baziGeminiRefreshQuota()}
       finally{btn.disabled=false;btn.textContent='✦ 開始站內 AI 深度解讀';}
     });
+    document.getElementById('baziGeminiCollapse')?.addEventListener('click',()=>{const el=document.getElementById('baziGeminiOutput');if(el){el.open=false;el.scrollIntoView({behavior:'smooth',block:'center'});}});
     document.getElementById('baziGeminiCopy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(baziGeminiLastReading);toast('已複製 Gemini 解讀')}catch(_){toast('複製失敗')}});
     document.getElementById('baziGeminiDownload')?.addEventListener('click',()=>{
       const url=URL.createObjectURL(new Blob([baziGeminiLastReading],{type:'text/plain;charset=utf-8'}));
@@ -5197,7 +5228,7 @@ ${intent}
           <label class="smart-prompt-question-label">想追問這一區的哪個細節？（選填）<textarea class="smart-prompt-question" maxlength="500" rows="3" placeholder="可補充你想追問的具體情況；未填寫就針對上方選項回答。"></textarea></label>
           <button type="button" class="smart-prompt-generate">✦ 由站內 Gemini AI 回答</button><div class="bazi-personal-quota bazi-ai-inline-notice">每次新解讀扣 1 次｜額度查詢中…</div>
           <div class="section-ai-message" role="status" aria-live="polite"></div>
-          <div class="section-ai-answer" hidden><div class="section-ai-reading"></div><div class="section-ai-actions"><button type="button" class="section-ai-copy">複製解讀</button><button type="button" class="section-ai-download">下載 TXT</button></div></div>
+          <div class="section-ai-answer" hidden><div class="section-ai-reading"></div><div class="section-ai-actions"><button type="button" class="section-ai-collapse">▲ 收合這篇解讀</button><button type="button" class="section-ai-copy">複製解讀</button><button type="button" class="section-ai-download">下載 TXT</button></div></div>
         </div></div></div>
     </details>`;
   }
@@ -5249,6 +5280,7 @@ ${intent}
       }catch(err){msg.textContent=err?.message||'AI 暫時無法解讀';baziGeminiRefreshQuota();}
       finally{run.disabled=false;run.textContent='✦ 由站內 Gemini AI 回答';}
     });
+    box.querySelector('.section-ai-collapse')?.addEventListener('click',()=>{const panel=box.querySelector('.section-ai-answer');if(panel)panel.hidden=true;box.scrollIntoView({behavior:'smooth',block:'center'});});
     box.querySelector('.section-ai-copy')?.addEventListener('click',async()=>{
       try{await navigator.clipboard.writeText(lastAnswer);toast('已複製 AI 解讀')}catch(_){toast('複製失敗')}
     });
@@ -5259,7 +5291,7 @@ ${intent}
   }
 
   function initSmartPromptUI(){
-    ['tengods','relations','luck','years'].forEach(key=>{
+    ['tengods','relations','luck','years','months'].forEach(key=>{
       const def=SMART_PROMPT_SECTIONS[key];
       const body=document.querySelector(`#${def.id} .report-body`);
       if(!body||body.querySelector(`.smart-prompt-box[data-prompt-key="${key}"]`))return;
@@ -6277,7 +6309,7 @@ ${intent}
       ['baziGeminiCopy','baziGeminiDownload'].forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=true;});
       selectedPeriods={};
       setDailyFlowChart(data);
-      renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);initSectionDecodeUI();resetExploration();
+      renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);renderMonthFlows(data);initSectionDecodeUI();resetExploration();
       emptyState.style.display='none';if(reveal){results.classList.add('show');document.body.classList.add('has-bazi-chart');}
       if (scroll) setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
     }catch(err){
@@ -6289,6 +6321,7 @@ ${intent}
   }
 
   window.addEventListener('bazi-google-login', async () => {
+    baziGeminiRefreshQuota();
     window.baziUpdateTopbarMember?.();
     refreshSmartPromptLocks?.();
     resetDailyFlowAccess();
