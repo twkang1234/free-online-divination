@@ -6632,5 +6632,77 @@ html[data-theme="light"] :is(button,a,input,select,textarea):focus-visible{outli
 })();
 </script>
 
+
+<style id="baziAiLightReadableV2">
+/* 只修正白底模式 AI 文章；黑底保留既有顏色 */
+html[data-theme="light"] .section-ai-answer{
+  background:#ffffff!important;
+  border:1px solid #c7cfd9!important;
+  box-shadow:0 2px 10px rgba(36,55,77,.05);
+  color:#263648!important;
+}
+html[data-theme="light"] .section-ai-reading,
+html[data-theme="light"] #baziGeminiReading{
+  background:transparent!important;
+  color:#263648!important;
+}
+html[data-theme="light"] :is(.section-ai-reading,#baziGeminiReading) p,
+html[data-theme="light"] :is(.section-ai-reading,#baziGeminiReading) li,
+html[data-theme="light"] :is(.section-ai-reading,#baziGeminiReading) ol,
+html[data-theme="light"] :is(.section-ai-reading,#baziGeminiReading) ul{
+  color:#2b3e51!important;
+}
+html[data-theme="light"] :is(.section-ai-reading,#baziGeminiReading) :is(h3,h4){
+  color:#83521a!important;
+}
+html[data-theme="light"] :is(.section-ai-reading,#baziGeminiReading) strong,
+html[data-theme="light"] :is(.section-ai-reading,#baziGeminiReading) b{
+  color:#6b3e12!important;
+  font-weight:780;
+}
+html[data-theme="light"] :is(.section-ai-reading,#baziGeminiReading) hr{
+  border-top-color:#bdc9d5!important;
+}
+html[data-theme="light"] #baziGeminiOutput{
+  background:#fff!important;
+  border:1px solid #c8cfd7!important;
+}
+html[data-theme="light"] #baziGeminiOutput>summary{color:#754919!important}
+html[data-theme="light"] .section-ai-actions button,
+html[data-theme="light"] #baziGeminiCollapse{
+  background:#fff8ee!important;
+  color:#744918!important;
+  border:1px solid #c6a978!important;
+}
+html[data-theme="light"] .section-ai-actions button:hover,
+html[data-theme="light"] #baziGeminiCollapse:hover{
+  background:#f7ead6!important;
+}
+/* 只閃按鈕本身的邊框與光暈，不切換整個頁面；兼顧動態偏好 */
+@keyframes baziThemeHintPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(178,116,30,0);outline-color:transparent}
+  50%{box-shadow:0 0 0 5px rgba(177,120,29,.20),0 0 14px 2px rgba(189,131,34,.30);outline-color:#b77728}
+}
+#themeToggle.bazi-theme-hint-flash{
+  animation:baziThemeHintPulse .48s ease-in-out 20;
+  outline:2px solid transparent;
+  outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce){
+  #themeToggle.bazi-theme-hint-flash{animation:none;outline:2px solid #b77728;box-shadow:0 0 0 4px rgba(177,120,29,.14)}
+}
+</style>
+<script id="baziThemeHintStartup">
+(()=>{
+  const btn=document.getElementById('themeToggle');
+  if(!btn)return;
+  // 等候頁面就緒；僅凸顯模式切換控制，不自動切換使用者已選主題。
+  requestAnimationFrame(()=>btn.classList.add('bazi-theme-hint-flash'));
+  btn.addEventListener('animationend',e=>{
+    if(e.animationName==='baziThemeHintPulse')btn.classList.remove('bazi-theme-hint-flash');
+  });
+  btn.addEventListener('click',()=>btn.classList.remove('bazi-theme-hint-flash'),{once:true});
+})();
+</script>
 </body>
 </html>
