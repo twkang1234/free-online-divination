@@ -2338,6 +2338,12 @@ html[data-theme="light"] .bazi-save-dialog{background:#fff;color:#244356;border-
 #baziGeminiOutput summary{cursor:pointer;color:var(--gold);font-weight:700}#baziGeminiReading{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.85;font-size:.9rem;margin-top:16px}
 html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
 
+.section-ai-message{margin-top:10px;font-size:.8rem;color:var(--gold)}
+.section-ai-answer{margin-top:14px;border:1px solid rgba(233,189,88,.2);padding:16px;border-radius:12px;background:rgba(0,0,0,.10)}
+.section-ai-answer[hidden]{display:none!important}
+.section-ai-reading{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;font-size:.88rem}
+.section-ai-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.section-ai-actions button{border:1px solid rgba(233,189,88,.32);background:rgba(233,189,88,.09);color:var(--gold);padding:9px 14px;border-radius:9px;cursor:pointer}
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script></head>
 <body>
@@ -2630,12 +2636,12 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
           <div class="ai-unlock-head">
             <span class="report-eyebrow">AI DEEP DIVE · FULL CHART</span>
             <h3>完整命盤｜交給 AI 繼續深入</h3>
-            <p>網站先整理命盤事實，你再選最想了解的方向。登入後可產生個人化提示詞；不知道該問什麼，也可以讓 AI 先替你找出最值得追問的地方。</p>
+            <p>這裡是完整命盤的綜合 AI 分析；如果只想問十神、干支或大運的某個細節，請到對應分區使用「AI 深入這一區」。</p>
           </div>
           <div class="smart-prompt-mount" data-smart-prompt="full"></div>
           <div class="bazi-gemini" id="baziGeminiPanel">
             <div class="bazi-gemini-head"><strong>✦ 站內 Gemini AI｜免費測試模式</strong><span id="baziGeminiQuota">正在查詢免費額度…</span></div>
-            <p>測試期間完成排盤即可使用，不需登入或付費解鎖提示詞。既有付費提示詞權限維持不變。資料會送交 Google 免費 API 處理，請勿輸入不必要的個人敏感資訊。</p>
+            <p>測試期間完成排盤即可使用，不需登入或付費。這裡會整合各分區資料產生完整命盤解讀；資料會送交 Google API 處理，請勿輸入不必要的個人敏感資訊。</p>
             <label for="baziGeminiTopic">這次主要想了解</label>
             <select id="baziGeminiTopic"><option>整體命盤</option><option>工作事業</option><option>感情婚姻</option><option>財運理財</option><option>性格天賦</option><option>十年大運與流年</option></select>
             <div class="bazi-gemini-actions"><button type="button" id="baziGeminiRun">✦ 開始站內 AI 深度解讀</button><button type="button" id="baziGeminiCopy" hidden>複製解讀</button><button type="button" id="baziGeminiDownload" hidden>下載 TXT</button></div>
@@ -4877,7 +4883,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
       return decodeCard('先給你最像「人的」總結', `這張盤最明顯的主軸，是 <b>${safe(hiG[0])}</b> 與 <b>${safe(secG[0])}</b> 同時較突出：${safe(pair)}。單一十神以 <b>${safe(topTen[0])}</b> 最明顯，處事偏向「${safe(mainGod.action || godPlain[topTen[0]])}」。`)
         + decodeCard('你的優勢通常從哪裡來', `${safe(mainGod.strength || groupPlain[hiG[0]]?.core)}。五行方面以 <b>${safe(hiE[0])}</b> 最明顯，較容易透過「${safe(elementPlain[hiE[0]]?.verb)}」發揮。`)
         + decodeCard('最容易出現的盲點', `${safe(mainGod.watch || '慣用模式也可能成為局限。')} 相對較少的 <b>${safe(loG[0])}</b> 代表「${safe(groupPlain[loG[0]]?.core)}」通常不是第一反應。`)
-        + decodeCard('網站目前能說到哪裡', `網站把五行、十神、干支與大運整理成規則式的結構傾向。下方的一鍵 AI 提示詞可把完整資料帶出，讓 AI 為你深入解答。`);
+        + decodeCard('網站目前能說到哪裡', `網站把五行、十神、干支與大運整理成規則式的結構傾向。下方可直接使用站內 AI，針對特定命盤細節繼續深入提問。`);
     }
 
     if (key === 'luck') {
@@ -5072,6 +5078,7 @@ ${tasks}
       return `${common}
 
 我正在查看【${def.promptTitle}】，目前最想了解的方向是【${topic}】。
+【使用者指定的分區細問】${String(question||'').trim()||'尚未填寫，請從本區最突出的資料尋找具體問題'}
 
 ${source}
 
@@ -5087,6 +5094,7 @@ ${source}
     return `${common}
 
 我正在查看【${def.promptTitle}】，請把【${topic}】當成這次的主要分析目標。
+【使用者指定的分區細問】${String(question||'').trim()||'尚未填寫，請根據本區資料聚焦分析'}
 
 ${source}
 
@@ -5099,64 +5107,24 @@ ${source}
 6. 再補充 3 個我可能沒有想到、但值得繼續追問的問題。`;
   }
 
+  // All local section questions invoke Gemini directly; only the bottom panel is full-chart AI.
   function smartPromptBoxHtml(key){
     const def=SMART_PROMPT_SECTIONS[key];
-    const full=key==='full';
     const shenshaGlobal=key==='shenshaGlobal';
-    const locked=!baziAuthProfile();
-
-    const inner=`<div class="smart-prompt-inner">
-      <div class="smart-prompt-head">
-        <div>
-          <strong>${shenshaGlobal?'用 AI 深入解讀你的全局神煞':full?'完整命盤 AI 深入分析':'選擇分析方式與主題'}</strong>
-          <span>${shenshaGlobal?'整合出生資料、四柱神煞與網站摘要，讓 AI 檢視依據、補充解析，並回應你的問題。':full?'整合重要命盤資料，再依你最在意的方向深入。':'命盤本身不變；主題只會改變提示詞的分析重心。'}</span>
-        </div>
-      </div>
-      <div class="smart-prompt-mode">
-        <button type="button" class="active" data-prompt-mode="deep">${shenshaGlobal?'深入解析與檢視摘要':'深入分析'+(full?'完整命盤':'這一區')}</button>
-        <button type="button" data-prompt-mode="discover">我還可以問什麼？</button>
-      </div>
-      <div class="smart-prompt-label">最想深入哪個方向？</div>
-      <div class="smart-topic-row">
-        ${SMART_TOPICS.map((x,i)=>`<button type="button" class="smart-topic-chip${i===0?' active':''}" data-topic="${x}">${x}</button>`).join('')}
-      </div>
-      ${shenshaGlobal?`<label class="smart-prompt-question-label">你想深入了解什麼？（選填）<textarea class="smart-prompt-question" maxlength="500" rows="3" placeholder="例如：華蓋重複出現，會如何影響我的工作與感情？"></textarea></label>`:''}
-      <button type="button" class="smart-prompt-generate">${shenshaGlobal?'獲得並複製提示詞':'產生並複製專屬提示詞'}</button>
-      <pre class="smart-prompt-preview"></pre>
-      <div class="smart-ai-links">
-        <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT ↗</a>
-        <a href="https://gemini.google.com/" target="_blank" rel="noopener">Gemini ↗</a>
-        <a href="https://claude.ai/" target="_blank" rel="noopener">Claude ↗</a>
-        <a href="https://chat.deepseek.com/" target="_blank" rel="noopener">DeepSeek ↗</a>
-      </div>
-    </div>`;
-
-    const lock=`<div class="smart-prompt-lock">
-      <div class="smart-prompt-lock-card">
-        <b>登入後解鎖 AI 深入分析</b>
-        <p>可依命盤區域與主題產生個人化提示詞，並直接帶去常用 AI 繼續追問。</p>
-        <button type="button" class="smart-prompt-login">免費登入解鎖</button>
-      </div>
-    </div>`;
-
-    if(full){
-      return `<div class="smart-prompt-box${locked?' is-locked':''}" data-prompt-key="${key}">
-        ${lock}${inner}
-      </div>`;
-    }
-
-    return `<details class="smart-prompt-collapse${locked?' is-locked-teaser':''}" data-prompt-collapse="${key}" ${locked&&!shenshaGlobal?'open':''}>
-      <summary>
-        <span class="smart-prompt-summary-copy">
-          <strong>${shenshaGlobal?'全局神煞 AI 提示詞設定':'AI 深入這一區'}</strong>
-          <span>${shenshaGlobal?'出生資料＋四柱神煞＋檢視網站摘要＋自訂問題':'深入分析／幫我找問題／6 種主題'}</span>
-        </span>
-      </summary>
-      <div class="smart-prompt-collapse-body">
-        <div class="smart-prompt-box${locked?' is-locked':''}" data-prompt-key="${key}">
-          ${lock}${inner}
-        </div>
-      </div>
+    return `<details class="smart-prompt-collapse" data-prompt-collapse="${key}">
+      <summary><span class="smart-prompt-summary-copy"><strong>${shenshaGlobal?'AI 深入全局神煞':'AI 深入這一區'}</strong><span>針對這個分區的細節提問，不重新解讀整份命盤</span></span></summary>
+      <div class="smart-prompt-collapse-body"><div class="smart-prompt-box" data-prompt-key="${key}">
+        <div class="smart-prompt-inner">
+          <div class="smart-prompt-head"><div><strong>針對「${def.promptTitle}」深入追問</strong>
+          <span>AI 會聚焦本區數據與問題；其他命盤資訊只作必要的輔助。</span></div></div>
+          <div class="smart-prompt-mode"><button type="button" class="active" data-prompt-mode="deep">深入回答我的問題</button><button type="button" data-prompt-mode="discover">我還可以問什麼？</button></div>
+          <div class="smart-prompt-label">本次想了解的方向</div>
+          <div class="smart-topic-row">${SMART_TOPICS.map((x,i)=>`<button type="button" class="smart-topic-chip${i===0?' active':''}" data-topic="${x}">${x}</button>`).join('')}</div>
+          <label class="smart-prompt-question-label">想追問這一區的哪個細節？（選填）<textarea class="smart-prompt-question" maxlength="500" rows="3" placeholder="例如：上方比例最高的十神對我有什麼影響？請結合本區數據回答。"></textarea></label>
+          <button type="button" class="smart-prompt-generate">✦ 由站內 Gemini AI 回答</button>
+          <div class="section-ai-message" role="status" aria-live="polite"></div>
+          <div class="section-ai-answer" hidden><div class="section-ai-reading"></div><div class="section-ai-actions"><button type="button" class="section-ai-copy">複製解讀</button><button type="button" class="section-ai-download">下載 TXT</button></div></div>
+        </div></div></div>
     </details>`;
   }
 
@@ -5165,53 +5133,53 @@ ${source}
     box.dataset.bound='1';
     let mode='deep';
     let topic='工作事業';
-
-    const collapse=box.closest('.smart-prompt-collapse');
-    if(collapse){
-      collapse.querySelector(':scope > summary')?.addEventListener('click',e=>{
-        if(!baziAuthProfile()){
-          e.preventDefault();
-          baziOpenAuth();
-        }
-      });
-    }
-
+    let lastAnswer='';
+    const run=box.querySelector('.smart-prompt-generate');
+    const msg=box.querySelector('.section-ai-message');
+    const answer=box.querySelector('.section-ai-answer');
+    const reading=box.querySelector('.section-ai-reading');
     box.querySelectorAll('[data-prompt-mode]').forEach(btn=>btn.addEventListener('click',()=>{
       mode=btn.dataset.promptMode;
       box.querySelectorAll('[data-prompt-mode]').forEach(x=>x.classList.toggle('active',x===btn));
-      box.querySelector('.smart-prompt-preview')?.classList.remove('show');
-      box.querySelector('.smart-ai-links')?.classList.remove('show');
     }));
-
     box.querySelectorAll('[data-topic]').forEach(btn=>btn.addEventListener('click',()=>{
       topic=btn.dataset.topic;
       box.querySelectorAll('[data-topic]').forEach(x=>x.classList.toggle('active',x===btn));
-      box.querySelector('.smart-prompt-preview')?.classList.remove('show');
-      box.querySelector('.smart-ai-links')?.classList.remove('show');
     }));
-
-    box.querySelector('.smart-prompt-question')?.addEventListener('input',()=>{
-      box.querySelector('.smart-prompt-preview')?.classList.remove('show');
-      box.querySelector('.smart-ai-links')?.classList.remove('show');
-    });
-    box.querySelector('.smart-prompt-login')?.addEventListener('click',baziOpenAuth);
-    box.querySelector('.smart-prompt-generate')?.addEventListener('click',async()=>{
-      if(!baziAuthProfile()){ baziOpenAuth(); return; }
-      if(!lastData){ toast('請先建立命盤'); return; }
-      const key=box.dataset.promptKey||'full';
-      const question=box.querySelector('.smart-prompt-question')?.value||'';
-      const prompt=buildSmartPrompt(lastData,key,topic,mode,question);
-      const preview=box.querySelector('.smart-prompt-preview');
-      const links=box.querySelector('.smart-ai-links');
-      if(preview){preview.textContent=prompt;preview.classList.add('show');}
-      links?.classList.add('show');
+    run?.addEventListener('click',async()=>{
+      if(!lastData){msg.textContent='請先完成八字排盤。';return;}
+      const key=box.dataset.promptKey;
+      const question=(box.querySelector('.smart-prompt-question')?.value||'').trim();
+      let prompt='';
       try{
-        await navigator.clipboard.writeText(prompt);
-        toast(mode==='discover'?'「值得追問」提示詞已產生並複製':'深入分析提示詞已產生並複製');
-      }catch(_){
-        toast('提示詞已產生，可直接手動複製');
-      }
-      trackAction(`smart-prompt-${key}-${mode}`);
+        prompt=buildSmartPrompt(lastData,key,topic,mode,question);
+        // Make section focus explicit even when other natal data is provided as supporting context.
+        prompt+='\n\n【本站分區 AI 的重要限制】\n這是「'+SMART_PROMPT_SECTIONS[key].promptTitle+'」的局部深入追問，不是整體命盤報告。請直接回答使用者選定的細節或本分區最值得追問的線索；不要逐區介紹五行、十神、感情、財富、大運等所有領域。若使用者提供自訂問題，請優先明確回答：'+(question||'（未填寫，聚焦本區與選定方向）')+'。如需別區資料，只能簡短用作佐證。請以白話自然段落呈現，把總結放在最後。';
+      }catch(err){msg.textContent='分區分析資料準備失敗：'+(err?.message||'未知錯誤');return;}
+      if(prompt.length>24000){msg.textContent='這一區的命盤資料超過目前 AI 長度限制，請縮短自訂問題或聯絡網站管理員。';return;}
+      if(prompt.length<250){msg.textContent='命盤資料尚未準備完成，請重新排盤。';return;}
+      run.disabled=true;run.textContent='Gemini 分析中，請稍候…';msg.textContent='正在針對這個分區分析…';
+      try{
+        const r=await fetch(BAZI_API_BASE+'/ai/reading',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+        const j=await r.json();
+        if(!r.ok||!j.ok){
+          const errors={GLOBAL_DAILY_LIMIT:'全站今日免費額度已用完，請明日再試。',SOURCE_DAILY_LIMIT:'本網路來源今日額度已用完。',PROVIDER_RATE_LIMIT:'Google AI 暫時忙碌或免費額度已滿，請稍後再試。',INVALID_BAZI_PROMPT:'命盤資料不完整或太長，請重新排盤。',AI_QUOTA_DATABASE_UNAVAILABLE:'額度服務暫時不可用。',GEMINI_NOT_CONFIGURED:'Gemini API 尚未設定。',MODEL_NOT_FOUND:'Gemini 模型暫時無法使用。'};
+          throw Error(errors[j.error]||'AI 解讀暫時失敗，請稍後再試。');
+        }
+        lastAnswer=String(j.reading||'');if(!lastAnswer)throw Error('AI 未回傳有效內容，請稍後再試。');
+        reading.textContent=lastAnswer;answer.hidden=false;msg.textContent='此分區的 AI 解讀已完成。';
+        baziGeminiRefreshQuota();
+        answer.scrollIntoView({behavior:'smooth',block:'nearest'});
+        trackAction(`section-gemini-${key}-${mode}`);
+      }catch(err){msg.textContent=err?.message||'AI 暫時無法解讀';baziGeminiRefreshQuota();}
+      finally{run.disabled=false;run.textContent='✦ 由站內 Gemini AI 回答';}
+    });
+    box.querySelector('.section-ai-copy')?.addEventListener('click',async()=>{
+      try{await navigator.clipboard.writeText(lastAnswer);toast('已複製 AI 解讀')}catch(_){toast('複製失敗')}
+    });
+    box.querySelector('.section-ai-download')?.addEventListener('click',()=>{
+      const url=URL.createObjectURL(new Blob([lastAnswer],{type:'text/plain;charset=utf-8'}));
+      const a=document.createElement('a');a.href=url;a.download='bazi-'+box.dataset.promptKey+'-gemini.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
     });
   }
 
@@ -5232,26 +5200,11 @@ ${source}
       globalMount.innerHTML=smartPromptBoxHtml('shenshaGlobal');
       bindSmartPromptBox(globalMount.querySelector('.smart-prompt-box'));
     }
-    const fullMount=document.querySelector('[data-smart-prompt="full"]');
-    if(fullMount && !fullMount.querySelector('.smart-prompt-box')){
-      fullMount.innerHTML=smartPromptBoxHtml('full');
-      bindSmartPromptBox(fullMount.querySelector('.smart-prompt-box'));
-    }
+    // 完整命盤由最下方既有的 Gemini 主面板獨立處理，避免重複入口。
   }
 
   function refreshSmartPromptLocks(){
-    const loggedIn=!!baziAuthProfile();
-    document.querySelectorAll('.smart-prompt-box').forEach(box=>{
-      box.classList.toggle('is-locked',!loggedIn);
-    });
-    document.querySelectorAll('.smart-prompt-collapse').forEach(collapse=>{
-      collapse.classList.toggle('is-locked-teaser',!loggedIn);
-      if(loggedIn || collapse.dataset.promptCollapse==='shenshaGlobal'){
-        collapse.open=false;
-      }else{
-        collapse.open=true;
-      }
-    });
+    // 測試期：各分區 Gemini AI 不受舊提示詞付費／登入鎖影響。
   }
 
   // Compatibility hook for existing luck/month selection code.
