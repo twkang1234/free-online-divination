@@ -943,6 +943,9 @@ html[data-theme="light"] .admin-test-banner{background:linear-gradient(135deg,#f
 html[data-theme="light"] .yijing-access-heading .yijing-access-cta{background:linear-gradient(125deg,#198744,#42c878)!important;border-color:#237b42!important;color:#fff!important}
 @media(max-width:700px){.yijing-access-heading{align-items:flex-start;gap:10px}.yijing-access-heading .yijing-access-cta{width:auto;max-width:100%;font-size:.74rem!important;padding:7px 14px!important}}
 @media(prefers-reduced-motion:reduce){.yijing-access-heading .yijing-access-cta{animation:none;box-shadow:0 0 0 3px rgba(124,227,161,.22),0 0 24px rgba(124,227,161,.4)}}
+
+  /* 申請刊登：全站共用獨立頁面，連結保留原有按鈕視覺。 */
+  a.listing-open, a.resource-apply-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
 </style>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -958,7 +961,7 @@ html[data-theme="light"] .yijing-access-heading .yijing-access-cta{background:li
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換顯示模式"><span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">☀</span><span class="theme-toggle-text" id="themeToggleText">淺色</span></button>
       <button class="member-open" id="yijingMemberButton" type="button"><span id="yijingMemberButtonText">免費登入</span></button>
       <div class="page-status">APPLY TO BE LISTED</div>
-      <button class="listing-open" id="openListing" type="button">申請刊登</button>
+      <a class="listing-open" id="openListing" href="apply-listing.html?from=yijing">申請刊登</a>
     </div>
   </header>
 
@@ -1325,7 +1328,7 @@ html[data-theme="light"] .yijing-access-heading .yijing-access-cta{background:li
       <section class="resource-section" id="yijing-resources" aria-labelledby="resourceTitle">
         <div class="resource-head">
           <div><div class="seo-kicker">TEACHERS & ADVANCED RESOURCES</div><h2 id="resourceTitle">推薦易經老師與資源</h2></div>
-          <button class="resource-apply-btn" id="openListingInline" type="button">申請刊登 →</button>
+          <a class="resource-apply-btn" id="openListingInline" href="apply-listing.html?from=yijing">申請刊登 →</a>
         </div>
         <div class="seo-copy resource-intro">
           <p>如果您希望進一步了解易經六十四卦、卦辭、爻辭、正式筮法與完整卦象判讀，可以參考真人老師與相關資源。<br>
@@ -2297,8 +2300,8 @@ function cardHTML(h, lines, label, movingLines=[]){
 
       const openListing=()=>{listingWorld?.classList.add('is-active');listingWorld?.setAttribute('aria-hidden','false');if(listingWorld)listingWorld.scrollTop=0;history.replaceState(null,'','#apply-listing');setOverlay();};
       const closeListing=()=>{listingWorld?.classList.remove('is-active');listingWorld?.setAttribute('aria-hidden','true');history.replaceState(null,'',location.pathname+location.search);setOverlay();};
-      document.getElementById('openListing')?.addEventListener('click',openListing);
-      document.getElementById('openListingInline')?.addEventListener('click',openListing);
+      
+      
       document.getElementById('closeListing')?.addEventListener('click',closeListing);
       document.getElementById('closeListingBottom')?.addEventListener('click',closeListing);
 

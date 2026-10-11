@@ -157,6 +157,9 @@ body.overlay-open{overflow:hidden}
 @media(max-width:700px){.page-topbar{width:min(100% - 24px,1460px)}.ziwei-hero,.ziwei-seo,.quiet-section{width:min(100% - 24px,1120px)}.ziwei-hero h1{font-size:clamp(3.8rem,18vw,5.8rem)}.hero-visual{min-height:470px}.hero-palace{transform:scale(.76)}#worldSecond{padding:72px 12px 60px}.faq-head-row{align-items:flex-start;flex-direction:column}.resource-head{align-items:flex-start;flex-direction:column}.faq-world-label,.listing-world-label{display:none}.palace-explain{grid-template-columns:1fr}}
 @media(max-width:470px){.hero-visual{min-height:410px}.hero-palace{transform:scale(.62)}.quiet-section{padding-top:78px}.seo-section{padding:64px 0}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important}}
+
+  /* 申請刊登：全站共用獨立頁面，連結保留原有按鈕視覺。 */
+  a.listing-open, a.resource-apply-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -169,7 +172,7 @@ body.overlay-open{overflow:hidden}
     </div>
     <div class="topbar-right">
       <div class="page-status">APPLY TO BE LISTED</div>
-      <button class="listing-open" id="openListing" type="button">申請刊登</button>
+      <a class="listing-open" id="openListing" href="apply-listing.html?from=ziwei">申請刊登</a>
     </div>
   </header>
 
@@ -370,7 +373,7 @@ body.overlay-open{overflow:hidden}
       <section class="resource-section" id="ziwei-resources" aria-labelledby="resourceTitle">
         <div class="resource-head">
           <div><div class="seo-kicker">TEACHERS & ADVANCED RESOURCES</div><h2 id="resourceTitle">推薦紫微斗數老師與資源</h2></div>
-          <button class="resource-apply-btn" id="openListingInline" type="button">申請刊登 →</button>
+          <a class="resource-apply-btn" id="openListingInline" href="apply-listing.html?from=ziwei">申請刊登 →</a>
         </div>
         <div class="seo-copy resource-intro">
           <p>如果您希望進一步了解自己的紫微命盤，或針對命宮、身宮、事業、感情、財務與大限週期獲得更完整的分析，可以參考真人紫微斗數老師與相關資源。<br>
@@ -664,8 +667,8 @@ body.overlay-open{overflow:hidden}
 
       const openListing=()=>{listingWorld?.classList.add('is-active');listingWorld?.setAttribute('aria-hidden','false');if(listingWorld)listingWorld.scrollTop=0;history.replaceState(null,'','#apply-listing');setOverlay();};
       const closeListing=()=>{listingWorld?.classList.remove('is-active');listingWorld?.setAttribute('aria-hidden','true');history.replaceState(null,'',location.pathname+location.search);setOverlay();};
-      document.getElementById('openListing')?.addEventListener('click',openListing);
-      document.getElementById('openListingInline')?.addEventListener('click',openListing);
+      
+      
       document.getElementById('closeListing')?.addEventListener('click',closeListing);
       document.getElementById('closeListingBottom')?.addEventListener('click',closeListing);
 
