@@ -290,7 +290,7 @@ a:focus-visible,button:focus-visible{outline:2px solid #ffc08e;outline-offset:3p
 <body>
   <div class="listing-world" id="listingWorld">
     <nav class="listing-topbar" aria-label="頁面導覽">
-      <a class="listing-back" href="index.html">← 返回網站首頁</a>
+      <a class="listing-back" href="/" data-smart-return>← 返回網站首頁</a>
       <div class="listing-world-label">APPLY TO BE LISTED</div>
     </nav>
 <div class="listing-inner">
@@ -369,10 +369,65 @@ a:focus-visible,button:focus-visible{outline:2px solid #ffc08e;outline-offset:3p
 </div>
 </section>
 <div class="listing-end">
-<a class="listing-back bottom" href="index.html">← 返回網站首頁</a>
+<a class="listing-back bottom" href="/" data-smart-return>← 返回網站首頁</a>
 </div>
 </div>
   </div>
+  <script>
+  // 統一申請頁：只提供「智慧返回原工具」，不新增全站導覽。
+  (() => {
+    const tools = Object.freeze({
+      bazi:   { name: '八字排盤', path: '/bazi.html' },
+      qimen:  { name: '奇門遁甲', path: '/qimen.html' },
+      tarot:  { name: '塔羅占卜', path: '/tarot.html' },
+      ziwei:  { name: '紫微斗數', path: '/ziwei.html' },
+      meihua: { name: '梅花易數', path: '/meihua.html' },
+      liuyao: { name: '六爻占卜', path: '/liuyao.html' },
+      yijing: { name: '易經占卜', path: '/yijing.html' }
+    });
+    const buttons = document.querySelectorAll('[data-smart-return]');
+    if (!buttons.length) return;
+
+    const hinted = new URLSearchParams(location.search).get('from');
+    const hintKey = Object.prototype.hasOwnProperty.call(tools, hinted) ? hinted : null;
+    let refKey = null;
+    let reloadedHere = false;
+    try {
+      const ref = new URL(document.referrer);
+      if (ref.origin === location.origin) {
+        reloadedHere = ref.pathname === location.pathname;
+        const match = /^\/(bazi|qimen|tarot|ziwei|meihua|liuyao|yijing)\.html$/i.exec(ref.pathname);
+        if (match) refKey = match[1].toLowerCase();
+      }
+    } catch (_) { /* 直接進站或來源不可讀，回首頁 */ }
+
+    let key = hintKey || refKey;
+    // 僅在「同頁重新整理」時恢復上一次的工具來源，避免直接進站讀到過期紀錄。
+    if (!key && reloadedHere) {
+      try {
+        const cached = sessionStorage.getItem('apply-listing-return-tool');
+        if (Object.prototype.hasOwnProperty.call(tools, cached)) key = cached;
+      } catch (_) {}
+    }
+    if (key && (hintKey || refKey)) {
+      try { sessionStorage.setItem('apply-listing-return-tool', key); } catch (_) {}
+    }
+    const destination = key ? tools[key] : { name: '網站首頁', path: '/' };
+    buttons.forEach((button) => {
+      // 真實 href 做為無 JS / 新分頁 / 歷史紀錄不可用時的後備。
+      button.href = destination.path;
+      button.textContent = '← 返回' + destination.name;
+      button.setAttribute('aria-label', '返回' + destination.name);
+      button.addEventListener('click', (event) => {
+        // 確認上一頁就是來源工具，才使用瀏覽器上一頁以盡量保留排盤結果與捲動位置。
+        if (key && refKey === key && history.length > 1 && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && event.button === 0) {
+          event.preventDefault();
+          history.back();
+        }
+      });
+    });
+  })();
+  </script>
   <script>
 
 (() => {
