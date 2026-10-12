@@ -175,10 +175,31 @@ a{color:inherit}a,button,input,textarea,select{ -webkit-tap-highlight-color:tran
 .admin-hint{font-size:.74rem;color:var(--muted);margin:10px 0;line-height:1.65}
 @media(max-width:760px){.admin-layout{grid-template-columns:1fr}}
 
+
+/* Preview mode UI gate. Use Cloudflare Access for true URL restriction. */
+body:not(.gate-open) > header,body:not(.gate-open) > main,body:not(.gate-open) > footer{visibility:hidden}
+#privateGate[hidden]{display:none!important}
+#privateGate{position:fixed;inset:0;background:#050711;z-index:10000;display:grid;place-items:center;padding:18px}
+#privateGate .private-panel{width:min(520px,100%);padding:32px;border:1px solid rgba(230,190,125,.35);border-radius:20px;background:radial-gradient(circle at 100% 0,rgba(120,95,185,.12),transparent 60%),#11121f;text-align:center}
+#privateGate h2{margin:0 0 12px;color:#f8ebdf}#privateGate p{color:#c7bdd8;font-size:.85rem;line-height:1.8}
+#privateGate .private-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:20px 0}
+.mine-card{border:1px solid var(--line);background:rgba(9,13,28,.7);padding:17px;border-radius:15px;margin-bottom:12px}
+.mine-card>div:first-child{display:flex;justify-content:space-between;gap:8px;align-items:center}.mine-card h3{margin:10px 0 6px;font-size:.94rem}.mine-card p{font-size:.82rem;color:var(--sub);white-space:pre-wrap;overflow-wrap:anywhere}
+.form-status.error{color:#ffb3b3}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+<section id="privateGate" aria-label="管理員私人測試入口"><div class="private-panel">
+  <div class="eyebrow">一念知機 · 會員心得中心</div>
+  <h2>目前僅開放管理員測試</h2>
+  <p>這一頁暫時還不開放一般會員。請先至現有的管理員後台登入，再回來驗證身份。沿用原本的後台管理密碼，不需要另外設定新密碼。</p>
+  <div class="private-actions"><a class="btn primary" href="/admin.html" style="text-decoration:none">前往管理員後台 ↗</a><button class="btn small" id="checkAdminGate" type="button">我已登入，重新檢查</button></div>
+  <p id="gateStatus" role="status">正在檢查管理員登入……</p>
+  <button id="localPreview" type="button" class="btn small" hidden>僅預覽本機版型（不連線投稿）</button>
+  <p style="font-size:.71rem;opacity:.75">注意：這是操作介面的管理員驗證。要真正阻止他人開啟網址，正式部署前仍需設定 Cloudflare Access 等伺服器端保護。</p>
+</div></section>
+
 <header class="sitebar">
   <div class="shell sitebar-inner">
     <a class="brand" href="https://divinationhub.tw/"><span class="brand-emblem" aria-hidden="true">✦</span><span>一念知機</span></a>
@@ -208,7 +229,7 @@ a{color:inherit}a,button,input,textarea,select{ -webkit-tap-highlight-color:tran
     </section>
     <aside class="stage-notice" aria-label="測試版本說明">
       <span class="notice-icon" aria-hidden="true">◇</span>
-      <div><b>目前為第一階段介面測試版，尚未開放正式投稿。</b><p>你可以先試用表單、儲存本機測試心得、查看待審核畫面及下方示範心得牆。<strong>測試資料只存放在這台裝置的瀏覽器，不會傳送給管理員，也不會公開刊登。</strong>正式跨裝置投稿、審核及公開展示，需要下一階段串接 Cloudflare Workers／D1 後端。</p></div>
+      <div><b>管理員測試模式｜正在準備正式會員心得系統</b><p id="stageMessage">正在確認管理員驗證與正式心得 API 是否已啟用。</p></div>
     </aside>
 
     <section id="review-form" aria-labelledby="formHeading">
@@ -222,7 +243,7 @@ a{color:inherit}a,button,input,textarea,select{ -webkit-tap-highlight-color:tran
             <div id="loggedText"><b id="loginTitle">登入會員，開始分享</b><small id="loginDesc">與塔羅、八字、易經工具共用同一個 Google 帳號。</small></div>
             <div class="login-controls">
               <div id="googleLoginMount"></div>
-              <button type="button" class="btn small" id="demoLogin">試用示範會員</button>
+              <button type="button" class="btn small" id="demoLogin" hidden>示範會員（停用）</button>
               <button type="button" class="btn small" id="logout" hidden>退出本頁體驗</button>
             </div>
           </div>
@@ -268,9 +289,9 @@ a{color:inherit}a,button,input,textarea,select{ -webkit-tap-highlight-color:tran
                 <div class="sample-note" id="inspireExample">「第一次接觸這個工具，原本擔心不會操作，實際使用後發現引導很清楚，幾個步驟就完成了。如果第一次進站能多一點提示會更好。」</div>
                 <div class="admin-hint">範例只提供靈感，不會自動填入文字，以免所有心得變得一模一樣。</div>
               </details>
-              <div class="form-actions"><button class="btn primary" id="submitBtn" type="submit">儲存測試心得（不會送出） ↗</button><button class="btn small" id="resetBtn" type="button">清空表單</button></div>
+              <div class="form-actions"><button class="btn primary" id="submitBtn" type="submit">送出心得，等待管理員審核 ↗</button><button class="btn small" id="resetBtn" type="button">清空表單</button></div>
             </fieldset>
-            <div class="form-status" id="formStatus" role="status" aria-live="polite">請先登入，或點「試用示範會員」體驗投稿畫面。</div>
+            <div class="form-status" id="formStatus" role="status" aria-live="polite">請先登入 Google 會員以發表心得。</div>
           </form>
         </div>
         <div class="side-stack">
@@ -286,251 +307,225 @@ a{color:inherit}a,button,input,textarea,select{ -webkit-tap-highlight-color:tran
     </section>
 
     <section id="my-reviews" aria-labelledby="myHeading">
-      <div class="section-heading"><div><span class="index">02 / MY SUBMISSIONS</span><h2 id="myHeading">我的心得與審核狀態</h2><p>未來會在這裡看到「待審核、已刊登、未通過」等狀態；目前只顯示此瀏覽器中的測試投稿。</p></div><span class="chip">會員專屬區</span></div>
-      <div class="my-box"><div id="myReviewList" class="my-cards"><div class="empty-box"><span class="empty-symbol">◎</span><span>尚無測試心得。可以先到上方表單體驗投稿流程。</span></div></div></div>
+      <div class="section-heading"><div><span class="index">02 / MY SUBMISSIONS</span><h2 id="myHeading">我的心得與審核狀態</h2><p>正式串接後，這裡會顯示 D1 中的「待審核、已刊登、未通過」投稿狀態。</p></div><span class="chip">會員專屬區</span></div>
+      <div class="my-box"><div id="myReviewList" class="my-cards"><div class="empty-box"><span class="empty-symbol">◎</span><span>尚無心得。登入後就可以在這裡管理自己的投稿。</span></div></div></div>
     </section>
-
-    <section class="local-admin" id="admin-preview" hidden aria-labelledby="adminTitle">
-      <div class="section-heading"><div><span class="index">ADMIN / LOCAL PREVIEW ONLY</span><h2 id="adminTitle">管理員操作預覽</h2><p>測試登入、審核會員投稿、修改示範心得卡片的流程。</p></div><span class="chip">僅本機瀏覽器</span></div>
-      <div class="admin-note"><strong>這不是正式管理員後台。</strong>本機密碼只用於示範操作，沒有真正的伺服器權限，也不會更動其他訪客看到的評論。請勿使用正式網站的管理員密碼。正式功能要接上 Cloudflare Workers 的管理員驗證與 D1。</div>
-      <div id="adminLocked" class="panel">
-        <h3 id="adminLockTitle">設定本機預覽密碼</h3>
-        <p class="panel-sub" id="adminLockDesc">第一次使用，請自己設定至少 8 字的測試密碼。</p>
-        <form id="adminLoginForm" autocomplete="off">
-          <div class="field"><label for="adminPassword">測試密碼</label><input id="adminPassword" type="password" minlength="8" autocomplete="off" placeholder="請勿輸入正式後台密碼" required></div>
-          <div class="field" id="adminConfirmWrap"><label for="adminConfirm">再次輸入測試密碼</label><input id="adminConfirm" type="password" minlength="8" autocomplete="off" placeholder="再次輸入" required></div>
-          <div class="admin-controls"><button type="submit" class="btn primary" id="adminLoginSubmit">建立測試密碼並進入</button><span id="adminLoginStatus" class="admin-hint" role="status"></span></div>
-        </form>
-      </div>
-      <div id="adminUnlocked" hidden>
-        <div class="admin-controls"><strong>已進入本機管理預覽</strong><button class="btn small" type="button" id="adminLogout">退出預覽管理</button><span class="admin-hint">任何操作只會改變本裝置的展示結果。</span></div>
-        <div class="admin-layout">
-          <div class="panel"><h3>本機心得審核</h3><p class="panel-sub">核准、拒絕或下架測試投稿（不是真的公開）。</p><div id="adminReviewList"></div></div>
-          <div class="panel"><h3>示範心得卡片管理</h3><p class="panel-sub">可以修改示範卡片內容或隱藏卡片，方便預覽未來刊登效果。</p><div id="adminSampleList"></div></div>
-        </div>
-        <form id="adminEditForm" class="admin-editor" hidden>
-          <h3>編輯示範卡片</h3>
-          <input id="adminEditId" type="hidden">
-          <div class="form-two"><div class="field"><label for="adminEditNick">示範暱稱</label><input id="adminEditNick" maxlength="18" required></div><div class="field"><label for="adminEditRating">示範星等</label><select id="adminEditRating"><option value="1">1 星</option><option value="2">2 星</option><option value="3">3 星</option><option value="4">4 星</option><option value="5">5 星</option></select></div></div>
-          <div class="field"><label for="adminEditTitle">示範標題</label><input id="adminEditTitle" maxlength="50" required></div>
-          <div class="field"><label for="adminEditBody">示範文字</label><textarea id="adminEditBody" maxlength="500" required></textarea></div>
-          <div class="admin-controls"><button type="submit" class="btn primary">儲存本機示範修改</button><button type="button" class="btn" id="adminEditCancel">取消</button></div>
-        </form>
-        <p class="admin-hint">管理員可以管理示範內容；正式的會員評論以「核准、拒絕、下架」為原則，不應悄悄改寫會員原文。</p>
-      </div>
-    </section>
-
+    <section class="local-admin" id="admin-preview"><div class="panel">
+      <h2>管理員審核入口</h2><p class="panel-sub">正式接上心得審核 API 後，可沿用現有 admin.html 管理員身分管理評論，不另設密碼。</p>
+      <a class="btn primary" style="display:inline-block;text-decoration:none" href="/admin.html">返回會員管理後台 ↗</a>
+    </div></section>
     <section class="display-zone" id="reviews-wall" aria-labelledby="wallHeading">
-      <div class="section-heading"><div><span class="index">03 / PUBLISHED REVIEWS PREVIEW</span><h2 id="wallHeading">使用者心得展示牆</h2><p>先在這一頁測試公開心得的卡片版型與分類切換；正式上線後會改成讀取管理員審核通過的真實評價。</p></div><span class="chip neutral">未來可搬至首頁及工具頁</span></div>
-      <div class="demo-callout" role="note"><span aria-hidden="true">ⓘ</span><span><strong>以下為虛構示範心得與本機核准測試資料，不是真實公開評價。</strong> 這一區僅供檢查未來刊登效果。測試投稿必須先在本機管理預覽中核准，才會出現在這台裝置的展示牆。</span></div>
+      <div class="section-heading"><div><span class="index">03 / PUBLISHED REVIEWS PREVIEW</span><h2 id="wallHeading">使用者心得展示牆</h2><p>目前提供明確標記的虛構心得版型預覽；完成後端串接後，才能顯示正式核准的真實評論。</p></div><span class="chip neutral">未來可搬至首頁及工具頁</span></div>
+      <div class="demo-callout" role="note"><span aria-hidden="true">ⓘ</span><span><strong>標記「虛構示範」的卡片只是版型參考，並非真實會員評價。</strong> 真實會員心得須先由正式管理員後台核准，才會顯示「已通過審核」。</span></div>
       <div class="filters" id="toolFilters" role="group" aria-label="依工具篩選示範心得"></div>
-      <div class="wall-grid" id="sampleWall"></div>
-      <p class="login-hint" style="margin-top:19px">此區之後可以直接抽成共用展示模組，首頁顯示所有核准心得，各工具頁則只篩選對應工具；同一筆資料無須複製。若要測試管理員操作，請點頁尾「管理員預覽入口」。</p>
+      <div id="wallError" class="form-status" role="status"></div><div class="wall-grid" id="sampleWall"></div>
+      <p class="login-hint" style="margin-top:19px">此區之後可以直接抽成共用展示模組，首頁顯示所有核准心得，各工具頁則只篩選對應工具；同一筆資料無須複製。審核功能請使用現有的 admin.html 管理員後台。</p>
     </section>
   </div>
 </main>
-<footer class="shell foot"><span>© 一念知機 Divination Hub · 會員心得評價中心（介面測試版）</span><span><a href="https://divinationhub.tw/">網站首頁</a> · <a href="https://divinationhub.tw/tarot-records.html">私人塔羅紀錄</a> · <a href="?admin-preview=1#admin-preview">管理員預覽入口</a></span></footer>
+<footer class="shell foot"><span>© 一念知機 Divination Hub · 會員心得評價中心（後端測試版）</span><span><a href="https://divinationhub.tw/">網站首頁</a> · <a href="https://divinationhub.tw/tarot-records.html">私人塔羅紀錄</a> · <a href="/admin.html">會員管理後台</a></span></footer>
 <script>
 (()=>{'use strict';
-  // 介面展示版：不連接任何心得提交／審核 API。
-  const CFG={authKey:'divinationhub-bazi-google-credential',clientId:'421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com',storageKey:'divinationhub-member-reviews-PREVIEW-v1'};
+  // PREVIEW_GATE controls only the display of the static page, not network security.
+  // To block URL access entirely in staging, configure Cloudflare Access or equivalent at the edge.
+  const PREVIEW_GATE=true;
+  const MEMBER_API='https://member-api.ezgocpu.workers.dev';
+  const ADMIN_API='https://admin-api.ezgocpu.workers.dev';
+  const AUTH_KEY='divinationhub-bazi-google-credential';
+  const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   const TOOLS={tarot:'塔羅占卜',bazi:'八字排盤',yijing:'易經占卜',qimen:'奇門遁甲',ziwei:'紫微斗數',meihua:'梅花易數',liuyao:'六爻占卜',site:'整體網站'};
-  const REVIEW_KIND='整體使用體驗'; // v1.1：不再要求選擇細項；舊資料仍可相容顯示。
   const DEMO_REVIEWS=[
-    {nick:'星空旅人',tool:'tarot',rating:5,title:'抽牌流程很容易理解',body:'第一次使用就能順利完成三張牌的操作，畫面一步一步引導很清楚。',aspect:'ease'},
-    {nick:'小月光',tool:'bazi',rating:4,title:'命盤資訊很豐富',body:'排盤之後可以慢慢查看不同區塊，資料整理得很完整；希望手機閱讀時字體再大一點。',aspect:'features'},
-    {nick:'匿名旅人',tool:'yijing',rating:5,title:'操作步驟清楚直覺',body:'起卦操作沒有太多複雜的流程，能很快找到需要的資訊，整體體驗不錯。',aspect:'ease'},
-    {nick:'雲上散步',tool:'qimen',rating:4,title:'重要資訊容易找到',body:'盤面項目多，但分類方式清楚。若能再增加一點新手導覽會更方便。',aspect:'clarity'},
-    {nick:'靜夜',tool:'site',rating:4,title:'不同工具都能在同一網站找到',body:'有很多種類的占卜與命理工具，切換很方便。希望以後還能有更統一的會員紀錄中心。',aspect:'overall'},
-    {nick:'旅人七號',tool:'tarot',rating:3,title:'功能不錯，但手機操作還能改善',body:'抽牌方式的選擇很多，不過有些按鈕在手機上稍微小了一點，期待後續優化。',aspect:'mobile'}
+    {id:'example-0',nickname:'星空旅人',tool:'tarot',rating:5,title:'抽牌流程很容易理解',body:'第一次使用就能順利完成三張牌的操作，畫面一步一步引導很清楚。'},
+    {id:'example-1',nickname:'小月光',tool:'bazi',rating:4,title:'命盤資訊很豐富',body:'排盤之後可以慢慢查看不同區塊，資料整理得很完整；希望手機閱讀時字體再大一點。'},
+    {id:'example-2',nickname:'匿名旅人',tool:'yijing',rating:5,title:'操作步驟清楚直覺',body:'起卦操作沒有太多複雜的流程，能很快找到需要的資訊，整體體驗不錯。'},
+    {id:'example-3',nickname:'雲上散步',tool:'qimen',rating:4,title:'重要資訊容易找到',body:'盤面項目多，但分類方式清楚。若能再增加一點新手導覽會更方便。'},
+    {id:'example-4',nickname:'靜夜',tool:'site',rating:4,title:'不同工具都能在同一網站找到',body:'有很多種類的占卜與命理工具，切換很方便。希望以後還能有更統一的會員紀錄中心。'},
+    {id:'example-5',nickname:'旅人七號',tool:'tarot',rating:3,title:'功能不錯，但手機操作還能改善',body:'抽牌方式的選擇很多，不過有些按鈕在手機上稍微小了一點，期待後續優化。'}
   ];
-  const $=id=>document.getElementById(id);
-  const btns=[...document.querySelectorAll('[data-star]')];
-  let user=null;let demoUser=false;let rating=0;let filter='all';let editingId=null;let googleReady=false;
-  const URL_PARAMS=new URLSearchParams(location.search);
-  const URL_TOOL=URL_PARAMS.get('tool');
-  const ADMIN_PREVIEW=URL_PARAMS.get('admin-preview')==='1';
-  $('reviewTool').value=Object.hasOwn(TOOLS,URL_TOOL)?URL_TOOL:'tarot';
-  const length=t=>[...String(t||'')].length;
-  const now=()=>new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  function storeRead(){try{const rows=JSON.parse(localStorage.getItem(CFG.storageKey)||'[]');return Array.isArray(rows)?rows:[]}catch(_){return []}}
-  function storeWrite(rows){try{localStorage.setItem(CFG.storageKey,JSON.stringify(rows));return true}catch(_){return false}}
-  function rawToken(){try{return localStorage.getItem(CFG.authKey)||''}catch(_){return ''}}
-  function parseToken(){try{const t=rawToken();if(!t)return null;const part=t.split('.')[1];if(!part)return null;const norm=part.replace(/-/g,'+').replace(/_/g,'/');const payload=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(norm),c=>c.charCodeAt(0))));if(!payload.sub||Number(payload.exp)*1000<Date.now())return null;return {id:String(payload.sub),name:String(payload.name||'Google 會員')}}catch(_){return null}}
-  // 此處 decode JWT 僅做前端介面辨識，不是身分驗證；未來 API 必須在伺服器驗證 Google Token。
-  function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n}
-  function setStatus(msg,type=''){const s=$('formStatus');s.textContent=msg;s.className='form-status'+(type?' '+type:'')}
-  function setRating(n){rating=n;btns.forEach(b=>{const active=Number(b.dataset.star)<=n;b.dataset.active=String(active);b.setAttribute('aria-pressed',String(Number(b.dataset.star)===n))});$('ratingNote').textContent=n?`${n} / 5 · ${['','需要改善','尚可','普通','不錯','非常滿意'][n]}`:'尚未評分'}
-  btns.forEach(b=>b.addEventListener('click',()=>setRating(Number(b.dataset.star))));
-  $('reviewBody').addEventListener('input',()=>{$('bodyCounter').textContent=`${length($('reviewBody').value)} / 500 字（至少 20 字）`});
   const INSPIRE={
     first:'第一次接觸這個工具，原本擔心不會操作，實際使用後發現引導很清楚，幾個步驟就完成了。如果第一次進站能多一點提示會更好。',
-    feature:'我最喜歡可以選擇不同的操作方式，而且資訊可以分區查看，不會一下子全部擠在眼前。希望以後也能保存常用設定。',
-    explain:'我原本不熟悉這類工具，覺得介面整理得蠻清楚，內容也能一步一步看懂。如果專有名詞旁邊有簡短說明就更好了。',
-    mobile:'我主要用手機瀏覽，整體功能能順利使用，也不需要一直切換頁面。不過有些按鈕比較小，希望可以再加大。',
-    better:'我覺得功能已經很豐富，但有時找不到剛剛看過的區塊。如果能加上快速返回或目錄定位，使用起來會更方便。',
-    share:'我會推薦想先體驗線上工具的朋友來試試，因為不用安裝程式，打開網頁就能操作。部分功能若能再加強說明會更完整。'
+    feature:'讓我印象最深刻的是可以選擇不同的使用方式，能按照自己的需求慢慢探索，而不是所有人只能走同一個流程。',
+    explain:'頁面上關鍵資訊有分區整理，閱讀起來比較輕鬆。個別專業名詞如果有更多生活化的解說，會更方便理解。',
+    mobile:'我主要用手機操作，整體流程算順暢；只有部分文字和按鈕比較小，希望以後能再調整。',
+    better:'功能已經很豐富了，我希望未來能增加簡單的搜尋或整理方式，讓下一次回來時更容易找到之前看過的內容。',
+    share:'我會推薦想自己嘗試的人來用，因為不用花太多時間研究就能開始，也能慢慢找到比較適合自己的工具。'
   };
-  document.querySelectorAll('[data-inspire]').forEach(b=>b.addEventListener('click',()=>{
-    const sample=INSPIRE[b.dataset.inspire];if(!sample)return;
-    $('inspireExample').textContent='「'+sample+'」';
-    $('reviewBody').placeholder='可以參考這個方向：'+sample;
-    document.querySelectorAll('[data-inspire]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
-  }));
-
-  function currentOwner(){return user?.id||''}
-  function mine(){const owner=currentOwner();return owner?storeRead().filter(r=>r.owner===owner):[]}
-  function updateIdentity(){
+  const $=id=>document.getElementById(id);
+  const cpLen=t=>[...String(t||'')].length;
+  const make=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};
+  const params=new URLSearchParams(location.search);
+  let user=null,score=0,editing=null,filter='all',mine=[],approved=[],busy=false;
+  let adminToken='';
+  let reviewsBackendReady=false;
+  function getAdminToken(){
+    try{const value=sessionStorage.getItem('divinationhub-admin-session');if(value)return value}catch(_){}
+    try{const saved=JSON.parse(localStorage.getItem('divinationhub-admin-remember-v1')||'null');
+      if(saved?.token&&Number(saved.expiresAt)>Date.now())return saved.token}catch(_){}
+    return '';
+  }
+  function memberToken(){try{return localStorage.getItem(AUTH_KEY)||''}catch(_){return ''}}
+  function jwtPayload(t){try{const p=t.split('.')[1];if(!p)return null;
+    const b=p.replace(/-/g,'+').replace(/_/g,'/');const bytes=Uint8Array.from(atob(b),x=>x.charCodeAt(0));
+    const obj=JSON.parse(new TextDecoder().decode(bytes));return obj.exp*1000>Date.now()?obj:null}catch(_){return null}}
+  function setNotice(s,failed=false){$('formStatus').textContent=s;$('formStatus').className='form-status'+(failed?' error':'')}
+  function setRating(n){score=n;document.querySelectorAll('[data-star]').forEach(b=>{b.setAttribute('aria-pressed',String(Number(b.dataset.star)<=n));b.classList.toggle('selected',Number(b.dataset.star)<=n)});
+    $('ratingNote').textContent=n?`${n} / 5 顆星`:'尚未評分'}
+  function resetForm(){editing=null;$('reviewForm').reset();$('reviewTool').disabled=false;
+    const requested=params.get('tool');$('reviewTool').value=Object.hasOwn(TOOLS,requested)?requested:'tarot';
+    $('reviewNick').value=user?.name?.slice(0,18)||'';$('submitBtn').textContent='送出心得，等待管理員審核 ↗';setRating(0);updateCounter();}
+  function updateCounter(){$('bodyCounter').textContent=`${cpLen($('reviewBody').value)} / 500 字（至少 20 字）`}
+  async function api(base,path,options={}){
+    const headers={Accept:'application/json',...(options.admin?{Authorization:'Bearer '+adminToken}:{...(options.member?{Authorization:'Bearer '+memberToken()}:{})})};
+    if(options.payload!==undefined)headers['Content-Type']='application/json';
+    const response=await fetch(base+path,{method:options.method||'GET',headers,cache:'no-store',body:options.payload!==undefined?JSON.stringify(options.payload):undefined});
+    const data=await response.json().catch(()=>({}));if(!response.ok||data.success===false)throw Error(data.error||`HTTP ${response.status}`);
+    return data;
+  }
+  async function verifyPreview(){
+    const gate=$('privateGate');
+    if(!PREVIEW_GATE){document.body.classList.add('gate-open');gate.hidden=true;init();return}
+    if(location.protocol==='file:'){
+      $('gateStatus').textContent='本機檔案僅能看介面示範；正式串接測試須部署於網站，並先登入 admin.html。';
+      $('localPreview').hidden=false;return;
+    }
+    adminToken=getAdminToken();
+    if(!adminToken){$('gateStatus').textContent='請先前往現有 admin.html 輸入管理員密碼登入，再返回本頁按重新檢查。';return}
+    $('gateStatus').textContent='正在向 Cloudflare 驗證管理員登入……';
+    try{await api(ADMIN_API,'/admin/stats',{admin:true});
+      document.body.classList.add('gate-open');gate.hidden=true;init();
+    }catch(e){$('gateStatus').textContent='尚未通過管理員驗證：'+e.message+'。請重新登入 admin.html。'}
+  }
+  function previewLocal(){document.body.classList.add('gate-open');$('privateGate').hidden=true;
+    $('stageMessage').textContent='本機純介面預覽：無法送出雲端心得，亦不會儲存任何投稿。';
+    $('googleHint').hidden=false;$('googleHint').textContent='直接開本機 HTML 無法測試正式 Google 登入。請部署到網站，從 admin.html 登入後再測試。';
+    renderFilters();renderWall();}
+  $('checkAdminGate').addEventListener('click',verifyPreview);
+  $('localPreview').addEventListener('click',previewLocal);
+  function updateUser(){
+    const token=memberToken(),p=jwtPayload(token);user=p?{id:p.sub,name:p.name||p.email||'會員'}:null;
     $('reviewFields').disabled=!user;
-    $('demoLogin').hidden=!!user;
     $('googleLoginMount').hidden=!!user;
     $('logout').hidden=!user;
-    $('logout').textContent=demoUser?'退出示範會員':'登出共用會員';
-    $('loginTitle').textContent=user?`${demoUser?'示範會員':'Google 會員'}：${user.name}`:'登入會員，開始分享';
-    $('loginDesc').textContent=user?(demoUser?'目前是本機示範帳號；不會連線或投稿到網站。':'已辨識共用 Google 會員；本頁仍是前端測試，心得只存本機。'):'與塔羅、八字、易經工具共用同一個 Google 帳號。';
-    if(user){$('reviewNick').value=$('reviewNick').value||'匿名會員';setStatus('目前為測試模式：可試填並儲存在此瀏覽器，但不會真的送交審核。')}
-    else{setStatus('請先登入，或點「試用示範會員」體驗投稿畫面。')}
-    renderMine();
+    $('demoLogin').hidden=true;
+    $('loginTitle').textContent=user?'已登入：'+user.name:'請登入 Google 會員後投稿';
+    $('loginDesc').textContent=user?'心得會儲存到網站 D1，送出後需管理員核准才會公開。':'全站共用同一個 Google 會員帳號。';
+    if(user){
+      if(reviewsBackendReady){setNotice('可以撰寫心得；公開展示仍需管理員審核。');loadMine();}
+      else{mine=[];renderMine();setNotice('目前可以試填表單，但正式投稿尚未啟用，資料不會送出。');}
+    } else {mine=[];renderMine();setNotice('請先登入 Google 會員，才能發表心得。');}
+    $('submitBtn').disabled=!reviewsBackendReady;
+    $('submitBtn').textContent=reviewsBackendReady?'送出心得，等待管理員審核 ↗':'正式投稿尚未啟用';
   }
-  function activateDemo(){demoUser=true;user={id:'local-demo-account',name:'示範旅人'};resetForm();updateIdentity();$('reviewNick').value='示範旅人'}
-  $('demoLogin').addEventListener('click',activateDemo);
-  $('logout').addEventListener('click',()=>{
-    if(!demoUser){try{localStorage.removeItem(CFG.authKey)}catch(_){}}
-    demoUser=false;user=null;resetForm();updateIdentity();googleInit();
-  });
-  function googleCredential(credential){if(!credential)return;try{localStorage.setItem(CFG.authKey,credential)}catch(_){}demoUser=false;user=parseToken();updateIdentity()}
-  let googleRetries=0;
+  let googleStarted=false,tries=0;
   function googleInit(){
-    if(user||googleReady)return;
-    if(location.protocol==='file:'){$('googleHint').hidden=false;$('googleHint').textContent='直接開本機 HTML 無法使用 Google 登入，請先用「試用示範會員」測試。上傳至正式網站後才能使用 Google 登入。';return}
-    if(!window.google?.accounts?.id){if(googleRetries++<18)setTimeout(googleInit,350);else{$('googleHint').hidden=false;$('googleHint').textContent='Google 登入元件暫時未載入，仍可使用示範會員測試。'}return}
-    try{google.accounts.id.initialize({client_id:CFG.clientId,callback:r=>googleCredential(r.credential)});google.accounts.id.renderButton($('googleLoginMount'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:210});googleReady=true;}
-    catch(_){$('googleHint').hidden=false;$('googleHint').textContent='Google 登入載入失敗，仍可使用示範會員測試。'}
+    if(location.protocol==='file:')return;
+    if(googleStarted)return;
+    if(!window.google?.accounts?.id){if(tries++<25)setTimeout(googleInit,350);else {$('googleHint').hidden=false;$('googleHint').textContent='Google 登入元件載入失敗，請稍後重新整理。'}return;}
+    window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async response=>{
+      if(!response.credential)return;
+      try{localStorage.setItem(AUTH_KEY,response.credential)}catch(_){}
+      try{await api(MEMBER_API,'/me',{member:true})}catch(e){setNotice('Google 會員驗證失敗：'+e.message,true)}
+      updateUser();resetForm();
+    }});
+    window.google.accounts.id.renderButton($('googleLoginMount'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:238});
+    googleStarted=true;
   }
-  function resetForm(){editingId=null;$('reviewForm').reset();$('reviewTool').value=Object.hasOwn(TOOLS,URL_TOOL)?URL_TOOL:'tarot';$('bodyCounter').textContent='0 / 500 字（至少 20 字）';$('submitBtn').textContent='儲存測試心得（不會送出） ↗';setRating(0);if(user)$('reviewNick').value=demoUser?'示範旅人':'匿名會員'}
-  $('resetBtn').addEventListener('click',()=>{resetForm();setStatus('表單已清空。')});
-  $('reviewForm').addEventListener('submit',e=>{
-    e.preventDefault();if(!user){setStatus('請先登入或使用示範會員。','error');return}
-    const tool=$('reviewTool').value,nick=$('reviewNick').value.trim(),title=$('reviewTitle').value.trim(),body=$('reviewBody').value.trim();
-    if(!Object.hasOwn(TOOLS,tool)){setStatus('請選擇有效的工具。','error');return}
-    if(rating<1||rating>5){setStatus('請先點選 1～5 顆星。','error');return}
-    if(length(nick)<2||length(nick)>18){setStatus('公開暱稱需為 2～18 字。','error');$('reviewNick').focus();return}
-    if(length(title)<4||length(title)>50){setStatus('心得標題需為 4～50 字。','error');$('reviewTitle').focus();return}
-    if(length(body)<20||length(body)>500){setStatus('使用心得需為 20～500 字。','error');$('reviewBody').focus();return}
-    const own=mine();
-    if(own.some(r=>r.tool===tool&&r.id!==editingId)){
-      setStatus(`你已有「${TOOLS[tool]}」的測試心得，請至下方「我的心得」修改原本內容。每項工具限保留一則有效評價。`,'error');return;
-    }
-    const all=storeRead(),existing=all.find(r=>r.id===editingId&&r.owner===currentOwner());
-    const value={id:existing?.id||('demo-'+Date.now()+'-'+Math.random().toString(36).slice(2,7)),owner:currentOwner(),tool,nick,rating,title,body,status:'pending-preview',createdAt:existing?.createdAt||now(),updatedAt:now()};
-    const next=existing?all.map(r=>r.id===existing.id?value:r):[value,...all];
-    if(!storeWrite(next)){setStatus('這個瀏覽器無法儲存測試資料，請檢查隱私瀏覽或本機儲存設定。','error');return}
-    resetForm();renderMine();renderAdmin();renderWall();setStatus('✓ 已儲存「本機測試心得」，畫面可在「我的心得」查看；沒有真的送到管理員，也不會公開刊登。','success');
-    $('my-reviews').scrollIntoView({behavior:'smooth',block:'start'});
+  $('logout').addEventListener('click',()=>{try{localStorage.removeItem(AUTH_KEY)}catch(_){}updateUser();resetForm();googleStarted=false;$('googleLoginMount').replaceChildren();googleInit();});
+  document.querySelectorAll('[data-star]').forEach(b=>b.addEventListener('click',()=>setRating(Number(b.dataset.star))));
+  $('reviewBody').addEventListener('input',updateCounter);
+  $('resetBtn').addEventListener('click',()=>{resetForm();setNotice('已清空表單。')});
+  document.querySelectorAll('[data-inspire]').forEach(b=>b.addEventListener('click',()=>{
+    const s=INSPIRE[b.dataset.inspire];if(!s)return;
+    document.querySelectorAll('[data-inspire]').forEach(x=>x.classList.toggle('active',x===b));
+    $('inspireExample').textContent='「'+s+'」';$('reviewBody').placeholder='可以參考這個方向：'+s;
+  }));
+  $('reviewForm').addEventListener('submit',async e=>{
+    e.preventDefault();if(busy)return;
+    if(!reviewsBackendReady){setNotice('目前只能查看與試填介面：正式投稿 API 尚未部署，資料不會送出。',true);return;}
+    if(!user){setNotice('請先登入會員。',true);return}
+    const payload={tool:$('reviewTool').value,nickname:$('reviewNick').value.trim(),rating:score,
+      title:$('reviewTitle').value.trim(),body:$('reviewBody').value.trim()};
+    if(!Object.hasOwn(TOOLS,payload.tool)||!Number.isInteger(score)||score<1||score>5||
+      cpLen(payload.nickname)<2||cpLen(payload.nickname)>18||cpLen(payload.title)<4||cpLen(payload.title)>50||
+      cpLen(payload.body)<20||cpLen(payload.body)>500){setNotice('請檢查工具、星級、暱稱（2～18 字）、標題（4～50 字）、心得（20～500 字）。',true);return}
+    busy=true;$('submitBtn').disabled=true;setNotice('正在儲存心得並送交審核……');
+    try{await api(MEMBER_API,'/reviews',{method:'POST',member:true,payload});
+      resetForm();setNotice('✓ 已成功儲存到 D1 資料庫，目前為「待審核」，尚未公開。');await loadMine();
+    }catch(err){setNotice('送出失敗：'+err.message,true)}finally{busy=false;$('submitBtn').disabled=false}
   });
-  function renderMine(){
-    const root=$('myReviewList');root.replaceChildren();
-    if(!user){const empty=el('div','empty-box');empty.append(el('span','empty-symbol','◎'),el('span','','請先登入或啟用示範會員，查看自己的本機測試投稿。'));root.append(empty);return}
-    const rows=mine();if(!rows.length){const empty=el('div','empty-box');empty.append(el('span','empty-symbol','◎'),el('span','','目前沒有測試心得。正式上線後，這裡會顯示待審核、已刊登與未通過的真實狀態。'));root.append(empty);return}
-    rows.forEach(r=>{
-      const card=el('article','my-card');const head=el('div','my-card-head');const headLeft=el('div','mini-tools');headLeft.append(el('span','',TOOLS[r.tool]||'其他'),el('span','','★'.repeat(r.rating)+'☆'.repeat(5-r.rating)));const STATUS_TEXT={'pending-preview':'待審核','approved-preview':'已核准','rejected-preview':'未通過','hidden-preview':'已下架'};head.append(headLeft,el('span','status-label',(STATUS_TEXT[r.status]||'待審核')+' · 僅本機示範'));
-      card.append(head,el('h3','',r.title),el('p','',r.body));const actions=el('div','mini-tools');const update=el('button','btn small','修改測試心得');const remove=el('button','btn small danger','刪除測試心得');
-      update.addEventListener('click',()=>{editingId=r.id;$('reviewTool').value=r.tool;$('reviewNick').value=r.nick;$('reviewTitle').value=r.title;$('reviewBody').value=r.body;setRating(r.rating);$('bodyCounter').textContent=`${length(r.body)} / 500 字（至少 20 字）`;$('submitBtn').textContent='儲存修改（仍為本機測試） ↗';setStatus('正在編輯本機測試心得；修改後會維持待審核示範狀態。');$('review-form').scrollIntoView({behavior:'smooth',block:'start'})});
-      remove.addEventListener('click',()=>{if(!confirm('確定刪除這則本機測試心得嗎？此操作無法復原。'))return;const ok=storeWrite(storeRead().filter(x=>!(x.id===r.id&&x.owner===currentOwner())));if(!ok){setStatus('本機資料刪除失敗。','error');return}if(editingId===r.id)resetForm();renderMine();renderAdmin();renderWall();setStatus('已刪除本機測試心得。','success')});
-      actions.append(update,remove,el('span','',`儲存時間：${r.updatedAt}`));card.append(actions);root.append(card)
-    });
+  async function loadMine(){if(!user||!reviewsBackendReady)return;
+    try{const data=await api(MEMBER_API,'/reviews/me',{member:true});mine=data.reviews||[];renderMine()}
+    catch(e){$('myReviewList').replaceChildren(make('p','empty-box','讀取我的心得失敗：'+e.message))}
   }
-  // 本機管理預覽：密碼只存在本裝置，前端所有權限都可以被繞過，不得當作正式管理後台。
-  let adminUnlocked=false;
-  const ADMIN_KEY=CFG.storageKey+'-admin-check-v1';
-  const hex=b=>Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');
-  const unhex=h=>new Uint8Array((String(h).match(/.{2}/g)||[]).map(x=>parseInt(x,16)));
-  async function derivePreviewPassword(pass,salt){
-    if(!globalThis.crypto?.subtle)throw Error('目前瀏覽器不支援密碼預覽，請在 HTTPS 或現代瀏覽器中開啟。');
-    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveBits']);
-    return hex(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:125000,hash:'SHA-256'},key,256)));
-  }
-  function existingPreviewSecret(){try{const x=JSON.parse(localStorage.getItem(ADMIN_KEY)||'null');return x?.salt&&x?.hash?x:null}catch(_){return null}}
-  function lockedAdminUI(){
-    const have=!!existingPreviewSecret();$('adminLockTitle').textContent=have?'輸入本機管理預覽密碼':'設定本機管理預覽密碼';
-    $('adminLockDesc').textContent=have?'輸入先前在這台瀏覽器設定的測試密碼。忘記時可清除本網站本機資料重新測試。':'第一次使用請建立至少 8 字的本機測試密碼；勿使用正式後台密碼。';
-    $('adminConfirmWrap').hidden=have;$('adminConfirm').required=!have;
-    $('adminLoginSubmit').textContent=have?'解鎖本機預覽':'建立測試密碼並進入';
-    $('adminLocked').hidden=adminUnlocked;$('adminUnlocked').hidden=!adminUnlocked;
-  }
-  function previewAdminNotice(s){$('adminLoginStatus').textContent=s}
-  if(ADMIN_PREVIEW){$('admin-preview').hidden=false;lockedAdminUI()}
-  $('adminLoginForm').addEventListener('submit',async e=>{
-    e.preventDefault();if(!ADMIN_PREVIEW)return;
-    const pw=$('adminPassword').value;
-    if(pw.length<8){previewAdminNotice('測試密碼至少 8 字。');return}
-    const saved=existingPreviewSecret();
-    if(!saved && pw!==$('adminConfirm').value){previewAdminNotice('兩次密碼不一致。');return}
-    $('adminLoginSubmit').disabled=true;previewAdminNotice('正在檢查本機測試密碼……');
-    try{
-      const salt=saved?unhex(saved.salt):crypto.getRandomValues(new Uint8Array(16));
-      const digest=await derivePreviewPassword(pw,salt);
-      if(saved&&saved.hash!==digest){previewAdminNotice('密碼不正確（只影響本機示範）。');return}
-      if(!saved){try{localStorage.setItem(ADMIN_KEY,JSON.stringify({salt:hex(salt),hash:digest}))}catch(_){throw Error('無法保存本機測試密碼')}}
-      adminUnlocked=true;$('adminPassword').value='';$('adminConfirm').value='';previewAdminNotice('');lockedAdminUI();renderAdmin();
-    }catch(err){previewAdminNotice(err.message||'無法啟用本機預覽')}finally{$('adminLoginSubmit').disabled=false}
-  });
-  $('adminLogout').addEventListener('click',()=>{adminUnlocked=false;lockedAdminUI()});
-  function updateReviewStatus(id,status){
-    if(!adminUnlocked||!ADMIN_PREVIEW)return;
-    const v=storeRead().map(x=>x.id===id?{...x,status,updatedAt:now()}:x);
-    if(!storeWrite(v))return;
-    renderMine();renderAdmin();renderWall();
-  }
-  function renderAdmin(){
-    if(!ADMIN_PREVIEW||!adminUnlocked)return;
-    const root=$('adminReviewList');root.replaceChildren();const reviews=storeRead();
-    if(!reviews.length)root.append(el('p','admin-hint','本機尚無測試投稿。可先用上方「示範會員」送一則心得。'));
-    reviews.forEach(r=>{
-      const card=el('div','admin-item');card.append(el('b','',`${TOOLS[r.tool]||r.tool} · ${r.nick} · ${r.rating} 星`),el('p','',r.title+'\n'+r.body),el('span','admin-label',`狀態：${r.status||'pending-preview'}`));
-      const actions=el('div','admin-controls');
-      for(const [st,txt] of [['approved-preview','核准（本機）'],['rejected-preview','拒絕'],['hidden-preview','下架'],['pending-preview','退回待審']]){
-        const b=el('button','btn small',txt);b.type='button';b.disabled=r.status===st;b.addEventListener('click',()=>updateReviewStatus(r.id,st));actions.append(b)
-      }
-      card.append(actions);root.append(card);
-    });
-    const samples=$('adminSampleList');samples.replaceChildren();sampleRows().forEach(r=>{
-      const item=el('div','admin-item');item.append(el('b','',`${TOOLS[r.tool]} · ${r.rating} 星`),el('p','',r.title),el('span','admin-label',r.hidden?'已隱藏（僅本機）':'正在展示（虛構範例）'));
-      const controls=el('div','admin-controls');const edit=el('button','btn small','編輯示範');edit.type='button';edit.addEventListener('click',()=>{
-        $('adminEditId').value=r.id;$('adminEditNick').value=r.nick;$('adminEditTitle').value=r.title;$('adminEditBody').value=r.body;$('adminEditRating').value=r.rating;
-        $('adminEditForm').hidden=false;$('adminEditForm').scrollIntoView({behavior:'smooth',block:'nearest'});
+  function renderMine(){const root=$('myReviewList');root.replaceChildren();
+    if(!user){root.append(make('div','empty-box','登入 Google 會員後，可查看自己已送出的心得。'));return}
+    if(!mine.length){root.append(make('div','empty-box','尚無心得。可以先在上方選擇工具，分享一次實際使用體驗。'));return}
+    mine.forEach(r=>{
+      const card=make('article','mine-card');const header=make('div','');
+      header.append(make('strong','',`${TOOLS[r.tool]||r.tool}　${'★'.repeat(r.rating)}`),make('span','chip neutral',({pending:'待審核',approved:'已刊登',rejected:'未通過',hidden:'已下架'}[r.status]||r.status)));
+      card.append(header,make('h3','',r.title),make('p','',r.body));
+      const buttons=make('div','form-actions');const edit=make('button','btn small','修改並重新送審');edit.type='button';edit.addEventListener('click',()=>{
+        editing=r.id;$('reviewTool').value=r.tool;$('reviewTool').disabled=true;
+        $('reviewNick').value=r.nickname;$('reviewTitle').value=r.title;$('reviewBody').value=r.body;
+        setRating(r.rating);updateCounter();$('submitBtn').textContent='儲存修改並重新送審 ↗';
+        $('review-form').scrollIntoView({behavior:'smooth'});
+        setNotice('提醒：重新送審後，原有已刊登心得會暫時下架，直到管理員再次核准。');
       });
-      const toggle=el('button','btn small',r.hidden?'恢復展示':'隱藏');toggle.type='button';toggle.addEventListener('click',()=>{
-        const o=getWallOverrides();o[r.id]={...(o[r.id]||{}),hidden:!r.hidden};if(putWallOverrides(o)){renderAdmin();renderWall()}
-      });controls.append(edit,toggle);item.append(controls);samples.append(item)
+      const remove=make('button','btn small','刪除我的心得');remove.type='button';remove.addEventListener('click',async()=>{
+        if(!confirm('刪除這則心得後，公開展示也會取消。確定刪除嗎？'))return;
+        try{await api(MEMBER_API,'/reviews/'+encodeURIComponent(r.id),{method:'DELETE',member:true});await loadMine();await loadWall();}
+        catch(e){setNotice('刪除失敗：'+e.message,true)}
+      });
+      buttons.append(edit,remove);card.append(buttons);root.append(card);
     });
   }
-  $('adminEditCancel').addEventListener('click',()=>{$('adminEditForm').hidden=true});
-  $('adminEditForm').addEventListener('submit',e=>{
-    e.preventDefault();if(!adminUnlocked||!ADMIN_PREVIEW)return;
-    const id=$('adminEditId').value;
-    if(!/^demo-[0-9]+$/.test(id)||!sampleRows().some(x=>x.id===id))return;
-    const nick=$('adminEditNick').value.trim(),title=$('adminEditTitle').value.trim(),body=$('adminEditBody').value.trim(),rating=Number($('adminEditRating').value);
-    if(length(nick)<2||length(title)<4||length(body)<10||!Number.isInteger(rating)||rating<1||rating>5){alert('請輸入有效的暱稱、標題（至少 4 字）與心得（至少 10 字）。');return}
-    const o=getWallOverrides();o[id]={...(o[id]||{}),nick,title,body,rating};
-    if(putWallOverrides(o)){$('adminEditForm').hidden=true;renderAdmin();renderWall()}
-  });
-
-  function renderFilters(){const root=$('toolFilters');root.replaceChildren();for(const [key,label] of [['all','全部心得'],...Object.entries(TOOLS)]){const btn=el('button','filter-btn',label);btn.type='button';btn.setAttribute('aria-pressed',String(filter===key));btn.addEventListener('click',()=>{filter=key;renderFilters();renderWall()});root.append(btn)}}
-  function getWallOverrides(){try{const v=JSON.parse(localStorage.getItem(CFG.storageKey+'-wall')||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch(_){return {}}}
-  function putWallOverrides(v){try{localStorage.setItem(CFG.storageKey+'-wall',JSON.stringify(v));return true}catch(_){return false}}
-  function sampleRows(){const o=getWallOverrides();return DEMO_REVIEWS.map((r,i)=>({...r,...(o['demo-'+i]||{}),id:'demo-'+i,source:'sample'}))}
-  function publicPreviewRows(){return [...sampleRows().filter(r=>!r.hidden),...storeRead().filter(r=>r.status==='approved-preview').map(r=>({...r,source:'local'}))]}
-  function renderWall(){const root=$('sampleWall');root.replaceChildren();const data=publicPreviewRows().filter(r=>filter==='all'||r.tool===filter);
-    if(!data.length){root.append(el('div','wall-empty','目前沒有此分類的示範卡片；正式上線後將顯示已審核的真實心得。'));return}
-    data.forEach(r=>{
-      const card=el('article','wall-card');const head=el('div','wall-head');const av=el('div','avatar',(r.nick||'匿').slice(0,1));av.setAttribute('aria-hidden','true');const who=el('div','wall-who');who.append(el('b','',r.nick),el('small','',TOOLS[r.tool]));head.append(av,who,el('span','demo-mark',r.source==='local'?'本機審核示範':'展示範例'));
-      const stars=el('div','stars','★'.repeat(r.rating)+'☆'.repeat(5-r.rating));stars.setAttribute('aria-label',`示範評分 ${r.rating} 顆星`);
-      const foot=el('div','wall-footer');foot.append(el('span','',REVIEW_KIND),el('b','',r.source==='local'?'本機核准測試':'虛構示範資料'));
-      card.append(head,stars,el('h3','',r.title),el('p','',r.body),foot);root.append(card)
-    });
+  function renderFilters(){const root=$('toolFilters');root.replaceChildren();
+    for(const [id,label] of [['all','全部心得'],...Object.entries(TOOLS)]){
+      const button=make('button','filter-btn',label);button.type='button';button.setAttribute('aria-pressed',String(id===filter));
+      button.addEventListener('click',()=>{filter=id;renderFilters();renderWall()});root.append(button);
+    }
   }
-  user=parseToken();updateIdentity();googleInit();renderFilters();renderWall();setRating(0);
+  async function loadWall(){
+    if(!reviewsBackendReady){approved=[];renderWall();$('wallError').textContent='目前顯示的是版型範例；尚未連接正式心得資料庫。';return;}
+    try{
+      if(PREVIEW_GATE){const data=await api(ADMIN_API,'/admin/reviews?status=approved',{admin:true});approved=data.reviews||[]}
+      else{const data=await api(MEMBER_API,'/reviews/public');approved=data.reviews||[]}
+      renderWall();
+    }catch(e){approved=[];renderWall();$('wallError').textContent='已刊登心得暫時無法讀取：'+e.message}
+  }
+  function renderWall(){
+    const root=$('sampleWall');root.replaceChildren();
+    const real=approved.map(r=>({...r,nickname:r.nickname||r.nick,example:false}));
+    const examples=PREVIEW_GATE?DEMO_REVIEWS.map(r=>({...r,example:true})):[];
+    const visible=[...real,...examples].filter(r=>filter==='all'||r.tool===filter);
+    if(!visible.length){root.append(make('div','wall-empty','目前尚無此分類已核准的心得。'));return}
+    for(const r of visible){
+      const card=make('article','wall-card');
+      const head=make('div','wall-head');const avatar=make('div','avatar',(r.nickname||'匿').slice(0,1));avatar.setAttribute('aria-hidden','true');
+      const who=make('div','wall-who');who.append(make('b','',r.nickname),make('small','',TOOLS[r.tool]||r.tool));
+      head.append(avatar,who,make('span','demo-mark',r.example?'虛構示範':'已通過審核'));
+      const stars=make('div','stars','★'.repeat(r.rating)+'☆'.repeat(5-r.rating));
+      stars.setAttribute('aria-label',`${r.rating} 顆星`);
+      const foot=make('div','wall-footer');foot.append(make('span','','整體使用體驗'),make('b','',r.example?'示範內容，非真實評論':'真實會員投稿'));
+      card.append(head,stars,make('h3','',r.title),make('p','',r.body),foot);root.append(card);
+    }
+  }
+  async function init(){
+    resetForm();renderFilters();$('wallError').textContent='';
+    // 舊版 member-api 沒有 /reviews/public；在升級 Worker 前維持可瀏覽但不可投稿。
+    try{
+      const health=await api(MEMBER_API,'/reviews/public');
+      // 兩支 Worker 都完成心得路由後才允許正式送出。
+      if(!Array.isArray(health.reviews))throw Error('會員心得 API 尚未就緒');
+      const moderation=await api(ADMIN_API,'/admin/reviews?status=approved',{admin:true});
+      reviewsBackendReady=Array.isArray(moderation.reviews);
+    }catch(_){reviewsBackendReady=false;}
+    updateUser();googleInit();loadWall();
+    $('stageMessage').textContent=reviewsBackendReady
+      ?'已完成管理員身分驗證。心得後端已回應；正式投稿仍須使用 Google 會員帳號，刊登需通過後台審核。'
+      :'已通過原有 admin.html 管理員驗證。你可以查看與試填頁面；正式心得 API 尚未部署，所以此版本不會把測試內容送出或宣稱已儲存。';
+  }
+  verifyPreview();
 })();
 </script>
 </body>
