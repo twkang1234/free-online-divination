@@ -68,9 +68,20 @@ td.muted{color:var(--muted)}
 .issue-admin-card{padding:17px;border:1px solid #323845;border-radius:13px;background:#0a1017}
 .issue-admin-card.alert{border-color:#ae505d;background:#1e1016}
 .issue-admin-card strong{display:block;font-size:1rem;color:#eee7da;margin:2px 0 8px}
-.issue-admin-card .issue-count{font-size:1.52rem;color:#8dd5a7;font-weight:850}
-.issue-admin-card.alert .issue-count{color:#ff9eaa}
+.issue-admin-card .issue-count{font-size:1.73rem;color:#8dd5a7;font-weight:850;line-height:1.35}
+.issue-admin-card.has-reports .issue-count{color:#ffadb4}
+.issue-admin-card.alert .issue-count{color:#ff7c91}
+.issue-count-caption{display:block;color:#9ba7b8;font-size:.73rem;margin-top:1px}
 .issue-admin-card .issue-note{display:block;color:#9ba7b8;font-size:.73rem;margin-top:7px}
+.issue-meter{height:7px;background:#242a35;overflow:hidden;border-radius:99px;margin-top:13px}
+.issue-meter-fill{height:100%;border-radius:99px;background:#64ae92;transition:width .2s ease}
+.issue-admin-card.has-reports .issue-meter-fill{background:#df8991}
+.issue-admin-card.alert .issue-meter-fill{background:#f66c81}
+.issue-count-overview{margin:16px 18px 2px;padding:13px 16px;background:#101922;border:1px solid #354554;border-radius:11px;color:#cae4e9;font-size:.84rem;line-height:1.6}
+.issue-count-overview strong{color:#f2e7d0}
+.issue-count-overview small{display:block;color:#9cabba;margin-top:3px}
+.issue-fetch-time{color:#9bafbb;font-size:.72rem;margin:0 18px 12px}
+.issue-tools-head{padding-top:14px}
 .issue-admin-card.maintenance{border-color:#bf6370;background:#201116}
 .issue-maint-status{font-size:.78rem;font-weight:850;margin:10px 0;color:#90d8ae}
 .issue-admin-card.maintenance .issue-maint-status{color:#ff9aa9}
@@ -131,7 +142,9 @@ td.muted{color:var(--muted)}
 
     <section class="section" style="margin-bottom:24px" id="issueAdminSection">
       <div class="section-head"><h2>網站異常紅綠燈監控</h2><span>會員目前亮起的紅燈人數｜只有本人可切換自己的狀態</span></div>
+      <div class="issue-count-overview" id="issueCountOverview" role="status" aria-live="polite">正在查詢目前亮紅燈的會員人數……</div>
       <div class="issue-summary" id="issueSummary"><div class="issue-admin-card">正在讀取異常回報資料……</div></div>
+      <div class="issue-fetch-time" id="issueFetchTime">尚未完成查詢</div>
       <div class="issue-tools-head">
         <label for="issueThreshold">紅燈警戒門檻（人）</label>
         <input id="issueThreshold" type="number" min="1" max="10000" step="1" value="50" inputmode="numeric">
@@ -566,26 +579,49 @@ async function loadIssueStats(){
     const j=await r.json().catch(()=>null);
     if(!r.ok||!j?.success||!Array.isArray(j.tools))throw Error(j?.error||'無法讀取異常統計');
     $('issueThreshold').value=j.threshold;
-    const threshold=Number(j.threshold);
+    const threshold=Math.max(1,Number(j.threshold)||50);
+    const counts=j.tools.map(t=>({
+      ...t,
+      reportCount:Math.max(0,Math.trunc(Number(t.reportCount)||0))
+    }));
+    const totalFlags=counts.reduce((sum,t)=>sum+t.reportCount,0);
+    const affected=counts.filter(t=>t.reportCount>0);
+    const overview=$('issueCountOverview');
+    overview.replaceChildren();
+    const heading=document.createElement('strong');
+    heading.textContent=totalFlags?`目前共有 ${totalFlags} 筆紅燈回報狀態，分布於 ${affected.length} 套工具`:'目前三套工具均無會員亮紅燈';
+    const extra=document.createElement('small');
+    extra.textContent=totalFlags
+      ?`各工具：${counts.map(t=>t.label+' '+t.reportCount+' 人').join(' · ')}。同一會員可能回報多套工具，所以總筆數不等於不重複會員人數。`
+      :'這裡顯示已儲存到 D1 的目前狀態；即使只有 1 人回報也會顯示，不必等到警戒門檻。';
+    overview.append(heading,extra);
     panel.replaceChildren();
-    for(const t of j.tools){
-      const card=document.createElement('div'),title=document.createElement('strong'),count=document.createElement('div'),note=document.createElement('span');
-      card.className='issue-admin-card'+(t.alerted?' alert':'')+(t.maintenance?' maintenance':'');
+    for(const t of counts){
+      const card=document.createElement('div'),title=document.createElement('strong'),count=document.createElement('div'),cap=document.createElement('span'),note=document.createElement('span');
+      card.className='issue-admin-card'+(t.reportCount>0?' has-reports':'')+(t.alerted?' alert':'')+(t.maintenance?' maintenance':'');
       title.textContent=t.label;
-      count.className='issue-count';count.textContent=String(t.reportCount)+' 人';
-      note.className='issue-note';note.textContent=t.maintenance?'站長已公告維修中，僅影響會員中心':t.alerted?'⚠ 紅燈人數已達警戒門檻':'未達警戒門檻 '+threshold+' 人';
+      count.className='issue-count';count.textContent='目前紅燈 '+t.reportCount+' 人';
+      cap.className='issue-count-caption';cap.textContent='警戒門檻 '+threshold+' 人';
+      const meter=document.createElement('div'),fill=document.createElement('div');
+      meter.className='issue-meter';meter.setAttribute('role','progressbar');meter.setAttribute('aria-label',t.label+'紅燈人數距離警戒門檻');meter.setAttribute('aria-valuemin','0');meter.setAttribute('aria-valuemax',String(threshold));meter.setAttribute('aria-valuenow',String(Math.min(t.reportCount,threshold)));
+      fill.className='issue-meter-fill';fill.style.width=(Math.min(100,t.reportCount/threshold*100))+'%';meter.append(fill);
+      note.className='issue-note';
+      note.textContent=t.alerted?'⚠ 已達警戒門檻':t.reportCount>0?'仍有 '+t.reportCount+' 人提報異常；距警戒還差 '+(threshold-t.reportCount)+' 人':'目前無會員提報異常';
       const state=document.createElement('div'),btn=document.createElement('button');
       state.className='issue-maint-status';state.textContent=t.maintenance?'🔴 站長全面紅燈｜維修中':'🟢 站長狀態｜正常中';
       btn.type='button';btn.className='btn issue-maint-btn';btn.textContent=t.maintenance?'✅ 已修復｜恢復全面綠燈':'🔧 開啟全面紅燈｜維修中';
       btn.addEventListener('click',()=>changeMaintenance(t.tool,t.label,!!t.maintenance));
-      card.append(title,count,note,state,btn);panel.append(card);
+      card.append(title,count,cap,meter,note,state,btn);panel.append(card);
     }
-    const alerts=j.tools.filter(t=>t.alerted);
-    const maintenance=j.tools.filter(t=>t.maintenance);
-    status.textContent=maintenance.length?'🔴 維修中：'+maintenance.map(t=>t.label).join('、')+'。會員心得測試表單已暫停。'+(alerts.length?'｜其他警戒：'+alerts.map(t=>t.label+' '+t.reportCount+' 人').join('、'):''):
-      alerts.length?'⚠ 警戒：'+alerts.map(t=>t.label+' '+t.reportCount+' 人').join('、')+'。請前往對應工具確認。':'目前沒有工具達到紅燈警戒門檻。';
+    $('issueFetchTime').textContent='最後成功查詢：'+new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})+'（台灣時間）｜管理員頁開啟時每 30 秒更新，返回分頁時也會查詢';
+    const alerts=counts.filter(t=>t.alerted);
+    const maintenance=counts.filter(t=>t.maintenance);
+    const reports=counts.filter(t=>t.reportCount>0);
+    status.textContent=maintenance.length?'🔴 維修中：'+maintenance.map(t=>t.label).join('、')+'。會員心得測試表單已暫停。'+(reports.length?'｜目前亮紅燈：'+reports.map(t=>t.label+' '+t.reportCount+' 人').join('、'):''):
+      alerts.length?'⚠ 警戒：'+alerts.map(t=>t.label+' '+t.reportCount+' 人').join('、')+'。請前往對應工具確認。':
+      reports.length?'目前有會員亮紅燈，但尚未達警戒門檻：'+reports.map(t=>t.label+' '+t.reportCount+' 人').join('、')+'。':'目前三套工具皆沒有會員亮紅燈。';
     status.className='issue-info'+(alerts.length||maintenance.length?' alert':'');
-  }catch(err){status.textContent='異常回報讀取失敗：'+err.message+'。原本的會員及付款資訊不受影響。';status.className='issue-info error'}
+  }catch(err){$('issueCountOverview').textContent='讀取異常回報失敗，無法確定目前人數';$('issueFetchTime').textContent='查詢失敗：請稍後重新查詢';status.textContent='異常回報讀取失敗：'+err.message+'。原本的會員及付款資訊不受影響。';status.className='issue-info error'}
   finally{issueRequestBusy=false;}
 }
 async function saveIssueThreshold(){
@@ -628,7 +664,8 @@ async function changeMaintenance(tool,label,active){
 $('issueSaveThreshold').addEventListener('click',saveIssueThreshold);
 $('issueRefresh').addEventListener('click',loadIssueStats);
 // 開著管理員後台時每分鐘重新檢查；不寄送訊息，也不在背景建立外部排程。
-setInterval(()=>{if(!$('dashboard').hidden&&token())loadIssueStats()},60000);
+setInterval(()=>{if(!document.hidden&&!$('dashboard').hidden&&token())loadIssueStats()},30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('dashboard').hidden&&token())loadIssueStats()});
 
 if(token())loadStats();
 else showLogin();
