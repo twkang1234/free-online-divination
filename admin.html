@@ -139,6 +139,14 @@ td.muted{color:var(--muted)}
 .review-admin-empty{background:#0d131b;padding:35px;border-radius:13px;border:1px dashed #344050;color:#a6b1c0;font-size:.85rem}
 @media(max-width:850px){.review-admin-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.review-admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.review-admin-toolbar{padding:16px}}
+.review-edit-panel{border:1px solid #685837;background:#161b21;border-radius:12px;padding:15px;margin-top:13px;display:grid;gap:10px}
+.review-edit-panel label{font-size:.78rem;color:#ead4a7;font-weight:700}
+.review-edit-panel input,.review-edit-panel textarea{width:100%;border:1px solid #394759;border-radius:9px;background:#0b1017;color:#f0e9dd;padding:11px 13px;line-height:1.7;font:inherit}
+.review-edit-panel textarea{min-height:114px;resize:vertical}
+.review-edit-panel p{font-size:.75rem;margin:0;color:#b7c2cf}
+.review-edit-panel .review-correction-original{background:#0a1119;border-left:2px solid #b59a64;border-radius:0 8px 8px 0;padding:10px;white-space:pre-wrap;line-height:1.7}
+.review-correction-actions{display:flex;gap:8px;flex-wrap:wrap}
+.review-edit-panel .review-edit-error{color:#f4a6a6}
 </style>
 </head>
 <body>
@@ -391,7 +399,9 @@ function productLabel(p){
   return period?`${base}｜${period}`:base;
 }
 
+let adminActivePage='dashboard';
 function showLogin(message=''){
+  adminActivePage='dashboard';
   $('loginCard').hidden=false;
   $('dashboard').hidden=true;
   $('refreshBtn').hidden=true;
@@ -586,8 +596,10 @@ async function loadStats(){
     `).join('')||'<tr><td colspan="5" class="muted">目前還沒有會員資料。</td></tr>';
 
     $('loginCard').hidden=true;
-    $('dashboard').hidden=false;
-    $('refreshBtn').hidden=false;
+    // 背景統計更新不能把使用者已開啟的審核假分頁切回首頁。
+    $('dashboard').hidden=adminActivePage!=='dashboard';
+    $('reviewAdminPage').hidden=adminActivePage!=='reviews';
+    $('refreshBtn').hidden=adminActivePage!=='dashboard';
     $('logoutBtn').hidden=false;
     if($('yijingTestLink'))$('yijingTestLink').hidden=false;
     if($('tarotTestLink'))$('tarotTestLink').hidden=false;
@@ -856,6 +868,7 @@ document.addEventListener('visibilitychange',()=>{
 // 正式心得審核假分頁，保留原本 admin.html 的登入與全部功能。
 let reviewAdminFilter='pending',reviewAdminOffset=0,reviewAdminBusy=false,reviewAdminMore=false,reviewModerating=false;
 let reviewAdminFirstPageSignature='';
+let reviewAdminEditingId=null;
 const reviewToolNames={bazi:'八字排盤',tarot:'塔羅占卜',yijing:'易經占卜',site:'整體網站體驗'};
 const reviewStates={pending:'待審核',approved:'已刊登',rejected:'未通過',hidden:'已下架'};
 function reviewAdminMessage(t,isError=false){const el=$('reviewAdminStatus');el.textContent=t;el.classList.toggle('error',isError)}
@@ -865,16 +878,18 @@ async function adminReviewRequest(path,method='GET',payload){
   const j=await r.json().catch(()=>null);if(!r.ok||!j?.success)throw Error(j?.error||('HTTP '+r.status));return j;
 }
 function reviewTabSelect(status){
-  reviewAdminFilter=status;reviewAdminOffset=0;
+  reviewAdminEditingId=null;reviewAdminFilter=status;reviewAdminOffset=0;
   for(const b of document.querySelectorAll('[data-review-tab]'))b.classList.toggle('active',b.dataset.reviewTab===status);
   $('reviewAdminList').replaceChildren();loadAdminReviews();
 }
 function showReviewAdmin(){
   if(!token()||$('loginCard').hidden===false)return;
+  adminActivePage='reviews';
   $('dashboard').hidden=true;$('reviewAdminPage').hidden=false;$('refreshBtn').hidden=true;
   window.scrollTo({top:0,behavior:'instant'});reviewTabSelect('pending');
 }
 function showAdminDashboard(){
+  adminActivePage='dashboard';
   $('reviewAdminPage').hidden=true;$('dashboard').hidden=false;$('refreshBtn').hidden=false;
   window.scrollTo({top:0,behavior:'instant'});loadIssueStats();
 }
@@ -900,15 +915,42 @@ function makeReviewAdminCard(r){
   if(r.rejectionReason){const note=document.createElement('p');note.textContent='審核註記：'+r.rejectionReason;box.append(note)}
   const actions=document.createElement('div');actions.className='review-admin-actions';
   const add=(label,action)=>{const btn=document.createElement('button');btn.type='button';btn.className='btn '+(action==='approve'?'':'secondary');btn.textContent=label;btn.addEventListener('click',()=>moderateReview(r,action,btn));actions.append(btn)};
+  if(['pending','rejected'].includes(r.status)&&!r.everApproved){const editBtn=document.createElement('button');editBtn.type='button';editBtn.className='btn secondary';editBtn.textContent='✎ 校正錯字';editBtn.addEventListener('click',()=>openReviewCorrection(r,box,editBtn));actions.append(editBtn)}
   if(r.status!=='approved')add('✓ 核准刊登','approve');
-  if(r.status!=='rejected')add('不予刊登','reject');
+  if(r.status==='pending')add('不予刊登','reject');
   if(r.status==='approved')add('下架心得','unpublish');
   box.append(actions);return box;
 }
+function openReviewCorrection(r,card,button){
+  if(reviewAdminEditingId!==null&&reviewAdminEditingId!==r.id){reviewAdminMessage('請先完成或取消目前正在校正的心得。',true);return}
+  const existing=card.querySelector('.review-edit-panel');if(existing){existing.remove();reviewAdminEditingId=null;return}
+  reviewAdminEditingId=r.id;
+  const panel=document.createElement('div');panel.className='review-edit-panel';
+  const lead=document.createElement('p');lead.textContent='只修正明顯錯字或標點，不可更動星級、暱稱、好壞立場；原稿將完整保存在後台稽核紀錄。';panel.append(lead);
+  const tlabel=document.createElement('label');tlabel.textContent='心得標題（可校正）';const title=document.createElement('input');title.maxLength=50;title.value=r.title;panel.append(tlabel,title);
+  const blabel=document.createElement('label');blabel.textContent='心得內容（可校正）';const body=document.createElement('textarea');body.maxLength=500;body.value=r.body;panel.append(blabel,body);
+  const original=document.createElement('div');original.className='review-correction-original';original.textContent='原始標題：'+r.title+'\n原始內容：'+r.body;panel.append(original);
+  const status=document.createElement('p');status.className='review-edit-error';status.setAttribute('role','status');panel.append(status);
+  const buttons=document.createElement('div');buttons.className='review-correction-actions';
+  const save=document.createElement('button');save.type='button';save.className='btn';save.textContent='儲存校正（不會刊登）';
+  const cancel=document.createElement('button');cancel.type='button';cancel.className='btn secondary';cancel.textContent='取消';
+  cancel.addEventListener('click',()=>{panel.remove();reviewAdminEditingId=null});
+  save.addEventListener('click',async()=>{
+    const correctedTitle=title.value.trim(),correctedBody=body.value.trim();
+    if(correctedTitle===r.title&&correctedBody===r.body){status.textContent='沒有修改文字。';return}
+    if(!confirm('確認只校正錯字、標點且沒有改變會員原意？儲存後仍為待審核，必須另外按「核准刊登」。'))return;
+    save.disabled=cancel.disabled=true;status.textContent='正在儲存校正……';
+    try{
+      await adminReviewRequest('/admin/reviews/'+encodeURIComponent(r.id)+'/correct','POST',{title:correctedTitle,body:correctedBody,expectedUpdatedAt:r.updatedAt});
+      reviewAdminEditingId=null;await loadAdminReviews();reviewAdminMessage('✓ 已儲存文字校正，保留會員原稿；請重新檢查後另按「核准刊登」。');
+    }catch(e){status.textContent='校正失敗：'+e.message;save.disabled=cancel.disabled=false}
+  });
+  buttons.append(save,cancel);panel.append(buttons);card.append(panel);title.focus();
+}
 async function loadAdminReviews(append=false,quiet=false){
-  if(reviewAdminBusy||reviewModerating||!token())return;
+  if(reviewAdminBusy||reviewModerating||!token()||(reviewAdminEditingId!==null&&quiet))return;
   reviewAdminBusy=true;const offset=append?reviewAdminOffset:0,filter=reviewAdminFilter;
-  if(!append&&!quiet){$('reviewAdminList').replaceChildren();reviewAdminMessage('正在讀取 '+reviewStates[filter]+' 心得……')}
+  if(!append&&!quiet){reviewAdminEditingId=null;$('reviewAdminList').replaceChildren();reviewAdminMessage('正在讀取 '+reviewStates[filter]+' 心得……')}
   try{
     const j=await adminReviewRequest('/admin/reviews?status='+encodeURIComponent(filter)+'&offset='+offset);
     if(filter!==reviewAdminFilter||$('reviewAdminPage').hidden)return;
@@ -942,7 +984,7 @@ async function moderateReview(r,action,clicked){
   if(!confirm('確認要對這則心得執行「'+label+'」嗎？'))return;
   let reason='';if(action==='reject'){const v=prompt('可選填審核說明（最多 200 字），不需要填寫也能拒絕：','');if(v===null)return;reason=v.slice(0,200)}
   clicked.disabled=true;reviewModerating=true;reviewAdminMessage('正在提交審核操作……');
-  try{await adminReviewRequest('/admin/reviews/'+encodeURIComponent(r.id)+'/'+action,'POST',{reason});
+  try{await adminReviewRequest('/admin/reviews/'+encodeURIComponent(r.id)+'/'+action,'POST',{reason,expectedUpdatedAt:r.updatedAt});
     reviewAdminMessage('✓ 已完成：'+label+'。');reviewAdminOffset=0;await loadAdminReviews(false);}
   catch(e){reviewAdminMessage('操作失敗：'+e.message,true);clicked.disabled=false}
   finally{reviewModerating=false}
