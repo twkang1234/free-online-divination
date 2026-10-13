@@ -142,7 +142,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 <body>
 <header class="topbar"><div class="top-inner">
   <a class="brand" href="member.html"><span class="brand-mark">✺</span>一念知機 <span style="font-size:.68rem;letter-spacing:.1em;color:var(--muted);font-weight:600">MEMBER</span></a>
-  <div class="top-actions"><a href="index.html" class="mini-link">網站首頁</a><a href="member.html" class="mini-link" id="headerMemberLink">會員中心</a><button class="btn ghost small" id="themeToggle" type="button">☼ 顯示模式</button><span id="accountChip" class="user-chip" hidden></span><button class="btn ghost small" id="logout" type="button" hidden>登出</button></div>
+  <div class="top-actions"><a href="index.html" class="mini-link">網站首頁</a><button class="btn ghost small" id="themeToggle" type="button">☼ 顯示模式</button><span id="accountChip" class="user-chip" hidden></span><button class="btn ghost small" id="logout" type="button" hidden>登出</button></div>
 </div></header>
 <main class="shell">
 <section id="pageHome" class="view">
@@ -743,9 +743,17 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     $('memberAnnouncementToggle').addEventListener('click',()=>{const root=$('memberAnnouncement'),toggle=$('memberAnnouncementToggle');const expanded=root.classList.toggle('is-expanded');toggle.setAttribute('aria-expanded',String(expanded));toggle.textContent=expanded?'收合公告 ↑':'展開完整公告 ↓';});
     for(const tile of document.querySelectorAll('[data-page]'))tile.addEventListener('click',()=>navigate(tile.dataset.page));for(const b of document.querySelectorAll('[data-back]'))b.addEventListener('click',()=>navigate('home'));
     for(const tool of tools){const row=document.querySelector(`[data-tool="${tool}"]`);for(const button of row.querySelectorAll('[data-health-state]'))button.addEventListener('click',()=>changeHealthState(tool,button.dataset.healthState))}
-    $('headerMemberLink').addEventListener('click',e=>{e.preventDefault();navigate('home')});$('baziRefresh').addEventListener('click',loadBazi);
+    $('baziRefresh').addEventListener('click',loadBazi);
     $('chatForm').addEventListener('submit',sendChat);$('chatText').addEventListener('input',()=>{$('chatCounter').textContent=[...$('chatText').value].length+' / 500 字';$('chatSend').disabled=!chatData?.open||!$('chatText').value.trim()||(chatData.messages||[]).filter(m=>m.role==='member').length>=6});$('chatThreadSelect').addEventListener('change',()=>{selectedChatId=Number($('chatThreadSelect').value)||null;refreshMemberChat()});
-    $('logout').addEventListener('click',()=>{rvDemo=false;rvResetForm();putToken('');try{google.accounts.id.disableAutoSelect()}catch(_){}$('tarotFrame').removeAttribute('src');updateAuthUI();if(currentView!=='home')navigate('home')});
+    $('logout').addEventListener('click',()=>{
+      // 先清除共用會員憑證；其他已開啟的工具分頁會收到 storage 事件同步登出。
+      putToken('');
+      try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
+      $('tarotFrame').removeAttribute('src');
+      updateAuthUI();
+      rvResetForm();
+      if(currentView!=='home')navigate('home');
+    });
     $('themeToggle').addEventListener('click',()=>{const t=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=t;try{localStorage.setItem('divinationhub-color-theme',t)}catch(_){};for(const f of [$('tarotFrame')]){try{if(f.contentDocument?.documentElement)f.contentDocument.documentElement.dataset.theme=t}catch(_){}}});
     for(const id of ['tarotFrame'])$(id).addEventListener('load',()=>adjustEmbeddedFrame($(id)));
     addEventListener('hashchange',showPage);addEventListener('popstate',showPage);addEventListener('storage',e=>{if(e.key===AUTH_KEY){updateAuthUI();if(currentView==='bazi')loadBazi();if(currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1'}}});

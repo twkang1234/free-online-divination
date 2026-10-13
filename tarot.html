@@ -621,6 +621,21 @@
 
 
     /* V9.1 · guest demo + free login */
+
+    /* 會員登入／會員中心共用入口；已登入時小箭頭提供登出，不重複增加會員中心按鈕。 */
+    .tarot-member-entry{position:relative;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto}
+    .tarot-member-entry [hidden]{display:none!important}
+    .tarot-member-menu-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:30px;min-height:34px;padding:4px 7px;border:1px solid rgba(91,190,197,.32);border-radius:999px;background:rgba(91,190,197,.06);color:#a6d8df;font-weight:800;cursor:pointer}
+    .tarot-member-menu-toggle:hover,.tarot-member-menu-toggle[aria-expanded="true"]{background:rgba(91,190,197,.16);border-color:rgba(91,190,197,.6)}
+    .tarot-member-dropdown{position:absolute;z-index:120;top:calc(100% + 9px);right:0;width:172px;padding:6px;border:1px solid rgba(160,145,190,.28);border-radius:13px;background:#110f1d;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+    .tarot-member-dropdown a,.tarot-member-dropdown button{box-sizing:border-box;display:block;width:100%;padding:9px 11px;border:0;border-radius:8px;background:transparent;color:#e8dced;text-decoration:none;text-align:left;font:inherit;font-size:.73rem;cursor:pointer}
+    .tarot-member-dropdown a:hover,.tarot-member-dropdown button:hover{background:rgba(154,114,255,.14)}
+    .tarot-member-dropdown button{color:#f4b4be}
+    html[data-theme="light"] .tarot-member-menu-toggle{background:#f5fafb;color:#376f76;border-color:rgba(56,126,137,.3)}
+    html[data-theme="light"] .tarot-member-dropdown{background:#fff;border-color:rgba(80,70,110,.2);box-shadow:0 15px 40px rgba(30,20,50,.15)}
+    html[data-theme="light"] .tarot-member-dropdown a{color:#473d5c}
+    html[data-theme="light"] .tarot-member-dropdown button{color:#a44055}
+    html[data-theme="light"] .tarot-member-dropdown a:hover,html[data-theme="light"] .tarot-member-dropdown button:hover{background:#f0eafa}
     .tarot-member-chip{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:6px 11px;border:1px solid rgba(154,114,255,.20);border-radius:999px;background:rgba(154,114,255,.045);color:#b9a9c5;font-size:.67rem;font-weight:800;cursor:pointer}
     .tarot-member-chip:hover{border-color:rgba(231,94,215,.42);background:rgba(231,94,215,.07);color:#eadcf0}.tarot-member-chip.logged{border-color:rgba(91,190,197,.25);background:rgba(91,190,197,.055);color:#b9e1e3}.tarot-member-dot{width:6px;height:6px;border-radius:50%;background:#9a72ff;box-shadow:0 0 12px rgba(154,114,255,.55)}.tarot-member-chip.logged .tarot-member-dot{background:#5bbec5;box-shadow:0 0 12px rgba(91,190,197,.48)}
     .tarot-access-mini{min-height:18px;margin:0 0 10px;text-align:right;color:#6f6477;font-family:var(--font-mono);font-size:.58rem;letter-spacing:.04em}.tarot-access-mini:empty{display:none}
@@ -2629,7 +2644,14 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     <div class="topbar-right">
       <button type="button" id="tarotTopNewQuestion" class="v2819-top-new" hidden title="重新開始｜選擇新的問題">↻ 新問題</button>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換顯示模式"><span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">☀</span><span class="theme-toggle-text" id="themeToggleText">淺色</span></button>
-      <button class="tarot-member-chip" id="tarotMemberButton" type="button"><span class="tarot-member-dot"></span><span id="tarotMemberButtonText">免費登入</span></button>
+      <div class="tarot-member-entry" id="tarotMemberEntry">
+        <button class="tarot-member-chip" id="tarotMemberButton" type="button"><span class="tarot-member-dot"></span><span id="tarotMemberButtonText">免費登入</span></button>
+        <button class="tarot-member-menu-toggle" id="tarotMemberMenuToggle" type="button" aria-label="會員選單，包含登出" aria-controls="tarotMemberDropdown" aria-expanded="false" title="會員選單／登出" hidden>▾</button>
+        <div class="tarot-member-dropdown" id="tarotMemberDropdown" hidden>
+          <a href="member.html">進入會員中心</a>
+          <button type="button" id="tarotMemberMenuLogout">登出會員</button>
+        </div>
+      </div>
       <a class="listing-open" id="openListing" href="apply-listing.html?from=tarot">申請刊登</a>
     </div>
   </header>
@@ -3895,12 +3917,27 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
       panel.setAttribute('aria-hidden',String(logged));
     });
   }
+  function closeTarotMemberDropdown(){
+    const menu=$('tarotMemberDropdown'),toggle=$('tarotMemberMenuToggle');
+    if(menu)menu.hidden=true;
+    if(toggle)toggle.setAttribute('aria-expanded','false');
+  }
+  function toggleTarotMemberDropdown(){
+    if(!isLogged()){closeTarotMemberDropdown();return;}
+    const menu=$('tarotMemberDropdown'),toggle=$('tarotMemberMenuToggle');
+    if(!menu||!toggle)return;
+    menu.hidden=!menu.hidden;
+    toggle.setAttribute('aria-expanded',String(!menu.hidden));
+  }
   function updateMemberUI(){
     const p=authProfile(),btn=$('tarotMemberButton'),txt=$('tarotMemberButtonText');if(p)bindMemberDevice();if(!btn||!txt)return;
     btn.classList.toggle('logged',!!p);
     txt.textContent=p?'會員中心':'免費登入';
     btn.setAttribute('aria-label',p?'前往一念知機會員中心':'免費登入一念知機會員');
     btn.title=p?'前往一念知機會員中心':'免費登入';
+    const menuToggle=$('tarotMemberMenuToggle');
+    if(menuToggle)menuToggle.hidden=!p;
+    if(!p)closeTarotMemberDropdown();
     updateAccessMini();updateQuotaUI();
     const prof=$('tarotMemberProfile');
     if(prof){
@@ -3951,6 +3988,7 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     if(state.stage3x3==='complete'&&state.current?.length===3)renderFinish();
   }
   function logoutMember(){
+    closeTarotMemberDropdown();
     if(isAdminTestActive()){simulateAdminMemberLogout();return;}
     setAuthToken('');paidBalance={followup:0,advanced:0};safeWrite(TAROT_LOCAL_MEMBER_KEY,false);
     try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
@@ -5670,8 +5708,22 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     location.href='payment.html';
   });
   $('tarotMemberButton')?.addEventListener('click',()=>{
-    if(isLogged()){window.location.href='member.html';return;}
+    if(isLogged()){closeTarotMemberDropdown();window.location.href='member.html';return;}
     openMemberModal();
+  });
+  $('tarotMemberMenuToggle')?.addEventListener('click',e=>{e.stopPropagation();toggleTarotMemberDropdown();});
+  $('tarotMemberMenuLogout')?.addEventListener('click',logoutMember);
+  document.addEventListener('click',e=>{if(!e.target.closest('#tarotMemberEntry'))closeTarotMemberDropdown();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTarotMemberDropdown();});
+  // 共用憑證在另一分頁被登出時，同步更新目前塔羅頁的權限與按鈕。
+  window.addEventListener('storage',e=>{
+    if(e.key!==TAROT_AUTH_KEY)return;
+    if(!authToken()){
+      try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
+      state.accessTier=state.current?.length?'guest':null;
+      paidBalance={followup:0,advanced:0};
+    }
+    refreshTarotAccessUI();
   });
   $('tarotMemberClose')?.addEventListener('click',closeMemberModal);
   $('tarotMemberLogout')?.addEventListener('click',logoutMember);
