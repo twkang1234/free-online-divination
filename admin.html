@@ -93,6 +93,26 @@ td.muted{color:var(--muted)}
 .issue-tools-head label{color:#b3bbca;font-size:.78rem}
 .issue-info{margin:0 18px 15px;font-size:.8rem;color:#b2b9c7}
 .issue-info.error{color:#f3a7ae}.issue-info.alert{color:#ffadb8;font-weight:750}
+/* 第三階段：站長主動發問，小量私人對話。清單預設收合，不擠壓監控卡片。 */
+.issue-member-btn{margin-top:9px;width:100%;border-color:#304c59!important;color:#b6dfea!important;background:#0d1a22!important}
+.issue-chat-admin{margin:8px 18px 20px;padding:19px;border:1px solid #354251;border-radius:14px;background:#0a111c}
+.issue-chat-admin[hidden]{display:none!important}.issue-chat-admin h3{font-size:1rem;margin:0 0 4px}
+.issue-chat-desc{font-size:.78rem;color:#9eafbe;line-height:1.7;margin:4px 0 14px}
+.issue-chat-toolbar{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+.issue-chat-columns{display:grid;grid-template-columns:minmax(235px,.82fr) minmax(0,1.3fr);gap:14px}
+.issue-reporter-list{border:1px solid #253343;border-radius:12px;padding:7px;max-height:440px;overflow-y:auto;background:#080e17}
+.issue-reporter{display:block;width:100%;padding:11px;text-align:left;background:transparent;border:1px solid transparent;border-radius:9px;color:#e1e5eb;cursor:pointer;margin-bottom:4px}
+.issue-reporter:hover,.issue-reporter.active{background:#152332;border-color:#466078}.issue-reporter strong{display:block;font-size:.8rem}.issue-reporter small{display:block;color:#a0acb9;overflow-wrap:anywhere;font-size:.71rem;margin-top:5px}
+.issue-dialog{padding:15px;border-radius:12px;border:1px solid #293541;background:#0a1019;min-height:300px}
+.issue-dialog h4{margin:0 0 8px;font-size:.92rem}.issue-dialog .issue-msgs{display:grid;align-content:start;gap:9px;max-height:300px;overflow:auto;margin:14px 0}
+.issue-msg{padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere;border-radius:10px;background:#172333;color:#e5ebf3;font-size:.83rem}
+.issue-msg.admin{border-left:3px solid #e2b967}.issue-msg.member{border-left:3px solid #7fcdb2}
+.issue-msg small{display:block;color:#9db0c2;font-size:.7rem;margin-bottom:5px}
+.issue-dialog textarea{width:100%;min-height:90px;resize:vertical;border:1px solid #394657;border-radius:10px;background:#070d15;color:#fff;padding:12px;font:inherit;font-size:.83rem}
+.issue-dialog textarea:disabled{opacity:.65}.issue-dialog-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
+.issue-chat-status{color:#b4c6d5;font-size:.76rem;margin-top:9px;line-height:1.7}
+.issue-chat-status.error{color:#ffacb0}
+@media(max-width:720px){.issue-chat-columns{grid-template-columns:1fr}.issue-reporter-list{max-height:260px}}
 @media(max-width:700px){.issue-summary{grid-template-columns:1fr}}
 </style>
 </head>
@@ -152,7 +172,14 @@ td.muted{color:var(--muted)}
         <button class="btn secondary" id="issueRefresh" type="button">重新查詢紅燈</button>
       </div>
       <p class="issue-info" id="issueAdminStatus" role="status" aria-live="polite">達到門檻時，此後台會亮起警告；目前不會發送 Email 或自動關閉工具。</p>
-      <p class="issue-info">站長可針對個別工具開啟「全面紅燈｜維修中」。會員中心會顯示維修訊息，並暫停該工具個人回報；只要有任一工具維修，心得測試投稿區便暫時停用。<strong>不會停止八字、塔羅、易經核心功能。</strong> 站長解除維修時會清除該工具全部會員的紅燈，展開新一輪統計。私人詢問功能仍待下一階段。</p>
+      <p class="issue-info">站長可針對個別工具開啟「全面紅燈｜維修中」。會員中心會顯示維修訊息，並暫停該工具個人回報；只要有任一工具維修，心得測試投稿區便暫時停用。<strong>不會停止八字、塔羅、易經核心功能。</strong> 站長解除維修時會清除該工具全部會員的紅燈，展開新一輪統計。可在下方「查看回報會員」中由站長主動詢問；會員無法先傳訊。</p>
+      <div class="issue-chat-admin" id="issueChatAdmin" hidden>
+        <div class="issue-chat-toolbar"><div><h3 id="issueChatHeading">站長主動詢問會員</h3><p class="issue-chat-desc">只有目前回報過紅燈的會員才能由站長首次開啟對話；解決後可結束並永久刪除對話訊息。</p></div><button class="btn secondary" type="button" id="issueChatHide">收起此區</button></div>
+        <div class="issue-chat-columns">
+          <div><div class="issue-chat-toolbar"><strong style="font-size:.84rem">回報會員名單</strong><button class="btn secondary" type="button" id="issueChatReload">重新整理</button></div><div class="issue-reporter-list" id="issueReporterList" role="list"><div class="issue-chat-status">選擇工具後載入會員……</div></div><button class="btn secondary" type="button" id="issueReporterMore" hidden style="margin-top:9px">載入更多會員</button></div>
+          <div class="issue-dialog"><h4 id="issueChatMember">請先從左邊選擇會員</h4><p class="issue-chat-desc" id="issueChatHelp">會員沒有收到站長詢問前，對話框一直灰暗鎖定。</p><div class="issue-msgs" id="issueChatMessages"></div><form id="issueAdminChatForm"><textarea maxlength="500" id="issueAdminChatText" disabled placeholder="選擇回報會員後，可輸入問題，例如：請問八字排盤哪個地方出錯？"></textarea><div class="issue-dialog-actions"><button class="btn" id="issueChatSend" type="submit" disabled>發送站長詢問</button><button class="btn secondary" id="issueChatClose" type="button" hidden>結束並刪除對話</button><small style="color:#a5b0bd" id="issueChatChars">0 / 500 字</small></div></form><div id="issueChatStatus" class="issue-chat-status" role="status" aria-live="polite"></div></div>
+        </div>
+      </div>
     </section>
 
     <section class="section" style="margin-bottom:24px">
@@ -611,7 +638,7 @@ async function loadIssueStats(){
       state.className='issue-maint-status';state.textContent=t.maintenance?'🔴 站長全面紅燈｜維修中':'🟢 站長狀態｜正常中';
       btn.type='button';btn.className='btn issue-maint-btn';btn.textContent=t.maintenance?'✅ 已修復｜恢復全面綠燈':'🔧 開啟全面紅燈｜維修中';
       btn.addEventListener('click',()=>changeMaintenance(t.tool,t.label,!!t.maintenance));
-      card.append(title,count,cap,meter,note,state,btn);panel.append(card);
+      const ask=document.createElement('button');ask.type='button';ask.className='btn issue-member-btn';ask.textContent='查看回報會員／站長詢問';ask.addEventListener('click',()=>openIssueReporterPanel(t.tool,t.label));card.append(title,count,cap,meter,note,state,btn,ask);panel.append(card);
     }
     $('issueFetchTime').textContent='最後成功查詢：'+new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})+'（台灣時間）｜管理員頁開啟時每 30 秒更新，返回分頁時也會查詢';
     const alerts=counts.filter(t=>t.alerted);
@@ -661,6 +688,96 @@ async function changeMaintenance(tool,label,active){
   }catch(err){status.textContent='維修狀態未更新：'+err.message;status.className='issue-info error'}
   finally{maintenanceBusy=false;for(const btn of document.querySelectorAll('.issue-maint-btn'))btn.disabled=false}
 }
+
+// 站長主動詢問。只有後端驗證管理員後才會回傳會員姓名、Email 或私訊。
+let activeIssueTool='',activeIssueLabel='',activeReporter=null,activeThreadId=null,reporterOffset=0,issueHasMore=false,issueChatBusy=false;
+function adminChatStatus(msg,error=false){const el=$('issueChatStatus');el.textContent=msg;el.className='issue-chat-status'+(error?' error':'')}
+async function issueAdminFetch(path,body){
+  const options={headers:{Authorization:'Bearer '+token(),Accept:'application/json'},cache:'no-store'};
+  if(body!==undefined){options.method='POST';options.headers['Content-Type']='application/json';options.body=JSON.stringify(body)}
+  const r=await fetch(API_BASE+path,options);const j=await r.json().catch(()=>null);
+  if(!r.ok||!j?.success)throw Error(j?.error||'操作失敗');return j;
+}
+function resetIssueChatComposer(){activeReporter=null;activeThreadId=null;$('issueChatMember').textContent='請先從左邊選擇會員';$('issueChatHelp').textContent='只有站長可以主動開啟對話。';$('issueChatMessages').replaceChildren();$('issueAdminChatText').value='';$('issueAdminChatText').disabled=true;$('issueChatSend').disabled=true;$('issueChatClose').hidden=true;$('issueChatChars').textContent='0 / 500 字';adminChatStatus('')}
+async function openIssueReporterPanel(tool,label){
+  if(!token())return;activeIssueTool=tool;activeIssueLabel=label;reporterOffset=0;issueHasMore=false;
+  $('issueChatAdmin').hidden=false;$('issueChatHeading').textContent=label+'｜回報會員與站長詢問';resetIssueChatComposer();
+  $('issueChatAdmin').scrollIntoView({behavior:'smooth',block:'start'});await loadIssueReporterList(false);
+}
+async function loadIssueReporterList(append=false){
+  if(!activeIssueTool||!token())return;
+  const tool=activeIssueTool,offset=append?reporterOffset:0,list=$('issueReporterList');
+  if(!append){list.replaceChildren();const info=document.createElement('p');info.className='issue-chat-status';info.textContent='正在查詢回報會員……';list.append(info)}
+  try{
+    const j=await issueAdminFetch('/admin/issues/reporters?tool='+encodeURIComponent(tool)+'&offset='+offset);
+    if(activeIssueTool!==tool)return;
+    if(!append){list.replaceChildren();reporterOffset=0}
+    for(const r of j.reporters){
+      const btn=document.createElement('button');btn.type='button';btn.className='issue-reporter';
+      const title=document.createElement('strong');title.textContent=r.name||'會員';
+      const meta=document.createElement('small');meta.textContent=(r.email||'會員已登入')+' · '+(r.reported?'🔴 目前紅燈':'已取消紅燈')+(r.conversationId?' · 💬 對話已開啟':'');
+      btn.append(title,meta);btn.addEventListener('click',()=>{
+        list.querySelectorAll('.issue-reporter').forEach(x=>x.classList.remove('active'));btn.classList.add('active');selectIssueReporter(r)
+      });list.append(btn)
+    }
+    reporterOffset=offset+j.reporters.length;issueHasMore=!!j.hasMore;$('issueReporterMore').hidden=!issueHasMore;
+    if(!reporterOffset){const t=document.createElement('div');t.className='issue-chat-status';t.textContent='目前沒有紅燈會員，也沒有未關閉的私人對話。';list.append(t)}
+  }catch(e){adminChatStatus('查詢會員失敗：'+e.message,true)}
+}
+async function selectIssueReporter(r){
+  activeReporter=r;activeThreadId=r.conversationId||null;
+  $('issueChatMember').textContent=(r.name||'會員')+'｜'+activeIssueLabel;
+  $('issueChatMessages').replaceChildren();$('issueAdminChatText').value='';$('issueChatChars').textContent='0 / 500 字';
+  $('issueChatClose').hidden=!activeThreadId;
+  $('issueChatHelp').textContent=activeThreadId?'此對話已開啟，會員可回覆。修復確認後可結束並刪除。':r.reported?'尚未發送詢問；只有站長發送後，會員的輸入框才會解鎖。':'會員已取消紅燈，無法開啟新對話。';
+  $('issueAdminChatText').disabled=!!(!activeThreadId&&!r.reported);$('issueChatSend').disabled=$('issueAdminChatText').disabled;
+  $('issueChatSend').textContent=activeThreadId?'回覆會員':'發送站長詢問';adminChatStatus('');
+  if(activeThreadId)await loadIssueConversation(activeThreadId)
+}
+async function loadIssueConversation(id){
+  if(!id||!token())return;
+  try{
+    const j=await issueAdminFetch('/admin/issues/chat/read?conversationId='+encodeURIComponent(id));
+    if(activeThreadId!==id)return;
+    const wrap=$('issueChatMessages');wrap.replaceChildren();
+    for(const m of j.messages){const div=document.createElement('div');div.className='issue-msg '+(m.role==='admin'?'admin':'member');const author=document.createElement('small');author.textContent=m.role==='admin'?'一念知機站長':'會員';const body=document.createElement('div');body.textContent=m.text;div.append(author,body);wrap.append(div)}
+    wrap.scrollTop=wrap.scrollHeight;
+    const used=j.messages.filter(m=>m.role==='admin').length;
+    $('issueChatHelp').textContent='私人對話已開啟｜站長已發送 '+used+'/8 則；會員最多回覆 6 則。解除全面維修紅燈不會提前關閉此對話。';
+    $('issueChatSend').textContent='回覆會員';
+    $('issueAdminChatText').disabled=used>=8;$('issueChatSend').disabled=used>=8||!$('issueAdminChatText').value.trim();
+    $('issueChatClose').hidden=false;
+  }catch(e){adminChatStatus('讀取對話失敗：'+e.message,true)}
+}
+async function sendIssueAdminMessage(e){
+  e.preventDefault();if(issueChatBusy||!activeReporter||!token())return;
+  const text=$('issueAdminChatText').value.trim();if(!text||[...text].length>500)return;
+  const target=activeReporter,tool=activeIssueTool,id=activeThreadId;
+  issueChatBusy=true;$('issueChatSend').disabled=true;adminChatStatus('正在送出……');
+  try{
+    if(id)await issueAdminFetch('/admin/issues/chat/reply',{conversationId:id,text});
+    else {const j=await issueAdminFetch('/admin/issues/chat/open',{tool,googleSub:target.googleSub,text});activeThreadId=j.conversationId}
+    $('issueAdminChatText').value='';$('issueChatChars').textContent='0 / 500 字';adminChatStatus('✓ 訊息已儲存；會員打開會員中心便能看到。');
+    await loadIssueConversation(activeThreadId);await loadIssueReporterList(false);
+  }catch(err){adminChatStatus('傳送失敗：'+err.message,true)}
+  finally{issueChatBusy=false;}
+}
+async function closeIssueAdminConversation(){
+  if(issueChatBusy||!activeThreadId||!token())return;
+  if(!confirm('確認會員問題已處理完成？\n\n此動作會永久刪除這段私人問答，會員輸入框將重新鎖定。異常紅燈統計不會因此改變。'))return;
+  issueChatBusy=true;const id=activeThreadId;adminChatStatus('正在結束並刪除對話……');
+  try{await issueAdminFetch('/admin/issues/chat/close',{conversationId:id});resetIssueChatComposer();adminChatStatus('✓ 已結束並刪除對話，會員對話框恢復鎖定。');await loadIssueReporterList(false)}
+  catch(e){adminChatStatus('刪除失敗：'+e.message,true)}finally{issueChatBusy=false}
+}
+$('issueChatHide').addEventListener('click',()=>{$('issueChatAdmin').hidden=true;activeIssueTool='';resetIssueChatComposer()});
+$('issueChatReload').addEventListener('click',()=>{loadIssueReporterList(false);if(activeThreadId)loadIssueConversation(activeThreadId)});
+$('issueReporterMore').addEventListener('click',()=>loadIssueReporterList(true));
+$('issueAdminChatForm').addEventListener('submit',sendIssueAdminMessage);
+$('issueChatClose').addEventListener('click',closeIssueAdminConversation);
+$('issueAdminChatText').addEventListener('input',()=>{
+  const n=[...$('issueAdminChatText').value.trim()].length;$('issueChatChars').textContent=n+' / 500 字';
+  $('issueChatSend').disabled=issueChatBusy||!activeReporter||!n||n>500||$('issueAdminChatText').disabled
+});
 $('issueSaveThreshold').addEventListener('click',saveIssueThreshold);
 $('issueRefresh').addEventListener('click',loadIssueStats);
 // 開著管理員後台時每分鐘重新檢查；不寄送訊息，也不在背景建立外部排程。

@@ -54,7 +54,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 .reviews-block.maintenance-active .review-inspire{pointer-events:none}
 @media(max-width:380px){.signal-switch{gap:5px}.signal-choice{font-size:.74rem;padding:10px 4px}}
 
-.chat{position:relative;margin-top:19px}.chat.locked{opacity:.63}.chat-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.chat-header h3{font-size:1.07rem;margin:0}.chat-messages{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:7px 3px;margin:13px 0}.bubble{max-width:90%;border-radius:14px;padding:11px 14px;background:var(--surface2);font-size:.84rem;white-space:pre-wrap;overflow-wrap:anywhere}.bubble.mine{align-self:flex-end;background:color-mix(in srgb,var(--primary) 16%,var(--surface))}.bubble.staff{align-self:flex-start;border-left:2px solid var(--primary)}.bubble small{display:block;color:var(--muted);font-size:.7rem;margin-bottom:3px}.chat-form{display:grid;gap:10px}.field-label{display:block;font-weight:750;font-size:.84rem;margin:0 0 7px}.field{width:100%;border-radius:11px;background:var(--base);color:var(--ink);border:1px solid var(--line);padding:11px 13px;min-height:43px}.field:disabled{background:var(--surface2);color:var(--muted);opacity:.7}.textarea{min-height:92px;resize:vertical}.chat-placeholder{font-size:.8rem;color:var(--muted);padding:7px 0 11px}.chat-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}.iframe-shell{border:1px solid var(--line);border-radius:15px;background:var(--base);overflow:hidden}.iframe-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 15px;border-bottom:1px solid var(--line);font-size:.77rem;color:var(--sub)}.archive-frame{display:block;width:100%;height:calc(100vh - 180px);min-height:660px;border:0;background:transparent}.reviews-frame{display:block;width:100%;height:685px;min-height:550px;border:0;background:transparent}.review-hint{padding:12px 0 0;color:var(--muted);font-size:.76rem}.reviews-block{margin-top:55px}
+.chat-select-row{display:grid;gap:6px;margin-bottom:12px;font-size:.8rem;color:var(--sub)}.chat{position:relative;margin-top:19px}.chat.locked{opacity:.63}.chat-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.chat-header h3{font-size:1.07rem;margin:0}.chat-messages{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:7px 3px;margin:13px 0}.bubble{max-width:90%;border-radius:14px;padding:11px 14px;background:var(--surface2);font-size:.84rem;white-space:pre-wrap;overflow-wrap:anywhere}.bubble.mine{align-self:flex-end;background:color-mix(in srgb,var(--primary) 16%,var(--surface))}.bubble.staff{align-self:flex-start;border-left:2px solid var(--primary)}.bubble small{display:block;color:var(--muted);font-size:.7rem;margin-bottom:3px}.chat-form{display:grid;gap:10px}.field-label{display:block;font-weight:750;font-size:.84rem;margin:0 0 7px}.field{width:100%;border-radius:11px;background:var(--base);color:var(--ink);border:1px solid var(--line);padding:11px 13px;min-height:43px}.field:disabled{background:var(--surface2);color:var(--muted);opacity:.7}.textarea{min-height:92px;resize:vertical}.chat-placeholder{font-size:.8rem;color:var(--muted);padding:7px 0 11px}.chat-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}.iframe-shell{border:1px solid var(--line);border-radius:15px;background:var(--base);overflow:hidden}.iframe-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 15px;border-bottom:1px solid var(--line);font-size:.77rem;color:var(--sub)}.archive-frame{display:block;width:100%;height:calc(100vh - 180px);min-height:660px;border:0;background:transparent}.reviews-frame{display:block;width:100%;height:685px;min-height:550px;border:0;background:transparent}.review-hint{padding:12px 0 0;color:var(--muted);font-size:.76rem}.reviews-block{margin-top:55px}
 .login-card{text-align:center;max-width:690px;margin:45px auto;padding:32px 25px}.login-card h2{margin:0 0 12px;font-size:1.4rem}.login-card p{margin:0 0 16px;color:var(--sub);font-size:.88rem}.google-mount{display:flex;justify-content:center;min-height:44px;margin:18px auto}.footer{margin-top:65px;padding-top:25px;border-top:1px solid var(--line);color:var(--muted);font-size:.76rem;text-align:center}.footer a{color:var(--sub)}.footer a+a{margin-left:13px}
 
 /* 會員心得：直接內建原有測試表單（與既有 member-reviews.html 使用同一本機測試 key） */
@@ -119,6 +119,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     </div>
     <p class="signal-note">◎ 紅燈前會提醒勿誤報。站長若確認故障，可將該工具設為「全面紅燈｜維修中」；維修完畢再切回全面綠燈。會員個人回報與站長維修公告是兩件不同的事。</p>
     <div class="panel chat locked" id="chatPanel"><div class="chat-header"><h3>🔒 站長詢問訊息</h3><span id="chatState" class="pill">預設關閉</span></div><p id="chatInfo" class="chat-placeholder">只有站長主動向您詢問異常細節後，此對話框才會開放。會員無法自行開啟私人對話。</p>
+      <div id="chatSelectRow" class="chat-select-row" hidden><label for="chatThreadSelect">站長詢問的工具</label><select class="field" id="chatThreadSelect"></select></div>
       <div id="chatMessages" class="chat-messages" hidden></div><form id="chatForm" class="chat-form"><label class="field-label" for="chatText">回覆站長</label><textarea id="chatText" class="field textarea" maxlength="500" disabled placeholder="目前未開放，等待站長詢問……"></textarea><div class="chat-foot"><span id="chatCounter" class="caption">0 / 500 字</span><button class="btn primary small" id="chatSend" type="submit" disabled>送出回覆</button></div></form>
       <div id="chatNotice" class="caption" role="status" style="margin-top:9px"></div>
     </div>
@@ -170,8 +171,8 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 </main>
 <script>
 (()=>{'use strict';
-  // 此檔為第一階段會員中心。只對既有的八字與塔羅 API 做真實請求。
-  // 以下「異常回報／站長主動詢問」接口尚未部署，後端需新增：
+  // 第三階段會員中心。異常紅綠燈與站長私人詢問使用正式 D1 API。心得仍屬本機測試。
+  // 第三階段對話接口由 member-api-6-issue-chat 提供：
   // GET /member/issue-status -> {ok:true,lights:[{tool,reported,maintenance,count,threshold,canToggle:true}]}
   // POST /member/issue-state <- {tool:'bazi'|'tarot'|'yijing',reported:boolean}
   // 會員可綠⇄紅雙向切換；後端需身分驗證、寫入回報狀態、限流和確認伺服器維修旗標。
@@ -186,7 +187,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   const $=id=>document.getElementById(id);
   const tools=['bazi','tarot','yijing'];
   const toolNames={bazi:'八字排盤',tarot:'塔羅占卜',yijing:'易經占卜'};
-  let googleReady=false,currentView='home',sessionKey='',baziRecords=[],lightData=null,chatData=null;
+  let googleReady=false,currentView='home',sessionKey='',baziRecords=[],lightData=null,chatData=null,selectedChatId=null;
   const healthPreviewMode=location.protocol==='file:'; // 只在本機 HTML 外觀預覽，絕不送回報
   const previewHealth={bazi:false,tarot:false,yijing:false};
   let issueBusy=new Set();
@@ -206,8 +207,8 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     if(page==='home'){if(profile())loadIssues();prepareReviews();}
   }
   function updateAuthUI(){const p=profile(),isOn=!!p;const name=p?(p.name||p.email||'會員'):'';$('accountChip').hidden=!isOn;$('accountChip').textContent=name;$('logout').hidden=!isOn;$('homeLoginNotice').hidden=isOn;
-    if(isOn){$('loginMessage').textContent='';if(sessionKey!==p.sub){sessionKey=p.sub||p.email||'logged';baziRecords=[];lightData=null;chatData=null;}if(currentView==='home')loadIssues();}
-    else{sessionKey='';baziRecords=[];lightData=null;chatData=null;renderLights();renderChat();renderGoogleLogin();}
+    if(isOn){$('loginMessage').textContent='';if(sessionKey!==p.sub){sessionKey=p.sub||p.email||'logged';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;}if(currentView==='home')loadIssues();}
+    else{sessionKey='';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;renderLights();renderChat();renderGoogleLogin();}
     rvAuthSync();
   }
   function renderGoogleLogin(){if(profile())return;if(location.protocol==='file:'){$('loginMessage').textContent='請先部署至網站，再使用 Google 登入。本機直接開啟 HTML 無法使用正式 Google 登入。';return}
@@ -301,7 +302,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     else showNotice('issueNotice','回報功能已連線。綠轉紅會再次確認以避免誤報；修復後可自行改回綠燈。','ok');
     syncReviewMaintenance();
   }
-  // 會員停留在首頁時每分鐘同步站長維修燈號；切回瀏覽器也會重新查詢。
+  // 會員停留在首頁時定期同步紅綠燈與站長訊息（30 秒），不需要即時聊天服務。
   let issueRefreshRunning=false;
   async function refreshMaintenanceStatus(){
     if(issueRefreshRunning||!profile()||currentView!=='home'||document.hidden)return;
@@ -313,10 +314,28 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       lightData=result;renderLights();
     }catch(_){if(owner!==getToken())return;lightData=null;renderLights();}
     finally{issueRefreshRunning=false}
+    if(owner===getToken())await refreshMemberChat();
+  }
+  async function refreshMemberChat(conversationId=selectedChatId){
+    if(!profile())return;
+    const oldToken=getToken();
+    try{
+      const query=conversationId?'?conversationId='+encodeURIComponent(conversationId):'';
+      const j=await api('/member/issue-chat'+query);
+      if(oldToken!==getToken())return;
+      chatData=j;
+      if(selectedChatId!==j.conversationId){$('chatText').value='';$('chatCounter').textContent='0 / 500 字';}
+      selectedChatId=j.open?j.conversationId:null;
+      renderChat();
+    }catch(_){
+      if(oldToken!==getToken())return;
+      if(conversationId){selectedChatId=null;await refreshMemberChat(null);return;}
+      chatData=null;$('chatText').value='';renderChat();
+    }
   }
   async function loadIssues(){if(!profile()){lightData=null;chatData=null;renderLights();renderChat();return}
     const token=getToken();try{const j=await api('/member/issue-status');if(token!==getToken())return;if(!Array.isArray(j.lights))throw Error('後端回傳格式不符');lightData=j;renderLights()}catch(_){if(token!==getToken())return;lightData=null;renderLights()}
-    try{const j=await api('/member/issue-chat');if(token!==getToken())return;chatData=j;renderChat()}catch(_){if(token!==getToken())return;chatData=null;renderChat()}
+    if(token===getToken())await refreshMemberChat();
   }
   async function changeHealthState(tool,state){
     if(!tools.includes(tool)||!['normal','issue'].includes(state)||issueBusy.has(tool))return;
@@ -342,14 +361,41 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     }catch(err){alert('狀態尚未成功更新：'+err.message)}
     finally{issueBusy.delete(tool);renderLights()}
   }
-  function renderChat(){const open=!!(profile()&&chatData?.open&&chatData?.conversationId);const panel=$('chatPanel'),area=$('chatText'),send=$('chatSend'),messages=$('chatMessages');panel.classList.toggle('locked',!open);area.disabled=!open;send.disabled=!open||!area.value.trim();messages.replaceChildren();
-    $('chatState').textContent=open?'站長已開啟':'預設關閉';$('chatInfo').textContent=open?`站長正在詢問${toolNames[chatData.tool]||'網站'}的異常細節，您可以回覆。問題確認修復後，站長會關閉並清除對話。`:'只有站長主動詢問後，對話框才會開啟。會員無法主動私訊站長。';
-    area.placeholder=open?'請簡單回覆站長詢問的問題……':'目前未開放，等待站長詢問……';messages.hidden=!open;
-    if(open){for(const m of (Array.isArray(chatData.messages)?chatData.messages:[])){const bubble=textNode('div','','bubble '+(m.role==='member'?'mine':'staff'));bubble.append(textNode('small',m.role==='member'?'我':'一念知機站長'),textNode('div',m.text||''));messages.append(bubble)}messages.scrollTop=messages.scrollHeight}
+  function renderChat(){
+    const open=!!(profile()&&chatData?.open&&chatData?.conversationId);
+    const panel=$('chatPanel'),area=$('chatText'),send=$('chatSend'),messages=$('chatMessages'),select=$('chatThreadSelect');
+    const all=Array.isArray(chatData?.conversations)?chatData.conversations:[];
+    const used=(chatData?.messages||[]).filter(m=>m.role==='member').length;
+    const canReply=open&&used<6;
+    panel.classList.toggle('locked',!open);area.disabled=!canReply;send.disabled=!canReply||!area.value.trim();
+    messages.replaceChildren();select.replaceChildren();
+    $('chatSelectRow').hidden=all.length<2;
+    for(const t of all){const o=document.createElement('option');o.value=String(t.id);o.textContent=toolNames[t.tool]||t.tool;select.append(o)}
+    if(open)select.value=String(chatData.conversationId);
+    $('chatState').textContent=open?'站長已開啟':'預設關閉';
+    $('chatInfo').textContent=open
+      ?`站長正在詢問${toolNames[chatData.tool]||'網站'}的異常細節。您已回覆 ${used}/6 則；問題修復後由站長關閉並清除對話。`
+      :'只有站長主動詢問後，對話框才會開啟。會員無法主動私訊站長。';
+    area.placeholder=!open?'目前未開放，等待站長詢問……':canReply?'請簡單回覆站長詢問的問題……':'這段對話已達六則回覆上限，請等待站長處理';
+    messages.hidden=!open;
+    if(open){for(const m of (Array.isArray(chatData.messages)?chatData.messages:[])){
+      const bubble=textNode('div','','bubble '+(m.role==='member'?'mine':'staff'));
+      bubble.append(textNode('small',m.role==='member'?'我':'一念知機站長'),textNode('div',m.text||''));
+      messages.append(bubble)
+    }messages.scrollTop=messages.scrollHeight}
   }
-  async function sendChat(e){e.preventDefault();const content=$('chatText').value.trim();if(!chatData?.open||!chatData.conversationId||!content)return;const start=getToken();$('chatSend').disabled=true;$('chatNotice').textContent='正在送出……';
-    try{await api('/member/issue-chat/reply',{method:'POST',body:JSON.stringify({conversationId:chatData.conversationId,text:content})});if(start!==getToken())return;$('chatText').value='';$('chatCounter').textContent='0 / 500 字';$('chatNotice').textContent='已送出回覆。';const data=await api('/member/issue-chat');if(start===getToken()){chatData=data;renderChat()}}
-    catch(err){$('chatNotice').textContent='送出失敗：'+err.message}finally{$('chatSend').disabled=!(chatData?.open&&$('chatText').value.trim())}
+  async function sendChat(e){
+    e.preventDefault();const content=$('chatText').value.trim();
+    if(!chatData?.open||!chatData.conversationId||!content)return;
+    if((chatData.messages||[]).filter(m=>m.role==='member').length>=6)return;
+    const start=getToken();$('chatSend').disabled=true;$('chatNotice').textContent='正在送出……';
+    try{
+      await api('/member/issue-chat/reply',{method:'POST',body:JSON.stringify({conversationId:chatData.conversationId,text:content})});
+      if(start!==getToken())return;
+      $('chatText').value='';$('chatCounter').textContent='0 / 500 字';$('chatNotice').textContent='已送出回覆。';
+      await refreshMemberChat();
+    }catch(err){$('chatNotice').textContent='送出失敗：'+err.message}
+    finally{renderChat()}
   }
   // 保留原 member-reviews.html 的同一本機測試 storageKey 及記錄格式；不得宣稱正式投稿。
   const REVIEW_KEY='divinationhub-member-reviews-PREVIEW-v1';
@@ -391,12 +437,12 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   function init(){for(const tile of document.querySelectorAll('[data-page]'))tile.addEventListener('click',()=>navigate(tile.dataset.page));for(const b of document.querySelectorAll('[data-back]'))b.addEventListener('click',()=>navigate('home'));
     for(const tool of tools){const row=document.querySelector(`[data-tool="${tool}"]`);for(const button of row.querySelectorAll('[data-health-state]'))button.addEventListener('click',()=>changeHealthState(tool,button.dataset.healthState))}
     $('headerMemberLink').addEventListener('click',e=>{e.preventDefault();navigate('home')});$('baziRefresh').addEventListener('click',loadBazi);
-    $('chatForm').addEventListener('submit',sendChat);$('chatText').addEventListener('input',()=>{$('chatCounter').textContent=[...$('chatText').value].length+' / 500 字';$('chatSend').disabled=!chatData?.open||!$('chatText').value.trim()});
+    $('chatForm').addEventListener('submit',sendChat);$('chatText').addEventListener('input',()=>{$('chatCounter').textContent=[...$('chatText').value].length+' / 500 字';$('chatSend').disabled=!chatData?.open||!$('chatText').value.trim()||(chatData.messages||[]).filter(m=>m.role==='member').length>=6});$('chatThreadSelect').addEventListener('change',()=>{selectedChatId=Number($('chatThreadSelect').value)||null;refreshMemberChat()});
     $('logout').addEventListener('click',()=>{rvDemo=false;rvResetForm();putToken('');try{google.accounts.id.disableAutoSelect()}catch(_){}$('tarotFrame').removeAttribute('src');updateAuthUI();if(currentView!=='home')navigate('home')});
     $('themeToggle').addEventListener('click',()=>{const t=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=t;try{localStorage.setItem('divinationhub-color-theme',t)}catch(_){};for(const f of [$('tarotFrame')]){try{if(f.contentDocument?.documentElement)f.contentDocument.documentElement.dataset.theme=t}catch(_){}}});
     for(const id of ['tarotFrame'])$(id).addEventListener('load',()=>adjustEmbeddedFrame($(id)));
     addEventListener('hashchange',showPage);addEventListener('popstate',showPage);addEventListener('storage',e=>{if(e.key===AUTH_KEY){updateAuthUI();if(currentView==='bazi')loadBazi();if(currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1'}}});
-    setInterval(refreshMaintenanceStatus,60000);
+    setInterval(refreshMaintenanceStatus,30000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshMaintenanceStatus()});
     reviewInit();showPage();updateAuthUI();
   }
