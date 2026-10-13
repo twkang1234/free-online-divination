@@ -2616,6 +2616,7 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     }
   }
 </style>
+
 </head>
 <body>
   <header class="page-topbar">
@@ -2628,8 +2629,6 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     <div class="topbar-right">
       <button type="button" id="tarotTopNewQuestion" class="v2819-top-new" hidden title="重新開始｜選擇新的問題">↻ 新問題</button>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換顯示模式"><span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">☀</span><span class="theme-toggle-text" id="themeToggleText">淺色</span></button>
-      
-      <a class="tarot-records-toplink" href="tarot-records.html" id="tarotRecordsLink">我的塔羅紀錄</a>
       <button class="tarot-member-chip" id="tarotMemberButton" type="button"><span class="tarot-member-dot"></span><span id="tarotMemberButtonText">免費登入</span></button>
       <a class="listing-open" id="openListing" href="apply-listing.html?from=tarot">申請刊登</a>
     </div>
@@ -2819,7 +2818,7 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
       <button class="tarot-local-login" id="tarotLocalLogin" type="button" hidden>本機預覽｜模擬免費登入</button>
       <div class="tarot-member-profile" id="tarotMemberProfile" hidden>
         <b id="tarotMemberName">會員</b><span id="tarotMemberEmail"></span>
-        <a href="tarot-records.html" class="tarot-records-toplink" style="margin:9px 0">查看我的塔羅紀錄</a>
+        <a href="member.html" class="tarot-records-toplink" style="margin:9px 0">前往會員中心</a>
         <button id="tarotMemberLogout" type="button">登出</button>
       </div>
     </div>
@@ -3899,7 +3898,9 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
   function updateMemberUI(){
     const p=authProfile(),btn=$('tarotMemberButton'),txt=$('tarotMemberButtonText');if(p)bindMemberDevice();if(!btn||!txt)return;
     btn.classList.toggle('logged',!!p);
-    txt.textContent=p?(p.name||'會員'):'免費登入';
+    txt.textContent=p?'會員中心':'免費登入';
+    btn.setAttribute('aria-label',p?'前往一念知機會員中心':'免費登入一念知機會員');
+    btn.title=p?'前往一念知機會員中心':'免費登入';
     updateAccessMini();updateQuotaUI();
     const prof=$('tarotMemberProfile');
     if(prof){
@@ -5668,7 +5669,10 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     if(openTesting){$('worldSecond')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
     location.href='payment.html';
   });
-  $('tarotMemberButton')?.addEventListener('click',()=>openMemberModal());
+  $('tarotMemberButton')?.addEventListener('click',()=>{
+    if(isLogged()){window.location.href='member.html';return;}
+    openMemberModal();
+  });
   $('tarotMemberClose')?.addEventListener('click',closeMemberModal);
   $('tarotMemberLogout')?.addEventListener('click',logoutMember);
   $('tarotLocalLogin')?.addEventListener('click',()=>{if(isAdminTestActive()){simulateAdminMemberLogin();return;}safeWrite(TAROT_LOCAL_MEMBER_KEY,true);memberLoginSucceeded();});
