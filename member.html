@@ -86,6 +86,16 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 .review-my-status{border-left:3px solid var(--primary2)}
 .review-my-status p{margin-bottom:2px}
 @media(max-width:690px){#rvFields{grid-template-columns:1fr;gap:8px}#rvFields>.review-field{grid-column:1/-1}.review-form-panel{padding:16px}}
+
+/* 站長公告：會員首頁主視覺下方，只有已發布資料才顯示。 */
+.member-announcement{margin:14px 0 28px;border:1px solid color-mix(in srgb,var(--gold) 43%,var(--line));border-left:3px solid var(--gold);border-radius:17px;background:linear-gradient(130deg,color-mix(in srgb,var(--gold) 8%,var(--surface)),var(--base) 75%);padding:22px 25px}
+.member-announcement-heading{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px;color:var(--gold)}
+.member-announcement-icon{font-size:1.16rem}.member-announcement-tag{font-size:.76rem;font-weight:800;letter-spacing:.13em}
+.member-announcement-date{margin-left:auto;font-size:.72rem;color:var(--muted)}
+.member-announcement h2{font-size:1.15rem;line-height:1.45;margin:4px 0 9px;overflow-wrap:anywhere}
+.member-announcement-content{color:var(--sub);font-size:.89rem;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.member-announcement-sign{margin-top:14px;text-align:right;color:var(--muted);font-size:.73rem}
+@media(max-width:580px){.member-announcement{padding:17px 16px}.member-announcement-date{margin-left:0;width:100%}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -97,6 +107,13 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 <main class="shell">
 <section id="pageHome" class="view">
   <div class="hero"><div class="hero-shell"><div><div class="kicker">DIVINATION HUB · MEMBER CENTER</div><h1 class="page-heading">我的會員中心</h1><p class="lead">一個會員帳號，集中管理八字命盤、塔羅及易經紀錄。網站有問題，也可以透過簡單的異常紅燈通知站長。</p></div><div class="hero-decor" aria-hidden="true">✧</div></div></div>
+  <!-- 站長公告：只顯示後端已正式發布的公開訊息 -->
+  <aside id="memberAnnouncement" class="member-announcement" aria-labelledby="memberAnnouncementTitle" hidden>
+    <div class="member-announcement-heading"><span class="member-announcement-icon" aria-hidden="true">✦</span><span class="member-announcement-tag">站長公告</span><time id="memberAnnouncementDate" class="member-announcement-date"></time></div>
+    <h2 id="memberAnnouncementTitle"></h2>
+    <p id="memberAnnouncementContent" class="member-announcement-content"></p>
+    <div class="member-announcement-sign">一念知機｜站長</div>
+  </aside>
   <div id="homeLoginNotice" class="panel login-card" hidden>
     <h2>登入後查看自己的資料</h2><p>使用一念知機原本的 Google 會員帳號，不需要再註冊。登入後可以查看既有八字、塔羅紀錄。</p><div class="google-mount" id="googleLoginMount"></div><p id="loginMessage" class="caption" role="status"></p>
   </div>
@@ -206,6 +223,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   // 站長後台需驗證管理員權限，並實作門檻設定、修復清燈、啟閉及清除個別對話。
   // 只有後端回覆成功，才顯示紅燈已回報、對話已送出。
   const API_MEMBER='https://member-api.ezgocpu.workers.dev';
+  const API_PUBLIC_ANNOUNCEMENT='https://admin-api.ezgocpu.workers.dev/member-announcement';
   const AUTH_KEY='divinationhub-bazi-google-credential';
   const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   const $=id=>document.getElementById(id);
@@ -223,13 +241,31 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   function parseJwt(token){try{const s=token.split('.')[1]?.replace(/-/g,'+').replace(/_/g,'/');if(!s)return null;const padded=s.padEnd(Math.ceil(s.length/4)*4,'=');const bytes=Uint8Array.from(atob(padded),c=>c.charCodeAt(0));return JSON.parse(new TextDecoder().decode(bytes))}catch(_){return null}}
   function profile(){const token=getToken(),p=parseJwt(token);return p&&Number(p.exp||0)*1000>Date.now()?p:null}
   function showNotice(id,message,cls=''){const el=$(id);el.textContent=message;el.className='notice '+cls}
+  // 公告讀取完全獨立於 Google 登入／會員 D1；失敗時不顯示過期草稿。
+  let announcementLoading=false,announcementLastRead=0;
+  async function refreshMemberAnnouncement(force=false){
+    if(announcementLoading||(!force&&Date.now()-announcementLastRead<55000))return;
+    announcementLoading=true;announcementLastRead=Date.now();
+    try{
+      const r=await fetch(API_PUBLIC_ANNOUNCEMENT,{headers:{Accept:'application/json'},cache:'no-store'});
+      const d=await r.json().catch(()=>null);
+      if(!r.ok||!d?.success)throw Error('announcement unavailable');
+      const item=d.visible&&d.announcement?d.announcement:null;
+      if(!item){$('memberAnnouncement').hidden=true;return;}
+      $('memberAnnouncementTitle').textContent=item.title||'';
+      $('memberAnnouncementContent').textContent=item.body||'';
+      $('memberAnnouncementDate').textContent=taiwanDate(item.updatedAt);
+      $('memberAnnouncement').hidden=false;
+    }catch(_){ /* 網路暫時中斷不影響其他會員功能；不宣稱正在發布。 */ }
+    finally{announcementLoading=false}
+  }
   function taiwanDate(value){if(!value)return '—';const t=new Date(value);return Number.isNaN(t.getTime())?'—':t.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'})}
   function pageFromHash(){return ['bazi','tarot','yijing'].includes(location.hash.slice(1))?location.hash.slice(1):'home'}
   function navigate(page){const p=tools.includes(page)?page:'home';if(p==='home'){if(location.hash){history.pushState(null,'',location.pathname+location.search);showPage()}else showPage()}else{if(location.hash==='#'+p)showPage();else location.hash=p}}
   function showPage(){const page=pageFromHash();currentView=page;for(const p of ['home',...tools])$('page'+(p==='home'?'Home':p[0].toUpperCase()+p.slice(1))).hidden=p!==page;window.scrollTo({top:0,behavior:'instant'});document.title=(page==='home'?'會員中心':page==='bazi'?'我的八字命盤':page==='tarot'?'我的塔羅紀錄':'我的易經紀錄')+'｜一念知機';
     if(page==='bazi')loadBazi();
     if(page==='tarot'&&!$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1';}
-    if(page==='home'){if(profile())loadIssues();prepareReviews();}
+    if(page==='home'){refreshMemberAnnouncement();if(profile())loadIssues();prepareReviews();}
   }
   function updateAuthUI(){const p=profile(),isOn=!!p;const name=p?(p.name||p.email||'會員'):'';$('accountChip').hidden=!isOn;$('accountChip').textContent=name;$('logout').hidden=!isOn;$('homeLoginNotice').hidden=isOn;
     if(isOn){$('loginMessage').textContent='';if(sessionKey!==p.sub){sessionKey=p.sub||p.email||'logged';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;}if(currentView==='home')loadIssues();}
@@ -616,6 +652,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     for(const id of ['tarotFrame'])$(id).addEventListener('load',()=>adjustEmbeddedFrame($(id)));
     addEventListener('hashchange',showPage);addEventListener('popstate',showPage);addEventListener('storage',e=>{if(e.key===AUTH_KEY){updateAuthUI();if(currentView==='bazi')loadBazi();if(currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1'}}});
     setInterval(refreshMaintenanceStatus,30000);
+    setInterval(()=>{if(currentView==='home'&&!document.hidden)refreshMemberAnnouncement()},60000);
     // 對話訊息獨立加快為約 5 秒同步；只有已登入且會員首頁在前景時執行。
     async function pollMemberIssueChat(){
       if(memberChatPolling||!profile()||currentView!=='home'||document.hidden)return;
@@ -625,7 +662,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     setInterval(pollMemberIssueChat,5000);
     // 心得審核與其他裝置投稿：在會員首頁自動同步；不重繪未變動內容、不清空正在編輯的文字。
     setInterval(()=>{rvRefreshMineQuiet();if(!document.hidden&&currentView==='home')rvLoadPublished()},15000);
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshMaintenanceStatus();pollMemberIssueChat();rvRefreshMineQuiet();if(currentView==='home')rvLoadPublished()}});
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(currentView==='home')refreshMemberAnnouncement(true);refreshMaintenanceStatus();pollMemberIssueChat();rvRefreshMineQuiet();if(currentView==='home')rvLoadPublished()}});
     window.addEventListener('focus',()=>{rvRefreshMineQuiet();if(currentView==='home')rvLoadPublished()});
     reviewInit();showPage();updateAuthUI();
     if(new URLSearchParams(location.search).get('submitReview')==='1'){

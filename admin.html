@@ -147,6 +147,24 @@ td.muted{color:var(--muted)}
 .review-edit-panel .review-correction-original{background:#0a1119;border-left:2px solid #b59a64;border-radius:0 8px 8px 0;padding:10px;white-space:pre-wrap;line-height:1.7}
 .review-correction-actions{display:flex;gap:8px;flex-wrap:wrap}
 .review-edit-panel .review-edit-error{color:#f4a6a6}
+
+/* 會員中心公告：後台獨立功能，不碰原會員／付款／紅燈／審核流程。 */
+.announcement-admin{padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,.65fr);gap:17px}
+.announcement-editor{display:grid;gap:11px}
+.announcement-admin label{display:block;font-size:.82rem;font-weight:750;color:#e7dfcf;margin-bottom:6px}
+.announcement-admin input[type=text],.announcement-admin textarea{font:inherit;width:100%;padding:11px 12px;border:1px solid #39424f;border-radius:10px;background:#080c13;color:#eee7da;line-height:1.7}
+.announcement-admin textarea{min-height:140px;resize:vertical}
+.announcement-preview{background:#101723;border:1px solid #334055;border-left:3px solid #c0a16a;border-radius:12px;padding:16px;align-self:start;overflow-wrap:anywhere}
+.announcement-preview h3{font-size:1rem;margin:10px 0;color:#fff0d0}.announcement-preview p{font-size:.81rem;line-height:1.85;color:#bfccda;white-space:pre-wrap;margin:8px 0}
+.announcement-status-chip{font-size:.7rem;border-radius:99px;padding:3px 9px;border:1px solid #4a5464;color:#bdcadd}
+.announcement-status-chip.published{border-color:#357760;color:#a6e8c9}
+.announcement-switch{display:flex!important;align-items:center;gap:9px;cursor:pointer;margin:4px 0}
+.announcement-switch input{accent-color:#d9b65d;width:17px;height:17px}
+.announcement-admin-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.announcement-admin .caption{font-size:.72rem;color:#9da9b8}
+#announcementAdminStatus{font-size:.78rem;color:#a9cfbd;line-height:1.7}
+#announcementAdminStatus.error{color:#f2a3ac}
+@media(max-width:800px){.announcement-admin{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -186,6 +204,20 @@ td.muted{color:var(--muted)}
       <div class="card"><span>近 30 日活躍</span><strong id="active30">—</strong></div>
       <div class="card"><span>儲存出生資料</span><strong id="savedBirthProfiles">—</strong></div>
     </div>
+
+    <section class="section" id="announcementAdminSection" style="margin-bottom:24px">
+      <div class="section-head"><h2>📣 站長公告</h2><span>同步顯示在 member.html 會員中心標題下方｜一次一則</span></div>
+      <div class="announcement-admin">
+        <form class="announcement-editor" id="announcementAdminForm">
+          <div><label for="announcementAdminTitle">公告標題</label><input type="text" id="announcementAdminTitle" maxlength="100" placeholder="例如：一念知機網站建置進度說明" autocomplete="off"></div>
+          <div><label for="announcementAdminBody">公告內容</label><textarea id="announcementAdminBody" maxlength="2000" rows="5" placeholder="請輸入要告訴所有會員的網站消息……"></textarea><div class="caption" id="announcementAdminCount">0 / 2000 字</div></div>
+          <label class="announcement-switch" for="announcementAdminPublished"><input type="checkbox" id="announcementAdminPublished">公開顯示在會員中心（取消勾選則保留草稿、隱藏公告）</label>
+          <div class="announcement-admin-actions"><button class="btn" type="submit" id="announcementAdminSave">儲存公告設定</button><button class="btn secondary" type="button" id="announcementAdminReload">重新讀取公告</button></div>
+          <div id="announcementAdminStatus" role="status" aria-live="polite">登入後可編輯公告，尚未發布時會員不會看到。</div>
+        </form>
+        <aside class="announcement-preview"><span id="announcementAdminBadge" class="announcement-status-chip">未發布</span><h3 id="announcementAdminPreviewTitle">公告預覽</h3><p id="announcementAdminPreviewBody">你輸入的內容會先在這裡預覽，儲存且勾選公開後才顯示給會員。</p><div class="caption">公告只顯示純文字，不接受 HTML。</div></aside>
+      </div>
+    </section>
 
     <section class="section" style="margin-bottom:24px">
       <div class="section-head"><h2>各工具使用次數</h2><span>正式使用紀錄｜測試資料不列入</span></div>
@@ -358,6 +390,49 @@ function fmtPaymentTime(t){
   const d=new Date(normalized);
   return Number.isNaN(d.getTime())?raw:d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false});
 }
+
+// 站長公告管理：所有寫入動作使用既有後台 HMAC 憑證。
+let announcementAdminBusy=false,announcementAdminLoaded=false;
+function announcementAdminStatus(message,error=false){const e=$('announcementAdminStatus');e.textContent=message;e.classList.toggle('error',error)}
+function announcementAdminPreview(){
+  const enabled=$('announcementAdminPublished').checked;
+  $('announcementAdminPreviewTitle').textContent=$('announcementAdminTitle').value.trim()||'公告預覽';
+  $('announcementAdminPreviewBody').textContent=$('announcementAdminBody').value.trim()||'你輸入的內容會先在這裡預覽，儲存且勾選公開後才顯示給會員。';
+  const badge=$('announcementAdminBadge');badge.textContent=enabled?'預計公開':'草稿／未公開';badge.classList.toggle('published',enabled);
+  $('announcementAdminCount').textContent=[...$('announcementAdminBody').value].length+' / 2000 字';
+}
+async function announcementAdminRequest(method='GET',payload){
+  const headers={Authorization:'Bearer '+token(),Accept:'application/json'};
+  if(payload!==undefined)headers['Content-Type']='application/json';
+  const r=await fetch(API_BASE+'/admin/member-announcement',{method,headers,body:payload!==undefined?JSON.stringify(payload):undefined,cache:'no-store'});
+  const d=await r.json().catch(()=>null);if(!r.ok||!d?.success)throw Error(d?.error||'公告連線失敗（HTTP '+r.status+'）');return d;
+}
+async function loadAnnouncementAdmin(){
+  if(!token()||announcementAdminBusy)return;
+  announcementAdminBusy=true;
+  announcementAdminStatus('正在讀取公告……');
+  try{const d=await announcementAdminRequest();const a=d.announcement||{};
+    $('announcementAdminTitle').value=a.title||'';
+    $('announcementAdminBody').value=a.body||'';
+    $('announcementAdminPublished').checked=!!a.published;
+    announcementAdminPreview();announcementAdminLoaded=true;
+    announcementAdminStatus(a.published?'公告目前已公開。最後更新：'+fmt(a.updatedAt):'目前未公開，內容可以保留為草稿。');
+  }catch(e){announcementAdminStatus('無法讀取公告：'+e.message,true)}
+  finally{announcementAdminBusy=false}
+}
+$('announcementAdminForm').addEventListener('submit',async e=>{
+  e.preventDefault();if(announcementAdminBusy||!token())return;
+  const title=$('announcementAdminTitle').value.trim(),body=$('announcementAdminBody').value.trim(),published=$('announcementAdminPublished').checked;
+  if([...title].length>100||[...body].length>2000){announcementAdminStatus('標題最多 100 字、內容最多 2000 字。',true);return}
+  if(published&&(!title||!body)){announcementAdminStatus('公開公告前，請填寫標題與內容。',true);return}
+  announcementAdminBusy=true;$('announcementAdminSave').disabled=true;announcementAdminStatus('正在儲存公告……');
+  try{const d=await announcementAdminRequest('POST',{title,body,published});announcementAdminLoaded=true;
+    announcementAdminStatus(d.announcement?.published?'✓ 公告已發布，會員重新開啟會員中心即可看到。':'✓ 已儲存草稿，會員中心不會顯示。');
+  }catch(e){announcementAdminStatus('儲存失敗：'+e.message,true)}
+  finally{announcementAdminBusy=false;$('announcementAdminSave').disabled=false}
+});
+$('announcementAdminReload').addEventListener('click',()=>{if(!announcementAdminBusy&&confirm('重新讀取將覆蓋尚未儲存的修改，確定嗎？'))loadAnnouncementAdmin()});
+for(const id of ['announcementAdminTitle','announcementAdminBody','announcementAdminPublished'])$(id).addEventListener(id==='announcementAdminPublished'?'change':'input',announcementAdminPreview);
 
 function money(v,currency='TWD'){
   const n=Number(v||0).toLocaleString('zh-TW');
@@ -609,6 +684,7 @@ async function loadStats(){
     loadReviewPendingBadge();
     $('status').textContent='';
     loadIssueStats();
+    if(!announcementAdminLoaded)loadAnnouncementAdmin();
 
   }catch(e){
     const msg=e.message||String(e);
