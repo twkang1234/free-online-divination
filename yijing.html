@@ -959,13 +959,48 @@ html[data-theme="light"] .yijing-access-heading .yijing-access-cta{background:li
 
   /* 申請刊登：全站共用獨立頁面，連結保留原有按鈕視覺。 */
   a.listing-open, a.resource-apply-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
+
+/* 2026-10 | 全站導覽一致性：沿用已確認的塔羅導覽結構及按鈕尺寸，保留易經綠色主題。 */
+.page-topbar{gap:18px}
+.page-topbar .topbar-left,.page-topbar .topbar-right{gap:12px;min-width:0}
+.page-topbar .tool-switcher a{padding:6px 10px;font-size:.70rem}
+.page-topbar .theme-toggle{min-height:34px;padding:6px 11px;font-size:.67rem}
+.page-topbar .member-open{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:6px 11px;font-size:.67rem;font-weight:800;transition:.2s ease}
+.page-topbar .member-open:hover{border-color:rgba(124,227,161,.46);background:rgba(124,227,161,.10)}
+.page-topbar .member-open.logged:hover{border-color:rgba(118,220,229,.48);background:rgba(118,220,229,.10)}
+.yijing-member-entry{gap:4px}
+.yijing-member-menu-toggle{min-height:34px;min-width:30px;padding:4px 7px}
+.yijing-member-dot{display:inline-block;flex:0 0 6px;width:6px;height:6px;border-radius:50%;background:#7ce3a1;box-shadow:0 0 12px rgba(124,227,161,.40)}
+.member-open.logged .yijing-member-dot{background:#76dce5;box-shadow:0 0 12px rgba(118,220,229,.42)}
+.yijing-member-dropdown{width:172px}
+.yijing-member-dropdown a,.yijing-member-dropdown button{box-sizing:border-box;display:block;width:100%;padding:9px 11px;border:0;border-radius:8px;background:transparent;color:#d7ecde;text-decoration:none;text-align:left;font:inherit;font-size:.73rem;cursor:pointer}
+.yijing-member-dropdown button{color:#f1afb4}
+.yijing-member-dropdown a:hover,.yijing-member-dropdown button:hover{background:rgba(124,227,161,.10)}
+html[data-theme="light"] .yijing-member-dropdown a{color:#305b3e}
+html[data-theme="light"] .yijing-member-dropdown button{color:#a54155}
+html[data-theme="light"] .yijing-member-dropdown a:hover,html[data-theme="light"] .yijing-member-dropdown button:hover{background:#edf7ef}
+html[data-theme="light"] .page-topbar .member-open{background:#fff;border-color:rgba(49,133,78,.22);color:#306b45}
+html[data-theme="light"] .page-topbar .member-open.logged{border-color:rgba(56,126,137,.23);color:#346b72;background:#f5fafb}
+html[data-theme="light"] .yijing-member-dot{background:#399863;box-shadow:0 0 9px rgba(56,150,86,.20)}
+html[data-theme="light"] .member-open.logged .yijing-member-dot{background:#4e9ba4;box-shadow:0 0 9px rgba(54,136,145,.20)}
+/* 與塔羅採相同斷點；中等寬度不硬擠七個工具。 */
+@media(max-width:1170px){.page-topbar .tool-switcher{display:none}}
+@media(max-width:760px){.page-topbar .theme-toggle{padding:6px 9px}}
+@media(max-width:600px){
+  .page-topbar{gap:7px;flex-wrap:wrap;justify-content:space-between;row-gap:7px}
+  .page-topbar .topbar-left{flex:0 1 auto;gap:5px;min-width:0}
+  .page-topbar .topbar-right{flex:0 0 auto;gap:5px;min-width:0;justify-content:flex-end;margin-left:auto}
+  .page-topbar .back-home{padding:7px 10px;font-size:.68rem}
+  .page-topbar .v2819-home-detail{display:none}
+}
+
 </style>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <header class="page-topbar">
     <div class="topbar-left">
-      <a class="back-home" href="index.html">← 一念知機｜免費線上占卜</a>
+      <a class="back-home" href="index.html" aria-label="回一念知機免費線上占卜首頁"><span>← 一念知機</span><span class="v2819-home-detail">｜免費線上占卜</span></a>
       <nav class="tool-switcher" aria-label="其他免費占卜工具">
         <a href="qimen.html">奇門</a><a href="tarot.html">塔羅</a><a href="bazi.html">八字</a><a href="ziwei.html">紫微</a><a href="meihua.html">梅花</a><a href="liuyao.html">六爻</a><a class="active" href="yijing.html">易經64卦</a>
       </nav>
@@ -973,13 +1008,13 @@ html[data-theme="light"] .yijing-access-heading .yijing-access-cta{background:li
     <div class="topbar-right">
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換顯示模式"><span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">☀</span><span class="theme-toggle-text" id="themeToggleText">淺色</span></button>
       <div class="yijing-member-entry" id="yijingMemberEntry">
-        <button class="member-open" id="yijingMemberButton" type="button" aria-label="免費登入一念知機會員"><span id="yijingMemberButtonText">免費登入</span></button>
+        <button class="member-open" id="yijingMemberButton" type="button" aria-label="免費登入一念知機會員"><span class="yijing-member-dot" aria-hidden="true"></span><span id="yijingMemberButtonText">免費登入</span></button>
         <button class="yijing-member-menu-toggle" id="yijingMemberMenuToggle" type="button" aria-controls="yijingMemberDropdown" aria-label="會員選單，包含登出" aria-expanded="false" title="會員選單／登出" hidden>▾</button>
         <div class="yijing-member-dropdown" id="yijingMemberDropdown" hidden>
+          <a href="member.html">進入會員中心</a>
           <button id="yijingMemberMenuLogout" type="button">登出會員</button>
         </div>
       </div>
-      <div class="page-status">APPLY TO BE LISTED</div>
       <a class="listing-open" id="openListing" href="apply-listing.html?from=yijing">申請刊登</a>
     </div>
   </header>
