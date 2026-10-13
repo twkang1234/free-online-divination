@@ -174,7 +174,7 @@ td.muted{color:var(--muted)}
       <p class="issue-info" id="issueAdminStatus" role="status" aria-live="polite">達到門檻時，此後台會亮起警告；目前不會發送 Email 或自動關閉工具。</p>
       <p class="issue-info">站長可針對個別工具開啟「全面紅燈｜維修中」。會員中心會顯示維修訊息，並暫停該工具個人回報；只要有任一工具維修，心得測試投稿區便暫時停用。<strong>不會停止八字、塔羅、易經核心功能。</strong> 站長解除維修時會清除該工具全部會員的紅燈，展開新一輪統計。可在下方「查看回報會員」中由站長主動詢問；會員無法先傳訊。</p>
       <div class="issue-chat-admin" id="issueChatAdmin" hidden>
-        <div class="issue-chat-toolbar"><div><h3 id="issueChatHeading">站長主動詢問會員</h3><p class="issue-chat-desc">只有目前回報過紅燈的會員才能由站長首次開啟對話；解決後可結束並永久刪除對話訊息。</p></div><button class="btn secondary" type="button" id="issueChatHide">收起此區</button></div>
+        <div class="issue-chat-toolbar"><div><h3 id="issueChatHeading">站長主動詢問會員</h3><p class="issue-chat-desc">只有目前回報過紅燈的會員才能由站長首次開啟對話；解決後可結束並永久刪除對話訊息。開啟對話後約每 5 秒自動更新。</p></div><button class="btn secondary" type="button" id="issueChatHide">收起此區</button></div>
         <div class="issue-chat-columns">
           <div><div class="issue-chat-toolbar"><strong style="font-size:.84rem">回報會員名單</strong><button class="btn secondary" type="button" id="issueChatReload">重新整理</button></div><div class="issue-reporter-list" id="issueReporterList" role="list"><div class="issue-chat-status">選擇工具後載入會員……</div></div><button class="btn secondary" type="button" id="issueReporterMore" hidden style="margin-top:9px">載入更多會員</button></div>
           <div class="issue-dialog"><h4 id="issueChatMember">請先從左邊選擇會員</h4><p class="issue-chat-desc" id="issueChatHelp">會員沒有收到站長詢問前，對話框一直灰暗鎖定。</p><div class="issue-msgs" id="issueChatMessages"></div><form id="issueAdminChatForm"><textarea maxlength="500" id="issueAdminChatText" disabled placeholder="選擇回報會員後，可輸入問題，例如：請問八字排盤哪個地方出錯？"></textarea><div class="issue-dialog-actions"><button class="btn" id="issueChatSend" type="submit" disabled>發送站長詢問</button><button class="btn secondary" id="issueChatClose" type="button" hidden>結束並刪除對話</button><small style="color:#a5b0bd" id="issueChatChars">0 / 500 字</small></div></form><div id="issueChatStatus" class="issue-chat-status" role="status" aria-live="polite"></div></div>
@@ -691,6 +691,8 @@ async function changeMaintenance(tool,label,active){
 
 // 站長主動詢問。只有後端驗證管理員後才會回傳會員姓名、Email 或私訊。
 let activeIssueTool='',activeIssueLabel='',activeReporter=null,activeThreadId=null,reporterOffset=0,issueHasMore=false,issueChatBusy=false;
+// 對話僅在開啟且頁面可見時定期讀取；避免重覆重繪或清空正在輸入的內容。
+let issueChatReadSeq=0,issueChatPolling=false,renderedThreadId=null,renderedChatSignature='';
 function adminChatStatus(msg,error=false){const el=$('issueChatStatus');el.textContent=msg;el.className='issue-chat-status'+(error?' error':'')}
 async function issueAdminFetch(path,body){
   const options={headers:{Authorization:'Bearer '+token(),Accept:'application/json'},cache:'no-store'};
@@ -698,7 +700,7 @@ async function issueAdminFetch(path,body){
   const r=await fetch(API_BASE+path,options);const j=await r.json().catch(()=>null);
   if(!r.ok||!j?.success)throw Error(j?.error||'操作失敗');return j;
 }
-function resetIssueChatComposer(){activeReporter=null;activeThreadId=null;$('issueChatMember').textContent='請先從左邊選擇會員';$('issueChatHelp').textContent='只有站長可以主動開啟對話。';$('issueChatMessages').replaceChildren();$('issueAdminChatText').value='';$('issueAdminChatText').disabled=true;$('issueChatSend').disabled=true;$('issueChatClose').hidden=true;$('issueChatChars').textContent='0 / 500 字';adminChatStatus('')}
+function resetIssueChatComposer(){issueChatReadSeq++;renderedThreadId=null;renderedChatSignature='';activeReporter=null;activeThreadId=null;$('issueChatMember').textContent='請先從左邊選擇會員';$('issueChatHelp').textContent='只有站長可以主動開啟對話。';$('issueChatMessages').replaceChildren();$('issueAdminChatText').value='';$('issueAdminChatText').disabled=true;$('issueChatSend').disabled=true;$('issueChatClose').hidden=true;$('issueChatChars').textContent='0 / 500 字';adminChatStatus('')}
 async function openIssueReporterPanel(tool,label){
   if(!token())return;activeIssueTool=tool;activeIssueLabel=label;reporterOffset=0;issueHasMore=false;
   $('issueChatAdmin').hidden=false;$('issueChatHeading').textContent=label+'｜回報會員與站長詢問';resetIssueChatComposer();
@@ -725,6 +727,7 @@ async function loadIssueReporterList(append=false){
   }catch(e){adminChatStatus('查詢會員失敗：'+e.message,true)}
 }
 async function selectIssueReporter(r){
+  issueChatReadSeq++;renderedThreadId=null;renderedChatSignature='';
   activeReporter=r;activeThreadId=r.conversationId||null;
   $('issueChatMember').textContent=(r.name||'會員')+'｜'+activeIssueLabel;
   $('issueChatMessages').replaceChildren();$('issueAdminChatText').value='';$('issueChatChars').textContent='0 / 500 字';
@@ -734,20 +737,33 @@ async function selectIssueReporter(r){
   $('issueChatSend').textContent=activeThreadId?'回覆會員':'發送站長詢問';adminChatStatus('');
   if(activeThreadId)await loadIssueConversation(activeThreadId)
 }
-async function loadIssueConversation(id){
+async function loadIssueConversation(id,silent=false){
   if(!id||!token())return;
+  const seq=++issueChatReadSeq;
   try{
     const j=await issueAdminFetch('/admin/issues/chat/read?conversationId='+encodeURIComponent(id));
-    if(activeThreadId!==id)return;
-    const wrap=$('issueChatMessages');wrap.replaceChildren();
-    for(const m of j.messages){const div=document.createElement('div');div.className='issue-msg '+(m.role==='admin'?'admin':'member');const author=document.createElement('small');author.textContent=m.role==='admin'?'一念知機站長':'會員';const body=document.createElement('div');body.textContent=m.text;div.append(author,body);wrap.append(div)}
-    wrap.scrollTop=wrap.scrollHeight;
+    if(activeThreadId!==id||seq!==issueChatReadSeq)return;
+    const wrap=$('issueChatMessages');
+    const signature=JSON.stringify(j.messages.map(m=>[m.role,m.text,m.createdAt]));
+    if(renderedThreadId!==id||renderedChatSignature!==signature){
+      const initial=renderedThreadId!==id;
+      const atBottom=wrap.scrollHeight-wrap.scrollTop-wrap.clientHeight<48;
+      wrap.replaceChildren();
+      for(const m of j.messages){
+        const div=document.createElement('div');div.className='issue-msg '+(m.role==='admin'?'admin':'member');
+        const author=document.createElement('small');author.textContent=m.role==='admin'?'一念知機站長':'會員';
+        const body=document.createElement('div');body.textContent=m.text;div.append(author,body);wrap.append(div)
+      }
+      renderedThreadId=id;renderedChatSignature=signature;
+      if(initial||atBottom)wrap.scrollTop=wrap.scrollHeight;
+    }
     const used=j.messages.filter(m=>m.role==='admin').length;
     $('issueChatHelp').textContent='私人對話已開啟｜站長已發送 '+used+'/8 則；會員最多回覆 6 則。解除全面維修紅燈不會提前關閉此對話。';
     $('issueChatSend').textContent='回覆會員';
-    $('issueAdminChatText').disabled=used>=8;$('issueChatSend').disabled=used>=8||!$('issueAdminChatText').value.trim();
+    $('issueAdminChatText').disabled=used>=8;
+    $('issueChatSend').disabled=issueChatBusy||used>=8||!$('issueAdminChatText').value.trim();
     $('issueChatClose').hidden=false;
-  }catch(e){adminChatStatus('讀取對話失敗：'+e.message,true)}
+  }catch(e){if(!silent)adminChatStatus('讀取對話失敗：'+e.message,true)}
 }
 async function sendIssueAdminMessage(e){
   e.preventDefault();if(issueChatBusy||!activeReporter||!token())return;
@@ -780,9 +796,20 @@ $('issueAdminChatText').addEventListener('input',()=>{
 });
 $('issueSaveThreshold').addEventListener('click',saveIssueThreshold);
 $('issueRefresh').addEventListener('click',loadIssueStats);
-// 開著管理員後台時每分鐘重新檢查；不寄送訊息，也不在背景建立外部排程。
+// 只有開啟會員對話、且後台在前景時才每 5 秒讀取新回覆（不是 WebSocket）。
+async function pollAdminIssueChat(){
+  if(document.hidden||$('dashboard').hidden||$('issueChatAdmin').hidden||!activeThreadId||!token()||issueChatBusy||issueChatPolling)return;
+  issueChatPolling=true;
+  try{await loadIssueConversation(activeThreadId,true)}finally{issueChatPolling=false}
+}
+setInterval(pollAdminIssueChat,5000);
+// 紅燈統計維持每 30 秒更新，與私人對話獨立，避免增加不必要請求。
 setInterval(()=>{if(!document.hidden&&!$('dashboard').hidden&&token())loadIssueStats()},30000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('dashboard').hidden&&token())loadIssueStats()});
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&!$('dashboard').hidden&&token()){
+    loadIssueStats();pollAdminIssueChat();
+  }
+});
 
 if(token())loadStats();
 else showLogin();

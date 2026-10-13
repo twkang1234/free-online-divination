@@ -188,6 +188,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   const tools=['bazi','tarot','yijing'];
   const toolNames={bazi:'八字排盤',tarot:'塔羅占卜',yijing:'易經占卜'};
   let googleReady=false,currentView='home',sessionKey='',baziRecords=[],lightData=null,chatData=null,selectedChatId=null;
+  let memberChatReadSeq=0,memberChatPolling=false,memberChatVisualKey='';
   const healthPreviewMode=location.protocol==='file:'; // 只在本機 HTML 外觀預覽，絕不送回報
   const previewHealth={bazi:false,tarot:false,yijing:false};
   let issueBusy=new Set();
@@ -316,19 +317,21 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     finally{issueRefreshRunning=false}
     if(owner===getToken())await refreshMemberChat();
   }
-  async function refreshMemberChat(conversationId=selectedChatId){
+  async function refreshMemberChat(conversationId=selectedChatId,silentNetworkError=false){
     if(!profile())return;
-    const oldToken=getToken();
+    const oldToken=getToken(),readSeq=++memberChatReadSeq;
     try{
       const query=conversationId?'?conversationId='+encodeURIComponent(conversationId):'';
       const j=await api('/member/issue-chat'+query);
-      if(oldToken!==getToken())return;
+      if(oldToken!==getToken()||readSeq!==memberChatReadSeq)return;
       chatData=j;
       if(selectedChatId!==j.conversationId){$('chatText').value='';$('chatCounter').textContent='0 / 500 字';}
       selectedChatId=j.open?j.conversationId:null;
       renderChat();
-    }catch(_){
-      if(oldToken!==getToken())return;
+    }catch(err){
+      if(oldToken!==getToken()||readSeq!==memberChatReadSeq)return;
+      // 背景輪詢若短暫斷線，不要將目前對話清空，更不能抹掉會員正在輸入的草稿。
+      if(silentNetworkError&&(!conversationId||!String(err?.message||'').includes('此功能的後端尚未啟用')))return;
       if(conversationId){selectedChatId=null;await refreshMemberChat(null);return;}
       chatData=null;$('chatText').value='';renderChat();
     }
@@ -368,21 +371,30 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     const used=(chatData?.messages||[]).filter(m=>m.role==='member').length;
     const canReply=open&&used<6;
     panel.classList.toggle('locked',!open);area.disabled=!canReply;send.disabled=!canReply||!area.value.trim();
-    messages.replaceChildren();select.replaceChildren();
+    const visualKey=JSON.stringify([open,chatData?.conversationId||null,all.map(t=>[t.id,t.tool]),(chatData?.messages||[]).map(m=>[m.role,m.text,m.createdAt])]);
+    const visualChanged=memberChatVisualKey!==visualKey;
+    const nearBottom=messages.scrollHeight-messages.scrollTop-messages.clientHeight<48;
+    if(visualChanged){
+      messages.replaceChildren();select.replaceChildren();
+      for(const t of all){const o=document.createElement('option');o.value=String(t.id);o.textContent=toolNames[t.tool]||t.tool;select.append(o)}
+      if(open)select.value=String(chatData.conversationId);
+      memberChatVisualKey=visualKey;
+    }
     $('chatSelectRow').hidden=all.length<2;
-    for(const t of all){const o=document.createElement('option');o.value=String(t.id);o.textContent=toolNames[t.tool]||t.tool;select.append(o)}
-    if(open)select.value=String(chatData.conversationId);
     $('chatState').textContent=open?'站長已開啟':'預設關閉';
     $('chatInfo').textContent=open
       ?`站長正在詢問${toolNames[chatData.tool]||'網站'}的異常細節。您已回覆 ${used}/6 則；問題修復後由站長關閉並清除對話。`
       :'只有站長主動詢問後，對話框才會開啟。會員無法主動私訊站長。';
     area.placeholder=!open?'目前未開放，等待站長詢問……':canReply?'請簡單回覆站長詢問的問題……':'這段對話已達六則回覆上限，請等待站長處理';
     messages.hidden=!open;
-    if(open){for(const m of (Array.isArray(chatData.messages)?chatData.messages:[])){
-      const bubble=textNode('div','','bubble '+(m.role==='member'?'mine':'staff'));
-      bubble.append(textNode('small',m.role==='member'?'我':'一念知機站長'),textNode('div',m.text||''));
-      messages.append(bubble)
-    }messages.scrollTop=messages.scrollHeight}
+    if(open&&visualChanged){
+      for(const m of (Array.isArray(chatData.messages)?chatData.messages:[])){
+        const bubble=textNode('div','','bubble '+(m.role==='member'?'mine':'staff'));
+        bubble.append(textNode('small',m.role==='member'?'我':'一念知機站長'),textNode('div',m.text||''));
+        messages.append(bubble)
+      }
+      if(nearBottom)messages.scrollTop=messages.scrollHeight;
+    }
   }
   async function sendChat(e){
     e.preventDefault();const content=$('chatText').value.trim();
@@ -443,7 +455,14 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     for(const id of ['tarotFrame'])$(id).addEventListener('load',()=>adjustEmbeddedFrame($(id)));
     addEventListener('hashchange',showPage);addEventListener('popstate',showPage);addEventListener('storage',e=>{if(e.key===AUTH_KEY){updateAuthUI();if(currentView==='bazi')loadBazi();if(currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1'}}});
     setInterval(refreshMaintenanceStatus,30000);
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshMaintenanceStatus()});
+    // 對話訊息獨立加快為約 5 秒同步；只有已登入且會員首頁在前景時執行。
+    async function pollMemberIssueChat(){
+      if(memberChatPolling||!profile()||currentView!=='home'||document.hidden)return;
+      memberChatPolling=true;
+      try{await refreshMemberChat(selectedChatId,true)}finally{memberChatPolling=false}
+    }
+    setInterval(pollMemberIssueChat,5000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshMaintenanceStatus();pollMemberIssueChat()}});
     reviewInit();showPage();updateAuthUI();
   }
   init();
