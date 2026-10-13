@@ -114,6 +114,22 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 .review-rules summary .review-rules-more{color:var(--muted);font-size:.72rem;font-weight:500}
 .review-my[hidden]{display:none!important}
 @media(max-width:580px){.member-announcement{padding:16px 15px}.chat.locked{padding:13px 14px}.member-announcement:not(.is-expanded) .member-announcement-content{-webkit-line-clamp:4}}
+
+/* 精簡會員公開介面：心得列表預設收合，技術提示不佔畫面 */
+.hero .lead{max-width:960px;text-wrap:pretty}
+.public-reviews-head{margin-bottom:12px}
+.public-reviews-fold{border:1px solid var(--line);background:var(--base);border-radius:13px;overflow:hidden}
+.public-reviews-fold>summary{display:flex;justify-content:space-between;align-items:center;gap:12px;list-style:none;cursor:pointer;padding:13px 17px;font-size:.86rem;font-weight:750;color:var(--ink)}
+.public-reviews-fold>summary::-webkit-details-marker{display:none}
+.public-reviews-fold>summary:hover{background:color-mix(in srgb,var(--primary) 5%,var(--base))}
+.public-fold-state{font-size:.76rem;color:var(--primary)}
+.public-close-label{display:none}
+.public-reviews-fold[open] .public-close-label{display:inline}
+.public-reviews-fold[open] .public-open-label{display:none}
+.public-reviews-content{padding:0 14px 15px;border-top:1px solid var(--line)}
+.public-reviews-content .review-my-list{padding-top:14px}
+.public-reviews-foot{margin-top:10px;display:flex;justify-content:flex-end}
+@media(max-width:580px){.hero .lead{max-width:100%}.public-reviews-head{align-items:flex-start}.public-reviews-fold>summary{padding:12px 13px}.public-reviews-content{padding:0 10px 12px}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -124,7 +140,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 </div></header>
 <main class="shell">
 <section id="pageHome" class="view">
-  <div class="hero"><div class="hero-shell"><div><div class="kicker">DIVINATION HUB · MEMBER CENTER</div><h1 class="page-heading">我的會員中心</h1><p class="lead">一個會員帳號，集中管理八字命盤、塔羅及易經紀錄。網站有問題，也可以透過簡單的異常紅燈通知站長。</p></div><div class="hero-decor" aria-hidden="true">✧</div></div></div>
+  <div class="hero"><div class="hero-shell"><div><div class="kicker">DIVINATION HUB · MEMBER CENTER</div><h1 class="page-heading">我的會員中心</h1><p class="lead">在這裡管理八字命盤、塔羅與易經紀錄，也能快速回報網站使用問題。</p></div><div class="hero-decor" aria-hidden="true">✧</div></div></div>
   <!-- 站長公告：只顯示後端已正式發布的公開訊息 -->
   <aside id="memberAnnouncement" class="member-announcement" aria-labelledby="memberAnnouncementTitle" hidden>
     <div class="member-announcement-heading"><span class="member-announcement-icon" aria-hidden="true">✦</span><span class="member-announcement-tag">站長公告</span><time id="memberAnnouncementDate" class="member-announcement-date"></time></div>
@@ -136,12 +152,12 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   <div id="homeLoginNotice" class="panel login-card" hidden>
     <h2>登入後查看自己的資料</h2><p>使用一念知機原本的 Google 會員帳號，不需要再註冊。登入後可以查看既有八字、塔羅紀錄。</p><div class="google-mount" id="googleLoginMount"></div><p id="loginMessage" class="caption" role="status"></p>
   </div>
-  <section class="section" style="margin-top:27px;padding-top:28px"><div class="section-top"><div><div class="eyebrow">MY DIVINATION</div><h2>我的占卜與命盤</h2><p class="section-lead">點擊後切換全畫面假分頁，不需要跳到另一個會員網站。</p></div></div>
+  <section class="section" style="margin-top:27px;padding-top:28px"><div class="section-top"><div><div class="eyebrow">MY DIVINATION</div><h2>我的占卜與命盤</h2><p class="section-lead">選擇工具，查看你的命盤與占卜紀錄。</p></div></div>
     <div class="tool-grid">
       <button class="tool-tile bazi" data-page="bazi" type="button"><span class="tile-icon">◈</span><h3>我的八字命盤</h3><p>管理本人與家人的出生資料、設定預設命盤。</p><span class="enter">開啟我的八字　↗</span></button>
       <button class="tool-tile tarot" data-page="tarot" type="button"><span class="tile-icon">✧</span><h3>我的塔羅紀錄</h3><p>回顧抽牌結果、記事、回顧提醒及已保存的資料。</p><span class="enter">開啟我的塔羅　↗</span></button>
       <button class="tool-tile yijing" data-page="yijing" type="button"><span class="tile-icon">☯</span><h3>我的易經紀錄</h3><p>未來可集中查詢起卦問題、本卦、變卦及回顧記事。</p><span class="enter">開啟我的易經　↗</span></button>
-    </div><p class="future-note">未來增加其他占卜工具，可以繼續加入同樣的假分頁，不必重新建立整套會員中心。</p>
+    </div>
   </section>
   <section class="section" id="issueSection"><div class="section-top"><div><div class="eyebrow">SITE HEALTH</div><h2>網站異常回報</h2><p class="section-lead">工具異常時切換紅燈，恢復後再切回綠燈；站長維修時會顯示維修狀態。</p></div><span class="pill">會員回報 · 不公開</span></div>
     <div id="issueNotice" class="notice warn" role="status" aria-live="polite">正在檢查異常回報功能……</div>
@@ -183,30 +199,35 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     </div>
   </section>
   <section class="section reviews-block" id="reviewSection">
-    <div class="section-top"><div><div class="eyebrow">MEMBER REVIEWS</div><h2>會員心得評價</h2><p class="section-lead">在會員中心直接分享八字、塔羅、易經等工具的真實使用體驗。<strong>只評價網站工具，不必透露占卜問題或出生資料。</strong></p></div></div>
+    <div class="section-top"><div><div class="eyebrow">MEMBER REVIEWS</div><h2>會員心得評價</h2><p class="section-lead">歡迎分享使用心得與建議，讓一念知機變得更好。</p></div></div>
     <div id="reviewMaintenanceNotice" class="signal-maintenance" role="status" hidden><strong>網站維修中｜心得投稿暫時關閉</strong><div>站長正在修復部分網站功能，為避免維修期間產生誤會，暫停心得評價及修改；全部維修解除後會恢復。原有心得不會被刪除。</div></div>
     <div id="reviewHealthUnavailable" class="notice warn" role="status" hidden>目前無法確認網站維修狀態，因此心得投稿表單暫時停用。稍後重新整理即可重試；原有心得不受影響。</div>
-    <div class="notice ok review-preview-notice" id="rvStageNotice" role="status"><strong>正式會員心得投稿</strong>：登入後提交心得，資料會儲存至網站資料庫並等待站長審核；核准前不會公開。以前的本機測試資料不會自動投稿。</div>
     <div class="review-layout">
       <div class="panel review-form-panel">
         <div class="review-ident"><div><strong id="rvIdentityTitle">登入會員，分享心得</strong><div class="caption" id="rvIdentityDesc">使用一念知機共用 Google 會員帳號。</div></div><button type="button" class="btn small ghost" id="rvDemoLogin" hidden disabled>本機試用表單</button></div>
-        <details class="review-rules"><summary>投稿不限篇數 · 每篇審核後公開 · 已刊登不可修改 <span class="review-rules-more">（詳細規則）</span></summary><p class="review-rules-detail">同一工具可以持續投稿多篇，不限每日篇數及投稿間隔；每篇都須站長審核。審核前可以修改，刊登後即鎖定，不得修改或刪除。公開時只顯示會員自訂暱稱，不公開 Google 帳號、生日或占卜資料。</p></details>
+        <details class="review-rules"><summary>投稿小提醒</summary><p class="review-rules-detail">歡迎隨時分享真實感受，不限投稿篇數。內容確認後才會公開；已刊登的心得無法再編輯。請勿填寫生日、占卜問題等私人資料。</p></details>
         <form id="rvForm" novalidate>
           <fieldset id="rvFields" disabled>
-            <div class="review-field"><label for="rvTool">這次要評價哪個工具？ <span class="required">*</span></label><select id="rvTool" class="field"><option value="bazi">八字排盤</option><option value="tarot">塔羅占卜</option><option value="yijing">易經占卜</option><option value="site">整體網站體驗</option></select><div class="review-existing" id="rvExistingNotice" role="status" hidden><span id="rvExistingText">這套工具已有心得。</span><button type="button" class="btn small ghost" id="rvExistingEdit">修改原心得</button></div></div>
+            <div class="review-field"><label for="rvTool">這次要評價哪個工具？ <span class="required">*</span></label><select id="rvTool" class="field"><option value="bazi">八字排盤</option><option value="tarot">塔羅占卜</option><option value="yijing">易經占卜</option><option value="site">整體網站體驗</option></select><div class="review-existing" id="rvExistingNotice" role="status" hidden><span id="rvExistingText">你有一篇心得可以繼續修改。</span><button type="button" class="btn small ghost" id="rvExistingEdit">修改原心得</button></div></div>
             <div class="review-field"><span class="field-label" id="rvRatingLabel">整體使用評分 <span class="required">*</span></span><div class="review-stars" role="group" aria-labelledby="rvRatingLabel"><button type="button" data-rv-star="1" aria-label="評 1 顆星" aria-pressed="false">★</button><button type="button" data-rv-star="2" aria-label="評 2 顆星" aria-pressed="false">★</button><button type="button" data-rv-star="3" aria-label="評 3 顆星" aria-pressed="false">★</button><button type="button" data-rv-star="4" aria-label="評 4 顆星" aria-pressed="false">★</button><button type="button" data-rv-star="5" aria-label="評 5 顆星" aria-pressed="false">★</button><span class="rating-note" id="rvRatingNote">尚未評分</span></div><div class="caption">歡迎真實評分，也可以提出需要改善的地方。</div></div>
             <div class="review-two"><div class="review-field"><label for="rvNick">公開暱稱 <span class="required">*</span></label><input class="field" id="rvNick" autocomplete="nickname" maxlength="18" placeholder="例如：星空旅人"></div><div class="review-field"><label for="rvTitle">心得標題 <span class="required">*</span></label><input class="field" id="rvTitle" maxlength="50" placeholder="例如：第一次抽牌很好上手"></div></div>
             <div class="review-field"><label for="rvBody">使用心得與建議 <span class="required">*</span></label><textarea class="field textarea review-body" id="rvBody" maxlength="500" placeholder="分享你實際使用的感受，或是希望改善的功能……"></textarea><div class="review-count" id="rvCount">0 / 500 字（至少 20 字）</div></div>
             <details class="review-inspire"><summary>不知道寫什麼？點選一個參考方向</summary><div class="review-inspire-list"><button type="button" data-rv-inspire="first">第一次使用容易上手嗎？</button><button type="button" data-rv-inspire="feature">哪個功能讓你印象深刻？</button><button type="button" data-rv-inspire="explain">畫面或說明容易理解嗎？</button><button type="button" data-rv-inspire="mobile">手機使用順不順暢？</button><button type="button" data-rv-inspire="better">希望未來改善什麼？</button><button type="button" data-rv-inspire="share">會推薦別人使用嗎？為什麼？</button></div><div class="review-example" id="rvExample">「第一次接觸這個工具，原本擔心不會操作，實際使用後發現引導很清楚，幾個步驟就完成了。如果第一次進站能多一點提示會更好。」</div><div class="caption">範例只作參考，不會自動填入心得。</div></details>
-            <div class="review-actions"><button class="btn primary" type="submit" id="rvSubmit">送出心得｜等待審核</button><button class="btn ghost" id="rvReset" type="button">清空表單</button></div>
+            <div class="review-actions"><button class="btn primary" type="submit" id="rvSubmit">分享心得</button><button class="btn ghost" id="rvReset" type="button">清空表單</button></div>
           </fieldset>
-          <div class="notice review-status" id="rvStatus" role="status" aria-live="polite">請登入會員，載入正式心得資料後即可投稿。</div>
+          <div class="notice review-status" id="rvStatus" role="status" aria-live="polite" hidden></div>
         </form>
       </div>
 
     </div>
-    <div class="panel review-my"><div class="section-top"><div><h3>我的心得</h3><p class="section-lead">待審核與未通過的投稿可以修改；已刊登的心得僅在下方公開展示區查看。</p></div><span class="pill">正式會員資料</span></div><div id="rvMine" class="review-my-list"><p class="caption">尚無心得。</p></div></div>
-    <div class="panel review-my" id="rvPublicSection"><div class="section-top"><div><h3>最新公開心得</h3><p class="section-lead">僅顯示最新 3 篇；更多心得請前往完整展示牆。</p></div><div class="review-actions"><a class="btn small ghost" href="member-reviews.html">完整心得展示牆 ↗</a><button type="button" class="btn small ghost" id="rvPublicRefresh">重新整理</button></div></div><div id="rvPublicWall" class="review-my-list"><p class="caption">正在讀取正式公開心得……</p></div></div>
+    <div class="panel review-my"><div class="section-top"><div><h3>我的心得</h3><p class="section-lead">查看尚未刊登的心得，或繼續修改內容。</p></div></div><div id="rvMine" class="review-my-list"><p class="caption">尚無心得。</p></div></div>
+    <div class="panel review-my" id="rvPublicSection">
+      <div class="section-top public-reviews-head"><div><h3>最新會員心得</h3><p class="section-lead">看看大家的使用心得。</p></div><a class="btn small ghost" href="member-reviews.html">查看全部心得 ↗</a></div>
+      <details class="public-reviews-fold" id="rvPublicFold">
+        <summary><span>近期心得預覽</span><span class="public-fold-state"><span class="public-open-label">展開 ↓</span><span class="public-close-label">收合 ↑</span></span></summary>
+        <div class="public-reviews-content"><div id="rvPublicWall" class="review-my-list"><p class="caption">正在載入心得……</p></div><div class="public-reviews-foot"><button type="button" class="btn small ghost" id="rvPublicRefresh">重新整理</button></div></div>
+      </details>
+    </div>
   </section>
 </section>
 <section id="pageBazi" class="view" hidden>
@@ -352,9 +373,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     $('rvFields').disabled=!allowed||blocked;
     $('rvDemoLogin').disabled=true;
     for(const b of document.querySelectorAll('.review-my-item button'))b.disabled=blocked||!rvReady||rvBusy;
-    if(maintenance)showNotice('rvStatus','站長維修模式已開啟，心得投稿及修改暫時停止。維修解除後會恢復。','warn');
-    else if(statusUnknown)showNotice('rvStatus','目前無法確認站長維修狀態，正式心得暫時停用。','warn');
-    else if(previousMaintenance)showNotice('rvStatus','站長已解除維修模式，已登入會員可重新提交正式心得。','ok');
+    if((maintenance||statusUnknown||previousMaintenance)&&!rvBusy)rvNotice('');
     previousMaintenance=maintenance;
   }
   function renderLights(){
@@ -555,8 +574,8 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   function rvSyncExisting(){
     const existing=rvReady?rvExistingForTool():[];
     const editable=existing.find(r=>['pending','rejected'].includes(r.status)&&!r.everApproved);
-    $('rvExistingNotice').hidden=!existing.length||!!rvEdit;
-    $('rvExistingText').textContent=`你先前已在此分類投稿 ${existing.length} 篇；可隨時另外撰寫新心得，每篇均獨立送審。已刊登的舊心得不可修改或刪除。`;
+    $('rvExistingNotice').hidden=!editable||!!rvEdit;
+    $('rvExistingText').textContent='你有一篇尚未刊登的心得，可以繼續修改。';
     $('rvExistingEdit').hidden=!editable||!!rvEdit;
     $('rvExistingEdit').disabled=!rvReady||rvBusy||isSiteMaintenance()||!editable;
     $('rvSubmit').disabled=rvBusy;
@@ -569,29 +588,29 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     rvEdit=r.id;$('rvTool').value=r.tool;$('rvTool').disabled=true;$('rvNick').value=r.nickname;
     $('rvTitle').value=r.title;$('rvBody').value=r.body;rvSetRating(Number(r.rating));
     $('rvCount').textContent=rvLen(r.body)+' / 500 字（至少 20 字）';
-    $('rvSubmit').textContent='儲存修改｜重新送審';rvClearErrors();rvSyncExisting();
-    rvNotice('正在修改原有心得；送出後會重新等待站長審核。','warn');
+    $('rvSubmit').textContent='儲存心得修改';rvClearErrors();rvSyncExisting();
+    rvNotice('已載入這篇心得，可以繼續修改。');
     $('reviewSection').scrollIntoView({behavior:'smooth'});
   }
 
   const rvOwner=()=>profile()?.sub||'';
   function rvSetRating(n){rvRating=n;for(const b of document.querySelectorAll('[data-rv-star]')){const v=Number(b.dataset.rvStar);b.dataset.active=String(v<=n);b.setAttribute('aria-pressed',String(v===n))}$('rvRatingNote').textContent=n?`${n} / 5 · ${['','需要改善','尚可','普通','不錯','非常滿意'][n]}`:'尚未評分';if(n)rvMarkError('rvRating','')}
-  function rvNotice(s,kind=''){showNotice('rvStatus',s,kind)}
-  function rvResetForm(){rvEdit=null;$('rvForm').reset();$('rvTool').disabled=false;rvSetRating(0);$('rvSubmit').textContent='送出心得｜等待審核';$('rvCount').textContent='0 / 500 字（至少 20 字）';$('rvTool').value='bazi';$('rvNick').value=profile()?'匿名會員':'';rvClearErrors();rvSyncExisting()}
+  function rvNotice(s,kind=''){const el=$('rvStatus');if(!s){el.hidden=true;el.textContent='';return}showNotice('rvStatus',s,kind);el.hidden=false}
+  function rvResetForm(){rvEdit=null;$('rvForm').reset();$('rvTool').disabled=false;rvSetRating(0);$('rvSubmit').textContent='分享心得';$('rvCount').textContent='0 / 500 字（至少 20 字）';$('rvTool').value='bazi';$('rvNick').value=profile()?'匿名會員':'';rvClearErrors();rvSyncExisting()}
   function rvAuthSync(){
     const owner=rvOwner(),changed=rvLastOwner!==owner;
     if(changed){rvLastOwner=owner;rvMineData=[];rvReady=false;rvLoading=false;rvResetForm();}
     const blocked=!owner||!rvReady||rvBusy||isSiteMaintenance()||!!(owner&&!lightData&&!healthPreviewMode);
     $('rvFields').disabled=blocked;$('rvDemoLogin').hidden=true;
-    $('rvIdentityTitle').textContent=owner?'Google 會員：'+(profile().name||'會員'):'請登入 Google 會員';
-    $('rvIdentityDesc').textContent=owner?'正式心得儲存在網站 D1，需站長審核才會公開。':'請登入共用會員帳號才能投稿。';
+    $('rvIdentityTitle').textContent=owner?'會員：'+(profile().name||'會員'):'登入後分享心得';
+    $('rvIdentityDesc').textContent=owner?'歡迎分享你的使用感受。':'登入會員即可分享心得。';
     if(owner&&!rvReady&&!rvLoading)rvLoadMine();
     rvRenderMine();rvSyncExisting();
   }
   async function rvLoadMine(){
     if(rvLoading||!rvOwner())return;const token=getToken();rvLoading=true;
-    try{const data=await api('/reviews/me');if(token!==getToken())return;rvMineData=Array.isArray(data.reviews)?data.reviews:[];rvReady=true;rvNotice('已連線正式心得系統。投稿後會顯示待審核，經站長核准才會公開。','ok');rvSyncExisting();}
-    catch(err){if(token!==getToken())return;rvReady=false;rvNotice('正式心得系統暫時不可使用：'+err.message,'warn')}
+    try{const data=await api('/reviews/me');if(token!==getToken())return;rvMineData=Array.isArray(data.reviews)?data.reviews:[];rvReady=true;rvNotice('');rvSyncExisting();}
+    catch(err){if(token!==getToken())return;rvReady=false;rvNotice('心得暫時無法載入，請稍後再試：'+err.message,'warn')}
     finally{rvLoading=false;$('rvFields').disabled=!rvReady||!rvOwner()||isSiteMaintenance()||!!(rvOwner()&&!lightData&&!healthPreviewMode);rvRenderMine();rvSyncExisting()}
   }
   function rvRenderMine(){
@@ -599,7 +618,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     const myPanel=root.closest('.review-my');
     if(myPanel)myPanel.hidden=!rvReady||!rvOwner()||!rvMineData.some(r=>r.status!=='approved');
     if(!rvOwner()){root.append(textNode('p','登入後可查看待審核及未通過的心得。','caption'));return}
-    if(!rvReady){root.append(textNode('p','正式心得資料尚未連線或正在讀取。','caption'));return}
+    if(!rvReady){root.append(textNode('p','正在載入心得……','caption'));return}
     const visible=rvMineData.filter(r=>r.status!=='approved');
     if(!visible.length){root.append(textNode('p','目前沒有待處理的心得。已刊登的心得請在下方「已通過審核的心得」觀看。','caption'));return}
     const statusName={pending:'待審核',rejected:'未通過',hidden:'已下架（已鎖定）'};
@@ -658,7 +677,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     for(const id of ['rvNick','rvTitle','rvBody']){
       $(id).addEventListener('input',()=>{const group=$(id).closest('.review-field');if(group.classList.contains('review-invalid'))rvMarkError(id,rvCheckers[id]())});
     }
-    $('rvReset').addEventListener('click',()=>{rvResetForm();rvNotice('已清空表單。')});
+    $('rvReset').addEventListener('click',()=>{rvResetForm();rvNotice('')});
     $('rvPublicRefresh').addEventListener('click',rvLoadPublished);
     $('rvForm').addEventListener('submit',async e=>{
       e.preventDefault();if(rvBusy)return;
@@ -667,9 +686,9 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       const payload={tool:$('rvTool').value,nickname:$('rvNick').value.trim(),rating:rvRating,title:$('rvTitle').value.trim(),body:$('rvBody').value.trim()};
       if(!rvValidate())return;
       // 不檢查同工具舊心得是否存在；所有符合內容規則的新投稿都獨立排隊審核。
-      rvBusy=true;$('rvFields').disabled=true;rvSyncExisting();rvNotice('正在儲存正式心得並送交審核……');
+      rvBusy=true;$('rvFields').disabled=true;rvSyncExisting();rvNotice('正在送出心得……');
       try{await api(rvEdit?'/reviews/'+encodeURIComponent(rvEdit):'/reviews',{method:rvEdit?'PUT':'POST',body:JSON.stringify(payload)});
-        rvResetForm();await rvLoadMineForce();await rvLoadPublished();rvNotice('✓ 新的一篇心得已正式提交並儲存至 D1，等待站長審核；不會覆蓋之前的心得。','ok');$('rvMine').scrollIntoView({behavior:'smooth',block:'nearest'});
+        rvResetForm();await rvLoadMineForce();await rvLoadPublished();rvNotice('✓ 感謝你的分享！心得已成功送出。','ok');$('rvMine').scrollIntoView({behavior:'smooth',block:'nearest'});
       }catch(err){
         rvNotice('投稿失敗：'+err.message,'err')
       }
