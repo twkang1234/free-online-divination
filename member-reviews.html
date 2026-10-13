@@ -2,530 +2,91 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#090a14">
-<meta name="robots" content="noindex,nofollow">
-<title>會員心得評價中心｜一念知機（測試版）</title>
-<meta name="description" content="一念知機全站共用會員心得中心。登入會員可分享塔羅、八字、易經等工具的使用心得；正式心得須經管理員審核後才會公開。">
-<!--
-  一念知機｜會員工具評價中心 v1.1：簡化評價面向、寫作引導、密碼管理預覽
-  ----------------------------------------------------------
-  此版本刻意不送出至伺服器；測試投稿只存在本瀏覽器 localStorage。
-  管理員密碼僅用於本機預覽；所有權限與資料都在瀏覽器端，不是正式保護。
-  正式審核必須由 Workers 在伺服器驗證管理員並操作 D1，不能使用前端密碼。
-  不會假冒已完成的雲端投稿或管理員審核。展示牆為明確標示的虛構範例。
-  正式串接時：
-    1. 在 Cloudflare D1 建立獨立 reviews / review_audit 資料表，使用會員的已驗證 sub。
-    2. 由 Workers 驗證 Google ID Token、限制每會員每工具一則有效評價、速率與長度。
-    3. 新增會員 API：GET /reviews/mine, POST /reviews, PATCH /reviews/:id,
-       DELETE /reviews/:id（或 withdrawal）, GET /reviews/public?tool=...&cursor=...
-    4. 新增 Admin API：GET /admin/reviews?status=pending, POST /admin/reviews/:id/approve,
-       POST /admin/reviews/:id/reject, POST /admin/reviews/:id/unpublish 等，驗證管理員權限。
-    5. 客戶端只能渲染服務端已核准 published 的評論；拒絕與待審核不公開。
-    6. 投稿修改應重送審核，不可直接更動公開文字；保留審核紀錄。
-    7. 同一公開評論資料源可供首頁及各工具頁讀取（工具分類與精選排序）。
-  不得只把本頁中的 PREVIEW_MODE 改成 false 就視為完成後端串接。
--->
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090a13">
+<meta name="description" content="一念知機真實會員心得展示牆，查看經站長審核刊登的八字、塔羅、易經與網站整體使用體驗。所有心得皆來自會員投稿。">
+<link rel="canonical" href="https://divinationhub.tw/member-reviews.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="會員心得展示牆｜一念知機">
+<meta property="og:description" content="瀏覽八字、塔羅、易經等工具已核准的真實會員心得。">
+<meta property="og:url" content="https://divinationhub.tw/member-reviews.html">
+<title>會員心得展示牆｜一念知機</title>
 <style>
-:root{
-  color-scheme:dark;
-  --bg:#080910;--bg2:#101322;--panel:#111525;--panel2:#171b2d;
-  --line:rgba(192,205,255,.13);--line2:rgba(198,167,255,.24);
-  --text:#f2f3ff;--sub:#b9bdd2;--muted:#8790a9;
-  --violet:#b7a0ff;--cyan:#8be2e8;--gold:#f8cf91;--rose:#ffabc5;
-  --good:#a6e4c7;--warn:#f3cf8c;--radius:22px;
-  --shadow:0 30px 76px rgba(0,0,0,.26);
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:100px}
-body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.7;background:var(--bg);min-height:100vh;overflow-x:hidden}
-body:before{content:"";z-index:-2;position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 760px 460px at 12% -5%,rgba(107,73,223,.17),transparent 73%),radial-gradient(ellipse 820px 530px at 96% 17%,rgba(51,177,185,.10),transparent 75%),radial-gradient(ellipse 600px 340px at 58% 93%,rgba(147,80,159,.09),transparent 75%),#080910}
-body:after{content:"";z-index:-1;position:fixed;inset:0;pointer-events:none;opacity:.35;background-image:radial-gradient(#dde5ff 0.7px,transparent 0.8px),radial-gradient(#b0c7ff .7px,transparent 1px);background-size:117px 117px,179px 179px;background-position:7px 13px,59px 86px;mask-image:linear-gradient(180deg,black 0%,transparent 82%)}
-button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}
-a{color:inherit}a,button,input,textarea,select{ -webkit-tap-highlight-color:transparent}
-:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
-[hidden]{display:none!important}
-.shell{width:min(1140px,calc(100% - 44px));margin-inline:auto}
-.sitebar{position:sticky;top:0;z-index:30;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(8,9,17,.86);backdrop-filter:blur(20px)}
-.sitebar-inner{min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:900;letter-spacing:.08em;white-space:nowrap}
-.brand-emblem{display:grid;place-items:center;width:34px;height:34px;border:1px solid rgba(168,155,255,.5);border-radius:12px;background:radial-gradient(circle,rgba(151,135,252,.25),rgba(137,140,227,.03));color:#e9ddff;box-shadow:0 0 24px rgba(161,116,238,.11);font-size:23px}
-.brand span:last-child{font-size:.95rem}
-.navlinks{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:9px}
-.navlinks a{border-radius:999px;text-decoration:none;font-size:.77rem;color:#b5bacf;padding:8px 12px;transition:background .2s,color .2s}
-.navlinks a:hover{background:rgba(177,161,255,.095);color:#fff}
-.navlinks a.nav-highlight{border:1px solid rgba(172,153,254,.34);color:#e1d8ff;background:rgba(137,102,229,.08)}
-.hero{position:relative;padding:85px 0 46px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:44px;align-items:center}
-.eyebrow{font-size:.72rem;color:var(--cyan);letter-spacing:.21em;font-weight:800;text-transform:uppercase;display:flex;align-items:center;gap:10px}
-.eyebrow:before{content:"";width:28px;height:1px;background:var(--cyan);box-shadow:0 0 18px rgba(139,226,232,.7)}
-.hero h1{font-size:clamp(2.8rem,5.8vw,5.4rem);line-height:1.1;letter-spacing:-.055em;margin:23px 0 18px;font-weight:900}
-.hero h1 .gradient{background:linear-gradient(100deg,#fff 2%,#d9d3ff 42%,#b9e9ed 100%);color:transparent;background-clip:text;-webkit-background-clip:text}
-.hero-lead{font-size:.98rem;color:var(--sub);max-width:640px;margin:0;line-height:1.95}
-.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
-.btn,.anchor-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line2);background:rgba(173,155,255,.085);color:#e7dcff;border-radius:12px;min-height:45px;padding:10px 17px;text-decoration:none;font-size:.86rem;font-weight:760;transition:background .2s,transform .2s,border-color .2s}
-.btn:hover:not(:disabled),.anchor-btn:hover{background:rgba(173,155,255,.17);border-color:rgba(189,170,255,.55);transform:translateY(-1px)}
-.btn.primary,.anchor-btn.primary{color:#101322;background:linear-gradient(100deg,#c0adff,#a3dbe5);border-color:transparent;box-shadow:0 12px 28px rgba(128,121,215,.16)}
-.btn.primary:hover:not(:disabled){filter:brightness(1.07)}
-.btn.danger{color:#ffd0db;border-color:rgba(255,150,173,.3);background:rgba(255,100,140,.04)}
-.btn.small{font-size:.74rem;min-height:36px;padding:7px 12px}
-.hero-orb{border:1px solid rgba(189,171,255,.19);border-radius:28px;padding:27px;background:radial-gradient(circle at 85% 0%,rgba(117,105,225,.15),transparent 48%),linear-gradient(150deg,rgba(25,27,49,.9),rgba(13,15,30,.78));box-shadow:var(--shadow);position:relative;overflow:hidden}
-.hero-orb:after{content:"✦";position:absolute;right:10px;bottom:-70px;font-size:250px;color:rgba(173,157,255,.055);line-height:1;pointer-events:none}
-.hero-orb .hero-orb-title{font-size:.71rem;letter-spacing:.16em;color:#b9b2db;font-weight:850}
-.feature-step{display:flex;align-items:center;gap:13px;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.09);position:relative;z-index:1}
-.feature-step:last-child{border-bottom:none;padding-bottom:4px}
-.feature-step .number{flex:none;width:35px;height:35px;border:1px solid rgba(200,185,255,.3);border-radius:11px;display:grid;place-items:center;color:#d4c5ff;background:rgba(170,140,235,.07);font-size:.82rem;font-weight:800}
-.feature-step b{display:block;font-size:.9rem}.feature-step small{display:block;color:var(--muted);font-size:.75rem;line-height:1.7;margin-top:2px}
-.stage-notice{border:1px solid rgba(243,198,121,.24);background:rgba(241,188,102,.065);border-radius:18px;padding:16px 20px;display:flex;gap:13px;align-items:flex-start;margin:0 0 36px}
-.stage-notice .notice-icon{font-size:1.25rem;color:var(--gold);line-height:1.3}
-.stage-notice b{color:#f9ddb4;font-size:.9rem}.stage-notice p{color:#ccbfae;font-size:.8rem;margin:3px 0 0;line-height:1.85}
-.section-heading{margin:70px 0 24px;display:flex;justify-content:space-between;align-items:end;gap:20px}
-.section-heading .index{font-weight:850;letter-spacing:.21em;font-size:.69rem;color:var(--cyan);text-transform:uppercase}
-.section-heading h2{font-size:clamp(1.55rem,3vw,2.35rem);line-height:1.25;letter-spacing:-.035em;margin:8px 0 8px}
-.section-heading p{font-size:.84rem;line-height:1.8;color:var(--muted);margin:0;max-width:720px}
-.chip{border:1px solid var(--line);background:rgba(255,255,255,.04);color:#bfc4d9;padding:5px 11px;border-radius:999px;font-size:.71rem;white-space:nowrap}
-.chip.neutral{border-color:rgba(159,221,233,.25);color:#b0e3ed;background:rgba(73,172,189,.07)}
-.workspace{display:grid;grid-template-columns:minmax(0,1.53fr) minmax(265px,.82fr);gap:20px;align-items:start}
-.panel{background:linear-gradient(145deg,rgba(22,25,44,.94),rgba(15,18,32,.96));border:1px solid var(--line);box-shadow:var(--shadow);border-radius:var(--radius);padding:27px}
-.panel h3{margin:0 0 6px;font-size:1.05rem}.panel .panel-sub{font-size:.8rem;color:var(--muted);margin:0 0 19px}
-.login-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:rgba(151,133,232,.065);border:1px solid rgba(190,172,255,.16);border-radius:16px;padding:15px 17px;margin-bottom:23px}
-.login-row b{display:block;font-size:.84rem}.login-row small{display:block;color:var(--muted);font-size:.74rem;margin-top:3px;line-height:1.55}
-.login-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-#googleLoginMount{min-height:40px}.login-hint{font-size:.74rem;color:var(--muted);margin:8px 0 0;line-height:1.7}
-.field{margin:0 0 20px}.field label,.field legend{display:block;color:#e9e7fa;font-size:.84rem;font-weight:780;margin-bottom:8px;padding:0}
-.field .hint{color:var(--muted);font-size:.74rem;margin-top:6px;line-height:1.7}
-.field input,.field select,.field textarea{width:100%;border:1px solid rgba(188,185,230,.20);border-radius:12px;min-height:47px;background:rgba(7,9,19,.7);padding:11px 14px;color:#f4f3fc;outline:none;transition:border-color .2s,box-shadow .2s}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(153,224,229,.72);box-shadow:0 0 0 3px rgba(112,209,221,.08)}
-.field input::placeholder,.field textarea::placeholder{color:#737d94}.field textarea{height:154px;resize:vertical;line-height:1.85}
-.field select{cursor:pointer;color-scheme:dark}
-.fieldset{margin:0;padding:0;border:0;min-width:0}.fieldset:disabled{opacity:.53}
-.rating-control{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
-.star-btn{border:0;background:transparent;padding:2px 4px;color:#5e637a;font-size:2rem;line-height:1.1;transition:transform .13s,color .13s}
-.star-btn[data-active="true"]{color:#f7c777;text-shadow:0 0 17px rgba(255,197,119,.21)}
-.star-btn:hover:not(:disabled){transform:translateY(-2px) scale(1.08)}
-.rating-note{font-size:.74rem;color:var(--sub);margin-left:12px}
-.counter{display:block;font-size:.72rem;color:var(--muted);text-align:right;margin-top:5px}
-.form-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.form-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.form-status{font-size:.79rem;color:var(--sub);line-height:1.7;margin-top:13px;min-height:24px}
-.form-status.error{color:#ffb5c6}.form-status.success{color:var(--good)}
-.side-stack{display:grid;gap:17px}
-.side-panel{border:1px solid var(--line);background:rgba(18,23,39,.8);border-radius:18px;padding:23px}
-.side-panel .mini-heading{font-size:.8rem;font-weight:840;color:#eee8ff;letter-spacing:.02em;margin-bottom:14px}
-.guide-line{display:flex;align-items:flex-start;gap:12px;margin:15px 0;font-size:.79rem;color:var(--sub)}
-.guide-line .mark{flex:none;display:grid;place-items:center;width:25px;height:25px;border-radius:8px;border:1px solid rgba(174,207,222,.24);background:rgba(108,184,198,.06);color:#a6dee8;font-weight:850;font-size:.7rem}
-.guide-line p{margin:0}.side-panel p{font-size:.79rem;color:var(--muted);line-height:1.85;margin:0}
-.my-box{border:1px solid var(--line);background:linear-gradient(145deg,rgba(20,24,41,.88),rgba(13,16,28,.85));border-radius:22px;padding:23px}
-.empty-box{display:flex;align-items:center;gap:16px;border:1px dashed rgba(176,185,221,.23);border-radius:14px;padding:24px;color:var(--muted);font-size:.85rem}
-.empty-symbol{font-size:2rem;color:var(--violet);opacity:.78}
-.my-cards{display:grid;gap:11px}
-.my-card{background:rgba(6,8,17,.4);border:1px solid var(--line);border-radius:15px;padding:18px;display:grid;gap:9px}
-.my-card-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:space-between}
-.my-card h3{font-size:.99rem;margin:0}.my-card p{color:var(--sub);font-size:.84rem;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
-.status-label{font-size:.69rem;border-radius:999px;padding:4px 10px;border:1px solid rgba(247,206,138,.28);color:#f2d59a;background:rgba(247,206,138,.06)}
-.my-card .mini-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.my-card .mini-tools span{font-size:.72rem;color:var(--muted)}
-.display-zone{position:relative;margin-top:70px;padding:3px 0 78px}
-.display-zone:before{content:"";position:absolute;inset:0 calc((1140px - 100vw)/2 - 30px) 0;pointer-events:none;background:linear-gradient(180deg,rgba(144,141,215,.035),transparent 80%);border-top:1px solid rgba(192,205,255,.06);z-index:-1}
-.demo-callout{padding:14px 17px;margin-bottom:23px;border:1px solid rgba(142,214,229,.26);border-radius:14px;background:rgba(45,124,146,.07);display:flex;gap:10px;align-items:center;color:#bfe6f1;font-size:.8rem;line-height:1.8}
-.filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 21px}
-.filter-btn{border:1px solid var(--line);background:rgba(18,23,38,.75);color:#a9b0c6;padding:8px 13px;border-radius:999px;font-size:.77rem;font-weight:700;min-height:37px}
-.filter-btn:hover{border-color:rgba(170,191,236,.3);color:#e3e7ff}
-.filter-btn[aria-pressed="true"]{border-color:rgba(159,217,226,.52);background:rgba(79,177,191,.13);color:#cbf5f9}
-.wall-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.wall-card{display:flex;flex-direction:column;gap:12px;padding:22px;border-radius:19px;border:1px solid rgba(151,159,199,.14);background:linear-gradient(158deg,rgba(28,30,48,.93),rgba(16,19,34,.94));box-shadow:0 15px 34px rgba(0,0,0,.12);min-height:250px;transition:transform .2s,border-color .2s}
-.wall-card:hover{transform:translateY(-3px);border-color:rgba(177,169,237,.35)}
-.wall-head{display:flex;align-items:center;gap:10px}
-.avatar{width:39px;height:39px;border-radius:50%;flex:none;display:grid;place-items:center;color:#e6dfff;border:1px solid rgba(200,184,255,.25);background:linear-gradient(135deg,rgba(172,136,238,.26),rgba(85,166,198,.14));font-weight:900}
-.wall-who{min-width:0;flex:1}.wall-who b{font-size:.82rem;display:block}.wall-who small{font-size:.7rem;color:var(--muted);display:block;margin-top:1px}
-.demo-mark{font-size:.65rem;white-space:nowrap;color:#90d9e4;border:1px solid rgba(139,226,232,.24);padding:3px 8px;border-radius:999px}
-.stars{color:#ffc980;letter-spacing:.11em;line-height:1.2;font-size:1.05rem}
-.wall-card h3{font-size:.93rem;margin:0}.wall-card p{font-size:.82rem;line-height:1.83;color:#c7cbdb;margin:0;overflow-wrap:anywhere;flex:1}
-.wall-footer{border-top:1px solid rgba(255,255,255,.08);padding-top:12px;display:flex;gap:8px;align-items:center;justify-content:space-between}
-.wall-footer span{font-size:.72rem;color:var(--muted)}.wall-footer b{font-weight:750;font-size:.68rem;color:#c8c2df}
-.wall-empty{grid-column:1/-1;border:1px dashed var(--line);padding:28px;text-align:center;border-radius:15px;color:var(--muted)}
-.foot{padding:28px 0 50px;color:var(--muted);border-top:1px solid var(--line);font-size:.75rem;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.foot a{text-decoration:none;color:#b9afd8}
-@media(max-width:920px){.hero{grid-template-columns:1fr;padding-top:65px}.hero-orb{max-width:610px}.workspace{grid-template-columns:1fr}.side-stack{grid-template-columns:1fr 1fr}.wall-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:670px){.shell{width:min(100% - 28px,1140px)}.sitebar-inner{min-height:68px}.navlinks a{font-size:.7rem;padding:7px 9px}.brand{gap:8px}.brand span:last-child{font-size:.84rem}.brand-emblem{width:29px;height:29px}.hero{padding:51px 0 24px;gap:25px}.hero h1{font-size:2.75rem;margin:14px 0}.hero-lead{font-size:.89rem}.hero-orb{padding:22px}.stage-notice{padding:14px}.section-heading{margin-top:49px}.panel{padding:19px}.form-two{grid-template-columns:1fr;gap:0}.side-stack{grid-template-columns:1fr}.wall-grid{grid-template-columns:1fr}.wall-card{min-height:unset}.filter-btn{padding:7px 11px}.foot{font-size:.72rem}.section-heading .chip{display:none}}
-@media(max-width:410px){.sitebar-inner{align-items:flex-start;padding:12px 0;flex-direction:column}.navlinks{justify-content:flex-start}.hero h1{font-size:2.5rem}.star-btn{font-size:1.77rem}}
+:root{color-scheme:dark;--bg:#090a13;--panel:#131625;--panel2:#1a1d30;--text:#f4f2ff;--sub:#bec2d8;--dim:#8990ab;--line:rgba(194,185,239,.17);--gold:#ffca7a;--purple:#b6a2f6;--mint:#85d7ca}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(770px 450px at 13% -7%,rgba(133,96,223,.17),transparent 78%),radial-gradient(620px 430px at 100% 18%,rgba(82,148,183,.08),transparent 74%),var(--bg);color:var(--text);font:15px/1.8 -apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+a{color:inherit;text-decoration:none}a:hover{text-decoration:none}button,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}[hidden]{display:none!important}:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.wrap{width:min(1170px,calc(100% - 36px));margin:auto}.topbar{background:rgba(8,9,18,.86);backdrop-filter:blur(18px);position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line)}.topinner{min-height:71px;display:flex;justify-content:space-between;align-items:center;gap:16px}.brand{display:flex;gap:10px;align-items:center;font-weight:900;letter-spacing:.07em}.brandmark{display:grid;place-items:center;width:37px;height:37px;border:1px solid rgba(191,172,255,.35);border-radius:11px;color:#d9c6ff;background:rgba(151,114,232,.11);font-size:1.35rem}.nav{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.nav a{font-size:.8rem;padding:8px 12px;color:var(--sub);border:1px solid var(--line);border-radius:11px}.nav a:hover{color:#fff;border-color:#9885dc}.nav a.featured{background:linear-gradient(125deg,#c7b5ff,#9cb0e0);color:#1d1634;font-weight:800;border-color:transparent}
+.hero{padding:58px 0 33px;display:flex;justify-content:space-between;align-items:center;gap:30px}.eyebrow{font-size:.73rem;font-weight:850;letter-spacing:.18em;color:#9edbd7}.hero h1{font-size:clamp(2.1rem,4.3vw,3.6rem);line-height:1.25;margin:12px 0 16px;letter-spacing:-.04em}.hero p{color:var(--sub);max-width:760px;margin:0;font-size:.93rem}.hero-symbol{width:145px;height:145px;flex:none;border-radius:32px;display:grid;place-items:center;font-size:4.2rem;color:#cab7ff;background:radial-gradient(circle at 30% 20%,rgba(176,144,243,.19),transparent 70%),var(--panel);border:1px solid var(--line);box-shadow:0 16px 55px rgba(0,0,0,.25)}
+.info{border-left:3px solid var(--mint);background:rgba(107,207,199,.06);padding:12px 16px;border-radius:10px;font-size:.81rem;color:var(--sub);margin:5px 0 25px}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:0 0 24px}.stat{border:1px solid var(--line);border-radius:15px;background:var(--panel);padding:15px 18px}.stat strong{display:block;font-size:1.65rem;color:#f0e4c3;line-height:1.3}.stat small{font-size:.75rem;color:var(--dim)}
+.tools{display:flex;gap:9px;flex-wrap:wrap;margin:0 0 20px}.filter{padding:9px 15px;border-radius:999px;background:rgba(24,27,46,.78);border:1px solid var(--line);color:var(--sub);font-size:.83rem;font-weight:700}.filter:hover{color:var(--text);border-color:#ab9ade}.filter[aria-pressed=true]{background:rgba(117,177,196,.13);color:#c8f2f3;border-color:#78bac4}.rowhead{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:22px 0 16px}.rowhead h2{margin:0;font-size:1.2rem}.rowhead small{color:var(--dim)}.wall{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.review{min-width:0;border:1px solid rgba(175,168,224,.17);border-radius:20px;background:linear-gradient(155deg,#191b2e,#111422);padding:22px;display:flex;flex-direction:column;gap:11px;min-height:295px;box-shadow:0 12px 35px rgba(0,0,0,.12)}.review:hover{border-color:rgba(197,175,255,.43);transform:translateY(-2px);transition:.2s}.who{display:flex;gap:10px;align-items:center}.avatar{width:38px;height:38px;flex:none;border-radius:50%;background:linear-gradient(130deg,rgba(182,160,249,.28),rgba(77,155,186,.1));border:1px solid rgba(188,169,248,.3);display:grid;place-items:center;font-weight:900;color:#eee2ff}.who-info{min-width:0;flex:1}.nick{font-weight:850;overflow-wrap:anywhere;font-size:.87rem}.tool-name{color:var(--dim);font-size:.75rem;line-height:1.4}.approved{font-size:.69rem;white-space:nowrap;color:#a9dfe9;border:1px solid rgba(128,213,225,.25);padding:2px 8px;border-radius:99px}.rating{font-size:1.24rem;letter-spacing:.08em;color:var(--gold);line-height:1.3}.review h3{font-size:1.05rem;line-height:1.5;margin:1px 0;overflow-wrap:anywhere}.body{font-size:.88rem;line-height:1.85;white-space:pre-wrap;overflow-wrap:anywhere;color:#c8cadd;margin:0;flex:1}.bottom{margin-top:auto;padding-top:11px;border-top:1px solid rgba(235,232,255,.085);display:flex;justify-content:space-between;gap:12px;font-size:.72rem;color:var(--dim)}.bottom b{color:#bfb6db;font-weight:700}.empty{grid-column:1/-1;background:rgba(24,27,45,.54);border:1px dashed var(--line);border-radius:18px;text-align:center;color:var(--sub);padding:45px 20px}.empty strong{display:block;color:var(--text);margin-bottom:6px}.loadmore{text-align:center;margin:24px 0 50px}.btn{min-height:43px;padding:10px 19px;border-radius:11px;border:1px solid rgba(176,166,238,.32);background:#16192b;color:var(--text);font-weight:750}.btn:hover:not(:disabled){background:#222740;border-color:#baa9ff}.btn.primary{background:linear-gradient(125deg,#c9b9ff,#a7d7e0);color:#1a1833;border-color:transparent}.foot{padding:30px 0 55px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:.76rem;color:var(--dim)}.foot a{color:#cdc6e6}.hint{font-size:.77rem;color:var(--sub)}
+@media(max-width:880px){.wall{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-symbol{width:105px;height:105px;font-size:3rem}.stats{gap:9px}}
+@media(max-width:620px){.wrap{width:calc(100% - 26px)}.topinner{min-height:65px;align-items:flex-start;padding:11px 0;flex-direction:column}.nav{gap:6px}.nav a{font-size:.74rem}.hero{padding:35px 0 23px}.hero-symbol{display:none}.hero h1{font-size:2.2rem}.wall{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat{padding:11px 13px}.review{min-height:0;padding:19px}.approved{font-size:.66rem}.rowhead{align-items:flex-start;flex-direction:column;gap:2px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
-
-/* v1.1: writing prompts and local admin proof of concept */
-.inspire-panel{border:1px solid rgba(151,219,229,.2);background:rgba(67,138,159,.06);border-radius:14px;padding:16px;margin:10px 0 20px}
-.inspire-panel summary{font-weight:800;color:#d5f2f7;cursor:pointer;font-size:.84rem;list-style:none}
-.inspire-panel summary::-webkit-details-marker{display:none}
-.inspire-panel summary:after{content:' ＋';color:var(--cyan)}
-.inspire-panel[open] summary:after{content:' －'}
-.inspire-panel p{color:var(--sub);font-size:.77rem;margin:12px 0;line-height:1.8}
-.inspire-chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.inspire-chip{border:1px solid rgba(155,205,220,.21);background:rgba(10,16,30,.5);color:#c9d8e8;border-radius:999px;padding:6px 10px;font-size:.73rem;line-height:1.4}
-.inspire-chip:hover,.inspire-chip:focus-visible{border-color:rgba(139,226,232,.6);color:#fff}
-.sample-note{border-left:2px solid var(--cyan);background:rgba(6,13,24,.44);padding:10px 13px;border-radius:0 10px 10px 0;line-height:1.8;font-size:.79rem;color:#cfdbed;min-height:69px}
-.local-admin{margin:70px 0 36px;padding:2px 0}
-.admin-note{padding:14px 16px;border-radius:13px;background:rgba(243,198,121,.055);border:1px solid rgba(243,198,121,.25);color:#f1d4aa;font-size:.78rem;line-height:1.85;margin:16px 0}
-.admin-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;margin:18px 0}
-.admin-item{border:1px solid var(--line);padding:14px;border-radius:12px;background:rgba(7,9,19,.4);margin-bottom:9px;overflow-wrap:anywhere}
-.admin-item p{font-size:.8rem;color:var(--sub);margin:6px 0;white-space:pre-wrap}
-.admin-item b{font-size:.84rem}
-.admin-item .btn{margin:5px 6px 0 0}
-.admin-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0}
-.admin-editor{border:1px solid var(--line);border-radius:15px;background:rgba(6,8,17,.45);padding:18px;margin:16px 0}
-.admin-editor .field{margin-bottom:12px}
-.admin-label{font-size:.75rem;color:var(--muted)}
-.admin-hint{font-size:.74rem;color:var(--muted);margin:10px 0;line-height:1.65}
-@media(max-width:760px){.admin-layout{grid-template-columns:1fr}}
-
-
-/* Preview mode UI gate. Use Cloudflare Access for true URL restriction. */
-body:not(.gate-open) > header,body:not(.gate-open) > main,body:not(.gate-open) > footer{visibility:hidden}
-#privateGate[hidden]{display:none!important}
-#privateGate{position:fixed;inset:0;background:#050711;z-index:10000;display:grid;place-items:center;padding:18px}
-#privateGate .private-panel{width:min(520px,100%);padding:32px;border:1px solid rgba(230,190,125,.35);border-radius:20px;background:radial-gradient(circle at 100% 0,rgba(120,95,185,.12),transparent 60%),#11121f;text-align:center}
-#privateGate h2{margin:0 0 12px;color:#f8ebdf}#privateGate p{color:#c7bdd8;font-size:.85rem;line-height:1.8}
-#privateGate .private-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:20px 0}
-.mine-card{border:1px solid var(--line);background:rgba(9,13,28,.7);padding:17px;border-radius:15px;margin-bottom:12px}
-.mine-card>div:first-child{display:flex;justify-content:space-between;gap:8px;align-items:center}.mine-card h3{margin:10px 0 6px;font-size:.94rem}.mine-card p{font-size:.82rem;color:var(--sub);white-space:pre-wrap;overflow-wrap:anywhere}
-.form-status.error{color:#ffb3b3}
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-<section id="privateGate" aria-label="管理員私人測試入口"><div class="private-panel">
-  <div class="eyebrow">一念知機 · 會員心得中心</div>
-  <h2>目前僅開放管理員測試</h2>
-  <p>這一頁暫時還不開放一般會員。請先至現有的管理員後台登入，再回來驗證身份。沿用原本的後台管理密碼，不需要另外設定新密碼。</p>
-  <div class="private-actions"><a class="btn primary" href="/admin.html" style="text-decoration:none">前往管理員後台 ↗</a><button class="btn small" id="checkAdminGate" type="button">我已登入，重新檢查</button></div>
-  <p id="gateStatus" role="status">正在檢查管理員登入……</p>
-  <button id="localPreview" type="button" class="btn small" hidden>僅預覽本機版型（不連線投稿）</button>
-  <p style="font-size:.71rem;opacity:.75">注意：這是操作介面的管理員驗證。要真正阻止他人開啟網址，正式部署前仍需設定 Cloudflare Access 等伺服器端保護。</p>
-</div></section>
-
-<header class="sitebar">
-  <div class="shell sitebar-inner">
-    <a class="brand" href="https://divinationhub.tw/"><span class="brand-emblem" aria-hidden="true">✦</span><span>一念知機</span></a>
-    <nav class="navlinks" aria-label="網站導覽">
-      <a href="https://divinationhub.tw/">網站首頁</a>
-      <a href="https://divinationhub.tw/tarot.html">塔羅工具</a>
-      <a href="https://divinationhub.tw/tarot-records.html">我的塔羅紀錄</a>
-      <a class="nav-highlight" href="#review-form">分享心得 ↗</a>
-    </nav>
-  </div>
-</header>
-<main>
-  <div class="shell">
-    <section class="hero" aria-labelledby="pageTitle">
-      <div>
-        <div class="eyebrow">COMMUNITY · MEMBER REVIEWS</div>
-        <h1 id="pageTitle">你的使用感受，<br><span class="gradient">值得被聽見。</span></h1>
-        <p class="hero-lead">歡迎分享你對「一念知機」各種占卜工具的實際使用體驗。每一則心得都會標記所屬工具，未來可以集中展示，也可以依照塔羅、八字、易經等分類閱讀。</p>
-        <div class="hero-actions"><a class="anchor-btn primary" href="#review-form">✎　寫下使用心得</a><a class="anchor-btn" href="#reviews-wall">看看心得展示效果 ↓</a></div>
-      </div>
-      <aside class="hero-orb" aria-label="心得發表流程">
-        <div class="hero-orb-title">HOW IT WORKS ／ 投稿流程</div>
-        <div class="feature-step"><span class="number">01</span><div><b>登入共用會員</b><small>使用一念知機原有的 Google 會員帳號</small></div></div>
-        <div class="feature-step"><span class="number">02</span><div><b>選擇工具並分享體驗</b><small>留下星級評分，以及優點或改進建議</small></div></div>
-        <div class="feature-step"><span class="number">03</span><div><b>管理員審核後刊登</b><small>合理的正反意見皆可刊登；個人資料不公開</small></div></div>
-      </aside>
-    </section>
-    <aside class="stage-notice" aria-label="測試版本說明">
-      <span class="notice-icon" aria-hidden="true">◇</span>
-      <div><b>管理員測試模式｜正在準備正式會員心得系統</b><p id="stageMessage">正在確認管理員驗證與正式心得 API 是否已啟用。</p></div>
-    </aside>
-
-    <section id="review-form" aria-labelledby="formHeading">
-      <div class="section-heading">
-        <div><span class="index">01 / SHARE YOUR EXPERIENCE</span><h2 id="formHeading">發表工具使用心得</h2><p>這裡只評價網站工具本身，例如操作流程、排版與功能體驗；不需要透露個人占卜問題或出生資料。</p></div>
-        <span class="chip neutral">全站共用 · 單一投稿入口</span>
-      </div>
-      <div class="workspace">
-        <div class="panel">
-          <div class="login-row">
-            <div id="loggedText"><b id="loginTitle">登入會員，開始分享</b><small id="loginDesc">與塔羅、八字、易經工具共用同一個 Google 帳號。</small></div>
-            <div class="login-controls">
-              <div id="googleLoginMount"></div>
-              <button type="button" class="btn small" id="demoLogin" hidden>示範會員（停用）</button>
-              <button type="button" class="btn small" id="logout" hidden>退出本頁體驗</button>
-            </div>
-          </div>
-          <p id="googleHint" class="login-hint" hidden></p>
-          <form id="reviewForm" novalidate>
-            <fieldset id="reviewFields" class="fieldset" disabled>
-              <div class="field">
-                <label for="reviewTool">這次要評價哪個工具？ <span aria-hidden="true">*</span></label>
-                <select id="reviewTool" name="tool" required>
-                  <option value="tarot">塔羅占卜</option><option value="bazi">八字排盤</option><option value="yijing">易經占卜</option>
-                  <option value="qimen">奇門遁甲</option><option value="ziwei">紫微斗數</option><option value="meihua">梅花易數</option>
-                  <option value="liuyao">六爻占卜</option><option value="site">整體網站體驗</option>
-                </select>
-                <div class="hint">從工具頁連進來時，可以自動預選對應分類。例如 <code>?tool=bazi</code>。</div>
-              </div>
-              <div class="field">
-                <label id="ratingLabel">整體使用評分 <span aria-hidden="true">*</span></label>
-                <div class="rating-control" role="group" aria-labelledby="ratingLabel">
-                  <button type="button" class="star-btn" data-star="1" aria-label="評 1 顆星" aria-pressed="false">★</button>
-                  <button type="button" class="star-btn" data-star="2" aria-label="評 2 顆星" aria-pressed="false">★</button>
-                  <button type="button" class="star-btn" data-star="3" aria-label="評 3 顆星" aria-pressed="false">★</button>
-                  <button type="button" class="star-btn" data-star="4" aria-label="評 4 顆星" aria-pressed="false">★</button>
-                  <button type="button" class="star-btn" data-star="5" aria-label="評 5 顆星" aria-pressed="false">★</button>
-                  <span class="rating-note" id="ratingNote">尚未評分</span>
-                </div>
-                <div class="hint">真實感受最重要，無論好評或改進建議都歡迎。</div>
-              </div>
-              <div class="field"><label for="reviewNick">公開暱稱 <span aria-hidden="true">*</span></label><input id="reviewNick" maxlength="18" autocomplete="nickname" placeholder="例如：夜空旅人" required><div class="hint">只刊登暱稱，不公開 Google 姓名或電子郵件。心得一律歸類為「整體使用體驗」，不用再選細項。</div></div>
-              <div class="field"><label for="reviewTitle">心得標題 <span aria-hidden="true">*</span></label><input id="reviewTitle" maxlength="50" placeholder="例如：第一次使用就能順利完成抽牌" required><div class="hint">請用一句話描述你最明顯的使用感受（4～50 字）。</div></div>
-              <div class="field"><label for="reviewBody">使用心得與建議 <span aria-hidden="true">*</span></label><textarea id="reviewBody" maxlength="500" placeholder="可以寫你最喜歡的功能、第一次使用時的感受，或希望網站改善什麼……" required></textarea><span class="counter" id="bodyCounter">0 / 500 字（至少 20 字）</span></div>
-              <details class="inspire-panel" id="inspirePanel" open>
-                <summary>沒有靈感？這些方向可以參考</summary>
-                <p>不需要全部回答，也不需要照抄範例。只要分享你真實的使用感受，寫一兩個重點就很好。</p>
-                <div class="inspire-chips" aria-label="心得撰寫提示">
-                  <button class="inspire-chip" type="button" data-inspire="first">第一次使用容易上手嗎？</button>
-                  <button class="inspire-chip" type="button" data-inspire="feature">哪個功能讓你印象深刻？</button>
-                  <button class="inspire-chip" type="button" data-inspire="explain">畫面或說明容易理解嗎？</button>
-                  <button class="inspire-chip" type="button" data-inspire="mobile">手機使用順不順暢？</button>
-                  <button class="inspire-chip" type="button" data-inspire="better">希望未來改善什麼？</button>
-                  <button class="inspire-chip" type="button" data-inspire="share">會推薦別人使用嗎？為什麼？</button>
-                </div>
-                <div class="admin-label">參考寫法（點上方問題可切換）</div>
-                <div class="sample-note" id="inspireExample">「第一次接觸這個工具，原本擔心不會操作，實際使用後發現引導很清楚，幾個步驟就完成了。如果第一次進站能多一點提示會更好。」</div>
-                <div class="admin-hint">範例只提供靈感，不會自動填入文字，以免所有心得變得一模一樣。</div>
-              </details>
-              <div class="form-actions"><button class="btn primary" id="submitBtn" type="submit">送出心得，等待管理員審核 ↗</button><button class="btn small" id="resetBtn" type="button">清空表單</button></div>
-            </fieldset>
-            <div class="form-status" id="formStatus" role="status" aria-live="polite">請先登入 Google 會員以發表心得。</div>
-          </form>
-        </div>
-        <div class="side-stack">
-          <aside class="side-panel"><div class="mini-heading">✦　我們怎麼處理每一則心得？</div>
-            <div class="guide-line"><span class="mark">1</span><p><b>先存入會員帳號</b><br>正式上線後會記錄投稿會員與工具分類，避免重複洗評價。</p></div>
-            <div class="guide-line"><span class="mark">2</span><p><b>交由管理員審核</b><br>辱罵、廣告、灌水或揭露個資的內容可拒絕刊登。</p></div>
-            <div class="guide-line"><span class="mark">3</span><p><b>通過才公開展示</b><br>心得少時集中首頁，累積多後可依工具分類。</p></div>
-          </aside>
-          <aside class="side-panel"><div class="mini-heading">🔒　隱私與公平原則</div><p>此系統和「我的塔羅占卜紀錄」完全分開，不會自動公開個人記事、問題、命盤或占卜內容。合理的負面使用體驗不會只因為評分低就被刪除。</p></aside>
-          <aside class="side-panel"><div class="mini-heading">✧　從各工具直接進入</div><p>後續只需要在各工具或會員紀錄頁放一個「分享使用心得」連結，導到這一頁並附上工具分類參數。所有心得仍進入同一套資料庫。</p></aside>
-        </div>
-      </div>
-    </section>
-
-    <section id="my-reviews" aria-labelledby="myHeading">
-      <div class="section-heading"><div><span class="index">02 / MY SUBMISSIONS</span><h2 id="myHeading">我的心得與審核狀態</h2><p>正式串接後，這裡會顯示 D1 中的「待審核、已刊登、未通過」投稿狀態。</p></div><span class="chip">會員專屬區</span></div>
-      <div class="my-box"><div id="myReviewList" class="my-cards"><div class="empty-box"><span class="empty-symbol">◎</span><span>尚無心得。登入後就可以在這裡管理自己的投稿。</span></div></div></div>
-    </section>
-    <section class="local-admin" id="admin-preview"><div class="panel">
-      <h2>管理員審核入口</h2><p class="panel-sub">正式接上心得審核 API 後，可沿用現有 admin.html 管理員身分管理評論，不另設密碼。</p>
-      <a class="btn primary" style="display:inline-block;text-decoration:none" href="/admin.html">返回會員管理後台 ↗</a>
-    </div></section>
-    <section class="display-zone" id="reviews-wall" aria-labelledby="wallHeading">
-      <div class="section-heading"><div><span class="index">03 / PUBLISHED REVIEWS PREVIEW</span><h2 id="wallHeading">使用者心得展示牆</h2><p>目前提供明確標記的虛構心得版型預覽；完成後端串接後，才能顯示正式核准的真實評論。</p></div><span class="chip neutral">未來可搬至首頁及工具頁</span></div>
-      <div class="demo-callout" role="note"><span aria-hidden="true">ⓘ</span><span><strong>標記「虛構示範」的卡片只是版型參考，並非真實會員評價。</strong> 真實會員心得須先由正式管理員後台核准，才會顯示「已通過審核」。</span></div>
-      <div class="filters" id="toolFilters" role="group" aria-label="依工具篩選示範心得"></div>
-      <div id="wallError" class="form-status" role="status"></div><div class="wall-grid" id="sampleWall"></div>
-      <p class="login-hint" style="margin-top:19px">此區之後可以直接抽成共用展示模組，首頁顯示所有核准心得，各工具頁則只篩選對應工具；同一筆資料無須複製。審核功能請使用現有的 admin.html 管理員後台。</p>
-    </section>
-  </div>
+<header class="topbar"><div class="wrap topinner"><a class="brand" href="https://divinationhub.tw/"><span class="brandmark" aria-hidden="true">✺</span><span>一念知機</span></a><nav class="nav" aria-label="網站導覽"><a href="https://divinationhub.tw/">網站首頁</a><a href="member.html">會員中心</a><a class="featured" href="member.html?submitReview=1">發表使用心得 ↗</a></nav></div></header>
+<main class="wrap">
+<section class="hero"><div><div class="eyebrow">MEMBER REVIEWS · DIVINATION HUB</div><h1>會員心得展示牆</h1><p>每一份真實使用心得，都是讓工具變得更好的線索。在這裡閱讀會員對八字、塔羅、易經等工具的實際評價，包括喜歡的地方與改善建議。</p></div><div class="hero-symbol" aria-hidden="true">✧</div></section>
+<div class="info">本頁只顯示經一念知機站長審核、正式刊登的會員心得。各篇保留原本的星級與會員自訂暱稱，不公開 Google 帳號或出生資料。</div>
+<div class="stats" aria-label="心得展示統計"><div class="stat"><strong id="totalCount">—</strong><small>已刊登心得（目前分類）</small></div><div class="stat"><strong>1～5 ★</strong><small>真實會員評分</small></div><div class="stat"><strong id="filterLabel">全部</strong><small>目前檢視分類</small></div></div>
+<nav class="tools" id="filters" aria-label="依工具篩選心得"><button class="filter" data-tool="" aria-pressed="true">全部心得</button><button class="filter" data-tool="bazi" aria-pressed="false">八字排盤</button><button class="filter" data-tool="tarot" aria-pressed="false">塔羅占卜</button><button class="filter" data-tool="yijing" aria-pressed="false">易經占卜</button><button class="filter" data-tool="site" aria-pressed="false">整體網站體驗</button></nav>
+<div class="rowhead"><h2>已刊登的真實心得</h2><small id="lastUpdate">準備讀取網站資料……</small></div>
+<div id="wall" class="wall" aria-live="polite"><div class="empty">正在讀取正式心得資料……</div></div>
+<div class="loadmore"><button type="button" class="btn" id="loadMore" hidden>載入更多心得 ↓</button><button type="button" class="btn" id="retry" hidden>重新讀取</button></div>
+<p class="hint" style="margin:0 0 45px">歡迎分享真實體驗。會員可以隨時投稿多篇心得，所有新稿均需由站長審核後才會出現在此；已刊登內容不會因新投稿而被覆蓋。</p>
 </main>
-<footer class="shell foot"><span>© 一念知機 Divination Hub · 會員心得評價中心（後端測試版）</span><span><a href="https://divinationhub.tw/">網站首頁</a> · <a href="https://divinationhub.tw/tarot-records.html">私人塔羅紀錄</a> · <a href="/admin.html">會員管理後台</a></span></footer>
+<footer class="wrap foot"><span>© 一念知機 Divination Hub · 會員心得展示牆</span><span><a href="member.html">會員中心</a>　·　<a href="https://divinationhub.tw/">網站首頁</a></span></footer>
 <script>
 (()=>{'use strict';
-  // PREVIEW_GATE controls only the display of the static page, not network security.
-  // To block URL access entirely in staging, configure Cloudflare Access or equivalent at the edge.
-  const PREVIEW_GATE=true;
-  const MEMBER_API='https://member-api.ezgocpu.workers.dev';
-  const ADMIN_API='https://admin-api.ezgocpu.workers.dev';
-  const AUTH_KEY='divinationhub-bazi-google-credential';
-  const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
-  const TOOLS={tarot:'塔羅占卜',bazi:'八字排盤',yijing:'易經占卜',qimen:'奇門遁甲',ziwei:'紫微斗數',meihua:'梅花易數',liuyao:'六爻占卜',site:'整體網站'};
-  const DEMO_REVIEWS=[
-    {id:'example-0',nickname:'星空旅人',tool:'tarot',rating:5,title:'抽牌流程很容易理解',body:'第一次使用就能順利完成三張牌的操作，畫面一步一步引導很清楚。'},
-    {id:'example-1',nickname:'小月光',tool:'bazi',rating:4,title:'命盤資訊很豐富',body:'排盤之後可以慢慢查看不同區塊，資料整理得很完整；希望手機閱讀時字體再大一點。'},
-    {id:'example-2',nickname:'匿名旅人',tool:'yijing',rating:5,title:'操作步驟清楚直覺',body:'起卦操作沒有太多複雜的流程，能很快找到需要的資訊，整體體驗不錯。'},
-    {id:'example-3',nickname:'雲上散步',tool:'qimen',rating:4,title:'重要資訊容易找到',body:'盤面項目多，但分類方式清楚。若能再增加一點新手導覽會更方便。'},
-    {id:'example-4',nickname:'靜夜',tool:'site',rating:4,title:'不同工具都能在同一網站找到',body:'有很多種類的占卜與命理工具，切換很方便。希望以後還能有更統一的會員紀錄中心。'},
-    {id:'example-5',nickname:'旅人七號',tool:'tarot',rating:3,title:'功能不錯，但手機操作還能改善',body:'抽牌方式的選擇很多，不過有些按鈕在手機上稍微小了一點，期待後續優化。'}
-  ];
-  const INSPIRE={
-    first:'第一次接觸這個工具，原本擔心不會操作，實際使用後發現引導很清楚，幾個步驟就完成了。如果第一次進站能多一點提示會更好。',
-    feature:'讓我印象最深刻的是可以選擇不同的使用方式，能按照自己的需求慢慢探索，而不是所有人只能走同一個流程。',
-    explain:'頁面上關鍵資訊有分區整理，閱讀起來比較輕鬆。個別專業名詞如果有更多生活化的解說，會更方便理解。',
-    mobile:'我主要用手機操作，整體流程算順暢；只有部分文字和按鈕比較小，希望以後能再調整。',
-    better:'功能已經很豐富了，我希望未來能增加簡單的搜尋或整理方式，讓下一次回來時更容易找到之前看過的內容。',
-    share:'我會推薦想自己嘗試的人來用，因為不用花太多時間研究就能開始，也能慢慢找到比較適合自己的工具。'
-  };
+  const API='https://member-api.ezgocpu.workers.dev';
+  const PAGE_SIZE=12;
+  const TOOL_NAMES={bazi:'八字排盤',tarot:'塔羅占卜',yijing:'易經占卜',site:'整體網站體驗'};
   const $=id=>document.getElementById(id);
-  const cpLen=t=>[...String(t||'')].length;
-  const make=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};
-  const params=new URLSearchParams(location.search);
-  let user=null,score=0,editing=null,filter='all',mine=[],approved=[],busy=false;
-  let adminToken='';
-  let reviewsBackendReady=false;
-  function getAdminToken(){
-    try{const value=sessionStorage.getItem('divinationhub-admin-session');if(value)return value}catch(_){}
-    try{const saved=JSON.parse(localStorage.getItem('divinationhub-admin-remember-v1')||'null');
-      if(saved?.token&&Number(saved.expiresAt)>Date.now())return saved.token}catch(_){}
-    return '';
+  const make=(tag,cls,value)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(value!==undefined)el.textContent=String(value);return el};
+  const filters=[...document.querySelectorAll('[data-tool]')];
+  let tool='',offset=0,total=0,busy=false,epoch=0;
+  const query=new URLSearchParams(location.search).get('tool')||'';
+  if(Object.prototype.hasOwnProperty.call(TOOL_NAMES,query))tool=query;
+  function dateTW(value){if(!value)return '';const d=new Date(value);return Number.isFinite(d.getTime())?'':d.toLocaleDateString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'});}
+  function renderCard(r){
+    const card=make('article','review');const head=make('div','who');const who=make('div','who-info');
+    const nick=String(r.nickname||'匿名會員');who.append(make('div','nick',nick),make('div','tool-name',TOOL_NAMES[r.tool]||'網站工具'));
+    const avatar=make('div','avatar',nick.slice(0,1)||'會');avatar.setAttribute('aria-hidden','true');
+    head.append(avatar,who,make('span','approved','已通過審核'));
+    const rating=Math.min(5,Math.max(1,Number(r.rating)||1));
+    const stars=make('div','rating','★'.repeat(rating)+'☆'.repeat(5-rating));stars.setAttribute('aria-label',rating+' 顆星');
+    card.append(head,stars,make('h3','',r.title||'會員心得'),make('p','body',r.body||''));
+    const footer=make('div','bottom');footer.append(make('span','',dateTW(r.publishedAt)),make('b','','真實會員投稿'));card.append(footer);return card;
   }
-  function memberToken(){try{return localStorage.getItem(AUTH_KEY)||''}catch(_){return ''}}
-  function jwtPayload(t){try{const p=t.split('.')[1];if(!p)return null;
-    const b=p.replace(/-/g,'+').replace(/_/g,'/');const bytes=Uint8Array.from(atob(b),x=>x.charCodeAt(0));
-    const obj=JSON.parse(new TextDecoder().decode(bytes));return obj.exp*1000>Date.now()?obj:null}catch(_){return null}}
-  function setNotice(s,failed=false){$('formStatus').textContent=s;$('formStatus').className='form-status'+(failed?' error':'')}
-  function setRating(n){score=n;document.querySelectorAll('[data-star]').forEach(b=>{b.setAttribute('aria-pressed',String(Number(b.dataset.star)<=n));b.classList.toggle('selected',Number(b.dataset.star)<=n)});
-    $('ratingNote').textContent=n?`${n} / 5 顆星`:'尚未評分'}
-  function resetForm(){editing=null;$('reviewForm').reset();$('reviewTool').disabled=false;
-    const requested=params.get('tool');$('reviewTool').value=Object.hasOwn(TOOLS,requested)?requested:'tarot';
-    $('reviewNick').value=user?.name?.slice(0,18)||'';$('submitBtn').textContent='送出心得，等待管理員審核 ↗';setRating(0);updateCounter();}
-  function updateCounter(){$('bodyCounter').textContent=`${cpLen($('reviewBody').value)} / 500 字（至少 20 字）`}
-  async function api(base,path,options={}){
-    const headers={Accept:'application/json',...(options.admin?{Authorization:'Bearer '+adminToken}:{...(options.member?{Authorization:'Bearer '+memberToken()}:{})})};
-    if(options.payload!==undefined)headers['Content-Type']='application/json';
-    const response=await fetch(base+path,{method:options.method||'GET',headers,cache:'no-store',body:options.payload!==undefined?JSON.stringify(options.payload):undefined});
-    const data=await response.json().catch(()=>({}));if(!response.ok||data.success===false)throw Error(data.error||`HTTP ${response.status}`);
-    return data;
-  }
-  async function verifyPreview(){
-    const gate=$('privateGate');
-    if(!PREVIEW_GATE){document.body.classList.add('gate-open');gate.hidden=true;init();return}
-    if(location.protocol==='file:'){
-      $('gateStatus').textContent='本機檔案僅能看介面示範；正式串接測試須部署於網站，並先登入 admin.html。';
-      $('localPreview').hidden=false;return;
-    }
-    adminToken=getAdminToken();
-    if(!adminToken){$('gateStatus').textContent='請先前往現有 admin.html 輸入管理員密碼登入，再返回本頁按重新檢查。';return}
-    $('gateStatus').textContent='正在向 Cloudflare 驗證管理員登入……';
-    try{await api(ADMIN_API,'/admin/stats',{admin:true});
-      document.body.classList.add('gate-open');gate.hidden=true;init();
-    }catch(e){$('gateStatus').textContent='尚未通過管理員驗證：'+e.message+'。請重新登入 admin.html。'}
-  }
-  function previewLocal(){document.body.classList.add('gate-open');$('privateGate').hidden=true;
-    $('stageMessage').textContent='本機純介面預覽：無法送出雲端心得，亦不會儲存任何投稿。';
-    $('googleHint').hidden=false;$('googleHint').textContent='直接開本機 HTML 無法測試正式 Google 登入。請部署到網站，從 admin.html 登入後再測試。';
-    renderFilters();renderWall();}
-  $('checkAdminGate').addEventListener('click',verifyPreview);
-  $('localPreview').addEventListener('click',previewLocal);
-  function updateUser(){
-    const token=memberToken(),p=jwtPayload(token);user=p?{id:p.sub,name:p.name||p.email||'會員'}:null;
-    $('reviewFields').disabled=!user;
-    $('googleLoginMount').hidden=!!user;
-    $('logout').hidden=!user;
-    $('demoLogin').hidden=true;
-    $('loginTitle').textContent=user?'已登入：'+user.name:'請登入 Google 會員後投稿';
-    $('loginDesc').textContent=user?'心得會儲存到網站 D1，送出後需管理員核准才會公開。':'全站共用同一個 Google 會員帳號。';
-    if(user){
-      if(reviewsBackendReady){setNotice('可以撰寫心得；公開展示仍需管理員審核。');loadMine();}
-      else{mine=[];renderMine();setNotice('目前可以試填表單，但正式投稿尚未啟用，資料不會送出。');}
-    } else {mine=[];renderMine();setNotice('請先登入 Google 會員，才能發表心得。');}
-    $('submitBtn').disabled=!reviewsBackendReady;
-    $('submitBtn').textContent=reviewsBackendReady?'送出心得，等待管理員審核 ↗':'正式投稿尚未啟用';
-  }
-  let googleStarted=false,tries=0;
-  function googleInit(){
-    if(location.protocol==='file:')return;
-    if(googleStarted)return;
-    if(!window.google?.accounts?.id){if(tries++<25)setTimeout(googleInit,350);else {$('googleHint').hidden=false;$('googleHint').textContent='Google 登入元件載入失敗，請稍後重新整理。'}return;}
-    window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async response=>{
-      if(!response.credential)return;
-      try{localStorage.setItem(AUTH_KEY,response.credential)}catch(_){}
-      try{await api(MEMBER_API,'/me',{member:true})}catch(e){setNotice('Google 會員驗證失敗：'+e.message,true)}
-      updateUser();resetForm();
-    }});
-    window.google.accounts.id.renderButton($('googleLoginMount'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:238});
-    googleStarted=true;
-  }
-  $('logout').addEventListener('click',()=>{try{localStorage.removeItem(AUTH_KEY)}catch(_){}updateUser();resetForm();googleStarted=false;$('googleLoginMount').replaceChildren();googleInit();});
-  document.querySelectorAll('[data-star]').forEach(b=>b.addEventListener('click',()=>setRating(Number(b.dataset.star))));
-  $('reviewBody').addEventListener('input',updateCounter);
-  $('resetBtn').addEventListener('click',()=>{resetForm();setNotice('已清空表單。')});
-  document.querySelectorAll('[data-inspire]').forEach(b=>b.addEventListener('click',()=>{
-    const s=INSPIRE[b.dataset.inspire];if(!s)return;
-    document.querySelectorAll('[data-inspire]').forEach(x=>x.classList.toggle('active',x===b));
-    $('inspireExample').textContent='「'+s+'」';$('reviewBody').placeholder='可以參考這個方向：'+s;
-  }));
-  $('reviewForm').addEventListener('submit',async e=>{
-    e.preventDefault();if(busy)return;
-    if(!reviewsBackendReady){setNotice('目前只能查看與試填介面：正式投稿 API 尚未部署，資料不會送出。',true);return;}
-    if(!user){setNotice('請先登入會員。',true);return}
-    const payload={tool:$('reviewTool').value,nickname:$('reviewNick').value.trim(),rating:score,
-      title:$('reviewTitle').value.trim(),body:$('reviewBody').value.trim()};
-    if(!Object.hasOwn(TOOLS,payload.tool)||!Number.isInteger(score)||score<1||score>5||
-      cpLen(payload.nickname)<2||cpLen(payload.nickname)>18||cpLen(payload.title)<4||cpLen(payload.title)>50||
-      cpLen(payload.body)<20||cpLen(payload.body)>500){setNotice('請檢查工具、星級、暱稱（2～18 字）、標題（4～50 字）、心得（20～500 字）。',true);return}
-    busy=true;$('submitBtn').disabled=true;setNotice('正在儲存心得並送交審核……');
-    try{await api(MEMBER_API,'/reviews',{method:'POST',member:true,payload});
-      resetForm();setNotice('✓ 已成功儲存到 D1 資料庫，目前為「待審核」，尚未公開。');await loadMine();
-    }catch(err){setNotice('送出失敗：'+err.message,true)}finally{busy=false;$('submitBtn').disabled=false}
-  });
-  async function loadMine(){if(!user||!reviewsBackendReady)return;
-    try{const data=await api(MEMBER_API,'/reviews/me',{member:true});mine=data.reviews||[];renderMine()}
-    catch(e){$('myReviewList').replaceChildren(make('p','empty-box','讀取我的心得失敗：'+e.message))}
-  }
-  function renderMine(){const root=$('myReviewList');root.replaceChildren();
-    if(!user){root.append(make('div','empty-box','登入 Google 會員後，可查看自己已送出的心得。'));return}
-    if(!mine.length){root.append(make('div','empty-box','尚無心得。可以先在上方選擇工具，分享一次實際使用體驗。'));return}
-    mine.forEach(r=>{
-      const card=make('article','mine-card');const header=make('div','');
-      header.append(make('strong','',`${TOOLS[r.tool]||r.tool}　${'★'.repeat(r.rating)}`),make('span','chip neutral',({pending:'待審核',approved:'已刊登',rejected:'未通過',hidden:'已下架'}[r.status]||r.status)));
-      card.append(header,make('h3','',r.title),make('p','',r.body));
-      const buttons=make('div','form-actions');const edit=make('button','btn small','修改並重新送審');edit.type='button';edit.addEventListener('click',()=>{
-        editing=r.id;$('reviewTool').value=r.tool;$('reviewTool').disabled=true;
-        $('reviewNick').value=r.nickname;$('reviewTitle').value=r.title;$('reviewBody').value=r.body;
-        setRating(r.rating);updateCounter();$('submitBtn').textContent='儲存修改並重新送審 ↗';
-        $('review-form').scrollIntoView({behavior:'smooth'});
-        setNotice('提醒：重新送審後，原有已刊登心得會暫時下架，直到管理員再次核准。');
-      });
-      const remove=make('button','btn small','刪除我的心得');remove.type='button';remove.addEventListener('click',async()=>{
-        if(!confirm('刪除這則心得後，公開展示也會取消。確定刪除嗎？'))return;
-        try{await api(MEMBER_API,'/reviews/'+encodeURIComponent(r.id),{method:'DELETE',member:true});await loadMine();await loadWall();}
-        catch(e){setNotice('刪除失敗：'+e.message,true)}
-      });
-      buttons.append(edit,remove);card.append(buttons);root.append(card);
-    });
-  }
-  function renderFilters(){const root=$('toolFilters');root.replaceChildren();
-    for(const [id,label] of [['all','全部心得'],...Object.entries(TOOLS)]){
-      const button=make('button','filter-btn',label);button.type='button';button.setAttribute('aria-pressed',String(id===filter));
-      button.addEventListener('click',()=>{filter=id;renderFilters();renderWall()});root.append(button);
-    }
-  }
-  async function loadWall(){
-    if(!reviewsBackendReady){approved=[];renderWall();$('wallError').textContent='目前顯示的是版型範例；尚未連接正式心得資料庫。';return;}
+  function showEmpty(title,description){const el=make('div','empty');el.append(make('strong','',title),make('span','',description));$('wall').replaceChildren(el);}
+  function updateFilters(){for(const b of filters)b.setAttribute('aria-pressed',String(b.dataset.tool===tool));$('filterLabel').textContent=TOOL_NAMES[tool]||'全部';}
+  async function load(reset=false){
+    if(reset){epoch++;offset=0;total=0;$('loadMore').hidden=true;$('retry').hidden=true;showEmpty('正在讀取心得……','請稍候。');}
+    if(busy&&!reset)return;
+    const ticket=epoch,currentTool=tool,currentOffset=offset;
+    busy=true;$('loadMore').disabled=true;$('retry').hidden=true;
     try{
-      if(PREVIEW_GATE){const data=await api(ADMIN_API,'/admin/reviews?status=approved',{admin:true});approved=data.reviews||[]}
-      else{const data=await api(MEMBER_API,'/reviews/public');approved=data.reviews||[]}
-      renderWall();
-    }catch(e){approved=[];renderWall();$('wallError').textContent='已刊登心得暫時無法讀取：'+e.message}
+      const u=new URL(API+'/reviews/public');u.searchParams.set('limit',String(PAGE_SIZE));u.searchParams.set('offset',String(currentOffset));if(currentTool)u.searchParams.set('tool',currentTool);
+      const response=await fetch(u.toString(),{headers:{Accept:'application/json'},cache:'no-store'});
+      const data=await response.json().catch(()=>({}));if(!response.ok||data.success===false||!Array.isArray(data.reviews))throw Error('目前無法取得正式心得資料');
+      if(ticket!==epoch||currentTool!==tool)return;
+      total=Number(data.total??data.reviews.length);$('totalCount').textContent=total.toLocaleString('zh-TW');
+      if(currentOffset===0)$('wall').replaceChildren();
+      if(!data.reviews.length&&currentOffset===0)showEmpty('目前還沒有此分類的公開心得','會員投稿經站長審核後，就會顯示在這裡。');
+      else for(const r of data.reviews)$('wall').append(renderCard(r));
+      offset=currentOffset+data.reviews.length;
+      $('loadMore').hidden=offset>=total||data.reviews.length===0;
+      $('lastUpdate').textContent='已顯示 '+Math.min(offset,total)+'／'+total+' 篇';
+    }catch(error){if(ticket!==epoch||currentTool!==tool)return;
+      if(currentOffset===0)showEmpty('暫時無法載入心得','稍後再試，已核准資料不會因此消失。');
+      $('lastUpdate').textContent='讀取失敗';$('retry').hidden=false;
+    }finally{if(ticket===epoch){busy=false;$('loadMore').disabled=false;}}
   }
-  function renderWall(){
-    const root=$('sampleWall');root.replaceChildren();
-    const real=approved.map(r=>({...r,nickname:r.nickname||r.nick,example:false}));
-    const examples=PREVIEW_GATE?DEMO_REVIEWS.map(r=>({...r,example:true})):[];
-    const visible=[...real,...examples].filter(r=>filter==='all'||r.tool===filter);
-    if(!visible.length){root.append(make('div','wall-empty','目前尚無此分類已核准的心得。'));return}
-    for(const r of visible){
-      const card=make('article','wall-card');
-      const head=make('div','wall-head');const avatar=make('div','avatar',(r.nickname||'匿').slice(0,1));avatar.setAttribute('aria-hidden','true');
-      const who=make('div','wall-who');who.append(make('b','',r.nickname),make('small','',TOOLS[r.tool]||r.tool));
-      head.append(avatar,who,make('span','demo-mark',r.example?'虛構示範':'已通過審核'));
-      const stars=make('div','stars','★'.repeat(r.rating)+'☆'.repeat(5-r.rating));
-      stars.setAttribute('aria-label',`${r.rating} 顆星`);
-      const foot=make('div','wall-footer');foot.append(make('span','','整體使用體驗'),make('b','',r.example?'示範內容，非真實評論':'真實會員投稿'));
-      card.append(head,stars,make('h3','',r.title),make('p','',r.body),foot);root.append(card);
-    }
-  }
-  async function init(){
-    resetForm();renderFilters();$('wallError').textContent='';
-    // 舊版 member-api 沒有 /reviews/public；在升級 Worker 前維持可瀏覽但不可投稿。
-    try{
-      const health=await api(MEMBER_API,'/reviews/public');
-      // 兩支 Worker 都完成心得路由後才允許正式送出。
-      if(!Array.isArray(health.reviews))throw Error('會員心得 API 尚未就緒');
-      const moderation=await api(ADMIN_API,'/admin/reviews?status=approved',{admin:true});
-      reviewsBackendReady=Array.isArray(moderation.reviews);
-    }catch(_){reviewsBackendReady=false;}
-    updateUser();googleInit();loadWall();
-    $('stageMessage').textContent=reviewsBackendReady
-      ?'已完成管理員身分驗證。心得後端已回應；正式投稿仍須使用 Google 會員帳號，刊登需通過後台審核。'
-      :'已通過原有 admin.html 管理員驗證。你可以查看與試填頁面；正式心得 API 尚未部署，所以此版本不會把測試內容送出或宣稱已儲存。';
-  }
-  verifyPreview();
+  filters.forEach(b=>b.addEventListener('click',()=>{if(b.dataset.tool===tool)return;tool=b.dataset.tool;updateFilters();load(true);const next=new URL(location.href);if(tool)next.searchParams.set('tool',tool);else next.searchParams.delete('tool');if(location.protocol==='https:'||location.protocol==='http:')history.replaceState(null,'',next.pathname+next.search);}));
+  $('loadMore').addEventListener('click',()=>load());$('retry').addEventListener('click',()=>load(true));
+  updateFilters();load(true);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&offset===0)load(true)});
 })();
 </script>
 </body>

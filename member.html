@@ -154,7 +154,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     <div class="review-layout">
       <div class="panel review-form-panel">
         <div class="review-ident"><div><strong id="rvIdentityTitle">登入會員，分享心得</strong><div class="caption" id="rvIdentityDesc">使用一念知機共用 Google 會員帳號。</div></div><button type="button" class="btn small ghost" id="rvDemoLogin" hidden disabled>本機試用表單</button></div>
-        <div class="review-guide-strip"><strong>投稿規則：</strong>每位會員對同一工具一篇；審核前可修改，<strong>刊登後即永久鎖定，不能修改或刪除</strong>。公開只顯示自訂暱稱，不公開 Google 帳號或占卜資料。</div>
+        <div class="review-guide-strip"><strong>投稿規則：</strong>同一工具可持續投稿多篇，沒有每日篇數或間隔限制；每篇都須站長審核。審核前可修改，<strong>刊登後即永久鎖定，不能修改或刪除</strong>。公開只顯示自訂暱稱，不公開 Google 帳號或占卜資料。</div>
         <form id="rvForm" novalidate>
           <fieldset id="rvFields" disabled>
             <div class="review-field"><label for="rvTool">這次要評價哪個工具？ <span class="required">*</span></label><select id="rvTool" class="field"><option value="bazi">八字排盤</option><option value="tarot">塔羅占卜</option><option value="yijing">易經占卜</option><option value="site">整體網站體驗</option></select><div class="review-existing" id="rvExistingNotice" role="status" hidden><span id="rvExistingText">這套工具已有心得。</span><button type="button" class="btn small ghost" id="rvExistingEdit">修改原心得</button></div></div>
@@ -170,7 +170,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 
     </div>
     <div class="panel review-my"><div class="section-top"><div><h3>我的心得</h3><p class="section-lead">待審核與未通過的投稿可以修改；已刊登的心得僅在下方公開展示區查看。</p></div><span class="pill">正式會員資料</span></div><div id="rvMine" class="review-my-list"><p class="caption">尚無心得。</p></div></div>
-    <div class="panel review-my" id="rvPublicSection"><div class="section-top"><div><h3>已通過審核的心得</h3><p class="section-lead">以下為站長核准的真實會員投稿；未審核、未通過或已下架心得不會公開。</p></div><button type="button" class="btn small ghost" id="rvPublicRefresh">重新整理</button></div><div id="rvPublicWall" class="review-my-list"><p class="caption">正在讀取正式公開心得……</p></div></div>
+    <div class="panel review-my" id="rvPublicSection"><div class="section-top"><div><h3>已通過審核的心得</h3><p class="section-lead">以下為站長核准的最新心得預覽；所有公開心得可到完整展示牆查看。</p></div><div class="review-actions"><a class="btn small ghost" href="member-reviews.html">完整心得展示牆 ↗</a><button type="button" class="btn small ghost" id="rvPublicRefresh">重新整理</button></div></div><div id="rvPublicWall" class="review-my-list"><p class="caption">正在讀取正式公開心得……</p></div></div>
   </section>
 </section>
 <section id="pageBazi" class="view" hidden>
@@ -482,19 +482,15 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       rvNotice('請依照紅框下方的提示修正，再送出心得。','err');return false}
     return true;
   }
-  function rvExistingForTool(){return rvMineData.find(x=>x.tool===$('rvTool').value)||null}
+  function rvExistingForTool(){return rvMineData.filter(r=>r.tool===$('rvTool').value)}
   function rvSyncExisting(){
-    const saved=rvReady?rvExistingForTool():null;const duplicate=!!(saved&&rvEdit!==saved.id);
-    $('rvExistingNotice').hidden=!duplicate;
-    if(duplicate){
-      const locked=['approved','hidden'].includes(saved.status)||!!saved.everApproved;
-      $('rvExistingText').textContent=locked
-        ?'這套工具的心得已經站長核准刊登，內容已鎖定，會員不能修改、撤回或再次投稿。'+(saved.status==='approved'?'請往下查看已刊登成果。':'該心得目前已由站長下架。')
-        :'這套工具已有一則心得（'+({pending:'待審核',rejected:'未通過'}[saved.status]||'已儲存')+'），請使用「修改原心得」，不需要再寫一篇。';
-      $('rvExistingEdit').hidden=locked;
-    }else $('rvExistingEdit').hidden=false;
-    $('rvExistingEdit').disabled=!rvReady||rvBusy||isSiteMaintenance()||!saved||(!['pending','rejected'].includes(saved.status)||!!saved.everApproved);
-    $('rvSubmit').disabled=duplicate||rvBusy;
+    const existing=rvReady?rvExistingForTool():[];
+    const editable=existing.find(r=>['pending','rejected'].includes(r.status)&&!r.everApproved);
+    $('rvExistingNotice').hidden=!existing.length||!!rvEdit;
+    $('rvExistingText').textContent=`你先前已在此分類投稿 ${existing.length} 篇；可隨時另外撰寫新心得，每篇均獨立送審。已刊登的舊心得不可修改或刪除。`;
+    $('rvExistingEdit').hidden=!editable||!!rvEdit;
+    $('rvExistingEdit').disabled=!rvReady||rvBusy||isSiteMaintenance()||!editable;
+    $('rvSubmit').disabled=rvBusy;
   }
   function rvBeginEdit(r){
     if(!r||isSiteMaintenance())return;
@@ -540,8 +536,8 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       const item=textNode('article','','review-my-item'+(r.status==='hidden'?' review-my-status':''));
       item.append(textNode('div',(REVIEW_TOOLS[r.tool]||r.tool)+'　'+ '★'.repeat(r.rating)+'☆'.repeat(5-r.rating)+'　· '+(statusName[r.status]||r.status),'review-my-label'),textNode('h4',r.title),textNode('p',r.body));
       if(r.status==='rejected'&&r.rejectionReason)item.append(textNode('p','未通過原因：'+r.rejectionReason,'caption'));
-      if(r.everApproved&&r.status!=='hidden')item.append(textNode('p','這則心得曾經刊登過，現在無法再編輯、刪除或重新投稿。','caption'));
-      if(r.status==='hidden')item.append(textNode('p','這則心得曾經刊登，已由管理員下架；會員無法修改、刪除或重新投稿。','caption'));
+      if(r.everApproved&&r.status!=='hidden')item.append(textNode('p','這則心得已刊登，不能修改或刪除；歡迎另外提交新的心得。','caption'));
+      if(r.status==='hidden')item.append(textNode('p','這則心得已由管理員下架，原稿不能修改或刪除；仍可另外發表新心得。','caption'));
       if(['pending','rejected'].includes(r.status)&&!r.everApproved){
         const actions=textNode('div','','review-actions');const edit=textNode('button','修改心得','btn small ghost'),del=textNode('button','刪除未刊登心得','btn small danger');edit.type=del.type='button';
         edit.addEventListener('click',()=>rvBeginEdit(r));
@@ -587,7 +583,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     for(const b of document.querySelectorAll('[data-rv-inspire]'))b.addEventListener('click',()=>{const example=REVIEW_EXAMPLES[b.dataset.rvInspire];if(!example)return;$('rvExample').textContent='「'+example+'」';$('rvBody').placeholder='可以參考這個方向：'+example;for(const x of document.querySelectorAll('[data-rv-inspire]'))x.setAttribute('aria-pressed',String(x===b))});
     $('rvBody').addEventListener('input',()=>{$('rvCount').textContent=rvLen($('rvBody').value)+' / 500 字（至少 20 字）'});
     $('rvTool').addEventListener('change',()=>{rvMarkError('rvTool','');rvSyncExisting()});
-    $('rvExistingEdit').addEventListener('click',()=>rvBeginEdit(rvExistingForTool()));
+    $('rvExistingEdit').addEventListener('click',()=>rvBeginEdit(rvExistingForTool().find(r=>['pending','rejected'].includes(r.status)&&!r.everApproved)));
     for(const id of ['rvNick','rvTitle','rvBody']){
       $(id).addEventListener('input',()=>{const group=$(id).closest('.review-field');if(group.classList.contains('review-invalid'))rvMarkError(id,rvCheckers[id]())});
     }
@@ -599,24 +595,11 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       if(!rvOwner()||!rvReady){rvNotice('請先登入並等待正式心得資料載入。','err');return}
       const payload={tool:$('rvTool').value,nickname:$('rvNick').value.trim(),rating:rvRating,title:$('rvTitle').value.trim(),body:$('rvBody').value.trim()};
       if(!rvValidate())return;
-      // 發送前再向 D1 確認，以免其他分頁或裝置剛剛投稿，會員直到最後才知道已存在。
-      if(!rvEdit){
-        try{const latest=await api('/reviews/me');if(Array.isArray(latest.reviews)){
-          rvMineData=latest.reviews;rvRenderMine();rvSyncExisting();
-          if(rvExistingForTool()){
-            rvMarkError('rvTool',(['approved','hidden'].includes(rvExistingForTool().status)||rvExistingForTool().everApproved)?'此工具心得已經刊登鎖定，不能修改或再次投稿。':'這套工具已有心得，請按上方「修改原心得」。',true);
-            $('rvTool').scrollIntoView({block:'center',behavior:'smooth'});
-            rvNotice('這套工具已有心得，請使用「修改原心得」，不需要重新填寫。','err');return;
-          }
-        }}catch(e){rvNotice('暫時無法確認是否已有心得，請稍後重試：'+e.message,'err');return}
-      }
+      // 不檢查同工具舊心得是否存在；所有符合內容規則的新投稿都獨立排隊審核。
       rvBusy=true;$('rvFields').disabled=true;rvSyncExisting();rvNotice('正在儲存正式心得並送交審核……');
       try{await api(rvEdit?'/reviews/'+encodeURIComponent(rvEdit):'/reviews',{method:rvEdit?'PUT':'POST',body:JSON.stringify(payload)});
-        rvResetForm();await rvLoadMineForce();await rvLoadPublished();rvNotice('✓ 心得已正式提交並儲存至 D1，目前為「待審核」，尚未公開。','ok');$('rvMine').scrollIntoView({behavior:'smooth',block:'nearest'});
+        rvResetForm();await rvLoadMineForce();await rvLoadPublished();rvNotice('✓ 新的一篇心得已正式提交並儲存至 D1，等待站長審核；不會覆蓋之前的心得。','ok');$('rvMine').scrollIntoView({behavior:'smooth',block:'nearest'});
       }catch(err){
-        if(/此工具已有心得/.test(err.message)){
-          await rvLoadMineForce();rvSyncExisting();rvMarkError('rvTool',rvExistingForTool()&&(['approved','hidden'].includes(rvExistingForTool().status)||rvExistingForTool().everApproved)?'此工具心得已刊登鎖定，不能修改或再次投稿。':'這套工具已有心得，請使用「修改原心得」。',true);
-        }
         rvNotice('投稿失敗：'+err.message,'err')
       }
       finally{rvBusy=false;rvAuthSync();rvSyncExisting()}
@@ -645,6 +628,9 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshMaintenanceStatus();pollMemberIssueChat();rvRefreshMineQuiet();if(currentView==='home')rvLoadPublished()}});
     window.addEventListener('focus',()=>{rvRefreshMineQuiet();if(currentView==='home')rvLoadPublished()});
     reviewInit();showPage();updateAuthUI();
+    if(new URLSearchParams(location.search).get('submitReview')==='1'){
+      setTimeout(()=>{if(currentView==='home')$('reviewSection')?.scrollIntoView({behavior:'smooth',block:'start'})},220);
+    }
   }
   init();
 })();
