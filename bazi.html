@@ -93,6 +93,20 @@ button,a{font:inherit}button{cursor:pointer}
 .member-unlock-btn:hover{border-color:var(--bazi-line-17,rgba(233,189,88,.58));background:var(--bazi-bg-59,rgba(233,189,88,.11))}
 .member-chip{padding:7px 12px}
 .member-chip .member-avatar,.member-chip .member-avatar-fallback{display:none!important}
+/* Shared one-button member entry: the existing chip is now only a sign-out menu arrow. */
+.member-entry{gap:5px}
+.bazi-member-menu-toggle{min-width:31px;min-height:36px;justify-content:center;padding:5px 8px;border-radius:999px}
+.bazi-member-menu-toggle .member-name{display:none!important}
+.bazi-member-menu-toggle[hidden]{display:none!important}
+@media(max-width:520px){.page-topbar{flex-wrap:wrap;row-gap:6px}.topbar-left{flex:1 1 100%}.topbar-right{flex:1 1 100%;justify-content:flex-end;gap:7px}.member-menu{right:0}}
+.bazi-member-menu-toggle[aria-expanded="true"]{border-color:rgba(117,220,228,.55);background:rgba(117,220,228,.13)}
+.member-unlock-btn{white-space:nowrap}
+html[data-theme="light"] .bazi-member-menu-toggle{background:#fff;border-color:rgba(44,125,135,.22);color:#316b70}
+html[data-theme="light"] .bazi-member-menu-toggle:hover{background:#ecf8f8}
+html[data-theme="light"] .member-menu{background:#fff;border-color:rgba(30,60,60,.16);box-shadow:0 15px 45px rgba(20,45,45,.15)}
+html[data-theme="light"] .member-menu button{color:#365564}
+html[data-theme="light"] .member-menu-info strong{color:#234652}
+html[data-theme="light"] .member-menu-info span{color:#657986}
 .auth-modal,.saved-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;background:var(--bazi-bg-60,rgba(0,0,0,.68));backdrop-filter:blur(8px)}
 .auth-modal.show,.saved-modal.show{display:flex}
 .auth-card,.saved-card{width:min(440px,94vw);border:1px solid var(--bazi-line-61,rgba(233,189,88,.24));border-radius:18px;background:var(--bazi-bg-62,#0a0d12);box-shadow:0 28px 90px var(--bazi-shadow-63,rgba(0,0,0,.52));padding:22px}
@@ -2432,8 +2446,8 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     <div class="topbar-right">
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換成淺色模式"><span id="themeToggleIcon" aria-hidden="true">☀</span><span id="themeToggleText">淺色</span></button>
       <div class="member-entry" id="baziMemberEntry">
-        <button class="member-unlock-btn" id="baziTopbarUnlockBtn" type="button">會員</button>
-        <button class="member-chip" id="baziMemberChip" type="button" hidden aria-haspopup="true" aria-expanded="false">
+        <button class="member-unlock-btn" id="baziTopbarUnlockBtn" type="button" aria-label="免費登入一念知機會員">免費登入</button>
+        <button class="member-chip bazi-member-menu-toggle" id="baziMemberChip" type="button" hidden aria-haspopup="true" aria-controls="baziMemberMenu" aria-label="會員選單，包含登出" aria-expanded="false" title="會員選單／登出">
           <span class="member-name" id="baziMemberName">會員</span>
           <span aria-hidden="true">▾</span>
         </button>
@@ -2444,7 +2458,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
           </div>
           <button id="baziSaveCurrentBtn" type="button">儲存目前八字</button>
           <button id="baziMyChartsBtn" type="button">我的八字</button>
-          <button id="baziLogoutBtn" type="button">登出</button>
+          <button id="baziLogoutBtn" type="button">登出會員</button>
         </div>
       </div>
       <a class="listing-open" id="openListing" href="/apply-listing.html">申請刊登</a>
@@ -3033,7 +3047,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     const inlineLoad=document.getElementById('birthMemberLoadBtn');
 
     if(profile){
-      if(unlock)unlock.hidden=true;
+      if(unlock){unlock.hidden=false;unlock.textContent='會員中心';unlock.setAttribute('aria-label','前往一念知機會員中心');unlock.title='前往一念知機會員中心';}
       if(chip)chip.hidden=false;
       if(inlineLogin)inlineLogin.hidden=true;
       if(inlineSave)inlineSave.hidden=false;
@@ -3042,8 +3056,8 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
       document.getElementById('baziMemberMenuName').textContent=profile.name;
       document.getElementById('baziMemberEmail').textContent=profile.email;
     }else{
-      if(unlock)unlock.hidden=false;
-      if(chip)chip.hidden=true;
+      if(unlock){unlock.hidden=false;unlock.textContent='免費登入';unlock.setAttribute('aria-label','免費登入一念知機會員');unlock.title='免費登入';}
+      if(chip){chip.hidden=true;chip.setAttribute('aria-expanded','false');}
       if(inlineLogin)inlineLogin.hidden=false;
       if(inlineSave)inlineSave.hidden=true;
       if(inlineLoad)inlineLoad.hidden=true;
@@ -6470,7 +6484,10 @@ ${intent}
     const memberChip=document.getElementById('baziMemberChip');
     const logoutBtn=document.getElementById('baziLogoutBtn');
 
-    document.getElementById('baziTopbarUnlockBtn')?.addEventListener('click',baziOpenAuth);
+    document.getElementById('baziTopbarUnlockBtn')?.addEventListener('click',()=>{
+      if(baziAuthProfile()){memberEntry?.classList.remove('is-open');location.href='member.html';}
+      else baziOpenAuth();
+    });
     document.getElementById('birthMemberLoginBtn')?.addEventListener('click',baziOpenAuth);
     document.getElementById('birthMemberSaveBtn')?.addEventListener('click',saveCurrentBazi);
     $('baziSaveForm')?.addEventListener('submit',submitSavedBazi);
@@ -6502,6 +6519,14 @@ ${intent}
       if(lastData)renderYearFlows({...lastData,threeYearStrategicOutlook:null});
       toast('已登出');
     });
+
+    window.addEventListener('storage',e=>{
+      if(e.key===BAZI_AUTH_KEY){
+        window.baziUpdateTopbarMember?.();
+        if(!baziAuthProfile()){refreshSmartPromptLocks?.();resetDailyFlowAccess();if(lastData)renderYearFlows({...lastData,threeYearStrategicOutlook:null});}
+      }
+    });
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){memberEntry?.classList.remove('is-open');memberChip?.setAttribute('aria-expanded','false');}});
 
     document.addEventListener('click',e=>{
       if(memberEntry && !memberEntry.contains(e.target)){

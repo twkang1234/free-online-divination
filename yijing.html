@@ -887,6 +887,19 @@ html[data-theme="light"] .ai-provider-btn small{color:#63766a}
 /* ===== V6.5 Guest → Free Member Access V1 ===== */
 .member-open{min-height:36px;padding:7px 13px;border:1px solid rgba(124,227,161,.30);border-radius:999px;background:rgba(124,227,161,.07);color:#a9eabf;font-weight:850;font-size:.70rem;white-space:nowrap}
 .member-open.logged{border-color:rgba(118,220,229,.24);background:rgba(118,220,229,.055);color:#b7e7e9}.member-open:hover{transform:translateY(-1px);border-color:rgba(124,227,161,.58)}
+/* Shared account button + sign-out dropdown (same behavior as tarot). */
+.yijing-member-entry{position:relative;display:inline-flex;align-items:center;gap:5px;flex:0 0 auto}
+.yijing-member-entry [hidden]{display:none!important}
+@media(max-width:520px){.page-topbar{flex-wrap:wrap;row-gap:6px}.topbar-left{flex:1 1 100%}.topbar-right{flex:1 1 100%;justify-content:flex-end;gap:7px}}
+.yijing-member-menu-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:30px;min-height:36px;padding:5px 7px;border:1px solid rgba(118,220,229,.30);border-radius:999px;background:rgba(118,220,229,.055);color:#b7e7e9;font-weight:800}
+.yijing-member-menu-toggle:hover,.yijing-member-menu-toggle[aria-expanded="true"]{background:rgba(118,220,229,.14);border-color:rgba(118,220,229,.58)}
+.yijing-member-dropdown{position:absolute;z-index:120;top:calc(100% + 9px);right:0;width:162px;padding:6px;border:1px solid rgba(124,227,161,.24);border-radius:13px;background:#07160e;box-shadow:0 18px 50px rgba(0,0,0,.42)}
+.yijing-member-dropdown button{display:block;width:100%;padding:9px 11px;border:0;border-radius:8px;background:transparent;color:#f1afb4;text-align:left;font:inherit;font-size:.73rem;cursor:pointer}
+.yijing-member-dropdown button:hover{background:rgba(124,227,161,.10)}
+html[data-theme="light"] .yijing-member-menu-toggle{background:#fff;border-color:rgba(49,133,78,.22);color:#2d7145}
+html[data-theme="light"] .yijing-member-dropdown{background:#fff;border-color:rgba(49,104,67,.18);box-shadow:0 15px 40px rgba(30,60,40,.14)}
+html[data-theme="light"] .yijing-member-dropdown button{color:#a54155}
+html[data-theme="light"] .yijing-member-dropdown button:hover{background:#edf7ef}
 .yijing-access-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 14px;padding:11px 13px;border:1px solid rgba(124,227,161,.12);border-radius:13px;background:rgba(124,227,161,.025)}
 .yijing-access-copy{min-width:0;flex:1}.yijing-access-copy b{display:block;color:#dceee2;font-size:.75rem}.yijing-access-copy span{display:block;margin-top:2px;color:#8fa197;font-size:.66rem;line-height:1.55}
 .yijing-access-urgent{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:8px;padding:10px 13px;border:1px solid rgba(225,197,110,.30);border-radius:12px;background:linear-gradient(145deg,rgba(225,197,110,.10),rgba(124,227,161,.025));color:#dce6df;line-height:1.35}.yijing-access-urgent .quota-label{color:#c9d7ce;font-size:.67rem;font-weight:850}.yijing-access-urgent .quota-number{color:#ffe083;font-size:1.02rem;font-weight:950;letter-spacing:.01em}.yijing-access-urgent .quota-refresh-note{flex-basis:100%;margin-top:2px;color:#9fb0a5;font-size:.59rem;line-height:1.45}.yijing-access-urgent.quota-empty{border-color:rgba(235,120,96,.36);background:linear-gradient(145deg,rgba(235,120,96,.09),rgba(225,197,110,.035))}.yijing-access-urgent.quota-empty .quota-label{color:#edb7aa}.yijing-access-urgent.quota-empty .quota-number{color:#ffad98}
@@ -959,7 +972,13 @@ html[data-theme="light"] .yijing-access-heading .yijing-access-cta{background:li
     </div>
     <div class="topbar-right">
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換顯示模式"><span class="theme-toggle-icon" id="themeToggleIcon" aria-hidden="true">☀</span><span class="theme-toggle-text" id="themeToggleText">淺色</span></button>
-      <button class="member-open" id="yijingMemberButton" type="button"><span id="yijingMemberButtonText">免費登入</span></button>
+      <div class="yijing-member-entry" id="yijingMemberEntry">
+        <button class="member-open" id="yijingMemberButton" type="button" aria-label="免費登入一念知機會員"><span id="yijingMemberButtonText">免費登入</span></button>
+        <button class="yijing-member-menu-toggle" id="yijingMemberMenuToggle" type="button" aria-controls="yijingMemberDropdown" aria-label="會員選單，包含登出" aria-expanded="false" title="會員選單／登出" hidden>▾</button>
+        <div class="yijing-member-dropdown" id="yijingMemberDropdown" hidden>
+          <button id="yijingMemberMenuLogout" type="button">登出會員</button>
+        </div>
+      </div>
       <div class="page-status">APPLY TO BE LISTED</div>
       <a class="listing-open" id="openListing" href="apply-listing.html?from=yijing">申請刊登</a>
     </div>
@@ -1700,11 +1719,25 @@ function cardHTML(h, lines, label, movingLines=[]){
     bindMemberDevice();saveLastMemberProfile(current);updateMemberUI();closeMemberModal();refreshAccessUI();
     if(previous&&!sameMember(previous,current)&&remainingUses()===0)setTimeout(()=>openDeviceQuotaModal(previous,current),120);
   }
-  function logoutMember(){if(isAdminTestActive()){setAdminTestMode('guest');return;}setAuthToken('');safeWrite(YIJING_LOCAL_MEMBER_KEY,false);try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){};updateMemberUI();refreshAccessUI()}
+  function closeYijingMemberDropdown(){
+    const menu=document.getElementById('yijingMemberDropdown'),toggle=document.getElementById('yijingMemberMenuToggle');
+    if(menu)menu.hidden=true;
+    if(toggle)toggle.setAttribute('aria-expanded','false');
+  }
+  function toggleYijingMemberDropdown(){
+    if(!isLogged()){closeYijingMemberDropdown();return;}
+    const menu=document.getElementById('yijingMemberDropdown'),toggle=document.getElementById('yijingMemberMenuToggle');
+    if(!menu||!toggle)return;
+    menu.hidden=!menu.hidden;
+    toggle.setAttribute('aria-expanded',String(!menu.hidden));
+  }
+  function logoutMember(){closeYijingMemberDropdown();if(isAdminTestActive()){setAdminTestMode('guest');return;}setAuthToken('');safeWrite(YIJING_LOCAL_MEMBER_KEY,false);try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){};updateMemberUI();refreshAccessUI()}
   function updateMemberUI(){
     const p=authProfile();if(p){bindMemberDevice();saveLastMemberProfile(p)}const bound=!p&&memberDeviceBound(),btn=document.getElementById('yijingMemberButton'),txt=document.getElementById('yijingMemberButtonText'),title=document.getElementById('yijingAccessTitle'),copy=document.getElementById('yijingAccessText'),cta=document.getElementById('yijingAccessLogin'),urgent=document.getElementById('yijingAccessUrgent'),benefit=document.getElementById('yijingMemberBenefit'),paidEntry=document.getElementById('yijingPaidEntry'),paidTitle=document.getElementById('yijingPaidEntryTitle'),paidText=document.getElementById('yijingPaidEntryText'),paidBalance=document.getElementById('yijingPaidBalance'),paidBtn=document.getElementById('yijingPaidEntryButton');
     const rem=remainingUses(),full=hasFullPaidAccess();
-    if(btn){btn.classList.toggle('logged',!!p)}if(txt)txt.textContent=p?p.name:(bound?'登入會員':'免費登入');
+    if(btn){btn.classList.toggle('logged',!!p);btn.setAttribute('aria-label',p?'前往一念知機會員中心':'免費登入一念知機會員');btn.title=p?'前往一念知機會員中心':'免費登入';}
+    if(txt)txt.textContent=p?'會員中心':'免費登入';
+    const menuToggle=document.getElementById('yijingMemberMenuToggle');if(menuToggle)menuToggle.hidden=!p;if(!p)closeYijingMemberDropdown();
     if(title)title.textContent=full?'完整進階起卦預覽｜本次全部功能已開放':(p?'免費會員｜大部分限制已解除':(bound?'此裝置已使用過會員功能｜請登入':'未登入訪客｜每日輪替開放'));
     if(copy)copy.textContent=full?'本次視為完整進階起卦：所有題目、6 種起卦方式、1～7 解讀與 AI／TXT 全部開放。':(p?'主題與固定題目全開、一般起卦全開；03／06 每日輪替開 1 種、專業分析 1～4 每日鎖 1 區。':(bound?'未登入訪客額度已停用；請登入會員後繼續使用。':'今日開放 4 / 8 主題、每情境 3 題、一般起卦 2 / 4 種；自訂題與進階方式受限。'));
     if(urgent){
@@ -2193,7 +2226,15 @@ function cardHTML(h, lines, label, movingLines=[]){
   updateMemberUI();
   renderTopics();
   result.addEventListener('click',e=>{const paid=e.target.closest('[data-paid-lock]');if(paid){openPaidModal(`「${paid.dataset.paidLock||'這項功能'}」目前屬完整進階功能。未來使用 1 個付費額度即可解鎖本次全部進階內容。`);return;}const lock=e.target.closest('[data-login-lock]');if(lock){openMemberModal(`「${lock.dataset.loginLock||'這項功能'}」目前未對未登入訪客開放；先免費登入可解除大部分限制。`);}});
-  document.getElementById('yijingMemberButton')?.addEventListener('click',()=>openMemberModal());
+  document.getElementById('yijingMemberButton')?.addEventListener('click',()=>{
+    if(isLogged()){closeYijingMemberDropdown();location.href='member.html';return;}
+    openMemberModal();
+  });
+  document.getElementById('yijingMemberMenuToggle')?.addEventListener('click',e=>{e.stopPropagation();toggleYijingMemberDropdown();});
+  document.getElementById('yijingMemberMenuLogout')?.addEventListener('click',logoutMember);
+  document.addEventListener('click',e=>{if(!e.target.closest('#yijingMemberEntry'))closeYijingMemberDropdown();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeYijingMemberDropdown();});
+  window.addEventListener('storage',e=>{if(e.key===YIJING_AUTH_KEY)refreshAccessUI();});
   document.getElementById('yijingAdminTestClose')?.addEventListener('click',closeAdminTestModal);
   document.getElementById('yijingAdminTestModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closeAdminTestModal()});
   document.getElementById('yijingAdminTestModes')?.addEventListener('click',e=>{const b=e.target.closest('[data-admin-test-mode]');if(b)setAdminTestMode(b.dataset.adminTestMode)});
