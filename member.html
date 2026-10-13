@@ -80,6 +80,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 #rvFields{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:10px 22px;align-items:start}
 #rvFields>.review-two,#rvFields>.review-field:nth-child(4),#rvFields>.review-inspire,#rvFields>.review-actions{grid-column:1/-1}
 #rvFields>.review-field{margin:0}
+#rvFields>.review-nick-only{grid-column:1/-1;max-width:100%}
 .review-guide-strip{font-size:.78rem;color:var(--sub);border:1px solid var(--line);border-radius:10px;padding:9px 13px;line-height:1.75;margin:7px 0 10px}
 .review-guide-strip strong{color:var(--ink)}
 .review-locked-chip{font-size:.75rem;color:var(--green);font-weight:750}
@@ -115,7 +116,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 .review-my[hidden]{display:none!important}
 @media(max-width:580px){.member-announcement{padding:16px 15px}.chat.locked{padding:13px 14px}.member-announcement:not(.is-expanded) .member-announcement-content{-webkit-line-clamp:4}}
 
-/* 會員心得分流：最新三篇公開展示，個人已刊登心得獨立收合 */
+/* 會員心得分流：最新三篇公開展示，個人發布中心得獨立收合 */
 .hero .lead{max-width:960px;text-wrap:pretty}
 .public-reviews-head{margin-bottom:15px}
 .review-wall-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -210,12 +211,12 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     <div class="review-layout">
       <div class="panel review-form-panel">
         <div class="review-ident"><div><strong id="rvIdentityTitle">登入會員，分享心得</strong></div><button type="button" class="btn small ghost" id="rvDemoLogin" hidden disabled>本機試用表單</button></div>
-        <details class="review-rules"><summary>投稿小提醒</summary><p class="review-rules-detail">歡迎隨時分享真實感受，不限投稿篇數。內容確認後才會公開；已刊登的心得無法再編輯。請勿填寫生日、占卜問題等私人資料。</p></details>
+        <details class="review-rules"><summary>投稿小提醒</summary><p class="review-rules-detail">歡迎隨時分享真實感受，不限投稿篇數。內容確認後才會公開；發布中的心得無法再編輯。請勿填寫生日、占卜問題等私人資料。</p></details>
         <form id="rvForm" novalidate>
           <fieldset id="rvFields" disabled>
             <div class="review-field"><label for="rvTool">這次要評價哪個工具？ <span class="required">*</span></label><select id="rvTool" class="field"><option value="bazi">八字排盤</option><option value="tarot">塔羅占卜</option><option value="yijing">易經占卜</option><option value="site">整體網站體驗</option></select><div class="review-existing" id="rvExistingNotice" role="status" hidden><span id="rvExistingText">你有一篇心得可以繼續修改。</span><button type="button" class="btn small ghost" id="rvExistingEdit">修改原心得</button></div></div>
             <div class="review-field"><span class="field-label" id="rvRatingLabel">整體使用評分 <span class="required">*</span></span><div class="review-stars" role="group" aria-labelledby="rvRatingLabel"><button type="button" data-rv-star="1" aria-label="評 1 顆星" aria-pressed="false">★</button><button type="button" data-rv-star="2" aria-label="評 2 顆星" aria-pressed="false">★</button><button type="button" data-rv-star="3" aria-label="評 3 顆星" aria-pressed="false">★</button><button type="button" data-rv-star="4" aria-label="評 4 顆星" aria-pressed="false">★</button><button type="button" data-rv-star="5" aria-label="評 5 顆星" aria-pressed="false">★</button><span class="rating-note" id="rvRatingNote">尚未評分</span></div><div class="caption">歡迎真實評分，也可以提出需要改善的地方。</div></div>
-            <div class="review-two"><div class="review-field"><label for="rvNick">公開暱稱 <span class="required">*</span></label><input class="field" id="rvNick" autocomplete="nickname" maxlength="18" placeholder="例如：星空旅人"></div><div class="review-field"><label for="rvTitle">心得標題 <span class="required">*</span></label><input class="field" id="rvTitle" maxlength="50" placeholder="例如：第一次抽牌很好上手"></div></div>
+            <div class="review-field review-nick-only"><label for="rvNick">公開暱稱 <span class="required">*</span></label><input class="field" id="rvNick" autocomplete="nickname" maxlength="18" placeholder="例如：星空旅人"></div>
             <div class="review-field"><label for="rvBody">使用心得與建議 <span class="required">*</span></label><textarea class="field textarea review-body" id="rvBody" maxlength="500" placeholder="分享你實際使用的感受，或是希望改善的功能……"></textarea><div class="review-count" id="rvCount">0 / 500 字（至少 20 字）</div></div>
             <details class="review-inspire"><summary>不知道寫什麼？點選一個參考方向</summary><div class="review-inspire-list"><button type="button" data-rv-inspire="first">第一次使用容易上手嗎？</button><button type="button" data-rv-inspire="feature">哪個功能讓你印象深刻？</button><button type="button" data-rv-inspire="explain">畫面或說明容易理解嗎？</button><button type="button" data-rv-inspire="mobile">手機使用順不順暢？</button><button type="button" data-rv-inspire="better">希望未來改善什麼？</button><button type="button" data-rv-inspire="share">會推薦別人使用嗎？為什麼？</button></div><div class="review-example" id="rvExample">「第一次接觸這個工具，原本擔心不會操作，實際使用後發現引導很清楚，幾個步驟就完成了。如果第一次進站能多一點提示會更好。」</div><div class="caption">範例只作參考，不會自動填入心得。</div></details>
             <div class="review-actions"><button class="btn primary" type="submit" id="rvSubmit">分享心得</button><button class="btn ghost" id="rvReset" type="button">清空表單</button></div>
@@ -225,7 +226,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       </div>
 
     </div>
-    <div class="panel review-my"><div class="section-top"><div><h3>我的心得</h3><p class="section-lead">查看尚未刊登的心得，或繼續修改內容。</p></div></div><div id="rvMine" class="review-my-list"><p class="caption">尚無心得。</p></div></div>
+    <div class="panel review-my"><div class="section-top"><div><h3>我的心得</h3><p class="section-lead">查看尚在處理的心得，或繼續修改內容。</p></div></div><div id="rvMine" class="review-my-list"><p class="caption">尚無心得。</p></div></div>
     <!-- 最新公開心得：所有訪客可觀看，固定展開最近三篇。 -->
     <div class="panel review-my" id="rvPublicSection">
       <div class="section-top public-reviews-head">
@@ -234,14 +235,14 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       </div>
       <div id="rvPublicWall" class="review-my-list" aria-live="polite"><p class="caption">正在載入心得……</p></div>
     </div>
-    <!-- 我的已刊登心得：只讀取登入會員自己的心得，預設收合；不提供修改或刪除。 -->
+    <!-- 我的發布中心得：只讀取登入會員自己的心得，預設收合；不提供修改或刪除。 -->
     <div class="panel review-my" id="rvMyApprovedPanel">
-      <div class="section-top"><div><h3>我已刊登的心得</h3><p class="section-lead">回顧自己分享過的心得。</p></div></div>
+      <div class="section-top"><div><h3>我發布中的心得</h3><p class="section-lead">回顧自己分享過的心得。</p></div></div>
       <details class="review-approved-fold" id="rvMyApprovedFold">
         <summary><span class="review-approved-fold-label"><strong>我的心得紀錄</strong><span class="review-approved-count" id="rvMyApprovedCount">讀取中</span></span><span class="review-approved-toggle" aria-hidden="true"></span></summary>
         <div class="review-approved-content"><div id="rvMyApprovedList" class="review-my-list"><p class="caption">正在載入心得……</p></div></div>
       </details>
-      <p class="review-approved-empty" id="rvMyApprovedEmpty" hidden>目前還沒有已刊登的心得，歡迎分享你的使用感受。</p>
+      <p class="review-approved-empty" id="rvMyApprovedEmpty" hidden>目前還沒有發布中的心得，歡迎分享你的使用感受。</p>
     </div>
   </section>
 </section>
@@ -562,9 +563,14 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     rvTool:()=>REVIEW_TOOLS[$('rvTool').value]?'':'請選擇要評價的工具。',
     rvRating:()=>rvRating>=1&&rvRating<=5?'':'請點選上方星星，選擇 1～5 顆星。',
     rvNick:()=>{const t=$('rvNick').value.trim(),n=rvLen(t);return n<2||n>18?'公開暱稱需要 2～18 字（目前 '+n+' 字）。':rvQualityError(t,'nick')},
-    rvTitle:()=>{const t=$('rvTitle').value.trim(),n=rvLen(t);return n<4||n>50?'心得標題需要 4～50 字（目前 '+n+' 字）。':rvQualityError(t,'title')},
     rvBody:()=>{const t=$('rvBody').value.trim(),n=rvLen(t);return n<20||n>500?'使用心得需要 20～500 字（目前 '+n+' 字，還差 '+Math.max(0,20-n)+' 字）。':rvQualityError(t,'body')}
   };
+  // 相容既有 /reviews API 必填 title；不要求使用者填寫，也不展示此內部欄位。
+  // 不調整後端 D1 結構或管理員審核權限。
+  function rvInternalTitle(body){
+    const text=[...String(body||'').trim().replace(/\s+/g,' ')].slice(0,28).join('').trim();
+    return text.length>=4&&!rvQualityError(text,'title')?text:'使用心得分享';
+  }
   function rvMarkError(id,message,flash=false){
     const field=(id==='rvRating'?$('rvRatingLabel'):$(id)).closest('.review-field');
     let el=field.querySelector('.rv-field-error');
@@ -574,10 +580,10 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     if(input){if(message)input.setAttribute('aria-invalid','true');else input.removeAttribute('aria-invalid')}
     if(flash&&message){field.classList.remove('review-flash');void field.offsetWidth;field.classList.add('review-flash');setTimeout(()=>field.classList.remove('review-flash'),1300)}
   }
-  function rvClearErrors(){for(const id of ['rvTool','rvRating','rvNick','rvTitle','rvBody'])rvMarkError(id,'')}
+  function rvClearErrors(){for(const id of ['rvTool','rvRating','rvNick','rvBody'])rvMarkError(id,'')}
   function rvValidate(){
     rvClearErrors();let first=null;
-    for(const id of ['rvTool','rvRating','rvNick','rvTitle','rvBody']){
+    for(const id of ['rvTool','rvRating','rvNick','rvBody']){
       const msg=rvCheckers[id]();if(msg){rvMarkError(id,msg,true);if(!first)first=id}
     }
     if(first){const el=first==='rvRating'?document.querySelector('[data-rv-star="1"]'):$(first);
@@ -590,7 +596,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     const existing=rvReady?rvExistingForTool():[];
     const editable=existing.find(r=>['pending','rejected'].includes(r.status)&&!r.everApproved);
     $('rvExistingNotice').hidden=!editable||!!rvEdit;
-    $('rvExistingText').textContent='你有一篇尚未刊登的心得，可以繼續修改。';
+    $('rvExistingText').textContent='你有一篇可以繼續修改的心得。';
     $('rvExistingEdit').hidden=!editable||!!rvEdit;
     $('rvExistingEdit').disabled=!rvReady||rvBusy||isSiteMaintenance()||!editable;
     $('rvSubmit').disabled=rvBusy;
@@ -598,10 +604,10 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   function rvBeginEdit(r){
     if(!r||isSiteMaintenance())return;
     if(!['pending','rejected'].includes(r.status)||r.everApproved){rvNotice('此心得已核准刊登，會員無法修改或撤回。','err');return}
-    const hasDraft=$('rvBody').value.trim()||$('rvTitle').value.trim();
+    const hasDraft=$('rvBody').value.trim();
     if(hasDraft&&!rvEdit&&!confirm('將載入原本的心得，取代目前尚未送出的文字。確定繼續嗎？'))return;
     rvEdit=r.id;$('rvTool').value=r.tool;$('rvTool').disabled=true;$('rvNick').value=r.nickname;
-    $('rvTitle').value=r.title;$('rvBody').value=r.body;rvSetRating(Number(r.rating));
+    $('rvBody').value=r.body;rvSetRating(Number(r.rating));
     $('rvCount').textContent=rvLen(r.body)+' / 500 字（至少 20 字）';
     $('rvSubmit').textContent='儲存心得修改';rvClearErrors();rvSyncExisting();
     rvNotice('已載入這篇心得，可以繼續修改。');
@@ -637,14 +643,14 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     fold.hidden=noItems;
     empty.hidden=!noItems;
     root.replaceChildren();
-    if(!own){root.append(textNode('p','登入後可以查看自己已刊登的心得。','caption'));return}
+    if(!own){root.append(textNode('p','登入後可以查看自己發布中的心得。','caption'));return}
     if(!rvReady){root.append(textNode('p','正在載入心得……','caption'));return}
     for(const r of items){
       const item=textNode('article','','review-my-item review-public-card');
       item.append(
-        textNode('div',(REVIEW_TOOLS[r.tool]||r.tool)+' · '+(r.nickname||'匿名會員')+' · 已刊登','review-public-meta'),
+        textNode('div',(REVIEW_TOOLS[r.tool]||r.tool)+' · '+(r.nickname||'匿名會員')+' · 發布中','review-public-meta'),
         textNode('div','★'.repeat(Number(r.rating)||0)+'☆'.repeat(5-(Number(r.rating)||0)),'review-public-stars'),
-        textNode('h4',r.title),textNode('p',r.body)
+        textNode('p',r.body)
       );
       root.append(item);
     }
@@ -661,16 +667,16 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     const statusName={pending:'待審核',rejected:'未通過',hidden:'已下架（已鎖定）'};
     for(const r of visible){
       const item=textNode('article','','review-my-item'+(r.status==='hidden'?' review-my-status':''));
-      item.append(textNode('div',(REVIEW_TOOLS[r.tool]||r.tool)+'　'+ '★'.repeat(r.rating)+'☆'.repeat(5-r.rating)+'　· '+(statusName[r.status]||r.status),'review-my-label'),textNode('h4',r.title),textNode('p',r.body));
+      item.append(textNode('div',(REVIEW_TOOLS[r.tool]||r.tool)+'　'+ '★'.repeat(r.rating)+'☆'.repeat(5-r.rating)+'　· '+(statusName[r.status]||r.status),'review-my-label'),textNode('p',r.body));
       if(r.status==='rejected'&&r.rejectionReason)item.append(textNode('p','未通過原因：'+r.rejectionReason,'caption'));
-      if(r.everApproved&&r.status!=='hidden')item.append(textNode('p','這則心得已刊登，不能修改或刪除；歡迎另外提交新的心得。','caption'));
+      if(r.everApproved&&r.status!=='hidden')item.append(textNode('p','這則心得發布中，不能修改或刪除；歡迎另外提交新的心得。','caption'));
       if(r.status==='hidden')item.append(textNode('p','這則心得已由管理員下架，原稿不能修改或刪除；仍可另外發表新心得。','caption'));
       if(['pending','rejected'].includes(r.status)&&!r.everApproved){
-        const actions=textNode('div','','review-actions');const edit=textNode('button','修改心得','btn small ghost'),del=textNode('button','刪除未刊登心得','btn small danger');edit.type=del.type='button';
+        const actions=textNode('div','','review-actions');const edit=textNode('button','修改心得','btn small ghost'),del=textNode('button','刪除心得','btn small danger');edit.type=del.type='button';
         edit.addEventListener('click',()=>rvBeginEdit(r));
         del.addEventListener('click',async()=>{
-          if(!confirm('確定刪除此則尚未刊登的心得？此動作無法復原。'))return;
-          try{await api('/reviews/'+encodeURIComponent(r.id),{method:'DELETE'});if(rvEdit===r.id)rvResetForm();await rvLoadMineForce();await rvLoadPublished();rvNotice('已刪除未刊登心得。','ok')}
+          if(!confirm('確定刪除此則心得？此動作無法復原。'))return;
+          try{await api('/reviews/'+encodeURIComponent(r.id),{method:'DELETE'});if(rvEdit===r.id)rvResetForm();await rvLoadMineForce();await rvLoadPublished();rvNotice('已刪除心得。','ok')}
           catch(e){rvNotice('刪除失敗：'+e.message,'err')}
         });
         edit.disabled=del.disabled=!rvReady||rvBusy||isSiteMaintenance()||!!(rvOwner()&&!lightData&&!healthPreviewMode);
@@ -701,7 +707,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       const fingerprint=JSON.stringify(data.reviews);if(fingerprint===rvPublicSignature)return;rvPublicSignature=fingerprint;
       root.replaceChildren();if(!data.reviews.length){root.append(textNode('p','目前尚無通過審核的會員心得。','caption'));return}
       for(const v of data.reviews.slice(0,3)){const item=textNode('article','','review-my-item review-public-card');
-        item.append(textNode('div',(REVIEW_TOOLS[v.tool]||v.tool)+' · '+v.nickname+' · 已刊登','review-public-meta'),textNode('div','★'.repeat(v.rating)+'☆'.repeat(5-v.rating),'review-public-stars'),textNode('h4',v.title),textNode('p',v.body));root.append(item)}
+        item.append(textNode('div',(REVIEW_TOOLS[v.tool]||v.tool)+' · '+v.nickname+' · 發布中','review-public-meta'),textNode('div','★'.repeat(v.rating)+'☆'.repeat(5-v.rating),'review-public-stars'),textNode('p',v.body));root.append(item)}
     }catch(e){root.replaceChildren(textNode('p','讀取公開心得失敗：'+e.message,'caption'))}
   }
   function prepareReviews(){rvAuthSync();rvRefreshMineQuiet();rvLoadPublished()}
@@ -711,7 +717,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     $('rvBody').addEventListener('input',()=>{$('rvCount').textContent=rvLen($('rvBody').value)+' / 500 字（至少 20 字）'});
     $('rvTool').addEventListener('change',()=>{rvMarkError('rvTool','');rvSyncExisting()});
     $('rvExistingEdit').addEventListener('click',()=>rvBeginEdit(rvExistingForTool().find(r=>['pending','rejected'].includes(r.status)&&!r.everApproved)));
-    for(const id of ['rvNick','rvTitle','rvBody']){
+    for(const id of ['rvNick','rvBody']){
       $(id).addEventListener('input',()=>{const group=$(id).closest('.review-field');if(group.classList.contains('review-invalid'))rvMarkError(id,rvCheckers[id]())});
     }
     $('rvReset').addEventListener('click',()=>{rvResetForm();rvNotice('')});
@@ -720,7 +726,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       e.preventDefault();if(rvBusy)return;
       if(isSiteMaintenance()||!lightData){rvNotice('目前正維修或無法確認網站狀態，暫停心得投稿。','err');return}
       if(!rvOwner()||!rvReady){rvNotice('請先登入並等待正式心得資料載入。','err');return}
-      const payload={tool:$('rvTool').value,nickname:$('rvNick').value.trim(),rating:rvRating,title:$('rvTitle').value.trim(),body:$('rvBody').value.trim()};
+      const payload={tool:$('rvTool').value,nickname:$('rvNick').value.trim(),rating:rvRating,title:rvInternalTitle($('rvBody').value),body:$('rvBody').value.trim()};
       if(!rvValidate())return;
       // 不檢查同工具舊心得是否存在；所有符合內容規則的新投稿都獨立排隊審核。
       rvBusy=true;$('rvFields').disabled=true;rvSyncExisting();rvNotice('正在送出心得……');
