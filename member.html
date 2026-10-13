@@ -115,21 +115,26 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 .review-my[hidden]{display:none!important}
 @media(max-width:580px){.member-announcement{padding:16px 15px}.chat.locked{padding:13px 14px}.member-announcement:not(.is-expanded) .member-announcement-content{-webkit-line-clamp:4}}
 
-/* 精簡會員公開介面：心得列表預設收合，技術提示不佔畫面 */
+/* 會員心得分流：最新三篇公開展示，個人已刊登心得獨立收合 */
 .hero .lead{max-width:960px;text-wrap:pretty}
-.public-reviews-head{margin-bottom:12px}
-.public-reviews-fold{border:1px solid var(--line);background:var(--base);border-radius:13px;overflow:hidden}
-.public-reviews-fold>summary{display:flex;justify-content:space-between;align-items:center;gap:12px;list-style:none;cursor:pointer;padding:13px 17px;font-size:.86rem;font-weight:750;color:var(--ink)}
-.public-reviews-fold>summary::-webkit-details-marker{display:none}
-.public-reviews-fold>summary:hover{background:color-mix(in srgb,var(--primary) 5%,var(--base))}
-.public-fold-state{font-size:.76rem;color:var(--primary)}
-.public-close-label{display:none}
-.public-reviews-fold[open] .public-close-label{display:inline}
-.public-reviews-fold[open] .public-open-label{display:none}
-.public-reviews-content{padding:0 14px 15px;border-top:1px solid var(--line)}
-.public-reviews-content .review-my-list{padding-top:14px}
-.public-reviews-foot{margin-top:10px;display:flex;justify-content:flex-end}
-@media(max-width:580px){.hero .lead{max-width:100%}.public-reviews-head{align-items:flex-start}.public-reviews-fold>summary{padding:12px 13px}.public-reviews-content{padding:0 10px 12px}}
+.public-reviews-head{margin-bottom:15px}
+.review-wall-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#rvPublicWall{display:grid;gap:10px}
+#rvMyApprovedPanel{margin-top:14px}
+.review-approved-fold{border:1px solid var(--line);border-radius:13px;background:var(--base);overflow:hidden}
+.review-approved-fold>summary{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 16px;cursor:pointer;list-style:none}
+.review-approved-fold>summary::-webkit-details-marker{display:none}
+.review-approved-fold>summary:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+.review-approved-fold>summary:hover{background:color-mix(in srgb,var(--primary) 5%,var(--base))}
+.review-approved-fold-label{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.review-approved-count{border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--sub);font-size:.75rem}
+.review-approved-toggle{font-size:.78rem;color:var(--primary)}
+.review-approved-toggle::after{content:'展開 ↓'}
+.review-approved-fold[open] .review-approved-toggle::after{content:'收合 ↑'}
+.review-approved-content{padding:13px 15px 16px;border-top:1px solid var(--line)}
+.review-approved-content .review-my-list{display:grid;gap:10px}
+.review-approved-empty{margin:0;color:var(--muted);font-size:.8rem}
+@media(max-width:580px){.hero .lead{max-width:100%}.public-reviews-head{align-items:flex-start}.review-wall-actions{width:100%}.review-approved-fold>summary{padding:12px 13px}.review-approved-content{padding:12px}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -221,12 +226,22 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 
     </div>
     <div class="panel review-my"><div class="section-top"><div><h3>我的心得</h3><p class="section-lead">查看尚未刊登的心得，或繼續修改內容。</p></div></div><div id="rvMine" class="review-my-list"><p class="caption">尚無心得。</p></div></div>
+    <!-- 最新公開心得：所有訪客可觀看，固定展開最近三篇。 -->
     <div class="panel review-my" id="rvPublicSection">
-      <div class="section-top public-reviews-head"><div><h3>最新會員心得</h3><p class="section-lead">看看大家的使用心得。</p></div><a class="btn small ghost" href="member-reviews.html">查看全部心得 ↗</a></div>
-      <details class="public-reviews-fold" id="rvPublicFold">
-        <summary><span>近期心得預覽</span><span class="public-fold-state"><span class="public-open-label">展開 ↓</span><span class="public-close-label">收合 ↑</span></span></summary>
-        <div class="public-reviews-content"><div id="rvPublicWall" class="review-my-list"><p class="caption">正在載入心得……</p></div><div class="public-reviews-foot"><button type="button" class="btn small ghost" id="rvPublicRefresh">重新整理</button></div></div>
+      <div class="section-top public-reviews-head">
+        <div><h3>最新會員心得</h3><p class="section-lead">看看其他會員怎麼分享，找找寫心得的靈感。</p></div>
+        <div class="review-wall-actions"><a class="btn small ghost" href="member-reviews.html">觀看更多心得 ↗</a><button type="button" class="btn small ghost" id="rvPublicRefresh">重新整理</button></div>
+      </div>
+      <div id="rvPublicWall" class="review-my-list" aria-live="polite"><p class="caption">正在載入心得……</p></div>
+    </div>
+    <!-- 我的已刊登心得：只讀取登入會員自己的心得，預設收合；不提供修改或刪除。 -->
+    <div class="panel review-my" id="rvMyApprovedPanel">
+      <div class="section-top"><div><h3>我已刊登的心得</h3><p class="section-lead">回顧自己分享過的心得。</p></div></div>
+      <details class="review-approved-fold" id="rvMyApprovedFold">
+        <summary><span class="review-approved-fold-label"><strong>我的心得紀錄</strong><span class="review-approved-count" id="rvMyApprovedCount">讀取中</span></span><span class="review-approved-toggle" aria-hidden="true"></span></summary>
+        <div class="review-approved-content"><div id="rvMyApprovedList" class="review-my-list"><p class="caption">正在載入心得……</p></div></div>
       </details>
+      <p class="review-approved-empty" id="rvMyApprovedEmpty" hidden>目前還沒有已刊登的心得，歡迎分享你的使用感受。</p>
     </div>
   </section>
 </section>
@@ -612,14 +627,37 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     catch(err){if(token!==getToken())return;rvReady=false;rvNotice('心得暫時無法載入，請稍後再試：'+err.message,'warn')}
     finally{rvLoading=false;$('rvFields').disabled=!rvReady||!rvOwner()||isSiteMaintenance()||!!(rvOwner()&&!lightData&&!healthPreviewMode);rvRenderMine();rvSyncExisting()}
   }
+  function rvRenderApprovedMine(){
+    // 與公開心得資料來源不同：只從 /reviews/me 篩選自己已通過審核的心得。
+    // 不在輪詢時重建 details，避免會員正在閱讀時突然收起。
+    const root=$('rvMyApprovedList'),fold=$('rvMyApprovedFold'),empty=$('rvMyApprovedEmpty'),count=$('rvMyApprovedCount');
+    const own=rvOwner(),items=own&&rvReady?rvMineData.filter(r=>r.status==='approved'):[];
+    count.textContent=own?(rvReady?items.length+' 篇':'讀取中'):'登入後查看';
+    const noItems=rvReady&&!!own&&!items.length;
+    fold.hidden=noItems;
+    empty.hidden=!noItems;
+    root.replaceChildren();
+    if(!own){root.append(textNode('p','登入後可以查看自己已刊登的心得。','caption'));return}
+    if(!rvReady){root.append(textNode('p','正在載入心得……','caption'));return}
+    for(const r of items){
+      const item=textNode('article','','review-my-item review-public-card');
+      item.append(
+        textNode('div',(REVIEW_TOOLS[r.tool]||r.tool)+' · '+(r.nickname||'匿名會員')+' · 已刊登','review-public-meta'),
+        textNode('div','★'.repeat(Number(r.rating)||0)+'☆'.repeat(5-(Number(r.rating)||0)),'review-public-stars'),
+        textNode('h4',r.title),textNode('p',r.body)
+      );
+      root.append(item);
+    }
+  }
   function rvRenderMine(){
+    rvRenderApprovedMine();
     const root=$('rvMine');root.replaceChildren();
     const myPanel=root.closest('.review-my');
     if(myPanel)myPanel.hidden=!rvReady||!rvOwner()||!rvMineData.some(r=>r.status!=='approved');
     if(!rvOwner()){root.append(textNode('p','登入後可查看待審核及未通過的心得。','caption'));return}
     if(!rvReady){root.append(textNode('p','正在載入心得……','caption'));return}
     const visible=rvMineData.filter(r=>r.status!=='approved');
-    if(!visible.length){root.append(textNode('p','目前沒有待處理的心得。已刊登的心得請在下方「已通過審核的心得」觀看。','caption'));return}
+    if(!visible.length){root.append(textNode('p','目前沒有待處理的心得。','caption'));return}
     const statusName={pending:'待審核',rejected:'未通過',hidden:'已下架（已鎖定）'};
     for(const r of visible){
       const item=textNode('article','','review-my-item'+(r.status==='hidden'?' review-my-status':''));
