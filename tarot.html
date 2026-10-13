@@ -2547,6 +2547,75 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
   @media(prefers-reduced-motion:reduce){.tarot-series-item{transition:none}.tarot-series-item:hover{transform:none}}
 
 </style>
+
+<style id="tarot-topic-attention-and-login-style">
+  /* Only topics available NOW glow, individually offset; no false glow on locked topics. */
+  @keyframes tarotTopicAttention {
+    0%,100%{border-color:rgba(255,255,255,.075);box-shadow:0 0 0 rgba(231,94,215,0)}
+    43%{border-color:rgba(231,94,215,.72);box-shadow:0 0 0 1px rgba(231,94,215,.15),0 0 25px rgba(231,94,215,.22),inset 0 0 22px rgba(231,94,215,.05)}
+    72%{border-color:rgba(154,114,255,.36);box-shadow:0 0 15px rgba(154,114,255,.08)}
+  }
+  .topic-choice-grid .choice-card.topic-ready{
+    animation:tarotTopicAttention 3.8s ease-in-out infinite;
+    animation-delay:calc(var(--topic-i,0) * -0.47s);
+  }
+  .topic-choice-grid .choice-card.topic-ready:hover,
+  .topic-choice-grid .choice-card.topic-ready:focus-visible{animation-play-state:paused;border-color:rgba(231,94,215,.76);box-shadow:0 0 28px rgba(231,94,215,.19)}
+  .topic-choice-grid .choice-card.topic-ready:focus-visible{outline:2px solid #e7a0dc;outline-offset:3px}
+  .topic-choice-grid .choice-card.topic-login-locked{
+    border-color:rgba(232,198,122,.23)!important;
+    background:linear-gradient(145deg,rgba(21,18,25,.63),rgba(8,8,17,.83))!important;
+    box-shadow:none!important;
+    animation:none!important;
+  }
+  .topic-choice-grid .choice-card.topic-login-locked .choice-icon,
+  .topic-choice-grid .choice-card.topic-login-locked b,
+  .topic-choice-grid .choice-card.topic-login-locked>small:not(.v2814-lock-note){opacity:.64}
+  .topic-choice-grid .choice-card.topic-login-locked:focus-visible{outline:2px solid #e7c98e;outline-offset:3px}
+  .tarot-topic-login-gate[hidden]{display:none!important}
+  .tarot-topic-login-gate{
+    margin:0 0 20px;padding:18px 20px;display:flex;gap:18px;
+    justify-content:space-between;align-items:center;
+    border:1px solid rgba(232,198,122,.28);border-radius:18px;
+    background:linear-gradient(105deg,rgba(232,198,122,.08),rgba(154,114,255,.035) 70%);
+  }
+  .tarot-topic-login-copy{min-width:0;max-width:920px}
+  .tarot-topic-login-copy strong{display:block;color:#f1d89f;font-size:.91rem}
+  .tarot-topic-login-copy p{margin:6px 0;color:#c5b4be;font-size:.77rem;line-height:1.8}
+  .tarot-topic-login-copy small{display:block;color:#bba482;font-size:.67rem;line-height:1.6}
+  .tarot-topic-login-gate button{
+    flex:0 0 auto;min-height:46px;padding:10px 18px;border:1px solid rgba(231,94,215,.42);
+    border-radius:999px;background:linear-gradient(135deg,#e78bdb,#be68ce);color:#231027;
+    font-size:.78rem;font-weight:850;cursor:pointer;
+  }
+  .tarot-topic-login-gate button:hover{filter:brightness(1.08)}
+  html[data-theme="light"] .topic-choice-grid .choice-card.topic-ready{
+    animation-name:tarotTopicAttentionLight;
+  }
+  @keyframes tarotTopicAttentionLight{
+    0%,100%{border-color:rgba(67,39,75,.11);box-shadow:0 5px 15px rgba(64,37,73,.035)}
+    43%{border-color:rgba(183,67,170,.63);box-shadow:0 0 0 1px rgba(231,94,215,.12),0 0 23px rgba(190,75,177,.18)}
+    72%{border-color:rgba(119,86,180,.3);box-shadow:0 0 15px rgba(119,86,180,.065)}
+  }
+  html[data-theme="light"] .topic-choice-grid .choice-card.topic-login-locked{
+    background:linear-gradient(145deg,#f7f4f6,#f5f1f7)!important;
+    border-color:rgba(145,118,85,.25)!important;
+  }
+  html[data-theme="light"] .tarot-topic-login-gate{background:linear-gradient(105deg,#fff9ee,#fbf5ff);border-color:rgba(158,115,46,.24)}
+  html[data-theme="light"] .tarot-topic-login-copy strong{color:#795321}
+  html[data-theme="light"] .tarot-topic-login-copy p{color:#5f5262}
+  html[data-theme="light"] .tarot-topic-login-copy small{color:#866435}
+  @media(max-width:720px){
+    .tarot-topic-login-gate{flex-direction:column;align-items:stretch;padding:16px}
+    .tarot-topic-login-gate button{width:100%}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .topic-choice-grid .choice-card.topic-ready,
+    html[data-theme="light"] .topic-choice-grid .choice-card.topic-ready{
+      animation:none!important;border-color:rgba(231,94,215,.42)!important;
+    }
+  }
+</style>
 </head>
 <body>
   <header class="page-topbar">
@@ -2637,6 +2706,14 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
 
       <div class="flow-step active" id="stepTopic" data-step="topic">
         <div class="flow-head"><div><span>STEP 01</span><h3>你現在最想處理哪一類事情？</h3><p>先選生活領域。這一步只是界定問題範圍，不會開始抽牌。</p></div></div>
+        <div class="tarot-topic-login-gate" id="tarotTopicLoginGate" role="status" hidden>
+          <div class="tarot-topic-login-copy">
+            <strong>🔒 目前需要登入會員才能選擇主題</strong>
+            <p>這台瀏覽器曾使用會員登入，因此未登入訪客模式已停用，現在所有占卜主題都暫時鎖定。請重新登入後，依會員當日權限使用；登入不會增加或重置今天的免費額度。</p>
+            <small>「自由提問」仍為完整進階項目，並不會因免費登入而自動解鎖。</small>
+          </div>
+          <button type="button" id="tarotTopicLoginButton">重新免費登入 →</button>
+        </div>
         <div class="choice-grid topic-choice-grid" id="topicGrid"></div>
       </div>
 
@@ -2695,40 +2772,6 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     </section>
   </section>
 
-
-
-  <!-- A single tarot-series navigation. The main page gets the current-page state; subpages will reuse the pattern later. -->
-  <section class="tarot-series-section" id="tarot-series-nav" aria-labelledby="tarot-series-title">
-    <div class="tarot-series-heading-row">
-      <div>
-        <p class="tarot-series-eyebrow">EXPLORE · TAROT TOPICS</p>
-        <h2 class="tarot-series-heading" id="tarot-series-title">探索更多塔羅占卜主題</h2>
-        <p class="tarot-series-description">從最在意的問題開始，選擇專屬主題；最後都可以回到同一套站內 AI 塔羅工具進行完整解讀。</p>
-      </div>
-      <span class="tarot-series-feature"><span class="tarot-series-feature-dot" aria-hidden="true"></span>一套工具 · 六個主題入口</span>
-    </div>
-    <nav class="tarot-series-track" aria-label="塔羅系列頁面導覽">
-      <a class="tarot-series-item tarot-series-current" href="tarot.html" aria-current="page">
-        <span class="tarot-series-glyph" aria-hidden="true">✦</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">AI 塔羅主頁</span><span class="tarot-series-item-desc">抽牌 · 深度解讀</span></span>
-      </a>
-      <a class="tarot-series-item tarot-series-love" href="tarot-love.html">
-        <span class="tarot-series-glyph" aria-hidden="true">♡</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">感情塔羅占卜</span><span class="tarot-series-item-desc">曖昧 · 分手復合</span></span>
-      </a>
-      <a class="tarot-series-item tarot-series-work" href="tarot-career.html">
-        <span class="tarot-series-glyph" aria-hidden="true">▤</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">工作塔羅占卜</span><span class="tarot-series-item-desc">面試 · 轉職升遷</span></span>
-      </a>
-      <a class="tarot-series-item tarot-series-business" href="tarot-business.html">
-        <span class="tarot-series-glyph" aria-hidden="true">◇</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">創業塔羅占卜</span><span class="tarot-series-item-desc">開店 · 合夥事業</span></span>
-      </a>
-      <a class="tarot-series-item tarot-series-money" href="tarot-money.html">
-        <span class="tarot-series-glyph" aria-hidden="true">◈</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">財運塔羅占卜</span><span class="tarot-series-item-desc">正財 · 偏財運勢</span></span>
-      </a>
-      <a class="tarot-series-item tarot-series-future" href="tarot-future.html">
-        <span class="tarot-series-glyph" aria-hidden="true">☼</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">近期運勢塔羅</span><span class="tarot-series-item-desc">今日 · 本週 · 本月</span></span>
-      </a>
-    </nav>
-    <p class="tarot-series-swipe-hint" aria-hidden="true">左右滑動查看更多主題 <span>↔</span></p>
-  </section>
 
 
   <div class="admin-test-modal" id="tarotAdminTestModal" aria-hidden="true">
@@ -3006,6 +3049,39 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
       <p class="resource-note">本區僅整理相關資源資訊；各服務內容、價格與聯繫方式，以服務提供者網站公告為準。</p>
     </section>
   </main>
+
+  <!-- A single tarot-series navigation. The main page gets the current-page state; subpages will reuse the pattern later. -->
+  <section class="tarot-series-section" id="tarot-series-nav" aria-labelledby="tarot-series-title">
+    <div class="tarot-series-heading-row">
+      <div>
+        <p class="tarot-series-eyebrow">EXPLORE · TAROT TOPICS</p>
+        <h2 class="tarot-series-heading" id="tarot-series-title">探索更多塔羅占卜主題</h2>
+        <p class="tarot-series-description">從最在意的問題開始，選擇專屬主題；最後都可以回到同一套站內 AI 塔羅工具進行完整解讀。</p>
+      </div>
+      <span class="tarot-series-feature"><span class="tarot-series-feature-dot" aria-hidden="true"></span>一套工具 · 六個主題入口</span>
+    </div>
+    <nav class="tarot-series-track" aria-label="塔羅系列頁面導覽">
+      <a class="tarot-series-item tarot-series-current" href="tarot.html" aria-current="page">
+        <span class="tarot-series-glyph" aria-hidden="true">✦</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">AI 塔羅主頁</span><span class="tarot-series-item-desc">抽牌 · 深度解讀</span></span>
+      </a>
+      <a class="tarot-series-item tarot-series-love" href="tarot-love.html">
+        <span class="tarot-series-glyph" aria-hidden="true">♡</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">感情塔羅占卜</span><span class="tarot-series-item-desc">曖昧 · 分手復合</span></span>
+      </a>
+      <a class="tarot-series-item tarot-series-work" href="tarot-career.html">
+        <span class="tarot-series-glyph" aria-hidden="true">▤</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">工作塔羅占卜</span><span class="tarot-series-item-desc">面試 · 轉職升遷</span></span>
+      </a>
+      <a class="tarot-series-item tarot-series-business" href="tarot-business.html">
+        <span class="tarot-series-glyph" aria-hidden="true">◇</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">創業塔羅占卜</span><span class="tarot-series-item-desc">開店 · 合夥事業</span></span>
+      </a>
+      <a class="tarot-series-item tarot-series-money" href="tarot-money.html">
+        <span class="tarot-series-glyph" aria-hidden="true">◈</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">財運塔羅占卜</span><span class="tarot-series-item-desc">正財 · 偏財運勢</span></span>
+      </a>
+      <a class="tarot-series-item tarot-series-future" href="tarot-future.html">
+        <span class="tarot-series-glyph" aria-hidden="true">☼</span><span class="tarot-series-item-text"><span class="tarot-series-item-title">近期運勢塔羅</span><span class="tarot-series-item-desc">今日 · 本週 · 本月</span></span>
+      </a>
+    </nav>
+    <p class="tarot-series-swipe-hint" aria-hidden="true">左右滑動查看更多主題 <span>↔</span></p>
+  </section>
 
 
   <footer class="page-footer">
@@ -3687,7 +3763,7 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
   function accessCategory(){return tarotFullPrivilege()?'paid':isLogged()?'member':'guest'}
   function guestCanUse(){return isLogged()||(!memberDeviceBound()&&!isAdminTestActive())||isAdminTestActive()}
   function guestTopicAvailable(id){return tarotFullPrivilege()||isLogged()||guestPolicy().topics.has(id)}
-  function topicAllowedForCurrentUser(id){return id==='free'?tarotFullPrivilege():guestTopicAvailable(id)}
+  function topicAllowedForCurrentUser(id){if(isGuestLoginRequired())return false;return id==='free'?tarotFullPrivilege():guestTopicAvailable(id)}
   function questionAllowedForCurrentUser(index){return tarotFullPrivilege()||isLogged()||(index%2!==guestPolicy().lockedQuestions)}
   // 牌陣不再受訪客或會員每日輪替鎖定；僅依題目是否涉及雙方互動決定關係牌陣。
   function questionHasTwoPartyInteraction(q=state.question){
@@ -3716,7 +3792,7 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
   function showRotationNotice(){return isLogged()?openGuestNotice('memberRotation'):openMemberModal();}
   function dailyTarotAccessMessage(){return isGuestLoginRequired()?'此瀏覽器已經登入過會員，訪客資格已停用。請登入 Google 會員繼續。':'免費登入立即解鎖今日輪替限制；自訂問題、實體牌輸入、TXT 下載仍屬完整進階。'}
   function lockedBadgeHTML(kind='member',note=''){
-    return `<span class="v2814-lock-badge">🔒 ${kind==='paid'?'完整進階':kind==='member-rotation'?'今日輪替鎖定':'免費登入解鎖'}</span>${note?`<small class="v2814-lock-note">${esc(note)}</small>`:''}`;
+    return `<span class="v2814-lock-badge">🔒 ${kind==='paid'?'完整進階':kind==='login-required'?'需重新登入':kind==='member-rotation'?'今日輪替鎖定':'免費登入解鎖'}</span>${note?`<small class="v2814-lock-note">${esc(note)}</small>`:''}`;
   }
   function enforceAccess(ok,kind='member'){
     if(ok)return true;
@@ -3799,9 +3875,9 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     $('tarotPaidQuotaTitle').textContent='付費額度池';
     const rem=dailyRemaining(),logged=isLogged(),full=tarotFullPrivilege();
     panel.hidden=false;panel.classList.toggle('empty',rem===0&&!full);
-    if($('tarotQuotaTitle'))$('tarotQuotaTitle').textContent=logged?'免費會員｜每日免費額度':isGuestLoginRequired()?'未登入訪客資格已取消':'未登入訪客｜每日免費額度';
+    if($('tarotQuotaTitle'))$('tarotQuotaTitle').textContent=logged?'免費會員｜每日免費額度':isGuestLoginRequired()?'訪客模式已停用｜請重新登入':'未登入訪客｜每日免費額度';
     if($('tarotQuotaCount'))$('tarotQuotaCount').textContent=isGuestLoginRequired()?'已停用':`${rem} / ${TAROT_DAILY_LIMIT} 次`;
-    if($('tarotQuotaNote'))$('tarotQuotaNote').textContent=isGuestLoginRequired()?'這台瀏覽器曾登入會員，請重新登入使用會員額度。':logged?`每日台灣時間補滿 3 次｜3＋3 算一次｜基礎牌義${basicMeaningAllowedForCurrentUser()?'今日開放':'明日開放'}。`:'每日台灣時間補滿 3 次｜同一瀏覽器共用，3＋3 算一次。';
+    if($('tarotQuotaNote'))$('tarotQuotaNote').textContent=isGuestLoginRequired()?'所有主題暫時鎖定。請重新登入會員，依今日權限繼續使用；登入不會重置免費次數。':logged?`每日台灣時間補滿 3 次｜3＋3 算一次｜基礎牌義${basicMeaningAllowedForCurrentUser()?'今日開放':'明日開放'}。`:'每日台灣時間補滿 3 次｜同一瀏覽器共用，3＋3 算一次。';
     const used=(state.followupUsed?1:0)+(state.advancedCards?.length?1:0);
     const credits=isAdminTestActive()?Math.max(0,adminTestConfig().credits-used):0;
     if($('tarotPaidQuotaCount'))$('tarotPaidQuotaCount').textContent=full?'本次已解鎖':isAdminTestActive()?`${credits} 次`:'0 次';
@@ -3834,7 +3910,7 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     const mount=$('tarotGoogleMount');if(mount)mount.hidden=!!p;
     const title=$('tarotMemberTitle'),intro=$('tarotMemberIntro');
     if(title)title.textContent=p?'免費會員':'免費登入';
-    if(intro)intro.textContent=p?'已登入一念知機免費會員。一般主題與固定題目全開；抽牌方式、解讀格式與基礎牌義依每日規則輪替；牌陣依題目適用性開放。自訂問題、實體牌輸入、TXT 下載保留未來完整進階。':isGuestLoginRequired()?'此瀏覽器曾登入過會員，訪客每日 3 次已停用；請重新登入繼續使用。':'訪客每日 3 次，主題、問題、抽牌方式與解讀格式每日輪替；牌陣依題目適用性開放。免費登入可解除一般限制並保存紀錄。';
+    if(intro)intro.textContent=p?'已登入一念知機免費會員。一般主題與固定題目全開；抽牌方式、解讀格式與基礎牌義依每日規則輪替；牌陣依題目適用性開放。自訂問題、實體牌輸入、TXT 下載保留未來完整進階。':isGuestLoginRequired()?'此瀏覽器曾登入過會員，未登入時所有占卜主題已鎖定；請重新登入會員，依當日會員權限使用。登入不會重置免費次數，完整進階功能仍另行解鎖。':'訪客每日 3 次，主題、問題、抽牌方式與解讀格式每日輪替；牌陣依題目適用性開放。免費登入可解除一般限制並保存紀錄。';
     syncMemberSaveInvites();
   }
   async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})}catch(_){}}
@@ -3956,10 +4032,16 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     state.accessTier=accessCategory();state.usageCounted=false;await drawReading();
   }
   function renderTopics(){
+    const loginRequired=isGuestLoginRequired();
+    const gate=$('tarotTopicLoginGate');
+    if(gate)gate.hidden=!loginRequired;
     els.topic.innerHTML=TOPICS.map((t,i)=>{
       const allowed=topicAllowedForCurrentUser(t.id),paid=t.id==='free';
-      const note=paid?'固定付費進階':(t.id==='love'||t.id==='work')?'明日免費輪替開放':'明日免費輪替開放';
-      return `<button type="button" class="choice-card ${allowed?'':'v2814-locked'}" data-topic="${t.id}" aria-label="${esc(t.name)}${allowed?'':'今日鎖定'}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small>${allowed?'':lockedBadgeHTML(paid?'paid':'member',note)}</button>`;
+      const note=loginRequired?(paid?'請先登入；仍需完整進階權限':'登入後依會員當日權限開放'):paid?'固定付費進階':'明日免費輪替開放';
+      const lockKind=paid?'paid':loginRequired?'login-required':'member';
+      const classes=['choice-card',allowed?'topic-ready':'v2814-locked',loginRequired?'topic-login-locked':''].filter(Boolean).join(' ');
+      const ariaState=allowed?'，可選擇':loginRequired?'，需重新登入會員':paid?'，完整進階鎖定':'，今日輪替鎖定';
+      return `<button type="button" class="${classes}" style="--topic-i:${i}" data-topic="${t.id}" aria-label="${esc(t.name)}${ariaState}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small>${allowed?'':lockedBadgeHTML(lockKind,note)}</button>`;
     }).join('');
   }
   function renderScenarios(){const t=state.topic;$('scenarioTitle').textContent=`${t.name}｜你目前處在哪個階段？`;els.scenario.innerHTML=t.scenarios.map((item,i)=>`<button class="choice-card" data-scenario="${item[0]}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><b>${item[1]}</b><small>${item[2]}</small></button>`).join('');}
@@ -5492,11 +5574,12 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     return true;
   };
   
+  $('tarotTopicLoginButton')?.addEventListener('click',()=>openMemberModal());
   els.topic.addEventListener('click',e=>{
     const b=e.target.closest('[data-topic]');if(!b)return;
     const topicId=b.dataset.topic;
-    if(!isTopicAllowed(topicId)){if(topicId==='free')openGuestNotice('advanced');else openMemberModal();return;}
     if(isGuestLoginRequired()){openMemberModal();return;}
+    if(!isTopicAllowed(topicId)){if(topicId==='free')openGuestNotice('advanced');else openMemberModal();return;}
     cancelFixedCase20();state.fixedCaseId='';state.topic=topicBy(topicId);state.scenario=state.question=null;state.spreadChoice=null;
     if(state.topic.id==='free'){state.scenario={id:'free',name:'自由提問'};renderQuestions();showStep('question');}
     else{renderScenarios();showStep('scenario');}
