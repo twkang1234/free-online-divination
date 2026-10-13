@@ -126,6 +126,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   <section class="section reviews-block" id="reviewSection">
     <div class="section-top"><div><div class="eyebrow">MEMBER REVIEWS</div><h2>會員心得評價</h2><p class="section-lead">在會員中心直接分享八字、塔羅、易經等工具的真實使用體驗。<strong>只評價網站工具，不必透露占卜問題或出生資料。</strong></p></div></div>
     <div id="reviewMaintenanceNotice" class="signal-maintenance" role="status" hidden><strong>網站維修中｜心得投稿暫時關閉</strong><div>站長正在修復部分網站功能，為避免維修期間產生誤會，暫停心得評價及修改；全部維修解除後會恢復。原有心得不會被刪除。</div></div>
+    <div id="reviewHealthUnavailable" class="notice warn" role="status" hidden>目前無法確認網站維修狀態，因此心得測試表單暫時停用。稍後重新整理即可重試；原有心得不受影響。</div>
     <div class="notice warn review-preview-notice" role="status"><strong>心得功能仍在測試階段。</strong> 以下表單可直接填寫、選星及儲存本機測試心得；目前不會真的傳送站長或進入正式審核。正式投稿需完成 Cloudflare Workers／D1 串接。</div>
     <div class="review-layout">
       <div class="panel review-form-panel">
@@ -245,17 +246,20 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   function lightItem(tool){return (lightData?.lights||[]).find(r=>r.tool===tool)||null}
   function serverMaintenance(r){return r?.maintenance===true||r?.underMaintenance===true||r?.mode==='maintenance'||r?.siteStatus==='maintenance'}
   function isSiteMaintenance(){return lightData?.maintenanceMode===true||(lightData?.lights||[]).some(serverMaintenance)}
-  function toggleSupported(r){return !!(r?.canToggle===true&&!serverMaintenance(r)&&lightData?.maintenanceMode!==true)}
+  function toggleSupported(r){return !!(r?.canToggle===true&&!serverMaintenance(r))}
   function syncReviewMaintenance(){
-    const maintenance=isSiteMaintenance(),section=$('reviewSection'),warning=$('reviewMaintenanceNotice');
-    section.classList.toggle('maintenance-active',maintenance);
+    const maintenance=isSiteMaintenance(),statusUnknown=!!(profile()&&!lightData&&!healthPreviewMode);
+    const blocked=maintenance||statusUnknown,section=$('reviewSection'),warning=$('reviewMaintenanceNotice');
+    section.classList.toggle('maintenance-active',blocked);
     warning.hidden=!maintenance;
-    // 停用整份心得投稿表單，不刪除既有心得或本機資料；正式上線時後端也必須同步拒絕投稿。
+    $('reviewHealthUnavailable').hidden=!statusUnknown;
+    // 維修狀態未能確認時也先鎖住測試表單，避免短暫誤開放；正式投稿後端仍須獨立檢查。
     const allowed=!!(profile()||rvDemo);
-    $('rvFields').disabled=!allowed||maintenance;
-    $('rvDemoLogin').disabled=maintenance;
-    for(const b of document.querySelectorAll('.review-my-item button'))b.disabled=maintenance;
+    $('rvFields').disabled=!allowed||blocked;
+    $('rvDemoLogin').disabled=blocked;
+    for(const b of document.querySelectorAll('.review-my-item button'))b.disabled=blocked;
     if(maintenance)showNotice('rvStatus','站長維修模式已開啟，心得投稿及修改暫時停止。維修解除後會恢復。','warn');
+    else if(statusUnknown)showNotice('rvStatus','目前無法確認站長維修狀態，心得測試表單暫時停用。','warn');
     else if(previousMaintenance)showNotice('rvStatus','站長已解除維修模式，心得表單恢復可操作。此版本仍只會儲存本機測試心得。','ok');
     previousMaintenance=maintenance;
   }
@@ -264,7 +268,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     const maintenanceList=[];
     for(const tool of tools){
       const row=document.querySelector(`[data-tool="${tool}"]`);
-      const r=lightItem(tool),adminMaint=lightData?.maintenanceMode===true||serverMaintenance(r),known=!!r||preview;
+      const r=lightItem(tool),adminMaint=serverMaintenance(r),known=!!r||preview;
       const reported=preview?!!previewHealth[tool]:!!r?.reported;
       const maintenance=!!adminMaint;
       if(maintenance)maintenanceList.push(toolNames[tool]);
@@ -288,14 +292,27 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       else{meta.textContent='目前未回報異常。確實發現功能問題時，再切成紅燈。';note.textContent='提報紅燈前需要確認';}
     }
     const notice=$('maintenanceBanner');notice.hidden=!isSiteMaintenance();
-    if(!notice.hidden){$('maintenanceText').textContent='｜'+[...new Set(maintenanceList)].join('、')+' 正在維修。所有會員可看見公告，個人回報暫時鎖定。';}
+    if(!notice.hidden){$('maintenanceText').textContent='｜'+[...new Set(maintenanceList)].join('、')+' 正在維修。維修中的工具暫停個人回報，其餘工具仍可使用紅綠燈。';}
     if(preview)showNotice('issueNotice','本機外觀示範：綠／紅開關可以操作，但不會保存或傳送給站長。正式回報功能仍需後端啟用。','warn');
     else if(!profile())showNotice('issueNotice','請先登入 Google 會員。若站長已進入維修模式，登入後會顯示全體維修公告。','warn');
     else if(!hasBackend)showNotice('issueNotice','異常回報後端尚未啟用或暫時無法連線。目前所有開關均停用，無法傳送回報。','warn');
-    else if(!lightData.lights.every(r=>toggleSupported(r)||serverMaintenance(r)||isSiteMaintenance()))showNotice('issueNotice','後端已有回報資料，但尚未開放綠／紅雙向切換；請等站長完成後端設定。','warn');
-    else if(isSiteMaintenance())showNotice('issueNotice','站長已啟動維修模式。請暫時不要重複操作故障工具，修復後將恢復綠燈與心得投稿。','warn');
+    else if(isSiteMaintenance())showNotice('issueNotice','部分工具正在維修，該工具暫停個人回報；其他工具仍可回報。待全部維修解除後，心得投稿恢復。','warn');
+    else if(!lightData.lights.every(r=>toggleSupported(r)||serverMaintenance(r)))showNotice('issueNotice','後端已有回報資料，但尚未開放綠／紅雙向切換；請等站長完成後端設定。','warn');
     else showNotice('issueNotice','回報功能已連線。綠轉紅會再次確認以避免誤報；修復後可自行改回綠燈。','ok');
     syncReviewMaintenance();
+  }
+  // 會員停留在首頁時每分鐘同步站長維修燈號；切回瀏覽器也會重新查詢。
+  let issueRefreshRunning=false;
+  async function refreshMaintenanceStatus(){
+    if(issueRefreshRunning||!profile()||currentView!=='home'||document.hidden)return;
+    issueRefreshRunning=true;
+    const owner=getToken();
+    try{const result=await api('/member/issue-status');
+      if(owner!==getToken())return;
+      if(!Array.isArray(result.lights))throw Error('後端回傳格式不符');
+      lightData=result;renderLights();
+    }catch(_){if(owner!==getToken())return;lightData=null;renderLights();}
+    finally{issueRefreshRunning=false}
   }
   async function loadIssues(){if(!profile()){lightData=null;chatData=null;renderLights();renderChat();return}
     const token=getToken();try{const j=await api('/member/issue-status');if(token!==getToken())return;if(!Array.isArray(j.lights))throw Error('後端回傳格式不符');lightData=j;renderLights()}catch(_){if(token!==getToken())return;lightData=null;renderLights()}
@@ -304,7 +321,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   async function changeHealthState(tool,state){
     if(!tools.includes(tool)||!['normal','issue'].includes(state)||issueBusy.has(tool))return;
     const report=state==='issue',r=lightItem(tool);
-    if(isSiteMaintenance()||serverMaintenance(r))return;
+    if(serverMaintenance(r))return;
     if(healthPreviewMode&&!lightData){
       if(report&&!confirm(`本機外觀示範：將「${toolNames[tool]}」切換成紅燈？\n\n請勿誤報，只有真正出現異常才應回報。\n\n注意：這裡不會真的傳送給站長。`))return;
       previewHealth[tool]=report;renderLights();return;
@@ -355,7 +372,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   function rvNow(){return new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
   function rvMy(){const owner=rvOwner();return owner?rvRead().filter(r=>r.owner===owner):[]}
   function rvResetForm(){rvEdit=null;$('rvForm').reset();rvSetRating(0);$('rvSubmit').textContent='儲存本機測試心得（不會送出）';$('rvCount').textContent='0 / 500 字（至少 20 字）';$('rvTool').value='bazi';$('rvNick').value=rvDemo?'示範旅人':(profile()?'匿名會員':'')}
-  function rvAuthSync(){const logged=!!profile();if(logged)rvDemo=false;const owner=rvOwner();if(rvLastOwner!==null&&rvLastOwner!==owner)rvResetForm();rvLastOwner=owner;const can=logged||rvDemo;$('rvFields').disabled=!can||isSiteMaintenance();$('rvDemoLogin').hidden=can;$('rvDemoLogin').disabled=isSiteMaintenance();$('rvIdentityTitle').textContent=logged?`Google 會員：${profile().name||'會員'}`:rvDemo?'示範會員（僅本機）':'登入會員，分享心得';$('rvIdentityDesc').textContent=logged?'目前為心得介面測試版：資料只存放這個瀏覽器。':rvDemo?'本機示範帳號，不會傳送資料到網站。':'使用全站共用 Google 會員帳號；本機預覽可按「本機試用表單」。';if(can&&!$('rvNick').value.trim())$('rvNick').value=rvDemo?'示範旅人':'匿名會員';rvRenderMine()}
+  function rvAuthSync(){const logged=!!profile();if(logged)rvDemo=false;const owner=rvOwner();if(rvLastOwner!==null&&rvLastOwner!==owner)rvResetForm();rvLastOwner=owner;const can=logged||rvDemo;$('rvFields').disabled=!can||isSiteMaintenance()||!!(logged&&!lightData&&!healthPreviewMode);$('rvDemoLogin').hidden=can;$('rvDemoLogin').disabled=isSiteMaintenance()||!!(logged&&!lightData&&!healthPreviewMode);$('rvIdentityTitle').textContent=logged?`Google 會員：${profile().name||'會員'}`:rvDemo?'示範會員（僅本機）':'登入會員，分享心得';$('rvIdentityDesc').textContent=logged?'目前為心得介面測試版：資料只存放這個瀏覽器。':rvDemo?'本機示範帳號，不會傳送資料到網站。':'使用全站共用 Google 會員帳號；本機預覽可按「本機試用表單」。';if(can&&!$('rvNick').value.trim())$('rvNick').value=rvDemo?'示範旅人':'匿名會員';rvRenderMine()}
   function rvRenderMine(){const root=$('rvMine');root.replaceChildren();const mine=rvMy();if(!rvOwner()){root.append(textNode('p','請先登入會員或使用本機試用表單，查看測試心得。','caption'));return}if(!mine.length){root.append(textNode('p','尚無本機測試心得。','caption'));return}
     for(const r of mine){const item=textNode('article','','review-my-item');item.append(textNode('div',`${REVIEW_TOOLS[r.tool]||r.tool}　${'★'.repeat(Number(r.rating)||0)}${'☆'.repeat(5-(Number(r.rating)||0))}　· 僅本機測試`,'review-my-label'),textNode('h4',r.title),textNode('p',r.body));const actions=textNode('div','','review-actions');const edit=textNode('button','修改','btn small ghost'),del=textNode('button','刪除','btn small danger');edit.type=del.type='button';edit.addEventListener('click',()=>{rvEdit=r.id;$('rvTool').value=r.tool;$('rvNick').value=r.nick;$('rvTitle').value=r.title;$('rvBody').value=r.body;rvSetRating(Number(r.rating));$('rvCount').textContent=rvLen(r.body)+' / 500 字（至少 20 字）';$('rvSubmit').textContent='儲存修改（仍為本機測試）';rvNotice('正在修改本機測試心得。');$('reviewSection').scrollIntoView({behavior:'smooth'})});del.addEventListener('click',()=>{if(!confirm('確定刪除這則本機測試心得？'))return;if(!rvWrite(rvRead().filter(x=>!(x.id===r.id&&x.owner===rvOwner())))){rvNotice('刪除失敗：無法使用本機儲存。','err');return}if(rvEdit===r.id)rvResetForm();rvRenderMine();rvNotice('本機測試心得已刪除。','ok')});edit.disabled=del.disabled=isSiteMaintenance();actions.append(edit,del);item.append(actions);root.append(item)}
   }
@@ -379,6 +396,8 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     $('themeToggle').addEventListener('click',()=>{const t=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=t;try{localStorage.setItem('divinationhub-color-theme',t)}catch(_){};for(const f of [$('tarotFrame')]){try{if(f.contentDocument?.documentElement)f.contentDocument.documentElement.dataset.theme=t}catch(_){}}});
     for(const id of ['tarotFrame'])$(id).addEventListener('load',()=>adjustEmbeddedFrame($(id)));
     addEventListener('hashchange',showPage);addEventListener('popstate',showPage);addEventListener('storage',e=>{if(e.key===AUTH_KEY){updateAuthUI();if(currentView==='bazi')loadBazi();if(currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1'}}});
+    setInterval(refreshMaintenanceStatus,60000);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshMaintenanceStatus()});
     reviewInit();showPage();updateAuthUI();
   }
   init();

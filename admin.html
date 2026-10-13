@@ -71,6 +71,12 @@ td.muted{color:var(--muted)}
 .issue-admin-card .issue-count{font-size:1.52rem;color:#8dd5a7;font-weight:850}
 .issue-admin-card.alert .issue-count{color:#ff9eaa}
 .issue-admin-card .issue-note{display:block;color:#9ba7b8;font-size:.73rem;margin-top:7px}
+.issue-admin-card.maintenance{border-color:#bf6370;background:#201116}
+.issue-maint-status{font-size:.78rem;font-weight:850;margin:10px 0;color:#90d8ae}
+.issue-admin-card.maintenance .issue-maint-status{color:#ff9aa9}
+.issue-maint-btn{margin-top:12px;width:100%;min-height:39px}
+.issue-admin-card.maintenance .issue-maint-btn{border-color:#64a892;color:#bdf4d4;background:#14241e}
+.issue-maint-btn:disabled{opacity:.55;cursor:not-allowed}
 .issue-tools-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 18px 18px}
 .issue-tools-head input{width:108px;min-height:38px;border:1px solid #4c5360;border-radius:9px;background:#090d13;color:#f1eadb;padding:7px 10px;font-size:.92rem}
 .issue-tools-head label{color:#b3bbca;font-size:.78rem}
@@ -133,7 +139,7 @@ td.muted{color:var(--muted)}
         <button class="btn secondary" id="issueRefresh" type="button">重新查詢紅燈</button>
       </div>
       <p class="issue-info" id="issueAdminStatus" role="status" aria-live="polite">達到門檻時，此後台會亮起警告；目前不會發送 Email 或自動關閉工具。</p>
-      <p class="issue-info">目前為第一階段：可查看紅燈人數及調整警戒門檻。「站長全面維修開關」與私人詢問將在下一階段加入。</p>
+      <p class="issue-info">站長可針對個別工具開啟「全面紅燈｜維修中」。會員中心會顯示維修訊息，並暫停該工具個人回報；只要有任一工具維修，心得測試投稿區便暫時停用。<strong>不會停止八字、塔羅、易經核心功能。</strong> 站長解除維修時會清除該工具全部會員的紅燈，展開新一輪統計。私人詢問功能仍待下一階段。</p>
     </section>
 
     <section class="section" style="margin-bottom:24px">
@@ -564,15 +570,21 @@ async function loadIssueStats(){
     panel.replaceChildren();
     for(const t of j.tools){
       const card=document.createElement('div'),title=document.createElement('strong'),count=document.createElement('div'),note=document.createElement('span');
-      card.className='issue-admin-card'+(t.alerted?' alert':'');
+      card.className='issue-admin-card'+(t.alerted?' alert':'')+(t.maintenance?' maintenance':'');
       title.textContent=t.label;
       count.className='issue-count';count.textContent=String(t.reportCount)+' 人';
-      note.className='issue-note';note.textContent=t.alerted?'⚠ 紅燈人數已達警戒門檻':'未達警戒門檻 '+threshold+' 人';
-      card.append(title,count,note);panel.append(card);
+      note.className='issue-note';note.textContent=t.maintenance?'站長已公告維修中，僅影響會員中心':t.alerted?'⚠ 紅燈人數已達警戒門檻':'未達警戒門檻 '+threshold+' 人';
+      const state=document.createElement('div'),btn=document.createElement('button');
+      state.className='issue-maint-status';state.textContent=t.maintenance?'🔴 站長全面紅燈｜維修中':'🟢 站長狀態｜正常中';
+      btn.type='button';btn.className='btn issue-maint-btn';btn.textContent=t.maintenance?'✅ 已修復｜恢復全面綠燈':'🔧 開啟全面紅燈｜維修中';
+      btn.addEventListener('click',()=>changeMaintenance(t.tool,t.label,!!t.maintenance));
+      card.append(title,count,note,state,btn);panel.append(card);
     }
     const alerts=j.tools.filter(t=>t.alerted);
-    status.textContent=alerts.length?'⚠ 警戒：'+alerts.map(t=>t.label+' '+t.reportCount+' 人').join('、')+'。請前往對應工具確認。':'目前沒有工具達到紅燈警戒門檻。';
-    status.className='issue-info'+(alerts.length?' alert':'');
+    const maintenance=j.tools.filter(t=>t.maintenance);
+    status.textContent=maintenance.length?'🔴 維修中：'+maintenance.map(t=>t.label).join('、')+'。會員心得測試表單已暫停。'+(alerts.length?'｜其他警戒：'+alerts.map(t=>t.label+' '+t.reportCount+' 人').join('、'):''):
+      alerts.length?'⚠ 警戒：'+alerts.map(t=>t.label+' '+t.reportCount+' 人').join('、')+'。請前往對應工具確認。':'目前沒有工具達到紅燈警戒門檻。';
+    status.className='issue-info'+(alerts.length||maintenance.length?' alert':'');
   }catch(err){status.textContent='異常回報讀取失敗：'+err.message+'。原本的會員及付款資訊不受影響。';status.className='issue-info error'}
   finally{issueRequestBusy=false;}
 }
@@ -589,6 +601,29 @@ async function saveIssueThreshold(){
     await loadIssueStats();
   }catch(err){status.textContent='儲存失敗：'+err.message;status.className='issue-info error'}
   finally{button.disabled=false}
+}
+// 管理員手動更改維修狀態；先確認、後端驗證成功才刷新畫面。
+let maintenanceBusy=false;
+async function changeMaintenance(tool,label,active){
+  if(!token()||maintenanceBusy)return;
+  const goingOn=!active;
+  const msg=goingOn
+    ?`確定將「${label}」公告為站長維修中嗎？\n\n會員中心將顯示全面紅燈，暫停這個工具的個人回報；整個心得測試表單也會暫停。\n不會關閉占卜工具核心。`
+    :`確定「${label}」已修復並恢復全面綠燈嗎？\n\n將清除該工具所有會員目前的個人紅燈，並重新開始統計。\n如其他工具仍在維修，心得表單仍然暫停。`;
+  if(!confirm(msg))return;
+  maintenanceBusy=true;
+  const status=$('issueAdminStatus');status.textContent='正在向伺服器更新維修狀態……';
+  for(const btn of document.querySelectorAll('.issue-maint-btn'))btn.disabled=true;
+  try{
+    const r=await fetch(API_BASE+'/admin/issues/maintenance',{
+      method:'POST',headers:{Authorization:'Bearer '+token(),Accept:'application/json','Content-Type':'application/json'},
+      body:JSON.stringify({tool,maintenance:goingOn}),cache:'no-store'
+    });
+    const result=await r.json().catch(()=>null);
+    if(!r.ok||!result?.success)throw Error(result?.error||'更新維修狀態失敗');
+    await loadIssueStats();
+  }catch(err){status.textContent='維修狀態未更新：'+err.message;status.className='issue-info error'}
+  finally{maintenanceBusy=false;for(const btn of document.querySelectorAll('.issue-maint-btn'))btn.disabled=false}
 }
 $('issueSaveThreshold').addEventListener('click',saveIssueThreshold);
 $('issueRefresh').addEventListener('click',loadIssueStats);
