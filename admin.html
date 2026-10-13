@@ -62,6 +62,21 @@ td.muted{color:var(--muted)}
   .section-head{align-items:flex-start;flex-direction:column}
   .section-head span{text-align:left}
 }
+
+/* 網站異常回報監控：獨立區塊，不動原有會員／金流顯示 */
+.issue-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:17px 18px}
+.issue-admin-card{padding:17px;border:1px solid #323845;border-radius:13px;background:#0a1017}
+.issue-admin-card.alert{border-color:#ae505d;background:#1e1016}
+.issue-admin-card strong{display:block;font-size:1rem;color:#eee7da;margin:2px 0 8px}
+.issue-admin-card .issue-count{font-size:1.52rem;color:#8dd5a7;font-weight:850}
+.issue-admin-card.alert .issue-count{color:#ff9eaa}
+.issue-admin-card .issue-note{display:block;color:#9ba7b8;font-size:.73rem;margin-top:7px}
+.issue-tools-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:0 18px 18px}
+.issue-tools-head input{width:108px;min-height:38px;border:1px solid #4c5360;border-radius:9px;background:#090d13;color:#f1eadb;padding:7px 10px;font-size:.92rem}
+.issue-tools-head label{color:#b3bbca;font-size:.78rem}
+.issue-info{margin:0 18px 15px;font-size:.8rem;color:#b2b9c7}
+.issue-info.error{color:#f3a7ae}.issue-info.alert{color:#ffadb8;font-weight:750}
+@media(max-width:700px){.issue-summary{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -105,6 +120,20 @@ td.muted{color:var(--muted)}
     <section class="section" style="margin-bottom:24px">
       <div class="section-head"><h2>各工具使用次數</h2><span>正式使用紀錄｜測試資料不列入</span></div>
       <div class="tool-cards" id="toolCards"></div>
+    </section>
+
+
+    <section class="section" style="margin-bottom:24px" id="issueAdminSection">
+      <div class="section-head"><h2>網站異常紅綠燈監控</h2><span>會員目前亮起的紅燈人數｜只有本人可切換自己的狀態</span></div>
+      <div class="issue-summary" id="issueSummary"><div class="issue-admin-card">正在讀取異常回報資料……</div></div>
+      <div class="issue-tools-head">
+        <label for="issueThreshold">紅燈警戒門檻（人）</label>
+        <input id="issueThreshold" type="number" min="1" max="10000" step="1" value="50" inputmode="numeric">
+        <button class="btn" id="issueSaveThreshold" type="button">儲存警戒值</button>
+        <button class="btn secondary" id="issueRefresh" type="button">重新查詢紅燈</button>
+      </div>
+      <p class="issue-info" id="issueAdminStatus" role="status" aria-live="polite">達到門檻時，此後台會亮起警告；目前不會發送 Email 或自動關閉工具。</p>
+      <p class="issue-info">目前為第一階段：可查看紅燈人數及調整警戒門檻。「站長全面維修開關」與私人詢問將在下一階段加入。</p>
     </section>
 
     <section class="section" style="margin-bottom:24px">
@@ -480,6 +509,7 @@ async function loadStats(){
     if($('baziTestLink'))$('baziTestLink').hidden=false;
     if($('reviewsLink'))$('reviewsLink').hidden=false;
     $('status').textContent='';
+    loadIssueStats();
 
   }catch(e){
     const msg=e.message||String(e);
@@ -516,6 +546,54 @@ $('logoutBtn').addEventListener('click',()=>{
   $('passwordInput').value='';
   showLogin('已登出。');
 });
+
+
+// 會員異常監控獨立於既有數據讀取，即使異常 API 不可用也不影響管理員後台。
+let issueRequestBusy=false;
+async function loadIssueStats(){
+  if(!token() || issueRequestBusy || $('dashboard').hidden)return;
+  issueRequestBusy=true;
+  const panel=$('issueSummary'),status=$('issueAdminStatus');
+  status.textContent='正在查詢網站異常回報……';status.className='issue-info';
+  try{
+    const r=await fetch(API_BASE+'/admin/issues',{headers:{Authorization:'Bearer '+token(),Accept:'application/json'},cache:'no-store'});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok||!j?.success||!Array.isArray(j.tools))throw Error(j?.error||'無法讀取異常統計');
+    $('issueThreshold').value=j.threshold;
+    const threshold=Number(j.threshold);
+    panel.replaceChildren();
+    for(const t of j.tools){
+      const card=document.createElement('div'),title=document.createElement('strong'),count=document.createElement('div'),note=document.createElement('span');
+      card.className='issue-admin-card'+(t.alerted?' alert':'');
+      title.textContent=t.label;
+      count.className='issue-count';count.textContent=String(t.reportCount)+' 人';
+      note.className='issue-note';note.textContent=t.alerted?'⚠ 紅燈人數已達警戒門檻':'未達警戒門檻 '+threshold+' 人';
+      card.append(title,count,note);panel.append(card);
+    }
+    const alerts=j.tools.filter(t=>t.alerted);
+    status.textContent=alerts.length?'⚠ 警戒：'+alerts.map(t=>t.label+' '+t.reportCount+' 人').join('、')+'。請前往對應工具確認。':'目前沒有工具達到紅燈警戒門檻。';
+    status.className='issue-info'+(alerts.length?' alert':'');
+  }catch(err){status.textContent='異常回報讀取失敗：'+err.message+'。原本的會員及付款資訊不受影響。';status.className='issue-info error'}
+  finally{issueRequestBusy=false;}
+}
+async function saveIssueThreshold(){
+  if(!token())return;
+  const input=$('issueThreshold'),value=Number(input.value),status=$('issueAdminStatus');
+  if(!Number.isInteger(value)||value<1||value>10000){status.textContent='請輸入 1～10000 的整數人數。';status.className='issue-info error';return;}
+  const button=$('issueSaveThreshold');button.disabled=true;status.textContent='正在儲存警戒值……';
+  try{
+    const r=await fetch(API_BASE+'/admin/issues/settings',{method:'POST',headers:{Authorization:'Bearer '+token(),Accept:'application/json','Content-Type':'application/json'},body:JSON.stringify({threshold:value}),cache:'no-store'});
+    const j=await r.json().catch(()=>null);
+    if(!r.ok||!j?.success)throw Error(j?.error||'儲存失敗');
+    status.textContent='警戒人數已設定為 '+j.threshold+' 人。';status.className='issue-info';
+    await loadIssueStats();
+  }catch(err){status.textContent='儲存失敗：'+err.message;status.className='issue-info error'}
+  finally{button.disabled=false}
+}
+$('issueSaveThreshold').addEventListener('click',saveIssueThreshold);
+$('issueRefresh').addEventListener('click',loadIssueStats);
+// 開著管理員後台時每分鐘重新檢查；不寄送訊息，也不在背景建立外部排程。
+setInterval(()=>{if(!$('dashboard').hidden&&token())loadIssueStats()},60000);
 
 if(token())loadStats();
 else showLogin();
