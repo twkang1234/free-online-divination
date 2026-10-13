@@ -5341,6 +5341,110 @@
       .about-us-section{grid-template-columns:1fr;padding:22px 18px;}
     }
 
+
+    /* 首頁心得情境示範：保留原有兩排無縫循環與深色宇宙風格 */
+    .testimonial-band-head .testimonial-demo-disclosure {
+      color:#d9b980; font-weight:750;
+    }
+    .testimonial-card {
+      display:flex;
+      flex-direction:column;
+      flex-basis:310px;
+      min-height:195px;
+      padding:18px 19px 19px;
+    }
+    .testimonial-card .testimonial-user {
+      flex:0 0 auto;
+      margin-bottom:7px;
+      gap:11px;
+      min-height:40px;
+    }
+    .testimonial-identity {min-width:0;}
+    .testimonial-user .testimonial-identity b {
+      font-size:.80rem;
+      font-weight:780;
+      color:#e6edf8 !important;
+    }
+    .testimonial-user .testimonial-identity small {
+      font-size:.59rem;
+      color:#93a9ba !important;
+      border-color:rgba(95,211,219,.10);
+      background:rgba(95,211,219,.055) !important;
+      padding:3px 7px;
+      margin-top:4px;
+    }
+    .testimonial-card .testimonial-avatar {
+      color:#d7d9f1 !important;
+      background:rgba(148,123,214,.14) !important;
+      border:1px solid rgba(162,146,225,.22) !important;
+      font-family:var(--font-sans);
+      font-size:.93rem;
+    }
+    .testimonial-card:nth-child(3n+2) .testimonial-avatar {
+      color:#b4ecec !important;
+      background:rgba(37,189,189,.10) !important;
+      border-color:rgba(70,204,208,.20) !important;
+    }
+    .testimonial-card:nth-child(3n+3) .testimonial-avatar {
+      color:#f0d2a3 !important;
+      background:rgba(238,185,105,.10) !important;
+      border-color:rgba(231,174,91,.18) !important;
+    }
+    .testimonial-rating {
+      display:flex;
+      gap:9px;
+      align-items:center;
+      flex:0 0 auto;
+      margin:0 0 10px 49px;
+      min-height:18px;
+    }
+    .testimonial-stars {
+      letter-spacing:.045em;
+      color:#e9b65f;
+      font-size:.97rem;
+      line-height:1;
+      white-space:nowrap;
+    }
+    .testimonial-rating-note {
+      color:#677991;
+      font-size:.55rem;
+      white-space:nowrap;
+    }
+    .testimonial-card p {
+      margin:0;
+      color:#b6c3d2 !important;
+      font-size:.76rem;
+      line-height:1.70;
+      overflow-wrap:anywhere;
+    }
+    .testimonial-row-left .testimonial-track {animation-duration:66s;}
+    .testimonial-row-right .testimonial-track {animation-duration:72s;}
+    @media(max-width:760px){
+      .testimonial-card {flex-basis:278px; min-height:191px; padding:17px;}
+      .testimonial-rating{margin-left:48px;}
+    }
+    @media(prefers-reduced-motion:reduce){
+      .testimonial-row .testimonial-track{animation:none !important;}
+      .testimonial-row{overflow-x:auto; scrollbar-width:thin;}
+    }
+
+
+    /* V12：首頁真實心得牆，即時載入公開資料；維持雙排反向、無縫動畫。 */
+    .testimonial-live-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;}
+    .testimonial-live-heading>div{min-width:0;flex:1;}
+    .testimonial-more-link{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(0,243,255,.25);border-radius:12px;padding:11px 15px;color:#a8f5f8;text-decoration:none;font-size:.80rem;font-weight:750;background:rgba(0,243,255,.045);transition:border-color .2s,background .2s;}
+    .testimonial-more-link:hover,.testimonial-more-link:focus-visible{border-color:rgba(0,243,255,.62);background:rgba(0,243,255,.11);}
+    .testimonial-source-note{font-size:.72rem!important;color:#8294a9!important;margin-top:12px!important;}
+    .testimonial-live-status{margin:22px auto 0;width:min(1180px,calc(100% - 44px));padding:24px 20px;text-align:center;border:1px dashed rgba(0,243,255,.20);border-radius:13px;background:rgba(9,13,23,.70);color:#98a9bf;font-size:.86rem;}
+    .testimonial-live-status[hidden],.testimonial-stream[hidden]{display:none!important;}
+    .testimonial-row .testimonial-track{animation:none;}
+    .testimonial-row-left .testimonial-track.is-running{animation:testimonialLeft var(--testimonial-duration,62s) linear infinite;}
+    .testimonial-row-right .testimonial-track.is-running{animation:testimonialRight var(--testimonial-duration,67s) linear infinite;}
+    .testimonial-card{height:auto;min-height:194px;overflow:hidden;}
+    .testimonial-card p{display:-webkit-box;-webkit-line-clamp:5;line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line;}
+    .testimonial-stream:hover .testimonial-track{animation-play-state:paused;}
+    @media(max-width:760px){.testimonial-live-heading{display:block;}.testimonial-more-link{margin-top:15px;font-size:.73rem;padding:9px 12px;}.testimonial-card{min-height:185px;}}
+    @media(prefers-reduced-motion:reduce){.testimonial-row .testimonial-track.is-running{animation:none!important;}}
 </style>
 </head>
 <body>
@@ -5781,45 +5885,25 @@
 
         
         
-        <section class="testimonial-band" aria-labelledby="testimonialTitle">
+        <!-- 真實會員心得：只讀取公開 API，不展示舊的情境示範文字。 -->
+        <section class="testimonial-band" id="member-feedback" aria-labelledby="testimonialTitle">
           <div class="testimonial-band-head">
-            <div>
-              <div class="testimonial-kicker">USER FEEDBACK</div>
-              <h2 id="testimonialTitle">使用者心得回饋</h2>
-              <p>匿名摘錄回饋內容；為保護隱私，以遮罩代號呈現，部分文字經精簡整理。</p>
+            <div class="testimonial-live-heading">
+              <div>
+                <div class="testimonial-kicker">USER FEEDBACK · MEMBER REVIEWS</div>
+                <h2 id="testimonialTitle">使用者心得回饋</h2>
+                <p>看看會員對八字、塔羅、易經等工具分享的實際使用體驗與建議。</p>
+              </div>
+              <a class="testimonial-more-link native-ui-surface" href="/member-reviews.html">查看全部心得 ↗</a>
             </div>
+            <p class="testimonial-source-note">下方心得均來自已公開的會員投稿；同一批心得會持續循環播放。</p>
           </div>
-
-          <div class="testimonial-stream" aria-label="匿名心得回饋">
-            <div class="testimonial-row testimonial-row-left">
-              <div class="testimonial-track">
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">J</span><div><b>ju***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>自己原本其實有答案，分析後更確定該注意什麼，也更知道下一步怎麼做。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">L</span><div><b>lo***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>把公司正在發生的狀況講得很具體，也讓我對後面的規劃更有底。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">W</span><div><b>wa***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>對工作分析很直接，不會只給模糊答案，還會提醒實際可以怎麼準備。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">A</span><div><b>a4***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>幾個選項看起來都不錯，拆開隱藏利弊後，答案反而自己浮現出來。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">B</span><div><b>bi***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>原本只想問一件事，後來才發現背後幾個問題其實彼此連在一起。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">E</span><div><b>ep***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>有不懂的地方會一一說明，把細節和真正的問題癥結整理得很清楚。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">T</span><div><b>th***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>未來發展和現在的情況都有講到，對做決定很有幫助。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">U</span><div><b>uz***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>把互動模式分析得很客觀，終於看清楚問題在哪裡，也知道界線怎麼設。</p></article>
-              </div>
-            </div>
-
-            <div class="testimonial-row testimonial-row-right">
-              <div class="testimonial-track">
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">M</span><div><b>mc***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>整理完目前困境後，看到幾個原本沒想到的方向，對未來重新有了想法。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">Y</span><div><b>yi***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>分析很全面，也會用例子解釋到真的聽懂，整體讓人比較安心。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">P</span><div><b>pa***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>工作上的情況和實際遇到的狀況很吻合，而且是一步一步說明原因。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">R</span><div><b>ra***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>不只是看結果，也讓我重新思考自己原本忽略的原因，心裡踏實很多。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">C</span><div><b>ch***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>把事情講得有理有據，也會說明後面還能補救和調整的方向。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">N</span><div><b>no***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>不是替我選，而是把看不到的利弊整理出來，最後反而更容易自己決定。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">S</span><div><b>sh***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>原本覺得事情很亂，分析後才知道真正卡住的地方在哪裡。</p></article>
-                <article class="testimonial-card"><div class="testimonial-user"><span class="testimonial-avatar">K</span><div><b>ki***</b><small>匿名回饋</small></div><span class="testimonial-mark" aria-hidden="true">❞</span></div><p>最有幫助的是把可能的風險先講清楚，讓我能提早準備，而不是事後才知道。</p></article>
-              </div>
-            </div>
+          <div id="testimonialLoadState" class="testimonial-live-status" role="status" aria-live="polite">正在載入會員心得……</div>
+          <div class="testimonial-stream" id="testimonialLiveStream" aria-label="真實會員已公開心得持續循環展示" hidden>
+            <div class="testimonial-row testimonial-row-left"><div class="testimonial-track" id="testimonialLiveLeft"></div></div>
+            <div class="testimonial-row testimonial-row-right"><div class="testimonial-track" id="testimonialLiveRight"></div></div>
           </div>
         </section>
-
-
 
         <section class="content-section site-trust-section" aria-labelledby="trustTitle">
           <div class="content-section-head">
@@ -7373,14 +7457,142 @@
     })();
 </script>
 <script>
-    (() => {
-      document.querySelectorAll('.testimonial-track').forEach(track => {
-        if (track.dataset.loopReady === '1') return;
-        const originals = [...track.children];
-        originals.forEach(card => track.appendChild(card.cloneNode(true)));
-        track.dataset.loopReady = '1';
-      });
-    })();
+  /* 首頁公開心得：與正式 member-reviews.html 使用同一個唯讀 API。 */
+  (() => {
+    'use strict';
+    const API = 'https://member-api.ezgocpu.workers.dev/reviews/public';
+    const PAGE_SIZE = 40;
+    const MAX_ITEMS = 1000; // 防止大量資料使首頁生成無限 DOM 節點；目前十多篇會全數載入。
+    const TOOL_NAMES = {bazi:'八字排盤',tarot:'塔羅占卜',yijing:'易經占卜',site:'整體網站體驗',qimen:'奇門遁甲',ziwei:'紫微斗數',meihua:'梅花易數',liuyao:'六爻占卜'};
+    const section = document.getElementById('member-feedback');
+    const stream = document.getElementById('testimonialLiveStream');
+    const state = document.getElementById('testimonialLoadState');
+    const left = document.getElementById('testimonialLiveLeft');
+    const right = document.getElementById('testimonialLiveRight');
+    if (!section || !stream || !state || !left || !right) return;
+    let published = [];
+    let lastLoad = 0;
+    let loading = false;
+    let resizeJob;
+    const element = (tag, cls, text) => {
+      const node = document.createElement(tag);
+      if (cls) node.className = cls;
+      if (text !== undefined) node.textContent = String(text);
+      return node;
+    };
+    function buildCard(review) {
+      const card = element('article','testimonial-card');
+      const top = element('div','testimonial-user');
+      const nickname = String(review.nickname || '匿名會員').trim().slice(0,36) || '匿名會員';
+      const avatar = element('span','testimonial-avatar',Array.from(nickname)[0] || '會');
+      avatar.setAttribute('aria-hidden','true');
+      const identity = element('div','testimonial-identity');
+      identity.append(element('b','',nickname),element('small','',TOOL_NAMES[review.tool] || '網站工具'));
+      const quote = element('span','testimonial-mark','❞');
+      quote.setAttribute('aria-hidden','true');
+      top.append(avatar,identity,quote);
+      const rating = Math.min(5,Math.max(1,Math.round(Number(review.rating) || 1)));
+      const stars = element('span','testimonial-stars','★'.repeat(rating)+'☆'.repeat(5-rating));
+      stars.setAttribute('aria-hidden','true');
+      const score = element('div','testimonial-rating');
+      score.setAttribute('aria-label','會員評分 '+rating+'／5 星');
+      score.append(stars,element('span','testimonial-rating-note',rating+' / 5'));
+      const body = element('p','',String(review.body || '').trim());
+      card.append(top,score,body);
+      return card;
+    }
+    function populateTrack(track, reviews) {
+      track.classList.remove('is-running');
+      track.replaceChildren();
+      if (!reviews.length) return;
+      // 每排至少超過可見區域的寬度，複製完整一輪才能真正無縫接合。
+      const cardWidth = matchMedia('(max-width: 760px)').matches ? 278 : 310;
+      const step = cardWidth + 16;
+      const minLength = section.clientWidth + step;
+      const repeats = Math.max(1,Math.ceil(minLength / Math.max(step * reviews.length,step)));
+      const originals = document.createDocumentFragment();
+      for (let i=0;i<repeats;i++) for (const review of reviews) originals.append(buildCard(review));
+      track.append(originals);
+      // 對於每一排只建立第二個與第一輪完全一致的副本，避免 DOM 可存取性重複。
+      const firstLoop = Array.from(track.children);
+      const cloneFragment = document.createDocumentFragment();
+      for (const node of firstLoop) {
+        const clone = node.cloneNode(true);
+        clone.setAttribute('aria-hidden','true');
+        cloneFragment.append(clone);
+      }
+      track.append(cloneFragment);
+      const seconds = Math.max(48,Math.min(600,firstLoop.length * 8.2));
+      track.style.setProperty('--testimonial-duration',seconds.toFixed(1)+'s');
+      track.classList.add('is-running');
+    }
+    function render(reviews) {
+      if (!reviews.length) {
+        stream.hidden=true;
+        state.hidden=false;
+        state.textContent='目前還沒有公開心得，歡迎稍後再來看看。';
+        return;
+      }
+      stream.hidden=false;
+      state.hidden=true;
+      const first=[],second=[];
+      reviews.forEach((review,i)=>(i%2===0?first:second).push(review));
+      // 極少筆資料時兩排仍持續移動；只是重複同一批真實心得，沒有新增虛構投稿。
+      if (!second.length) second.push(...first);
+      populateTrack(left,first);
+      populateTrack(right,second);
+    }
+    async function load() {
+      if (loading) return;
+      loading=true;
+      if (!published.length){state.hidden=false;state.textContent='正在載入會員心得……';}
+      try {
+        const collected=[];
+        const seen=new Set();
+        let offset=0,total=Infinity;
+        // 資料庫可能限制單頁數量，所以用實際取得篇數遞增 offset，直到讀完。
+        for (let page=0; page<80 && offset<total && offset<MAX_ITEMS; page++) {
+          const url = new URL(API);
+          url.searchParams.set('limit',String(PAGE_SIZE));
+          url.searchParams.set('offset',String(offset));
+          const response=await fetch(url.toString(),{headers:{Accept:'application/json'},cache:'no-store'});
+          if (!response.ok) throw Error('HTTP '+response.status);
+          const data=await response.json();
+          if (data.success===false || !Array.isArray(data.reviews)) throw Error('invalid reviews data');
+          if (Number.isFinite(Number(data.total)) && data.total!==null && data.total!==undefined) total=Math.max(0,Number(data.total));
+          if (!data.reviews.length) break;
+          for (const r of data.reviews) {
+            if (!r || !String(r.body||'').trim()) continue;
+            const unique=String(r.id || [r.nickname,r.tool,r.rating,r.body].join('|'));
+            if (seen.has(unique)) continue;
+            seen.add(unique);
+            collected.push(r);
+          }
+          offset+=data.reviews.length;
+        }
+        published=collected;
+        render(published);
+        lastLoad=Date.now();
+      } catch(error) {
+        if (!published.length) {
+          stream.hidden=true;
+          state.hidden=false;
+          state.textContent='公開心得暫時無法載入，請點「查看全部心得」閱讀。';
+        }
+        // 網路暫時中斷時保留已成功讀取的畫面，不使用假資料取代。
+        console.warn('無法載入公開會員心得',error);
+      } finally {loading=false;}
+    }
+    window.addEventListener('resize',()=>{
+      if (!published.length) return;
+      clearTimeout(resizeJob);
+      resizeJob=setTimeout(()=>render(published),250);
+    },{passive:true});
+    document.addEventListener('visibilitychange',()=>{
+      if (!document.hidden && Date.now()-lastLoad>5*60*1000) load();
+    });
+    load();
+  })();
 </script>
 
 
