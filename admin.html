@@ -131,7 +131,7 @@ td.muted{color:var(--muted)}
 .review-admin-card{background:#0e151e;border:1px solid #303b48;border-radius:15px;padding:20px;overflow-wrap:anywhere}
 .review-admin-meta{display:flex;gap:9px;align-items:center;flex-wrap:wrap;color:#9eacbf;font-size:.75rem;margin-bottom:12px}
 .review-admin-meta .status-chip{border:1px solid #554830;background:#201a12;color:#e9cf9d;border-radius:999px;padding:3px 10px}
-.review-admin-card h3{font-size:1.07rem;margin:10px 0;color:#f4ecdf}
+.review-admin-body{font-size:.92rem!important;line-height:1.86!important;color:#e0e6ee!important}
 .review-admin-card p{font-size:.85rem;color:#cbd2dd;line-height:1.8;white-space:pre-wrap;margin:8px 0 13px}
 .review-admin-stars{color:#ffd38a;letter-spacing:.06em;font-size:1.1rem}
 .review-admin-person{color:#a8b6c6;border-top:1px solid #25313c;padding-top:11px;font-size:.77rem}
@@ -983,11 +983,10 @@ function makeReviewAdminCard(r){
   const date=document.createElement('span');date.textContent=fmt(r.updatedAt);
   meta.append(tool,status,date);
   const star=document.createElement('div');star.className='review-admin-stars';star.textContent='★'.repeat(r.rating)+'☆'.repeat(5-r.rating);
-  const title=document.createElement('h3');title.textContent=r.title;
-  const body=document.createElement('p');body.textContent=r.body;
+  const body=document.createElement('p');body.className='review-admin-body';body.textContent=r.body;
   const info=document.createElement('div');info.className='review-admin-person';
   info.textContent='公開暱稱：'+r.nickname+'　｜　投稿會員：'+(r.memberName||'—')+'　｜　Email（僅站長可見）：'+(r.memberEmail||'—');
-  box.append(meta,star,title,body,info);
+  box.append(meta,star,body,info);
   if(r.rejectionReason){const note=document.createElement('p');note.textContent='審核註記：'+r.rejectionReason;box.append(note)}
   const actions=document.createElement('div');actions.className='review-admin-actions';
   const add=(label,action)=>{const btn=document.createElement('button');btn.type='button';btn.className='btn '+(action==='approve'?'':'secondary');btn.textContent=label;btn.addEventListener('click',()=>moderateReview(r,action,btn));actions.append(btn)};
@@ -1003,25 +1002,24 @@ function openReviewCorrection(r,card,button){
   reviewAdminEditingId=r.id;
   const panel=document.createElement('div');panel.className='review-edit-panel';
   const lead=document.createElement('p');lead.textContent='只修正明顯錯字或標點，不可更動星級、暱稱、好壞立場；原稿將完整保存在後台稽核紀錄。';panel.append(lead);
-  const tlabel=document.createElement('label');tlabel.textContent='心得標題（可校正）';const title=document.createElement('input');title.maxLength=50;title.value=r.title;panel.append(tlabel,title);
   const blabel=document.createElement('label');blabel.textContent='心得內容（可校正）';const body=document.createElement('textarea');body.maxLength=500;body.value=r.body;panel.append(blabel,body);
-  const original=document.createElement('div');original.className='review-correction-original';original.textContent='原始標題：'+r.title+'\n原始內容：'+r.body;panel.append(original);
+  const original=document.createElement('div');original.className='review-correction-original';original.textContent='原始心得內容：'+r.body;panel.append(original);
   const status=document.createElement('p');status.className='review-edit-error';status.setAttribute('role','status');panel.append(status);
   const buttons=document.createElement('div');buttons.className='review-correction-actions';
   const save=document.createElement('button');save.type='button';save.className='btn';save.textContent='儲存校正（不會刊登）';
   const cancel=document.createElement('button');cancel.type='button';cancel.className='btn secondary';cancel.textContent='取消';
   cancel.addEventListener('click',()=>{panel.remove();reviewAdminEditingId=null});
   save.addEventListener('click',async()=>{
-    const correctedTitle=title.value.trim(),correctedBody=body.value.trim();
-    if(correctedTitle===r.title&&correctedBody===r.body){status.textContent='沒有修改文字。';return}
+    const correctedBody=body.value.trim();
+    if(correctedBody===r.body){status.textContent='沒有修改文字。';return}
     if(!confirm('確認只校正錯字、標點且沒有改變會員原意？儲存後仍為待審核，必須另外按「核准刊登」。'))return;
     save.disabled=cancel.disabled=true;status.textContent='正在儲存校正……';
     try{
-      await adminReviewRequest('/admin/reviews/'+encodeURIComponent(r.id)+'/correct','POST',{title:correctedTitle,body:correctedBody,expectedUpdatedAt:r.updatedAt});
+      await adminReviewRequest('/admin/reviews/'+encodeURIComponent(r.id)+'/correct','POST',{title:r.title,body:correctedBody,expectedUpdatedAt:r.updatedAt});
       reviewAdminEditingId=null;await loadAdminReviews();reviewAdminMessage('✓ 已儲存文字校正，保留會員原稿；請重新檢查後另按「核准刊登」。');
     }catch(e){status.textContent='校正失敗：'+e.message;save.disabled=cancel.disabled=false}
   });
-  buttons.append(save,cancel);panel.append(buttons);card.append(panel);title.focus();
+  buttons.append(save,cancel);panel.append(buttons);card.append(panel);body.focus();
 }
 async function loadAdminReviews(append=false,quiet=false){
   if(reviewAdminBusy||reviewModerating||!token()||(reviewAdminEditingId!==null&&quiet))return;
