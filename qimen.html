@@ -1497,8 +1497,30 @@
   /* 申請刊登：全站共用獨立頁面，連結保留原有按鈕視覺。 */
   a.listing-open, a.resource-apply-btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
 </style>
+<style id="dhSharedMemberStyle">
+/* 一念知機：共用會員入口。只新增會員 UI，不影響各工具的免費排盤及頁面樣式。 */
+.dh-member-entry{--dh-member-accent:#a9e8bc;position:relative;display:inline-flex;align-items:stretch;flex:none;min-height:36px;z-index:90}
+.dh-member-entry button{font:inherit;cursor:pointer}
+.dh-member-button{display:inline-flex;justify-content:center;align-items:center;gap:7px;min-height:36px;padding:7px 12px;border:1px solid color-mix(in srgb,var(--dh-member-accent) 38%,transparent);border-radius:999px;background:color-mix(in srgb,var(--dh-member-accent) 9%,#080809);color:var(--dh-member-accent);white-space:nowrap;font-size:.72rem;font-weight:800;line-height:1.3;transition:background .15s,border-color .15s}
+.dh-member-button:hover{border-color:var(--dh-member-accent);background:color-mix(in srgb,var(--dh-member-accent) 17%,#080809)}
+.dh-member-button:disabled{cursor:wait;opacity:.8}
+.dh-member-status-dot{display:inline-block;flex:none;width:7px;height:7px;border-radius:50%;background:var(--dh-member-accent);box-shadow:0 0 9px color-mix(in srgb,var(--dh-member-accent) 40%,transparent)}
+.dh-member-button.is-logged .dh-member-status-dot{background:#78e5b5;box-shadow:0 0 10px rgba(120,229,181,.44)}
+.dh-member-entry:has(.dh-member-arrow:not([hidden])) .dh-member-button{border-radius:999px 0 0 999px;border-right:0;padding-right:9px}
+.dh-member-arrow{min-height:36px;padding:0 9px;border:1px solid color-mix(in srgb,var(--dh-member-accent) 38%,transparent);border-radius:0 999px 999px 0;background:color-mix(in srgb,var(--dh-member-accent) 9%,#080809);color:var(--dh-member-accent)}
+.dh-member-arrow:hover{background:color-mix(in srgb,var(--dh-member-accent) 17%,#080809)}
+.dh-member-dropdown{position:absolute;z-index:200;right:0;top:calc(100% + 7px);min-width:156px;padding:6px;border:1px solid color-mix(in srgb,var(--dh-member-accent) 35%,transparent);border-radius:12px;background:#131217;box-shadow:0 14px 36px rgba(0,0,0,.45)}
+.dh-member-dropdown a,.dh-member-dropdown button{display:block;width:100%;padding:10px 11px;border:0;border-radius:8px;background:transparent;color:#f5ede6;text-align:left;text-decoration:none;white-space:nowrap;font-size:.74rem;font-weight:750}
+.dh-member-dropdown a:hover,.dh-member-dropdown button:hover{background:color-mix(in srgb,var(--dh-member-accent) 13%,#131217)}
+.dh-member-entry [hidden]{display:none!important}
+.dh-member-entry :focus-visible{outline:2px solid var(--dh-member-accent);outline-offset:3px}
+@media(max-width:680px){.dh-member-button{padding:7px 10px;font-size:.69rem}.dh-member-arrow{padding:0 8px}.topbar-right{gap:6px}}
+@media(max-width:430px){.page-topbar{gap:7px}.back-home{padding-left:9px;padding-right:9px}.listing-open{padding-left:9px;padding-right:9px}}
+/* 奇門原本手機版保留工具切換橫向捲動；右側會員與申請刊登獨立一列避免擠壓。 */
+@media(max-width:700px){body.dh-qimen-member .page-topbar{flex-wrap:wrap;row-gap:7px}body.dh-qimen-member .page-topbar .topbar-left{width:100%;min-width:0;overflow:hidden}body.dh-qimen-member .page-topbar .tool-switcher{flex:1;min-width:0;max-width:none}body.dh-qimen-member .page-topbar .topbar-right{margin-left:auto}}
+</style>
 </head>
-<body>
+<body class="dh-qimen-member">
   <header class="page-topbar">
     <div class="topbar-left">
       <a class="back-home" href="index.html">← 免費線上占卜</a>
@@ -1507,6 +1529,11 @@
       </nav>
     </div>
     <div class="topbar-right">
+<div class="dh-member-entry" id="dhSharedMemberEntry" style="--dh-member-accent:#ff985d">
+  <button class="dh-member-button" type="button" id="dhSharedMemberButton" aria-label="前往會員中心免費登入"><span class="dh-member-status-dot" aria-hidden="true"></span><span id="dhSharedMemberText">免費登入</span></button>
+  <button class="dh-member-arrow" type="button" id="dhSharedMemberMenuToggle" aria-label="會員選單" aria-expanded="false" aria-controls="dhSharedMemberDropdown" hidden>▾</button>
+  <div class="dh-member-dropdown" id="dhSharedMemberDropdown" hidden><a href="member.html">進入會員中心</a><button type="button" id="dhSharedMemberLogout">登出會員</button></div>
+</div>
       <div class="page-status">APPLY TO BE LISTED</div>
       <a class="listing-open" id="openListing" href="apply-listing.html?from=qimen">申請刊登</a>
     </div>
@@ -2346,5 +2373,95 @@ document.addEventListener('DOMContentLoaded', () => {
       if (location.hash === '#faq-full') openFaqWorld();
     });
   </script>
+<script id="dhSharedMemberScript">
+(() => {
+  'use strict';
+  // 四個免費工具僅辨識現有會員 Session；不自行呼叫 Google，也不改變訪客使用權限。
+  const SESSION_KEY = 'divinationhub-auth-session-v1';
+  const MEMBER_API = 'https://member-api.ezgocpu.workers.dev';
+  const $ = id => document.getElementById(id);
+  const button = $('dhSharedMemberButton');
+  const caption = $('dhSharedMemberText');
+  const menuButton = $('dhSharedMemberMenuToggle');
+  const menu = $('dhSharedMemberDropdown');
+  const logout = $('dhSharedMemberLogout');
+  if (!button || !caption || !menuButton || !menu || !logout) return;
+
+  let member = null;
+  let checking = false;
+  let verifyId = 0;
+
+  function token() {
+    try { return localStorage.getItem(SESSION_KEY) || ''; } catch (_) { return ''; }
+  }
+  function returnURL(logoutRequested) {
+    const params = new URLSearchParams();
+    if (logoutRequested) params.set('logout','1');
+    params.set('return', location.pathname + location.search + location.hash);
+    return 'member.html?' + params.toString();
+  }
+  function closeMenu() {
+    menu.hidden = true;
+    menuButton.setAttribute('aria-expanded','false');
+  }
+  function paint() {
+    const authenticated = !!member?.sub;
+    caption.textContent = authenticated ? '會員中心' : checking ? '登入確認中' : '免費登入';
+    button.disabled = checking;
+    button.classList.toggle('is-logged',authenticated);
+    button.setAttribute('aria-label',authenticated ? '前往一念知機會員中心' : '前往會員中心免費登入');
+    button.title = authenticated ? '已登入，前往會員中心' : '由會員中心統一 Google 登入';
+    menuButton.hidden = !authenticated;
+    if (!authenticated) closeMenu();
+  }
+  async function verify() {
+    const id = ++verifyId;
+    const originalToken = token();
+    member = null;
+    checking = Boolean(originalToken);
+    paint();
+    if (!originalToken) return;
+    try {
+      const response = await fetch(MEMBER_API + '/auth/session', {
+        headers:{Accept:'application/json',Authorization:'Bearer ' + originalToken},
+        cache:'no-store'
+      });
+      const data = await response.json();
+      if (id !== verifyId || originalToken !== token()) return;
+      if (response.ok && data?.success && data.authenticated && data.member?.sub) member=data.member;
+    } catch (_) {
+      // 伺服器或網路異常時，不能刪除其他工具共用的 30 天 Session。
+    } finally {
+      if (id === verifyId) {checking=false;paint();}
+    }
+  }
+
+  button.addEventListener('click', () => {
+    if (checking) return;
+    location.assign(member?.sub ? 'member.html' : returnURL(false));
+  });
+  menuButton.addEventListener('click', event => {
+    event.stopPropagation();
+    if (!member?.sub) return closeMenu();
+    menu.hidden = !menu.hidden;
+    menuButton.setAttribute('aria-expanded',String(!menu.hidden));
+  });
+  logout.addEventListener('click', () => {
+    closeMenu();
+    // 在會員中心透過後端 /auth/logout 撤銷 Session；不在子頁自行清除 localStorage。
+    location.assign(returnURL(true));
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('#dhSharedMemberEntry')) closeMenu();
+  });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
+  window.addEventListener('storage', event => {
+    if (event.key === SESSION_KEY || event.key === 'divinationhub-auth-event') verify();
+  });
+  window.addEventListener('pageshow', verify);
+  document.addEventListener('visibilitychange', () => {if (!document.hidden) verify();});
+  verify();
+})();
+</script>
 </body>
 </html>
