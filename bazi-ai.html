@@ -233,7 +233,6 @@ html[data-theme="light"] :is(.site-footer,.footer,.footer a,.footer-inner,.site-
 
 @media(max-width:850px){.bz-sub-topbar .bz-sub-tool-switcher{display:flex!important}}
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div class="bz-sub-shell"><header class="bz-sub-topbar" aria-label="一念知機全站導覽">
@@ -253,17 +252,6 @@ html[data-theme="light"] :is(.site-footer,.footer,.footer a,.footer-inner,.site-
   <a href="bazi.html#worldSecond" class="bz-sub-action bz-sub-cta" aria-label="前往完整八字排盤">完整八字排盤 ↗</a>
  </div>
 </header></div>
-<div aria-hidden="true" class="bz-sub-login-modal" hidden="" id="bzSubLoginModal" role="presentation">
-<div aria-describedby="bzSubLoginDescription" aria-labelledby="bzSubLoginTitle" aria-modal="true" class="bz-sub-login-card" role="dialog">
-<button aria-label="關閉登入視窗" class="bz-sub-login-close" id="bzSubLoginClose" type="button">×</button>
-<span class="bz-sub-login-eyebrow">DIVINATION HUB · MEMBER</span>
-<h2 id="bzSubLoginTitle">免費登入一念知機</h2>
-<p id="bzSubLoginDescription">使用 Google 帳號登入。登入後可在八字主頁、會員中心及其他工具共用會員身分。</p>
-<div aria-label="Google 登入按鈕" class="bz-sub-google-mount" id="bzSubGoogleMount"></div>
-<p aria-live="polite" class="bz-sub-login-status" id="bzSubLoginStatus" role="status">正在準備 Google 登入選項…</p>
-<a class="bz-sub-login-fallback" href="bazi.html">改到八字主頁登入 ↗</a>
-</div>
-</div>
 <main>
 <section class="container hero" aria-labelledby="hero-title">
  <div class="hero-copy">
@@ -596,128 +584,127 @@ html[data-theme="light"] :is(.site-footer,.footer,.footer a,.footer-inner,.site-
 </script>
 
 <script id="bzSubMembershipScript">
-
-(function(){
+(() => {
   'use strict';
-  // 與正式八字主頁、塔羅、會員中心共用既有 Google 憑證；不建立第二種會員制度。
-  const KEY='divinationhub-bazi-google-credential';
-  const CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
-  const MEMBER_API='https://member-api.ezgocpu.workers.dev';
-  const byId=id=>document.getElementById(id);
-  const button=byId('bzSubMemberButton'),buttonText=byId('bzSubMemberButtonText');
-  const arrow=byId('bzSubMemberMenuToggle'),dropdown=byId('bzSubMemberDropdown');
-  const modal=byId('bzSubLoginModal'),closeButton=byId('bzSubLoginClose');
-  const mount=byId('bzSubGoogleMount'),status=byId('bzSubLoginStatus');
-  let googleReady=false,loadAttempts=0,loadTimer=null,focusReturn=null;
-  function getCredential(){try{return localStorage.getItem(KEY)||''}catch(_){return ''}}
-  function setCredential(value){try{if(value)localStorage.setItem(KEY,value);else localStorage.removeItem(KEY)}catch(_){}}
-  function profileFromJwt(token){
-    try{
-      const part=String(token||'').split('.')[1];if(!part)return null;
-      const raw=atob(part.replace(/-/g,'+').replace(/_/g,'/'));
-      const payload=JSON.parse(decodeURIComponent(Array.from(raw,c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0')).join('')));
-      if(!payload||Number(payload.exp||0)*1000<=Date.now())return null;
-      return {name:payload.name||payload.given_name||payload.email||'會員',email:payload.email||''};
-    }catch(_){return null}
+  // 八字 SEO 子頁只顯示已由 member-api 驗證的 Session 狀態；Google 登入及撤銷都在 member.html。
+  // 本頁不改動任何排盤、AI 額度、付費或個人紀錄。
+  const SESSION_KEY = 'divinationhub-auth-session-v1';
+  const API_MEMBER = 'https://member-api.ezgocpu.workers.dev';
+  const $ = id => document.getElementById(id);
+  const button = $('bzSubMemberButton');
+  const buttonText = $('bzSubMemberButtonText');
+  const arrow = $('bzSubMemberMenuToggle');
+  const dropdown = $('bzSubMemberDropdown');
+  const logout = $('bzSubMemberLogout');
+  let member = null;
+  let checking = false;
+  let checkSeq = 0;
+
+  function sessionToken() {
+    try { return localStorage.getItem(SESSION_KEY) || ''; } catch (_) { return ''; }
   }
-  function activeProfile(){
-    const token=getCredential();if(!token)return null;
-    const p=profileFromJwt(token);if(!p)setCredential('');return p;
-  }
-  function closeMenu(){dropdown.hidden=true;arrow.setAttribute('aria-expanded','false')}
-  function refresh(){
-    const p=activeProfile();buttonText.textContent=p?'會員中心':'免費登入';
-    button.classList.toggle('is-logged',!!p);
-    button.setAttribute('aria-label',p?'前往一念知機會員中心':'免費登入一念知機會員');
-    arrow.hidden=!p;if(!p)closeMenu();
-    if(p&&!modal.hidden)closeModal(false);
-  }
-  function closeModal(restoreFocus=true){
-    if(loadTimer){clearTimeout(loadTimer);loadTimer=null;}
-    modal.hidden=true;modal.setAttribute('aria-hidden','true');
-    document.body.classList.remove('bz-sub-modal-open');
-    if(restoreFocus&&focusReturn?.isConnected)focusReturn.focus();
-  }
-  function loadGoogle(){
-    if(modal.hidden||activeProfile())return;
-    if(location.protocol==='file:'){status.textContent='本機檔案無法使用正式 Google 登入，請部署至網站後測試。';return;}
-    if(!window.google?.accounts?.id){
-      if(++loadAttempts<=24){loadTimer=setTimeout(loadGoogle,350);}
-      else{status.textContent='Google 登入暫時無法載入，請確認網路後重試，或到八字主頁登入。';}
-      return;
+  // 會員中心只允許返回本網站的 HTML 頁面；保留原頁查詢參數與錨點。
+  function memberURL(action) {
+    const params = new URLSearchParams();
+    if (action === 'login' || action === 'logout') {
+      if (action === 'logout') params.set('logout', '1');
+      params.set('return', location.pathname + location.search + location.hash);
     }
-    try{
-      if(!googleReady){
-        window.google.accounts.id.initialize({client_id:CLIENT_ID,callback:async result=>{
-          const credential=result?.credential||'';
-          if(!credential||!profileFromJwt(credential)){status.textContent='Google 登入未完成，請再試一次。';return;}
-          setCredential(credential);refresh();closeModal(false);
-          // 沿用八字主頁的會員後端登錄方式，發生暫時連線錯誤不丟失 Google 登入結果。
-          try{await fetch(MEMBER_API+'/me',{headers:{Authorization:'Bearer '+credential,Accept:'application/json'}})}catch(_){ }
-        }});
-        googleReady=true;
-      }
-      mount.replaceChildren();
-      window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});
-      status.textContent='請使用 Google 帳號登入。';
-    }catch(_){status.textContent='暫時無法顯示 Google 登入，請改到八字主頁登入。';}
+    return 'member.html' + (params.size ? '?' + params.toString() : '');
   }
-  function openModal(){
-    if(activeProfile()){location.href='member.html';return;}
-    focusReturn=document.activeElement;loadAttempts=0;
-    status.textContent='正在準備 Google 登入選項…';modal.hidden=false;modal.setAttribute('aria-hidden','false');
-    document.body.classList.add('bz-sub-modal-open');
-    closeButton.focus();loadGoogle();
+  function closeMenu() {
+    dropdown.hidden = true;
+    arrow.setAttribute('aria-expanded', 'false');
   }
-  button.addEventListener('click',()=>activeProfile()?location.assign('member.html'):openModal());
-  arrow.addEventListener('click',event=>{
-    event.stopPropagation();if(!activeProfile()){closeMenu();return;}
-    dropdown.hidden=!dropdown.hidden;arrow.setAttribute('aria-expanded',String(!dropdown.hidden));
-  });
-  byId('bzSubMemberLogout').addEventListener('click',()=>{
-    closeMenu();setCredential('');
-    try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){ }
-    refresh();
-  });
-  closeButton.addEventListener('click',()=>closeModal());
-  modal.addEventListener('click',event=>{if(event.target===modal)closeModal()});
-  document.addEventListener('click',event=>{if(!event.target.closest('#bzSubMemberEntry'))closeMenu()});
-  document.addEventListener('keydown',event=>{
-    if(event.key==='Escape'){if(!modal.hidden)closeModal();else closeMenu();}
-    // Only retain keyboard focus inside the active modal.
-    if(event.key==='Tab'&&!modal.hidden){
-      const items=[...modal.querySelectorAll('button,a,[tabindex]:not([tabindex="-1"])')].filter(el=>!el.hidden);
-      if(items.length){const first=items[0],last=items[items.length-1];
-        if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
-        else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  function paint() {
+    const loggedIn = !!member?.sub;
+    buttonText.textContent = loggedIn ? '會員中心' : checking ? '登入確認中' : '免費登入';
+    button.classList.toggle('is-logged', loggedIn);
+    button.setAttribute('aria-label', loggedIn ? '前往一念知機會員中心' : '前往會員中心免費登入');
+    button.title = loggedIn ? '已登入，前往會員中心' : '由會員中心統一 Google 登入';
+    arrow.hidden = !loggedIn;
+    if (!loggedIn) closeMenu();
+  }
+  async function verifySession() {
+    const seq = ++checkSeq;
+    const token = sessionToken();
+    member = null;
+    checking = !!token;
+    paint();
+    if (!token) return;
+    try {
+      const response = await fetch(API_MEMBER + '/auth/session', {
+        headers: { Accept: 'application/json', Authorization: 'Bearer ' + token },
+        cache: 'no-store'
+      });
+      const data = await response.json();
+      if (seq !== checkSeq || sessionToken() !== token) return;
+      if (response.ok && data?.success && data.authenticated && data.member?.sub) {
+        member = data.member;
       }
+    } catch (_) {
+      // 連線失敗時不刪除 Session。下次回頁面仍會重新向後端確認。
+    } finally {
+      if (seq === checkSeq) { checking = false; paint(); }
     }
+  }
+
+  button.addEventListener('click', () => {
+    location.assign(member?.sub ? 'member.html' : memberURL('login'));
   });
-  window.addEventListener('storage',event=>{if(event.key===KEY)refresh()});
-  window.addEventListener('pageshow',refresh);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
-  // 五個八字教學子頁原無主題切換，提供一致的深淺色主題。
+  arrow.addEventListener('click', event => {
+    event.stopPropagation();
+    if (!member?.sub) return closeMenu();
+    dropdown.hidden = !dropdown.hidden;
+    arrow.setAttribute('aria-expanded', String(!dropdown.hidden));
+  });
+  logout.textContent = '登出會員';
+  logout.addEventListener('click', () => {
+    // 遵循會員中心既有的 /auth/logout 伺服器撤銷流程。
+    // 若登出失敗，member.html 會提示錯誤而非假裝已登出。
+    location.assign(memberURL('logout'));
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('#bzSubMemberEntry')) closeMenu();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeMenu();
+  });
+  window.addEventListener('storage', event => {
+    if (event.key === SESSION_KEY || event.key === 'divinationhub-auth-event') verifySession();
+  });
+  window.addEventListener('pageshow', verifySession);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) verifySession();
+  });
+
+  // 沿用原有五個 SEO 子頁相同的深淺模式切換。
   {
-    const themeKey='divinationhub-color-theme';
-    const updateThemeButton=()=>{
-      const light=document.documentElement.dataset.theme==='light';
-      byId('themeToggleIcon').textContent=light?'☾':'☀';
-      byId('themeToggleText').textContent=light?'深色':'淺色';
-      const t=byId('themeToggle');t.setAttribute('aria-label',light?'切換成深色模式':'切換成淺色模式');
-      t.title=light?'切換成深色模式':'切換成淺色模式';
+    const themeKey = 'divinationhub-color-theme';
+    const updateThemeButton = () => {
+      const light = document.documentElement.dataset.theme === 'light';
+      $('themeToggleIcon').textContent = light ? '☾' : '☀';
+      $('themeToggleText').textContent = light ? '深色' : '淺色';
+      const t = $('themeToggle');
+      t.setAttribute('aria-label', light ? '切換成深色模式' : '切換成淺色模式');
+      t.title = light ? '切換成深色模式' : '切換成淺色模式';
     };
-    byId('themeToggle').addEventListener('click',()=>{
-      const next=document.documentElement.dataset.theme==='light'?'dark':'light';
-      document.documentElement.dataset.theme=next;
-      try{localStorage.setItem(themeKey,next)}catch(_){ }
+    $('themeToggle').addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem(themeKey, next); } catch (_) {}
       updateThemeButton();
     });
-    window.addEventListener('storage',event=>{if(event.key===themeKey){document.documentElement.dataset.theme=event.newValue==='light'?'light':'dark';updateThemeButton()}});
+    window.addEventListener('storage', event => {
+      if (event.key === themeKey) {
+        document.documentElement.dataset.theme = event.newValue === 'light' ? 'light' : 'dark';
+        updateThemeButton();
+      }
+    });
     updateThemeButton();
   }
-  refresh();
+  verifySession();
 })();
-
 </script>
 </body>
 </html>
