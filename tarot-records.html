@@ -42,17 +42,17 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
 #googleLoginMount{margin:15px 0;min-height:42px}.status-space{min-height:22px}.timeline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 @media(max-width:700px){main{padding:22px 13px 65px}.sitebar{padding:12px 14px}.panel{padding:16px}.summary{grid-template-columns:1fr 1fr}.columns,.settings{grid-template-columns:1fr}.recordhead{align-items:flex-start}.record{padding:15px}.record-main.has-note{grid-template-columns:1fr;gap:12px}.record-note{padding:12px 14px}.actions .btn{flex:1}.sitebar-links{gap:8px}}
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Google 登入只在 member.html；紀錄頁不再自行載入 Google Identity Services。 -->
 </head>
 <body>
-<header class="sitebar"><a class="brand" href="tarot.html">✺ 一念知機・塔羅</a><nav class="sitebar-links"><a href="tarot.html" class="top-link">返回抽牌</a><button id="shareSiteButton" class="btn ghost" type="button" title="只分享網站，不包含占卜私人資料">分享好友</button><span id="accountName" class="small"></span><button class="btn ghost" type="button" id="logoutButton" hidden>登出</button></nav></header>
+<header class="sitebar"><a class="brand" href="tarot.html">✺ 一念知機・塔羅</a><nav class="sitebar-links"><a href="tarot.html" class="top-link">返回抽牌</a><button id="shareSiteButton" class="btn ghost" type="button" title="只分享網站，不包含占卜私人資料">分享好友</button><span id="accountName" class="small"></span><a class="btn ghost" id="logoutButton" href="member.html?logout=1&amp;return=%2Ftarot-records.html" target="_top" hidden>登出</a></nav></header>
 <main>
   <div class="eyebrow">MEMBER · TAROT ARCHIVE · V28.14</div>
   <h1>我的塔羅占卜紀錄</h1>
   <p class="lead">記住每次的問題與牌面，隨時取回當時真正產生的 AI 提示詞。你也可以留下 50 字心得，設定日後的回顧時間。</p>
   <section id="loginPanel" class="panel" hidden>
     <h2>免費登入，查看自己的紀錄</h2><p class="small">使用一念知機原有的 Google 會員帳號。登入只用於保存及查看紀錄，抽牌與取得提示詞仍然免費。</p>
-    <div id="googleLoginMount"></div><p id="loginHint" class="small"></p>
+    <p class="small" id="loginHint">請到會員中心使用 Google 登入；登入後會自動返回塔羅紀錄。</p><a id="memberLoginLink" class="btn primary" href="member.html?return=%2Ftarot-records.html" target="_top">前往會員中心 Google 登入 ↗</a>
     <a class="btn" href="tarot.html">返回塔羅抽牌</a>
   </section>
   <section id="dashboard" hidden>
@@ -92,21 +92,25 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
 </main>
 <script>
 (()=>{'use strict';
-  const API='https://tarot-api.ezgocpu.workers.dev',MEMBER_API='https://member-api.ezgocpu.workers.dev',AUTH_KEY='divinationhub-bazi-google-credential',GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
+  const API='https://tarot-api.ezgocpu.workers.dev',MEMBER_API='https://member-api.ezgocpu.workers.dev',AUTH_KEY='divinationhub-auth-session-v1';
   const $=id=>document.getElementById(id);
-  let currentPage=0,more=false,items=[],dueItems=[],selected=null,googleReady=false,totalRecords=0;
+  let currentPage=0,more=false,items=[],dueItems=[],selected=null,totalRecords=0;
+  let verifiedMember=null,restoreSeq=0;
   const PENDING_KEY='divinationhub-tarot-pending-record-v1';
   const rawToken=()=>{try{return localStorage.getItem(AUTH_KEY)||''}catch(_){return ''}};
-  const setToken=t=>{try{if(t)localStorage.setItem(AUTH_KEY,t);else localStorage.removeItem(AUTH_KEY)}catch(_){}};
-  function identity(){try{const t=rawToken();if(!t)return null;const p=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0))));return Number(p.exp)*1000>Date.now()?p:null}catch(_){return null}}
+  function identity(){return verifiedMember}
   async function api(path,body,method){
-    const token=rawToken();if(!token)throw Error('請先登入會員');
+    const token=identity()?.sub?rawToken():'';
+    if(!token)throw Error('請先到會員中心登入');
     const res=await fetch(API+path,{method:method||(body===undefined?'GET':'POST'),headers:{Authorization:'Bearer '+token,Accept:'application/json',...(body===undefined?{}:{'Content-Type':'application/json'})},body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});
     const data=await res.json().catch(()=>({}));
     if(!res.ok||!data.ok){
       const code=data.error||'SERVER_ERROR';
       if(code==='RECORD_STORAGE_NOT_CONFIGURED')throw Error('後端尚未綁定 D1（DB），請先完成後端設定。');
-      if(code==='UNAUTHORIZED'||code==='LOGIN_REQUIRED')throw Error('登入已過期，請重新登入。');
+      if(code==='UNAUTHORIZED'||code==='LOGIN_REQUIRED'){
+        verifiedMember=null;setLoggedUI();
+        throw Error('會員 Session 已失效，請到會員中心重新登入。');
+      }
       throw Error('資料讀取／儲存失敗：'+code);
     }
     return data;
@@ -119,17 +123,26 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
   function dom(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
   function put(parent,...children){children.forEach(n=>parent.append(n));return parent}
   function button(label,fn,variant=''){const b=dom('button','btn '+variant,label);b.type='button';b.addEventListener('click',fn);return b}
-  function setLoggedUI(){const who=identity();$('loginPanel').hidden=!!who;$('dashboard').hidden=!who;$('detailPanel').hidden=true;$('accountName').textContent=who?(who.name||who.email||'會員'):'';$('logoutButton').hidden=!who;if(who){loadPage(true)}else{renderLogin()}}
-  async function renderLogin(){
-    if(location.protocol==='file:'){$('loginHint').textContent='請將本頁上傳網站後再使用 Google 登入；直接開本機檔案無法連線正式紀錄 API。';return}
-    if(googleReady)return;
-    if(!window.google?.accounts?.id){setTimeout(renderLogin,300);return}
-    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async({credential})=>{
-      if(!credential)return;setToken(credential);
-      try{await fetch(MEMBER_API+'/me',{headers:{Authorization:'Bearer '+credential}})}catch(_){}
+  function setLoggedUI(){const who=identity();$('loginPanel').hidden=!!who;$('dashboard').hidden=!who;$('detailPanel').hidden=true;$('accountName').textContent=who?(who.name||who.email||'會員'):'';$('logoutButton').hidden=!who;if(who){loadPage(true)}}
+  async function restoreArchiveSession(){
+    const seq=++restoreSeq,token=rawToken();
+    verifiedMember=null;
+    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token)){setLoggedUI();return}
+    try{
+      const headers={Authorization:'Bearer '+token,Accept:'application/json'};
+      const m=await fetch(MEMBER_API+'/auth/session',{headers,cache:'no-store'});
+      const mj=await m.json().catch(()=>null);
+      if(seq!==restoreSeq||token!==rawToken())return;
+      if(!m.ok||mj?.success!==true||mj.authenticated!==true||!mj.member?.sub)throw Error('MEMBER_SESSION_INVALID');
+      const t=await fetch(API+'/session-check',{headers,cache:'no-store'});
+      const tj=await t.json().catch(()=>null);
+      if(seq!==restoreSeq||token!==rawToken())return;
+      if(!t.ok||tj?.success!==true||tj.authenticated!==true||tj.member?.sub!==mj.member.sub)throw Error('TAROT_SESSION_INVALID');
+      verifiedMember={sub:mj.member.sub,email:mj.member.email||'',name:mj.member.name||'會員'};
       setLoggedUI();
-    }});
-    google.accounts.id.renderButton($('googleLoginMount'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:250});googleReady=true;
+    }catch(err){
+      if(seq===restoreSeq){console.warn('塔羅紀錄：會員 Session 未通過驗證：',err?.message);verifiedMember=null;setLoggedUI()}
+    }
   }
   function daysToDate(iso){
     const today=todayTaiwan();
@@ -284,9 +297,11 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
   });
   $('markReviewed').addEventListener('click',()=>{if(selected)markAsReviewed(selected)});
   $('shareSiteButton').addEventListener('click',async()=>{const site='https://divinationhub.tw/tarot.html';try{if(navigator.share)await navigator.share({title:'一念知機｜免費塔羅抽牌',url:site});else{await navigator.clipboard.writeText(site);$('shareSiteButton').textContent='✓ 網址已複製'}}catch(err){if(err.name!=='AbortError'){$('shareSiteButton').textContent='請手動複製網址'}}});
-  $('logoutButton').addEventListener('click',()=>{setToken('');try{google.accounts.id.disableAutoSelect()}catch(_){}items=[];selected=null;setLoggedUI()});
+  // 登出由 member.html 撤銷後端 Session。紀錄頁只同步狀態，不自行登出。
+  window.addEventListener('storage',e=>{if(e.key===AUTH_KEY||e.key==='divinationhub-auth-event')void restoreArchiveSession()});
+  window.addEventListener('focus',()=>{if(!document.hidden)void restoreArchiveSession()});
   $('loadMore').addEventListener('click',()=>loadPage(false));
-  setLoggedUI();
+  void restoreArchiveSession();
 })();
 </script>
 </body>

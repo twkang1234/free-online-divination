@@ -3168,7 +3168,7 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     </div>
   </section>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Google 登入只由 member.html 載入，不再由塔羅頁另行初始化。 -->
 <!-- 156 組塔羅 AI 關鍵字已內建於此頁，無須額外資料檔案 -->
 <script>
 (() => {
@@ -3608,6 +3608,8 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
   const TAROT_USAGE_KEY='divinationhub-tarot-daily-usage-v3';
   const TAROT_DEVICE_BOUND_KEY='divinationhub-tarot-ever-google-member-v1';
   const TAROT_AUTH_KEY='divinationhub-bazi-google-credential';
+  const TAROT_SESSION_KEY='divinationhub-auth-session-v1';
+  let tarotSessionMember=null; // 僅在 member-api 與 tarot-api 雙重驗證後設定
   const TAROT_LOCAL_MEMBER_KEY='divinationhub-tarot-local-member-preview';
   const MEMBER_API_BASE='https://member-api.ezgocpu.workers.dev';
   const ADMIN_API_BASE='https://admin-api.ezgocpu.workers.dev';
@@ -3860,14 +3862,54 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
   function dailyRemaining(){return Math.max(0,TAROT_DAILY_LIMIT-dailyUsage())}
   function questionKey(){return `${state.topic?.id||''}:${state.scenario?.id||''}:${state.question?.id||''}`}
   function decodeJwt(token){try{const part=String(token||'').split('.')[1];if(!part)return null;const base=part.replace(/-/g,'+').replace(/_/g,'/');const json=decodeURIComponent(atob(base).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));return JSON.parse(json)}catch(_){return null}}
-  function authToken(){try{return localStorage.getItem(TAROT_AUTH_KEY)||''}catch(_){return ''}}
+  // 與八字共用同一顆 30 天 Session；在後端尚未驗證通過前不能當會員憑證。
+  function tarotStoredSession(){try{return localStorage.getItem(TAROT_SESSION_KEY)||''}catch(_){return ''}}
+  // 正式登入只承認兩個 Worker 驗證通過的共用 Session；舊 Google Token 不可假裝長期登入。
+  function authToken(){return tarotSessionMember?.sub?tarotStoredSession():''}
   function setAuthToken(token){try{if(token)localStorage.setItem(TAROT_AUTH_KEY,token);else localStorage.removeItem(TAROT_AUTH_KEY)}catch(_){}}
   function authProfile(){
     if(isAdminTestActive())return adminTestProfile();
     if(location.protocol==='file:'&&safeRead(TAROT_LOCAL_MEMBER_KEY,false))return {name:'本機測試會員',email:'LOCAL PREVIEW'};
-    const token=authToken();if(!token)return null;const p=decodeJwt(token);if(!p)return null;if(Number(p.exp||0)*1000<=Date.now()){setAuthToken('');return null}return {name:p.name||p.given_name||p.email||'會員',email:p.email||''};
+    return tarotSessionMember?.sub?tarotSessionMember:null;
   }
   function isLogged(){return !!authProfile()}
+  function tarotGoMember(logout=false){
+    const back=location.pathname+location.search+location.hash;
+    location.href='member.html?'+(logout?'logout=1&':'')+'return='+encodeURIComponent(back);
+  }
+  // 只有 member-api 及 tarot-api 都認得同一個 Session，才開放塔羅會員功能。
+  let tarotRestoreSeq=0;
+  async function tarotRestoreSession(){
+    if(isAdminTestActive()||location.protocol==='file:')return;
+    const token=tarotStoredSession(),seq=++tarotRestoreSeq;
+    if(!token){tarotSessionMember=null;refreshTarotAccessUI();return;}
+    const headers={Authorization:'Bearer '+token,Accept:'application/json'};
+    try{
+      const mr=await fetch(MEMBER_API_BASE+'/auth/session',{headers,cache:'no-store'});
+      const mj=await mr.json();
+      if(!mr.ok||mj?.success!==true)throw Error(mj?.error||'MEMBER_SESSION_UNAVAILABLE');
+      if(seq!==tarotRestoreSeq||token!==tarotStoredSession())return;
+      if(!mj.authenticated||!mj.member?.sub){
+        tarotSessionMember=null;
+        // 已經確定後端撤銷／逾期，僅移除這個登入 Token；不修改任何使用額度。
+        try{localStorage.removeItem(TAROT_SESSION_KEY)}catch(_){}
+        refreshTarotAccessUI();return;
+      }
+      const tr=await fetch(TAROT_API_BASE+'/session-check',{headers,cache:'no-store'});
+      const tj=await tr.json();
+      if(!tr.ok||tj?.success!==true||tj.authenticated!==true||tj.member?.sub!==mj.member.sub)throw Error('TAROT_BACKEND_SESSION_UNAVAILABLE');
+      if(seq!==tarotRestoreSeq||token!==tarotStoredSession())return;
+      const prior=tarotSessionMember?.sub;
+      tarotSessionMember={sub:mj.member.sub,name:mj.member.name||mj.member.email||'會員',email:mj.member.email||'',picture:mj.member.picture||''};
+      if(prior!==tarotSessionMember.sub)memberLoginSucceeded();
+      else refreshTarotAccessUI();
+    }catch(err){
+      if(seq!==tarotRestoreSeq||token!==tarotStoredSession())return;
+      tarotSessionMember=null; // Worker 不認得，不可只依 localStorage 假裝成功登入
+      console.warn('塔羅 30 天 Session 尚未通過後端驗證：',err?.message);
+      refreshTarotAccessUI();
+    }
+  }
   function guestReaderKey(){return guestPolicy().reader}
   function isTopicAllowed(id){return TOPICS.some(t=>t.id===id)&&topicAllowedForCurrentUser(id)}
   function isDrawModeAllowed(mode){return ['fan','scatter','flow','study','stop','physical'].includes(mode)&&drawAllowedForCurrentUser(mode)}
@@ -3951,28 +3993,23 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     if(intro)intro.textContent=p?'已登入一念知機免費會員。一般主題與固定題目全開；抽牌方式、解讀格式與基礎牌義依每日規則輪替；牌陣依題目適用性開放。自訂問題、實體牌輸入、TXT 下載保留未來完整進階。':isGuestLoginRequired()?'此瀏覽器曾登入過會員，未登入時所有占卜主題已鎖定；請重新登入會員，依當日會員權限使用。登入不會重置免費次數，完整進階功能仍另行解鎖。':'訪客每日 3 次，主題、問題、抽牌方式與解讀格式每日輪替；牌陣依題目適用性開放。免費登入可解除一般限制並保存紀錄。';
     syncMemberSaveInvites();
   }
-  async function registerMember(){const token=authToken();if(!token)return;try{await fetch(MEMBER_API_BASE+'/me',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})}catch(_){}}
+  // 登入集中由 member.html 管理；塔羅不呼叫 /me，不額外增加登入次數。
   function renderGoogleButton(){
     const local=$('tarotLocalLogin'),mount=$('tarotGoogleMount');
     if(isAdminTestActive()){
-      if(isLogged()){if(local)local.hidden=true;if(mount)mount.innerHTML='';return;}
-      if(mount){mount.innerHTML='';mount.hidden=true;}
-      if(local){local.hidden=false;local.textContent='測試模式｜模擬免費會員登入';}
+      if(local){local.hidden=isLogged();local.textContent='測試模式｜模擬免費會員登入';}
+      if(mount){mount.hidden=true;mount.textContent='';}
       return;
     }
-    if(isLogged()){if(local)local.hidden=true;return;}
-    if(location.protocol==='file:'){if(local){local.hidden=false;local.textContent='本機預覽｜模擬免費登入';}return;}
+    if(mount){mount.hidden=true;mount.textContent='';}
     if(local)local.hidden=true;
-    if(!window.google?.accounts?.id){setTimeout(renderGoogleButton,250);return;}
-    if(!tarotGoogleInitialized){window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,auto_select:true,callback:async response=>{const credential=response?.credential||'';if(!credential)return;setAuthToken(credential);await registerMember();memberLoginSucceeded();}});tarotGoogleInitialized=true;}
-    if(mount&&mount.dataset.ready!=='1'){mount.hidden=false;mount.dataset.ready='1';window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});}
   }
   function openMemberModal(targetReader=null){
     state.pendingReader=targetReader||null;
-    updateMemberUI();
-    const modal=$('tarotMemberModal');
-    modal.classList.add('show');modal.setAttribute('aria-hidden','false');
-    renderGoogleButton();
+    if(isAdminTestActive()){
+      updateMemberUI();const modal=$('tarotMemberModal');modal.classList.add('show');modal.setAttribute('aria-hidden','false');renderGoogleButton();return;
+    }
+    tarotGoMember(false);
   }
   function closeMemberModal(){const modal=$('tarotMemberModal');modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
   function memberLoginSucceeded(){
@@ -3990,14 +4027,8 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
   function logoutMember(){
     closeTarotMemberDropdown();
     if(isAdminTestActive()){simulateAdminMemberLogout();return;}
-    setAuthToken('');paidBalance={followup:0,advanced:0};safeWrite(TAROT_LOCAL_MEMBER_KEY,false);
-    try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
-    state.accessTier=state.current?.length?'guest':null;
-    updateMemberUI();renderTopics();
-    if(!$('drawModeShell').hidden)applyDrawModeAccess();
-    if(!els.analysis.hidden&&state.readerBodies){state.readersViewed=new Set(['a']);renderReaderShell();}
-    closeMemberModal();
-    if(state.stage3x3==='complete'&&state.current?.length===3)renderFinish();
+    // 遠端撤銷 Session 的唯一入口是 member.html；不能只清除本機顯示狀態。
+    tarotGoMember(true);
   }
   function openGuestNotice(kind,confirmFn){
     const title=$('tarotGuestNoticeTitle'),kicker=$('tarotGuestNoticeKicker'),copy=$('tarotGuestNoticeCopy'),confirm=$('tarotGuestNoticeConfirm');
@@ -5709,21 +5740,25 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
   });
   $('tarotMemberButton')?.addEventListener('click',()=>{
     if(isLogged()){closeTarotMemberDropdown();window.location.href='member.html';return;}
-    openMemberModal();
+    tarotGoMember(false);
   });
   $('tarotMemberMenuToggle')?.addEventListener('click',e=>{e.stopPropagation();toggleTarotMemberDropdown();});
   $('tarotMemberMenuLogout')?.addEventListener('click',logoutMember);
   document.addEventListener('click',e=>{if(!e.target.closest('#tarotMemberEntry'))closeTarotMemberDropdown();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTarotMemberDropdown();});
-  // 共用憑證在另一分頁被登出時，同步更新目前塔羅頁的權限與按鈕。
+  // 與八字共用登入／登出訊號，所有分頁同步；不得重設原本的塔羅使用額度。
+  window.addEventListener('focus',()=>{if(!document.hidden&&!isAdminTestActive())void tarotRestoreSession()});
   window.addEventListener('storage',e=>{
-    if(e.key!==TAROT_AUTH_KEY)return;
-    if(!authToken()){
-      try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
-      state.accessTier=state.current?.length?'guest':null;
-      paidBalance={followup:0,advanced:0};
+    if(e.key==='divinationhub-auth-event'){
+      let signal=null;try{signal=JSON.parse(e.newValue||'null')}catch(_){}
+      if(signal?.kind==='login')void tarotRestoreSession();
+      if(signal?.kind==='logout'){
+        tarotRestoreSeq++;tarotSessionMember=null;paidBalance={followup:0,advanced:0};
+        refreshTarotAccessUI();
+      }
     }
-    refreshTarotAccessUI();
+    if(e.key===TAROT_SESSION_KEY){tarotSessionMember=null;void tarotRestoreSession();}
+    if(e.key===TAROT_AUTH_KEY&&!tarotSessionMember){refreshTarotAccessUI();}
   });
   $('tarotMemberClose')?.addEventListener('click',closeMemberModal);
   $('tarotMemberLogout')?.addEventListener('click',logoutMember);
@@ -5777,12 +5812,8 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
   syncThemeToggle();
   flashThemeToggle();
 
-  // 嘗試靜默恢復 Google 登入（Google 可因使用者設定拒絕自動登入）。
-  function tryGoogleAutoSignIn(){
-    if(isLogged()||isAdminTestActive()||location.protocol==='file:')return;
-    const start=()=>{if(!window.google?.accounts?.id){setTimeout(start,450);return;}
-      renderGoogleButton();try{window.google.accounts.id.prompt(()=>{});}catch(_){}};start();
-  }
+  // 不再於塔羅頁呼叫 Google One Tap：只有會員中心可執行 Google 登入。
+  function tryGoogleAutoSignIn(){return;}
   // 初始化主塔羅頁；若由管理員後台進入，先驗證 session token 再開啟測試模式。
   // V28 free prompt flow deliberately does not call /health, /interpret or paid-access.
   renderTopics();$('deckCount').textContent=78;
@@ -5790,7 +5821,7 @@ html[data-theme="light"] #tarot-spreads .spread-seo-card .spread-seo-caution{col
     // 只憑網址無法啟用測試；必須先驗證管理員登入憑證。驗證後會顯示六個測試狀態選項。
     initAdminTestMode();
   }else{
-    updateMemberUI();tryGoogleAutoSignIn();
+    updateMemberUI();void tarotRestoreSession();
     // 正式訪客與會員僅恢復自己的 3＋3 紀錄，測試絕不覆寫此資料。
     if(!new URLSearchParams(location.search).has('topic')){try{if(restore3x3())openResumeNotice();}catch(e){console.warn('3+3 resume skipped',e)}}
   }
