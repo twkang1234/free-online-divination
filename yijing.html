@@ -1774,6 +1774,12 @@ function cardHTML(h, lines, label, movingLines=[]){
   function stopPaidPreview(){if(isAdminTestActive()&&adminTestMode==='paid-full'){const back=ADMIN_TEST_MODES[adminTestReturnMode]?adminTestReturnMode:'member';setAdminTestMode(back);closePaidModal();return;}paidPreviewActive=false;closePaidModal();refreshAccessUI();}
 
   function openMemberModal(reason='',quota=false){
+    // 正式網站的未登入者直接進入共用會員中心，不再多顯示一層說明視窗。
+    // 本機預覽和已授權管理員測試模式保留原有模擬功能。
+    if(!authProfile()&&location.protocol!=='file:'&&!isAdminTestActive()){
+      goToMemberLogin();
+      return;
+    }
     const p=authProfile(),bound=memberDeviceLoginRequired(),modal=document.getElementById('yijingMemberModal'),title=document.getElementById('yijingMemberTitle'),intro=document.getElementById('yijingMemberIntro'),note=document.getElementById('yijingQuotaNote');
     if(title)title.textContent=p?(quota?'今日免費次數已用完':'免費會員'):(bound?'請登入會員':'免費登入解鎖');
     if(intro)intro.textContent=reason||(p?'你已登入免費會員。主題與固定題目已全開，但部分進階功能仍依每日輪替或進階權限保留。':(bound?'這台瀏覽器已成功登入過會員，因此不再提供未登入訪客模式。請登入會員後繼續使用。':'未登入每天會輪替開放部分主題、題目、起卦方式與解讀內容；免費登入後可解除大部分限制。'));
