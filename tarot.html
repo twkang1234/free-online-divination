@@ -3065,6 +3065,147 @@ html[data-tarot-layout="mobile"] .reading-analysis .tarot-site-ai .tarot-ai-shar
 html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota-free{gap:6px;padding:8px 9px}
 
 </style>
+
+<style id="tarot-visual-hierarchy-v3">
+/* 2026-10-15 · mobile-first interaction hierarchy, presentation only. The original
+   topic/question/draw access checks remain authoritative and unchanged. */
+.tarot-choose-hint{margin:4px 0 11px;padding:9px 12px;border-radius:11px;border:1px solid rgba(188,111,202,.23);background:rgba(176,89,192,.07);color:#e6c3eb;font-weight:730;font-size:.78rem;line-height:1.55}
+html[data-theme="light"] .tarot-choose-hint{background:#f7eaf9;border-color:#e3bee8;color:#873b93}
+.tarot-choose-hint[hidden]{display:none!important}
+/* Available options receive the visual emphasis and directional hints. */
+.topic-choice-grid .choice-card.is-option-open,
+.question-grid .question-card.is-option-open,
+.draw-mode-grid .draw-mode-card.is-option-open,
+.scenario-grid .choice-card.is-option-open{
+  position:relative;border:1.5px solid rgba(224,117,222,.71)!important;
+  background:linear-gradient(150deg,rgba(77,28,88,.40),rgba(33,17,51,.76))!important;
+  box-shadow:0 0 0 1px rgba(211,106,214,.14),0 6px 22px rgba(188,74,190,.12)!important;
+  color:#fcf4ff!important;opacity:1!important;cursor:pointer;
+}
+.topic-choice-grid .choice-card.is-option-open{animation:tarotTopicAttention 4.5s ease-in-out infinite}
+.question-grid .question-card.is-option-open{animation:tarotAvailablePulse 4.2s ease-in-out infinite;animation-delay:calc(var(--available-n,0)*-.6s)}
+.draw-mode-grid .draw-mode-card.is-option-open{animation:tarotAvailablePulse 4.8s ease-in-out infinite;animation-delay:calc(var(--draw-n,0)*-.5s)}
+@keyframes tarotAvailablePulse{0%,100%{box-shadow:0 0 0 1px rgba(211,106,214,.10),0 5px 15px rgba(184,71,190,.07)}52%{box-shadow:0 0 0 2px rgba(236,143,239,.31),0 5px 25px rgba(197,84,205,.27)}}
+.topic-choice-grid .choice-card.is-option-open:hover,
+.question-grid .question-card.is-option-open:hover,
+.draw-mode-grid .draw-mode-card.is-option-open:hover,
+.scenario-grid .choice-card.is-option-open:hover{transform:translateY(-2px);border-color:#eb9bf2!important;filter:brightness(1.04)}
+.topic-choice-grid .choice-card.is-option-open:focus-visible,
+.question-grid .question-card.is-option-open:focus-visible,
+.draw-mode-grid .draw-mode-card.is-option-open:focus-visible,
+.scenario-grid .choice-card.is-option-open:focus-visible{outline:3px solid #f1b2f5;outline-offset:3px;animation-play-state:paused}
+.topic-choice-grid .choice-card.is-option-open b,.question-grid .question-card.is-option-open b,.draw-mode-grid .draw-mode-card.is-option-open b,.scenario-grid .choice-card.is-option-open b{color:#fff4ff!important}
+.topic-choice-grid .choice-card.is-option-open small,.draw-mode-grid .draw-mode-card.is-option-open small,.scenario-grid .choice-card.is-option-open small{color:#e6d1ed!important}
+/* Bright indicator, not on locked controls. */
+.tarot-available-indicator{position:relative;z-index:3;display:inline-flex;align-items:center;gap:5px;margin-top:auto;padding-top:9px;color:#f4cbff;font-size:.69rem;line-height:1.2;font-weight:900;letter-spacing:.01em;font-style:normal}
+.tarot-available-indicator i{font-style:normal;opacity:.85}
+.question-grid .tarot-available-indicator{position:absolute;right:12px;top:9px;margin:0;padding:3px 7px;border-radius:999px;background:rgba(214,123,220,.22);border:1px solid rgba(236,163,238,.27);font-size:.66rem;white-space:nowrap}
+.question-grid .question-card.is-option-open{padding-right:95px}
+.draw-mode-grid .tarot-available-indicator{padding-top:8px;font-size:.66rem}
+/* Locked options remain legible and clickable to learn how to unlock, but are
+   visually receded; old gold/pink pulsing badges must never outrank options. */
+.topic-choice-grid .choice-card.is-option-locked,
+.question-grid .question-card.is-option-locked,
+.draw-mode-grid .draw-mode-card.is-option-locked{
+  border:1px solid rgba(142,130,147,.18)!important;
+  background:rgba(85,75,94,.065)!important;
+  box-shadow:none!important;
+  animation:none!important;filter:saturate(.42);opacity:.82;
+  transform:none!important;
+}
+.topic-choice-grid .choice-card.is-option-locked b,.question-grid .question-card.is-option-locked b,.draw-mode-grid .draw-mode-card.is-option-locked b{color:#a99bad!important;opacity:.9!important}
+.topic-choice-grid .choice-card.is-option-locked small,.draw-mode-grid .draw-mode-card.is-option-locked small{color:#8e8197!important;opacity:.85!important}
+.draw-mode-grid .draw-mode-card.is-option-locked>*:not(.guest-lock-badge){opacity:.75!important}
+.topic-choice-grid .choice-card.is-option-locked .v2814-lock-badge,
+.question-grid .question-card.is-option-locked .v2814-lock-badge,
+.draw-mode-grid .draw-mode-card.is-option-locked .guest-lock-badge{
+  animation:none!important;box-shadow:none!important;
+  border:1px solid rgba(165,150,171,.22)!important;
+  background:rgba(91,81,102,.22)!important;color:#b1a3bb!important;
+  font-size:.60rem!important;letter-spacing:0;font-weight:730;
+  padding:3px 7px!important;border-radius:999px!important;
+}
+.topic-choice-grid .choice-card.is-option-locked .v2814-lock-note,
+.question-grid .question-card.is-option-locked .v2814-lock-note{color:#91869a!important;opacity:.8!important}
+.topic-choice-grid .choice-card.is-option-locked:hover,.question-grid .question-card.is-option-locked:hover,.draw-mode-grid .draw-mode-card.is-option-locked:hover{box-shadow:none!important;border-color:rgba(163,131,171,.40)!important;filter:saturate(.62)}
+/* Light theme: vivid enabled cards, low-contrast locked cards */
+html[data-theme="light"] .topic-choice-grid .choice-card.is-option-open,
+html[data-theme="light"] .question-grid .question-card.is-option-open,
+html[data-theme="light"] .draw-mode-grid .draw-mode-card.is-option-open,
+html[data-theme="light"] .scenario-grid .choice-card.is-option-open{
+  background:linear-gradient(145deg,#fff8ff,#f7e5f9)!important;
+  border-color:#bd66ca!important;
+  box-shadow:0 0 0 1px rgba(182,79,196,.16),0 6px 19px rgba(148,62,167,.12)!important;color:#512e62!important;
+}
+html[data-theme="light"] .topic-choice-grid .choice-card.is-option-open b,
+html[data-theme="light"] .question-grid .question-card.is-option-open b,
+html[data-theme="light"] .draw-mode-grid .draw-mode-card.is-option-open b,
+html[data-theme="light"] .scenario-grid .choice-card.is-option-open b{color:#43214f!important}
+html[data-theme="light"] .topic-choice-grid .choice-card.is-option-open small,
+html[data-theme="light"] .draw-mode-grid .draw-mode-card.is-option-open small,
+html[data-theme="light"] .scenario-grid .choice-card.is-option-open small{color:#71537a!important}
+html[data-theme="light"] .tarot-available-indicator{color:#8c319e!important}
+html[data-theme="light"] .question-grid .tarot-available-indicator{background:#edcff1;border-color:#ddafe6}
+html[data-theme="light"] .topic-choice-grid .choice-card.is-option-locked,
+html[data-theme="light"] .question-grid .question-card.is-option-locked,
+html[data-theme="light"] .draw-mode-grid .draw-mode-card.is-option-locked{
+  background:#f3f0f3!important;border-color:#e3dde5!important;box-shadow:none!important;filter:saturate(.55);opacity:1;
+}
+html[data-theme="light"] .topic-choice-grid .choice-card.is-option-locked b,
+html[data-theme="light"] .question-grid .question-card.is-option-locked b,
+html[data-theme="light"] .draw-mode-grid .draw-mode-card.is-option-locked b{color:#746b79!important}
+html[data-theme="light"] .topic-choice-grid .choice-card.is-option-locked small,
+html[data-theme="light"] .draw-mode-grid .draw-mode-card.is-option-locked small{color:#7c7281!important}
+html[data-theme="light"] .topic-choice-grid .choice-card.is-option-locked .v2814-lock-badge,
+html[data-theme="light"] .question-grid .question-card.is-option-locked .v2814-lock-badge,
+html[data-theme="light"] .draw-mode-grid .draw-mode-card.is-option-locked .guest-lock-badge{
+  background:#ebe6ed!important;border-color:#ddd5df!important;color:#75697a!important;
+}
+html[data-theme="light"] .topic-choice-grid .choice-card.is-option-locked .v2814-lock-note,
+html[data-theme="light"] .question-grid .question-card.is-option-locked .v2814-lock-note{color:#7e7283!important}
+/* The basic meanings are optional research: ONE closed disclosure instead of
+   three sizeable cards taking priority over the AI report. */
+.tarot-meaning-group[hidden]{display:none!important}
+.tarot-meaning-group{display:block;margin:12px 0 7px;border:1px solid rgba(167,137,174,.22);border-radius:12px;background:rgba(107,70,116,.055);overflow:hidden}
+.tarot-meaning-group>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;min-height:49px;padding:10px 13px;color:#c6b6d2}
+.tarot-meaning-group>summary::-webkit-details-marker{display:none}
+.tarot-meaning-group>summary:focus-visible{outline:2px solid #cc78d5;outline-offset:-3px}
+.tarot-meaning-group-icon{font-size:1.05rem;filter:saturate(.65)}
+.tarot-meaning-group-text{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+.tarot-meaning-group-text b{font-size:.78rem;font-weight:800;color:inherit}
+.tarot-meaning-group-text small{font-size:.66rem;color:#95869b}
+.tarot-meaning-group-meta{font-size:.68rem;font-weight:720;white-space:nowrap;color:#b69abd}
+.tarot-meaning-group>summary::after{content:'＋';margin-left:3px;font-size:1.08rem;line-height:1}
+.tarot-meaning-group[open]>summary::after{content:'－'}
+.tarot-meaning-group .interpretation{padding:0 9px 10px;margin:0!important}
+.tarot-meaning-group .meaning-card{margin:0!important}
+html[data-theme="light"] .tarot-meaning-group{background:#faf7fb;border-color:#e9dfea}
+html[data-theme="light"] .tarot-meaning-group>summary{color:#68536d}
+html[data-theme="light"] .tarot-meaning-group-text small{color:#827488}
+html[data-theme="light"] .tarot-meaning-group-meta{color:#9877a1}
+/* On phones lock decoration shouldn't force cards to be excessively tall. */
+@media(max-width:700px){
+  .tarot-choose-hint{font-size:.73rem;padding:8px 10px;margin:2px 0 9px}
+  #stepQuestion .flow-head p{display:none}
+  .topic-choice-grid .choice-card.is-option-locked .v2814-lock-badge{right:6px;top:6px;padding:2px 5px!important;max-width:calc(100% - 12px)}
+  .topic-choice-grid .choice-card.is-option-locked .v2814-lock-note{font-size:.61rem;line-height:1.25}
+  .question-grid .question-card.is-option-locked{min-height:60px!important;padding:12px 9px!important}
+  .question-grid .question-card.is-option-locked span:first-child{font-size:.60rem;color:#968b9b}
+  .question-grid .question-card.is-option-locked .v2814-lock-badge{position:absolute;right:8px;top:9px;font-size:.56rem!important}
+  .question-grid .question-card.is-option-locked .v2814-lock-note{display:none!important}
+  .question-grid .question-card.is-option-locked b{font-size:.83rem;padding-right:3px}
+  .question-grid .question-card.is-option-open{min-height:69px;padding:11px 91px 10px 12px}
+  .question-grid .question-card.is-option-open .tarot-available-indicator{right:7px;top:8px;font-size:.59rem;padding:2px 5px}
+  .draw-mode-grid .draw-mode-card.is-option-locked{padding-top:30px!important}
+  .draw-mode-grid .draw-mode-card.is-option-locked .guest-lock-badge{left:7px!important;right:7px!important;max-width:calc(100% - 14px);top:6px;font-size:.53rem!important;padding:3px 5px!important;white-space:normal}
+  .draw-mode-grid .draw-mode-card.is-option-open .tarot-available-indicator{font-size:.62rem}
+  .tarot-meaning-group{margin-top:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .topic-choice-grid .choice-card.is-option-open,.question-grid .question-card.is-option-open,.draw-mode-grid .draw-mode-card.is-option-open{animation:none!important}
+}
+</style>
+
 </head>
 <body>
   <button type="button" id="tarotLayoutRescue" class="tarot-layout-rescue" hidden aria-label="恢復自動排版">↩ 恢復自動版面</button>
@@ -3185,6 +3326,7 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
           </div>
           <button type="button" id="tarotTopicLoginButton">重新免費登入 →</button>
         </div>
+        <p class="tarot-choose-hint" id="tarotTopicTapHint" role="status" aria-live="polite">✦ 亮色卡片為今日可選；灰色卡片可查看解鎖條件。</p>
         <div class="choice-grid topic-choice-grid" id="topicGrid"></div>
       </div>
 
@@ -3198,6 +3340,7 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
         <button class="flow-back" data-back="scenario" type="button">← 返回情境</button>
         <div class="flow-head"><div><span>STEP 03</span><h3>這次最想看清楚哪一件事？</h3><p>每個情境提供 9 道預設問題；自己輸入問題屬未來完整進階功能。</p></div></div>
         <div class="question-context" id="questionContext"></div>
+        <p class="tarot-choose-hint" id="tarotQuestionTapHint" role="status" aria-live="polite">✦ 請先選擇亮色的可用題目。</p>
         <div class="question-grid" id="questionGrid"></div>
       </div>
 
@@ -3218,6 +3361,7 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
             <div><h4>選擇這次的抽牌方式</h4><p>沿用六種抽牌方式；完成抽牌後，由系統自動安排站內 AI 取得完整解讀。</p></div>
             <div class="ritual-count" id="drawModeNeed">需選 — 張</div>
           </div>
+          <p class="tarot-choose-hint tarot-draw-hint" id="tarotDrawTapHint" role="status" aria-live="polite">✦ 亮色卡片可立即抽牌。</p>
           <div class="draw-mode-grid" id="drawModeGrid">
             <button class="draw-mode-card" type="button" data-draw-mode="fan"><span class="draw-mode-no">01 / FAN DECK</span><b>扇形選牌</b><small>洗牌後展開牌群，憑直覺親手選牌。</small></button>
             <button class="draw-mode-card" type="button" data-draw-mode="scatter"><span class="draw-mode-no">02 / SCATTER TABLE</span><b>桌面散牌</b><small>牌散落在桌面，還可以再丟牌進來。</small></button>
@@ -3234,7 +3378,10 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
           <div class="cards" id="cards"></div>
         </div>
         <div class="bottom-actions" style="display:none"><button class="btn-ghost" id="revealAllBtn" type="button">全部翻牌</button></div>
-        <div class="interpretation" id="interpretation"></div>
+        <details class="tarot-meaning-group" id="tarotMeaningGroup" hidden>
+          <summary><span class="tarot-meaning-group-icon" aria-hidden="true">📖</span><span class="tarot-meaning-group-text"><b>三張牌的基礎牌義</b><small>選讀｜非 AI 解讀報告</small></span><span class="tarot-meaning-group-meta" id="tarotMeaningLabel">點擊展開</span></summary>
+          <div class="interpretation" id="interpretation"></div>
+        </details>
         <section class="reading-analysis" id="readingAnalysis" hidden></section>
         <section class="followup-panel" id="followupPanel" hidden></section>
         <section class="followup-result" id="followupResult" hidden></section>
@@ -4563,12 +4710,13 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
       const allowed=topicAllowedForCurrentUser(t.id),paid=t.id==='free';
       const note=loginRequired?(paid?'請先登入；仍需完整進階權限':'登入後依會員當日權限開放'):paid?'固定付費進階':'明日免費輪替開放';
       const lockKind=paid?'paid':loginRequired?'login-required':'member';
-      const classes=['choice-card',allowed?'topic-ready':'v2814-locked',loginRequired?'topic-login-locked':''].filter(Boolean).join(' ');
+      const classes=['choice-card',allowed?'topic-ready is-option-open':'v2814-locked is-option-locked',loginRequired?'topic-login-locked':''].filter(Boolean).join(' ');
       const ariaState=allowed?'，可選擇':loginRequired?'，需重新登入會員':paid?'，完整進階鎖定':'，今日輪替鎖定';
-      return `<button type="button" class="${classes}" style="--topic-i:${i}" data-topic="${t.id}" aria-label="${esc(t.name)}${ariaState}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small>${allowed?'':lockedBadgeHTML(lockKind,note)}</button>`;
+      return `<button type="button" class="${classes}" style="--topic-i:${i}" data-topic="${t.id}" aria-label="${esc(t.name)}${ariaState}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small>${allowed?'<span class="tarot-available-indicator" aria-hidden="true">✓ 今天可選 <i>點選 →</i></span>':lockedBadgeHTML(lockKind,note)}</button>`;
     }).join('');
+    const hint=$('tarotTopicTapHint');if(hint){const count=TOPICS.filter(t=>topicAllowedForCurrentUser(t.id)).length;hint.textContent=count?'✓ 亮色卡片可選（'+count+' 個）　·　灰色卡片需登入或等待開放':'🔒 目前需登入會員後才能繼續選擇主題';}
   }
-  function renderScenarios(){const t=state.topic;$('scenarioTitle').textContent=`${t.name}｜你目前處在哪個階段？`;els.scenario.innerHTML=t.scenarios.map((item,i)=>`<button class="choice-card" data-scenario="${item[0]}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><b>${item[1]}</b><small>${item[2]}</small></button>`).join('');}
+  function renderScenarios(){const t=state.topic;$('scenarioTitle').textContent=`${t.name}｜你目前處在哪個階段？`;els.scenario.innerHTML=t.scenarios.map((item,i)=>`<button class="choice-card is-option-open scenario-ready" data-scenario="${item[0]}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><b>${item[1]}</b><small>${item[2]}</small></button>`).join('');}
   function questions(){return LOCAL_QUESTIONS[`${state.topic.id}:${state.scenario.id}`]||[];}
   function recommendedSpread(q){
     if(q.custom)return 'past';
@@ -4603,9 +4751,10 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
     els.qctx.textContent=free?'不限主題｜請輸入你真正想釐清的一件事情。':`${state.topic.name} → ${state.scenario.name}｜9 道固定題目，訪客每日輪替開放約一半；免費登入全開。`;
     const fixed=qs.map((q,i)=>{
       const allowed=questionAllowedForCurrentUser(i);
-      return `<button type="button" class="question-card ${allowed?'':'v2814-locked'}" data-question="${esc(q.id)}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b>${allowed?'':lockedBadgeHTML('member','明日免費開放')}</button>`;
+      return `<button type="button" class="question-card ${allowed?'is-option-open question-ready':'v2814-locked is-option-locked'}" data-question="${esc(q.id)}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b>${allowed?'<span class="tarot-available-indicator" aria-hidden="true">✓ 可選 →</span>':lockedBadgeHTML('member','明日免費開放')}</button>`;
     }).join('');
     els.question.innerHTML=fixed+customFormHTML(free);
+    const qHint=$('tarotQuestionTapHint');if(qHint){const n=qs.filter((_,i)=>questionAllowedForCurrentUser(i)).length;qHint.hidden=free;qHint.textContent='✓ 亮色題目今天可選（'+n+' 題）　·　灰色題目需解鎖';}
     const back=document.querySelector('#stepQuestion [data-back]');if(back){back.dataset.back=free?'topic':'scenario';back.textContent=free?'← 返回主題':'← 返回情境';}
   }
   function selectCustomQuestion(){
@@ -4810,9 +4959,13 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
       const mode=btn.dataset.drawMode,allowed=isDrawModeAllowed(mode);
       btn.classList.toggle('v2814-locked',!allowed);
       btn.classList.toggle('guest-locked',!allowed);
+      btn.classList.toggle('is-option-open',allowed);
+      btn.classList.toggle('is-option-locked',!allowed);
       btn.disabled=false;
       btn.setAttribute('aria-disabled',allowed?'false':'true');
       btn.querySelector('.guest-lock-badge')?.remove();
+      btn.querySelector('.tarot-available-indicator')?.remove();
+      if(allowed){const marker=document.createElement('span');marker.className='tarot-available-indicator';marker.setAttribute('aria-hidden','true');marker.textContent='✓ 可立即抽牌 →';btn.appendChild(marker);}
       if(!allowed){
         const badge=document.createElement('span');
         badge.className='guest-lock-badge';
@@ -4820,6 +4973,7 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
         btn.appendChild(badge);
       }
     });
+    const dHint=$('tarotDrawTapHint');if(dHint){const n=[...document.querySelectorAll('[data-draw-mode]')].filter(b=>b.classList.contains('is-option-open')).length;dHint.textContent='✓ 亮色可選（'+n+' 種）　·　灰色為目前鎖定';}
   }
   function showModeSelector(){
     clearRitualTimers();state.drawMode=null;state.ritualSelected=0;
@@ -5279,7 +5433,7 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
       state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;
       state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.singleReadingHTML='';state.followupOptions=[];
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
-      els.cards.innerHTML='';els.cards.className='cards';els.interp.innerHTML='';els.interp.classList.remove('show');els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
+      els.cards.innerHTML='';els.cards.className='cards';els.interp.innerHTML='';els.interp.classList.remove('show');const meaningGroup=$('tarotMeaningGroup');if(meaningGroup){meaningGroup.open=false;meaningGroup.hidden=true;}els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
       $('readingPath').textContent=`${state.topic.name} → ${state.scenario.name}`;$('readingQuestion').textContent=(state.batchTest?'測試抽牌｜示範題：':'')+q.text;$('spreadName').textContent=q.spread.name;$('spreadDesc').textContent=q.spread.desc;$('deckCount').textContent=78;
       els.workspace.hidden=false;document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));els.progress.querySelectorAll('button').forEach(x=>x.classList.remove('active'));syncNewQuestionUI();
       showModeSelector();
@@ -5296,7 +5450,7 @@ html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota
     }
     return `<details class="meaning-card tarot-pro-details"><summary>第 ${index+1} 張｜${esc(c.name)}：基礎牌義（選讀）</summary><div class="tarot-pro-body"><div class="meaning-index">${String(index+1).padStart(2,'0')} // ${esc(c.position)}</div><h3>${esc(c.name)}</h3><div class="ori">${c.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div><p>${esc(c.meaning||'請以傳統塔羅牌義搭配牌位解讀。')}</p></div></details>`;
   }
-  function renderMeanings(){els.interp.innerHTML=state.current.map((c,i)=>state.revealed.has(i)?meaningCardHTML(c,i):'').join('');els.interp.classList.toggle('show',state.revealed.size>0);}
+  function renderMeanings(){els.interp.innerHTML=state.current.map((c,i)=>state.revealed.has(i)?meaningCardHTML(c,i):'').join('');els.interp.classList.toggle('show',state.revealed.size>0);const group=$('tarotMeaningGroup');if(group){group.hidden=state.revealed.size===0;const label=$('tarotMeaningLabel');if(label)label.textContent=state.revealed.size+' 張 · 點擊展開';}}
   
   // V28.3：解讀格式（報告架構）與老師風格（敘事口吻）分開選擇。
   // 注意：此處 A/B/C 為「AI 解讀格式」，不是 A/B/C 抽牌階段。
