@@ -155,6 +155,14 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 .review-approved-content .review-my-list{display:grid;gap:10px}
 .review-approved-empty{margin:0;color:var(--muted);font-size:.8rem}
 @media(max-width:580px){.hero .lead{max-width:100%}.public-reviews-head{align-items:flex-start}.review-wall-actions{width:100%}.review-approved-fold>summary{padding:12px 13px}.review-approved-content{padding:12px}}
+
+/* 大型登入入口：僅未登入會員顯示，置於首頁標題與站長公告之間。 */
+.member-welcome-login{max-width:100%;margin:10px 0 22px;padding:25px 22px 23px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;border:1px solid color-mix(in srgb,var(--primary) 30%,var(--line));border-radius:20px;background:linear-gradient(115deg,color-mix(in srgb,var(--primary) 11%,var(--base)),color-mix(in srgb,var(--green) 4%,var(--base)));box-shadow:var(--shadow)}
+.member-welcome-login h2{font-size:clamp(1.16rem,2.1vw,1.58rem);letter-spacing:.015em;line-height:1.4;color:var(--ink);margin:0;font-weight:850}
+.member-welcome-login .google-mount{display:flex;justify-content:center;align-items:center;margin:0;min-height:44px;width:min(360px,100%)}
+.member-welcome-login .google-mount>div{max-width:100%}
+.member-welcome-login .welcome-login-status{margin:0;color:var(--red);font-size:.76rem;max-width:570px;line-height:1.6}
+@media(max-width:580px){.member-welcome-login{padding:23px 14px 20px;margin:6px 0 19px}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -171,6 +179,12 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 <main class="shell">
 <section id="pageHome" class="view">
   <div class="hero"><div class="hero-shell"><div><div class="kicker">DIVINATION HUB · MEMBER CENTER</div><h1 class="page-heading">我的會員中心</h1><p class="lead">在這裡管理八字命盤、塔羅與易經紀錄，也能快速回報網站使用問題。</p></div><div class="hero-decor" aria-hidden="true">✧</div></div></div>
+  <!-- 未登入首頁的大型 Google 入口：與右上角選單共用同一個登入回呼。 -->
+  <section id="memberWelcomeLogin" class="member-welcome-login" aria-labelledby="memberWelcomeLoginTitle" hidden>
+    <h2 id="memberWelcomeLoginTitle">免費登入 Google 會員</h2>
+    <div class="google-mount" id="welcomeGoogleLoginMount"></div>
+    <p id="welcomeLoginMessage" class="welcome-login-status" role="status" aria-live="polite" hidden></p>
+  </section>
   <!-- 站長公告：只顯示後端已正式發布的公開訊息 -->
   <aside id="memberAnnouncement" class="member-announcement" aria-labelledby="memberAnnouncementTitle" hidden>
     <div class="member-announcement-heading"><span class="member-announcement-icon" aria-hidden="true">✦</span><span class="member-announcement-tag">站長公告</span><time id="memberAnnouncementDate" class="member-announcement-date"></time></div>
@@ -339,11 +353,17 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     $('sourceNavDivider').hidden=false;
   }
   function returnAfterLogin(){
-    const explicit=new URLSearchParams(location.search).get('return');
-    const href=explicit?safeMemberReturn(explicit):null;
-    if(href)location.assign(href);
+    // 只有工具明確攜帶 return 才自動返回；直接造訪會員中心不能依 referrer 強制跳離。
+    // 登出流程會自行處理返回，不允許此函式在登出中誤觸返回。
+    const params=new URLSearchParams(location.search);
+    if(params.get('logout')==='1')return;
+    const href=safeMemberReturn(params.get('return'));
+    if(!href)return;
+    // 縮短往返時產生的瀏覽器歷史記錄，避免上一頁回到已登入的 member 又被自動送出。
+    location.replace(href);
   }
 
+  let memberSessionCheckDone=false;
   let googleReady=false,currentView='home',sessionKey='',baziRecords=[],lightData=null,chatData=null,selectedChatId=null;
   let memberChatReadSeq=0,memberChatPolling=false,memberChatVisualKey='';
   const healthPreviewMode=location.protocol==='file:'; // 只在本機 HTML 外觀預覽，絕不送回報
@@ -400,18 +420,32 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     $('logout').setAttribute('aria-expanded',String(open));
     if(open)renderGoogleLogin();
   }
+  function setMemberLoginError(message){
+    $('loginMessage').textContent=message;
+    $('welcomeLoginMessage').textContent=message;
+    $('welcomeLoginMessage').hidden=!message;
+  }
   function updateAuthUI(){const p=profile(),isOn=!!p;const name=p?(p.name||p.email||'會員'):'';
     $('accountChip').hidden=!isOn;$('accountChip').textContent=name;
+    // Session 還在驗證時先不要顯示登入卡；驗證失效或無 Session 時才顯示。
+    $('memberWelcomeLogin').hidden=isOn||!memberSessionCheckDone;
     // 同一顆頂部按鈕：已登入＝登出，未登入＝免費登入。
     $('logout').textContent=isOn?'登出':'免費登入';setHeaderLoginMenu(false);
-    if(isOn){$('loginMessage').textContent='';if(sessionKey!==p.sub){sessionKey=p.sub||p.email||'logged';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;}if(currentView==='home')loadIssues();}
-    else{sessionKey='';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;renderLights();renderChat();}
+    if(isOn){setMemberLoginError('');if(sessionKey!==p.sub){sessionKey=p.sub||p.email||'logged';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;}if(currentView==='home')loadIssues();}
+    else{sessionKey='';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;renderLights();renderChat();if(memberSessionCheckDone)renderGoogleLogin();}
     rvAuthSync();
   }
-  let googleButtonReady=false;
-  function renderGoogleLogin(){if(profile()||$('headerLoginMenu').hidden)return;
-    if(location.protocol==='file:'){$('loginMessage').textContent='Google 登入需在正式網站使用。';return}
-    if(!window.google?.accounts?.id){setTimeout(()=>{if(!profile()&&!$('headerLoginMenu').hidden)renderGoogleLogin()},350);return}
+  let googleHeaderReady=false,googleCenterReady=false,googleRetryScheduled=false;
+  function renderGoogleLogin(){
+    if(profile())return;
+    const centerVisible=!$('memberWelcomeLogin').hidden;
+    const headerVisible=!$('headerLoginMenu').hidden;
+    if(!centerVisible&&!headerVisible)return;
+    if(location.protocol==='file:'){setMemberLoginError('Google 登入需在正式網站使用。');return}
+    if(!window.google?.accounts?.id){
+      if(!googleRetryScheduled){googleRetryScheduled=true;setTimeout(()=>{googleRetryScheduled=false;renderGoogleLogin()},350)}
+      return;
+    }
     if(!googleReady){google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async({credential})=>{
       if(!credential)return;
       try {
@@ -419,13 +453,15 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
         const j=await r.json();if(!r.ok||!j.success||!j.member?.sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(j.sessionToken||''))throw Error(j.error||'會員驗證未通過');
         if(!storeSession(j.sessionToken))throw Error('瀏覽器無法儲存會員 Session，請確認不是限制儲存模式');
         // Keep the short-lived Google credential ONLY for legacy Tarot/Yijing during migration.
-        putToken(credential);verifiedSessionMember=j.member;updateAuthUI();announceMemberAuth('login');
+        putToken(credential);verifiedSessionMember=j.member;memberSessionCheckDone=true;updateAuthUI();announceMemberAuth('login');
         if(currentView==='bazi')loadBazi();
         if(currentView==='tarot'&&$('tarotFrame').src)$('tarotFrame').src='tarot-records.html?embedded=1';
         returnAfterLogin();
-      }catch(err){$('loginMessage').textContent='登入暫時無法完成：'+err.message}
+      }catch(err){setMemberLoginError('登入暫時無法完成：'+err.message)}
     }});googleReady=true}
-    if(!googleButtonReady){google.accounts.id.renderButton($('googleLoginMount'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:250});googleButtonReady=true;}
+    // Google 官方按鈕可直接點選帳號；不需要先按自訂 CTA 再開選單。
+    if(centerVisible&&!googleCenterReady){google.accounts.id.renderButton($('welcomeGoogleLoginMount'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:340,logo_alignment:'left'});googleCenterReady=true;}
+    if(headerVisible&&!googleHeaderReady){google.accounts.id.renderButton($('googleLoginMount'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:250});googleHeaderReady=true;}
   }
   async function api(path,options={}){const token=getToken();if(!profile()||!token)throw Error('請先登入會員');const headers={Accept:'application/json',...sessionHeaders(),...options.headers};
     if(options.body!==undefined)headers['Content-Type']='application/json';let resp;
@@ -825,7 +861,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     const r=await fetch(API_MEMBER+'/auth/logout',{method:'POST',headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{})},cache:'no-store'});
     const j=await r.json().catch(()=>null);if(!r.ok||!j?.success)throw Error(j?.error||'後端登出失敗');
     ++memberSessionCheckSeq;
-    verifiedSessionMember=null;storeSession('');putToken('');announceMemberAuth('logout');
+    verifiedSessionMember=null;memberSessionCheckDone=true;storeSession('');putToken('');announceMemberAuth('logout');
     try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
     $('tarotFrame').removeAttribute('src');updateAuthUI();rvResetForm();
     if(currentView!=='home')navigate('home');
@@ -840,16 +876,16 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       return;
     }
     const token=savedSession();
-    if(!token){verifiedSessionMember=null;updateAuthUI();return}
+    if(!token){verifiedSessionMember=null;memberSessionCheckDone=true;updateAuthUI();return}
     try{
       const r=await fetch(API_MEMBER+'/auth/session',{cache:'no-store',headers:{Accept:'application/json',Authorization:'Bearer '+token}});
       const j=await r.json().catch(()=>null);
       if(seq!==memberSessionCheckSeq||token!==savedSession())return;
       if(!r.ok||!j?.success)throw Error(j?.error||'SESSION_UNAVAILABLE');
       if(j.authenticated&&j.member?.sub){
-        verifiedSessionMember=j.member;updateAuthUI();if(currentView==='bazi')loadBazi();returnAfterLogin();
-      }else{verifiedSessionMember=null;storeSession('');updateAuthUI()}
-    }catch(err){console.warn('Member Session verification failed:',err?.message);verifiedSessionMember=null;updateAuthUI()}
+        verifiedSessionMember=j.member;memberSessionCheckDone=true;updateAuthUI();if(currentView==='bazi')loadBazi();returnAfterLogin();
+      }else{verifiedSessionMember=null;memberSessionCheckDone=true;storeSession('');updateAuthUI()}
+    }catch(err){console.warn('Member Session verification failed:',err?.message);verifiedSessionMember=null;memberSessionCheckDone=true;updateAuthUI()}
   }
   function init(){
     initReturnToSource();
@@ -873,7 +909,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     });
     $('themeToggle').addEventListener('click',()=>{const t=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=t;try{localStorage.setItem('divinationhub-color-theme',t)}catch(_){};for(const f of [$('tarotFrame')]){try{if(f.contentDocument?.documentElement)f.contentDocument.documentElement.dataset.theme=t}catch(_){}}});
     for(const id of ['tarotFrame'])$(id).addEventListener('load',()=>adjustEmbeddedFrame($(id)));
-    addEventListener('hashchange',showPage);addEventListener('popstate',showPage);addEventListener('storage',e=>{if(e.key==='divinationhub-auth-event'){let notice;try{notice=JSON.parse(e.newValue||'null')}catch(_){}if(notice?.kind==='logout'){verifiedSessionMember=null;storeSession('');putToken('');updateAuthUI();}if(notice?.kind==='login')restoreMemberSession();}if(e.key===SESSION_KEY){restoreMemberSession();}if(e.key===AUTH_KEY&&currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1';}});
+    addEventListener('hashchange',showPage);addEventListener('popstate',showPage);addEventListener('storage',e=>{if(e.key==='divinationhub-auth-event'){let notice;try{notice=JSON.parse(e.newValue||'null')}catch(_){}if(notice?.kind==='logout'){verifiedSessionMember=null;memberSessionCheckDone=true;storeSession('');putToken('');updateAuthUI();}if(notice?.kind==='login')restoreMemberSession();}if(e.key===SESSION_KEY){restoreMemberSession();}if(e.key===AUTH_KEY&&currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1';}});
     setInterval(refreshMaintenanceStatus,30000);
     setInterval(()=>{if(currentView==='home'&&!document.hidden)refreshMemberAnnouncement()},60000);
     // 對話訊息獨立加快為約 5 秒同步；只有已登入且會員首頁在前景時執行。
