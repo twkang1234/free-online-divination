@@ -3001,6 +3001,69 @@ html[data-tarot-layout="mobile"] .tarot-layout-menu{right:-68px}
 html[data-theme="light"] .flow-head p,html[data-theme="light"] .choice-card small,html[data-theme="light"] .draw-mode-card small{color:#685b70}
 html[data-theme="dark"] .flow-head p,html[data-theme="dark"] .choice-card small,html[data-theme="dark"] .draw-mode-card small{color:#bbacc5}
 
+
+/* v2: real focus entry paths, compact results, content hierarchy */
+/* The professional listing CTA remains in the bottom resource section, not in the main navigation. */
+.page-topbar .listing-open{display:none!important}
+/* "hidden" is a semantic state: honor it on generated panels even when legacy display CSS wins. */
+#readingFinish[hidden],#readingAnalysis[hidden],#readingWorkspace[hidden],.tarot-ai-phase [hidden]{display:none!important}
+/* Free quota is the active decision; a zero-credit paid pool must not occupy half the top section. */
+.tarot-quota-panel.tarot-paid-zero{display:block!important}
+.tarot-quota-panel.tarot-paid-zero .tarot-quota-paid{display:none!important}
+.tarot-quota-panel.tarot-paid-zero .tarot-quota-free{display:flex;align-items:center;gap:12px;min-height:64px}
+.tarot-quota-panel.tarot-paid-zero .tarot-paid-compact{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:7px 12px;border:1px solid var(--tl-line);border-radius:10px;background:transparent;color:var(--text);font-size:.72rem;flex:0 0 auto;cursor:pointer}
+.tarot-quota-panel.tarot-paid-zero .tarot-quota-copy{flex:1;min-width:0}
+/* The immersive mode emphasizes the active experience, not the marketing headline. */
+body.tarot-focus .tarot-stage-kicker,body.tarot-focus .tarot-stage-desc,body.tarot-focus .tarot-engine-chip{display:none!important}
+body.tarot-focus .tarot-stage-title{font-size:clamp(1.4rem,2.7vw,2.15rem);margin:0;line-height:1.3}
+body.tarot-focus .tarot-stage-header{align-items:center}
+/* Remove nested cards within the one functional reading panel. */
+.reading-analysis{border-color:rgba(190,116,190,.17);box-shadow:none}
+.reading-analysis .tarot-ai-entry{padding:0;border:0;background:transparent;box-shadow:none}
+.reading-analysis .tarot-prompt-choices{padding:10px 0 4px;border:0;background:transparent;border-radius:0;box-shadow:none}
+.reading-analysis .tarot-site-ai{margin-top:12px;padding:16px 0 4px;border:0;border-top:1px solid var(--tl-line);background:transparent;border-radius:0;box-shadow:none}
+.reading-analysis .tarot-site-ai h4{font-size:1rem;margin:5px 0}
+.reading-analysis .tarot-site-ai>p:not(.tarot-site-ai-status):not(.tarot-ai-shared-note){font-size:.74rem;line-height:1.65;margin:6px 0}
+.reading-analysis .tarot-site-ai .tarot-ai-shared-note{font-size:.70rem;line-height:1.6}
+.reading-analysis .tarot-site-ai .tarot-site-ai-run{width:100%;min-height:48px;font-size:.87rem;border-radius:12px}
+.reading-analysis .tarot-site-ai[data-site-ai-result="success"] [data-site-ai-run]{width:auto;min-height:39px;align-self:flex-start;font-size:.76rem;opacity:.85;border:1px solid var(--tl-line);box-shadow:none;background:transparent!important;color:var(--text)!important;padding:8px 12px}
+.reading-analysis .tarot-site-ai[data-site-ai-result="success"] [data-site-ai-output]{margin:12px 0 10px}
+.reading-analysis .tarot-site-ai[data-site-ai-result="success"] [data-site-ai-status]{display:none}
+.reading-analysis .tarot-ai-phase{border-color:rgba(176,94,189,.25);background:rgba(174,90,182,.045);padding:clamp(12px,2vw,20px);border-radius:14px;margin:4px 0}
+.reading-analysis .tarot-site-ai .tarot-ai-phase .tarot-site-ai-actions{display:flex;flex-wrap:wrap;gap:8px}
+.reading-analysis .tarot-site-ai [data-site-ai-pending]{display:none!important}
+.reading-analysis .tarot-site-ai[data-site-ai-result="success"] .tarot-site-ai-toggle{font-weight:800}
+/* Emphasize the report; technical channel and trace metadata should not dominate. */
+.reading-analysis .tarot-ai-phase [data-site-ai-metrics]{font-size:.68rem;opacity:.7}
+.reading-analysis .tarot-site-ai-result{font-size:clamp(.87rem,1vw,.98rem);line-height:1.85}
+/* Compact secondary information without hiding functionality. */
+body.tarot-focus .ready-rules{display:none}
+body.tarot-focus .reader-seal{display:none}
+html[data-theme="light"] .reading-analysis .tarot-site-ai{background:transparent}
+html[data-theme="light"] .reading-analysis .tarot-prompt-choices{background:transparent}
+html[data-theme="dark"] .reading-analysis .tarot-site-ai{background:transparent}
+@media(max-width:700px){
+ body.tarot-focus #worldSecond{padding-top:13px}
+ body.tarot-focus .tarot-stage-header{display:flex;flex-direction:row;align-items:center;gap:8px}
+ body.tarot-focus .tarot-stage-title{font-size:1.25rem}
+ body.tarot-focus .tarot-stage-tools{flex:0 0 auto}
+ .reading-analysis{padding:10px!important;margin-top:10px!important}
+ .reading-analysis .tarot-ai-phase{padding:10px}
+ .reading-analysis .tarot-ai-entry>p{font-size:.78rem}
+ .reading-analysis .tarot-prompt-choices{padding:3px 0}
+ .reading-analysis .tarot-site-ai{padding:12px 0 3px}
+ .reading-analysis .tarot-site-ai .tarot-ai-shared-note{display:none!important}
+ .reading-analysis .tarot-ai-phase [data-site-ai-metrics]{overflow-wrap:anywhere}
+ .tarot-quota-panel.tarot-paid-zero .tarot-quota-free{gap:6px;padding:8px 9px}
+ .tarot-quota-panel.tarot-paid-zero .tarot-paid-compact{padding:6px 8px;font-size:.68rem;min-height:34px}
+}
+/* Explicit smartphone preview on computer matches handheld refinements. */
+html[data-tarot-layout="mobile"] body.tarot-focus .tarot-stage-header{display:flex;flex-direction:row;align-items:center;gap:8px}
+html[data-tarot-layout="mobile"] body.tarot-focus .tarot-stage-title{font-size:1.25rem}
+html[data-tarot-layout="mobile"] .reading-analysis{padding:10px!important;margin-top:10px!important}
+html[data-tarot-layout="mobile"] .reading-analysis .tarot-site-ai .tarot-ai-shared-note{display:none!important}
+html[data-tarot-layout="mobile"] .tarot-quota-panel.tarot-paid-zero .tarot-quota-free{gap:6px;padding:8px 9px}
+
 </style>
 </head>
 <body>
@@ -5355,7 +5418,9 @@ html[data-theme="dark"] .flow-head p,html[data-theme="dark"] .choice-card small,
     }else{
       els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">完成第一階段站內 AI 解讀後，即可繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，由本次選定的 AI 產生六張牌整合解讀。</small></div><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second ${firstStageReadyForFollowup()?'':'disabled aria-disabled="true"'}>${firstStageReadyForFollowup()?'繼續第二階段 →':'先完成三張牌 AI 解讀，開啟第二階段'}</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }
-    els.finish.hidden=false;
+    // Reserve phase-II CTA until phase-I AI has actually finished.
+    // Keep all original step and access checks, only declutter its presentation.
+    els.finish.hidden=state.stage3x3!=='complete'&&!state.followFormOpen&&!firstStageReadyForFollowup();
     syncMemberSaveInvites();
     syncV5StepCues();
   }
@@ -5888,6 +5953,8 @@ html[data-theme="dark"] .flow-head p,html[data-theme="dark"] .choice-card small,
       onsiteAiPhaseResults.auto[phase]={answer,channel:data.channel,traceId:data.traceId,seconds:data.seconds||'—'};
       if(data.quota){tarotRealAiQuota=data.quota;tarotRealAiQuotaRole=data.quota.role;}
       renderOnsiteAiPhaseCards(root);root.dataset.siteAiResult='success';
+      const answerRegion=root.querySelector('[data-site-ai-output]');
+      if(answerRegion){root.insertBefore(answerRegion,btn);const currentPhase=answerRegion.querySelector(`[data-site-ai-phase=\"${phase}\"]`);if(currentPhase)setOnsiteAiArticleExpanded(currentPhase,true);}
       status.textContent=`${aiPhaseName(phase)}完成｜通道 ${data.channel||'—'}｜追蹤碼：${data.traceId||'—'}`;
       if(phase==='three'){state.firstAiInterpretationCompleted=true;persist3x3();renderFinish();setAIGuidanceStage('return');}
       updateAccessMini();updateQuotaUI();renderAdminTestBanner();
@@ -5900,7 +5967,7 @@ html[data-theme="dark"] .flow-head p,html[data-theme="dark"] .choice-card small,
       if(serial===onsiteAiRequestSerial){
         onsiteAiBusy=false;
         const current=els.analysis.querySelector('[data-site-ai]');const currentBtn=current?.querySelector('[data-site-ai-run]');
-        if(currentBtn){currentBtn.classList.remove('v6-busy');currentBtn.textContent='✦ 開始站內 AI 解讀';}
+        if(currentBtn){currentBtn.classList.remove('v6-busy');currentBtn.textContent=current?.dataset.siteAiResult==='success'?'↻ 重新產生解讀（會使用額度）':'✦ 開始站內 AI 解讀';}
         const waiting=current?.querySelector('[data-site-ai-pending]');if(waiting)waiting.hidden=true;
         void refreshOnsiteAiQuota();
       }
@@ -6273,22 +6340,61 @@ html[data-theme="dark"] .flow-head p,html[data-theme="dark"] .choice-card small,
       window.requestAnimationFrame(()=>target?.scrollIntoView({behavior:'smooth',block:'start'}));
     }
   }
-  // Do not remove article HTML; SEO remains rendered on normal page load and readable without JavaScript.
+  // A reader can start by scrolling to the actual tool, resuming a saved spread,
+  // following a SEO deep link, or using the hero button. All entry paths must work.
+  // The SEO article remains normal visible HTML until an actual reading starts.
   const cameFromTopic=new URLSearchParams(location.search).has('topic');
-  let resume=false;try{resume=sessionStorage.getItem(FOCUS_KEY)==='1'}catch(_){}
-  if(resume||cameFromTopic)setFocus(true,{scroll:false});
+  let focusPreference='';try{focusPreference=sessionStorage.getItem(FOCUS_KEY)||''}catch(_){}
+  let introManuallyRestored=focusPreference==='intro';
+  function hasReadingProgress(){
+    const workspace=document.getElementById('readingWorkspace');
+    const cards=document.getElementById('cards');
+    const steps=document.querySelectorAll('#flowProgress button.active');
+    return (!!workspace&&!workspace.hidden)||!!cards?.children.length||
+      [...steps].some(btn=>btn.dataset.jump&&btn.dataset.jump!=='topic')||
+      !!document.querySelector('#stepScenario.active,#stepQuestion.active,#stepReady.active');
+  }
+  function enterReading({scroll=false}={}){
+    introManuallyRestored=false;
+    if(!document.body.classList.contains('tarot-focus'))setFocus(true,{scroll});
+  }
+  if(focusPreference==='1'||cameFromTopic||(focusPreference!=='intro'&&hasReadingProgress()))enterReading({scroll:false});
+  // Catch saved progress that is restored asynchronously by the original engine.
+  let watchingProgress=true;
+  const watchRoot=document.getElementById('worldSecond');
+  if(watchRoot){
+    const progressObserver=new MutationObserver(()=>{
+      if(!watchingProgress||introManuallyRestored||document.body.classList.contains('tarot-focus'))return;
+      if(hasReadingProgress())enterReading({scroll:false});
+    });
+    progressObserver.observe(watchRoot,{subtree:true,childList:true,attributes:true,attributeFilter:['class','hidden']});
+  }
   document.addEventListener('click',event=>{
     const a=event.target.closest?.('a[href]');
-    if(!a||!a.closest('body'))return;
-    const url=new URL(a.href,location.href);
-    if(url.pathname===location.pathname&&url.hash==='#worldSecond'){
-      event.preventDefault();setFocus(true);
-      try{history.replaceState(history.state,'',location.pathname+location.search+'#worldSecond')}catch(_){}
+    if(a&&a.closest('body')){
+      const url=new URL(a.href,location.href);
+      if(url.pathname===location.pathname&&url.hash==='#worldSecond'){
+        event.preventDefault();enterReading({scroll:true});
+        try{history.replaceState(history.state,'',location.pathname+location.search+'#worldSecond')}catch(_){}
+        return;
+      }
     }
-  });
+    // The user may have skipped the hero and chosen a topic or resumed cards.
+    // Capture BEFORE the site's own handlers transition to the next step.
+    const button=event.target.closest?.('button,[role="button"]');
+    if(!button||!button.closest('#worldSecond'))return;
+    if(button.id==='tarotExitFocus'||button.id==='tarotPaidQuotaMore'||button.id==='tarotPaidCompact')return;
+    if(button.disabled)return;
+    if(button.closest('#flowProgress')&&button.disabled)return;
+    enterReading({scroll:false});
+    // Do not steal focus during animations/rituals; merely update display.
+  },true);
   exit?.addEventListener('click',()=>{
-    setFocus(false);
+    introManuallyRestored=true;
+    setFocus(false,{scroll:false});
+    try{sessionStorage.setItem(FOCUS_KEY,'intro')}catch(_){}
     try{history.replaceState(history.state,'',location.pathname+location.search+'#top')}catch(_){}
+    requestAnimationFrame(()=>document.getElementById('top')?.scrollIntoView({behavior:'smooth',block:'start'}));
   });
   function syncCompact(){
     if(!compact||!paid)return;
@@ -6297,6 +6403,7 @@ html[data-theme="dark"] .flow-head p,html[data-theme="dark"] .choice-card small,
     const count=match?Number(match[0]):0;
     compact.textContent=count>0?'進階 '+count+' 次':'了解進階';
     compact.setAttribute('aria-label',count>0?'了解進階功能，剩餘 '+count+' 次':'了解進階功能');
+    document.getElementById('tarotQuotaPanel')?.classList.toggle('tarot-paid-zero',count===0);
   }
   if(compact&&paid){
     compact.addEventListener('click',()=>originalPaidButton?.click());
