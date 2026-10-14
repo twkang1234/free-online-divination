@@ -2397,7 +2397,7 @@ html[data-theme="light"] .bazi-save-dialog{background:#fff;color:#244356;border-
 .bazi-gemini-head span,.bazi-gemini p{font-size:.75rem;color:var(--dim)}.bazi-gemini p{margin:10px 0 16px}
 .bazi-gemini label{font-size:.77rem;display:block;margin-bottom:6px}.bazi-gemini select{width:min(360px,100%);min-height:42px;padding:8px;border-radius:9px;background:#151612;color:#f8edcf;border:1px solid rgba(233,189,88,.3)}
 .bazi-gemini-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.bazi-gemini-actions button{min-height:40px;padding:8px 13px;border:1px solid rgba(233,189,88,.4);border-radius:10px;color:#f4e2b4;background:rgba(233,189,88,.13);cursor:pointer}.bazi-gemini-actions button:disabled{opacity:.5;cursor:wait}
-#baziGeminiMessage{color:var(--dim);font-size:.75rem;margin-top:10px}#baziGeminiOutput{margin-top:16px;border:1px solid rgba(233,189,88,.15);padding:14px;border-radius:12px}
+#baziGeminiMessage{color:var(--dim);font-size:.75rem;margin-top:7px}#baziGeminiOutput{margin-top:16px;border:1px solid rgba(233,189,88,.15);padding:14px;border-radius:12px}
 #baziGeminiOutput summary{cursor:pointer;color:var(--gold);font-weight:700}#baziGeminiReading{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.85;font-size:.9rem;margin-top:16px}
 html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
 
@@ -2442,6 +2442,19 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
 html[data-theme="light"] .bazi-ai-report-button{border-color:#d3cbe6;background:#f8f6fb;color:#63468c}
 html[data-theme="light"] .bazi-ai-report-form{border-color:#e3ddee;background:#fbf9fe}
 html[data-theme="light"] .bazi-ai-report-form select,html[data-theme="light"] .bazi-ai-report-form textarea{border-color:#c8bedb;background:#fff;color:#1b2540}
+.bazi-ai-trace-inline{font-size:11px;font-weight:400;color:var(--dim);overflow-wrap:anywhere}
+.bazi-ai-service-report{margin:3px 0 7px}
+.bazi-ai-service-report .bazi-ai-report-bar{gap:9px}
+.bazi-ai-report-button[hidden]{display:none!important}
+.bazi-ai-service-report .bazi-ai-report-form{max-width:480px;padding:9px;margin-top:6px}
+.bazi-ai-service-report .bazi-ai-report-form textarea{min-height:55px;line-height:1.5}
+.smart-extra-question{margin:6px 0 11px}
+.smart-extra-question > summary{cursor:pointer;display:inline-block;font-size:13px;color:var(--gold);padding:5px 1px;user-select:none}
+.smart-extra-question > summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:3px}
+.smart-extra-question[open]{margin-bottom:13px}
+.smart-extra-question .smart-prompt-question-label{margin:4px 0 0}
+.smart-extra-question .smart-prompt-question{min-height:65px;line-height:1.5}
+html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 </style>
 </head>
 <body>
@@ -5259,33 +5272,42 @@ ${tasks}
     const sibling=statusEl?.nextElementSibling;
     if(sibling?.classList.contains('bazi-ai-report'))sibling.remove();
   }
-  function baziAiShowError(statusEl,j,message){
-    baziAiClearReport(statusEl);statusEl.textContent=message;
-    if(j?.traceId){const note=document.createElement('small');note.className='bazi-ai-trace-note';note.textContent=' 故障追蹤碼：'+j.traceId+'（可提供管理員查詢）';statusEl.appendChild(note);}
-  }
+  // 正常完成只顯示固定通道與追蹤碼；真正的站內 AI 故障才顯示回報入口。
   function baziAiShowSuccess(statusEl,j,section,doneText){
-    baziAiClearReport(statusEl);statusEl.textContent=doneText;
+    baziAiClearReport(statusEl);
+    statusEl.textContent=doneText;
     if(!BAZI_CHANNELS.has(j?.channel)||!/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/.test(String(j?.traceId||'')))return;
-    const box=document.createElement('div');box.className='bazi-ai-report';
-    const meta=document.createElement('div');meta.className='bazi-ai-report-bar';
-    const code=document.createElement('small');code.textContent='通道 '+j.channel+'｜追蹤碼：'+j.traceId;
-    const button=document.createElement('button');button.type='button';button.className='bazi-ai-report-button';button.textContent='回報解讀有誤';
-    meta.append(code,button);box.appendChild(meta);
+    const code=document.createElement('small');
+    code.className='bazi-ai-trace-inline';
+    code.textContent='通道 '+j.channel+'｜追蹤碼：'+j.traceId;
+    statusEl.append(document.createTextNode('　'),code);
+  }
+  function baziAiShowError(statusEl,j,message,section){
+    baziAiClearReport(statusEl);
+    statusEl.textContent=message;
+    // 額度不足、尚未排盤等不曾呼叫 AI 的錯誤沒有追蹤碼，不要求會員回報。
+    if(!/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/.test(String(j?.traceId||'')))return;
+    const box=document.createElement('div');box.className='bazi-ai-report bazi-ai-service-report';
+    const row=document.createElement('div');row.className='bazi-ai-report-bar';
+    const code=document.createElement('small');code.textContent='故障追蹤碼：'+j.traceId;
+    // 失敗時不會有「成功通道」；避免把最後嘗試的 A/B 誤當成成功通道。
+    const button=document.createElement('button');button.type='button';button.className='bazi-ai-report-button';button.textContent='回報站內 AI 異常';button.setAttribute('aria-expanded','false');
+    row.append(code,button);box.appendChild(row);
     const form=document.createElement('div');form.className='bazi-ai-report-form';form.hidden=true;
-    const select=document.createElement('select');select.setAttribute('aria-label','錯誤類型');
-    [['chart','命盤資料不符'],['logic','解讀邏輯有誤'],['language','內容不清楚'],['other','其他問題']].forEach(([value,name])=>{const o=document.createElement('option');o.value=value;o.textContent=name;select.appendChild(o)});
-    const textarea=document.createElement('textarea');textarea.maxLength=400;textarea.rows=3;textarea.placeholder='請簡單說明哪裡不正確（5～400 字）；請勿填寫生日、電話等個人資料。';
-    const submit=document.createElement('button');submit.type='button';submit.className='bazi-ai-report-button';submit.textContent='送出回報';
+    const textarea=document.createElement('textarea');textarea.maxLength=400;textarea.rows=2;textarea.setAttribute('aria-label','說明 AI 異常情況');
+    textarea.placeholder='請簡短描述異常（至少 5 字），不需提供生日或命盤。';
+    const submit=document.createElement('button');submit.type='button';submit.className='bazi-ai-report-button';submit.textContent='送出異常回報';
     const feedback=document.createElement('small');feedback.setAttribute('role','status');
-    form.append(select,textarea,submit,feedback);box.appendChild(form);
-    button.addEventListener('click',()=>{form.hidden=!form.hidden;button.textContent=form.hidden?'回報解讀有誤':'收合回報'});
+    form.append(textarea,submit,feedback);box.appendChild(form);
+    button.addEventListener('click',()=>{form.hidden=!form.hidden;button.setAttribute('aria-expanded',String(!form.hidden));button.textContent=form.hidden?'回報站內 AI 異常':'收合回報';});
     submit.addEventListener('click',async()=>{
       const comment=textarea.value.trim();if(comment.length<5){feedback.textContent='請至少填寫 5 個字。';return;}
       submit.disabled=true;feedback.textContent='傳送回報中…';
       try{
-       const r=await fetch(BAZI_API_BASE+'/ai/feedback',{method:'POST',headers:{'Content-Type':'application/json',...baziAiHeaders()},body:JSON.stringify({traceId:j.traceId,section,category:select.value,comment})});
-       const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error==='ALREADY_REPORTED'?'這次解讀已回報過。':data.error==='FEEDBACK_DAILY_LIMIT'?'今日回報次數已達上限。': '回報失敗，請稍後再試。');
-       feedback.textContent='回報已送出，謝謝！';submit.disabled=true;textarea.disabled=true;select.disabled=true;button.disabled=true;
+        const r=await fetch(BAZI_API_BASE+'/ai/feedback',{method:'POST',headers:{'Content-Type':'application/json',...baziAiHeaders()},body:JSON.stringify({traceId:j.traceId,section,category:'service',comment})});
+        const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error==='ALREADY_REPORTED'?'這次異常已回報過。':data.error==='FEEDBACK_DAILY_LIMIT'?'今日回報次數已達上限。':'回報失敗，請稍後再試。');
+        // 回報成功後立即收合整張表單，也移除再次回報的入口。
+        form.hidden=true;button.hidden=true;code.textContent='故障追蹤碼：'+j.traceId+'｜已收到異常回報';
       }catch(e){feedback.textContent=e?.message||'回報失敗';submit.disabled=false;}
     });
     statusEl.insertAdjacentElement('afterend',box);
@@ -5347,7 +5369,7 @@ ${tasks}
         baziAiShowSuccess(msg,j,'full','AI 完整解讀已產生。');
         baziGeminiRefreshQuota();
         document.getElementById('baziGeminiOutput').scrollIntoView({behavior:'smooth',block:'nearest'});
-      }catch(err){baziAiShowError(msg,aiDiagnostic,err?.message||'AI 解讀失敗');baziGeminiRefreshQuota()}
+      }catch(err){baziAiShowError(msg,aiDiagnostic,err?.message||'AI 解讀失敗','full');baziGeminiRefreshQuota()}
       finally{btn.disabled=false;btn.textContent='✦ 開始站內 AI 深度解讀';}
     });
     document.getElementById('baziGeminiCollapse')?.addEventListener('click',()=>{const el=document.getElementById('baziGeminiOutput');if(el){el.open=false;el.scrollIntoView({behavior:'smooth',block:'center'});}});
@@ -5399,7 +5421,7 @@ ${intent}
           <div class="smart-prompt-mode"><button type="button" class="active" data-prompt-mode="deep">深入回答我的問題</button><button type="button" data-prompt-mode="discover">我還可以問什麼？</button></div>
           <div class="smart-prompt-label">本次想了解的方向</div>
           <div class="smart-topic-row">${(SECTION_AI_TOPICS[key]||[]).map((x,i)=>`<button type="button" class="smart-topic-chip${i===0?' active':''}" data-topic="${x}">${x}</button>`).join('')}</div>
-          <label class="smart-prompt-question-label">想追問這一區的哪個細節？（選填）<textarea class="smart-prompt-question" maxlength="500" rows="3" placeholder="可補充你想追問的具體情況；未填寫就針對上方選項回答。"></textarea></label>
+          <details class="smart-extra-question"><summary>＋ 補充具體問題（選填）</summary><label class="smart-prompt-question-label">想補充哪個細節？<textarea class="smart-prompt-question" maxlength="500" rows="2" placeholder="選填；不輸入就針對上方選項回答。"></textarea></label></details>
           <button type="button" class="smart-prompt-generate">✦ 由站內 AI 回答</button><div class="bazi-personal-quota bazi-ai-inline-notice">每次新解讀扣 1 次｜額度查詢中…</div>
           <div class="section-ai-message" role="status" aria-live="polite"></div>
           <div class="section-ai-answer" hidden><div class="section-ai-reading"></div><div class="section-ai-actions"><button type="button" class="section-ai-collapse">▲ 收合這篇解讀</button><button type="button" class="section-ai-copy">複製解讀</button><button type="button" class="section-ai-download">下載 TXT</button></div></div>
@@ -5452,7 +5474,7 @@ ${intent}
         baziGeminiRefreshQuota();
         answer.scrollIntoView({behavior:'smooth',block:'nearest'});
         trackAction(`section-gemini-${key}-${mode}`);
-      }catch(err){baziAiShowError(msg,aiDiagnostic,err?.message||'AI 暫時無法解讀');baziGeminiRefreshQuota();}
+      }catch(err){baziAiShowError(msg,aiDiagnostic,err?.message||'AI 暫時無法解讀',key);baziGeminiRefreshQuota();}
       finally{run.disabled=false;run.textContent='✦ 由站內 AI 回答';}
     });
     box.querySelector('.section-ai-collapse')?.addEventListener('click',()=>{const panel=box.querySelector('.section-ai-answer');if(panel)panel.hidden=true;box.scrollIntoView({behavior:'smooth',block:'center'});});
