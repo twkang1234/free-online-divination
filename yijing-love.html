@@ -272,7 +272,6 @@ html[data-theme="light"] .yi-sub-login-fallback{color:#2a794a}
 @media(prefers-reduced-motion:reduce){.yi-sub-topbar *{transition:none!important}}
 
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <header class="page-topbar yi-sub-topbar">
@@ -290,22 +289,7 @@ html[data-theme="light"] .yi-sub-login-fallback{color:#2a794a}
     <a class="yi-sub-action start-top" href="#love-entry">開始感情占卜</a>
   </div>
 </header>
-
-<!-- 一念知機共用會員登入入口：與易經主頁使用相同 Google ID 與憑證鍵。 -->
-<div class="yi-sub-login-modal" id="yiSubLoginModal" role="presentation" aria-hidden="true" hidden>
-  <div class="yi-sub-login-card" role="dialog" aria-modal="true" aria-labelledby="yiSubLoginTitle" aria-describedby="yiSubLoginDescription">
-    <button id="yiSubLoginClose" class="yi-sub-login-close" type="button" aria-label="關閉登入視窗">×</button>
-    <span class="yi-sub-login-eyebrow">DIVINATION HUB · MEMBER</span>
-    <h2 id="yiSubLoginTitle">免費登入一念知機</h2>
-    <p id="yiSubLoginDescription">使用 Google 帳號登入。登入後可在易經主頁、會員中心及其他工具共用會員身分。</p>
-    <div class="yi-sub-google-mount" id="yiSubGoogleMount" aria-label="Google 登入按鈕"></div>
-    <p id="yiSubLoginStatus" class="yi-sub-login-status" role="status" aria-live="polite">正在準備 Google 登入選項…</p>
-    <a class="yi-sub-login-fallback" href="yijing.html">改到易經主頁登入 ↗</a>
-  </div>
-</div>
-
-
-  <section class="love-hero" id="top">
+<section class="love-hero" id="top">
     <div class="hero-copy">
       <div class="hero-kicker">I CHING LOVE · RELATIONSHIP · CHANGE</div>
       <h1>易經感情占卜</h1>
@@ -560,125 +544,126 @@ html[data-theme="light"] .yi-sub-login-fallback{color:#2a794a}
     });
   </script>
 <script id="yiSubMembershipScript">
-(function(){
+(() => {
   'use strict';
-  // 與正式易經主頁、塔羅、會員中心共用既有 Google 憑證；不建立第二種會員制度。
-  const KEY='divinationhub-bazi-google-credential';
-  const CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
-  const MEMBER_API='https://member-api.ezgocpu.workers.dev';
-  const byId=id=>document.getElementById(id);
-  const button=byId('yiSubMemberButton'),buttonText=byId('yiSubMemberButtonText');
-  const arrow=byId('yiSubMemberMenuToggle'),dropdown=byId('yiSubMemberDropdown');
-  const modal=byId('yiSubLoginModal'),closeButton=byId('yiSubLoginClose');
-  const mount=byId('yiSubGoogleMount'),status=byId('yiSubLoginStatus');
-  let googleReady=false,loadAttempts=0,loadTimer=null,focusReturn=null;
-  function getCredential(){try{return localStorage.getItem(KEY)||''}catch(_){return ''}}
-  function setCredential(value){try{if(value)localStorage.setItem(KEY,value);else localStorage.removeItem(KEY)}catch(_){}}
-  function profileFromJwt(token){
-    try{
-      const part=String(token||'').split('.')[1];if(!part)return null;
-      const raw=atob(part.replace(/-/g,'+').replace(/_/g,'/'));
-      const payload=JSON.parse(decodeURIComponent(Array.from(raw,c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0')).join('')));
-      if(!payload||Number(payload.exp||0)*1000<=Date.now())return null;
-      return {name:payload.name||payload.given_name||payload.email||'會員',email:payload.email||''};
-    }catch(_){return null}
+  // 會員中心唯一登入／登出入口；子頁只讀取並由 member-api 驗證既有 30 天 Session。
+  // 不改變易經主系統的起卦、每日次數、會員權限及本頁互動工具。
+  const SESSION_KEY = 'divinationhub-auth-session-v1';
+  const MEMBER_API = 'https://member-api.ezgocpu.workers.dev';
+  const $ = id => document.getElementById(id);
+  const button = $('yiSubMemberButton');
+  const buttonText = $('yiSubMemberButtonText');
+  const arrow = $('yiSubMemberMenuToggle');
+  const dropdown = $('yiSubMemberDropdown');
+  const logout = $('yiSubMemberLogout');
+  let member = null;
+  let checking = false;
+  let checkSeq = 0;
+
+  function sessionToken() {
+    try { return localStorage.getItem(SESSION_KEY) || ''; } catch (_) { return ''; }
   }
-  function activeProfile(){
-    const token=getCredential();if(!token)return null;
-    const p=profileFromJwt(token);if(!p)setCredential('');return p;
-  }
-  function closeMenu(){dropdown.hidden=true;arrow.setAttribute('aria-expanded','false')}
-  function refresh(){
-    const p=activeProfile();buttonText.textContent=p?'會員中心':'免費登入';
-    button.classList.toggle('is-logged',!!p);
-    button.setAttribute('aria-label',p?'前往一念知機會員中心':'免費登入一念知機會員');
-    arrow.hidden=!p;if(!p)closeMenu();
-    if(p&&!modal.hidden)closeModal(false);
-  }
-  function closeModal(restoreFocus=true){
-    if(loadTimer){clearTimeout(loadTimer);loadTimer=null;}
-    modal.hidden=true;modal.setAttribute('aria-hidden','true');
-    document.body.classList.remove('yi-sub-modal-open');
-    if(restoreFocus&&focusReturn?.isConnected)focusReturn.focus();
-  }
-  function loadGoogle(){
-    if(modal.hidden||activeProfile())return;
-    if(location.protocol==='file:'){status.textContent='本機檔案無法使用正式 Google 登入，請部署至網站後測試。';return;}
-    if(!window.google?.accounts?.id){
-      if(++loadAttempts<=24){loadTimer=setTimeout(loadGoogle,350);}
-      else{status.textContent='Google 登入暫時無法載入，請確認網路或改到易經主頁登入。';}
-      return;
+  function memberURL(action) {
+    const params = new URLSearchParams();
+    if (action === 'login' || action === 'logout') {
+      if (action === 'logout') params.set('logout', '1');
+      params.set('return', location.pathname + location.search + location.hash);
     }
-    try{
-      if(!googleReady){
-        window.google.accounts.id.initialize({client_id:CLIENT_ID,callback:async result=>{
-          const credential=result?.credential||'';
-          if(!credential||!profileFromJwt(credential)){status.textContent='Google 登入未完成，請再試一次。';return;}
-          setCredential(credential);refresh();closeModal(false);
-          // 沿用易經主頁的會員後端登錄方式，發生暫時連線錯誤不丟失 Google 登入結果。
-          try{await fetch(MEMBER_API+'/me',{headers:{Authorization:'Bearer '+credential,Accept:'application/json'}})}catch(_){ }
-        }});
-        googleReady=true;
-      }
-      mount.replaceChildren();
-      window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});
-      status.textContent='請使用 Google 帳號登入。';
-    }catch(_){status.textContent='暫時無法顯示 Google 登入，請改到易經主頁登入。';}
+    return 'member.html' + (params.size ? '?' + params.toString() : '');
   }
-  function openModal(){
-    if(activeProfile()){location.href='member.html';return;}
-    focusReturn=document.activeElement;loadAttempts=0;
-    status.textContent='正在準備 Google 登入選項…';modal.hidden=false;modal.setAttribute('aria-hidden','false');
-    document.body.classList.add('yi-sub-modal-open');
-    closeButton.focus();loadGoogle();
+  function closeMenu() {
+    dropdown.hidden = true;
+    arrow.setAttribute('aria-expanded', 'false');
   }
-  button.addEventListener('click',()=>activeProfile()?location.assign('member.html'):openModal());
-  arrow.addEventListener('click',event=>{
-    event.stopPropagation();if(!activeProfile()){closeMenu();return;}
-    dropdown.hidden=!dropdown.hidden;arrow.setAttribute('aria-expanded',String(!dropdown.hidden));
-  });
-  byId('yiSubMemberLogout').addEventListener('click',()=>{
-    closeMenu();setCredential('');
-    try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){ }
-    refresh();
-  });
-  closeButton.addEventListener('click',()=>closeModal());
-  modal.addEventListener('click',event=>{if(event.target===modal)closeModal()});
-  document.addEventListener('click',event=>{if(!event.target.closest('#yiSubMemberEntry'))closeMenu()});
-  document.addEventListener('keydown',event=>{
-    if(event.key==='Escape'){if(!modal.hidden)closeModal();else closeMenu();}
-    // Only retain keyboard focus inside the active modal.
-    if(event.key==='Tab'&&!modal.hidden){
-      const items=[...modal.querySelectorAll('button,a,[tabindex]:not([tabindex="-1"])')].filter(el=>!el.hidden);
-      if(items.length){const first=items[0],last=items[items.length-1];
-        if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
-        else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  function render() {
+    const loggedIn = !!member?.sub;
+    buttonText.textContent = loggedIn ? '會員中心' : checking ? '登入確認中' : '免費登入';
+    button.classList.toggle('is-logged', loggedIn);
+    button.disabled = checking;
+    button.setAttribute('aria-label', loggedIn ? '前往一念知機會員中心' : '前往會員中心免費登入');
+    button.title = loggedIn ? '已登入，前往會員中心' : '由會員中心統一 Google 登入';
+    arrow.hidden = !loggedIn;
+    if (!loggedIn) closeMenu();
+  }
+  async function verifySession() {
+    const seq = ++checkSeq;
+    const token = sessionToken();
+    member = null;
+    checking = !!token;
+    render();
+    if (!token) return;
+    try {
+      const response = await fetch(MEMBER_API + '/auth/session', {
+        headers: { Accept: 'application/json', Authorization: 'Bearer ' + token },
+        cache: 'no-store'
+      });
+      const data = await response.json();
+      if (seq !== checkSeq || sessionToken() !== token) return;
+      if (response.ok && data?.success && data.authenticated && data.member?.sub) {
+        member = data.member;
       }
+    } catch (_) {
+      // 臨時離線不擅自刪除會員中心所管理的 Session；重新進入時再查驗。
+    } finally {
+      if (seq === checkSeq) { checking = false; render(); }
     }
+  }
+
+  button.addEventListener('click', () => {
+    if (checking) return;
+    location.assign(member?.sub ? 'member.html' : memberURL('login'));
   });
-  window.addEventListener('storage',event=>{if(event.key===KEY)refresh()});
-  window.addEventListener('pageshow',refresh);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
-  // AI 教學子頁舊版沒有切換按鈕；其餘五頁沿用原有 themeToggle 處理程式。
-  if(document.body.classList.contains('yi-sub-ai-page')){
-    const themeKey='divinationhub-color-theme';
-    const updateThemeButton=()=>{
-      const light=document.documentElement.dataset.theme==='light';
-      byId('themeToggleIcon').textContent=light?'☾':'☀';
-      byId('themeToggleText').textContent=light?'深色':'淺色';
-      const t=byId('themeToggle');t.setAttribute('aria-label',light?'切換成深色模式':'切換成淺色模式');
-      t.title=light?'切換成深色模式':'切換成淺色模式';
+  arrow.addEventListener('click', event => {
+    event.stopPropagation();
+    if (!member?.sub) return closeMenu();
+    dropdown.hidden = !dropdown.hidden;
+    arrow.setAttribute('aria-expanded', String(!dropdown.hidden));
+  });
+  logout.addEventListener('click', () => {
+    // 交由 member.html 呼叫 /auth/logout 撤銷 Session，不能僅清除本機憑證。
+    closeMenu();
+    location.assign(memberURL('logout'));
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('#yiSubMemberEntry')) closeMenu();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeMenu();
+  });
+  window.addEventListener('storage', event => {
+    if (event.key === SESSION_KEY || event.key === 'divinationhub-auth-event') verifySession();
+  });
+  window.addEventListener('pageshow', verifySession);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) verifySession();
+  });
+
+  // AI 教學子頁的深淺切換原本附在會員程式內，需原樣保留；其他頁由既有程式處理。
+  if (document.body.classList.contains('yi-sub-ai-page')) {
+    const themeKey = 'divinationhub-color-theme';
+    const updateThemeButton = () => {
+      const light = document.documentElement.dataset.theme === 'light';
+      $('themeToggleIcon').textContent = light ? '☾' : '☀';
+      $('themeToggleText').textContent = light ? '深色' : '淺色';
+      const t = $('themeToggle');
+      t.setAttribute('aria-label', light ? '切換成深色模式' : '切換成淺色模式');
+      t.title = light ? '切換成深色模式' : '切換成淺色模式';
     };
-    byId('themeToggle').addEventListener('click',()=>{
-      const next=document.documentElement.dataset.theme==='light'?'dark':'light';
-      document.documentElement.dataset.theme=next;
-      try{localStorage.setItem(themeKey,next)}catch(_){ }
+    $('themeToggle').addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem(themeKey, next); } catch (_) { }
       updateThemeButton();
     });
-    window.addEventListener('storage',event=>{if(event.key===themeKey){document.documentElement.dataset.theme=event.newValue==='light'?'light':'dark';updateThemeButton()}});
+    window.addEventListener('storage', event => {
+      if (event.key === themeKey) {
+        document.documentElement.dataset.theme = event.newValue === 'light' ? 'light' : 'dark';
+        updateThemeButton();
+      }
+    });
     updateThemeButton();
   }
-  refresh();
+  verifySession();
 })();
 </script>
 </body>
