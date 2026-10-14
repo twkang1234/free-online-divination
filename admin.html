@@ -165,16 +165,6 @@ td.muted{color:var(--muted)}
 #announcementAdminStatus{font-size:.78rem;color:#a9cfbd;line-height:1.7}
 #announcementAdminStatus.error{color:#f2a3ac}
 @media(max-width:800px){.announcement-admin{grid-template-columns:1fr}}
-.bazi-real-test{padding:18px;display:grid;gap:13px}
-.bazi-real-test p{margin:0;color:#c0cbd9;font-size:.83rem;line-height:1.75}
-.bazi-real-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.bazi-real-stat{background:#0a121c;border:1px solid #2c3744;border-radius:11px;padding:14px}
-.bazi-real-stat small{display:block;color:#a9b9c9;margin-bottom:7px}.bazi-real-stat strong{font-size:1.4rem;color:#f0dfb5}
-.bazi-real-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.bazi-real-actions button:disabled{opacity:.5;cursor:wait}
-#baziRealTestStatus{font-size:.83rem;color:#b2d8c7}#baziRealTestStatus.error{color:#f0a3a3}
-.bazi-real-hint{color:#9baabc;font-size:.72rem;line-height:1.7}
-@media(max-width:620px){.bazi-real-grid{grid-template-columns:1fr}.bazi-real-actions>*{flex-grow:1;text-align:center}}
 </style>
 </head>
 <body>
@@ -234,22 +224,6 @@ td.muted{color:var(--muted)}
       <div class="tool-cards" id="toolCards"></div>
     </section>
 
-
-    <!-- Only the CURRENT verified member in this browser receives real admin test credits. -->
-    <section class="section" id="baziRealTestPanel" style="margin-bottom:24px">
-      <div class="section-head"><h2>🧪 八字 AI 真實測試額度</h2><span>只補給本裝置登入的八字會員，不增加其他會員額度</span></div>
-      <div class="bazi-real-test">
-        <p>原本的「八字測試模式」只模擬畫面，不呼叫 AI。這裡可以替你正在登入的八字會員補發<b>真實 AI 解讀測試次數</b>。今天最多加 20 次，每次成功解讀仍計入 AI 供應商用量。</p>
-        <div class="bazi-real-grid">
-          <div class="bazi-real-stat"><small>原本免費額度</small><strong id="baziTestBase">—</strong></div>
-          <div class="bazi-real-stat"><small>今日額外測試</small><strong id="baziTestBonus">—</strong></div>
-          <div class="bazi-real-stat"><small>目前可用</small><strong id="baziTestRemaining">—</strong></div>
-        </div>
-        <div class="bazi-real-actions"><button class="btn" type="button" data-bazi-test-add="5">＋5 次測試</button><button class="btn" type="button" data-bazi-test-add="10">＋10 次測試</button><button class="btn secondary" id="baziTestReload" type="button">重新查詢</button><button class="btn secondary" id="baziTestClear" type="button">清除額外次數</button><a class="btn secondary" href="/bazi.html" style="text-decoration:none">開啟八字實際解讀</a></div>
-        <div id="baziRealTestStatus" role="status" aria-live="polite">正在讀取本裝置的八字會員與測試額度……</div>
-        <small class="bazi-real-hint">只有管理員已登入且本裝置另有八字會員登入時才能補發；每日 08:00（台灣）重置。此處不增加 Google／Groq／Cloudflare 的免費 API 額度，也不會開通付費權限。</small>
-      </div>
-    </section>
 
     <section class="section" style="margin-bottom:24px" id="issueAdminSection">
       <div class="section-head"><h2>網站異常紅綠燈監控</h2><span>會員目前亮起的紅燈人數｜只有本人可切換自己的狀態</span></div>
@@ -711,7 +685,6 @@ async function loadStats(){
     $('status').textContent='';
     loadIssueStats();
     if(!announcementAdminLoaded)loadAnnouncementAdmin();
-    baziBonusRequest();
 
   }catch(e){
     const msg=e.message||String(e);
@@ -735,36 +708,6 @@ $('loginForm').addEventListener('submit',e=>{
 
   login(password);
 });
-
-// Real Bazi admin testing credit: never change quotas globally, only the current verified member.
-const BAZI_TEST_API='https://bazi-api.ezgocpu.workers.dev/ai/admin/test-bonus';
-let baziBonusBusy=false;
-function baziMemberTestToken(){
-  try{return localStorage.getItem('divinationhub-auth-session-v1')||localStorage.getItem('divinationhub-bazi-google-credential')||''}catch(_){return ''}
-}
-function baziBonusMessage(msg,error=false){const el=$('baziRealTestStatus');if(el){el.textContent=msg;el.classList.toggle('error',error)}}
-async function baziBonusRequest(amount){
-  const member=baziMemberTestToken();
-  if(!member){baziBonusMessage('目前沒有八字會員登入。請先開啟八字網站完成 Google 會員登入，再回此頁重新查詢。',true);return}
-  if(!token()){baziBonusMessage('管理員登入已過期，請重新登入後台。',true);return}
-  if(baziBonusBusy)return;
-  baziBonusBusy=true;
-  for(const x of document.querySelectorAll('[data-bazi-test-add],#baziTestClear,#baziTestReload'))x.disabled=true;
-  baziBonusMessage(amount===undefined?'正在查詢真實測試額度……':amount===0?'正在清除額外測試額度……':'正在補發 '+amount+' 次真實測試額度……');
-  try{
-    const r=await fetch(BAZI_TEST_API,{method:amount===undefined?'GET':'POST',cache:'no-store',headers:{Authorization:'Bearer '+token(),'X-Bazi-Member-Token':member,Accept:'application/json',...(amount===undefined?{}:{'Content-Type':'application/json'})},...(amount===undefined?{}:{body:JSON.stringify({amount})})});
-    const j=await r.json().catch(()=>null);
-    if(!r.ok||!j?.ok){const messages={ADMIN_LOGIN_EXPIRED:'管理員登入已過期，請重新登入。',ADMIN_LOGIN_REQUIRED:'請先登入管理員後台。',ADMIN_AUTH_BINDING_MISSING:'bazi-api 缺少 ADMIN_AUTH 服務綁定。',ADMIN_AUTH_UNAVAILABLE:'管理員驗證暫時無法連線。',BAZI_MEMBER_LOGIN_REQUIRED:'八字會員登入已過期，請回八字網站重新登入。',ADMIN_TEST_BONUS_MAX_REACHED:'今日額外測試最多 20 次，已達安全上限。',ADMIN_TEST_BONUS_STORE_ERROR:'資料庫儲存失敗，請稍後再試。'};throw Error(messages[j?.error]||'操作失敗：'+(j?.error||'HTTP '+r.status))}
-    $('baziTestBase').textContent=j.baseLimit+' 次';
-    $('baziTestBonus').textContent='＋'+j.bonus+' 次';
-    $('baziTestRemaining').textContent=j.personalRemaining+' / '+j.personalLimit+' 次';
-    baziBonusMessage(amount===undefined?'已取得真實額度，今日已使用 '+j.personalUsed+' 次。':amount===0?'已清除額外測試額度；正式使用紀錄沒有刪除。':'✓ 已補發，請開啟正常的 bazi.html 進行真實 AI 解讀。');
-  }catch(e){baziBonusMessage('操作未完成：'+(e?.message||e),true)}
-  finally{baziBonusBusy=false;for(const x of document.querySelectorAll('[data-bazi-test-add],#baziTestClear,#baziTestReload'))x.disabled=false}
-}
-for(const b of document.querySelectorAll('[data-bazi-test-add]'))b.addEventListener('click',()=>baziBonusRequest(Number(b.dataset.baziTestAdd)));
-$('baziTestReload').addEventListener('click',()=>baziBonusRequest());
-$('baziTestClear').addEventListener('click',()=>{if(confirm('確定清除今天為自己補發的測試額度嗎？不會刪除正式 AI 使用紀錄。'))baziBonusRequest(0)});
 
 $('refreshBtn').addEventListener('click',loadStats);
 

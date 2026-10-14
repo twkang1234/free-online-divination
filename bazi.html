@@ -5312,11 +5312,17 @@ ${tasks}
     });
     statusEl.insertAdjacentElement('afterend',box);
   }
-  function baziAiHeaders(){return baziHeaderForAuth()}
+  function baziAiHeaders(){
+    if(location.search.includes('admin=1')){
+      const tester=window.__baziAdminRoleTest;
+      return {'Authorization':'Bearer '+String(tester?.token||''),'X-Bazi-Test-Mode':String(tester?.mode||'blocked')};
+    }
+    return baziHeaderForAuth();
+  }
   function baziPersonalQuotaText(j){return '今日 AI 剩餘 '+Math.max(0,Number(j.personalRemaining||0))+' / '+Number(j.personalLimit||1)+' 次';}
   function baziAiUpdateVisible(j){
     if(!j||!j.ok)return;
-    if(location.search.includes('admin=1'))return; // 管理員測試顯示由模擬器接管
+    if(location.search.includes('admin=1')){window.__baziAdminRoleQuota?.(j);return;}
     baziLatestQuota=j;
     const who=j.visitorType==='member'?'免費會員':'未登入訪客';
     const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent=who+'｜每日免費 AI 解讀';
@@ -5333,7 +5339,7 @@ ${tasks}
       const r=await fetch(BAZI_API_BASE+'/ai/status',{cache:'no-store',headers:baziAiHeaders()}),j=await r.json();
       if(requestSequence!==baziQuotaRequestSequence||authAtStart!==baziAuthToken())return;
       if(!j.ok)throw Error(j.error||'UNKNOWN');
-      target.textContent=`${baziPersonalQuotaText(j)}｜全站 AI 剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} 次｜08:00 重置`;
+      target.textContent=j.adminRoleTest?`【角色測試】今日 AI 剩餘 ${j.testRemaining} / ${j.testLimit} 次｜真正呼叫 AI`:`${baziPersonalQuotaText(j)}｜全站 AI 剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} 次｜08:00 重置`;
       baziAiUpdateVisible(j);
     }catch(_){if(requestSequence===baziQuotaRequestSequence)target.textContent='免費額度暫時無法取得';}
   }
@@ -6747,105 +6753,99 @@ html[data-theme="light"] .bazi-ai-free-card :is(strong,b),html[data-theme="light
 html[data-theme="light"] :is(button,a,input,select,textarea):focus-visible{outline:2px solid #12697b;outline-offset:2px}
 </style>
 <div id="baziAdminTestOverlay" aria-hidden="true">
-  <div id="baziAdminTestDialog" role="dialog" aria-modal="true" aria-label="管理員八字測試模式">
-    <div style="font-size:.75rem;letter-spacing:.18em;color:#e8a8de;margin-bottom:13px">ADMIN · BAZI TEST MODE</div>
-    <h2>管理員八字測試模式</h2>
-    <p id="baziAdminTestAuth">管理員驗證中…</p>
+  <div id="baziAdminTestDialog" role="dialog" aria-modal="true" aria-label="管理員八字角色測試">
+    <div style="font-size:.75rem;letter-spacing:.18em;color:#e8a8de;margin-bottom:13px">ADMIN · BAZI ROLE PREVIEW</div>
+    <h2>管理員八字角色測試</h2>
+    <p id="baziAdminTestAuth">正在驗證管理員權限…</p>
     <div id="baziAdminTestChoices" hidden>
-      <button data-mode="guest"><b>全新訪客</b>模擬每日免費 1／1 次。</button>
-      <button data-mode="member"><b>免費會員</b>模擬每日免費 4／4 次。</button>
-      <button data-mode="exhausted"><b>免費額度用完</b>模擬免費會員已使用 4／4 次。</button>
-      <button data-mode="paid1"><b>付費額度 1 次</b>免費額度用完，模擬付費額度剩 1 次。</button>
-      <button data-mode="paid"><b>完整付費解鎖</b>模擬每日免費 15／15 次（未來規劃）。</button>
-      <button data-mode="paid0"><b>付費額度 0 次</b>免費與付費均用完。</button>
+      <button data-mode="guest"><b>全新訪客</b>真正測試 AI 1／1 次</button>
+      <button data-mode="member"><b>免費會員</b>真正測試 AI 4／4 次</button>
+      <button data-mode="exhausted"><b>免費額度用完</b>模擬 0／4 次、檢查限制</button>
+      <button data-mode="paid1"><b>付費額度 1 次</b>未來付費情境：真正測 AI 1 次</button>
+      <button data-mode="paid"><b>完整付費解鎖</b>未來情境：真正測 AI 15／15 次</button>
+      <button data-mode="paid0"><b>付費額度 0 次</b>模擬所有額度均用完</button>
     </div>
-    <div id="baziAdminTestNotice">僅模擬八字 AI 額度與測試回應。測試不呼叫 Gemini，不修改正式會員登入、購買額度、資料庫或正式使用次數。尚未實作的付費功能不會因此開通。</div>
+    <div id="baziAdminTestNotice">選擇角色就會重置該角色的獨立測試額度；用完後再次點選即可重新測試。AI 解讀真的會呼叫四套 AI 總控，計入供應商用量，但不扣正式會員的次數，也不開通付費資格。登入、會員資料與實際付款不會被改動。</div>
     <div class="bazi-admin-test-actions"><button id="baziAdminTestBack">回管理後台</button><button id="baziAdminTestReset">退出測試</button><button id="baziAdminTestClose">套用並關閉</button></div>
   </div>
 </div>
 <script>
 (function(){
   'use strict';
-  const PREFIX='divinationhub-bazi-admin-test-v1',ADMIN_TOKEN='divinationhub-admin-session';
-  const modes={guest:{label:'全新訪客',limit:1,used:0,paid:0},member:{label:'免費會員',limit:4,used:0,paid:0},exhausted:{label:'免費額度用完',limit:4,used:4,paid:0},paid1:{label:'付費額度 1 次',limit:4,used:4,paid:1},paid:{label:'完整付費解鎖',limit:15,used:0,paid:0},paid0:{label:'付費額度 0 次',limit:4,used:4,paid:0}};
-  let active=false,mode='member',used=0,paid=0;
-  const $=id=>document.getElementById(id),overlay=$('baziAdminTestOverlay');
-  const status=$('baziAdminTestAuth');
-  function quotaText(){const m=modes[mode];return `管理員測試：${m.label}｜免費剩餘 ${Math.max(0,m.limit-used)} / ${m.limit} 次｜模擬付費剩餘 ${paid} 次｜正式額度不扣除`;}
+  const PREFIX='divinationhub-bazi-admin-role-test-v2',ADMIN_TOKEN='divinationhub-admin-session';
+  const API='https://bazi-api.ezgocpu.workers.dev';
+  const modes={guest:{label:'全新訪客',free:1,paid:0},member:{label:'免費會員',free:4,paid:0},exhausted:{label:'免費額度用完',free:4,paid:0},paid1:{label:'付費額度 1 次',free:4,paid:1},paid:{label:'完整付費解鎖（測試）',free:15,paid:0},paid0:{label:'付費額度 0 次',free:4,paid:0}};
+  let active=false,mode='member',quota=null,busy=false;
+  const $=id=>document.getElementById(id),overlay=$('baziAdminTestOverlay'),status=$('baziAdminTestAuth');
+  function headers(){return {'Authorization':'Bearer '+String(window.__baziAdminRoleTest?.token||''),'X-Bazi-Test-Mode':mode,'Content-Type':'application/json'};}
   function display(){if(!active)return;
-    const shell=$('baziAiQuotaPanel');if(shell)shell.classList.add('test-active');
-    if($('baziQuotaAccountLabel'))$('baziQuotaAccountLabel').textContent=modes[mode].label+'｜每日免費額度';
-    if($('baziQuotaDailyCount'))$('baziQuotaDailyCount').textContent=Math.max(0,modes[mode].limit-used)+' / '+modes[mode].limit+' 次';
-    if($('baziQuotaDailyHint'))$('baziQuotaDailyHint').textContent='【管理員模擬】台灣時間 08:00 重置｜本次已模擬使用 '+used+' 次；不影響正式額度。';
+    const m=modes[mode],free=Math.max(0,Number(quota?.personalRemaining??m.free)),freeMax=Number(quota?.personalLimit??m.free),paid=Math.max(0,Number(quota?.paidRemaining??m.paid));
+    const shell=$('baziAiQuotaPanel');shell?.classList.add('test-active');
+    if($('baziQuotaAccountLabel'))$('baziQuotaAccountLabel').textContent=m.label+'｜角色測試額度';
+    if($('baziQuotaDailyCount'))$('baziQuotaDailyCount').textContent=free+' / '+freeMax+' 次';
+    if($('baziQuotaDailyHint'))$('baziQuotaDailyHint').textContent='【管理員測試】只影響本次角色視角，正式會員額度不變。';
     if($('baziQuotaPaidCount'))$('baziQuotaPaidCount').textContent=paid+' 次';
-    if($('baziQuotaPaidHint'))$('baziQuotaPaidHint').textContent='【管理員模擬】測試用付費餘額，不會建立訂單或更動資料庫。';
-    if($('baziQuotaTestBanner'))$('baziQuotaTestBanner').textContent='🧪 管理員八字測試模式｜僅模擬介面，不扣 Gemini 額度';
-    const q=$('baziGeminiQuota');if(q)q.textContent=quotaText();
-    const b=$('baziAdminTestLauncher');if(b)b.textContent='🧪 八字測試 · '+modes[mode].label;
-    document.querySelectorAll('[data-bazi-test-quota],.bazi-personal-quota').forEach(el=>el.textContent=quotaText());
-    document.querySelectorAll('#baziAdminTestChoices button').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+    if($('baziQuotaPaidHint'))$('baziQuotaPaidHint').textContent='模擬付費額度，不會建立付款訂單。';
+    if($('baziQuotaTestBanner'))$('baziQuotaTestBanner').textContent='🧪 '+m.label+'｜真實 AI 測試｜供應商安全上限照常適用';
+    if($('baziQuotaGlobalCount'))$('baziQuotaGlobalCount').textContent='測試用量計入 AI 總控統計｜不計入正式會員次數';
+    const label='【'+m.label+'測試】今日 AI 剩餘 '+Number(quota?.testRemaining??0)+' / '+Number(quota?.testLimit??0)+' 次';
+    if($('baziGeminiQuota'))$('baziGeminiQuota').textContent=label;
+    document.querySelectorAll('.bazi-personal-quota').forEach(el=>el.textContent=label);
+    const launcher=$('baziAdminTestLauncher');if(launcher)launcher.textContent='🧪 '+m.label+' · '+Number(quota?.testRemaining??0)+' 次';
+    document.querySelectorAll('#baziAdminTestChoices button').forEach(btn=>{
+      btn.classList.toggle('active',btn.dataset.mode===mode);
+      const typ=btn.dataset.mode;const freeQuota=(typ==='guest'?Number(quota?.personalLimit??1):Number(quota?.personalLimit??4));
+      if(typ==='member'&&mode==='member'&&btn.querySelector('b'))btn.lastChild.textContent='真正測試 AI '+freeQuota+'／'+freeQuota+' 次';
+      if(typ==='guest'&&mode==='guest'&&btn.querySelector('b'))btn.lastChild.textContent='真正測試 AI '+freeQuota+'／'+freeQuota+' 次';
+    });
   }
-  function setMode(next){if(!modes[next])return;active=true;mode=next;used=modes[next].used;paid=modes[next].paid;sessionStorage.setItem(PREFIX,JSON.stringify({mode,used,paid}));display();}
+  window.__baziAdminRoleQuota=j=>{if(active&&j?.adminRoleTest&&j.role===mode){quota=j;display();}};
+  async function loadQuota(){
+    const r=await fetch(API+'/ai/status',{headers:headers(),cache:'no-store'}),j=await r.json();
+    if(!r.ok||!j.ok)throw Error('角色額度查詢失敗：'+(j.error||r.status));
+    quota=j;display();
+  }
+  async function setMode(next,reset=true){
+    if(!Object.hasOwn(modes,next)||busy)return;
+    busy=true;status.textContent='正在切換角色並準備真實測試額度…';
+    document.querySelectorAll('#baziAdminTestChoices button').forEach(b=>b.disabled=true);
+    const previous=mode;mode=next;
+    try{
+      const url=reset?API+'/ai/admin/test/reset':API+'/ai/status';
+      const options=reset?{method:'POST',headers:headers(),body:'{}'}:{headers:headers(),cache:'no-store'};
+      const r=await fetch(url,options),j=await r.json();
+      if(!r.ok||!j.ok)throw Error(j.error||'設定失敗');
+      active=true;quota=j;window.__baziAdminRoleTest.mode=mode;
+      sessionStorage.setItem(PREFIX,mode);
+      status.textContent='已切換「'+modes[mode].label+'」；可直接使用下方真正的 AI 解讀。再次點此角色可補滿測試次數。';
+      display();
+    }catch(e){mode=previous;status.textContent='角色切換失敗：'+e.message+'（未啟用新角色）';}
+    finally{busy=false;document.querySelectorAll('#baziAdminTestChoices button').forEach(b=>b.disabled=false);}
+  }
   function show(){overlay.classList.add('show');overlay.setAttribute('aria-hidden','false');display();}
   function hide(){overlay.classList.remove('show');overlay.setAttribute('aria-hidden','true');}
-  function exit(){active=false;sessionStorage.removeItem(PREFIX);location.replace('/bazi.html');}
-  function useOne(){const lim=modes[mode].limit;if(used<lim){used++;}else if(paid>0){paid--;}else return false;sessionStorage.setItem(PREFIX,JSON.stringify({mode,used,paid}));display();return true;}
-  function fakeReading(){return '【管理員測試回應】\n這是八字 AI 測試模式的介面示範，未呼叫 Google Gemini，沒有消耗正式額度。\n\n請使用各分區專屬問題，確認點擊、額度變化、訊息與文字呈現是否正常。正式命理解讀仍需在退出測試模式後使用。';}
+  function exit(){active=false;window.__baziAdminRoleTest=null;sessionStorage.removeItem(PREFIX);location.replace('/bazi.html');}
   async function init(){if(!location.search.includes('admin=1'))return;
-    show();
-    const token=sessionStorage.getItem(ADMIN_TOKEN)||'';
-    if(!token){status.textContent='沒有管理員測試憑證。請從已登入的管理後台按「八字測試」進入。';return;}
+    show();const token=sessionStorage.getItem(ADMIN_TOKEN)||'';
+    if(!token){status.textContent='沒有管理員驗證憑證。請從已登入的管理後台點「八字測試」進入。';return;}
     try{
-      const resp=await fetch('https://admin-api.ezgocpu.workers.dev/admin/stats',{headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'});
-      if(!resp.ok)throw Error('驗證失敗或已過期');
-      const payload=await resp.json();if(!payload.success)throw Error('管理員驗證失敗');
-      status.textContent='管理員驗證成功。可選擇模擬狀態；僅本分頁有效，不影響正式額度與會員資料。';
+      const r=await fetch('https://admin-api.ezgocpu.workers.dev/admin/stats',{headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'});
+      const j=await r.json();if(!r.ok||!j?.success)throw Error('驗證失敗或登入已過期');
+      window.__baziAdminRoleTest={token,mode:'blocked'};
       $('baziAdminTestChoices').hidden=false;
-      const launcher=document.createElement('button');launcher.id='baziAdminTestLauncher';launcher.type='button';launcher.textContent='🧪 八字測試';launcher.addEventListener('click',show);document.body.appendChild(launcher);
-      let previous=null;try{previous=JSON.parse(sessionStorage.getItem(PREFIX)||'null')}catch(_){}
-      setMode(modes[previous?.mode]?previous.mode:'member');if(previous){used=Math.max(0,Math.min(1000,Number(previous.used)||0));paid=Math.max(0,Math.min(1000,Number(previous.paid)||0));display();}
-      // Capture test AI clicks before live handlers. No network request, no quota usage.
-      document.addEventListener('click',e=>{
-        if(!active)return;
-        const button=e.target.closest('#baziGeminiRun,.smart-prompt-generate');if(!button)return;
-        e.preventDefault();e.stopImmediatePropagation();
-        const target=button.id==='baziGeminiRun'? $('baziGeminiMessage'):button.closest('.smart-prompt-box,.section-ai-box,details')?.querySelector('.section-ai-message');
-        if(!useOne()){if(target)target.textContent='【管理員模擬】今日額度已用完。';alert('【管理員模擬】今日免費與付費額度都已用完。');return;}
-        const reading=fakeReading();
-        if(button.id==='baziGeminiRun'){
-          const output=$('baziGeminiOutput'),view=$('baziGeminiReading');if(output&&view){output.hidden=false;output.open=true;view.textContent=reading;}
-          if($('baziGeminiCopy'))$('baziGeminiCopy').hidden=false;
-          if($('baziGeminiDownload'))$('baziGeminiDownload').hidden=false;
-        }else{
-          const box=button.closest('.smart-prompt-box')||button.closest('details');
-          const answer=box?.querySelector('.section-ai-answer'),view=box?.querySelector('.section-ai-reading');
-          if(answer&&view){answer.hidden=false;view.textContent=reading;}
-        }
-        if(target)target.textContent='【管理員模擬】成功，未呼叫 Gemini、未扣正式額度。';display();
-      },true);
-      // Live quota refresh can run in original scripts; keep simulated display after updates.
-      const q=$('baziGeminiQuota');if(q)new MutationObserver(()=>{if(active&&q.textContent!==quotaText())q.textContent=quotaText()}).observe(q,{childList:true,characterData:true,subtree:true});
-    }catch(err){status.textContent='無法啟用管理員測試：'+err.message+'。請返回後台重新登入。';}
+      const launcher=document.createElement('button');launcher.id='baziAdminTestLauncher';launcher.type='button';launcher.textContent='🧪 管理員角色測試';launcher.addEventListener('click',show);document.body.appendChild(launcher);
+      // Reopen same role after page refresh without resetting the used count.
+      const saved=sessionStorage.getItem(PREFIX);
+      await setMode(Object.hasOwn(modes,saved)?saved:'member',!Object.hasOwn(modes,saved));
+    }catch(err){status.textContent='管理員測試無法使用：'+err.message+'。請返回後台登入。';}
   }
-  document.querySelectorAll('#baziAdminTestChoices [data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+  document.querySelectorAll('#baziAdminTestChoices button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode,true)));
   $('baziAdminTestClose').addEventListener('click',hide);
   $('baziAdminTestBack').addEventListener('click',()=>location.assign('/admin.html'));
   $('baziAdminTestReset').addEventListener('click',exit);
-  async function liveQuota(){
-    const el=$('baziQuotaGlobalCount');if(!el)return;
-    try{
-      const r=await fetch('https://bazi-api.ezgocpu.workers.dev/ai/status',{cache:'no-store',headers:typeof baziAuthToken==='function'?baziAiHeaders():{}});
-      const j=await r.json();if(!r.ok||!j?.ok)throw Error('暫時無法取得');
-      const remaining=Number(j.globalLimit)-Number(j.globalUsed);
-      const limit=j.globalLimit;
-      el.textContent=Number.isFinite(Number(remaining))?'全站 AI 剩餘 '+remaining+' / '+limit+' 次｜08:00 重置':'全站 AI 額度依服務端查詢';if(!location.search.includes('admin=1')){const c=$('baziQuotaDailyCount');if(c)c.textContent=j.personalRemaining+' / '+j.personalLimit+' 次';const l=$('baziQuotaAccountLabel');if(l)l.textContent=(j.visitorType==='member'?'免費會員':'未登入訪客')+'｜每日免費 AI 解讀';if(typeof baziAiUpdateVisible==='function')baziAiUpdateVisible(j);}
-    }catch(_){el.textContent='全站 AI 額度暫時無法取得';}
-  }
-  document.addEventListener('DOMContentLoaded',liveQuota,{once:true});
   document.addEventListener('DOMContentLoaded',init,{once:true});
 })();
 </script>
-
 
 <style id="baziAiLightReadableV2">
 /* 只修正白底模式 AI 文章；黑底保留既有顏色 */
