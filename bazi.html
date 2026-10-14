@@ -2959,7 +2959,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     </div>
   </section>
 
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Google login now exclusively handled by member.html -->
   <div class="auth-modal" id="baziAuthModal" aria-hidden="true">
     <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="baziAuthTitle">
       <button class="modal-close" id="baziAuthClose" type="button" aria-label="關閉">×</button>
@@ -2993,14 +2993,19 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
   const MEMBER_API_BASE = 'https://member-api.ezgocpu.workers.dev';
   const GOOGLE_CLIENT_ID = '421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   const BAZI_AUTH_KEY = 'divinationhub-bazi-google-credential';
+  const BAZI_SESSION_KEY='divinationhub-auth-session-v1';
+  let baziSessionMember=null; // only after BOTH Worker checks pass
+  function baziStoredSession(){try{return localStorage.getItem(BAZI_SESSION_KEY)||''}catch(_){return ''}}
+  function baziHeaderForAuth(){const t=baziAuthToken();return t?{Authorization:'Bearer '+t}:{}}
 
   function baziAuthToken(){
+    if(baziSessionMember?.sub)return baziStoredSession();
     try{ return localStorage.getItem(BAZI_AUTH_KEY) || ''; }catch(_){ return ''; }
   }
   function baziSetAuthToken(token){
     try{
       if(token) localStorage.setItem(BAZI_AUTH_KEY, token);
-      else localStorage.removeItem(BAZI_AUTH_KEY);
+      else {localStorage.removeItem(BAZI_AUTH_KEY);baziSessionMember=null;}
     }catch(_){}
     // 登入、登出後立即更新站內 AI 額度，無須重整網頁。
     if(typeof baziGeminiRefreshQuota==='function')baziGeminiRefreshQuota();
@@ -3018,6 +3023,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
   }
 
   function baziAuthProfile(){
+    if(baziSessionMember?.sub)return baziSessionMember;
     const token=baziAuthToken();
     if(!token)return null;
     const p=baziDecodeJwt(token);
@@ -3065,64 +3071,43 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
     }
   }
 
+  // All Google login and logout actions are owned by member.html.
   function baziOpenAuth(){
-    if(baziAuthProfile()){
-      baziUpdateTopbarMember();
-      return;
-    }
-    baziRenderGoogleButton();
-    let fallbackTimer=setTimeout(()=>{
-      const modal=document.getElementById('baziAuthModal');
-      if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');}
-    },700);
-
+    const from=location.pathname+location.search+location.hash;
+    location.href='member.html?return='+encodeURIComponent(from);
+  }
+  function baziCloseAuth(){}
+  function baziRenderGoogleButton(){} // old inline Google widget intentionally disabled
+  let baziRestoreSeq=0;
+  async function baziRestoreSession(){
+    const token=baziStoredSession(),seq=++baziRestoreSeq;
+    if(!token){baziSessionMember=null;window.baziUpdateTopbarMember?.();return}
+    const header={Accept:'application/json',Authorization:'Bearer '+token};
     try{
-      window.google?.accounts?.id?.prompt?.(notification=>{
-        if(notification?.isDisplayed?.()){
-          clearTimeout(fallbackTimer);
-          return;
-        }
-        if(notification?.isNotDisplayed?.() || notification?.isSkippedMoment?.()){
-          clearTimeout(fallbackTimer);
-          const modal=document.getElementById('baziAuthModal');
-          if(modal){modal.classList.add('show');modal.setAttribute('aria-hidden','false');}
-        }
-      });
-    }catch(_){}
-  }
-
-  function baziCloseAuth(){
-    const modal=document.getElementById('baziAuthModal');
-    if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
-  }
-
-  function baziRenderGoogleButton(){
-    if(!window.google?.accounts?.id){
-      setTimeout(baziRenderGoogleButton,250);
-      return;
-    }
-    if(!baziGoogleInitialized){
-      window.google.accounts.id.initialize({
-        client_id:GOOGLE_CLIENT_ID,
-        callback:async response=>{
-          const credential=response?.credential||'';
-          if(!credential)return;
-          baziSetAuthToken(credential);
-          await baziRegisterMember();
-          baziUpdateTopbarMember();
-          baziCloseAuth();
-          window.dispatchEvent(new CustomEvent('bazi-google-login',{detail:{credential}}));
-        }
-      });
-      baziGoogleInitialized=true;
-    }
-    const mount=document.getElementById('baziAuthGoogleMount');
-    if(mount && mount.dataset.ready!=='1'){
-      mount.dataset.ready='1';
-      window.google.accounts.id.renderButton(mount,{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:260});
+      const r=await fetch(MEMBER_API_BASE+'/auth/session',{cache:'no-store',headers:header});
+      const j=await r.json();
+      if(!r.ok||!j.success)throw Error(j.error||'SESSION_UNAVAILABLE');
+      if(seq!==baziRestoreSeq||token!==baziStoredSession())return;
+      if(j.authenticated&&j.member?.sub){
+        const check=await fetch(BAZI_API_BASE+'/session-check',{cache:'no-store',headers:header});
+        const cj=await check.json();
+        if(seq!==baziRestoreSeq||token!==baziStoredSession())return;
+        if(!check.ok||!cj.success||!cj.authenticated||cj.member?.sub!==j.member.sub)throw Error('BAZI_BACKEND_SESSION_UNAVAILABLE');
+        const previous=baziSessionMember?.sub;
+        baziSessionMember={sub:j.member.sub,name:j.member.name||j.member.email||'會員',email:j.member.email||'',picture:j.member.picture||''};
+        window.baziUpdateTopbarMember?.();
+        if(previous!==baziSessionMember.sub)window.dispatchEvent(new CustomEvent('bazi-google-login',{detail:{session:true}}));
+      }else{
+        baziSessionMember=null;
+        try{localStorage.removeItem(BAZI_SESSION_KEY)}catch(_){}
+        window.baziUpdateTopbarMember?.();baziGeminiRefreshQuota();
+      }
+    }catch(err){
+      if(seq!==baziRestoreSeq)return;
+      console.warn('Session restore unavailable. No unverified session is displayed:',err?.message);
+      baziSessionMember=null;window.baziUpdateTopbarMember?.();
     }
   }
-
   window.baziRenderGoogleButton=baziRenderGoogleButton;
   window.baziUpdateTopbarMember=baziUpdateTopbarMember;
   window.baziOpenAuth=baziOpenAuth;
@@ -3302,7 +3287,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
       try{
         const headers={'Content-Type':'application/json','Accept':'application/json'};
         const authToken=baziAuthToken();
-        if(authToken)headers['Authorization']='Bearer '+authToken;
+        Object.assign(headers,baziHeaderForAuth());
         const res=await fetch(BAZI_API_BASE+path,{method:'POST',headers,body:JSON.stringify(payload)});
         const text=await res.text();
         let json=null;try{json=text?JSON.parse(text):null;}catch(_){json=null;}
@@ -5254,7 +5239,7 @@ ${tasks}
   // TEST MODE: 只開放站內 Gemini AI，不變動會員儲存及既有付費提示詞權限。
   let baziLatestQuota=null;
   let baziQuotaRequestSequence=0;
-  function baziAiHeaders(){const token=baziAuthToken();return token?{Authorization:'Bearer '+token}:{}}
+  function baziAiHeaders(){return baziHeaderForAuth()}
   function baziPersonalQuotaText(j){return '今日 AI 剩餘 '+Math.max(0,Number(j.personalRemaining||0))+' / '+Number(j.personalLimit||1)+' 次';}
   function baziAiUpdateVisible(j){
     if(!j||!j.ok)return;
@@ -5608,7 +5593,7 @@ ${intent}
     const payload={offset,calendar:{pillars:lastData.pillars.map(p=>({gan:p.gan,zhi:p.zhi}))}};
     try{
       const headers={'Content-Type':'application/json','Accept':'application/json'};
-      if(token)headers.Authorization='Bearer '+token;
+      Object.assign(headers,baziHeaderForAuth());
       const controller=new AbortController();
       const timeout=setTimeout(()=>controller.abort(),15000);
       let res,json;
@@ -6096,7 +6081,7 @@ ${intent}
   async function savedBaziRequest(path,options={}){
     const token=baziAuthToken();
     if(!token)throw Error('請先免費解鎖');
-    const headers={...(options.headers||{}),'Authorization':'Bearer '+token,'Accept':'application/json'};
+    const headers={...(options.headers||{}),...baziHeaderForAuth(),'Accept':'application/json'};
     if(options.body)headers['Content-Type']='application/json';
     const res=await fetch(MEMBER_API_BASE+path,{...options,headers});
     const json=await res.json().catch(()=>null);
@@ -6104,7 +6089,7 @@ ${intent}
     return json;
   }
 
-  function memberBirthKey(){const p=baziDecodeJwt(baziAuthToken());return p?.sub||p?.email||'';}
+  function memberBirthKey(){if(baziSessionMember?.sub)return baziSessionMember.sub;const p=baziDecodeJwt(baziAuthToken());return p?.sub||p?.email||'';}
   function localMemberBirth(){try{return JSON.parse(localStorage.getItem('divinationhub-bazi-member:'+memberBirthKey())||'null')}catch(_){return null}}
   function writeLocalMemberBirth(patch){const key=memberBirthKey();if(!key)return;try{localStorage.setItem('divinationhub-bazi-member:'+key,JSON.stringify({...localMemberBirth(),...patch}))}catch(_){}}
   function captureBirthInput(){return {birth_date:birthTime.value,time_slot:$('useExactTime').checked?null:Number($('birthSlot').value),exact_time:$('useExactTime').checked?$('exactBirthTime').value:'',use_exact:$('useExactTime').checked,gender:gender.value,sect:sect.value};}
@@ -6479,6 +6464,7 @@ ${intent}
 
   document.addEventListener('DOMContentLoaded', () => {
     window.baziUpdateTopbarMember?.();
+    baziRestoreSession();
 
     const memberEntry=document.getElementById('baziMemberEntry');
     const memberChip=document.getElementById('baziMemberChip');
@@ -6508,19 +6494,22 @@ ${intent}
     document.getElementById('baziSavedModal')?.addEventListener('click',e=>{if(e.target.id==='baziSavedModal'){e.currentTarget.classList.remove('show');e.currentTarget.setAttribute('aria-hidden','true');}});
 
     logoutBtn?.addEventListener('click',()=>{
-      try{window.google?.accounts?.id?.disableAutoSelect?.();}catch(_){}
-      baziSetAuthToken('');
-      memberEntry?.classList.remove('is-open');
-      if(memberChip)memberChip.setAttribute('aria-expanded','false');
-      window.baziUpdateTopbarMember?.();
-      refreshSmartPromptLocks?.();
-      resetDailyFlowAccess();
-      loadDailyFlow(0,true);
-      if(lastData)renderYearFlows({...lastData,threeYearStrategicOutlook:null});
-      toast('已登出');
+      // Sign-out must revoke the HttpOnly D1 Session at the central member service.
+      location.href='member.html?logout=1&return='+encodeURIComponent(location.pathname+location.search+location.hash);
+      return;
     });
 
     window.addEventListener('storage',e=>{
+      if(e.key==='divinationhub-auth-event'){
+        let signal;try{signal=JSON.parse(e.newValue||'null')}catch(_){}
+        if(signal?.kind==='login')baziRestoreSession();
+        if(signal?.kind==='logout'){
+          baziSessionMember=null;baziSetAuthToken('');window.baziUpdateTopbarMember?.();
+          resetDailyFlowAccess();refreshSmartPromptLocks?.();baziGeminiRefreshQuota();
+          if(lastData)renderYearFlows({...lastData,threeYearStrategicOutlook:null});
+        }
+      }
+      if(e.key===BAZI_SESSION_KEY){baziSessionMember=null;baziRestoreSession();}
       if(e.key===BAZI_AUTH_KEY){
         window.baziUpdateTopbarMember?.();
         if(!baziAuthProfile()){refreshSmartPromptLocks?.();resetDailyFlowAccess();if(lastData)renderYearFlows({...lastData,threeYearStrategicOutlook:null});}

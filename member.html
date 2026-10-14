@@ -300,40 +300,48 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   // 站長後台需驗證管理員權限，並實作門檻設定、修復清燈、啟閉及清除個別對話。
   // 只有後端回覆成功，才顯示紅燈已回報、對話已送出。
   const API_MEMBER='https://member-api.ezgocpu.workers.dev';
+   let verifiedSessionMember=null;
+   function announceMemberAuth(kind){try{localStorage.setItem('divinationhub-auth-event',JSON.stringify({kind,at:Date.now()}))}catch(_){}}
+   const SESSION_KEY='divinationhub-auth-session-v1';
+   function savedSession(){try{return localStorage.getItem(SESSION_KEY)||''}catch(_){return ''}}
+   function storeSession(token){try{if(token)localStorage.setItem(SESSION_KEY,token);else localStorage.removeItem(SESSION_KEY);return true}catch(_){return false}}
+   function sessionHeaders(){const t=savedSession();return t?{Authorization:'Bearer '+t}:{}}
   const API_PUBLIC_ANNOUNCEMENT='https://admin-api.ezgocpu.workers.dev/member-announcement';
   const AUTH_KEY='divinationhub-bazi-google-credential';
   const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
   const $=id=>document.getElementById(id);
   const tools=['bazi','tarot','yijing'];
   const toolNames={bazi:'八字排盤',tarot:'塔羅占卜',yijing:'易經占卜'};
-  // 僅允許返回本站的既有工具頁，不接受外部任意 URL，避免意外跳出本站。
+  // Explicit return query overrides referrer. Never allow off-site redirects.
+  function safeMemberReturn(input){
+    try {
+      if(!input||input.startsWith('//'))return null;
+      const u=new URL(input,location.origin);
+      if(u.origin!==location.origin)return null;
+      if(u.pathname==='/member.html')return null;
+      if(!/^\/[A-Za-z0-9_./-]*\.html$/.test(u.pathname)&&u.pathname!=='/')return null;
+      if(u.pathname.includes('/../'))return null;
+      return u.pathname+u.search+u.hash;
+    }catch(_){return null}
+  }
+  function intendedMemberReturn(){
+    const explicit=new URLSearchParams(location.search).get('return');
+    if(explicit)return safeMemberReturn(explicit);
+    return safeMemberReturn(document.referrer);
+  }
   function initReturnToSource(){
-    const valid={
-      'bazi.html':'八字','tarot.html':'塔羅','yijing.html':'易經',
-      'qimen.html':'奇門','ziwei.html':'紫微','meihua.html':'梅花','liuyao.html':'六爻'
-    };
-    function safeToolHref(input){
-      try{
-        const url=new URL(input,location.href);
-        if(url.origin!==location.origin)return null;
-        const file=url.pathname.split('/').pop().toLowerCase();
-        return valid[file]?{href:file,label:valid[file]}:null;
-      }catch(_){return null}
-    }
-    let source=safeToolHref(document.referrer);
-    try{
-      const remembered=JSON.parse(sessionStorage.getItem('divinationhub-member-return-source')||'null');
-      if(!source && remembered && Date.now()-Number(remembered.savedAt||0)<2*60*60*1000)
-        source=safeToolHref(remembered.href);
-      if(source)sessionStorage.setItem('divinationhub-member-return-source',JSON.stringify({...source,savedAt:Date.now()}));
-    }catch(_){}
+    const source=intendedMemberReturn();
     if(!source)return;
     const link=$('returnToSource');
-    link.href=source.href;
-    link.textContent='← 返回'+source.label;
-    link.setAttribute('aria-label','返回'+source.label+'工具');
+    link.href=source;
+    link.textContent='← 返回原頁面';
     link.hidden=false;
     $('sourceNavDivider').hidden=false;
+  }
+  function returnAfterLogin(){
+    const explicit=new URLSearchParams(location.search).get('return');
+    const href=explicit?safeMemberReturn(explicit):null;
+    if(href)location.assign(href);
   }
 
   let googleReady=false,currentView='home',sessionKey='',baziRecords=[],lightData=null,chatData=null,selectedChatId=null;
@@ -343,10 +351,10 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   let issueBusy=new Set();
   let previousMaintenance=false;
   function textNode(tag,content,cls=''){const el=document.createElement(tag);if(cls)el.className=cls;el.textContent=String(content??'');return el}
-  function getToken(){try{return localStorage.getItem(AUTH_KEY)||''}catch(_){return ''}}
+  function getToken(){if(verifiedSessionMember?.sub)return savedSession();try{return localStorage.getItem(AUTH_KEY)||''}catch(_){return ''}}
   function putToken(t){try{if(t)localStorage.setItem(AUTH_KEY,t);else localStorage.removeItem(AUTH_KEY)}catch(_){}}
   function parseJwt(token){try{const s=token.split('.')[1]?.replace(/-/g,'+').replace(/_/g,'/');if(!s)return null;const padded=s.padEnd(Math.ceil(s.length/4)*4,'=');const bytes=Uint8Array.from(atob(padded),c=>c.charCodeAt(0));return JSON.parse(new TextDecoder().decode(bytes))}catch(_){return null}}
-  function profile(){const token=getToken(),p=parseJwt(token);return p&&Number(p.exp||0)*1000>Date.now()?p:null}
+  function profile(){return verifiedSessionMember?.sub?verifiedSessionMember:null}
   function showNotice(id,message,cls=''){const el=$(id);el.textContent=message;el.className='notice '+cls}
   // 公告讀取完全獨立於 Google 登入／會員 D1；失敗時不顯示過期草稿。
   let announcementLoading=false,announcementLastRead=0;
@@ -405,13 +413,21 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     if(location.protocol==='file:'){$('loginMessage').textContent='Google 登入需在正式網站使用。';return}
     if(!window.google?.accounts?.id){setTimeout(()=>{if(!profile()&&!$('headerLoginMenu').hidden)renderGoogleLogin()},350);return}
     if(!googleReady){google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:async({credential})=>{
-      if(!credential)return;const before=getToken();putToken(credential);
-      try{const r=await fetch(API_MEMBER+'/me',{headers:{Authorization:'Bearer '+credential,Accept:'application/json'},cache:'no-store'});if(!r.ok)throw Error('會員驗證未通過');updateAuthUI();if(currentView==='bazi')loadBazi();if(currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1';}}
-      catch(err){putToken(before);updateAuthUI();$('loginMessage').textContent='登入暫時無法完成：'+err.message}
+      if(!credential)return;
+      try {
+        const r=await fetch(API_MEMBER+'/auth/login',{method:'POST',headers:{Authorization:'Bearer '+credential,Accept:'application/json'},cache:'no-store'});
+        const j=await r.json();if(!r.ok||!j.success||!j.member?.sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(j.sessionToken||''))throw Error(j.error||'會員驗證未通過');
+        if(!storeSession(j.sessionToken))throw Error('瀏覽器無法儲存會員 Session，請確認不是限制儲存模式');
+        // Keep the short-lived Google credential ONLY for legacy Tarot/Yijing during migration.
+        putToken(credential);verifiedSessionMember=j.member;updateAuthUI();announceMemberAuth('login');
+        if(currentView==='bazi')loadBazi();
+        if(currentView==='tarot'&&$('tarotFrame').src)$('tarotFrame').src='tarot-records.html?embedded=1';
+        returnAfterLogin();
+      }catch(err){$('loginMessage').textContent='登入暫時無法完成：'+err.message}
     }});googleReady=true}
     if(!googleButtonReady){google.accounts.id.renderButton($('googleLoginMount'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',width:250});googleButtonReady=true;}
   }
-  async function api(path,options={}){const token=getToken();if(!profile()||!token)throw Error('請先登入會員');const headers={Accept:'application/json',Authorization:'Bearer '+token,...options.headers};
+  async function api(path,options={}){const token=getToken();if(!profile()||!token)throw Error('請先登入會員');const headers={Accept:'application/json',...sessionHeaders(),...options.headers};
     if(options.body!==undefined)headers['Content-Type']='application/json';let resp;
     try{resp=await fetch(API_MEMBER+path,{...options,headers,cache:'no-store'});}catch(_){throw Error('無法連線會員 API，請稍後再試')}
     const data=await resp.json().catch(()=>null);if(!resp.ok||!data||(data.success===false)||(data.ok===false)){
@@ -423,7 +439,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     try{const j=await api('/saved-bazi');if(start!==getToken())return;baziRecords=Array.isArray(j.records)?j.records:[];renderBazi();showNotice('baziInfo',baziRecords.length?'已載入帳號內的八字命盤。':'目前尚未保存八字命盤。','ok')}
     catch(err){if(start!==getToken())return;root.replaceChildren(textNode('div','無法讀取命盤：'+err.message,'empty-state'));showNotice('baziInfo','命盤讀取失敗：'+err.message,'err')}
   }
-  function localBirthKey(){const p=parseJwt(getToken());return p?.sub||p?.email||''}
+  function localBirthKey(){if(verifiedSessionMember?.sub)return verifiedSessionMember.sub;const p=parseJwt(getToken());return p?.sub||p?.email||''}
   function syncBaziLocal(patch){const id=localBirthKey();if(!id)return;const key='divinationhub-bazi-member:'+id;try{const prev=JSON.parse(localStorage.getItem(key)||'null')||{};localStorage.setItem(key,JSON.stringify({...prev,...patch}))}catch(_){}}
   function baziDate(rec){const gender=String(rec.gender)==='1'?'男':String(rec.gender)==='0'?'女':'未註明';const birth=String(rec.birth_date||'未設定生日');const time=rec.use_exact?String(rec.exact_time||''):(Number.isInteger(Number(rec.time_slot))?'時辰選擇':'');return [birth,time,gender].filter(Boolean).join(' · ')}
   function renderBazi(){const root=$('baziList');root.replaceChildren();$('baziCount').textContent=`${baziRecords.length} 張`;
@@ -802,6 +818,39 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     rvLoadPublished();rvAuthSync();
   }
   function adjustEmbeddedFrame(frame){try{const doc=frame.contentDocument;if(!doc?.body)return;if(doc.getElementById('memberEmbeddingCss'))return;const css=doc.createElement('style');css.id='memberEmbeddingCss';css.textContent='.sitebar{display:none!important} body{min-height:0!important} main{padding-top:18px!important}';doc.head.append(css)}catch(_){}}
+  let memberSessionCheckSeq=0;
+  async function logoutMemberNow(redirectAfter=false){
+    const token=savedSession();
+    // Always call server to revoke before clearing local bearer; never silently claim success.
+    const r=await fetch(API_MEMBER+'/auth/logout',{method:'POST',headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{})},cache:'no-store'});
+    const j=await r.json().catch(()=>null);if(!r.ok||!j?.success)throw Error(j?.error||'後端登出失敗');
+    ++memberSessionCheckSeq;
+    verifiedSessionMember=null;storeSession('');putToken('');announceMemberAuth('logout');
+    try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
+    $('tarotFrame').removeAttribute('src');updateAuthUI();rvResetForm();
+    if(currentView!=='home')navigate('home');
+    const back=safeMemberReturn(new URLSearchParams(location.search).get('return'));
+    if(redirectAfter&&back)location.assign(back);
+  }
+  async function restoreMemberSession(){
+    const seq=++memberSessionCheckSeq;
+    const params=new URLSearchParams(location.search);
+    if(params.get('logout')==='1'){
+      try{await logoutMemberNow(true)}catch(err){showNotice('issueNotice','登出未完成：'+err.message,'err');alert('登出未完成：'+err.message)}
+      return;
+    }
+    const token=savedSession();
+    if(!token){verifiedSessionMember=null;updateAuthUI();return}
+    try{
+      const r=await fetch(API_MEMBER+'/auth/session',{cache:'no-store',headers:{Accept:'application/json',Authorization:'Bearer '+token}});
+      const j=await r.json().catch(()=>null);
+      if(seq!==memberSessionCheckSeq||token!==savedSession())return;
+      if(!r.ok||!j?.success)throw Error(j?.error||'SESSION_UNAVAILABLE');
+      if(j.authenticated&&j.member?.sub){
+        verifiedSessionMember=j.member;updateAuthUI();if(currentView==='bazi')loadBazi();returnAfterLogin();
+      }else{verifiedSessionMember=null;storeSession('');updateAuthUI()}
+    }catch(err){console.warn('Member Session verification failed:',err?.message);verifiedSessionMember=null;updateAuthUI()}
+  }
   function init(){
     initReturnToSource();
     $('memberAnnouncementToggle').addEventListener('click',()=>{const root=$('memberAnnouncement'),toggle=$('memberAnnouncementToggle');const expanded=root.classList.toggle('is-expanded');toggle.setAttribute('aria-expanded',String(expanded));toggle.textContent=expanded?'收合公告 ↑':'展開完整公告 ↓';});
@@ -809,15 +858,12 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     for(const tool of tools){const row=document.querySelector(`[data-tool="${tool}"]`);for(const button of row.querySelectorAll('[data-health-state]'))button.addEventListener('click',()=>changeHealthState(tool,button.dataset.healthState))}
     $('baziRefresh').addEventListener('click',loadBazi);
     $('chatForm').addEventListener('submit',sendChat);$('chatText').addEventListener('input',()=>{$('chatCounter').textContent=[...$('chatText').value].length+' / 500 字';$('chatSend').disabled=!chatData?.open||!$('chatText').value.trim()||(chatData.messages||[]).filter(m=>m.role==='member').length>=6});$('chatThreadSelect').addEventListener('change',()=>{selectedChatId=Number($('chatThreadSelect').value)||null;refreshMemberChat()});
-    $('logout').addEventListener('click',()=>{
+    $('logout').addEventListener('click',async()=>{
       if(!profile()){setHeaderLoginMenu($('headerLoginMenu').hidden);return;}
-      // 會員主動登出後，同一顆按鈕立即變回「免費登入」，Google 登入從原位置展開。
-      putToken('');
-      try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
-      $('tarotFrame').removeAttribute('src');
-      updateAuthUI();
-      rvResetForm();
-      if(currentView!=='home')navigate('home');
+      const button=$('logout');button.disabled=true;
+      try{await logoutMemberNow(new URLSearchParams(location.search).get('logout')==='1')}
+      catch(e){$('loginMessage').textContent='登出未完成：'+e.message;alert('登出未完成，請勿視為已登出：'+e.message)}
+      finally{button.disabled=false}
     });
     document.addEventListener('click',event=>{
       if(!$('headerLoginMenu').hidden&&!$('headerMemberAuth').contains(event.target))setHeaderLoginMenu(false);
@@ -827,7 +873,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     });
     $('themeToggle').addEventListener('click',()=>{const t=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=t;try{localStorage.setItem('divinationhub-color-theme',t)}catch(_){};for(const f of [$('tarotFrame')]){try{if(f.contentDocument?.documentElement)f.contentDocument.documentElement.dataset.theme=t}catch(_){}}});
     for(const id of ['tarotFrame'])$(id).addEventListener('load',()=>adjustEmbeddedFrame($(id)));
-    addEventListener('hashchange',showPage);addEventListener('popstate',showPage);addEventListener('storage',e=>{if(e.key===AUTH_KEY){updateAuthUI();if(currentView==='bazi')loadBazi();if(currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1'}}});
+    addEventListener('hashchange',showPage);addEventListener('popstate',showPage);addEventListener('storage',e=>{if(e.key==='divinationhub-auth-event'){let notice;try{notice=JSON.parse(e.newValue||'null')}catch(_){}if(notice?.kind==='logout'){verifiedSessionMember=null;storeSession('');putToken('');updateAuthUI();}if(notice?.kind==='login')restoreMemberSession();}if(e.key===SESSION_KEY){restoreMemberSession();}if(e.key===AUTH_KEY&&currentView==='tarot'&&$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1';}});
     setInterval(refreshMaintenanceStatus,30000);
     setInterval(()=>{if(currentView==='home'&&!document.hidden)refreshMemberAnnouncement()},60000);
     // 對話訊息獨立加快為約 5 秒同步；只有已登入且會員首頁在前景時執行。
@@ -842,6 +888,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(currentView==='home')refreshMemberAnnouncement(true);refreshMaintenanceStatus();pollMemberIssueChat();rvRefreshMineQuiet();if(currentView==='home')rvLoadPublished()}});
     window.addEventListener('focus',()=>{rvRefreshMineQuiet();if(currentView==='home')rvLoadPublished()});
     reviewInit();showPage();updateAuthUI();
+    restoreMemberSession();
     if(new URLSearchParams(location.search).get('submitReview')==='1'){
       setTimeout(()=>{if(currentView==='home')$('reviewSection')?.scrollIntoView({behavior:'smooth',block:'start'})},220);
     }
