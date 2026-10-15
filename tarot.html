@@ -3205,6 +3205,49 @@ html[data-theme="light"] .tarot-meaning-group-meta{color:#9877a1}
   .topic-choice-grid .choice-card.is-option-open,.question-grid .question-card.is-option-open,.draw-mode-grid .draw-mode-card.is-option-open{animation:none!important}
 }
 </style>
+<style id="tarot-question-uniform-v4">
+/* 2026-10-15: Every question occupies the same visual footprint.
+   Applies in responsive auto mode AND when smartphone layout is selected
+   on a wide desktop screen. No change to access/rotation/event logic. */
+.question-grid{grid-auto-rows:1fr;align-items:stretch}
+.question-grid .question-card,
+.question-grid .question-card.is-option-open,
+.question-grid .question-card.is-option-locked,
+.question-grid .question-card.v2814-locked,
+html[data-tarot-layout="mobile"] .question-grid .question-card{
+  display:flex;flex-direction:column;align-items:stretch;justify-content:center;
+  box-sizing:border-box;min-height:84px!important;
+  padding:27px 12px 9px!important;
+  border-radius:12px;
+  height:100%;
+}
+.question-grid .question-card > span:first-child{
+  position:absolute;top:10px;left:12px;
+  margin:0!important;padding:0!important;line-height:1.2;
+}
+.question-grid .question-card > b{
+  display:block;flex:0 0 auto;
+  margin:0!important;padding:0!important;
+  font-size:.86rem;line-height:1.43;overflow-wrap:anywhere;
+}
+.question-grid .question-card .v2814-lock-badge,
+.question-grid .question-card .tarot-available-indicator{
+  position:absolute!important;top:8px!important;right:8px!important;
+  left:auto!important;bottom:auto!important;
+  margin:0!important;padding:3px 7px!important;
+  line-height:1.2!important;
+}
+/* The locked-state explanation is already at the top of the selection step,
+   so don't duplicate it inside every locked question tile. */
+.question-grid .question-card .v2814-lock-note{display:none!important}
+@media (max-width:360px){
+ .question-grid .question-card,
+ html[data-tarot-layout="mobile"] .question-grid .question-card{min-height:90px!important;padding:27px 10px 9px!important}
+ .question-grid .question-card > span:first-child{left:10px}
+ .question-grid .question-card > b{font-size:.83rem}
+}
+</style>
+
 
 </head>
 <body>
@@ -4751,7 +4794,7 @@ html[data-theme="light"] .tarot-meaning-group-meta{color:#9877a1}
     els.qctx.textContent=free?'不限主題｜請輸入你真正想釐清的一件事情。':`${state.topic.name} → ${state.scenario.name}｜9 道固定題目，訪客每日輪替開放約一半；免費登入全開。`;
     const fixed=qs.map((q,i)=>{
       const allowed=questionAllowedForCurrentUser(i);
-      return `<button type="button" class="question-card ${allowed?'is-option-open question-ready':'v2814-locked is-option-locked'}" data-question="${esc(q.id)}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b>${allowed?'<span class="tarot-available-indicator" aria-hidden="true">✓ 可選 →</span>':lockedBadgeHTML('member','明日免費開放')}</button>`;
+      return `<button type="button" class="question-card ${allowed?'is-option-open question-ready':'v2814-locked is-option-locked'}" data-question="${esc(q.id)}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b>${allowed?'<span class="tarot-available-indicator" aria-hidden="true">✓ 可選 →</span>':lockedBadgeHTML('member','')}</button>`;
     }).join('');
     els.question.innerHTML=fixed+customFormHTML(free);
     const qHint=$('tarotQuestionTapHint');if(qHint){const n=qs.filter((_,i)=>questionAllowedForCurrentUser(i)).length;qHint.hidden=free;qHint.textContent='✓ 亮色題目今天可選（'+n+' 題）　·　灰色題目需解鎖';}
