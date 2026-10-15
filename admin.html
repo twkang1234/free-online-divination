@@ -264,7 +264,7 @@ td.muted{color:var(--muted)}
     <details class="section member-usage-box" id="memberUsagePanel">
       <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設收合｜依成功起盤排行）</small></span></summary>
       <div class="member-usage-body">
-        <p class="member-usage-note">僅統計已登入會員成功完成的起盤、抽牌或起卦；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>需各工具接入成功事件後才會有資料。</strong></p>
+        <p class="member-usage-note">僅統計已登入會員成功完成的起盤、抽牌或起卦；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>八字、塔羅、易經已接入成功事件；啟用統計後才開始累計，不回填過去紀錄。</strong></p>
         <div class="member-usage-settings">
           <div class="member-usage-settings-head"><strong style="font-size:.86rem">統計模式</strong><span class="member-usage-status" id="memberUsageModeTime">尚未讀取設定</span></div>
           <div class="member-usage-fields">
@@ -788,7 +788,7 @@ async function loadMemberUsageLeaderboard(preserveStatus=false){
   try{
     const r=await usageAdminRequest('/admin/member-usage/leaderboard?period='+encodeURIComponent(memberUsagePeriod)+'&limit='+encodeURIComponent(limit));
     if(seq!==memberUsageRequestSeq||!$('memberUsagePanel').open)return;
-    if(!r.rows?.length){$('memberUsageResults').textContent='這段期間尚無可顯示的會員成功起盤紀錄。若尚未接入工具成功事件，排行榜會保持空白。';return}
+    if(!r.rows?.length){$('memberUsageResults').textContent='這段期間尚無可顯示的會員成功起盤紀錄。請確認已啟用「精簡」或「完整」模式，再以一般登入會員成功使用工具。';return}
     $('memberUsageResults').innerHTML=`<table aria-label="會員起盤排行榜"><thead><tr><th>排名</th><th>會員</th><th class="mobile-hide">最近使用</th><th>起盤</th><th class="mobile-hide">AI 成功</th><th>詳細</th></tr></thead><tbody>${r.rows.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(m.name||'—')}<small style="display:block;color:#91a2b5;overflow-wrap:anywhere">${esc(m.email||'')}</small></td><td class="mobile-hide muted">${fmt(m.lastUsedAt)}</td><td><strong>${Number(m.castCount||0)}</strong></td><td class="mobile-hide">${Number(m.aiCount||0)}</td><td><button class="btn secondary" type="button" data-usage-member="${esc(m.googleSub)}">查看</button></td></tr>`).join('')}</tbody></table>`;
     for(const btn of $('memberUsageResults').querySelectorAll('[data-usage-member]'))btn.addEventListener('click',()=>loadMemberUsageDetails(btn.dataset.usageMember));
   }catch(e){if(seq===memberUsageRequestSeq){$('memberUsageResults').textContent='讀取排行榜失敗';usageStatus(e.message,true)}}
@@ -828,7 +828,7 @@ $('memberUsageSave').addEventListener('click',async()=>{
   try{
     const r=await usageAdminRequest('/admin/member-usage/settings','POST',{mode});
     $('memberUsageModeTime').textContent='上次儲存：'+fmt(r.updatedAt);
-    usageStatus('統計設定已儲存：'+name+'。若各命理工具尚未接入成功事件，仍不會產生資料。');
+    usageStatus('統計設定已儲存：'+name+'。三項工具成功事件已接入，關閉期間不補記。');
     await loadMemberUsageLeaderboard(true);
   }catch(e){usageStatus('儲存設定失敗：'+e.message,true)}finally{btn.disabled=false}
 });

@@ -3023,6 +3023,50 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
   const BAZI_AUTH_KEY = 'divinationhub-bazi-google-credential';
   const BAZI_SESSION_KEY='divinationhub-auth-session-v1';
   let baziSessionMember=null; // only after BOTH Worker checks pass
+  // 次要會員統計：只在已驗證會員「成功使用」後執行；完全關閉不會 POST 寫入。
+  // 關閉／精簡／完整模式由 member-api 控制，失敗絕不影響排盤或 AI。
+  let baziUsageModeCache={mode:'off',until:0,pending:null};
+  async function baziUsageMode(){
+    const c=baziUsageModeCache;
+    if(Date.now()<c.until)return c.mode;
+    if(c.pending)return c.pending;
+    c.pending=(async()=>{
+      try{
+        const r=await fetch(MEMBER_API_BASE+'/member-usage/mode',{method:'GET',cache:'no-store'});
+        const j=await r.json();
+        c.mode=r.ok&&j?.success&&['simple','full'].includes(j.mode)?j.mode:'off';
+      }catch(_err){c.mode='off';}
+      finally{c.until=Date.now()+60000;c.pending=null;}
+      return c.mode;
+    })();
+    return c.pending;
+  }
+  function baziAiUsageCategory(topic){
+    const s=String(topic||'');
+    if(s.includes('感情')||s.includes('婚姻'))return '感情';
+    if(s.includes('工作'))return '工作';
+    if(s.includes('事業'))return '事業';
+    if(s.includes('財')||s.includes('理財'))return '財運';
+    if(s.includes('學'))return '學業';
+    return '其他';
+  }
+  function baziTrackUsage(event,category=''){
+    if(location.protocol==='file:'||(new URLSearchParams(location.search).has('admin')||new URLSearchParams(location.search).has('admin-test'))||!baziSessionMember?.sub)return;
+    const memberSub=baziSessionMember.sub,token=baziStoredSession();
+    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;
+    // Fire-and-forget；重新整理／切換頁面仍有機會完成請求；不儲存問題內文。
+    void (async()=>{
+      if(await baziUsageMode()==='off')return;
+      if(baziSessionMember?.sub!==memberSub||baziStoredSession()!==token)return;
+      try{
+        await fetch(MEMBER_API_BASE+'/member-usage/record',{
+          method:'POST',cache:'no-store',keepalive:true,
+          headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+          body:JSON.stringify({tool:'bazi',event,category,count:1})
+        });
+      }catch(_err){/* 統計為次要功能；不影響占卜成果。 */}
+    })();
+  }
   function baziStoredSession(){try{return localStorage.getItem(BAZI_SESSION_KEY)||''}catch(_){return ''}}
   function baziHeaderForAuth(){const t=baziAuthToken();return t?{Authorization:'Bearer '+t}:{}}
 
@@ -5373,6 +5417,7 @@ ${tasks}
         document.getElementById('baziGeminiCopy').hidden=false;
         document.getElementById('baziGeminiDownload').hidden=false;
         baziAiShowSuccess(msg,j,'full','AI 完整解讀已產生。');
+        if(String(j.reading||'').trim())baziTrackUsage('ai_success',baziAiUsageCategory(topic));
         baziGeminiRefreshQuota();
         document.getElementById('baziGeminiOutput').scrollIntoView({behavior:'smooth',block:'nearest'});
       }catch(err){baziAiShowError(msg,aiDiagnostic,err?.message||'AI 解讀失敗','full');baziGeminiRefreshQuota()}
@@ -5477,6 +5522,7 @@ ${intent}
         }
         lastAnswer=String(j.reading||'');if(!lastAnswer)throw Error('AI 未回傳有效內容，請稍後再試。');
         renderBaziAiMarkdown(reading,lastAnswer);answer.hidden=false;baziAiShowSuccess(msg,j,key,'此分區的 AI 解讀已完成。');
+        baziTrackUsage('ai_success',baziAiUsageCategory(topic));
         baziGeminiRefreshQuota();
         answer.scrollIntoView({behavior:'smooth',block:'nearest'});
         trackAction(`section-gemini-${key}-${mode}`);
@@ -6515,6 +6561,8 @@ ${intent}
       renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);renderMonthFlows(data);initSectionDecodeUI();resetExploration();
       emptyState.style.display='none';if(reveal){results.classList.add('show');document.body.classList.remove('show-bazi-intro');document.body.classList.add('has-bazi-chart');}
       if (scroll) setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+      // 只在使用者主動按「排八字」且成功完成排盤時紀錄。
+      if(countUsage&&reveal)baziTrackUsage('cast','');
     }catch(err){
       console.error('[Bazi API]',err);
       if (scroll) alert(err&&err.message?err.message:String(err));

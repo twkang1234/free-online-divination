@@ -4374,6 +4374,52 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   const TAROT_AUTH_KEY='divinationhub-bazi-google-credential';
   const TAROT_SESSION_KEY='divinationhub-auth-session-v1';
   let tarotSessionMember=null; // 僅在 member-api 與 tarot-api 雙重驗證後設定
+  // 次要會員統計：只在已驗證會員「成功使用」後執行；完全關閉不會 POST 寫入。
+  // 關閉／精簡／完整模式由 member-api 控制，失敗絕不影響排盤或 AI。
+  let tarotUsageModeCache={mode:'off',until:0,pending:null};
+  async function tarotUsageMode(){
+    const c=tarotUsageModeCache;
+    if(Date.now()<c.until)return c.mode;
+    if(c.pending)return c.pending;
+    c.pending=(async()=>{
+      try{
+        const r=await fetch(MEMBER_API_BASE+'/member-usage/mode',{method:'GET',cache:'no-store'});
+        const j=await r.json();
+        c.mode=r.ok&&j?.success&&['simple','full'].includes(j.mode)?j.mode:'off';
+      }catch(_err){c.mode='off';}
+      finally{c.until=Date.now()+60000;c.pending=null;}
+      return c.mode;
+    })();
+    return c.pending;
+  }
+  function tarotUsageCategory(){
+    const topic=state.topic?.id||'',scenario=state.scenario?.id||'';
+    if(topic==='love'){
+      if(scenario==='breakup')return '分手';
+      if(scenario==='marriage')return '婚姻';
+      return '感情';
+    }
+    if(topic==='work')return scenario==='business'?'事業':scenario==='study'?'學業':'工作';
+    if(topic==='money')return '財運';
+    return '其他';
+  }
+  function tarotTrackUsage(event,category=''){
+    if(location.protocol==='file:'||(isAdminTestActive()||!!state.batchTest||!!state.fixedCaseId)||!tarotSessionMember?.sub)return;
+    const memberSub=tarotSessionMember.sub,token=tarotStoredSession();
+    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;
+    // Fire-and-forget；重新整理／切換頁面仍有機會完成請求；不儲存問題內文。
+    void (async()=>{
+      if(await tarotUsageMode()==='off')return;
+      if(tarotSessionMember?.sub!==memberSub||tarotStoredSession()!==token)return;
+      try{
+        await fetch(MEMBER_API_BASE+'/member-usage/record',{
+          method:'POST',cache:'no-store',keepalive:true,
+          headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+          body:JSON.stringify({tool:'tarot',event,category,count:1})
+        });
+      }catch(_err){/* 統計為次要功能；不影響占卜成果。 */}
+    })();
+  }
   const TAROT_LOCAL_MEMBER_KEY='divinationhub-tarot-local-member-preview';
   const MEMBER_API_BASE='https://member-api.ezgocpu.workers.dev';
   const ADMIN_API_BASE='https://admin-api.ezgocpu.workers.dev';
@@ -5582,6 +5628,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
     setTimeout(()=>$('readingZone').scrollIntoView({behavior:'smooth',block:'center'}),50);
     const ok=await renderFullReading();
+    if(!state.usageCounted&&state.current?.length===3){state.usageCounted=true;tarotTrackUsage('cast',tarotUsageCategory());}
   }
 
   function buildCard(card,index){const slot=document.createElement('div');slot.className='tarot-slot';slot.innerHTML=`<div class="position-label">${esc(card.position)}</div>`;const wrap=document.createElement('div');wrap.className='tarot-card';wrap.style.setProperty('--delay',`${index*90}ms`);wrap.dataset.index=index;wrap.tabIndex=0;wrap.setAttribute('role','button');wrap.setAttribute('aria-label',`${card.position}，點擊翻牌`);const frontClass=card.reversed?'card-front reversed-content':'card-front';wrap.innerHTML=`<div class="card-inner"><div class="card-face card-back"><div class="back-sigil">✺</div></div><div class="card-face ${frontClass}"><div class="card-content"><div class="card-number">${esc(card.number)} · ${esc(card.suit)}</div><div class="arcana-symbol">${esc(card.symbol)}</div><div class="card-name">${esc(card.name)}</div><div class="card-en">${esc(card.en)}</div><div class="orientation">${card.reversed?'逆位 REVERSED':'正位 UPRIGHT'}</div></div></div></div>`;const hint=document.createElement('div');hint.className='reveal-hint';hint.textContent='點擊翻牌';const reveal=()=>revealCard(index,wrap,hint);wrap.addEventListener('click',reveal);wrap.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();reveal();}});slot.append(wrap,hint);return slot;}
@@ -5592,7 +5639,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     try{
       if(startBtn){startBtn.disabled=true;startBtn.textContent='正在準備抽牌方式…';}
       document.getElementById('tarotSixExtraCards')?.remove();clear3x3();state.stage3x3='first';state.firstPromptSnapshot='';state.firstAiInterpretationCompleted=false;state.sixPromptSnapshot='';state.sixPromptCopied=false;state.followFormOpen=false;state.followChoice='same';state.followText='';state.advanceSpreadKey='';state.archiveRecordId='';state.readingId='';state.advancedCards=[];selectedSixPromptFormat='A';state.firstDrawMode='';state.aiGuidanceStage='idle';state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();
-      state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;
+      state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;state.usageBCounted=false;
       state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.singleReadingHTML='';state.followupOptions=[];
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
       els.cards.innerHTML='';els.cards.className='cards';els.interp.innerHTML='';els.interp.classList.remove('show');const meaningGroup=$('tarotMeaningGroup');if(meaningGroup){meaningGroup.open=false;meaningGroup.hidden=true;}els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
@@ -5603,7 +5650,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       return true;
     }catch(e){showTarotApiError(e);return false;}finally{if(startBtn){startBtn.disabled=false;if(old)startBtn.textContent=old;}}
   }
-  function revealCard(i,wrap,hint){if(!state.current[i]||state.revealed.has(i))return;state.revealed.add(i);wrap.classList.add('revealed');hint.textContent=state.current[i].reversed?'逆位':'正位';renderMeanings();if(state.revealed.size===state.current.length){$('revealAllBtn').disabled=true;renderFullReading();els.follow.hidden=true;els.followResult.hidden=true;}}
+  function revealCard(i,wrap,hint){if(!state.current[i]||state.revealed.has(i))return;state.revealed.add(i);wrap.classList.add('revealed');hint.textContent=state.current[i].reversed?'逆位':'正位';renderMeanings();if(state.revealed.size===state.current.length){$('revealAllBtn').disabled=true;renderFullReading();if(!state.usageCounted&&state.current.length===3){state.usageCounted=true;tarotTrackUsage('cast',tarotUsageCategory());}els.follow.hidden=true;els.followResult.hidden=true;}}
   function revealAll(){els.cards.querySelectorAll('.tarot-card').forEach((w,i)=>{const h=w.parentElement.querySelector('.reveal-hint');revealCard(i,w,h);});}
   // V28.9：兩輪三張牌共用同一組卡片 HTML，避免折疊區塊版面不一致。
   function meaningCardHTML(c,index){
@@ -5759,6 +5806,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     cachedV1Prompt={key:'',text:''};inflightV1Prompt=null;
     els.workspace.classList.remove('tarot-followup-drawing');
     renderSixCards();renderFullReading();persist3x3();syncNewQuestionUI();
+    if(!state.usageBCounted){state.usageBCounted=true;tarotTrackUsage('cast',tarotUsageCategory());}
     setTimeout(()=>els.analysis.scrollIntoView({behavior:'smooth',block:'start'}),120);
   }
   function beginFollowupDraw(){
@@ -6141,6 +6189,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       if(state.readingId!==readingId)return;
       state.advancedCards=pack.cards;state.advancedReadingHTML=pack.readingHTML;state.integrationHTML=pack.integrationHTML;state.integrationText=pack.integrationText||[];
       restoreDrawHosts();saveReadingProgress();renderReaderShell();refreshPaidAccess();updateQuotaUI();renderFinish();$('tarotAdvancedResult')?.scrollIntoView({behavior:'smooth',block:'start'});
+      if(!state.usageBCounted){state.usageBCounted=true;tarotTrackUsage('cast',tarotUsageCategory());}
     }catch(e){
       if(state.readingId!==readingId)return;
       host.innerHTML=`<div class="ritual-result-grid">${state.bDraft.current.map(formalResultCard).join('')}</div><p role="alert">這次解讀未完成，已保留你選出的三張牌，可重試。</p><button type="button" class="btn-primary" data-retry-b>使用同三張牌重試</button>`;showPaidError(e,'advanced');
@@ -6321,6 +6370,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
         }
       }
       status.textContent=`${aiPhaseName(phase)}完成｜通道 ${data.channel||'—'}｜追蹤碼：${data.traceId||'—'}`;
+      tarotTrackUsage('ai_success',tarotUsageCategory());
       if(phase==='three'){state.firstAiInterpretationCompleted=true;persist3x3();setAIGuidanceStage('return');}
       renderFinish();updateAccessMini();updateQuotaUI();renderAdminTestBanner();
     }catch(e){

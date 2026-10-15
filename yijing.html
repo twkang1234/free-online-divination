@@ -1545,6 +1545,54 @@ function cardHTML(h, lines, label, movingLines=[]){
   const YIJING_ADMIN_TEST_KEY='divinationhub-yijing-admin-test-v1';
   let guestPolicyCache=null, memberPolicyCache=null;
   let yijingSessionMember=null, yijingSessionSeq=0, yijingSessionChecking=false;
+  // 次要會員統計：只在已驗證會員「成功使用」後執行；完全關閉不會 POST 寫入。
+  // 關閉／精簡／完整模式由 member-api 控制，失敗絕不影響排盤或 AI。
+  let yijingUsageModeCache={mode:'off',until:0,pending:null};
+  async function yijingUsageMode(){
+    const c=yijingUsageModeCache;
+    if(Date.now()<c.until)return c.mode;
+    if(c.pending)return c.pending;
+    c.pending=(async()=>{
+      try{
+        const r=await fetch(MEMBER_API_BASE+'/member-usage/mode',{method:'GET',cache:'no-store'});
+        const j=await r.json();
+        c.mode=r.ok&&j?.success&&['simple','full'].includes(j.mode)?j.mode:'off';
+      }catch(_err){c.mode='off';}
+      finally{c.until=Date.now()+60000;c.pending=null;}
+      return c.mode;
+    })();
+    return c.pending;
+  }
+  function yijingUsageCategory(){
+    const topic=state.topic?.id||'',scenario=state.scenario?.id||'';
+    if(topic==='love'){
+      if(scenario==='breakup')return '分手';
+      if(scenario==='reconcile')return '復合';
+      return '感情';
+    }
+    if(topic==='work')return '工作';
+    if(topic==='business')return '事業';
+    if(topic==='finance')return '財運';
+    if(topic==='people')return '人際';
+    return '其他';
+  }
+  function yijingTrackUsage(event,category=''){
+    if(location.protocol==='file:'||(adminEntryRequested()||isAdminTestActive())||!yijingSessionMember?.sub)return;
+    const memberSub=yijingSessionMember.sub,token=yijingSavedSession();
+    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;
+    // Fire-and-forget；重新整理／切換頁面仍有機會完成請求；不儲存問題內文。
+    void (async()=>{
+      if(await yijingUsageMode()==='off')return;
+      if(yijingSessionMember?.sub!==memberSub||yijingSavedSession()!==token)return;
+      try{
+        await fetch(MEMBER_API_BASE+'/member-usage/record',{
+          method:'POST',cache:'no-store',keepalive:true,
+          headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+          body:JSON.stringify({tool:'yijing',event,category,count:1})
+        });
+      }catch(_err){/* 統計為次要功能；不影響占卜成果。 */}
+    })();
+  }
   let paidPreviewActive=false; // 僅供本機預覽；正式付費額度日後由 payment-api / D1 驗證。
   let adminTestAuthorized=false, adminTestMode='normal', adminTestUsage=0, adminTestReturnMode='member';
   const ADMIN_TEST_MODES={
@@ -2090,7 +2138,7 @@ function cardHTML(h, lines, label, movingLines=[]){
     clearCastTimers();
     const panel=document.querySelector(`[data-cast-panel="${cast.mode}"]`);panel?.classList.add('cast-working');
     const oldText=button?.textContent;if(button){button.disabled=true;button.textContent=state.custom?'正在形成卦象與 AI 提示詞…':'正在形成卦象與解讀…';}
-    try{const reading=await YijingCore.draw(data.q,data.context);markReadingUsed();render(reading);}
+    try{const reading=await YijingCore.draw(data.q,data.context);markReadingUsed();render(reading);yijingTrackUsage('cast',yijingUsageCategory());}
     catch(err){console.error(err);alert(err?.message||(state.custom?'目前無法完成起卦或產生提示詞，請稍後再試。':'目前無法取得解卦結果，請稍後再試。'));}
     finally{panel?.classList.remove('cast-working');if(button){button.disabled=false;if(oldText)button.textContent=oldText;}}
   }
