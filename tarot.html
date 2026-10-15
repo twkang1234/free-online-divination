@@ -5667,8 +5667,12 @@ html[data-tarot-layout="mobile"]{
   }
   function renderFinish(){
     if(state.stage3x3==='complete'){
-      const logged=isLogged()&&!isAdminTestActive();
-      els.finish.innerHTML=`<h4 class="v285-journey-title">本次 3＋3 六張牌已完成</h4><p class="v285-journey-desc">兩組不同牌陣已完成。請在上方選擇解讀格式與老師風格，由系統自動選擇可用 AI 進行六張牌整合解讀。</p><div class="v285-journey-progress">第一組：${esc(state.question.spread.name)}　＋　第二組：${esc(state.question.advancedSpread?.name||'進階牌陣')}</div><div class="finish-actions v285-actions"><button type="button" class="v285-new v2810-new-main" data-new-reading><span class="v2819-new-label">開始另一個全新問題 →</span></button></div>`;
+      const sixReady=!!onsiteAiPhaseResults.auto?.six;
+      if(sixReady){
+        els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段六張牌整合解讀已完成</h4><p class="v285-journey-desc">目前的主報告是下方的<strong>六張牌 AI 整合解讀</strong>；第一階段三張牌解讀已改為選讀。</p><div class="v285-journey-progress">第一組：${esc(state.question.spread.name)}　＋　第二組：${esc(state.question.advancedSpread?.name||'進階牌陣')}</div><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-jump-six-ai>回到六張牌整合解讀 ↑</button><button type="button" class="v285-new" data-new-reading>開始另一個全新問題 →</button></div>`;
+      }else{
+        els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段三張牌已抽齊</h4><p class="v285-journey-desc">第一階段三張牌 AI 解讀已先收合。<strong>現在的重點是 3＋3 六張牌 AI 整合解讀</strong>，請直接前往下方按鈕開始。</p><div class="v285-journey-progress">第一組：${esc(state.question.spread.name)}　＋　第二組：${esc(state.question.advancedSpread?.name||'進階牌陣')}</div><div class="finish-actions v285-actions"><button type="button" class="v285-continue v2810-new-main" data-jump-six-ai>前往六張牌 AI 整合解讀 ↓</button><div class="v285-journey-sub">此時先忽略第一階段舊報告，完成六張牌整合解讀後再一起回看。</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
+      }
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }else{
@@ -5690,7 +5694,7 @@ html[data-tarot-layout="mobile"]{
     // V9: 進入六牌階段時移除三牌提示詞快取，杜絕舊預覽／剪貼簿內容混入。
     cachedV1Prompt={key:'',text:''};inflightV1Prompt=null;
     renderSixCards();renderFullReading();persist3x3();syncNewQuestionUI();
-    setTimeout(()=>document.getElementById('tarotSixExtraCards')?.scrollIntoView({behavior:'smooth',block:'start'}),100);
+    setTimeout(()=>els.analysis.scrollIntoView({behavior:'smooth',block:'start'}),120);
   }
   function beginFollowupDraw(){
     if(isGuestLoginRequired()){openMemberModal();return;}
@@ -6160,22 +6164,34 @@ html[data-tarot-layout="mobile"]{
     flushParagraph();host.replaceChildren(frag);
   }
   function aiPhaseName(phase){return phase==='six'?'第二階段｜六張牌 AI 整合解讀':'第一階段｜三張牌 AI 解讀';}
-  function renderOnsiteAiPhaseCards(root){
-    if(!root)return;
-    const host=root.querySelector('[data-site-ai-output]');if(!host)return;
-    const phases=state.stage3x3==='complete'?['three','six']:['three'];
-    host.replaceChildren();let shown=0;
-    for(const phase of phases){
-      const result=onsiteAiPhaseResults.auto?.[phase];if(!result)continue;shown++;
-      const section=document.createElement('section');section.className='tarot-ai-phase';section.dataset.siteAiPhase=phase;
-      section.innerHTML=`<h4>${aiPhaseName(phase)}｜解讀完成</h4><div class="tarot-site-ai-stats" data-site-ai-metrics></div>
+  function buildOnsiteAiPhaseSection(phase){
+    const result=onsiteAiPhaseResults.auto?.[phase];if(!result)return null;
+    const section=document.createElement('section');section.className='tarot-ai-phase';section.dataset.siteAiPhase=phase;
+    section.innerHTML=`<h4>${aiPhaseName(phase)}｜解讀完成</h4><div class="tarot-site-ai-stats" data-site-ai-metrics></div>
       <button type="button" class="tarot-site-ai-toggle" data-site-ai-toggle="top" aria-expanded="false">↓ 展開閱讀${phase==='six'?'六張牌':'三張牌'}完整解讀</button>
       <div class="tarot-site-ai-article-body" data-site-ai-article-body hidden><article class="tarot-site-ai-result" data-site-ai-answer></article>
       <button type="button" class="tarot-site-ai-toggle tarot-site-ai-toggle-bottom" data-site-ai-toggle="bottom">↑ 收合${phase==='six'?'六張牌':'三張牌'}完整解讀</button></div>
       <div class="tarot-site-ai-actions"><button type="button" data-site-ai-copy="auto:${phase}">複製解讀</button><button type="button" data-site-ai-txt="auto:${phase}">下載解讀 TXT</button></div>`;
-      section.querySelector('[data-site-ai-metrics]').textContent=`通道 ${result.channel||'—'}｜追蹤碼：${result.traceId||'—'}`;
-      renderOnsiteAiArticle(section.querySelector('[data-site-ai-answer]'),result.answer);host.appendChild(section);
-    }
+    section.querySelector('[data-site-ai-metrics]').textContent=`通道 ${result.channel||'—'}｜追蹤碼：${result.traceId||'—'}`;
+    renderOnsiteAiArticle(section.querySelector('[data-site-ai-answer]'),result.answer);
+    return section;
+  }
+  function renderOnsiteAiPhaseCards(root){
+    if(!root)return;
+    const host=root.querySelector('[data-site-ai-output]');if(!host)return;
+    host.replaceChildren();let shown=0;
+    const threeSection=buildOnsiteAiPhaseSection('three');
+    const sixSection=buildOnsiteAiPhaseSection('six');
+    if(state.stage3x3==='complete'){
+      if(sixSection){host.appendChild(sixSection);shown++;}
+      if(threeSection){
+        const wrap=document.createElement('details');wrap.className='tarot-ai-previous-stage';
+        wrap.style.cssText='margin-top:12px;border:1px solid rgba(201,173,222,.7);border-radius:16px;background:rgba(255,255,255,.66);overflow:hidden';
+        wrap.innerHTML='<summary style="cursor:pointer;padding:14px 16px;font-weight:800;color:#59446d;">查看第一階段三張牌已完成解讀（選讀）</summary>';
+        threeSection.style.margin='0';
+        wrap.appendChild(threeSection);host.appendChild(wrap);shown++;
+      }
+    }else if(threeSection){host.appendChild(threeSection);shown++;}
     host.hidden=shown===0;
   }
   function setOnsiteAiArticleExpanded(section,expanded){
@@ -6212,8 +6228,8 @@ html[data-tarot-layout="mobile"]{
       const answerRegion=root.querySelector('[data-site-ai-output]');
       if(answerRegion){root.insertBefore(answerRegion,btn);const currentPhase=answerRegion.querySelector(`[data-site-ai-phase=\"${phase}\"]`);if(currentPhase)setOnsiteAiArticleExpanded(currentPhase,true);}
       status.textContent=`${aiPhaseName(phase)}完成｜通道 ${data.channel||'—'}｜追蹤碼：${data.traceId||'—'}`;
-      if(phase==='three'){state.firstAiInterpretationCompleted=true;persist3x3();renderFinish();setAIGuidanceStage('return');}
-      updateAccessMini();updateQuotaUI();renderAdminTestBanner();
+      if(phase==='three'){state.firstAiInterpretationCompleted=true;persist3x3();setAIGuidanceStage('return');}
+      renderFinish();updateAccessMini();updateQuotaUI();renderAdminTestBanner();
     }catch(e){
       if(serial!==onsiteAiRequestSerial||!root.isConnected)return;
       lastTarotErrorTrace=String(e?.traceId||'');root.dataset.siteAiResult='failed';
@@ -6248,12 +6264,26 @@ html[data-tarot-layout="mobile"]{
     const currentKey=six?selectedSixPromptFormat:selectedPromptFormat;
     const formatButtons=Object.entries(activeFormats).map(([key,val])=>{const allowed=formatAllowedForCurrentUser(key);return `<button type="button" class="tarot-prompt-format ${key===currentKey?'is-selected':''} ${allowed?'':'v2814-locked'}" data-prompt-format="${key}" aria-pressed="${key===currentKey}" aria-label="解讀格式 ${key}：${esc(val.name)}"><b>${key}｜${esc(val.name)}</b><small>${esc(val.short)}</small>${allowed?'':rotatingBadgeForCurrentUser('明日開放')}</button>`}).join('');
     const styleOptions=Object.entries(PROMPT_STYLES).map(([key,val])=>`<option value="${key}"${key===selectedPromptStyle?' selected':''}>${esc(val.name)}${key==='warm'?'（預設）':''}</option>`).join('');
-    els.analysis.innerHTML=`<section class="tarot-ai-entry"><div class="analysis-kicker">${six?'SIX CARDS · AI READING':'THREE CARDS · AI READING'}</div><h3 class="v2810-prompt-title">${six?'第二階段｜六張牌整合解讀':'第一階段｜三張牌 AI 解讀'}</h3><p>選擇解讀格式及老師風格，由站內 AI 自動調度提供完整解讀。</p>
-      <div class="tarot-prompt-choices"><div class="tarot-prompt-label">① 解讀格式 <span>選一種報告架構</span></div><div class="tarot-prompt-format-grid" role="group" aria-label="選擇 AI 解讀格式">${formatButtons}</div><p class="tarot-prompt-hint" data-format-hint>${esc(activeFormats[currentKey].hint)}</p>
-      <label class="tarot-prompt-label" for="tarotPromptStyle">② 老師風格 <span>每次只選一種</span></label><select id="tarotPromptStyle" class="tarot-prompt-style" data-prompt-style aria-label="選擇 AI 解讀風格">${styleOptions}</select><p class="tarot-prompt-hint" data-style-hint>${esc(PROMPT_STYLES[selectedPromptStyle].hint)}</p></div>
+    const settingsBlock=`<div class="tarot-prompt-choices"><div class="tarot-prompt-label">① 解讀格式 <span>選一種報告架構</span></div><div class="tarot-prompt-format-grid" role="group" aria-label="選擇 AI 解讀格式">${formatButtons}</div><p class="tarot-prompt-hint" data-format-hint>${esc(activeFormats[currentKey].hint)}</p>
+      <label class="tarot-prompt-label" for="tarotPromptStyle">② 老師風格 <span>每次只選一種</span></label><select id="tarotPromptStyle" class="tarot-prompt-style" data-prompt-style aria-label="選擇 AI 解讀風格">${styleOptions}</select><p class="tarot-prompt-hint" data-style-hint>${esc(PROMPT_STYLES[selectedPromptStyle].hint)}</p></div>`;
+    const intro=six
+      ?'<p>第一階段三張牌 AI 解讀已完成。現在請聚焦 <strong>3＋3 六張牌整合解讀</strong>；下方會先沿用目前設定，你也可以展開修改。</p>'
+      :'<p>選擇解讀格式及老師風格，由站內 AI 自動調度提供完整解讀。</p>';
+    const focusNote=six
+      ?`<div style="margin:0 0 14px;padding:12px 14px;border:1px solid rgba(204,125,232,.35);border-radius:16px;background:rgba(246,233,250,.7);color:#5b446d;"><strong style="display:block;margin-bottom:6px;">第一階段三張牌解讀已完成</strong><span>現在的重點是 <strong>3＋3 六張牌 AI 整合解讀</strong>。下方按鈕會直接開始整合；第一階段舊解讀已暫時收合為選讀。</span></div>`
+      :'';
+    const settingsHtml=six
+      ?`<details class="tarot-six-settings" style="margin:0 0 14px;border:1px solid rgba(204,125,232,.28);border-radius:16px;background:rgba(255,255,255,.76);padding:0;"><summary style="cursor:pointer;padding:14px 16px;font-weight:800;color:#5c486f;">目前設定｜${esc(activeFormats[currentKey].name)} · ${esc(PROMPT_STYLES[selectedPromptStyle].name)} <span style="font-weight:600;color:#a06bc5;">（點此修改）</span></summary><div style="padding:0 14px 14px;">${settingsBlock}</div></details>`
+      :settingsBlock;
+    const aiLead=six
+      ?'兩組三張牌都已完成抽牌。點擊下方按鈕後，站內 AI 會整合六張牌產生一份新的完整報告。'
+      :'三張牌與 3＋3 六張牌，每次成功完成 AI 解讀才扣 1 次；若服務故障，系統自動切換其他 AI，全部失敗不扣次。';
+    els.analysis.innerHTML=`<section class="tarot-ai-entry"><div class="analysis-kicker">${six?'SIX CARDS · AI READING':'THREE CARDS · AI READING'}</div><h3 class="v2810-prompt-title">${six?'第二階段｜六張牌整合解讀':'第一階段｜三張牌 AI 解讀'}</h3>${intro}
+      ${focusNote}
+      ${settingsHtml}
       <section class="tarot-site-ai" aria-label="站內 AI 塔羅解讀" data-site-ai>
         <h4>✦ 站內 AI 專業解讀 <small>系統自動選擇可用通道</small></h4>
-        <p>三張牌與 3＋3 六張牌，每次成功完成 AI 解讀才扣 1 次；若服務故障，系統自動切換其他 AI，全部失敗不扣次。</p>
+        <p>${aiLead}</p>
         <div class="tarot-site-ai-stats" data-site-ai-quota>正在確認今日 AI 解讀次數…</div>
         <p class="tarot-ai-shared-note">登入前的訪客額度與免費會員額度分開計算。首次登入後可重新取得會員每日 3 次；曾登入的裝置必須重新登入才能解讀。</p>
         <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>✦ 開始站內 AI 解讀</button>
@@ -6357,6 +6387,14 @@ html[data-tarot-layout="mobile"]{
     if(e.target.closest('[data-open-second]')){
       if(!firstStageReadyForFollowup()){els.analysis.scrollIntoView({behavior:'smooth',block:'start'});const s=els.analysis.querySelector('[data-ai-copy-status]');if(s)s.textContent='請先完成第一階段站內 AI 解讀，再繼續第二階段。';return;}
       state.followFormOpen=true;state.followChoice=state.followChoice||'same';renderFinish();persist3x3();return;
+    }
+    if(e.target.closest('[data-jump-six-ai]')){
+      const sixSection=els.analysis.querySelector('[data-site-ai-phase="six"]');
+      if(sixSection){setOnsiteAiArticleExpanded(sixSection,true);sixSection.scrollIntoView({behavior:'smooth',block:'start'});}else{
+        els.analysis.scrollIntoView({behavior:'smooth',block:'start'});
+        els.analysis.querySelector('[data-site-ai-run]')?.focus({preventScroll:true});
+      }
+      return;
     }
     if(e.target.closest('[data-start-follow]')){beginFollowupDraw();return;}
     if(e.target.closest('[data-new-reading]')){confirmNewTarotReading();return;}
