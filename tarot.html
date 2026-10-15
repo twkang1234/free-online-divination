@@ -3358,6 +3358,14 @@ html[data-theme="light"] .tarot-six-cards-optional{background:#faf8fc;border-col
 html[data-tarot-layout="mobile"] #readingWorkspace.tarot-six-stage .reading-analysis{padding:9px!important}
 html[data-tarot-layout="mobile"] #readingWorkspace.tarot-six-stage .tarot-prompt-format{min-height:53px}
 @media(prefers-reduced-motion:reduce){#readingWorkspace.tarot-six-stage .tarot-site-ai-run{animation:none!important}}
+
+/* Completed AI reports: no second generation action; only reading, copy and TXT remain. */
+.tarot-site-ai[data-site-ai-result="success"] [data-site-ai-run],
+.tarot-site-ai [data-site-ai-run][hidden]{display:none!important}
+.tarot-six-end-actions{flex-direction:column;align-items:center;gap:10px}
+.tarot-restart-warning{margin:0 auto;max-width:470px;padding:0 5px;text-align:center;color:var(--dim);font-size:.76rem;line-height:1.7;overflow-wrap:anywhere}
+html[data-theme="light"] .tarot-restart-warning{color:#776681}
+@media(max-width:700px){.tarot-restart-warning{font-size:.75rem;line-height:1.65;max-width:320px}}
 </style>
 </head>
 <body>
@@ -5725,7 +5733,7 @@ html[data-tarot-layout="mobile"] #readingWorkspace.tarot-six-stage .tarot-prompt
       // Once six cards are drawn, never insert a second large instruction panel.
       // The six-card settings and AI button above are the only primary CTA.
       els.finish.innerHTML=onsiteAiPhaseResults.auto?.six
-        ?'<div class="tarot-six-end-actions"><button type="button" class="v285-new" data-new-reading>開始另一個全新問題 →</button></div>'
+        ?'<div class="tarot-six-end-actions"><button type="button" class="v285-new" data-new-reading>開始另一個全新問題 →</button><p class="tarot-restart-warning">提醒：請先複製或下載本次 AI 解讀。開始新問題後，本頁目前的牌面與解讀內容將清空，無法從這個頁面還原。</p></div>'
         :'';
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
@@ -6159,7 +6167,11 @@ html[data-tarot-layout="mobile"] #readingWorkspace.tarot-six-stage .tarot-prompt
   async function refreshOnsiteAiQuota(){
     const root=els.analysis.querySelector('[data-site-ai]');
     const display=root?.querySelector('[data-site-ai-quota]'),btn=root?.querySelector('[data-site-ai-run]');
-    if(btn)btn.disabled=true;
+    if(btn){
+      const phase=state.stage3x3==='complete'?'six':'three';
+      const alreadyDone=!!onsiteAiPhaseResults.auto?.[phase];
+      btn.hidden=alreadyDone;btn.disabled=true;
+    }
     if(display)display.textContent='正在確認今日 AI 解讀次數…';
     if(isGuestLoginRequired()){
       tarotRealAiQuota=null;if(display)display.textContent='此瀏覽器曾登入會員，請先重新登入才能解讀';
@@ -6169,7 +6181,11 @@ html[data-tarot-layout="mobile"] #readingWorkspace.tarot-six-stage .tarot-prompt
       const d=await tarotAPI('/ai/center/quota');
       tarotRealAiQuota=d.quota;tarotRealAiQuotaRole=d.quota?.role||'';
       if(display)display.textContent=`今日 AI 解讀剩餘 ${d.quota.remaining}／${d.quota.limit} 次｜台灣時間 08:00 重置`;
-      if(btn)btn.disabled=onsiteAiBusy||d.quota.remaining<=0;
+      if(btn){
+        const phase=state.stage3x3==='complete'?'six':'three';
+        const alreadyDone=!!onsiteAiPhaseResults.auto?.[phase];
+        btn.hidden=alreadyDone;btn.disabled=alreadyDone||onsiteAiBusy||d.quota.remaining<=0;
+      }
       if(root?.querySelector('[data-site-ai-status]')&&!root.dataset.siteAiResult)root.querySelector('[data-site-ai-status]').textContent=d.quota.remaining>0?'每次成功解讀扣 1 次；三張、六張分開計算。':'今日 AI 解讀次數已用完，仍可免費抽牌。';
       updateAccessMini();updateQuotaUI();renderAdminTestBanner();
     }catch(e){
@@ -6277,6 +6293,8 @@ html[data-tarot-layout="mobile"] #readingWorkspace.tarot-six-stage .tarot-prompt
     if(onsiteAiBusy||isGuestLoginRequired())return;
     const root=els.analysis.querySelector('[data-site-ai]');if(!root)return;
     const phase=state.stage3x3==='complete'?'six':'three';
+    // A successfully completed interpretation cannot be repeated from this page.
+    if(onsiteAiPhaseResults.auto?.[phase])return;
     const key=promptRequestKey(),payload=v1PromptPayload();if(!payload)return;
     payload.requestId=crypto.randomUUID();
     const serial=++onsiteAiRequestSerial;onsiteAiBusy=true;lastTarotErrorTrace='';root.dataset.siteAiResult='';btn.disabled=true;btn.classList.add('v6-busy');
@@ -6317,9 +6335,10 @@ html[data-tarot-layout="mobile"] #readingWorkspace.tarot-six-stage .tarot-prompt
         if(currentBtn){
           currentBtn.classList.remove('v6-busy');
           const inSix=state.stage3x3==='complete';
-          currentBtn.textContent=current?.dataset.siteAiResult==='success'
-            ?(inSix?'↻ 重新產生六張牌解讀（會扣額度）':'↻ 重新產生解讀（會使用額度）')
-            :(inSix?'✦ 開始六張牌 AI 整合解讀':'✦ 開始站內 AI 解讀');
+          const phase=inSix?'six':'three';
+          const done=!!onsiteAiPhaseResults.auto?.[phase];
+          currentBtn.hidden=done;currentBtn.disabled=done;
+          if(!done)currentBtn.textContent=inSix?'✦ 開始六張牌 AI 整合解讀':'✦ 開始站內 AI 解讀';
         }
         const waiting=current?.querySelector('[data-site-ai-pending]');if(waiting)waiting.hidden=true;
         void refreshOnsiteAiQuota();
@@ -6376,6 +6395,8 @@ html[data-tarot-layout="mobile"] #readingWorkspace.tarot-six-stage .tarot-prompt
         <div data-site-ai-output hidden></div>
       </section></section>`;
     renderOnsiteAiPhaseCards(els.analysis.querySelector('[data-site-ai]'));
+    const aiRoot=els.analysis.querySelector('[data-site-ai]');
+    if(onsiteAiPhaseResults.auto?.[six?'six':'three'])aiRoot.dataset.siteAiResult='success';
     void refreshOnsiteAiQuota();
     renderFinish();applyAIGuidance();syncMemberSaveInvites();if(state.stage3x3!=='complete')persist3x3();return true;
   }
@@ -6396,12 +6417,11 @@ html[data-tarot-layout="mobile"] #readingWorkspace.tarot-six-stage .tarot-prompt
     notice.hidden=false;syncNewQuestionUI();
   }
   function confirmNewTarotReading(){
-    // This explicit confirmation is the ONLY way these controls clear the saved 3+3 result.
-    const msg=state.stage3x3==='complete'&&!state.sixPromptCopied
-      ?'確定結束這次六張牌占卜，改問一個全新問題嗎？'
-      :state.stage3x3!=='complete'&&!firstStageReadyForFollowup()
-      ?'這次三張牌還沒有完成 AI 解讀。確定放棄目前的牌，重新選擇問題嗎？'
-      :'確定結束目前的牌局，開始一個全新的問題嗎？';
+    // A restart clears the current on-page deck and AI answers. Warn for every restart entry point.
+    const hasReport=!!(onsiteAiPhaseResults.auto?.three||onsiteAiPhaseResults.auto?.six);
+    const msg='確定開始另一個全新問題嗎？\n\n'
+      +(hasReport?'請先複製或下載本次 AI 解讀。\n':'')
+      +'確認後，本頁目前的牌面與解讀內容將清空，無法從這個頁面還原。';
     if(!window.confirm(msg))return false;
     resetToTopic();return true;
   }
