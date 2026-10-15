@@ -3249,6 +3249,65 @@ html[data-tarot-layout="mobile"] .question-grid .question-card{
 </style>
 
 
+<style id="tarot-ai-reading-width-v5">
+/* 2026-10-15: 3-card and 6-card AI reports share the same responsive reading layout.
+   Only expanded results bleed past the nested configuration frame; settings, rights,
+   quota, card dealing, and AI networking remain unchanged. */
+@media (max-width:700px){
+ html:not([data-tarot-layout="desktop"]){
+   --tarot-report-bleed:18px;
+   --tarot-report-phase-pad:5px;
+   --tarot-report-paragraph-pad:7px;
+   --tarot-report-side-pad:0px;
+   --tarot-report-bg:transparent;
+   --tarot-report-font:0.96rem;
+   --tarot-report-line-height:1.82;
+ }
+}
+/* Match the true mobile viewport when previewing phone layout on a computer. */
+html[data-tarot-layout="mobile"]{
+ --tarot-report-bleed:18px;
+ --tarot-report-phase-pad:5px;
+ --tarot-report-paragraph-pad:7px;
+ --tarot-report-side-pad:0px;
+ --tarot-report-bg:transparent;
+ --tarot-report-font:0.96rem;
+ --tarot-report-line-height:1.82;
+}
+.reading-analysis .tarot-site-ai[data-site-ai-result="success"]{
+ padding-inline:var(--tarot-report-side-pad, 0px);
+}
+.reading-analysis .tarot-site-ai[data-site-ai-result="success"] [data-site-ai-output]{
+ width:calc(100% + 2 * var(--tarot-report-bleed, 0px));
+ margin-inline:calc(-1 * var(--tarot-report-bleed, 0px));
+ box-sizing:border-box;
+ min-width:0;
+}
+.reading-analysis .tarot-site-ai [data-site-ai-output] .tarot-ai-phase{
+ padding:var(--tarot-report-phase-pad,clamp(12px,2vw,20px));
+ min-width:0;
+}
+.reading-analysis .tarot-site-ai [data-site-ai-output] .tarot-site-ai-result{
+ padding:var(--tarot-report-paragraph-pad,clamp(14px,2.8vw,26px));
+ background:var(--tarot-report-bg,rgba(95,75,135,.12));
+ font-size:var(--tarot-report-font,clamp(.87rem,1vw,.98rem));
+ line-height:var(--tarot-report-line-height,1.85);
+ min-width:0;
+ max-width:100%;
+ box-sizing:border-box;
+ overflow-wrap:anywhere;
+}
+/* Both collapse controls are visible and identically worded for either report. */
+.reading-analysis .tarot-ai-phase .tarot-site-ai-toggle{
+ min-height:44px;
+ touch-action:manipulation;
+}
+.reading-analysis .tarot-ai-phase .tarot-site-ai-toggle-bottom{
+ margin-top:16px;
+}
+</style>
+
+
 </head>
 <body>
   <button type="button" id="tarotLayoutRescue" class="tarot-layout-rescue" hidden aria-label="恢復自動排版">↩ 恢復自動版面</button>
@@ -6112,7 +6171,7 @@ html[data-tarot-layout="mobile"] .question-grid .question-card{
       section.innerHTML=`<h4>${aiPhaseName(phase)}｜解讀完成</h4><div class="tarot-site-ai-stats" data-site-ai-metrics></div>
       <button type="button" class="tarot-site-ai-toggle" data-site-ai-toggle="top" aria-expanded="false">↓ 展開閱讀${phase==='six'?'六張牌':'三張牌'}完整解讀</button>
       <div class="tarot-site-ai-article-body" data-site-ai-article-body hidden><article class="tarot-site-ai-result" data-site-ai-answer></article>
-      <button type="button" class="tarot-site-ai-toggle tarot-site-ai-toggle-bottom" data-site-ai-toggle="bottom">↑ 收合完整解讀｜回到操作按鈕</button></div>
+      <button type="button" class="tarot-site-ai-toggle tarot-site-ai-toggle-bottom" data-site-ai-toggle="bottom">↑ 收合${phase==='six'?'六張牌':'三張牌'}完整解讀</button></div>
       <div class="tarot-site-ai-actions"><button type="button" data-site-ai-copy="auto:${phase}">複製解讀</button><button type="button" data-site-ai-txt="auto:${phase}">下載解讀 TXT</button></div>`;
       section.querySelector('[data-site-ai-metrics]').textContent=`通道 ${result.channel||'—'}｜追蹤碼：${result.traceId||'—'}`;
       renderOnsiteAiArticle(section.querySelector('[data-site-ai-answer]'),result.answer);host.appendChild(section);
@@ -6126,7 +6185,7 @@ html[data-tarot-layout="mobile"] .question-grid .question-card{
     const phase=section.dataset.siteAiPhase==='six'?'六張牌':'三張牌';
     section.querySelectorAll('[data-site-ai-toggle]').forEach(btn=>{
       btn.setAttribute('aria-expanded',String(expanded));
-      btn.textContent=expanded?(btn.dataset.siteAiToggle==='bottom'?'↑ 收合完整解讀｜回到操作按鈕':`↑ 收合${phase}完整解讀`):`↓ 展開閱讀${phase}完整解讀`;
+      btn.textContent=expanded?(`↑ 收合${phase}完整解讀`):`↓ 展開閱讀${phase}完整解讀`;
     });
     if(!expanded)section.scrollIntoView({behavior:'smooth',block:'start'});
   }
