@@ -2472,6 +2472,14 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
       </nav>
     </div>
     <div class="topbar-right">
+      <div class="bazi-layout-select" id="baziLayoutSelect">
+        <button type="button" class="bazi-layout-trigger" id="baziLayoutTrigger" aria-expanded="false" aria-controls="baziLayoutMenu" aria-label="畫面顯示設定">▣ <span>畫面：自動</span> ▾</button>
+        <div class="bazi-layout-menu" id="baziLayoutMenu" hidden role="group" aria-label="畫面顯示模式">
+          <button type="button" data-bazi-layout-choice="auto">自動｜依裝置調整</button>
+          <button type="button" data-bazi-layout-choice="mobile">手機版｜精簡排版</button>
+          <button type="button" data-bazi-layout-choice="desktop">電腦版｜寬螢幕排版</button>
+        </div>
+      </div>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切換成淺色模式"><span id="themeToggleIcon" aria-hidden="true">☀</span><span id="themeToggleText">淺色</span></button>
       <div class="member-entry" id="baziMemberEntry">
         <button class="member-unlock-btn" id="baziTopbarUnlockBtn" type="button" aria-label="免費登入一念知機會員">免費登入</button>
@@ -2624,34 +2632,66 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
       </div>
 
       <div id="emptyState" hidden></div>
+      <button type="button" id="baziFlowCollapseToggle" class="bazi-flow-collapse-trigger" hidden aria-expanded="false" aria-controls="report-daily-flow">▸ 今日流日（選讀）｜點擊展開</button>
       <section class="daily-flow-section" id="report-daily-flow" aria-label="每日流日"><div class="daily-flow-content" id="dailyFlowContent"></div></section>
 
       <div class="results" id="results">
+      <!-- 排盤成功後採專注閱讀模式；返回介紹可重新整理頁面 -->
 <section class="report-hero" id="report-overview">
+          <div id="baziRecastSlot" class="bazi-recast-slot" aria-label="重新排盤設定"></div>
           <div class="report-identity">
             <div class="identity-seal" id="identitySeal">命</div>
             <div>
               <div class="report-eyebrow">DAY MASTER · STRUCTURE SNAPSHOT</div>
               <h3 id="reportTitle">八字結構總覽</h3>
               <p id="reportSummary"></p>
-              <div class="tag-row" id="summaryTags"></div>
+              <div class="bazi-summary-inline-row">
+                <div class="tag-row" id="summaryTags"></div>
+                <div class="bazi-summary-actions" role="group" aria-label="命盤補充分析">
+                  <button type="button" data-bazi-summary-panel="baziOverviewExtra" aria-controls="baziOverviewExtra" aria-expanded="false">▸ 生活領域</button>
+                  <button type="button" data-bazi-summary-panel="baziMethodDetails" aria-controls="baziMethodDetails" aria-expanded="false">▸ 判讀依據</button>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="overview-life-grid" id="overviewLife"></div>
-          <details class="method-details"><summary>查看結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">加權方式：每個天干 1 份，地支按藏干比例分配；月支乘 1.35，其餘支乘 1.05。十神占比不計日干本身；支持度另看同類、生扶、通根與月支。此處未完整判定格局、調候與喜用神。</p><p class="micro-note">歲運比較：支持較足時，以食傷、財星與官殺作為發揮方向；支持較少時，以比劫與印星作為承接方向。原局已集中的主題與沖刑害破增加負擔；合只代表連結，不一律加分。分項說明另外看十神主題及日支、月柱互動。</p></details>
+          <details class="bazi-overview-extra bazi-aux-panel" id="baziOverviewExtra"><summary class="bazi-aux-native-summary">生活領域與結構重點（選讀）</summary><div class="overview-life-grid" id="overviewLife"></div></details>
+          <details class="method-details bazi-aux-panel" id="baziMethodDetails"><summary class="bazi-aux-native-summary">結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">加權方式：每個天干 1 份，地支按藏干比例分配；月支乘 1.35，其餘支乘 1.05。十神占比不計日干本身；支持度另看同類、生扶、通根與月支。此處未完整判定格局、調候與喜用神。</p><p class="micro-note">歲運比較：支持較足時，以食傷、財星與官殺作為發揮方向；支持較少時，以比劫與印星作為承接方向。原局已集中的主題與沖刑害破增加負擔；合只代表連結，不一律加分。分項說明另外看十神主題及日支、月柱互動。</p></details>
         </section>
 
 
 
-        <details class="report-section" id="report-pillars" open>
-          <summary><span><b>01</b> 四柱命盤</span><small>FOUR PILLARS · HIDDEN STEMS · TEN GODS</small></summary>
+        <details class="report-section bazi-primary-pillars bazi-section-visible" id="report-pillars" open>
+          <summary><span><b>01</b> 完整四柱命盤</span><small>FOUR PILLARS · HIDDEN STEMS · TEN GODS</small></summary>
           <div class="report-body">
             <div class="pillars" id="pillars"></div>
             <div class="meta" id="meta"></div>
           </div>
         </details>
 
-        <details class="report-section" id="report-elements" open>
+
+        <section class="bazi-section-hub" id="baziSectionHub" aria-label="九大專業分析目錄">
+          <div class="bazi-hub-title"><div><span class="report-eyebrow">CHOOSE YOUR ANALYSIS</span><h3>九大專業分析｜選擇你要深入的部分</h3></div><button id="baziHideSection" type="button" hidden>收合目前章節 ↑</button></div>
+          <div class="bazi-hub-grid">
+            <button type="button" data-bazi-open-section="report-pillars" aria-controls="report-pillars" aria-expanded="false"><small>01</small><span>四柱命盤（上方）</span><b aria-hidden="true">↗</b></button>
+            <button type="button" data-bazi-open-section="report-elements" aria-controls="report-elements" aria-expanded="false"><small>02</small><span>五行與陰陽</span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-tengods" aria-controls="report-tengods" aria-expanded="false"><small>03</small><span>十神結構</span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-relations" aria-controls="report-relations" aria-expanded="false"><small>04</small><span>干支合沖</span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-shensha" aria-controls="report-shensha" aria-expanded="false"><small>05</small><span>常用神煞</span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-reading" aria-controls="report-reading" aria-expanded="false"><small>06</small><span>命盤結構</span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-luck" aria-controls="report-luck" aria-expanded="false"><small>07</small><span>八步大運</span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-years" aria-controls="report-years" aria-expanded="false"><small>08</small><span>三年流年</span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-months" aria-controls="report-months" aria-expanded="false"><small>09</small><span>十二流月</span><b aria-hidden="true">＋</b></button>
+          </div>
+          <div class="bazi-hub-activebar" id="baziHubActivebar" hidden aria-label="目前分析章節與快速切換">
+            <strong id="baziHubActiveTitle">目前章節</strong>
+            <div class="bazi-hub-active-actions">
+              <button type="button" data-bazi-chapter-action="prev" aria-label="上一章">← 上一章</button>
+              <button type="button" data-bazi-chapter-action="next" aria-label="下一章">下一章 →</button>
+              <button type="button" data-bazi-chapter-action="choose" id="baziHubChoose">切換章節 ▾</button>
+            </div>
+          </div>
+        </section>
+        <details class="report-section" id="report-elements">
           <summary><span><b>02</b> 五行能量與陰陽</span><small>VISIBLE + WEIGHTED STRUCTURE</small></summary>
           <div class="report-body">
             <div class="analysis-grid two">
@@ -2682,7 +2722,7 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
           </div>
         </details>
 
-        <details class="report-section" id="report-tengods" open>
+        <details class="report-section" id="report-tengods">
           <summary><span><b>03</b> 十神結構與性格</span><small>TEN GODS · PERSONALITY · BEHAVIOR</small></summary>
           <div class="report-body">
             <div class="ten-god-layout">
@@ -2698,7 +2738,7 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
           </div>
         </details>
 
-        <details class="report-section" id="report-relations" open>
+        <details class="report-section" id="report-relations">
           <summary><span><b>04</b> 天干地支互動</span><small>COMBINATION · CLASH · HARM · PUNISHMENT</small></summary>
           <div class="report-body">
             <div class="answer-first-lead" id="relationLifeLead"></div>
@@ -2712,7 +2752,7 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
           </div>
         </details>
 
-        <details class="report-section" id="report-shensha" open>
+        <details class="report-section" id="report-shensha">
           <summary><span><b>05</b> 常用神煞</span><small>25 COMMON SHENSHA · AUXILIARY SIGNALS</small></summary>
           <div class="report-body">
             <div class="shensha-headline" id="shenshaHeadline"></div>
@@ -2724,13 +2764,13 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 </div>
         </details>
 
-        <details class="report-section" id="report-reading" open>
+        <details class="report-section" id="report-reading">
           <summary><span><b>06</b> 命盤結構解讀</span><small>PERSONALITY · CAREER · FINANCE · RELATIONSHIP</small></summary>
           <div class="report-body" id="readingBody">
           </div>
         </details>
 
-        <details class="report-section" id="report-luck" open>
+        <details class="report-section" id="report-luck">
           <summary><span><b>07</b> 一生大運｜哪十年相對較順？</span><small>8 × 10-YEAR CYCLES</small></summary>
           <div class="report-body">
             <div class="time-explain">
@@ -2747,7 +2787,7 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
           </div>
         </details>
 
-        <details class="report-section" id="report-years" open>
+        <details class="report-section" id="report-years">
           <summary><span><b>08</b> 流年｜去年、今年與明年三年戰略</span><small>THREE-YEAR STRATEGIC OUTLOOK</small></summary>
           <div class="report-body">
             <div class="time-explain">
@@ -2758,7 +2798,7 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
           </div>
         </details>
 
-        <details class="report-section" id="report-months" open>
+        <details class="report-section" id="report-months">
           <summary><span><b>09</b> 十二流月｜今年每個節氣月的變化</span><small>12 SOLAR-TERM MONTHS · MONTHLY FLOW</small></summary>
           <div class="report-body">
             <div class="time-explain"><strong>十二流月｜逐月查看短期節奏</strong><span id="monthFlowIntro">排出八字後，顯示今年各節氣月的干支與相對變化。流月依節氣換月，並非每月一日換月。</span></div>
@@ -2766,9 +2806,28 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
             <div class="month-flow-grid" id="monthFlowGrid"></div>
             <div class="detail-console fortune-detail" id="monthDetail">請選擇月份，查看該節氣段的相關命盤線索。</div>
             <div class="smart-prompt-mount" data-smart-prompt="months"></div>
+            <div id="baziDailyMonthlySlot" class="bazi-daily-monthly-slot" aria-label="流月後的每日流日">
+              <details id="baziQimenOptional" class="bazi-qimen-optional">
+                <summary>▸ 延伸探索｜有具體問題時，可查看奇門遁甲（選讀）</summary>
+        <section class="qimen-bridge" id="qimen-bridge">
+          <div class="qimen-bridge-head"><div><span class="report-eyebrow">FROM LONG-TERM STRUCTURE TO CURRENT DECISION</span><h3>八字看長期底牌；現在這件事，可以換奇門來看</h3><p>如果你已經了解自己的長期結構，但真正想問的是「眼前這一件事情會怎麼發展、該怎麼選」，奇門遁甲更偏向處理具體事件與當下決策。</p></div><a class="qimen-main-link" href="/qimen.html">免費體驗奇門排盤 →</a></div>
+          <div class="scenario-grid">
+            <a class="scenario-card" href="/qimen.html" data-qimen-topic="工作去留"><b>工作要不要換？</b><span>看眼前職涯選擇與發展方向</span></a>
+            <a class="scenario-card" href="/qimen.html" data-qimen-topic="感情發展"><b>這段感情怎麼走？</b><span>把具體關係問題拉回當下局勢</span></a>
+            <a class="scenario-card" href="/qimen.html" data-qimen-topic="合作投資"><b>合作／投資適合嗎？</b><span>針對單一計畫、對象與風險判斷</span></a>
+            <a class="scenario-card" href="/qimen.html" data-qimen-topic="二選一"><b>兩個選擇怎麼挑？</b><span>把候選方案放到同一個事件裡比較</span></a>
+            <a class="scenario-card" href="/qimen.html" data-qimen-topic="時機"><b>現在是不是好時機？</b><span>更著重近期局勢與行動時點</span></a>
+          </div>
+          <div class="other-tools"><span>也可以繼續探索：</span><a href="/ziwei.html">紫微斗數</a><a href="/tarot.html">塔羅</a><a href="/meihua.html">梅花易數</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經 64 卦</a></div>
+        </section>
+              </details>
+            </div>
           </div>
         </details>
 
+        <!-- 九大專業分析之後，才提供完整命盤 AI 總結。 -->
+        <details class="bazi-ai-focus" id="baziAiFocus">
+          <summary><span>✦ 完整命盤 AI 解讀</span><small>看完九大專業分析，再從感情、工作、財運或整體命盤進行 AI 總結</small><b>展開 AI →</b></summary>
         <section class="ai-unlock-zone smart-prompt-full" id="ai-prompt-zone">
           <div class="ai-unlock-head">
             <span class="report-eyebrow">AI DEEP DIVE · FULL CHART</span>
@@ -2786,18 +2845,8 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
             <details id="baziGeminiOutput" hidden><summary>展開／收合完整 AI 解讀</summary><div id="baziGeminiReading"></div><div class="bazi-ai-output-bottom"><button type="button" id="baziGeminiCollapse">▲ 收合這篇 AI 解讀</button></div></details>
           </div>
         </section>
+        </details>
 
-        <section class="qimen-bridge" id="qimen-bridge">
-          <div class="qimen-bridge-head"><div><span class="report-eyebrow">FROM LONG-TERM STRUCTURE TO CURRENT DECISION</span><h3>八字看長期底牌；現在這件事，可以換奇門來看</h3><p>如果你已經了解自己的長期結構，但真正想問的是「眼前這一件事情會怎麼發展、該怎麼選」，奇門遁甲更偏向處理具體事件與當下決策。</p></div><a class="qimen-main-link" href="/qimen.html">免費體驗奇門排盤 →</a></div>
-          <div class="scenario-grid">
-            <a class="scenario-card" href="/qimen.html" data-qimen-topic="工作去留"><b>工作要不要換？</b><span>看眼前職涯選擇與發展方向</span></a>
-            <a class="scenario-card" href="/qimen.html" data-qimen-topic="感情發展"><b>這段感情怎麼走？</b><span>把具體關係問題拉回當下局勢</span></a>
-            <a class="scenario-card" href="/qimen.html" data-qimen-topic="合作投資"><b>合作／投資適合嗎？</b><span>針對單一計畫、對象與風險判斷</span></a>
-            <a class="scenario-card" href="/qimen.html" data-qimen-topic="二選一"><b>兩個選擇怎麼挑？</b><span>把候選方案放到同一個事件裡比較</span></a>
-            <a class="scenario-card" href="/qimen.html" data-qimen-topic="時機"><b>現在是不是好時機？</b><span>更著重近期局勢與行動時點</span></a>
-          </div>
-          <div class="other-tools"><span>也可以繼續探索：</span><a href="/ziwei.html">紫微斗數</a><a href="/tarot.html">塔羅</a><a href="/meihua.html">梅花易數</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經 64 卦</a></div>
-        </section>
       </div>
 
       <div class="notice">
@@ -5383,7 +5432,17 @@ ${tasks}
       const r=await fetch(BAZI_API_BASE+'/ai/status',{cache:'no-store',headers:baziAiHeaders()}),j=await r.json();
       if(requestSequence!==baziQuotaRequestSequence||authAtStart!==baziAuthToken())return;
       if(!j.ok)throw Error(j.error||'UNKNOWN');
-      target.textContent=j.adminRoleTest?`【角色測試】今日 AI 剩餘 ${j.testRemaining} / ${j.testLimit} 次｜真正呼叫 AI`:`${baziPersonalQuotaText(j)}｜全站 AI 剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} 次｜08:00 重置`;
+      // 命盤頁只在 AI 使用入口凸顯個人額度；全站共享額度維持次要資訊。
+      const personal=document.createElement('strong');personal.className='bazi-ai-daily-emphasis';
+      const shared=document.createElement('small');shared.className='bazi-ai-global-subline';
+      if(j.adminRoleTest){
+        personal.textContent=`【角色測試】今日 AI 剩餘 ${j.testRemaining} / ${j.testLimit} 次`;
+        shared.textContent='真正呼叫 AI｜測試角色額度';
+      }else{
+        personal.textContent=baziPersonalQuotaText(j);
+        shared.textContent=`全站 AI 剩餘 ${Math.max(0,j.globalLimit-j.globalUsed)} 次｜08:00 重置`;
+      }
+      target.replaceChildren(personal,shared);
       baziAiUpdateVisible(j);
     }catch(_){if(requestSequence===baziQuotaRequestSequence)target.textContent='免費額度暫時無法取得';}
   }
@@ -5796,7 +5855,7 @@ ${intent}
       const hide=Array.isArray(p.hideGan)?p.hideGan.join('、'):(p.hideGan||'—');
       const ten=Array.isArray(p.shiShenZhi)?p.shiShenZhi.join('、'):(p.shiShenZhi||'—');
       return `<article class="pillar ${p.key==='day'?'day-master':''}">
-        <div class="pillar-head"><span>${cn}</span><small>${en}</small></div>
+        <div class="pillar-head"><span>${cn}</span><small>${en}</small><button type="button" class="bazi-pillar-toggle" aria-expanded="false" aria-label="${cn}完整細節">詳細 ▾</button></div>
         <div class="chars"><div class="char-box gan"><b>${esc(p.gan)}</b><span>${esc(p.shiShenGan||'日主')}</span></div><div class="char-box zhi"><b>${esc(p.zhi)}</b><span>${esc(p.zhiElement||p.wuXing||'—')}</span></div></div>
         <div class="pillar-body">
           <div class="row"><label>干支</label><strong>${esc(p.ganZhi||'—')}</strong></div>
@@ -6559,7 +6618,7 @@ ${intent}
       selectedPeriods={};
       setDailyFlowChart(data);
       renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);renderYearFlows(data);renderMonthFlows(data);initSectionDecodeUI();resetExploration();
-      emptyState.style.display='none';if(reveal){results.classList.add('show');document.body.classList.remove('show-bazi-intro');document.body.classList.add('has-bazi-chart');}
+      emptyState.style.display='none';if(reveal){results.classList.add('show');document.body.classList.remove('show-bazi-intro');document.body.classList.add('has-bazi-chart');window.baziReadingUiSuccess?.(data);}
       if (scroll) setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
       // 只在使用者主動按「排八字」且成功完成排盤時紀錄。
       if(countUsage&&reveal)baziTrackUsage('cast','');
@@ -6992,6 +7051,453 @@ html[data-theme="light"] .bazi-seo .bazi-explore-heading p,html[data-theme="ligh
     if(e.animationName==='baziThemeHintPulse')btn.classList.remove('bazi-theme-hint-flash');
   });
   btn.addEventListener('click',()=>btn.classList.remove('bazi-theme-hint-flash'),{once:true});
+})();
+</script>
+<style id="baziResponsiveReading20261015">
+/* 本次更新只在排盤成功後啟用閱讀模式。未排盤的主視覺、排盤輸入與今日流日維持原版。 */
+body.has-bazi-chart:not(.show-bazi-intro) .bazi-hero{display:none!important}
+body.has-bazi-chart:not(.show-bazi-intro) .bazi-seo{display:none}
+.bazi-reading-toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:5px 0 12px;padding:10px 13px;border:1px solid rgba(233,189,88,.16);border-radius:13px;background:rgba(233,189,88,.035);font-size:.78rem;color:var(--text)}
+.bazi-reading-toolbar button,.bazi-quick-heading button,.bazi-hub-title button{min-height:34px!important;padding:6px 10px!important;border:1px solid rgba(233,189,88,.28);border-radius:9px;background:rgba(233,189,88,.07);color:var(--gold);font-size:.72rem;white-space:normal}
+.bazi-input-collapsed{margin:0 0 12px;border:1px solid rgba(233,189,88,.18);border-radius:13px;overflow:visible}
+.bazi-input-collapsed>summary{cursor:pointer;padding:12px 14px;font-size:.85rem;font-weight:800;color:var(--gold);list-style:none}
+.bazi-input-collapsed>summary::-webkit-details-marker{display:none}
+.bazi-input-collapsed>summary::before{content:'▸';margin-right:8px}
+.bazi-input-collapsed[open]>summary::before{content:'▾'}
+.bazi-input-collapsed .controls{margin:0 10px 10px}
+.bazi-flow-collapse-trigger{display:none;box-sizing:border-box;width:100%;text-align:left;padding:13px 15px;border:1px solid rgba(233,189,88,.20);border-radius:12px;background:rgba(233,189,88,.045);color:var(--gold);font-weight:800;font-size:.81rem}
+body.has-bazi-chart .bazi-flow-collapse-trigger{display:block}
+body.has-bazi-chart #report-daily-flow:not(.bazi-daily-expanded){display:none!important}
+body.has-bazi-chart:not(.show-bazi-intro) .tool-head{display:none}
+body.has-bazi-chart .bazi-ai-quota-shell{padding:9px 13px;margin:8px auto 12px;border-radius:14px}
+body.has-bazi-chart .bazi-ai-free-card{padding:7px 9px}
+body.has-bazi-chart .bazi-ai-paid-card,body.has-bazi-chart .bazi-ai-quota-foot{display:none}
+body.has-bazi-chart .bazi-ai-quota-grid{display:block}
+body.has-bazi-chart #baziQuotaDailyHint{display:none}
+.bazi-quick-four{padding:15px 17px;margin:0 0 12px;border:1px solid rgba(233,189,88,.19);border-radius:16px;background:rgba(233,189,88,.035)}
+.bazi-quick-heading,.bazi-hub-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.bazi-quick-heading h3,.bazi-hub-title h3{margin:3px 0;font-size:1.02rem;color:var(--text)}
+.bazi-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.bazi-quick-pillar{min-width:0;border:1px solid rgba(233,189,88,.17);border-radius:12px;background:rgba(255,255,255,.025);padding:11px 4px;text-align:center}
+.bazi-quick-pillar.is-day{border-color:rgba(117,220,228,.60);background:rgba(117,220,228,.055)}
+.bazi-quick-pillar small{display:block;font-size:.70rem;color:var(--dim)}
+.bazi-quick-pillar strong{display:block;font-size:clamp(1.25rem,3vw,1.85rem);line-height:1.4;letter-spacing:.02em;color:var(--gold)}
+.bazi-quick-pillar .zhi{color:var(--cyan)}
+.bazi-quick-pillar em{display:block;font-style:normal;font-size:.61rem;line-height:1.4;color:var(--dim)}
+.bazi-quick-four>p{margin:9px 0 0;font-size:.73rem;line-height:1.7;color:var(--dim)}
+.bazi-ai-focus{margin:12px 0;border:1px solid rgba(233,189,88,.35);border-radius:16px;background:rgba(233,189,88,.04);overflow:hidden}
+.bazi-ai-focus>summary{display:flex;align-items:center;gap:12px;cursor:pointer;padding:14px 16px;list-style:none;color:var(--gold)}
+.bazi-ai-focus>summary::-webkit-details-marker{display:none}
+.bazi-ai-focus>summary>span{font-size:.98rem;font-weight:850;flex-shrink:0}
+.bazi-ai-focus>summary>small{color:var(--dim);font-size:.73rem;line-height:1.5}
+.bazi-ai-focus>summary>b{margin-left:auto;white-space:nowrap;font-size:.76rem}
+.bazi-ai-focus[open]>summary>b{font-size:0}.bazi-ai-focus[open]>summary>b::after{content:'收合 ↑';font-size:.76rem}
+.bazi-ai-focus>.ai-unlock-zone{margin:0!important;border:0!important;background:transparent!important;padding:12px!important}
+.bazi-ai-focus #baziGeminiReading{line-height:1.85}
+.bazi-section-hub{margin:14px 0 10px;padding:16px;border-radius:17px;border:1px solid rgba(233,189,88,.20);background:rgba(233,189,88,.035)}
+.bazi-hub-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.bazi-hub-grid button{display:flex;gap:8px;align-items:center;justify-content:flex-start;min-width:0;min-height:49px!important;padding:9px 12px!important;border:1px solid rgba(233,189,88,.15);border-radius:10px;background:rgba(255,255,255,.025);text-align:left;font-size:.78rem;color:var(--text);font-weight:700}
+.bazi-hub-grid button small{color:var(--gold);font-size:.63rem}
+.bazi-hub-grid button span{flex:1;min-width:0}
+.bazi-hub-grid button b{color:var(--gold);font-size:1rem}
+.bazi-hub-grid button[aria-expanded="true"]{border-color:var(--gold);background:rgba(233,189,88,.12)}
+.bazi-hub-grid button:hover,.bazi-hub-grid button:focus-visible{border-color:var(--gold);outline-offset:2px}
+body.has-bazi-chart .results .report-section{display:none}
+body.has-bazi-chart .results .report-section.bazi-section-visible{display:block}
+body.has-bazi-chart .results .report-section.bazi-section-visible>summary{background:rgba(233,189,88,.08)}
+.bazi-layout-select{position:relative;z-index:95;flex:0 0 auto}
+.bazi-layout-trigger{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:6px 10px;border:1px solid rgba(233,189,88,.28);border-radius:999px;background:rgba(233,189,88,.055);color:var(--gold);font-size:.70rem;font-weight:750;white-space:nowrap}
+.bazi-layout-menu{position:absolute;right:0;top:calc(100% + 5px);z-index:99;width:210px;max-width:calc(100vw - 20px);padding:6px;border:1px solid rgba(233,189,88,.35);border-radius:13px;background:var(--panel);box-shadow:0 12px 30px rgba(0,0,0,.26)}
+.bazi-layout-menu[hidden]{display:none!important}
+.bazi-layout-menu button{display:block;width:100%;margin:2px 0;padding:10px;text-align:left;color:var(--text);border:0;border-radius:8px;background:transparent;font-size:.78rem}
+.bazi-layout-menu button:hover,.bazi-layout-menu button[aria-pressed="true"]{background:rgba(233,189,88,.12);color:var(--gold)}
+.bazi-desktop-rescue{display:none;position:fixed;right:10px;bottom:15px;z-index:170;border:1px solid var(--gold);border-radius:12px;padding:10px 12px;background:var(--panel);color:var(--gold);font-size:.78rem;box-shadow:0 5px 20px rgba(0,0,0,.25)}
+html[data-bazi-layout="desktop"] .bazi-desktop-rescue{display:block}
+html[data-theme="light"] .bazi-quick-four,html[data-theme="light"] .bazi-section-hub,html[data-theme="light"] .bazi-ai-focus{background:#fdfbf5;border-color:#d8c7a3}
+html[data-theme="light"] .bazi-quick-pillar,html[data-theme="light"] .bazi-hub-grid button{background:#fff;border-color:#e0d7c6}
+html[data-theme="light"] .bazi-quick-pillar.is-day{background:#eef8f8;border-color:#7db1b7}
+html[data-theme="light"] .bazi-layout-menu{background:#fff}
+html[data-theme="light"] .bazi-quick-pillar strong,html[data-theme="light"] .bazi-layout-trigger,html[data-theme="light"] .bazi-hub-grid button small{color:#8b5b11}
+html[data-theme="light"] .bazi-quick-pillar .zhi{color:#1c6a79}
+html[data-theme="light"] .bazi-reading-toolbar{background:#faf7ef;color:#29363c}
+/* phone-first report only; no change to the homepage's existing flow/form before chart */
+@media(max-width:700px){
+ body.has-bazi-chart #worldSecond{padding:12px 6px 40px}
+ body.has-bazi-chart .core{padding:8px;border-radius:14px}
+ body.has-bazi-chart .report-hero{padding:14px}
+ .bazi-quick-grid{gap:5px}
+ .bazi-quick-four{padding:12px 10px}
+ .bazi-quick-pillar{padding:10px 3px}
+ .bazi-quick-pillar strong{font-size:1.45rem}
+ .bazi-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .bazi-section-hub{padding:12px 10px}
+ .bazi-hub-grid button{padding:8px!important;min-height:45px!important;font-size:.73rem}
+ .bazi-reading-toolbar{flex-wrap:wrap;padding:9px}
+ .bazi-ai-focus>summary{flex-wrap:wrap;gap:4px 10px}
+ .bazi-ai-focus>summary>small{flex:1 1 100%;order:2}
+ .bazi-layout-trigger{padding:6px 8px}
+ .bazi-layout-trigger span{font-size:.65rem}
+}
+/* Allow users at a desktop computer to inspect true compact mode. */
+html[data-bazi-layout="mobile"] #worldSecond{width:min(100%,480px);padding:10px 6px 40px}
+html[data-bazi-layout="mobile"] #worldSecond .core{padding:8px;border-radius:14px}
+html[data-bazi-layout="mobile"] #worldSecond .results .report-hero{padding:14px}
+html[data-bazi-layout="mobile"] #worldSecond .bazi-quick-four{padding:12px 10px}
+html[data-bazi-layout="mobile"] #worldSecond .bazi-quick-grid{gap:5px}
+html[data-bazi-layout="mobile"] #worldSecond .bazi-quick-pillar strong{font-size:1.45rem}
+html[data-bazi-layout="mobile"] #worldSecond .bazi-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+html[data-bazi-layout="mobile"] #worldSecond .bazi-section-hub{padding:12px 10px}
+html[data-bazi-layout="mobile"] #worldSecond .pillars{grid-template-columns:repeat(2,minmax(0,1fr))}
+html[data-bazi-layout="mobile"] #worldSecond .report-body{padding:12px}
+html[data-bazi-layout="mobile"] #worldSecond .bazi-reading-toolbar{flex-wrap:wrap}
+/* Forced desktop uses natural desktop width; on a phone, horizontal movement may be necessary. */
+html[data-bazi-layout="desktop"] body{overflow-x:auto}
+html[data-bazi-layout="desktop"] #worldSecond{width:max(960px,calc(100% - 28px));max-width:none;min-width:960px}
+html[data-bazi-layout="desktop"] #worldSecond .pillars{grid-template-columns:repeat(4,minmax(0,1fr))}
+html[data-bazi-layout="desktop"] #worldSecond .bazi-hub-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+html[data-bazi-layout="desktop"] #worldSecond .summary-grid{grid-template-columns:1fr 1fr}
+@media(max-width:520px){.bazi-layout-menu{right:-5px}.bazi-quick-heading{align-items:flex-start}.bazi-quick-heading button{font-size:.64rem}}
+/* The summary is useful, but expanded life-domain narratives are optional on a compact chart. */
+.bazi-overview-extra{margin-top:9px;border:1px solid rgba(233,189,88,.14);border-radius:11px;overflow:hidden}
+.bazi-overview-extra>summary{cursor:pointer;padding:10px 13px;font-size:.76rem;color:var(--gold);font-weight:700}
+.bazi-overview-extra>.overview-life-grid{padding:10px}
+@media(max-width:700px){body.has-bazi-chart .bazi-ai-focus .bazi-gemini{padding:10px;margin-top:12px}body.has-bazi-chart .bazi-ai-focus .ai-unlock-head{padding:3px 0}}
+html[data-bazi-layout="mobile"] #worldSecond .controls,
+html[data-bazi-layout="mobile"] #worldSecond .overview-life-grid,
+html[data-bazi-layout="mobile"] #worldSecond .analysis-grid.two,
+html[data-bazi-layout="mobile"] #worldSecond .ten-god-layout,
+html[data-bazi-layout="mobile"] #worldSecond .period-domains,
+html[data-bazi-layout="mobile"] #worldSecond .fortune-summary-grid,
+html[data-bazi-layout="mobile"] #worldSecond .shensha-pillar-grid.integrated,
+html[data-bazi-layout="mobile"] #worldSecond .three-year-cards-grid,
+html[data-bazi-layout="mobile"] #worldSecond .daily-flow-top-grid,
+html[data-bazi-layout="mobile"] #worldSecond .daily-flow-bottom-grid{grid-template-columns:minmax(0,1fr)!important}
+html[data-bazi-layout="mobile"] #worldSecond .bazi-ai-focus .bazi-gemini{padding:10px;margin-top:12px}
+html[data-bazi-layout="mobile"] #worldSecond #report-months .month-flow-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+html[data-bazi-layout="mobile"] #worldSecond .luck-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media print{body.has-bazi-chart .results .report-section{display:block!important}.bazi-section-hub,.bazi-reading-toolbar,.bazi-layout-select,.bazi-desktop-rescue{display:none!important}}
+
+/* 2026-10-15 小幅精簡：僅在成功排盤後生效，不更動首頁的流日與排盤入口。 */
+body.has-bazi-chart #baziAiQuotaPanel{display:none!important}
+/* 不再占用命盤開頭的「已完成／看 SEO」提示列。 */
+body.has-bazi-chart .bazi-reading-toolbar{display:none!important}
+
+/* 「修改出生資料」移到命盤摘要的右上角，收合時只是一顆小按鈕。 */
+body.has-bazi-chart #report-overview{position:relative}
+body.has-bazi-chart .bazi-recast-slot{position:absolute;z-index:12;top:15px;right:17px;max-width:calc(100% - 34px)}
+body.has-bazi-chart .bazi-recast-slot:not(.is-expanded) + .report-identity{padding-right:235px}
+body.has-bazi-chart .bazi-recast-slot.is-expanded{position:relative;inset:auto;max-width:none;width:100%;margin-bottom:14px}
+body.has-bazi-chart .bazi-recast-slot .bazi-input-collapsed{margin:0;border:0;border-radius:12px;background:transparent;overflow:visible}
+body.has-bazi-chart .bazi-recast-slot .bazi-input-collapsed>summary{width:max-content;max-width:100%;padding:9px 13px;border:1px solid rgba(233,189,88,.3);border-radius:999px;background:rgba(233,189,88,.07);font-size:.73rem;line-height:1.4;white-space:normal}
+body.has-bazi-chart .bazi-recast-slot .bazi-input-collapsed>summary:hover{background:rgba(233,189,88,.13);border-color:rgba(233,189,88,.52)}
+body.has-bazi-chart .bazi-recast-slot .bazi-input-collapsed[open]{background:rgba(233,189,88,.025);border:1px solid rgba(233,189,88,.20);padding:10px}
+body.has-bazi-chart .bazi-recast-slot .bazi-input-collapsed[open]>summary{margin-bottom:10px}
+body.has-bazi-chart .bazi-recast-slot .bazi-input-collapsed .controls{margin:0;padding:12px;width:100%}
+@media(max-width:850px){
+  body.has-bazi-chart .bazi-recast-slot{position:relative;top:auto;right:auto;max-width:none;width:100%;display:flex;justify-content:flex-end;margin:0 0 9px}
+  body.has-bazi-chart .bazi-recast-slot.is-expanded{display:block;margin-bottom:12px}
+  body.has-bazi-chart .bazi-recast-slot:not(.is-expanded) + .report-identity{padding-right:0}
+}
+html[data-bazi-layout="mobile"] body.has-bazi-chart .bazi-recast-slot{position:relative;top:auto;right:auto;max-width:none;width:100%;display:flex;justify-content:flex-end;margin:0 0 9px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart .bazi-recast-slot.is-expanded{display:block;margin-bottom:12px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart .bazi-recast-slot:not(.is-expanded) + .report-identity{padding-right:0}
+
+/* 流日移至第九章十二流月之末尾：月份先看，流日有需要才展開。 */
+body.has-bazi-chart .bazi-daily-monthly-slot{margin-top:15px;padding-top:12px;border-top:1px solid rgba(233,189,88,.16)}
+body.has-bazi-chart .bazi-daily-monthly-slot .bazi-flow-collapse-trigger{display:block;width:100%;font-size:.78rem;padding:10px 12px;margin:0}
+body.has-bazi-chart .bazi-daily-monthly-slot #report-daily-flow{margin:12px 0 0}
+body.has-bazi-chart .bazi-daily-monthly-slot #report-daily-flow:not(.bazi-daily-expanded){display:none!important}
+
+/* 真正開啟站內 AI 時，個人免費次數是最重要的資訊。 */
+body.has-bazi-chart .bazi-gemini-head{align-items:center}
+body.has-bazi-chart #baziGeminiQuota{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right;max-width:100%;color:var(--text)}
+body.has-bazi-chart #baziGeminiQuota .bazi-ai-daily-emphasis{font-size:clamp(1rem,1.8vw,1.28rem);line-height:1.35;font-weight:900;color:var(--gold);letter-spacing:.012em}
+body.has-bazi-chart #baziGeminiQuota .bazi-ai-global-subline{font-size:.68rem;line-height:1.55;color:var(--dim)}
+html[data-theme="light"] body.has-bazi-chart #baziGeminiQuota .bazi-ai-daily-emphasis{color:#865a10}
+@media(max-width:650px){body.has-bazi-chart #baziGeminiQuota{align-items:flex-start;text-align:left}}
+
+/* 2026-10-15：奇門跨工具引導併入十二流月之後，預設完全收合。 */
+body.has-bazi-chart .bazi-daily-monthly-slot .bazi-qimen-optional{
+  margin-top:9px;border:1px solid rgba(117,220,228,.18);border-radius:12px;background:rgba(117,220,228,.018);overflow:hidden;
+}
+body.has-bazi-chart .bazi-qimen-optional>summary{
+  display:block;list-style:none;cursor:pointer;padding:12px 13px;color:var(--dim);font-size:.76rem;font-weight:700;line-height:1.55;
+}
+body.has-bazi-chart .bazi-qimen-optional>summary::-webkit-details-marker{display:none}
+body.has-bazi-chart .bazi-qimen-optional[open]>summary{color:var(--cyan);border-bottom:1px solid rgba(117,220,228,.12)}
+body.has-bazi-chart .bazi-qimen-optional .qimen-bridge{margin:8px 10px 10px;padding:16px;border-radius:14px}
+html[data-theme="light"] body.has-bazi-chart .bazi-qimen-optional{background:#f8fbfa;border-color:#d7e9e8}
+html[data-theme="light"] body.has-bazi-chart .bazi-qimen-optional>summary{color:#51646b}
+html[data-theme="light"] body.has-bazi-chart .bazi-qimen-optional[open]>summary{color:#175c64}
+@media(max-width:650px){
+  body.has-bazi-chart .bazi-qimen-optional .qimen-bridge{padding:12px;margin:7px 7px 8px}
+}
+
+/* 九大分析：固定按鈕位置，分析內容只在同一區域切換。 */
+body.has-bazi-chart #baziSectionHub{scroll-margin-top:72px}
+body.has-bazi-chart #baziAiFocus{scroll-margin-top:78px}
+body.has-bazi-chart .bazi-hub-activebar{display:none;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:11px 12px;border:1px solid rgba(233,189,88,.20);border-radius:11px;background:rgba(233,189,88,.045)}
+body.has-bazi-chart .bazi-hub-activebar[hidden]{display:none!important}
+.bazi-hub-activebar strong{color:var(--text);font-size:.78rem;line-height:1.5}
+.bazi-hub-active-actions,.bazi-chapter-footer{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.bazi-hub-active-actions button,.bazi-chapter-footer button{min-height:38px!important;padding:7px 11px!important;border:1px solid rgba(233,189,88,.23);border-radius:9px;background:rgba(233,189,88,.05);color:var(--gold);font-size:.75rem;font-weight:700}
+.bazi-hub-active-actions button:disabled,.bazi-chapter-footer button:disabled{opacity:.34;cursor:not-allowed}
+.bazi-chapter-footer{justify-content:space-between;margin:4px 17px 15px;padding-top:13px;border-top:1px solid rgba(233,189,88,.15)}
+.bazi-chapter-footer button:nth-child(2){margin:auto}
+.bazi-section-hub .bazi-hub-grid button[aria-expanded="true"]{box-shadow:inset 3px 0 0 var(--gold)}
+html[data-theme="light"] .bazi-hub-activebar{background:#fcf6e9;border-color:#d8c69d}
+html[data-theme="light"] .bazi-chapter-footer button,html[data-theme="light"] .bazi-hub-active-actions button{color:#875f18;background:#fff9ed;border-color:#d7c494}
+@media(max-width:700px){
+ body.has-bazi-chart .bazi-section-hub.bazi-hub-has-active:not(.bazi-hub-menu-open) .bazi-hub-grid{display:none}
+ body.has-bazi-chart .bazi-hub-activebar{display:grid;gap:9px}
+ body.has-bazi-chart .bazi-hub-active-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ body.has-bazi-chart .bazi-hub-active-actions button{min-width:0;padding:6px!important;font-size:.69rem}
+ body.has-bazi-chart .bazi-chapter-footer{margin:4px 10px 12px;gap:5px;display:grid;grid-template-columns:1fr 1.4fr 1fr}
+ body.has-bazi-chart .bazi-chapter-footer button{min-width:0;padding:8px 5px!important;font-size:.68rem;line-height:1.4}
+}
+html[data-bazi-layout="mobile"] body.has-bazi-chart .bazi-section-hub.bazi-hub-has-active:not(.bazi-hub-menu-open) .bazi-hub-grid{display:none}
+html[data-bazi-layout="mobile"] body.has-bazi-chart .bazi-hub-activebar{display:grid;gap:8px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart .bazi-hub-active-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart .bazi-hub-active-actions button{min-width:0;padding:6px!important;font-size:.68rem}
+html[data-bazi-layout="mobile"] body.has-bazi-chart .bazi-chapter-footer{display:grid;grid-template-columns:1fr 1.4fr 1fr;margin:4px 10px 12px;gap:5px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart .bazi-chapter-footer button{min-width:0;padding:8px 5px!important;font-size:.68rem}
+html[data-bazi-layout="desktop"] body.has-bazi-chart .bazi-section-hub.bazi-hub-has-active:not(.bazi-hub-menu-open) .bazi-hub-grid{display:grid}
+html[data-bazi-layout="desktop"] body.has-bazi-chart .bazi-hub-activebar{display:none}
+@media print{body.has-bazi-chart .bazi-chapter-footer,body.has-bazi-chart .bazi-hub-activebar{display:none!important}}
+</style>
+<style id="baziFourPillarPrimary20261015">
+/* Original homepage/SEO unaffected. Compact summary actions use unused space next to tags. */
+body.has-bazi-chart #report-overview .report-identity{margin-bottom:0}
+body.has-bazi-chart #report-overview .report-identity>div:last-child{flex:1;min-width:0}
+body.has-bazi-chart .bazi-summary-inline-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;margin-top:10px}
+body.has-bazi-chart .bazi-summary-inline-row>.tag-row{margin:0;flex:0 1 auto}
+body.has-bazi-chart .bazi-summary-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+body.has-bazi-chart .bazi-summary-actions button{min-height:30px;padding:5px 11px;border:1px solid rgba(233,189,88,.26);border-radius:999px;background:rgba(233,189,88,.045);color:var(--gold);font-size:.70rem;font-weight:760;line-height:1.35;white-space:nowrap}
+body.has-bazi-chart .bazi-summary-actions button:hover,body.has-bazi-chart .bazi-summary-actions button.is-active{background:rgba(233,189,88,.14);border-color:rgba(233,189,88,.55)}
+body.has-bazi-chart .report-hero .bazi-aux-panel{display:none;margin:12px 0 0;padding:12px;border:1px solid rgba(233,189,88,.20);border-radius:12px;background:rgba(233,189,88,.025)}
+body.has-bazi-chart .report-hero .bazi-aux-panel[open]{display:block}
+body.has-bazi-chart .bazi-aux-panel>.bazi-aux-native-summary{display:none}
+body.has-bazi-chart .report-hero .bazi-aux-panel .overview-life-grid{margin:0;padding:0}
+body.has-bazi-chart .report-hero .bazi-aux-panel.method-details .score-grid{margin-top:0}
+body.has-bazi-chart #report-pillars{display:block!important;margin:0 0 12px;border-color:rgba(233,189,88,.27)}
+body.has-bazi-chart #report-pillars>summary{background:rgba(233,189,88,.08)}
+body.has-bazi-chart #report-pillars .pillar{min-width:0}
+body.has-bazi-chart #report-pillars .bazi-pillar-toggle{display:none}
+body.has-bazi-chart .bazi-hub-grid button[data-bazi-open-section="report-pillars"]{border-color:rgba(233,189,88,.32);background:rgba(233,189,88,.06)}
+body.has-bazi-chart .bazi-hub-grid button[data-bazi-open-section="report-pillars"] b{font-size:.88rem}
+html[data-theme="light"] body.has-bazi-chart .bazi-summary-actions button{background:#fff8e9;color:#795716;border-color:#d6bc80}
+html[data-theme="light"] body.has-bazi-chart .bazi-summary-actions button.is-active{background:#f8ebcf}
+html[data-theme="light"] body.has-bazi-chart .report-hero .bazi-aux-panel{background:#fdfdfb;border-color:#cfbc92}
+@media(max-width:700px){
+ body.has-bazi-chart .bazi-summary-inline-row{align-items:flex-start;gap:10px}
+ body.has-bazi-chart .bazi-summary-actions button{min-height:35px;font-size:.72rem}
+ body.has-bazi-chart #report-pillars>.report-body{padding:10px}
+ body.has-bazi-chart #report-pillars .pillars{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ body.has-bazi-chart #report-pillars .pillar-head{padding:8px 9px;flex-wrap:wrap;gap:3px}
+ body.has-bazi-chart #report-pillars .pillar-head small{display:none}
+ body.has-bazi-chart #report-pillars .bazi-pillar-toggle{display:block;min-height:27px!important;padding:3px 6px!important;border:1px solid rgba(233,189,88,.3);border-radius:7px;background:rgba(233,189,88,.09);color:var(--gold);font-size:.68rem;line-height:1}
+ body.has-bazi-chart #report-pillars .pillar-body{display:none}
+ body.has-bazi-chart #report-pillars .pillar.bazi-pillar-detail-open .pillar-body{display:block;padding:8px 7px}
+ body.has-bazi-chart #report-pillars .chars{padding:12px 6px 10px;gap:5px}
+ body.has-bazi-chart #report-pillars .char-box{padding:10px 2px}
+ body.has-bazi-chart #report-pillars .char-box b{font-size:1.9rem}
+ body.has-bazi-chart #report-pillars .row{grid-template-columns:1fr;gap:1px;padding:4px 0}
+ body.has-bazi-chart #report-pillars .row label{font-size:.65rem}
+ body.has-bazi-chart #report-pillars .row strong{font-size:.70rem;overflow-wrap:anywhere}
+}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .pillars{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars>.report-body{padding:10px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .pillar-head{padding:8px 9px;flex-wrap:wrap;gap:3px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .pillar-head small{display:none}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .bazi-pillar-toggle{display:block;min-height:28px!important;padding:3px 6px!important;border:1px solid rgba(233,189,88,.3);border-radius:7px;background:rgba(233,189,88,.09);color:var(--gold);font-size:.68rem}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .pillar-body{display:none}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .pillar.bazi-pillar-detail-open .pillar-body{display:block;padding:8px 7px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .chars{padding:12px 6px 10px;gap:5px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .char-box{padding:10px 2px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .char-box b{font-size:1.9rem}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-template-columns:1fr;gap:1px;padding:4px 0}
+@media(max-width:700px){html[data-bazi-layout="desktop"] body.has-bazi-chart #report-pillars .pillars{grid-template-columns:repeat(4,minmax(0,1fr))}html[data-bazi-layout="desktop"] body.has-bazi-chart #report-pillars .pillar-body{display:block}html[data-bazi-layout="desktop"] body.has-bazi-chart #report-pillars .bazi-pillar-toggle{display:none}}
+@media print{body.has-bazi-chart #report-pillars .pillar-body,html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .pillar-body{display:block!important}body.has-bazi-chart #report-overview .bazi-aux-panel{display:block!important}}
+</style>
+<button type="button" id="baziDesktopRescue" class="bazi-desktop-rescue" title="返回自動排版">↩ 恢復自動版面</button><script id="baziReadingUx20261015">
+(()=>{
+  const root=document.documentElement, layoutKey='divinationhub-bazi-layout';
+  const names={auto:'自動',mobile:'手機版',desktop:'電腦版'};
+  let selected='auto';
+  try{selected=localStorage.getItem(layoutKey)||'auto'}catch(_){ }
+  if(!names[selected])selected='auto';
+  function setLayout(value){
+    if(!names[value])return;
+    selected=value;root.dataset.baziLayout=value;
+    const label=document.querySelector('#baziLayoutTrigger span');if(label)label.textContent='畫面：'+names[value];
+    document.querySelectorAll('[data-bazi-layout-choice]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.baziLayoutChoice===value)));
+    try{localStorage.setItem(layoutKey,value)}catch(_){ }
+    document.getElementById('baziLayoutMenu')?.setAttribute('hidden','');
+    document.getElementById('baziLayoutTrigger')?.setAttribute('aria-expanded','false');
+  }
+  const chapterIds=['report-pillars','report-elements','report-tengods','report-relations','report-shensha','report-reading','report-luck','report-years','report-months'];
+  const chapterNames=['四柱詳細資料','五行與陰陽','十神結構','干支合沖','常用神煞','命盤結構','八步大運','三年流年','十二流月'];
+  let activeChapterId='';
+  const isCompactChapterLayout=()=>root.dataset.baziLayout==='mobile'||(root.dataset.baziLayout!=='desktop'&&window.matchMedia('(max-width:700px)').matches);
+  function prepareChapterFooters(){
+    // Buttons sit outside .report-body to avoid being destroyed by dynamic analysis rerenders.
+    chapterIds.forEach((id,index)=>{
+      const section=document.getElementById(id);if(!section||index===0||section.querySelector(':scope > .bazi-chapter-footer'))return;
+      const footer=document.createElement('nav');footer.className='bazi-chapter-footer';footer.setAttribute('aria-label','分析章節切換');
+      footer.innerHTML=`<button type="button" data-bazi-chapter-action="prev" ${index===0?'disabled':''}>← 上一章</button><button type="button" data-bazi-chapter-action="choose">返回九大分析目錄 ↑</button><button type="button" data-bazi-chapter-action="next" ${index===8?'disabled':''}>下一章 →</button>`;
+      section.append(footer);
+    });
+  }
+  function updateChapterNavigation(){
+    const index=chapterIds.indexOf(activeChapterId),active=index>=0;
+    document.querySelectorAll('[data-bazi-open-section]').forEach(btn=>{
+      const primary=btn.dataset.baziOpenSection==='report-pillars';
+      const selected=active&&btn.dataset.baziOpenSection===activeChapterId;
+      btn.setAttribute('aria-expanded',String(primary?true:selected));
+      const symbol=btn.querySelector('b[aria-hidden]');if(symbol)symbol.textContent=primary?'↖':(selected?'－':'＋');
+    });
+    const hide=document.getElementById('baziHideSection');if(hide)hide.hidden=!active;
+    const bar=document.getElementById('baziHubActivebar');if(bar)bar.hidden=!active;
+    const name=document.getElementById('baziHubActiveTitle');if(name)name.textContent=active?`目前：${String(index+1).padStart(2,'0')}｜${chapterNames[index]}`:'目前章節';
+    const prev=bar?.querySelector('[data-bazi-chapter-action="prev"]');if(prev)prev.disabled=index<=0;
+    const next=bar?.querySelector('[data-bazi-chapter-action="next"]');if(next)next.disabled=index<0||index>=8;
+    const hub=document.getElementById('baziSectionHub');
+    if(hub){hub.classList.toggle('bazi-hub-has-active',active);if(!active)hub.classList.remove('bazi-hub-menu-open');}
+    const choose=document.getElementById('baziHubChoose');if(choose)choose.setAttribute('aria-expanded',String(!!hub?.classList.contains('bazi-hub-menu-open')));
+  }
+  function collapseChapters(){
+    activeChapterId='';
+    document.querySelectorAll('#results .report-section:not(#report-pillars)').forEach(d=>{d.open=false;d.classList.remove('bazi-section-visible')});
+    updateChapterNavigation();
+  }
+  function scrollToChapter(section){
+    // Only mobile/explicit chapter navigation uses a single, final jump after layout settles.
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(!section.classList.contains('bazi-section-visible'))return;
+      const y=section.getBoundingClientRect().top+window.scrollY-72;
+      window.scrollTo({top:Math.max(0,y),behavior:'instant'});
+    }));
+  }
+  function openChapter(id, source='grid'){
+    const section=document.getElementById(id);
+    if(!section||!section.matches('#results .report-section'))return;
+    if(id==='report-pillars'){
+      // Primary four pillars are already shown above the menu; this is a deliberate return shortcut.
+      collapseChapters();
+      section.open=true;
+      section.classList.add('bazi-section-visible');
+      section.scrollIntoView({behavior:'smooth',block:'start'});
+      return;
+    }
+    const reopen=activeChapterId!==id;
+    collapseChapters();
+    if(reopen){
+      activeChapterId=id;
+      section.classList.add('bazi-section-visible');section.open=true;
+      updateChapterNavigation();
+    }
+    // Mouse can stay on the exact same grid button on a desktop. Never auto-scroll there.
+    if(source==='grid'&&!isCompactChapterLayout())return;
+    if(source==='grid'&&isCompactChapterLayout()&&!reopen)return;
+    if(reopen)scrollToChapter(section);
+    else if(source!=='grid')document.getElementById('baziSectionHub')?.scrollIntoView({behavior:'instant',block:'start'});
+  }
+  function navigateChapter(action){
+    const activeIndex=chapterIds.indexOf(activeChapterId);
+    if(action==='choose'){
+      const hub=document.getElementById('baziSectionHub');
+      if(isCompactChapterLayout()&&activeIndex>=0){
+        hub?.classList.add('bazi-hub-menu-open');updateChapterNavigation();
+      }
+      hub?.scrollIntoView({behavior:'instant',block:'start'});
+      return;
+    }
+    const next=action==='prev'?activeIndex-1:activeIndex+1;
+    if(next<0||next>=chapterIds.length)return;
+    openChapter(chapterIds[next],'chapter-nav');
+  }
+  // Called only after a real, successfully revealed cast. This does not alter home mode.
+  window.baziReadingUiSuccess=function(data){
+    collapseChapters();
+    const primary=document.getElementById('report-pillars');
+    if(primary){primary.open=true;primary.classList.add('bazi-section-visible');}
+    document.querySelectorAll('#pillars .bazi-pillar-toggle').forEach(btn=>{btn.setAttribute('aria-expanded','false');btn.closest('.pillar')?.classList.remove('bazi-pillar-detail-open');});
+    const ai=document.getElementById('baziAiFocus');if(ai)ai.open=false;
+    const overview=document.getElementById('baziOverviewExtra');if(overview)overview.open=false;
+    const method=document.getElementById('baziMethodDetails');if(method)method.open=false;
+    document.querySelectorAll('[data-bazi-summary-panel]').forEach(btn=>{btn.setAttribute('aria-expanded','false');btn.classList.remove('is-active');btn.textContent=btn.dataset.baziSummaryPanel==='baziOverviewExtra'?'▸ 生活領域':'▸ 判讀依據';});
+    // 本頁首次成功排盤後才把今日流日原元件移到「十二流月」內；首頁保持原樣。
+    // move() 而非重建：保留流日資料、DOM 事件及原本的權限判斷。
+    const flow=document.getElementById('report-daily-flow');flow?.classList.remove('bazi-daily-expanded');
+    const flowBtn=document.getElementById('baziFlowCollapseToggle');
+    if(flowBtn){flowBtn.hidden=false;flowBtn.setAttribute('aria-expanded','false');flowBtn.textContent='▸ 今日流日（選讀）｜點擊展開';}
+    const dailySlot=document.getElementById('baziDailyMonthlySlot');
+    if(dailySlot && flowBtn && flow){dailySlot.prepend(flowBtn,flow);}
+    const qimenOptional=document.getElementById('baziQimenOptional');if(qimenOptional)qimenOptional.open=false;
+
+    // 將既有出生資料表單整份移入命盤總覽右上角；不複製輸入控制，不更動重新排盤事件。
+    const formSlot=document.getElementById('baziRecastSlot');
+    let form=document.getElementById('baziFormAfterCast');
+    const controls=document.querySelector('#worldSecond .controls');
+    if(controls&&!form){
+      form=document.createElement('details');form.className='bazi-input-collapsed';form.id='baziFormAfterCast';
+      const sum=document.createElement('summary');sum.textContent='修改出生資料／重新排盤';form.append(sum,controls);
+    }
+    if(form && formSlot){
+      if(form.parentElement!==formSlot)formSlot.append(form);
+      form.open=false;
+      const syncRecast=()=>formSlot.classList.toggle('is-expanded',form.open);
+      if(!form.dataset.recastBound){form.addEventListener('toggle',syncRecast);form.dataset.recastBound='1';}
+      syncRecast();
+    }
+  };
+  document.addEventListener('DOMContentLoaded',()=>{
+    const trigger=document.getElementById('baziLayoutTrigger'),menu=document.getElementById('baziLayoutMenu');
+    trigger?.addEventListener('click',e=>{e.stopPropagation();const expand=menu.hidden;menu.hidden=!expand;trigger.setAttribute('aria-expanded',String(expand))});
+    menu?.addEventListener('click',e=>{const btn=e.target.closest('[data-bazi-layout-choice]');if(btn)setLayout(btn.dataset.baziLayoutChoice)});
+    document.addEventListener('click',e=>{if(!e.target.closest('#baziLayoutSelect')){if(menu)menu.hidden=true;trigger?.setAttribute('aria-expanded','false');}});
+    document.getElementById('baziDesktopRescue')?.addEventListener('click',()=>setLayout('auto'));
+    prepareChapterFooters();
+    document.addEventListener('click',e=>{
+      const extraButton=e.target.closest('[data-bazi-summary-panel]');
+      if(extraButton){
+        const id=extraButton.dataset.baziSummaryPanel;
+        const target=document.getElementById(id);
+        if(!target)return;
+        const opening=!target.open;
+        document.querySelectorAll('#report-overview .bazi-aux-panel').forEach(p=>{p.open=false;});
+        target.open=opening;
+        document.querySelectorAll('[data-bazi-summary-panel]').forEach(btn=>{
+          const on=btn.dataset.baziSummaryPanel===id&&opening;
+          btn.setAttribute('aria-expanded',String(on));btn.classList.toggle('is-active',on);
+          const label=btn.dataset.baziSummaryPanel==='baziOverviewExtra'?'生活領域':'判讀依據';
+          btn.textContent=(on?'▾ ':'▸ ')+label;
+        });
+        return;
+      }
+      const pillarButton=e.target.closest('.bazi-pillar-toggle');
+      if(pillarButton){
+        const parent=pillarButton.closest('.pillar');const expanded=parent?.classList.toggle('bazi-pillar-detail-open');
+        pillarButton.setAttribute('aria-expanded',String(!!expanded));
+        pillarButton.textContent=expanded?'收合 ▴':'詳細 ▾';
+        return;
+      }
+
+      const nav=e.target.closest('[data-bazi-chapter-action]');
+      if(nav){navigateChapter(nav.dataset.baziChapterAction);return;}
+      const b=e.target.closest('[data-bazi-open-section]');
+      if(b)openChapter(b.dataset.baziOpenSection,b.closest('#baziSectionHub')?'grid':'quick-link');
+    });
+    document.getElementById('baziHideSection')?.addEventListener('click',()=>{collapseChapters();document.getElementById('baziSectionHub')?.scrollIntoView({behavior:'instant',block:'start'})});
+    document.getElementById('baziShowIntroduction')?.addEventListener('click',()=>{document.body.classList.add('show-bazi-intro');document.getElementById('top')?.scrollIntoView({behavior:'smooth',block:'start'})});
+    document.getElementById('baziFlowCollapseToggle')?.addEventListener('click',()=>{
+      const area=document.getElementById('report-daily-flow'),btn=document.getElementById('baziFlowCollapseToggle');
+      const opened=area.classList.toggle('bazi-daily-expanded');btn.setAttribute('aria-expanded',String(opened));btn.textContent=opened?'▾ 收合今日流日':'▸ 今日流日（選讀）｜點擊展開';
+    });
+    const heroCta=document.querySelector('.hero-primary');
+    heroCta?.addEventListener('click',()=>{const form=document.getElementById('baziFormAfterCast');if(form)form.open=true;});
+    setLayout(selected);
+  });
 })();
 </script>
 </body>
