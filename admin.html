@@ -58,7 +58,7 @@ td.muted{color:var(--muted)}
   .top{align-items:flex-start;flex-direction:column}
 }
 @media(max-width:560px){
-  .cards,.tool-cards{grid-template-columns:1fr}
+  .cards,.tool-cards{grid-template-columns:1fr} .cards[style]{grid-template-columns:1fr!important}
   .section-head{align-items:flex-start;flex-direction:column}
   .section-head span{text-align:left}
 }
@@ -165,6 +165,44 @@ td.muted{color:var(--muted)}
 #announcementAdminStatus{font-size:.78rem;color:#a9cfbd;line-height:1.7}
 #announcementAdminStatus.error{color:#f2a3ac}
 @media(max-width:800px){.announcement-admin{grid-template-columns:1fr}}
+
+/* 會員使用排行：預設完全收合，展開才讀取，手機只顯示必要欄位。 */
+.member-usage-box{margin-bottom:24px}
+.member-usage-box>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;cursor:pointer;font-weight:760;font-size:1rem}
+.member-usage-box>summary::-webkit-details-marker{display:none}
+.member-usage-box>summary::after{content:'▾';color:var(--gold)}
+.member-usage-box[open]>summary::after{content:'▴'}
+.member-usage-box[open]>summary{border-bottom:1px solid var(--line)}
+.member-usage-body{padding:17px 18px 20px;display:grid;gap:16px}
+.member-usage-note{color:#a8b5c6;font-size:.78rem;line-height:1.75;margin:0}
+.member-usage-settings{background:#0a121b;border:1px solid #303b49;border-radius:12px;padding:14px;display:grid;gap:12px}
+.member-usage-settings-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.member-usage-fields{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.member-usage-fields label{font-size:.82rem;color:#d2d9e5}
+.member-usage-fields select{background:#080e15;border:1px solid #475262;border-radius:9px;padding:9px;color:#f2e9db;font:inherit;font-size:.82rem;max-width:100%}
+.member-usage-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.member-usage-periods{display:flex;gap:7px;flex-wrap:wrap}
+.member-usage-periods button{padding:8px 11px;border-radius:9px;border:1px solid #334050;color:#afbdd0;background:#0b131c;cursor:pointer;font-size:.8rem}
+.member-usage-periods button[aria-pressed=true]{background:#312716;color:#ffe0a0;border-color:#b69456;font-weight:800}
+.member-usage-results{overflow-x:auto}
+.member-usage-results table{min-width:630px}
+.member-usage-results td{vertical-align:middle}
+.member-usage-results button{white-space:nowrap}
+.member-usage-status{color:#acbccb;font-size:.76rem;line-height:1.65;min-height:19px}
+.member-usage-status.error{color:#f7a6ac}
+.member-usage-detail{border:1px solid #425169;border-radius:11px;padding:14px;background:#0a1420;display:grid;gap:10px}
+.member-usage-detail[hidden]{display:none!important}
+.member-usage-detail .detail-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.member-usage-detail h3{margin:0;font-size:.91rem}
+.member-usage-detail table{min-width:0}
+.member-usage-warn{color:#cbbca7;font-size:.75rem;line-height:1.7}
+@media(max-width:640px){
+ .member-usage-body{padding:13px;gap:13px}
+ .member-usage-results table{min-width:0}
+ .member-usage-results th,.member-usage-results td{padding:10px 7px;font-size:.74rem}
+ .member-usage-results .mobile-hide{display:none}
+ .member-usage-detail table th,.member-usage-detail table td{padding:8px 5px;font-size:.71rem}
+}
 </style>
 </head>
 <body>
@@ -197,11 +235,9 @@ td.muted{color:var(--muted)}
   </section>
 
   <main class="dashboard" id="dashboard" hidden>
-    <div class="cards">
+    <div class="cards" style="grid-template-columns:repeat(3,minmax(0,1fr))">
       <div class="card"><span>會員總數</span><strong id="totalMembers">—</strong></div>
-      <div class="card"><span>今日登入</span><strong id="todayLogin">—</strong></div>
       <div class="card"><span>本月新增</span><strong id="monthNew">—</strong></div>
-      <div class="card"><span>近 30 日活躍</span><strong id="active30">—</strong></div>
       <div class="card"><span>儲存出生資料</span><strong id="savedBirthProfiles">—</strong></div>
     </div>
 
@@ -224,6 +260,40 @@ td.muted{color:var(--muted)}
       <div class="tool-cards" id="toolCards"></div>
     </section>
 
+
+    <details class="section member-usage-box" id="memberUsagePanel">
+      <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設收合｜依成功起盤排行）</small></span></summary>
+      <div class="member-usage-body">
+        <p class="member-usage-note">僅統計已登入會員成功完成的起盤、抽牌或起卦；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>需各工具接入成功事件後才會有資料。</strong></p>
+        <div class="member-usage-settings">
+          <div class="member-usage-settings-head"><strong style="font-size:.86rem">統計模式</strong><span class="member-usage-status" id="memberUsageModeTime">尚未讀取設定</span></div>
+          <div class="member-usage-fields">
+            <label for="memberUsageMode">紀錄方式</label>
+            <select id="memberUsageMode" aria-label="選擇會員統計模式">
+              <option value="off">完全關閉（不再寫入會員統計）</option>
+              <option value="simple">精簡模式（工具＋次數＋AI）</option>
+              <option value="full">完整模式（另記固定題目分類）</option>
+            </select>
+            <button class="btn" type="button" id="memberUsageSave">儲存統計設定</button>
+          </div>
+          <div class="member-usage-warn">關閉後保留過去統計；不會自動補記關閉期間的使用次數。此開關控制額外寫入，不是僅隱藏畫面。</div>
+        </div>
+        <div class="member-usage-controls">
+          <div class="member-usage-periods" aria-label="排行期間" id="memberUsagePeriods">
+            <button type="button" data-period="all" aria-pressed="false">歷史至今</button>
+            <button type="button" data-period="month" aria-pressed="false">本月</button>
+            <button type="button" data-period="week" aria-pressed="false">本週</button>
+            <button type="button" data-period="3days" aria-pressed="false">近三天</button>
+            <button type="button" data-period="today" aria-pressed="true">今天</button>
+          </div>
+          <div class="member-usage-fields"><label for="memberUsageLimit">顯示</label><select id="memberUsageLimit"><option value="10">前 10 名</option><option value="5">前 5 名</option><option value="3">前 3 名</option></select><button type="button" class="btn secondary" id="memberUsageReload">重新查詢</button></div>
+        </div>
+        <div class="member-usage-results" id="memberUsageResults"><div class="member-usage-status">展開後才查詢排行榜資料。</div></div>
+        <div class="member-usage-detail" id="memberUsageDetail" hidden></div>
+        <div class="member-usage-status" id="memberUsageStatus" role="status" aria-live="polite"></div>
+        <div style="border-top:1px solid #26313d;padding-top:12px;display:flex;gap:9px;flex-wrap:wrap;align-items:center"><button class="btn secondary" type="button" id="memberUsageClear">清除所有會員統計資料</button><span class="member-usage-warn">僅清除這項功能的日統計與歷史累計；不刪除會員、原有占卜紀錄、AI 或金流資料。需先關閉統計。</span></div>
+      </div>
+    </details>
 
     <section class="section" style="margin-bottom:24px" id="issueAdminSection">
       <div class="section-head"><h2>網站異常紅綠燈監控</h2><span>會員目前亮起的紅燈人數｜只有本人可切換自己的狀態</span></div>
@@ -296,10 +366,10 @@ td.muted{color:var(--muted)}
     </section>
 
     <section class="section">
-      <div class="section-head"><h2>最近登入會員</h2><span id="updatedAt"></span></div>
+      <div class="section-head"><h2>會員名單</h2><span id="updatedAt"></span></div>
       <div class="table-wrap">
-        <table>
-          <thead><tr><th>名稱</th><th>Email</th><th>第一次登入</th><th>最近登入</th><th>登入次數</th></tr></thead>
+        <table style="min-width:0">
+          <thead><tr><th>名稱</th><th>Email</th><th>加入日期</th></tr></thead>
           <tbody id="memberRows"></tbody>
         </table>
       </div>
@@ -490,6 +560,7 @@ function showLogin(message=''){
   $('loginStatus').textContent=message;
   loggingIn=false;
   lastAttempt='';
+  if($('memberUsagePanel')){$('memberUsagePanel').open=false;$('memberUsageResults').textContent='展開後才查詢排行榜資料。';$('memberUsageDetail').hidden=true;}
   setTimeout(()=>$('passwordInput')?.focus(),0);
 }
 
@@ -587,9 +658,7 @@ async function loadStats(){
     const s=j.stats||{};
 
     $('totalMembers').textContent=s.totalMembers??0;
-    $('todayLogin').textContent=s.todayLogin??0;
     $('monthNew').textContent=s.monthNew??0;
-    $('active30').textContent=s.active30??0;
     $('savedBirthProfiles').textContent=s.savedBirthProfiles??0;
 
     const knownTools=[
@@ -665,10 +734,8 @@ async function loadStats(){
         <td>${esc(m.name||'—')}</td>
         <td>${esc(m.email||'—')}</td>
         <td class="muted">${fmt(m.created_at)}</td>
-        <td class="muted">${fmt(m.last_login)}</td>
-        <td>${Number(m.login_count||0)}</td>
       </tr>
-    `).join('')||'<tr><td colspan="5" class="muted">目前還沒有會員資料。</td></tr>';
+    `).join('')||'<tr><td colspan="3" class="muted">目前還沒有會員資料。</td></tr>';
 
     $('loginCard').hidden=true;
     // 背景統計更新不能把使用者已開啟的審核假分頁切回首頁。
@@ -692,6 +759,90 @@ async function loadStats(){
     $('status').classList.add('error');
   }
 }
+
+// 會員工具排行榜獨立模組：只有展開才向後端發出查詢。
+let memberUsagePeriod='today',memberUsageRequestSeq=0;
+function usageStatus(message='',error=false){const e=$('memberUsageStatus');e.textContent=message;e.classList.toggle('error',error)}
+async function usageAdminRequest(path,method='GET',data){
+  if(!token())throw Error('請先登入管理員');
+  const r=await fetch(API_BASE+path,{method,headers:{Authorization:'Bearer '+token(),Accept:'application/json',...(data!==undefined?{'Content-Type':'application/json'}:{})},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store'});
+  const result=await r.json().catch(()=>null);
+  if(r.status===401)throw Error('管理員登入已過期，請重新登入');
+  if(!r.ok||!result?.success)throw Error(result?.error||'統計服務暫時不可用');
+  return result;
+}
+async function loadMemberUsageSettings(){
+  try{
+    const r=await usageAdminRequest('/admin/member-usage/settings');
+    $('memberUsageMode').value=r.mode;
+    $('memberUsageModeTime').textContent=r.updatedAt?'上次儲存：'+fmt(r.updatedAt):'預設關閉';
+  }catch(e){usageStatus('讀取設定失敗：'+e.message,true)}
+}
+async function loadMemberUsageLeaderboard(preserveStatus=false){
+  if(!$('memberUsagePanel').open||!token())return;
+  const seq=++memberUsageRequestSeq;
+  const limit=$('memberUsageLimit').value;
+  $('memberUsageResults').textContent='正在查詢會員排行…';
+  $('memberUsageDetail').hidden=true;
+  if(!preserveStatus)usageStatus('');
+  try{
+    const r=await usageAdminRequest('/admin/member-usage/leaderboard?period='+encodeURIComponent(memberUsagePeriod)+'&limit='+encodeURIComponent(limit));
+    if(seq!==memberUsageRequestSeq||!$('memberUsagePanel').open)return;
+    if(!r.rows?.length){$('memberUsageResults').textContent='這段期間尚無可顯示的會員成功起盤紀錄。若尚未接入工具成功事件，排行榜會保持空白。';return}
+    $('memberUsageResults').innerHTML=`<table aria-label="會員起盤排行榜"><thead><tr><th>排名</th><th>會員</th><th class="mobile-hide">最近使用</th><th>起盤</th><th class="mobile-hide">AI 成功</th><th>詳細</th></tr></thead><tbody>${r.rows.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(m.name||'—')}<small style="display:block;color:#91a2b5;overflow-wrap:anywhere">${esc(m.email||'')}</small></td><td class="mobile-hide muted">${fmt(m.lastUsedAt)}</td><td><strong>${Number(m.castCount||0)}</strong></td><td class="mobile-hide">${Number(m.aiCount||0)}</td><td><button class="btn secondary" type="button" data-usage-member="${esc(m.googleSub)}">查看</button></td></tr>`).join('')}</tbody></table>`;
+    for(const btn of $('memberUsageResults').querySelectorAll('[data-usage-member]'))btn.addEventListener('click',()=>loadMemberUsageDetails(btn.dataset.usageMember));
+  }catch(e){if(seq===memberUsageRequestSeq){$('memberUsageResults').textContent='讀取排行榜失敗';usageStatus(e.message,true)}}
+}
+const usageToolNames={bazi:'八字',tarot:'塔羅',yijing:'易經',qimen:'奇門',ziwei:'紫微',liuyao:'六爻',meihua:'梅花易數'};
+async function loadMemberUsageDetails(sub){
+  if(!sub)return;
+  const seq=memberUsageRequestSeq;
+  const el=$('memberUsageDetail');el.hidden=false;el.textContent='正在讀取會員使用明細…';
+  try{
+    const r=await usageAdminRequest('/admin/member-usage/member?sub='+encodeURIComponent(sub)+'&period='+encodeURIComponent(memberUsagePeriod));
+    if(seq!==memberUsageRequestSeq||!$('memberUsagePanel').open)return;
+    el.innerHTML=`<div class="detail-title"><h3>${esc(r.member?.name||'會員')}｜${esc(r.member?.email||'')}</h3><button type="button" class="btn secondary" id="memberUsageCloseDetail">收合明細</button></div>
+      <div class="member-usage-note">${r.activeDays==null?'歷史至今僅顯示累計次數（日統計採 90 天循環保留），不提供無法確定的活躍天數。':'此期間成功起盤的活躍使用天數：'+Number(r.activeDays)+' 天'}</div>
+      <table><thead><tr><th>工具</th><th>題型</th><th>起盤</th><th>AI 成功</th></tr></thead><tbody>${r.details?.length?r.details.map(x=>`<tr><td>${esc(usageToolNames[x.tool]||x.tool)}</td><td>${esc(x.category||'未細分')}</td><td>${Number(x.castCount||0)}</td><td>${Number(x.aiCount||0)}</td></tr>`).join(''):'<tr><td colspan="4">目前沒有使用紀錄</td></tr>'}</tbody></table>`;
+    $('memberUsageCloseDetail').addEventListener('click',()=>{el.hidden=true});
+  }catch(e){el.textContent='讀取明細失敗：'+e.message}
+}
+$('memberUsagePanel').addEventListener('toggle',async()=>{
+  if(!$('memberUsagePanel').open){memberUsageRequestSeq++;return}
+  if(!token())return;
+  await loadMemberUsageSettings();
+  if($('memberUsagePanel').open)await loadMemberUsageLeaderboard();
+});
+for(const btn of $('memberUsagePeriods').querySelectorAll('button[data-period]'))btn.addEventListener('click',()=>{
+  memberUsagePeriod=btn.dataset.period;
+  for(const other of $('memberUsagePeriods').querySelectorAll('button'))other.setAttribute('aria-pressed',String(other===btn));
+  loadMemberUsageLeaderboard();
+});
+$('memberUsageLimit').addEventListener('change',loadMemberUsageLeaderboard);
+$('memberUsageReload').addEventListener('click',loadMemberUsageLeaderboard);
+$('memberUsageSave').addEventListener('click',async()=>{
+  const mode=$('memberUsageMode').value;
+  const name={off:'完全關閉',simple:'精簡',full:'完整'}[mode];
+  if(!confirm('確定要將會員使用統計設定為「'+name+'」嗎？\n關閉不會刪除歷史資料。'))return;
+  const btn=$('memberUsageSave');btn.disabled=true;
+  try{
+    const r=await usageAdminRequest('/admin/member-usage/settings','POST',{mode});
+    $('memberUsageModeTime').textContent='上次儲存：'+fmt(r.updatedAt);
+    usageStatus('統計設定已儲存：'+name+'。若各命理工具尚未接入成功事件，仍不會產生資料。');
+    await loadMemberUsageLeaderboard(true);
+  }catch(e){usageStatus('儲存設定失敗：'+e.message,true)}finally{btn.disabled=false}
+});
+$('memberUsageClear').addEventListener('click',async()=>{
+  if($('memberUsageMode').value!=='off'){usageStatus('必須先選擇「完全關閉」並按「儲存統計設定」，才能清除。',true);return}
+  if(!confirm('確定要永久清除全部會員使用統計嗎？這不影響會員與其他紀錄，但刪除的統計無法恢復。'))return;
+  if(prompt('為避免誤刪，請輸入「清除」以確認刪除會員使用統計資料：')!=='清除')return;
+  const btn=$('memberUsageClear');btn.disabled=true;
+  try{
+    await usageAdminRequest('/admin/member-usage/clear','POST',{confirmation:'CLEAR_MEMBER_USAGE'});
+    usageStatus('已清除會員使用統計，未更動會員、登入、AI、金流或其他資料。');
+    await loadMemberUsageLeaderboard(true);
+  }catch(e){usageStatus('清除失敗：'+e.message,true)}finally{btn.disabled=false}
+});
 
 $('passwordInput').addEventListener('input',scheduleAutoLogin);
 
