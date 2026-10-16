@@ -2456,6 +2456,14 @@ html[data-theme="light"] .bazi-ai-report-form select,html[data-theme="light"] .b
 .smart-extra-question .smart-prompt-question{min-height:65px;line-height:1.5}
 html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 </style>
+<style id="baziExampleAdminStyle">
+.bazi-example-admin-toolbar[hidden]{display:none!important}
+.bazi-example-admin-toolbar{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px;border:1px dashed rgba(233,189,88,.3);border-radius:12px;background:rgba(232,195,104,.035)}
+.bazi-example-admin-toolbar button{min-height:36px!important;padding:6px 10px!important;font-size:.68rem;border:1px solid rgba(233,189,88,.28);background:transparent;color:var(--gold);border-radius:8px}
+.bazi-example-admin-toolbar button:disabled{opacity:.45;cursor:wait}
+.bazi-example-admin-title{font-size:.67rem;font-weight:800;color:var(--gold)}
+.bazi-example-admin-toolbar small{flex-basis:100%;font-size:.65rem;color:var(--dim)}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -2625,6 +2633,13 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 
         <div class="primary-action-row">
           <button class="cast-btn" id="castBtn" type="button">免費排八字</button>
+          <div class="bazi-example-admin-toolbar" id="baziExampleAdminToolbar" hidden>
+            <div class="bazi-example-admin-title">管理員｜範例資料庫</div>
+            <button type="button" id="baziExampleSeed20">建立20筆隨機範例</button>
+            <button type="button" id="baziExampleSaveCurrent">儲存目前生日為範例</button>
+            <button type="button" id="baziExampleCount">查看目前筆數</button>
+            <small id="baziExampleAdminStatus" role="status" aria-live="polite"></small>
+          </div>
           <button class="member-save-cta" id="birthMemberLoginBtn" type="button">登入可儲存</button>
           <button class="member-save-cta" id="birthMemberSaveBtn" type="button" hidden>儲存八字</button>
           <button class="member-save-cta member-load-cta" id="birthMemberLoadBtn" type="button" hidden>載入八字</button>
@@ -7615,5 +7630,81 @@ html[data-theme="light"] :is(button,summary,a,input,select,textarea):focus-visib
 }
 
 </style>
+
+<script id="baziExampleLibraryAdmin20261016">
+(() => {
+  const API='https://bazi-api.ezgocpu.workers.dev';
+  const ADMIN='https://admin-api.ezgocpu.workers.dev';
+  const TOKEN_KEY='divinationhub-admin-session';
+  const $=id=>document.getElementById(id);
+  const toolbar=$('baziExampleAdminToolbar');
+  if(!toolbar)return;
+  const status=$('baziExampleAdminStatus');
+  const statusText=s=>{status.textContent=s;};
+  const seeds=[{"seedKey":"seed-random-001","title":"隨機示範 001","datetime":"1960-12-19T16:00","gender":1,"sect":2,"kind":"random"},{"seedKey":"seed-random-002","title":"隨機示範 002","datetime":"1987-05-16T04:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-003","title":"隨機示範 003","datetime":"1997-10-18T06:00","gender":1,"sect":2,"kind":"random"},{"seedKey":"seed-random-004","title":"隨機示範 004","datetime":"1955-03-25T20:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-005","title":"隨機示範 005","datetime":"1995-01-25T18:00","gender":1,"sect":2,"kind":"random"},{"seedKey":"seed-random-006","title":"隨機示範 006","datetime":"1974-10-15T20:00","gender":1,"sect":2,"kind":"random"},{"seedKey":"seed-random-007","title":"隨機示範 007","datetime":"1989-07-16T02:00","gender":1,"sect":2,"kind":"random"},{"seedKey":"seed-random-008","title":"隨機示範 008","datetime":"1992-07-13T00:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-009","title":"隨機示範 009","datetime":"1994-12-02T14:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-010","title":"隨機示範 010","datetime":"1987-09-12T04:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-011","title":"隨機示範 011","datetime":"1968-09-19T04:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-012","title":"隨機示範 012","datetime":"2002-07-16T14:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-013","title":"隨機示範 013","datetime":"1970-03-05T04:00","gender":1,"sect":2,"kind":"random"},{"seedKey":"seed-random-014","title":"隨機示範 014","datetime":"1992-06-22T02:00","gender":1,"sect":2,"kind":"random"},{"seedKey":"seed-random-015","title":"隨機示範 015","datetime":"1974-10-21T20:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-016","title":"隨機示範 016","datetime":"1956-06-04T10:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-017","title":"隨機示範 017","datetime":"1987-02-14T22:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-018","title":"隨機示範 018","datetime":"2002-03-15T16:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-019","title":"隨機示範 019","datetime":"1997-03-11T18:00","gender":0,"sect":2,"kind":"random"},{"seedKey":"seed-random-020","title":"隨機示範 020","datetime":"1972-06-16T02:00","gender":0,"sect":2,"kind":"random"}];
+  let busy=false;
+  const auth=()=>sessionStorage.getItem(TOKEN_KEY)||'';
+  async function api(body){
+    const r=await fetch(API+'/examples/admin/import',{
+      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+auth()},
+      body:JSON.stringify(body)
+    });
+    const j=await r.json().catch(()=>({ok:false,error:'回應格式錯誤'}));
+    if(!r.ok||!j.ok)throw Error(j.error||'HTTP '+r.status);
+    return j;
+  }
+  async function checkAdmin(){
+    if(!auth())return;
+    try{
+      const r=await fetch(ADMIN+'/admin/stats',{headers:{Authorization:'Bearer '+auth(),Accept:'application/json'},cache:'no-store'});
+      const j=await r.json();
+      if(r.ok&&j.success===true)toolbar.hidden=false;
+    }catch(_){/* Admin controls stay hidden. */}
+  }
+  function makeCalendar(seed){
+    if(typeof buildFrontendCalendarPayload!=='function')throw Error('找不到現有的八字曆法函式，請先確認網站已載入');
+    const options={datetime:seed.datetime,gender:seed.gender,sect:seed.sect};
+    const calendar=buildFrontendCalendarPayload(options);
+    return {...seed,calendar};
+  }
+  $('baziExampleSeed20').addEventListener('click',async()=>{
+    if(busy||!confirm('確認建立 20 筆完整隨機範例命盤？既有同編號範例不會被覆蓋。'))return;
+    busy=true;toolbar.querySelectorAll('button').forEach(x=>x.disabled=true);
+    let created=0,existing=0;const errors=[];
+    for(let i=0;i<seeds.length;i++){
+      const s=seeds[i];statusText(`建立中 ${i+1}/20：${s.title}`);
+      try{const r=await api(makeCalendar(s));if(r.created)created++;else existing++;}
+      catch(err){errors.push(`${s.seedKey}: ${err.message}`);}
+    }
+    statusText(`執行完畢：新增 ${created} 筆、已存在 ${existing} 筆、失敗 ${errors.length} 筆。${errors.length?'首筆錯誤：'+errors[0]:''}`);
+    toolbar.querySelectorAll('button').forEach(x=>x.disabled=false);busy=false;
+  });
+  $('baziExampleSaveCurrent').addEventListener('click',async()=>{
+    if(busy)return;
+    const birth=$('birthTime')?.value;
+    const gender=Number($('gender')?.value??1),sect=Number($('sect')?.value??2);
+    const exact=$('useExactTime')?.checked;
+    const datetime=exact?(birth+'T'+($('exactBirthTime')?.value||'')):baziSlotDateTime(birth,$('birthSlot')?.value);
+    if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(datetime)){alert('請先選擇有效的出生年月日與時辰');return;}
+    const title=prompt('輸入範例名稱，例如：張學友。請先確認名人出生時間來源。','');
+    if(!title)return;
+    const kind=confirm('這是一張「名人命盤」嗎？\n按確定：名人命盤；按取消：一般隨機示範盤。')?'celebrity':'random';
+    busy=true;toolbar.querySelectorAll('button').forEach(x=>x.disabled=true);
+    statusText('正在計算並儲存 '+title+'…');
+    try{
+      const seedKey='custom-'+crypto.randomUUID();
+      const r=await api(makeCalendar({seedKey,title:title.trim(),kind,datetime,gender,sect}));
+      statusText(`已成功儲存「${r.title}」，編號 ${r.id}。`);
+    }catch(e){statusText('儲存失敗：'+e.message)}
+    finally{busy=false;toolbar.querySelectorAll('button').forEach(x=>x.disabled=false);}
+  });
+  $('baziExampleCount').addEventListener('click',async()=>{
+    try{const r=await fetch(API+'/examples/list');const j=await r.json();statusText(j.ok?`目前已有 ${j.count} 筆範例。`:'查詢失敗');}
+    catch(e){statusText('查詢失敗：'+e.message)}
+  });
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',checkAdmin,{once:true});
+  else checkAdmin();
+})();
+</script>
 </body>
 </html>
