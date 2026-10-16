@@ -2651,7 +2651,7 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
         <div class="bazi-access-head"><span>YOUR PERSONAL PILLARS · FREE</span><h3>你的個人四柱命盤</h3><p>個人四柱免費呈現。五行、十神、大運及九大完整分析，不在免費個人命盤公開。</p></div>
         <div class="bazi-personal-pillars" id="baziPersonalPillars"></div>
         <p id="baziPersonalBasicInfo" class="bazi-access-status"></p>
-        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>首次點擊「免費排八字」，自動產生一篇綜合命盤 AI 解析</strong>，使用 1 次今日免費 AI 額度；感情與事業報告可另外選擇，成功產生各使用 1 次。已產生的報告可在本次瀏覽工作階段重看，不會重複扣額度。</p>
+        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>首次點擊「免費排八字」，自動產生一篇綜合命盤 AI 解析</strong>，使用 1 次今日免費 AI 額度；感情與事業報告可另外選擇，成功產生各使用 1 次。已產生的報告可在本次瀏覽工作階段重看，不會重複扣額度；每次僅展開一篇，點擊文章上下按鈕即可收合。</p>
           <div class="bazi-access-actions"><button type="button" data-bazi-topic="overall">綜合命盤（首篇自動解析）</button><button type="button" data-bazi-topic="love">感情與相處</button><button type="button" data-bazi-topic="career">事業與發展</button></div>
           <p id="baziPersonalAiStatus" class="bazi-access-status" role="status"></p><div id="baziPersonalAiReports"></div>
         </div>
@@ -7843,6 +7843,34 @@ html[data-theme="light"] .bazi-access-stage{background:#fffdf8;color:#283a48;bor
 html[data-theme="light"] .bazi-personal-stage{border-color:#9bc6c9}
 html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry{background:#f3f9f9;border-color:#b7d3d6}
 html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry pre{color:#2c4554}
+
+/* Personal AI articles — compact, accessible, one report expanded at a time. */
+.bazi-personal-stage .bazi-reading-entry{margin:11px 0;padding:15px 16px;border-radius:13px;scroll-margin-top:100px}
+.bazi-personal-stage .bazi-reading-entry-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:start;margin:0 0 10px}
+.bazi-personal-stage .bazi-reading-entry-head h5{font-size:.95rem;line-height:1.6;color:var(--text);margin:0;font-weight:800}
+.bazi-personal-stage .bazi-reading-trace{font-size:.68rem;line-height:1.7;color:var(--dim);overflow-wrap:anywhere}
+.bazi-personal-stage .bazi-reading-toggle{display:flex;justify-content:center;align-items:center;width:100%;margin:10px 0 0;padding:11px 15px;min-height:42px;border:1px solid rgba(90,163,172,.4);border-radius:10px;background:rgba(90,163,172,.13);color:var(--text);font-weight:800;font-size:.78rem;cursor:pointer;transition:background .15s,border-color .15s}
+.bazi-personal-stage .bazi-reading-toggle:hover{background:rgba(90,163,172,.23);border-color:rgba(90,163,172,.65)}
+.bazi-personal-stage .bazi-reading-toggle:focus-visible{outline:3px solid var(--gold,#e9bd58);outline-offset:2px}
+.bazi-personal-stage .bazi-reading-article[hidden],.bazi-personal-stage .bazi-reading-entry[hidden]{display:none!important}
+.bazi-personal-stage .bazi-reading-article{margin-top:14px;overflow-wrap:anywhere;font-size:.88rem;line-height:1.95;color:var(--text)}
+.bazi-personal-stage .bazi-reading-article h3{font-size:1.05rem;line-height:1.6;margin:23px 0 11px;color:var(--text)}
+.bazi-personal-stage .bazi-reading-article h4{font-size:.97rem;line-height:1.65;margin:20px 0 9px;color:var(--text)}
+.bazi-personal-stage .bazi-reading-article p{font-size:inherit;line-height:inherit;color:inherit;margin:0 0 13px;white-space:pre-line}
+.bazi-personal-stage .bazi-reading-article ul,.bazi-personal-stage .bazi-reading-article ol{padding-left:1.5rem;margin:8px 0 16px}
+.bazi-personal-stage .bazi-reading-article li{margin:6px 0;line-height:1.85}
+.bazi-personal-stage .bazi-reading-article strong{font-weight:800;color:var(--text)}
+.bazi-personal-stage .bazi-reading-article hr{border:0;border-top:1px solid rgba(150,174,181,.27);margin:20px 0}
+.bazi-personal-stage .bazi-reading-toggle-bottom{margin-top:20px}
+.bazi-personal-stage #baziPersonalAiStatus.bazi-ai-working{display:flex;align-items:center;gap:10px;color:var(--text);font-weight:700}
+.bazi-personal-stage #baziPersonalAiStatus.bazi-ai-working::before,.bazi-personal-stage .bazi-ai-generating::before{content:'';display:inline-block;flex:none;width:15px;height:15px;border:2px solid rgba(99,174,181,.25);border-top-color:var(--gold,#e9bd58);border-radius:50%;animation:bazi-personal-spin .85s linear infinite}
+.bazi-personal-stage .bazi-access-actions .bazi-ai-generating{display:inline-flex;align-items:center;justify-content:center;gap:9px;opacity:1;cursor:progress}
+@keyframes bazi-personal-spin{to{transform:rotate(360deg)}}
+html[data-theme="light"] .bazi-personal-stage .bazi-reading-toggle{background:#e6f3f5;border-color:#b6d4da;color:#254b5b}
+html[data-theme="light"] .bazi-personal-stage .bazi-reading-toggle:hover{background:#d8edf0}
+html[data-theme="light"] .bazi-personal-stage .bazi-reading-article,html[data-theme="light"] .bazi-personal-stage .bazi-reading-article strong,html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry-head h5{color:#2c4554}
+@media(prefers-reduced-motion:reduce){.bazi-personal-stage #baziPersonalAiStatus.bazi-ai-working::before,.bazi-personal-stage .bazi-ai-generating::before{animation:none}}
+@media(max-width:540px){.bazi-personal-stage .bazi-reading-entry{padding:12px}.bazi-personal-stage .bazi-reading-toggle{font-size:.75rem;padding:10px 8px}}
 </style>
 <script id="baziIntegratedController">
 (()=>{
@@ -7851,7 +7879,10 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry pre{color:#2c4
   const $=id=>document.getElementById(id);
   const labels=['年柱','月柱','日柱','時柱'];
   let current=null,busy=false;
-  let reports={},aiBusy=false;
+  let reports={},aiBusy=false,expandedTopic=null;
+  const topicTitles={overall:'綜合命盤解析',love:'感情與相處解析',career:'事業與發展解析'};
+  const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
+  const channelPattern=/^[A-E]$/;
   const storePrefix='bazi-personal-v4:';
   const safeText=v=>String(v==null?'':v);
   const adminTestPage=new URLSearchParams(location.search).get('admin')==='1';
@@ -7881,13 +7912,118 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry pre{color:#2c4
   }
   // A newly reset role must not inherit an already-generated AI report.
   window.baziOnAdminTestRoleChanged=()=>{
-    reports={};
+    reports={};expandedTopic=null;
     if(current)current.key=identity(current);
     drawReports();
     if($('baziPersonalAiStatus'))$('baziPersonalAiStatus').textContent='🧪 已切換管理員角色，可重新產生綜合、感情及事業 AI 報告。';
     void refreshPersonalQuota();
   };
-  function drawReports(){const root=$('baziPersonalAiReports');root.replaceChildren();for(const [topic,title] of Object.entries({overall:'綜合命盤解析',love:'感情與相處解析',career:'事業與發展解析'})){if(!reports[topic])continue;const d=document.createElement('details');d.className='bazi-reading-entry';d.open=true;const s=document.createElement('summary');s.textContent=title;const pre=document.createElement('pre');pre.textContent=reports[topic];d.append(s,pre);root.append(d);}}
+  function normalReport(value){
+    if(typeof value==='string')return {reading:value,channel:'',traceId:''};
+    if(value&&typeof value==='object')return {reading:safeText(value.reading||''),channel:safeText(value.channel||''),traceId:safeText(value.traceId||'')};
+    return {reading:'',channel:'',traceId:''};
+  }
+  // Display AI Markdown as safe DOM nodes, never interpret the response as HTML.
+  function renderPersonalReading(target,source){
+    target.replaceChildren();
+    const frag=document.createDocumentFragment();
+    const lines=safeText(source).replace(/\r\n?/g,'\n').split('\n');
+    let paragraph=[],list=null,listType='';
+    function inline(el,text){
+      const normalized=safeText(text).replace(/\\\*/g,'*');
+      const pieces=normalized.split(/(\*\*[^*\n]+\*\*)/g);
+      for(const piece of pieces){
+        if(/^\*\*[^*\n]+\*\*$/.test(piece)){
+          const strong=document.createElement('strong');strong.textContent=piece.slice(2,-2);el.append(strong);
+        }else if(piece){
+          // Unpaired Markdown delimiters must not appear as raw code-like markers.
+          el.append(document.createTextNode(piece.replace(/\*\*/g,'')));
+        }
+      }
+    }
+    function flushParagraph(){
+      if(!paragraph.length)return;
+      const p=document.createElement('p');inline(p,paragraph.join('\n'));frag.append(p);paragraph=[];
+    }
+    function resetList(){list=null;listType='';}
+    for(const raw of lines){
+      const line=raw.trim();
+      if(!line){flushParagraph();resetList();continue;}
+      if(/^(?:-{3,}|\*{3,}|_{3,})$/.test(line)){
+        flushParagraph();resetList();frag.append(document.createElement('hr'));continue;
+      }
+      const heading=line.match(/^#{1,6}\s*(.+)$/);
+      const onlyBold=line.match(/^\*\*([^*\n]+)\*\*\s*$/);
+      if(heading||onlyBold){
+        flushParagraph();resetList();
+        const h=document.createElement(heading&&/^#{1,2}(?!#)/.test(line)?'h3':'h4');
+        inline(h,heading?heading[1]:onlyBold[1]);frag.append(h);continue;
+      }
+      const bullet=line.match(/^(?:[-*•]\s+|[•●]\s*)(.+)$/);
+      const ordered=line.match(/^\d+[.．、)]\s*(.+)$/);
+      if(bullet||ordered){
+        flushParagraph();const kind=ordered?'ol':'ul';
+        if(!list||listType!==kind){list=document.createElement(kind);frag.append(list);listType=kind;}
+        const li=document.createElement('li');inline(li,(ordered||bullet)[1]);list.append(li);continue;
+      }
+      resetList();paragraph.push(line);
+    }
+    flushParagraph();target.append(frag);
+  }
+  function setReportExpanded(topic,open,fromBottom=false){
+    expandedTopic=open?topic:null;
+    const root=$('baziPersonalAiReports');
+    root.querySelectorAll('[data-report-topic]').forEach(card=>{
+      const selected=open&&card.dataset.reportTopic===topic;
+      const body=card.querySelector('[data-report-body]');
+      const top=card.querySelector('[data-report-toggle-top]');
+      if(body)body.hidden=!selected;
+      if(top){top.setAttribute('aria-expanded',String(selected));top.textContent=selected?'↑ 收合'+topicTitles[card.dataset.reportTopic]:'↓ 展開閱讀'+topicTitles[card.dataset.reportTopic];}
+    });
+    if(fromBottom){
+      const card=Array.from(root.querySelectorAll('[data-report-topic]')).find(x=>x.dataset.reportTopic===topic);
+      card?.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  }
+  function drawReports(selected){
+    const root=$('baziPersonalAiReports');root.replaceChildren();
+    const topics=Object.keys(topicTitles).filter(topic=>normalReport(reports[topic]).reading);
+    if(selected&&topics.includes(selected))expandedTopic=selected;
+    if(expandedTopic&&!topics.includes(expandedTopic))expandedTopic=null;
+    if(expandedTopic===null&&topics.length&&selected!==null)expandedTopic=topics[0];
+    for(const topic of topics){
+      const title=topicTitles[topic],data=normalReport(reports[topic]);
+      const card=document.createElement('section');card.className='bazi-reading-entry';card.dataset.reportTopic=topic;
+      const head=document.createElement('div');head.className='bazi-reading-entry-head';
+      const h=document.createElement('h5');h.textContent=title+'｜解讀完成';head.append(h);
+      if(channelPattern.test(data.channel)&&tracePattern.test(data.traceId)){
+        const info=document.createElement('small');info.className='bazi-reading-trace';
+        info.textContent='通道 '+data.channel+'｜追蹤碼：'+data.traceId;head.append(info);
+      }
+      const top=document.createElement('button');top.type='button';top.className='bazi-reading-toggle';
+      top.dataset.reportToggleTop='1';top.setAttribute('aria-controls','bazi-report-'+topic);
+      const body=document.createElement('div');body.id='bazi-report-'+topic;body.dataset.reportBody='1';
+      const article=document.createElement('article');article.className='bazi-reading-article';
+      renderPersonalReading(article,data.reading);
+      const bottom=document.createElement('button');bottom.type='button';bottom.className='bazi-reading-toggle bazi-reading-toggle-bottom';
+      bottom.textContent='↑ 收合'+title;
+      top.addEventListener('click',()=>setReportExpanded(topic,expandedTopic!==topic));
+      bottom.addEventListener('click',()=>setReportExpanded(topic,false,true));
+      body.append(article,bottom);card.append(head,top,body);root.append(card);
+    }
+    setReportExpanded(expandedTopic,!!expandedTopic);
+  }
+  function showAiWorking(btn,topic,on){
+    const status=$('baziPersonalAiStatus');
+    status?.classList.toggle('bazi-ai-working',on);
+    status?.setAttribute('aria-busy',String(on));
+    $('baziPersonalAiReports')?.setAttribute('aria-busy',String(on));
+    document.querySelectorAll('[data-bazi-topic]').forEach(b=>{
+      b.disabled=on;
+      if(on&&b===btn){b.dataset.previousLabel=b.textContent;b.textContent='正在解析…';b.classList.add('bazi-ai-generating');}
+      if(!on){if(b.dataset.previousLabel)b.textContent=b.dataset.previousLabel;delete b.dataset.previousLabel;b.classList.remove('bazi-ai-generating');}
+    });
+  }
   function renderBasic(data,reveal=true){const root=$('baziPersonalPillars');root.replaceChildren();data.pillars.forEach((p,i)=>{const e=document.createElement('div');e.className='bazi-personal-pillar'+(i===2?' day':'');const sm=document.createElement('small');sm.textContent=labels[i];const text=document.createElement('strong');text.textContent=p.ganZhi;e.append(sm,text);root.append(e);});$('baziPersonalBasicInfo').textContent='公曆：'+safeText(data.solarText)+'｜農曆：'+safeText(data.lunarText)+'｜日主：'+safeText(data.dayMaster);$('baziPersonalPreview').hidden=!reveal;$('results').classList.remove('show');document.body.classList.remove('bazi-example-snapshot-mode','has-bazi-chart');$('baziExampleSnapshotBanner').hidden=true;}
   function clearViewForDemo(){$('baziPersonalPreview').hidden=true;current=null;}
   window.baziOnDemoEnter=clearViewForDemo;
@@ -7900,7 +8036,7 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry pre{color:#2c4
     try{
       const j=await post('/v2/basic',{datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect),calendar:buildFrontendCalendarPayload(options),usageIntent:countUsage&&!testRole()?'user-cast':'internal-refresh'});
       if(!j.data||j.data.pillars?.length!==4)throw Error('後端沒有回傳四柱');
-      const key=identity(options);current={key,datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect)};
+      const key=identity(options);if(current?.key!==key)expandedTopic=null;current={key,datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect)};
       try{reports=JSON.parse(sessionStorage.getItem(storePrefix+key)||'{}')}catch(_){reports={};}
       drawReports();renderBasic(j.data,reveal);
       $('baziPersonalAiStatus').textContent=reports.overall?'已讀取你的綜合命盤 AI 解析；可在下方繼續閱讀。':(countUsage&&reveal?'四柱已完成，正在準備免費綜合命盤 AI 解析…':'四柱已完成，可選擇下方的站內 AI 解讀。');
@@ -7909,7 +8045,7 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry pre{color:#2c4
       // Only an explicit "免費排八字" click starts the first AI report.
       // No additional AI use for old saved reports, background refresh, or example browsing.
       if(reveal&&countUsage&&!reports.overall){
-        setTimeout(()=>{if(current?.key===key)void topicClick('overall',$('[data-bazi-topic="overall"]'),true);},0);
+        setTimeout(()=>{if(current?.key===key)void topicClick('overall',document.querySelector('[data-bazi-topic="overall"]'),true);},0);
       }
       return true;
     }catch(e){$('baziPersonalAiStatus').textContent=e.message||'排盤失敗';throw e;}
@@ -7919,20 +8055,20 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry pre{color:#2c4
     const status=$('baziPersonalAiStatus');
     if(!current||busy){status.textContent='請先建立個人四柱';return;}
     if(aiBusy){status.textContent='AI 正在產生解析，請稍候完成後再選擇其他主題。';return;}
-    if(reports[topic]){drawReports();status.textContent='這份報告已保留，不會重複扣額度。';return;}
+    if(reports[topic]){drawReports(topic);status.textContent='這份報告已保留，不會重複扣額度。';return;}
     if(!automatic&&!confirm('確定產生'+({overall:'綜合',love:'感情',career:'事業'}[topic])+'報告？成功生成將扣除 1 次免費 AI 額度。'))return;
     const chart={...current},reportKey=current.key;
     aiBusy=true;
-    document.querySelectorAll('[data-bazi-topic]').forEach(b=>b.disabled=true);
-    status.textContent=automatic?'正在為你自動產生第一篇綜合命盤 AI 解析，請稍候…':'AI 正在解讀中，請稍候…';
+    showAiWorking(btn,topic,true);
+    status.textContent=automatic?'正在解析你的綜合命盤，約需 10～20 秒，請稍候…':'AI 正在解析'+topicTitles[topic]+'，約需 10～20 秒，請稍候…';
     try{
       const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic});
       if(!j.reading)throw Error('AI 沒有回傳解析');
-      let saved={};try{saved=JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}catch(_){}
-      saved[topic]=j.reading;
+      let saved=current?.key===reportKey?{...reports}:{};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){}
+      saved[topic]={reading:j.reading,channel:j.channel||'',traceId:j.traceId||''};
       try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){}
       if(current?.key===reportKey){
-        reports=saved;drawReports();
+        reports=saved;drawReports(topic);
         status.textContent=automatic?'免費綜合命盤 AI 解析已完成，請直接在下方閱讀。':'解析完成；已保留這份報告。';
       }
       if(typeof baziGeminiRefreshQuota==='function')baziGeminiRefreshQuota();
@@ -7943,7 +8079,7 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry pre{color:#2c4
       }
     }finally{
       aiBusy=false;
-      document.querySelectorAll('[data-bazi-topic]').forEach(b=>b.disabled=false);
+      showAiWorking(btn,topic,false);
       refreshPersonalQuota();
     }
   }
