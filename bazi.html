@@ -6981,7 +6981,11 @@ html[data-theme="light"] :is(button,a,input,select,textarea):focus-visible{outli
       const r=await fetch(url,options),j=await r.json();
       if(!r.ok||!j.ok)throw Error(j.error||'設定失敗');
       active=true;quota=j;window.__baziAdminRoleTest.mode=mode;
+      // Isolate each administrator test session from real-member report caches.
+      window.__baziAdminRoleTest.generation=crypto.randomUUID?.()||String(Date.now());
       sessionStorage.setItem(PREFIX,mode);
+      window.baziOnAdminTestRoleChanged?.();
+      if(typeof baziGeminiRefreshQuota==='function')void baziGeminiRefreshQuota();
       status.textContent='已切換「'+modes[mode].label+'」；可直接使用下方真正的 AI 解讀。再次點此角色可補滿測試次數。';
       display();
     }catch(e){mode=previous;status.textContent='角色切換失敗：'+e.message+'（未啟用新角色）';}
@@ -7850,23 +7854,51 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry pre{color:#2c4
   let reports={},aiBusy=false;
   const storePrefix='bazi-personal-v4:';
   const safeText=v=>String(v==null?'':v);
-  function headers(){const t=typeof baziAuthToken==='function'?baziAuthToken():'';return {'Content-Type':'application/json',...(t?{Authorization:'Bearer '+t}:{})};}
+  const adminTestPage=new URLSearchParams(location.search).get('admin')==='1';
+  function testRole(){
+    const t=window.__baziAdminRoleTest;
+    return adminTestPage&&t?.token&&t.mode&&t.mode!=='blocked'?t:null;
+  }
+  function headers(){
+    const t=testRole();
+    if(t)return {'Content-Type':'application/json','Authorization':'Bearer '+t.token,'X-Bazi-Test-Mode':t.mode};
+    const token=typeof baziAuthToken==='function'?baziAuthToken():'';
+    return {'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})};
+  }
   async function post(path,body){const r=await fetch(API+path,{method:'POST',headers:headers(),body:JSON.stringify(body),cache:'no-store'});const j=await r.json().catch(()=>({ok:false,error:'INVALID_SERVER_RESPONSE'}));if(!r.ok||!j.ok)throw Error(j.message||j.error||('HTTP '+r.status));return j;}
   async function refreshPersonalQuota(){
     const target=$('baziPersonalQuota');if(!target)return;
+    if(adminTestPage&&!testRole()){target.textContent='管理員測試權限驗證中…';return;}
     try{const r=await fetch(API+'/ai/status',{headers:headers(),cache:'no-store'});const j=await r.json();
-      target.textContent=r.ok&&j.ok&&Number.isFinite(Number(j.personalRemaining))?'今日剩餘 '+j.personalRemaining+' / '+j.personalLimit+' 次':'額度暫時無法取得';
+      if(r.ok&&j.ok&&j.adminRoleTest)target.textContent='🧪 測試額度剩餘 '+j.testRemaining+' / '+j.testLimit+' 次';
+      else target.textContent=r.ok&&j.ok&&Number.isFinite(Number(j.personalRemaining))?'今日剩餘 '+j.personalRemaining+' / '+j.personalLimit+' 次':'額度暫時無法取得';
     }catch(_){target.textContent='額度暫時無法取得';}
   }
-  function identity(options){return [options.datetime,options.gender,options.sect,typeof baziSessionMember!=='undefined'&&baziSessionMember?.sub?'member:'+baziSessionMember.sub:'visitor'].join('|');}
+  function identity(options){
+    const t=testRole();
+    const account=t?'admin-role:'+t.mode+':'+(t.generation||0):typeof baziSessionMember!=='undefined'&&baziSessionMember?.sub?'member:'+baziSessionMember.sub:'visitor';
+    return [options.datetime,options.gender,options.sect,account].join('|');
+  }
+  // A newly reset role must not inherit an already-generated AI report.
+  window.baziOnAdminTestRoleChanged=()=>{
+    reports={};
+    if(current)current.key=identity(current);
+    drawReports();
+    if($('baziPersonalAiStatus'))$('baziPersonalAiStatus').textContent='🧪 已切換管理員角色，可重新產生綜合、感情及事業 AI 報告。';
+    void refreshPersonalQuota();
+  };
   function drawReports(){const root=$('baziPersonalAiReports');root.replaceChildren();for(const [topic,title] of Object.entries({overall:'綜合命盤解析',love:'感情與相處解析',career:'事業與發展解析'})){if(!reports[topic])continue;const d=document.createElement('details');d.className='bazi-reading-entry';d.open=true;const s=document.createElement('summary');s.textContent=title;const pre=document.createElement('pre');pre.textContent=reports[topic];d.append(s,pre);root.append(d);}}
   function renderBasic(data,reveal=true){const root=$('baziPersonalPillars');root.replaceChildren();data.pillars.forEach((p,i)=>{const e=document.createElement('div');e.className='bazi-personal-pillar'+(i===2?' day':'');const sm=document.createElement('small');sm.textContent=labels[i];const text=document.createElement('strong');text.textContent=p.ganZhi;e.append(sm,text);root.append(e);});$('baziPersonalBasicInfo').textContent='公曆：'+safeText(data.solarText)+'｜農曆：'+safeText(data.lunarText)+'｜日主：'+safeText(data.dayMaster);$('baziPersonalPreview').hidden=!reveal;$('results').classList.remove('show');document.body.classList.remove('bazi-example-snapshot-mode','has-bazi-chart');$('baziExampleSnapshotBanner').hidden=true;}
   function clearViewForDemo(){$('baziPersonalPreview').hidden=true;current=null;}
   window.baziOnDemoEnter=clearViewForDemo;
   window.baziMainCast=async function({options,scroll,reveal,countUsage=false}){
+    if(adminTestPage&&!testRole()){
+      $('baziPersonalAiStatus').textContent='管理員測試尚未驗證完成，請先選擇測試角色。';
+      throw Error('管理員測試尚未驗證完成');
+    }
     if(busy)return false;busy=true;const btn=$('castBtn'),old=btn?.textContent||'免費排八字';if(btn){btn.disabled=true;btn.textContent='正在排出你的四柱…';}
     try{
-      const j=await post('/v2/basic',{datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect),calendar:buildFrontendCalendarPayload(options),usageIntent:countUsage?'user-cast':'internal-refresh'});
+      const j=await post('/v2/basic',{datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect),calendar:buildFrontendCalendarPayload(options),usageIntent:countUsage&&!testRole()?'user-cast':'internal-refresh'});
       if(!j.data||j.data.pillars?.length!==4)throw Error('後端沒有回傳四柱');
       const key=identity(options);current={key,datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect)};
       try{reports=JSON.parse(sessionStorage.getItem(storePrefix+key)||'{}')}catch(_){reports={};}
