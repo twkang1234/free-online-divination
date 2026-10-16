@@ -7,7 +7,7 @@
 <section><h2>輸入出生資料</h2><p class="hint">此頁獨立測試，不會覆蓋目前完整排盤頁。以民用時間（台灣時間）排盤，不做真太陽時校正。</p>
 <form class="control" id="entry"><label>出生日期與時間<input id="birth" type="datetime-local" value="1990-01-27T10:30" required min="1850-01-01T00:00" max="2100-12-31T23:59"></label><label>性別<select id="gender"><option value="1">男</option><option value="0">女</option></select></label><label>日柱換日派別<select id="sect"><option value="2">晚子時不換日</option><option value="1">23:00 換日</option></select></label><button type="submit">免費排八字</button></form><p class="status" id="status" role="status" aria-live="polite"></p></section>
 <section id="personal" hidden><div class="row"><h2>我的四柱</h2><span class="hint">只公開極簡盤，完整計算留在後端</span></div><div class="pillars" id="pillars"></div><p class="hint" id="calendarNote"></p></section>
-<section id="reportSection" hidden><div class="row"><h2>站內 AI 免費體驗</h2><span id="quota" class="hint">讀取使用額度中…</span></div><p class="hint">測試版直接使用原本 AI 額度：訪客及會員的可用次數以現行後端設定為準，按一次計一次，沒有新增免費額度。</p><div class="reports" id="reports"></div></section>
+<section id="reportSection" hidden><div class="row"><h2>站內 AI 免費體驗</h2><span id="quota" class="hint">讀取使用額度中…</span></div><p class="hint">使用原本 AI 額度；成功的解析將在此瀏覽器分頁的工作階段保留。重新產生才會再次消耗額度。</p><div class="reports" id="reports"></div></section>
 <section><div class="row"><h2>20 筆完整示範盤資料庫</h2><button class="secondary" id="reload" type="button">更新範例清單</button></div><p class="hint">這裡只讀取已保存的示範資料。名人盤尚未新增。正式完整展示廳將沿用原本九大分析介面。</p><div class="demo" id="samples"></div><p class="status" id="demoStatus"></p><div id="sampleDetail" hidden><h3 id="sampleTitle"></h3><div class="pillars" id="samplePillars"></div><details style="margin-top:12px"><summary>查看此示範盤的已儲存分析摘要</summary><div class="showdata" id="sampleSummary"></div></details></div></section>
 </main><script>
 (() => {
@@ -48,15 +48,77 @@
  function authHeaders(){const t=localStorage.getItem('divinationhub-auth-session-v1')||localStorage.getItem('divinationhub-bazi-google-credential')||'';return t?{'Authorization':'Bearer '+t}:{}}
  async function request(path,payload){const r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(payload)});const j=await r.json().catch(()=>({ok:false,error:'SERVER_RESPONSE_ERROR'}));if(!r.ok||j.ok!==true)throw Error(j.message||j.error||'HTTP '+r.status);return j;}
  function showPillars(node,ps){node.replaceChildren();(ps||[]).forEach((p,i)=>{let el=document.createElement('div');el.className='pillar';const a=document.createElement('div');a.className='label';a.textContent=labels[i];const b=document.createElement('strong');b.textContent=p.gan;const c=document.createElement('strong');c.className='branch';c.textContent=p.zhi;el.append(a,b,c);node.append(el)})}
- let current=null,loading=false;
+ let current=null,loading=false,currentKey='';
+ // Preserve successful reports when the visitor opens a demo or repeats the same
+ // cast in this tab. sessionStorage expires with the browser session, not a
+ // permanent copy of birth information in localStorage.
+ const reportCache=new Map();
+ const reportTopics=[['overall','綜合命盤解析'],['love','感情解析'],['career','事業解析']];
+ const sessionPrefix='dh-bazi-preview-report-v3-';
+ const hashChart=async ({datetime,gender,sect})=>{
+   const bytes=new TextEncoder().encode(datetime+'|'+gender+'|'+sect);
+   const d=await crypto.subtle.digest('SHA-256',bytes);
+   return Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,'0')).join('');
+ };
+ function savedReports(){
+   if(!currentKey)return {};
+   if(reportCache.has(currentKey))return reportCache.get(currentKey);
+   let data={};
+   try{const raw=sessionStorage.getItem(sessionPrefix+currentKey);if(raw){const v=JSON.parse(raw);if(v&&typeof v==='object'&&!Array.isArray(v)){
+      for(const [key] of reportTopics)if(typeof v[key]==='string'&&v[key].length<40000)data[key]=v[key];
+   }}}catch(_){}
+   reportCache.set(currentKey,data);return data;
+ }
+ function saveReports(){
+   if(!currentKey)return;
+   try{sessionStorage.setItem(sessionPrefix+currentKey,JSON.stringify(savedReports()))}catch(_){}
+ }
  async function quota(){try{const r=await fetch(API+'/ai/status',{headers:authHeaders(),cache:'no-store'}),j=await r.json();if(j.ok)$('quota').textContent='今日剩餘 '+j.personalRemaining+'／'+j.personalLimit+' 次';else $('quota').textContent='額度暫無法讀取'}catch(_){$('quota').textContent='額度暫無法讀取'}}
- $('entry').addEventListener('submit',async ev=>{ev.preventDefault();if(loading)return;loading=true;$('status').textContent='正在建立極簡命盤…';try{
-  const datetime=$('birth').value,gender=Number($('gender').value),sect=Number($('sect').value);current={datetime,gender,sect,calendar:calendar(datetime,gender,sect)};
-  const j=await request('/v2/basic',current);showPillars($('pillars'),j.data.pillars);$('calendarNote').textContent='公曆：'+j.data.solarText+' ｜ 農曆：'+j.data.lunarText;
-  $('personal').hidden=false;$('reportSection').hidden=false;$('status').textContent='已排盤；進階計算資料未傳回此頁。';createCards();await quota();$('personal').scrollIntoView({behavior:'smooth',block:'start'});
- }catch(e){$('status').textContent='失敗：'+e.message}finally{loading=false}});
- const topics=[['overall','綜合命盤解析'],['love','感情解析'],['career','事業解析']];
- function createCards(){const el=$('reports');el.replaceChildren();for(const [key,name] of topics){const card=document.createElement('div');card.className='report';const h=document.createElement('h3');h.textContent=name;const p=document.createElement('p');p.className='hint';p.textContent='後端依完整命盤資料組裝提示詞，不將專業提示詞傳回瀏覽器。';const b=document.createElement('button');b.textContent='產生此份解析';b.addEventListener('click',async()=>{if(!current)return;b.disabled=true;b.textContent='正在產生…';const msg=document.createElement('article');msg.textContent='';card.appendChild(msg);try{const res=await request('/v2/ai/report',{...current,topic:key});msg.textContent=res.reading;b.textContent='重新產生解析';await quota()}catch(e){msg.textContent='暫時無法產生：'+e.message;b.textContent='重試'}finally{b.disabled=false}});card.append(h,p,b);el.append(card)}}
+ $('entry').addEventListener('submit',async ev=>{
+   ev.preventDefault();if(loading)return;loading=true;$('status').textContent='正在建立極簡命盤…';
+   try{
+      const datetime=$('birth').value,gender=Number($('gender').value),sect=Number($('sect').value);
+      const next={datetime,gender,sect,calendar:calendar(datetime,gender,sect)};
+      const j=await request('/v2/basic',next);
+      // Commit a new current chart only after successful validation.
+      current=next;currentKey=await hashChart(next);
+      showPillars($('pillars'),j.data.pillars);
+      $('calendarNote').textContent='公曆：'+j.data.solarText+' ｜ 農曆：'+j.data.lunarText;
+      $('personal').hidden=false;$('reportSection').hidden=false;
+      $('status').textContent='已排盤；進階計算資料未傳回此頁。';
+      createCards();await quota();$('personal').scrollIntoView({behavior:'smooth',block:'start'});
+   }catch(e){$('status').textContent='失敗：'+e.message}finally{loading=false}
+ });
+ function createCards(){
+   const el=$('reports');el.replaceChildren();
+   for(const [key,name] of reportTopics){
+      const card=document.createElement('div');card.className='report';
+      const h=document.createElement('h3');h.textContent=name;
+      const p=document.createElement('p');p.className='hint';
+      p.textContent='由後端整理專業分析；此頁不會顯示完整提示詞。';
+      const msg=document.createElement('article');
+      let cached=savedReports()[key]||'';
+      if(cached){msg.textContent=cached;p.textContent='已產生的報告已保留，可以繼續閱讀。';}
+      const b=document.createElement('button');
+      b.textContent=cached?'重新產生（將消耗一次 AI 額度）':'產生此份解析';
+      b.addEventListener('click',async()=>{
+         if(!current)return;
+         if(savedReports()[key]&&!confirm('重新產生會使用一次 AI 額度。確定繼續嗎？'))return;
+         b.disabled=true;b.textContent='正在產生…';
+         try{
+           const res=await request('/v2/ai/report',{...current,topic:key});
+           if(typeof res.reading!=='string'||!res.reading.trim())throw Error('沒有收到完整報告');
+           savedReports()[key]=res.reading;saveReports();
+           msg.textContent=res.reading;p.textContent='已產生的報告已保留，可以繼續閱讀。';
+           b.textContent='重新產生（將消耗一次 AI 額度）';await quota();
+         }catch(e){
+           if(!msg.textContent.trim())msg.textContent='暫時無法產生：'+e.message;
+           b.textContent=cached?'重新產生（將消耗一次 AI 額度）':'重試產生';
+         }finally{b.disabled=false}
+      });
+      card.append(h,p,b,msg);el.append(card);
+   }
+ }
  async function loadExamples(){const list=$('samples');list.replaceChildren();$('demoStatus').textContent='讀取中…';try{const r=await fetch(API+'/examples/list'),j=await r.json();if(!j.ok)throw Error(j.error);for(const item of j.examples||[]){const b=document.createElement('button');b.className='sample';b.textContent=item.title||item.seed_key;const note=document.createElement('small');note.textContent=item.kind==='celebrity'?'名人範例':'隨機範例';b.appendChild(note);b.addEventListener('click',()=>showExample(item,b));list.appendChild(b)}$('demoStatus').textContent='目前已保存 '+(j.examples||[]).length+' 筆完整示範盤';}catch(e){$('demoStatus').textContent='讀取失敗：'+e.message}}
  async function showExample(item,btn){$('demoStatus').textContent='正在讀取 '+item.title+'…';try{const r=await fetch(API+'/examples/item/'+encodeURIComponent(item.seed_key)),j=await r.json();if(!j.ok)throw Error(j.error);const d=j.data;$('sampleDetail').hidden=false;$('sampleTitle').textContent=j.title+' · '+j.asOf+' 固定快照';showPillars($('samplePillars'),d.pillars);$('sampleSummary').textContent=(d.reading?.summary||'')+'\n\n'+(d.overallMasterSummary?.summary||d.highlights?.summary||'')+'\n\n八步大運：'+(d.daYun?.cycles||[]).map(x=>x.ganZhi).join('、');document.querySelectorAll('.sample').forEach(x=>x.setAttribute('aria-pressed',String(x===btn)));$('demoStatus').textContent='已讀取保存的完整結果，沒有再次計算。';}catch(e){$('demoStatus').textContent='讀取失敗：'+e.message}}
  $('reload').addEventListener('click',loadExamples);loadExamples();
