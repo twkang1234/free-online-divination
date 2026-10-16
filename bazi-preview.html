@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>一念知機｜個人極簡命盤測試</title>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","Microsoft JhengHei",sans-serif;color:#193b45;background:#f5f6f1;line-height:1.75}*{box-sizing:border-box}body{margin:0}main{max-width:1050px;margin:auto;padding:28px 16px 80px}.header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}.header a{color:#2c6d72;text-decoration:none}h1{margin:0;font-size:clamp(26px,4vw,40px)}p{margin:8px 0}.eyebrow{letter-spacing:.18em;color:#8a783d;font-size:12px}section{background:#fff;border:1px solid #cadbda;border-radius:20px;padding:24px;margin-bottom:18px;box-shadow:0 10px 28px #3c6c690a}.hint{color:#677986;font-size:14px}.control{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end;margin-top:18px}label{display:grid;gap:5px;font-size:14px;color:#41616c}input,select{width:100%;height:48px;border:1px solid #aec7cf;border-radius:10px;background:white;color:#214653;padding:8px 12px;font:inherit}button{background:#176577;color:white;border:0;border-radius:10px;padding:12px 18px;min-height:48px;font:inherit;cursor:pointer}button:hover{filter:brightness(1.06)}button:disabled{opacity:.48;cursor:not-allowed}.secondary{background:#ecf4f1;color:#1f6573;border:1px solid #a9cfd3}.pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.pillar{text-align:center;border-radius:16px;background:#ecf6f6;border:1px solid #b7d3d5;padding:13px 8px}.pillar strong{font-size:36px;line-height:1.3;display:block;color:#126d83}.pillar .branch{color:#9a642c}.label{font-size:13px;color:#6e7e82}.reports{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.report{background:#f7faf9;padding:16px;border:1px solid #d2e4df;border-radius:14px}.report h3{margin:0 0 6px}.report article{margin:14px 0;max-height:360px;overflow:auto;white-space:pre-wrap;color:#2c4250;font-size:14px}.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.status{color:#895e13;min-height:24px;font-size:14px}.quiet{background:#f0f7f6;border-radius:11px;padding:14px}.demo{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px}.sample{background:#fff;text-align:left;border:1px solid #aac8ce;color:#23616a;padding:12px}.sample[aria-pressed=true]{border-color:#b7893d;background:#fff9ef}.sample small{display:block;color:#71838b}.showdata{padding:14px;background:#f5f8f6;border:1px solid #cadbda;border-radius:13px;max-height:260px;overflow:auto}details>summary{cursor:pointer;color:#286a75;font-weight:700}@media(max-width:760px){.control{grid-template-columns:1fr 1fr}.control label:first-child{grid-column:1/-1}.control button{grid-column:1/-1}.reports{grid-template-columns:1fr}.pillars{gap:6px}.pillar strong{font-size:26px}} </style>
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
+</head><body><main><div class="header"><div><div class="eyebrow">DIVINATION HUB · STAGING</div><h1>個人命盤｜極簡與 AI 試行</h1></div><a href="/bazi.html">返回原八字首頁</a></div>
+<section><h2>輸入出生資料</h2><p class="hint">此頁獨立測試，不會覆蓋目前完整排盤頁。以民用時間（台灣時間）排盤，不做真太陽時校正。</p>
+<form class="control" id="entry"><label>出生日期與時間<input id="birth" type="datetime-local" value="1990-01-27T10:30" required min="1850-01-01T00:00" max="2100-12-31T23:59"></label><label>性別<select id="gender"><option value="1">男</option><option value="0">女</option></select></label><label>日柱換日派別<select id="sect"><option value="2">晚子時不換日</option><option value="1">23:00 換日</option></select></label><button type="submit">免費排八字</button></form><p class="status" id="status" role="status" aria-live="polite"></p></section>
+<section id="personal" hidden><div class="row"><h2>我的四柱</h2><span class="hint">只公開極簡盤，完整計算留在後端</span></div><div class="pillars" id="pillars"></div><p class="hint" id="calendarNote"></p></section>
+<section id="reportSection" hidden><div class="row"><h2>站內 AI 免費體驗</h2><span id="quota" class="hint">讀取使用額度中…</span></div><p class="hint">測試版直接使用原本 AI 額度：訪客及會員的可用次數以現行後端設定為準，按一次計一次，沒有新增免費額度。</p><div class="reports" id="reports"></div></section>
+<section><div class="row"><h2>20 筆完整示範盤資料庫</h2><button class="secondary" id="reload" type="button">更新範例清單</button></div><p class="hint">這裡只讀取已保存的示範資料。名人盤尚未新增。正式完整展示廳將沿用原本九大分析介面。</p><div class="demo" id="samples"></div><p class="status" id="demoStatus"></p><div id="sampleDetail" hidden><h3 id="sampleTitle"></h3><div class="pillars" id="samplePillars"></div><details style="margin-top:12px"><summary>查看此示範盤的已儲存分析摘要</summary><div class="showdata" id="sampleSummary"></div></details></div></section>
+</main><script>
+(() => {
+ 'use strict';
+ const API='https://bazi-api.ezgocpu.workers.dev';
+ const $=id=>document.getElementById(id);
+ const labels=['年柱','月柱','日柱','時柱'];
+ const pad=x=>String(x).padStart(2,'0');
+ const gchars='甲乙丙丁戊己庚辛壬癸';
+ const elements={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+ function fmt(s){return s?.toYmdHms?s.toYmdHms():''}
+ function splitGZ(gz){return {gan:gz.charAt(0),zhi:gz.charAt(1),ganZhi:gz}}
+ function jieInfo(lunar){let j={};try{const p=lunar.getPrevJie(),n=lunar.getNextJie();j={prev:{name:p.getName(),solar:fmt(p.getSolar())},next:{name:n.getName(),solar:fmt(n.getSolar())}}}catch(_){}return j}
+ function calendar(datetime,gender,sect){
+   if(typeof Solar==='undefined')throw Error('曆法套件尚未載入');
+   const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(datetime);
+   if(!m)throw Error('請輸入有效日期');
+   const [year,month,day,hour,minute]=m.slice(1).map(Number);
+   const so=Solar.fromYmdHms(year,month,day,hour,minute,0);
+   const lunar=so.getLunar(),eight=lunar.getEightChar();eight.setSect(sect);
+   let timeEight=eight;
+   if(sect===2&&hour===23){timeEight=Solar.fromYmdHms(year,month,day,0,30,0).getLunar().getEightChar();timeEight.setSect(sect)}
+   const keys=['year','month','day','time'];
+   const pillars=keys.map(k=>{
+    const v=k==='time'?timeEight:eight;
+    const u=k[0].toUpperCase()+k.slice(1);
+    const gz=v['get'+u]();const h=v['get'+u+'HideGan']();
+    return {...splitGZ(gz),key:k,hideGan:h||[],shiShenZhi:v['get'+u+'ShiShenZhi']()||[]};
+   });
+   const y=eight.getYun(gender,2),start=y.getStartSolar();
+   const daYun={forward:y.isForward(),startSolar:fmt(start),startYears:y.getStartYear(),startMonths:y.getStartMonth(),startDays:y.getStartDay(),startHours:y.getStartHour(),cycles:y.getDaYun(9).filter(v=>v.getIndex()>0).slice(0,8).map((v,i)=>({...splitGZ(v.getGanZhi()),kind:'luck',startYear:v.getStartYear(),endYear:v.getEndYear(),startAge:v.getStartAge(),endAge:v.getEndAge(),startSolar:fmt(start.nextYear(i*10)),endSolar:fmt(start.nextYear((i+1)*10))}))};
+   const yearNow=new Date().getFullYear();
+   const yearFlows=Array.from({length:12},(_,i)=>{const year=yearNow-1+i,s=Solar.fromYmdHms(year,7,1,12,0,0),e=s.getLunar().getEightChar();return {...splitGZ(e.getYear()),kind:'year',year,referenceSolar:fmt(s)}});
+   const flowYear=year=>Array.from({length:12},(_,i)=>{const month=i+1,s=Solar.fromYmdHms(year,month,15,12,0,0),e=s.getLunar().getEightChar(),j=jieInfo(s.getLunar());return {...splitGZ(e.getMonth()),kind:'month',year,month,yearGan:e.getYearGan(),yearZhi:e.getYearZhi(),referenceSolar:fmt(s),startSolar:j.prev?.solar||'',endSolar:j.next?.solar||''}});
+   const months=flowYear(yearNow),prior=flowYear(yearNow-1);
+   return {input:{year,month,day,hour,minute},solarText:fmt(so),lunarText:`${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,gender,sect,pillars,dayMaster:pillars[2].gan,taiYuan:eight.getTaiYuan(),mingGong:eight.getMingGong(),shenGong:eight.getShenGong(),jie:jieInfo(lunar),daYun,yearFlows,monthFlowYear:yearNow,monthCarry:prior.at(-1),monthFlows:months};
+ }
+ function authHeaders(){const t=localStorage.getItem('divinationhub-auth-session-v1')||localStorage.getItem('divinationhub-bazi-google-credential')||'';return t?{'Authorization':'Bearer '+t}:{}}
+ async function request(path,payload){const r=await fetch(API+path,{method:'POST',headers:{'Content-Type':'application/json',...authHeaders()},body:JSON.stringify(payload)});const j=await r.json().catch(()=>({ok:false,error:'SERVER_RESPONSE_ERROR'}));if(!r.ok||j.ok!==true)throw Error(j.message||j.error||'HTTP '+r.status);return j;}
+ function showPillars(node,ps){node.replaceChildren();(ps||[]).forEach((p,i)=>{let el=document.createElement('div');el.className='pillar';const a=document.createElement('div');a.className='label';a.textContent=labels[i];const b=document.createElement('strong');b.textContent=p.gan;const c=document.createElement('strong');c.className='branch';c.textContent=p.zhi;el.append(a,b,c);node.append(el)})}
+ let current=null,loading=false;
+ async function quota(){try{const r=await fetch(API+'/ai/status',{headers:authHeaders(),cache:'no-store'}),j=await r.json();if(j.ok)$('quota').textContent='今日剩餘 '+j.personalRemaining+'／'+j.personalLimit+' 次';else $('quota').textContent='額度暫無法讀取'}catch(_){$('quota').textContent='額度暫無法讀取'}}
+ $('entry').addEventListener('submit',async ev=>{ev.preventDefault();if(loading)return;loading=true;$('status').textContent='正在建立極簡命盤…';try{
+  const datetime=$('birth').value,gender=Number($('gender').value),sect=Number($('sect').value);current={datetime,gender,sect,calendar:calendar(datetime,gender,sect)};
+  const j=await request('/v2/basic',current);showPillars($('pillars'),j.data.pillars);$('calendarNote').textContent='公曆：'+j.data.solarText+' ｜ 農曆：'+j.data.lunarText;
+  $('personal').hidden=false;$('reportSection').hidden=false;$('status').textContent='已排盤；進階計算資料未傳回此頁。';createCards();await quota();$('personal').scrollIntoView({behavior:'smooth',block:'start'});
+ }catch(e){$('status').textContent='失敗：'+e.message}finally{loading=false}});
+ const topics=[['overall','綜合命盤解析'],['love','感情解析'],['career','事業解析']];
+ function createCards(){const el=$('reports');el.replaceChildren();for(const [key,name] of topics){const card=document.createElement('div');card.className='report';const h=document.createElement('h3');h.textContent=name;const p=document.createElement('p');p.className='hint';p.textContent='後端依完整命盤資料組裝提示詞，不將專業提示詞傳回瀏覽器。';const b=document.createElement('button');b.textContent='產生此份解析';b.addEventListener('click',async()=>{if(!current)return;b.disabled=true;b.textContent='正在產生…';const msg=document.createElement('article');msg.textContent='';card.appendChild(msg);try{const res=await request('/v2/ai/report',{...current,topic:key});msg.textContent=res.reading;b.textContent='重新產生解析';await quota()}catch(e){msg.textContent='暫時無法產生：'+e.message;b.textContent='重試'}finally{b.disabled=false}});card.append(h,p,b);el.append(card)}}
+ async function loadExamples(){const list=$('samples');list.replaceChildren();$('demoStatus').textContent='讀取中…';try{const r=await fetch(API+'/examples/list'),j=await r.json();if(!j.ok)throw Error(j.error);for(const item of j.examples||[]){const b=document.createElement('button');b.className='sample';b.textContent=item.title||item.seed_key;const note=document.createElement('small');note.textContent=item.kind==='celebrity'?'名人範例':'隨機範例';b.appendChild(note);b.addEventListener('click',()=>showExample(item,b));list.appendChild(b)}$('demoStatus').textContent='目前已保存 '+(j.examples||[]).length+' 筆完整示範盤';}catch(e){$('demoStatus').textContent='讀取失敗：'+e.message}}
+ async function showExample(item,btn){$('demoStatus').textContent='正在讀取 '+item.title+'…';try{const r=await fetch(API+'/examples/item/'+encodeURIComponent(item.seed_key)),j=await r.json();if(!j.ok)throw Error(j.error);const d=j.data;$('sampleDetail').hidden=false;$('sampleTitle').textContent=j.title+' · '+j.asOf+' 固定快照';showPillars($('samplePillars'),d.pillars);$('sampleSummary').textContent=(d.reading?.summary||'')+'\n\n'+(d.overallMasterSummary?.summary||d.highlights?.summary||'')+'\n\n八步大運：'+(d.daYun?.cycles||[]).map(x=>x.ganZhi).join('、');document.querySelectorAll('.sample').forEach(x=>x.setAttribute('aria-pressed',String(x===btn)));$('demoStatus').textContent='已讀取保存的完整結果，沒有再次計算。';}catch(e){$('demoStatus').textContent='讀取失敗：'+e.message}}
+ $('reload').addEventListener('click',loadExamples);loadExamples();
+})();
+</script></body></html>
