@@ -2638,6 +2638,7 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
             <button type="button" id="baziExampleSeed20">建立20筆隨機範例</button>
             <button type="button" id="baziExampleSaveCurrent">儲存目前生日為範例</button>
             <button type="button" id="baziExampleCount">查看目前筆數</button>
+            <button type="button" id="baziExampleBrowse">查看20筆範例命盤</button>
             <small id="baziExampleAdminStatus" role="status" aria-live="polite"></small>
           </div>
           <button class="member-save-cta" id="birthMemberLoginBtn" type="button">登入可儲存</button>
@@ -2651,6 +2652,10 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
       <section class="daily-flow-section" id="report-daily-flow" aria-label="每日流日"><div class="daily-flow-content" id="dailyFlowContent"></div></section>
 
       <div class="results" id="results">
+      <div id="baziExampleSnapshotBanner" class="bazi-example-snapshot-banner" hidden>
+        <div><strong>範例資料庫｜已儲存命盤預覽</strong><span id="baziExampleSnapshotTitle"></span><small>直接讀取資料庫快照；沒有重新排盤、沒有呼叫站內 AI，也不是你自己的命盤。</small></div>
+        <div class="bazi-example-snapshot-actions"><button type="button" id="baziExampleAnother">查看其他範例</button><button type="button" id="baziExampleExit">結束預覽／返回正常排盤</button></div>
+      </div>
       <!-- 排盤成功後採專注閱讀模式；返回介紹可重新整理頁面 -->
 <section class="report-hero" id="report-overview">
           <div id="baziRecastSlot" class="bazi-recast-slot" aria-label="重新排盤設定"></div>
@@ -6623,6 +6628,8 @@ ${intent}
       const options=birthOptions(),input=captureBirthInput(),token=baziAuthToken();
       const data=await requestBaziApi(options, countUsage);
       if(token!==baziAuthToken())return;
+      document.body.classList.remove('bazi-example-snapshot-mode');
+      if($('baziExampleSnapshotBanner'))$('baziExampleSnapshotBanner').hidden=true;
       lastSuccessfulBirthInput=input;
       if(reveal)rememberMemberBirth(input);
       $('birthTimeNotice').textContent=timeInputNote(data);
@@ -6644,6 +6651,39 @@ ${intent}
       if(castBtn){castBtn.disabled=false;castBtn.textContent=originalText||'排八字';}
     }
   }
+
+  // Administrator-only review UI reuses the original chapter renderers, but reads archived JSON only.
+  // It never invokes requestBaziApi or AI APIs, and frozen daily flow stays at the saved date.
+  window.baziShowArchivedExample=function(data,meta={}){
+    if(!data||!Array.isArray(data.pillars)||data.pillars.length!==4||!data.overallMasterSummary||!Array.isArray(data.monthFlows)||!data.threeYearStrategicOutlook){
+      throw Error('這筆範例缺少完整的已存命盤分析，無法直接預覽。');
+    }
+    const banner=$('baziExampleSnapshotBanner');
+    if(!banner)throw Error('找不到範例預覽畫面');
+    document.body.classList.add('bazi-example-snapshot-mode');
+    lastData=data;
+    lastSuccessfulBirthInput=null;
+    selectedPeriods={};
+    baziGeminiLastReading='';
+    const gemOut=$('baziGeminiOutput');if(gemOut)gemOut.hidden=true;
+    // Frozen archived daily-flow view: do not silently fetch today again.
+    dailyFlowCache.clear();
+    dailyFlowDemo=true;
+    dailyFlowState={offset:0,day:data.dailyFlow||null,loading:false,error:data.dailyFlow?'':'此範例未儲存流日快照',requestId:dailyFlowState.requestId+1,token:'',chartKey:dailyChartKey(data)};
+    renderDailyFlowView();
+    renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);
+    renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);
+    renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);
+    renderYearFlows(data);renderMonthFlows(data);initSectionDecodeUI();resetExploration();
+    emptyState.style.display='none';
+    results.classList.add('show');
+    document.body.classList.remove('show-bazi-intro');
+    document.body.classList.add('has-bazi-chart');
+    window.baziReadingUiSuccess?.(data);
+    $('baziExampleSnapshotTitle').textContent=String(meta.title||'已存範例')+'｜快照日期 '+String(meta.asOf||'建立時');
+    banner.hidden=false;
+    banner.scrollIntoView({behavior:'smooth',block:'start'});
+  };
 
   window.addEventListener('bazi-google-login', async () => {
     baziGeminiRefreshQuota();
@@ -7631,6 +7671,39 @@ html[data-theme="light"] :is(button,summary,a,input,select,textarea):focus-visib
 
 </style>
 
+<style id="baziExampleSnapshotReviewStyle">
+.bazi-example-snapshot-banner[hidden]{display:none!important}
+.bazi-example-snapshot-banner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin:10px 0 18px;padding:15px 18px;border:2px solid #c2943d;border-radius:16px;background:var(--bazi-bg-219,rgba(233,189,88,.08));color:var(--text)}
+.bazi-example-snapshot-banner>div:first-child{display:grid;gap:3px;min-width:0}
+.bazi-example-snapshot-banner strong{color:var(--bazi-text-210,#dec57e);font-size:.88rem}
+.bazi-example-snapshot-banner span{font-weight:750;font-size:.78rem}
+.bazi-example-snapshot-banner small{color:var(--dim);font-size:.66rem}
+.bazi-example-snapshot-actions{display:flex;flex-wrap:wrap;gap:8px}
+.bazi-example-snapshot-actions button{min-height:38px;padding:8px 12px;border:1px solid #b99856;border-radius:10px;background:var(--panel);color:var(--text);font-size:.72rem;font-weight:760}
+body.bazi-example-snapshot-mode :is(#baziAiFocus,#aiGenerator,.section-ai-box,.smart-prompt-mount,.smart-prompt-collapse,#birthMemberSaveBtn,#birthMemberLoadBtn,#birthMemberLoginBtn,#baziSaveCurrentBtn,#baziMyChartsBtn){display:none!important}
+.bazi-example-picker{width:min(760px,calc(100vw - 28px));max-height:86vh;border:1px solid var(--bazi-line-14,rgba(233,189,88,.26));border-radius:18px;padding:0;background:var(--panel);color:var(--text);box-shadow:0 20px 70px rgba(0,0,0,.35)}
+.bazi-example-picker::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+.bazi-example-picker-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.bazi-example-picker-header h3{font-size:1rem;margin:0;color:var(--text)}
+.bazi-example-picker-header p{font-size:.72rem;margin:5px 0 0;color:var(--dim)}
+.bazi-example-picker-header button{min-height:34px;padding:5px 10px;border:1px solid var(--line);background:transparent;color:var(--text);border-radius:8px}
+.bazi-example-picker-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;padding:15px 18px;overflow:auto;max-height:60vh}
+.bazi-example-picker-list button{padding:12px 8px;min-height:70px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;text-align:left;border:1px solid var(--bazi-line-10,rgba(255,255,255,.11));border-radius:12px;background:var(--panel2);color:var(--text)}
+.bazi-example-picker-list button:hover{border-color:#b58a3f}
+.bazi-example-picker-list button strong{font-size:.74rem}.bazi-example-picker-list button small{font-size:.62rem;color:var(--dim)}
+.bazi-example-picker-status{min-height:28px;margin:0;padding:0 19px 16px;font-size:.73rem;color:var(--dim)}
+html[data-theme="light"] .bazi-example-picker{background:#fff}
+html[data-theme="light"] .bazi-example-picker-list button{background:#f6fafb;border-color:#bbd0d4;color:#25485a}
+html[data-theme="light"] .bazi-example-snapshot-banner{background:#fff9eb;color:#2c4352}
+html[data-theme="light"] .bazi-example-snapshot-banner strong{color:#7c501d}
+html[data-theme="light"] .bazi-example-snapshot-actions button{background:#fff;color:#3c5867}
+@media(max-width:700px){.bazi-example-picker-list{grid-template-columns:repeat(2,minmax(0,1fr))}.bazi-example-snapshot-actions{width:100%}.bazi-example-snapshot-actions button{flex:1}}
+</style>
+<dialog id="baziExamplePicker" class="bazi-example-picker" aria-labelledby="baziExamplePickerHeading">
+ <div class="bazi-example-picker-header"><div><h3 id="baziExamplePickerHeading">已保存的範例命盤</h3><p>點擊任一筆，直接呈現當初儲存的九大分析與白話解析。</p></div><button type="button" id="baziExamplePickerClose">關閉 ✕</button></div>
+ <div id="baziExamplePickerList" class="bazi-example-picker-list"></div>
+ <p id="baziExamplePickerStatus" class="bazi-example-picker-status" role="status" aria-live="polite"></p>
+</dialog>
 <script id="baziExampleLibraryAdmin20261016">
 (() => {
   const API='https://bazi-api.ezgocpu.workers.dev';
@@ -7702,6 +7775,48 @@ html[data-theme="light"] :is(button,summary,a,input,select,textarea):focus-visib
     try{const r=await fetch(API+'/examples/list');const j=await r.json();statusText(j.ok?`目前已有 ${j.count} 筆範例。`:'查詢失敗');}
     catch(e){statusText('查詢失敗：'+e.message)}
   });
+  const picker=$('baziExamplePicker');
+  const pickerList=$('baziExamplePickerList');
+  const pickerStatus=$('baziExamplePickerStatus');
+  const browse=$('baziExampleBrowse');
+  let viewing=false;
+  async function openPicker(){
+    if(toolbar.hidden||!picker)return;
+    pickerStatus.textContent='正在讀取已儲存的範例…';pickerList.replaceChildren();
+    if(!picker.open)picker.showModal();
+    try{
+      const r=await fetch(API+'/examples/list',{cache:'no-store'}),j=await r.json();
+      if(!r.ok||!j.ok||!Array.isArray(j.examples))throw Error(j.error||'無法讀取範例清單');
+      for(const item of j.examples){
+        const btn=document.createElement('button');btn.type='button';
+        const title=document.createElement('strong');title.textContent=item.title||item.seed_key;
+        const detail=document.createElement('small');detail.textContent=(item.kind==='celebrity'?'名人':'隨機')+'｜'+(item.as_of||'已儲存');
+        btn.append(title,detail);
+        btn.addEventListener('click',()=>openArchivedItem(item));
+        pickerList.appendChild(btn);
+      }
+      pickerStatus.textContent='目前 '+j.examples.length+' 筆｜點選一筆查看完整九大分析；只讀取快照、不重新計算。';
+    }catch(err){pickerStatus.textContent='無法載入：'+(err.message||err);}
+  }
+  async function openArchivedItem(item){
+    if(viewing)return;
+    viewing=true;
+    pickerStatus.textContent='正在讀取「'+item.title+'」當初儲存的資料…';
+    pickerList.querySelectorAll('button').forEach(b=>b.disabled=true);
+    try{
+      const r=await fetch(API+'/examples/item/'+encodeURIComponent(item.seed_key),{cache:'no-store'}),j=await r.json();
+      if(!r.ok||!j.ok||!j.example||!j.data)throw Error(j.error||'範例資料不存在');
+      if(typeof window.baziShowArchivedExample!=='function')throw Error('原始九大分析介面尚未準備完成');
+      window.baziShowArchivedExample(j.data,{title:j.title,asOf:j.asOf});
+      picker.close();statusText('已開啟 '+j.title+'（'+j.asOf+' 快照）；要看其他筆，可使用命盤上方的「查看其他範例」。');
+    }catch(err){pickerStatus.textContent='載入失敗：'+(err.message||err);}
+    finally{viewing=false;pickerList.querySelectorAll('button').forEach(b=>b.disabled=false);}
+  }
+  browse?.addEventListener('click',openPicker);
+  $('baziExampleAnother')?.addEventListener('click',openPicker);
+  $('baziExampleExit')?.addEventListener('click',()=>location.reload());
+  $('baziExamplePickerClose')?.addEventListener('click',()=>picker.close());
+  window.baziExampleOpenPicker=openPicker;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',checkAdmin,{once:true});
   else checkAdmin();
 })();
