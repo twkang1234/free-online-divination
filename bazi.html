@@ -2418,6 +2418,15 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
 #baziGeminiReading strong,.section-ai-reading strong{font-weight:750;color:#f1e1bd}
 #baziGeminiReading hr,.section-ai-reading hr{border:0;border-top:1px solid rgba(185,153,83,.22);margin:1.1rem 0}
 
+
+  .mask-sim{display:inline-block;background:linear-gradient(90deg, rgba(120,138,160,.28), rgba(120,138,160,.14)); color:transparent !important; border-radius:6px; user-select:none; vertical-align:baseline; text-shadow:none !important; filter:blur(2px); padding:0 .18em; margin:0 .04em; white-space:nowrap;}
+  .mask-sim.inline{min-width:2.2em;}
+  .mask-sim.block{display:block; width:100%; min-height:1.15em; padding:.22em .35em; margin:.18em 0;}
+  .mask-note{display:flex; align-items:center; justify-content:space-between; gap:10px; margin:10px 0 14px; padding:12px 14px; border:1px dashed var(--bazi-line-325,rgba(117,220,228,.28)); border-radius:12px; background:var(--bazi-bg-724,rgba(117,220,228,.03));}
+  .mask-note strong{display:block; color:var(--bazi-text-705,#f5ead0); font-size:.84rem;}
+  .mask-note span{display:block; color:var(--bazi-text-715,#9da7b6); font-size:.72rem; line-height:1.7;}
+  .mask-note b{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; border:1px solid var(--bazi-line-325,rgba(117,220,228,.28)); background:var(--bazi-bg-400,rgba(117,220,228,.06)); color:var(--bazi-text-171,#89dfe6); font-size:.66rem; font-weight:800; letter-spacing:.08em; white-space:nowrap;}
+
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script><style>
 #baziGeminiOutput .bazi-ai-output-bottom{display:flex;justify-content:center;padding:18px 6px 6px;margin-top:18px;border-top:1px solid rgba(233,189,88,.18)}
@@ -4360,21 +4369,61 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
     }).join('');
   }
 
+
+  function maskSimBlockText(raw){
+    const chars=[...String(raw??'')].filter(ch=>!/[\s，。、「」：；（）()\-—,.%]/.test(ch)).length;
+    const width=Math.max(3,Math.min(18,chars||4));
+    return `<span class="mask-sim inline" aria-hidden="true">${'█'.repeat(width)}</span>`;
+  }
+
+  function maskSimSensitiveText(raw){
+    const src=String(raw??'—');
+    const escapeHtml=s=>String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+    const blur=s=>maskSimBlockText(s);
+    let out=escapeHtml(src);
+    const patterns=[
+      /(甲|乙|丙|丁|戊|己|庚|辛|壬|癸)(子|丑|寅|卯|辰|巳|午|未|申|酉|戌|亥)/g,
+      /(甲|乙|丙|丁|戊|己|庚|辛|壬|癸|子|丑|寅|卯|辰|巳|午|未|申|酉|戌|亥){2,}/g,
+      /(比肩|劫財|食神|傷官|正財|偏財|正官|七殺|正印|偏印|比劫|食傷|財星|官殺|印星)/g,
+      /(金|木|水|火|土)(?=\s*[（(]|\s*\+|\s*、|\s*最|\s*旺|\s*弱|\s*重|\s*多|\s*少|\s*為|\s*與|\s*是)/g,
+      /(喜用神|用神|忌神|身強|身弱|格局|魁罡|調候|旺衰|沖剋|合化|官位|夫妻宮|母慈滅子|傷官|食神|印星|財星|官殺|比劫)/g,
+      /\d+(?:\.\d+)?%/g,
+      /\d+(?:\.\d+)?/g,
+      /（[^）]{1,24}）/g,
+      /\([^)]{1,24}\)/g
+    ];
+    patterns.forEach(re=>{out=out.replace(re,m=>blur(m));});
+    return out;
+  }
+
+  function maskSimKeepLabel(raw){
+    return esc(String(raw??'—'));
+  }
+
+  function maskSimPillarValue(raw){
+    return maskSimBlockText(raw);
+  }
+
+  function masterMaskNote(){
+    return `<div class="mask-note"><div><strong>目前為遮罩模擬預覽</strong><span>這一版只是先模擬前台顯示效果，實際內容仍在前端。等你確認遮哪些內容後，再集中改成真正的後端隱藏與權限解鎖。</span></div><b>前台遮罩模擬</b></div>`;
+  }
+
   function renderMasterReadingHtml(m) {
     if (!m) return '';
     const safe = x => esc(String(x ?? '—'));
     return `
+      ${masterMaskNote()}
       <article class="decode-card master-card" style="grid-column: 1 / -1; border-color: var(--bazi-line-601,rgba(233,189,88,.38)); background: radial-gradient(circle 500px at 0% 0%, var(--bazi-bg-18,rgba(233,189,88,.07)), transparent 70%), var(--bazi-bg-704,rgba(16,19,28,.92)); padding: 22px;">
         <small style="color: var(--bazi-text-6,#e9bd58); font-size: .66rem; letter-spacing: .12em; font-weight: 800;">01 · 格局與日主狀態分析</small>
-        <h3 style="margin: 8px 0 12px; color: var(--bazi-text-705,#f5ead0); font-size: 1.15rem; font-weight: 850;">「格局與日主狀態」：${safe(m.pattern.title)}</h3>
+        <h3 style="margin: 8px 0 12px; color: var(--bazi-text-705,#f5ead0); font-size: 1.15rem; font-weight: 850;">「格局與日主狀態」：${maskSimSensitiveText(m.pattern.title)}</h3>
         <p style="margin: 0 0 6px; color: var(--bazi-text-16,#e5c778); font-weight: 780; font-size: .78rem;">四柱落點分析：</p>
-        <p style="margin: 0 0 14px; color: var(--bazi-text-706,#c4ccd8); font-size: .76rem; line-height: 1.8; white-space: pre-line;">${safe(m.pattern.pillarsDrop)}</p>
+        <p style="margin: 0 0 14px; color: var(--bazi-text-706,#c4ccd8); font-size: .76rem; line-height: 1.8; white-space: pre-line;">${maskSimSensitiveText(m.pattern.pillarsDrop)}</p>
         <p style="margin: 0 0 6px; color: var(--bazi-text-16,#e5c778); font-weight: 780; font-size: .78rem;">命理師必須告知客戶的結論：</p>
         <div style="display: grid; gap: 8px;">
           ${m.pattern.conclusions.map(c => `
             <div style="padding: 10px 14px; border: 1px solid var(--bazi-line-67,rgba(255,255,255,.07)); border-left: 3px solid var(--bazi-line-526,#e9bd58); border-radius: 8px; background: var(--bazi-bg-68,rgba(255,255,255,.02));">
-              <b style="color: var(--bazi-text-104,#f0d17d); display: block; margin-bottom: 3px; font-size: .78rem;">${safe(c.label)}</b>
-              <span style="color: var(--bazi-text-707,#a6b2c2); font-size: .72rem; line-height: 1.75; display: block;">${safe(c.text)}</span>
+              <b style="color: var(--bazi-text-104,#f0d17d); display: block; margin-bottom: 3px; font-size: .78rem;">${maskSimSensitiveText(c.label)}</b>
+              <span style="color: var(--bazi-text-707,#a6b2c2); font-size: .72rem; line-height: 1.75; display: block;">${maskSimSensitiveText(c.text)}</span>
             </div>
           `).join('')}
         </div>
@@ -4382,21 +4431,21 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 
       <article class="decode-card master-card" style="grid-column: 1 / -1; border-color: var(--bazi-line-325,rgba(117,220,228,.32)); background: radial-gradient(circle 500px at 100% 0%, var(--bazi-bg-400,rgba(117,220,228,.06)), transparent 70%), var(--bazi-bg-704,rgba(16,19,28,.92)); padding: 22px;">
         <small style="color: var(--bazi-text-8,#75dce4); font-size: .66rem; letter-spacing: .12em; font-weight: 800;">02 · 四柱宮位結合五行沖剋動態</small>
-        <h3 style="margin: 8px 0 12px; color: var(--bazi-text-705,#f5ead0); font-size: 1.15rem; font-weight: 850;">四柱宮位結合五行沖剋：${safe(m.clash.title)}</h3>
+        <h3 style="margin: 8px 0 12px; color: var(--bazi-text-705,#f5ead0); font-size: 1.15rem; font-weight: 850;">四柱宮位結合五行沖剋：${maskSimSensitiveText(m.clash.title)}</h3>
         <p style="margin: 0 0 6px; color: var(--bazi-text-106,#72d7df); font-weight: 780; font-size: .78rem;">四柱落點分析：</p>
-        <p style="margin: 0 0 14px; color: var(--bazi-text-706,#c4ccd8); font-size: .76rem; line-height: 1.8;">${safe(m.clash.pillarsDrop)}</p>
+        <p style="margin: 0 0 14px; color: var(--bazi-text-706,#c4ccd8); font-size: .76rem; line-height: 1.8;">${maskSimSensitiveText(m.clash.pillarsDrop)}</p>
         <p style="margin: 0 0 6px; color: var(--bazi-text-106,#72d7df); font-weight: 780; font-size: .78rem;">現實生活方面：</p>
         <div style="display: grid; gap: 8px;">
           ${m.clash.realityLife.map(r => `
             <div style="padding: 10px 14px; border: 1px solid var(--bazi-line-67,rgba(255,255,255,.07)); border-left: 3px solid var(--bazi-line-708,#75dce4); border-radius: 8px; background: var(--bazi-bg-68,rgba(255,255,255,.02));">
-              <b style="color: var(--bazi-text-171,#89dfe6); display: block; margin-bottom: 3px; font-size: .78rem;">${safe(r.label)}</b>
-              <span style="color: var(--bazi-text-707,#a6b2c2); font-size: .72rem; line-height: 1.75; display: block;">${safe(r.text)}</span>
+              <b style="color: var(--bazi-text-171,#89dfe6); display: block; margin-bottom: 3px; font-size: .78rem;">${maskSimSensitiveText(r.label)}</b>
+              <span style="color: var(--bazi-text-707,#a6b2c2); font-size: .72rem; line-height: 1.75; display: block;">${maskSimSensitiveText(r.text)}</span>
             </div>
           `).join('')}
           ${m.clash.elementDepleted ? `
             <div style="padding: 10px 14px; border: 1px solid var(--bazi-line-67,rgba(255,255,255,.07)); border-left: 3px solid var(--bazi-line-709,#df9b46); border-radius: 8px; background: var(--bazi-bg-710,rgba(223,155,70,.03));">
               <b style="color: var(--bazi-text-711,#ecc07e); display: block; margin-bottom: 3px; font-size: .78rem;">微弱元素與才華受制：</b>
-              <span style="color: var(--bazi-text-707,#a6b2c2); font-size: .72rem; line-height: 1.75; display: block;">${safe(m.clash.elementDepleted)}</span>
+              <span style="color: var(--bazi-text-707,#a6b2c2); font-size: .72rem; line-height: 1.75; display: block;">${maskSimSensitiveText(m.clash.elementDepleted)}</span>
             </div>
           ` : ''}
         </div>
@@ -4404,13 +4453,13 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 
       <article class="decode-card master-card" style="grid-column: 1 / -1; border-color: var(--bazi-line-712,rgba(220,112,98,.30)); background: radial-gradient(circle 500px at 0% 100%, var(--bazi-bg-713,rgba(220,112,98,.06)), transparent 70%), var(--bazi-bg-704,rgba(16,19,28,.92)); padding: 22px;">
         <small style="color: var(--bazi-text-714,#dc7062); font-size: .66rem; letter-spacing: .12em; font-weight: 800;">03 · 精準健康預警</small>
-        <h3 style="margin: 8px 0 6px; color: var(--bazi-text-705,#f5ead0); font-size: 1.15rem; font-weight: 850;">${safe(m.health.title)}</h3>
-        <p style="margin: 0 0 14px; color: var(--bazi-text-715,#9da7b6); font-size: .73rem;">${safe(m.health.intro)}</p>
+        <h3 style="margin: 8px 0 6px; color: var(--bazi-text-705,#f5ead0); font-size: 1.15rem; font-weight: 850;">${maskSimSensitiveText(m.health.title)}</h3>
+        <p style="margin: 0 0 14px; color: var(--bazi-text-715,#9da7b6); font-size: .73rem;">${maskSimSensitiveText(m.health.intro)}</p>
         <div style="display: grid; gap: 8px;">
           ${m.health.items.map(h => `
             <div style="padding: 10px 14px; border: 1px solid var(--bazi-line-67,rgba(255,255,255,.07)); border-left: 3px solid var(--bazi-line-716,#dc7062); border-radius: 8px; background: var(--bazi-bg-68,rgba(255,255,255,.02));">
-              <b style="color: var(--bazi-text-717,#e59990); display: block; margin-bottom: 3px; font-size: .78rem;">${safe(h.label)}</b>
-              <span style="color: var(--bazi-text-707,#a6b2c2); font-size: .72rem; line-height: 1.75; display: block;">${safe(h.body)}</span>
+              <b style="color: var(--bazi-text-717,#e59990); display: block; margin-bottom: 3px; font-size: .78rem;">${maskSimSensitiveText(h.label)}</b>
+              <span style="color: var(--bazi-text-707,#a6b2c2); font-size: .72rem; line-height: 1.75; display: block;">${maskSimSensitiveText(h.body)}</span>
             </div>
           `).join('')}
         </div>
@@ -4418,27 +4467,27 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 
       <article class="decode-card master-card" style="grid-column: 1 / -1; border-color: var(--bazi-line-718,rgba(110,201,170,.35)); background: radial-gradient(circle 500px at 100% 100%, var(--bazi-bg-719,rgba(110,201,170,.07)), transparent 70%), var(--bazi-bg-704,rgba(16,19,28,.92)); padding: 22px;">
         <small style="color: var(--bazi-text-9,#6ec9aa); font-size: .66rem; letter-spacing: .12em; font-weight: 800;">04 · 真正的喜用神與生涯指引</small>
-        <h3 style="margin: 8px 0 6px; color: var(--bazi-text-705,#f5ead0); font-size: 1.15rem; font-weight: 850;">${safe(m.usefulGod.title)}</h3>
-        <p style="margin: 0 0 14px; color: var(--bazi-text-715,#9da7b6); font-size: .73rem;">${safe(m.usefulGod.subtitle)}</p>
+        <h3 style="margin: 8px 0 6px; color: var(--bazi-text-705,#f5ead0); font-size: 1.15rem; font-weight: 850;">${maskSimSensitiveText(m.usefulGod.title)}</h3>
+        <p style="margin: 0 0 14px; color: var(--bazi-text-715,#9da7b6); font-size: .73rem;">${maskSimSensitiveText(m.usefulGod.subtitle)}</p>
         <div style="display: grid; gap: 10px;">
           <div style="padding: 11px 14px; border: 1px solid var(--bazi-line-67,rgba(255,255,255,.07)); border-left: 3px solid var(--bazi-line-720,#6ec9aa); border-radius: 8px; background: var(--bazi-bg-721,rgba(110,201,170,.03));">
             <b style="color: var(--bazi-text-488,#8be0b6); display: block; margin-bottom: 4px; font-size: .78rem;">綜合診斷：</b>
-            <span style="color: var(--bazi-text-722,#b0bccb); font-size: .73rem; line-height: 1.75; display: block; white-space: pre-line;">${safe(m.usefulGod.diagnosis)}</span>
+            <span style="color: var(--bazi-text-722,#b0bccb); font-size: .73rem; line-height: 1.75; display: block; white-space: pre-line;">${maskSimSensitiveText(m.usefulGod.diagnosis)}</span>
           </div>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px;">
             <div style="padding: 10px 13px; border: 1px solid var(--bazi-line-723,rgba(117,220,228,.2)); border-radius: 8px; background: var(--bazi-bg-724,rgba(117,220,228,.02));">
-              <b style="color: var(--bazi-text-106,#72d7df); font-size: .76rem; display: block; margin-bottom: 3px;">第一用神：${safe(m.usefulGod.firstGod)}</b>
-              <span style="color: var(--bazi-text-725,#98a7b8); font-size: .70rem; line-height: 1.65; display: block;">${safe(m.usefulGod.firstGodDesc)}</span>
+              <b style="color: var(--bazi-text-106,#72d7df); font-size: .76rem; display: block; margin-bottom: 3px;">第一用神：${maskSimSensitiveText(m.usefulGod.firstGod)}</b>
+              <span style="color: var(--bazi-text-725,#98a7b8); font-size: .70rem; line-height: 1.65; display: block;">${maskSimSensitiveText(m.usefulGod.firstGodDesc)}</span>
             </div>
             <div style="padding: 10px 13px; border: 1px solid var(--bazi-line-528,rgba(233,189,88,.2)); border-radius: 8px; background: var(--bazi-bg-469,rgba(233,189,88,.02));">
-              <b style="color: var(--bazi-text-6,#e9bd58); font-size: .76rem; display: block; margin-bottom: 3px;">第二用神：${safe(m.usefulGod.secondGod)}</b>
-              <span style="color: var(--bazi-text-725,#98a7b8); font-size: .70rem; line-height: 1.65; display: block;">${safe(m.usefulGod.secondGodDesc)}</span>
+              <b style="color: var(--bazi-text-6,#e9bd58); font-size: .76rem; display: block; margin-bottom: 3px;">第二用神：${maskSimSensitiveText(m.usefulGod.secondGod)}</b>
+              <span style="color: var(--bazi-text-725,#98a7b8); font-size: .70rem; line-height: 1.65; display: block;">${maskSimSensitiveText(m.usefulGod.secondGodDesc)}</span>
             </div>
           </div>
           <div style="padding: 11px 14px; border: 1px solid var(--bazi-line-67,rgba(255,255,255,.07)); border-radius: 8px; background: var(--bazi-bg-68,rgba(255,255,255,.02));">
             <b style="color: var(--bazi-text-394,#ecd084); font-size: .78rem; display: block; margin-bottom: 4px;">職業與生涯指引：</b>
-            <p style="margin: 0 0 6px; color: var(--bazi-text-726,#a4b0c0); font-size: .73rem; line-height: 1.75;">${safe(m.usefulGod.careerGuide)}</p>
-            <p style="margin: 0; color: var(--bazi-text-488,#8be0b6); font-size: .73rem; font-weight: 700;">開運方位建議：${safe(m.usefulGod.luckyDir)}</p>
+            <p style="margin: 0 0 6px; color: var(--bazi-text-726,#a4b0c0); font-size: .73rem; line-height: 1.75;">${maskSimSensitiveText(m.usefulGod.careerGuide)}</p>
+            <p style="margin: 0; color: var(--bazi-text-488,#8be0b6); font-size: .73rem; font-weight: 700;">開運方位建議：${maskSimSensitiveText(m.usefulGod.luckyDir)}</p>
           </div>
         </div>
       </article>
@@ -5902,15 +5951,15 @@ ${intent}
       const ten=Array.isArray(p.shiShenZhi)?p.shiShenZhi.join('、'):(p.shiShenZhi||'—');
       return `<article class="pillar ${p.key==='day'?'day-master':''}">
         <div class="pillar-head"><span>${cn}</span><small>${en}</small><button type="button" class="bazi-pillar-toggle" aria-expanded="false" aria-label="${cn}完整細節">詳細 ▾</button></div>
-        <div class="chars"><div class="char-box gan"><b>${esc(p.gan)}</b><span>${esc(p.shiShenGan||'日主')}</span></div><div class="char-box zhi"><b>${esc(p.zhi)}</b><span>${esc(p.zhiElement||p.wuXing||'—')}</span></div></div>
+        <div class="chars"><div class="char-box gan"><b>${esc(p.gan)}</b><span>${p.key==='day'?'日主':maskSimPillarValue(p.shiShenGan||'—')}</span></div><div class="char-box zhi"><b>${esc(p.zhi)}</b><span>${esc(p.zhiElement||p.wuXing||'—')}</span></div></div>
         <div class="pillar-body">
           <div class="row"><label>干支</label><strong>${esc(p.ganZhi||'—')}</strong></div>
           <div class="row"><label>陰陽</label><strong>${esc(`${p.ganYinYang||'—'}干・${p.zhiYinYang||'—'}支`)}</strong></div>
-          <div class="row"><label>藏干</label><strong>${esc(hide)}</strong></div>
-          <div class="row"><label>支十神</label><strong>${esc(ten)}</strong></div>
-          <div class="row"><label>納音</label><strong>${esc(p.naYin||'—')}</strong></div>
-          <div class="row"><label>十二長生</label><strong>${esc(p.diShi||'—')}</strong></div>
-          <div class="row"><label>旬空</label><strong>${esc(p.xunKong||'—')}</strong></div>
+          <div class="row"><label>藏干</label><strong>${maskSimPillarValue(hide)}</strong></div>
+          <div class="row"><label>支十神</label><strong>${maskSimPillarValue(ten)}</strong></div>
+          <div class="row"><label>納音</label><strong>${maskSimPillarValue(p.naYin||'—')}</strong></div>
+          <div class="row"><label>十二長生</label><strong>${maskSimPillarValue(p.diShi||'—')}</strong></div>
+          <div class="row"><label>旬空</label><strong>${maskSimPillarValue(p.xunKong||'—')}</strong></div>
         </div></article>`;
     }).join('');
   }
