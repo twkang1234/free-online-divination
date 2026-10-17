@@ -2815,12 +2815,6 @@ body.bazi-example-snapshot-mode .bazi-private-lock-panel{display:none!important}
           <div class="bazi-access-actions"><button type="button" data-bazi-topic="overall">綜合命盤</button><button type="button" data-bazi-topic="love">感情與相處</button><button type="button" data-bazi-topic="career">事業與發展</button></div>
           <p id="baziPersonalAiStatus" class="bazi-access-status" role="status"></p><div id="baziPersonalAiReports"></div>
         </div>
-        <div class="bazi-full-access"><h4>想知道其他人的九大分析長什麼樣子？</h4><p>自己的命盤先顯示部分免費分析，其他專業區域可用 20 筆已儲存範例免費試閱完整內容；正式付費解鎖功能尚未開通。</p><button type="button" id="baziPersonalDemoLink">查看 20 筆完整範例</button></div>
-      </section>
-      <section class="bazi-access-stage" id="baziDemoHall" aria-label="完整八字範例展示廳">
-        <div class="bazi-access-head"><span>FULL EXAMPLE · 完整九大分析</span><h3>20 筆完整範例展示廳</h3><p>看完自己的命盤後，也可以瀏覽其他人的九大完整分析。這裡只會讀取已儲存的範例，不會更改你的排盤。</p></div>
-        <div class="bazi-access-actions"><button type="button" id="baziPublicRandom">隨機查看完整範例</button><button type="button" id="baziPublicBrowse">選擇範例命盤</button></div>
-        <p class="bazi-access-status" id="baziPublicDemoStatus" role="status"></p>
       </section>
       <div id="emptyState" hidden></div>
       <button type="button" id="baziFlowCollapseToggle" class="bazi-flow-collapse-trigger" hidden aria-expanded="false" aria-controls="report-daily-flow">▸ 今日流日（選讀）｜點擊展開</button>
@@ -5886,6 +5880,8 @@ ${intent}
     });
   };
   window.baziDecodeOpenFirstVisit=id=>{
+    // 第 05 章「常用神煞」全文較長，預設收合；僅在使用者自行點擊後展開。
+    if(id==='report-shensha')return;
     const personal=document.body.classList.contains('bazi-personal-full-mode');
     // 06～09 的個人專業內容全鎖：不生成或展開個人白話解讀。
     if(personal&&['report-reading','report-luck','report-years','report-months'].includes(id))return;
@@ -8432,17 +8428,13 @@ html[data-theme="light"] .bazi-personal-core-notice button{background:#166b75}
       refreshPersonalQuota();
     }
   }
-  async function demoRandom(btn){btn.disabled=true;$('baziPublicDemoStatus').textContent='載入完整範例中…';try{const r=await fetch(API+'/examples/random',{cache:'no-store'}),j=await r.json();if(!r.ok||!j.ok||!j.data)throw Error(j.error||'範例載入失敗');window.baziShowArchivedExample(j.data,{title:j.title,asOf:j.asOf});$('baziPublicDemoStatus').textContent='已開啟 '+j.title+' 的九大分析。';}catch(e){$('baziPublicDemoStatus').textContent=e.message;}finally{btn.disabled=false;}}
   document.addEventListener('DOMContentLoaded',()=>{
     refreshPersonalQuota();window.addEventListener('bazi-google-login',refreshPersonalQuota);
-    $('baziPublicRandom')?.addEventListener('click',e=>demoRandom(e.currentTarget));
-    $('baziPublicBrowse')?.addEventListener('click',()=>window.baziExampleOpenPicker?.());
     document.querySelectorAll('[data-bazi-topic]').forEach(b=>b.addEventListener('click',()=>topicClick(b.dataset.baziTopic,b)));
-    $('baziPersonalDemoLink')?.addEventListener('click',()=>window.baziExampleOpenPicker?.());
     $('baziCoreBrowse20')?.addEventListener('click',()=>window.baziExampleOpenPicker?.());
     // Preserve the original intro layout until the visitor actually casts a chart.
-    const results=$('results'),personal=$('baziPersonalPreview'),hall=$('baziDemoHall');
-    if(results&&personal&&hall){results.after(personal);personal.after(hall);}
+    const results=$('results'),personal=$('baziPersonalPreview');
+    if(results&&personal)results.after(personal);
   });
 })();
 </script>
