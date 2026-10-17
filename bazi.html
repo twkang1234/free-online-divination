@@ -2473,6 +2473,43 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 .bazi-example-admin-title{font-size:.67rem;font-weight:800;color:var(--gold)}
 .bazi-example-admin-toolbar small{flex-basis:100%;font-size:.65rem;color:var(--dim)}
 </style>
+
+<style id="bazi-mask-level-preview-style">
+/* 九大分析遮罩比較工具：視覺模擬，無資料安全功能 */
+.bazi-mask-compare{border:1px solid rgba(38,131,149,.32);border-radius:18px;padding:18px 20px;margin:12px 0 16px;background:linear-gradient(110deg,rgba(76,183,190,.075),rgba(233,189,88,.045));}
+.bazi-mask-compare[hidden]{display:none!important}
+.bazi-mask-compare-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.bazi-mask-compare-head h3{margin:4px 0;font-size:1rem;line-height:1.4}
+.bazi-mask-compare-head p{margin:3px 0 0;color:var(--dim);font-size:.75rem;line-height:1.75}
+.bazi-mask-compare-head>strong{border:1px solid rgba(15,116,136,.24);background:rgba(15,116,136,.075);border-radius:999px;padding:6px 12px;white-space:nowrap;font-size:.75rem;color:var(--cyan)}
+.bazi-mask-switches{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:15px}
+.bazi-mask-switches button{min-height:44px;padding:9px 6px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:12px;font-size:.82rem;font-weight:750;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
+.bazi-mask-switches button:hover{border-color:var(--cyan)}
+.bazi-mask-switches button[aria-pressed="true"]{background:rgba(39,126,138,.14);border-color:var(--cyan);box-shadow:inset 0 0 0 1px rgba(38,131,149,.20);color:var(--cyan)}
+.bazi-mask-comparison-feedback{display:flex;flex-wrap:wrap;justify-content:space-between;gap:7px 16px;margin-top:10px;font-size:.73rem;color:var(--dim);line-height:1.65}
+.bazi-mask-demo-warning{color:var(--amber);font-weight:800}
+.bazi-personal-full-mode #results[data-bazi-mask-level="3"] .bazi-mask-tier-3,
+.bazi-personal-full-mode #results[data-bazi-mask-level="5"] .bazi-mask-tier-3,
+.bazi-personal-full-mode #results[data-bazi-mask-level="5"] .bazi-mask-tier-5,
+.bazi-personal-full-mode #results[data-bazi-mask-level="7"] .bazi-mask-tier-3,
+.bazi-personal-full-mode #results[data-bazi-mask-level="7"] .bazi-mask-tier-5,
+.bazi-personal-full-mode #results[data-bazi-mask-level="7"] .bazi-mask-tier-7,
+.bazi-personal-full-mode #results[data-bazi-mask-level="9"] .bazi-mask-tier-3,
+.bazi-personal-full-mode #results[data-bazi-mask-level="9"] .bazi-mask-tier-5,
+.bazi-personal-full-mode #results[data-bazi-mask-level="9"] .bazi-mask-tier-7,
+.bazi-personal-full-mode #results[data-bazi-mask-level="9"] .bazi-mask-tier-9{
+  color:transparent!important; -webkit-text-fill-color:transparent!important;
+  background:linear-gradient(90deg,rgba(110,136,150,.29),rgba(110,136,150,.16))!important;
+  filter:blur(3.7px); border-radius:5px; text-shadow:none!important;
+  pointer-events:none;user-select:none;-webkit-user-select:none;
+}
+.bazi-personal-full-mode #results[data-bazi-mask-level]:not([data-bazi-mask-level="0"]) .bazi-mask-chart-hidden{
+  filter:blur(4px);opacity:.25;pointer-events:none;user-select:none;
+}
+.bazi-personal-full-mode #results[data-bazi-mask-level="0"] .bazi-mask-chart-hidden{filter:none;opacity:1;pointer-events:auto}
+.bazi-example-snapshot-mode #baziMaskCompare{display:none!important}
+@media(max-width:700px){.bazi-mask-compare{padding:13px}.bazi-mask-compare-head{align-items:flex-start}.bazi-mask-compare-head>strong{font-size:.66rem}.bazi-mask-switches{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.bazi-mask-switches button{font-size:.65rem;padding:9px 2px;min-height:40px}.bazi-mask-demo-warning{width:100%}}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -2706,9 +2743,23 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 
       <div class="results" id="results">
       <div id="baziPersonalCoreNotice" class="bazi-personal-core-notice" hidden>
-        <div><strong>你的個人完整命盤｜測試預覽</strong><span>目前九大分析暫時全部開放，未來會依你確認的項目逐步鎖定。下方仍可使用原有三篇站內 AI 解讀。</span></div>
+        <div><strong>你的個人完整命盤｜測試預覽</strong><span>可在下方即時切換五種九大分析遮擋程度，作為版面比較。這是前端模擬，尚未保護實際資料；三篇個人 AI 解讀保持原樣。</span></div>
         <button id="baziCoreBrowse20" type="button">對照 20 筆完整範例</button>
       </div>
+      <section id="baziMaskCompare" class="bazi-mask-compare" hidden aria-label="個人九大分析遮罩程度測試">
+        <div class="bazi-mask-compare-head">
+          <div><span class="report-eyebrow">MASK PREVIEW · TEST ONLY</span><h3>九大分析｜遮罩程度比較</h3><p>即時切換同一張命盤，不重新排盤，也不消耗 AI 額度。以命理資訊的敏感程度分級，非隨機遮住指定字數比例。</p></div>
+          <strong id="baziMaskLevelName">五成遮擋</strong>
+        </div>
+        <div class="bazi-mask-switches" role="group" aria-label="選擇遮擋等級">
+          <button type="button" data-bazi-mask-option="0" aria-pressed="false">原版不遮</button>
+          <button type="button" data-bazi-mask-option="3" aria-pressed="false">遮三成</button>
+          <button type="button" data-bazi-mask-option="5" aria-pressed="true">遮五成</button>
+          <button type="button" data-bazi-mask-option="7" aria-pressed="false">遮七成</button>
+          <button type="button" data-bazi-mask-option="9" aria-pressed="false">遮九成</button>
+        </div>
+        <div class="bazi-mask-comparison-feedback" role="status"><span id="baziMaskLevelDescription">隱藏數值及核心分類，保留較多日常白話結論。</span><span class="bazi-mask-demo-warning">僅供視覺測試｜資料仍在前端，不能防止擷取</span></div>
+      </section>
       <div id="baziExampleSnapshotBanner" class="bazi-example-snapshot-banner" hidden>
         <div><strong>範例資料庫｜已儲存命盤預覽</strong><span id="baziExampleSnapshotTitle"></span><small>直接讀取資料庫快照；沒有重新排盤、沒有呼叫站內 AI，也不是你自己的命盤。</small></div>
         <div class="bazi-example-snapshot-actions"><button type="button" id="baziExampleAnother">查看其他範例</button><button type="button" id="baziExampleExit">返回我的個人命盤</button></div>
@@ -4370,43 +4421,11 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
   }
 
 
-  function maskSimBlockText(raw){
-    const chars=[...String(raw??'')].filter(ch=>!/[\s，。、「」：；（）()\-—,.%]/.test(ch)).length;
-    const width=Math.max(3,Math.min(18,chars||4));
-    return `<span class="mask-sim inline" aria-hidden="true">${'█'.repeat(width)}</span>`;
-  }
-
-  function maskSimSensitiveText(raw){
-    const src=String(raw??'—');
-    const escapeHtml=s=>String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
-    const blur=s=>maskSimBlockText(s);
-    let out=escapeHtml(src);
-    const patterns=[
-      /(甲|乙|丙|丁|戊|己|庚|辛|壬|癸)(子|丑|寅|卯|辰|巳|午|未|申|酉|戌|亥)/g,
-      /(甲|乙|丙|丁|戊|己|庚|辛|壬|癸|子|丑|寅|卯|辰|巳|午|未|申|酉|戌|亥){2,}/g,
-      /(比肩|劫財|食神|傷官|正財|偏財|正官|七殺|正印|偏印|比劫|食傷|財星|官殺|印星)/g,
-      /(金|木|水|火|土)(?=\s*[（(]|\s*\+|\s*、|\s*最|\s*旺|\s*弱|\s*重|\s*多|\s*少|\s*為|\s*與|\s*是)/g,
-      /(喜用神|用神|忌神|身強|身弱|格局|魁罡|調候|旺衰|沖剋|合化|官位|夫妻宮|母慈滅子|傷官|食神|印星|財星|官殺|比劫)/g,
-      /\d+(?:\.\d+)?%/g,
-      /\d+(?:\.\d+)?/g,
-      /（[^）]{1,24}）/g,
-      /\([^)]{1,24}\)/g
-    ];
-    patterns.forEach(re=>{out=out.replace(re,m=>blur(m));});
-    return out;
-  }
-
-  function maskSimKeepLabel(raw){
-    return esc(String(raw??'—'));
-  }
-
-  function maskSimPillarValue(raw){
-    return maskSimBlockText(raw);
-  }
-
-  function masterMaskNote(){
-    return `<div class="mask-note"><div><strong>目前為遮罩模擬預覽</strong><span>這一版只是先模擬前台顯示效果，實際內容仍在前端。等你確認遮哪些內容後，再集中改成真正的後端隱藏與權限解鎖。</span></div><b>前台遮罩模擬</b></div>`;
-  }
+  // Compatibility: all text remains complete in the browser for this VISUAL-ONLY preview.
+  function maskSimBlockText(raw){ return esc(String(raw??'—')); }
+  function maskSimSensitiveText(raw){ return esc(String(raw??'—')); }
+  function maskSimPillarValue(raw){ return esc(String(raw??'—')); }
+  function masterMaskNote(){ return ''; }
 
   function renderMasterReadingHtml(m) {
     if (!m) return '';
@@ -8287,6 +8306,172 @@ html[data-theme="light"] .bazi-personal-core-notice button{background:#166b75}
     const results=$('results'),personal=$('baziPersonalPreview'),hall=$('baziDemoHall');
     if(results&&personal&&hall){results.after(personal);personal.after(hall);}
   });
+})();
+</script>
+
+<script id="bazi-mask-level-compare-runtime">
+(()=>{
+  'use strict';
+  const levels={
+    0:['原版不遮','完整對照模式：九大分析顯示所有原始資料。'],
+    3:['三成遮擋','優先遮擋精確數值、比例、藏干、十神明細與個人運勢比較依據。'],
+    5:['五成遮擋','再遮擋主導十神、重要命理組合、格局判斷與專業推導依據，保留部分生活解釋。'],
+    7:['七成遮擋','再遮擋多數個人化深入論斷與具體歲運分析，留下較精簡的結論。'],
+    9:['九成遮擋','主要保留四柱骨架、章節架構與一般命理說明，隱藏大多數個人專屬內容。']
+  };
+  let chosen=5, busy=false, queued=false;
+  const $=id=>document.getElementById(id);
+  const plainSummary=s=>s.replace(/\s+/g,' ').trim();
+  const technical=/(?:比肩|劫財|食神|傷官|偏財|正財|七殺|正官|偏印|正印|比劫|食傷|財星|官殺|印星|藏干|通根|透干|透出|合化|沖剋|自刑|六沖|六合|半合|三合|三會|刑害|刑沖|相沖|沖刑|扶抑|喜用神|用神|忌神|調候|身強|身弱|偏強|偏弱|稍強|稍弱|中和附近|旺衰|格局|魁罡|華蓋|桃花|驛馬|文昌|傷官見官|母慈滅子|日支被|日支有|歲運|相剋|相生|流年干支|流月干支)/g;
+  const pillars=/(?:[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]){1,4}/g;
+  const sensitiveNumeric=/(?:\d+(?:\.\d+)?\s*%|(?:高達|占比|支持度|權重|評分|分數|加權|比例|合計|為|出現)[：\s]*\d+(?:\.\d+)?(?:%|分|次)?)/g;
+  // Explicit per-section rules: levels are information sensitivity grades, not literal % of characters.
+  const targetIDs=['report-overview','report-pillars','report-elements','report-tengods','report-relations','report-shensha','report-reading','report-luck','report-years','report-months'];
+  const skipSelector='button,a,input,textarea,select,option,summary,script,style,svg,canvas,code,pre,.bazi-mask-token,.bazi-mask-compare,.smart-prompt-box,.section-ai-answer,.bazi-gemini,.bazi-ai-focus,.bazi-personal-core-notice,.bazi-example-snapshot-banner';
+  function wrapAllText(el,tier){
+    if(!el||el.closest('.bazi-mask-token')||el.closest('.bazi-mask-compare'))return;
+    // Text is wrapped rather than elements removed, so interactive widgets keep their event listeners.
+    const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+    for(const node of nodes){
+      const parent=node.parentElement;
+      if(!parent||parent.closest(skipSelector))continue;
+      const src=node.nodeValue||'';if(!src.trim())continue;
+      const span=document.createElement('span');span.className='bazi-mask-token bazi-mask-tier-'+tier;
+      span.textContent=src;
+      node.replaceWith(span);
+    }
+  }
+  function wrapMatches(node,regex,tier){
+    const src=node.nodeValue||'', parent=node.parentElement;
+    if(!parent||parent.closest(skipSelector))return;
+    regex.lastIndex=0;const hits=[...src.matchAll(regex)].filter(m=>m[0].trim());
+    if(!hits.length)return;
+    const frag=document.createDocumentFragment();let at=0;
+    for(const hit of hits){
+      if(hit.index>at)frag.appendChild(document.createTextNode(src.slice(at,hit.index)));
+      const span=document.createElement('span');span.className='bazi-mask-token bazi-mask-tier-'+tier;
+      span.textContent=hit[0];frag.appendChild(span);at=hit.index+hit[0].length;
+    }
+    if(at<src.length)frag.appendChild(document.createTextNode(src.slice(at)));
+    node.replaceWith(frag);
+  }
+  function markElement(el,tier){if(el)el.classList.add('bazi-mask-tier-'+tier)}
+  function scanText(container,sectionId){
+    const walker=document.createTreeWalker(container,NodeFilter.SHOW_TEXT);
+    const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+    for(const node of nodes){
+      const el=node.parentElement;
+      if(!el||el.closest(skipSelector))continue;
+      if(el.closest('.bazi-mask-compare'))continue;
+      const val=node.nodeValue||'';if(val.trim().length<2)continue;
+      // At level nine, generic headings and captions remain readable; specific output text is hidden.
+      const personalized=el.closest('.decode-card, .master-card, .section-takeaway, .fortune-detail, .fortune-summary-grid, .three-year-compare, .detail-console, .smart-analysis, .relation-card, .shensha-deep-card, .life-card, .time-explain, .month-flow-grid, .luck-grid, .tg-row, .group-card, .element-row, .yy-numbers');
+      const coreHeading=el.closest('h1,h2,h3,h4,h5,.panel-title,.report-eyebrow');
+      if(personalized&&!coreHeading && (sectionId==='report-years'||sectionId==='report-months'||sectionId==='report-luck')){
+        if(el.matches('p,small,em,span,strong,b,li,div') && !el.closest('button,a')){
+          // The bare text node is individually wrapped, never an entire container with controls.
+          const tier=el.closest('.time-explain')?9:7;
+          const t=document.createElement('span');t.className='bazi-mask-token bazi-mask-tier-'+tier;t.textContent=val;node.replaceWith(t);continue;
+        }
+      }
+      if(personalized&&!coreHeading && ['report-reading','report-shensha','report-relations','report-tengods','report-elements','report-pillars'].includes(sectionId)){
+        if(el.matches('p,li,small,span') && !el.closest('.bazi-mask-token') && !el.closest('.pillar .chars,.pillar .row')){
+          // At high strength, retain high-level titles and descriptions; hide most detailed personalised paragraphs.
+          const t=document.createElement('span');t.className='bazi-mask-token bazi-mask-tier-9';t.textContent=val;node.replaceWith(t);continue;
+        }
+      }
+      // Sensitive names and exact values are independent of which block contains them.
+      const concat=new RegExp([sensitiveNumeric.source,pillars.source,technical.source].join('|'),'g');
+      // Skip freely public four-pillar characters and birth metadata.
+      if(el.closest('#pillars .chars b,#pillars .pillar-head,#pillars .row:first-child,#meta'))continue;
+      wrapMatches(node,concat,3);
+    }
+  }
+  function addScopedRules(section,id){
+    if(id==='report-overview'){
+      markElement($('reportSummary'),7);
+      Array.from($('summaryTags')?.children||[]).forEach((x,i)=>markElement(x,i===0?9:3));
+      Array.from($('scoreGrid')?.children||[]).forEach(x=>markElement(x,3));
+      document.querySelectorAll('#overviewLife .life-card p').forEach(x=>markElement(x,7));
+      document.querySelectorAll('#overviewLife .life-card small').forEach(x=>markElement(x,5));
+      return;
+    }
+    if(id==='report-pillars'){
+      document.querySelectorAll('#pillars .pillar').forEach(p=>{
+        p.querySelectorAll('.char-box.gan span').forEach(el=>{if(el.textContent.trim()!=='日主')markElement(el,5)});
+        p.querySelectorAll('.row').forEach(row=>{
+          const name=row.querySelector('label')?.textContent.trim();const val=row.querySelector('strong');
+          const tier={'藏干':3,'支十神':3,'十二長生':5,'納音':7,'旬空':7,'陰陽':9}[name];
+          if(tier)markElement(val,tier);
+        });
+      });
+      // In a public preview, the four GanZhi and original dates remain visible.
+      document.querySelectorAll('#meta > div:nth-child(n+4) span').forEach(x=>markElement(x,7));
+    }
+    if(id==='report-elements'){
+      section.querySelectorAll('.fill,.five-donut,.yy-track,.bar .fill').forEach(e=>markElement(e,3));
+      section.querySelectorAll('.element-row b,.yy-numbers b,#fiveDonutCenter').forEach(e=>markElement(e,3));
+      section.querySelectorAll('#auxGrid strong,.section-takeaway').forEach(e=>markElement(e,5));
+    }
+    if(id==='report-tengods'){
+      section.querySelectorAll('.tg-row b,.tg-row .fill,.group-card span,.group-card.dominant').forEach(e=>markElement(e,3));
+      section.querySelectorAll('#tenGodInsight,.section-takeaway').forEach(e=>markElement(e,5));
+    }
+    if(id==='report-relations'){
+      section.querySelectorAll('#relationLifeLead,#relationFocus,.relation-card b,.relation-card p,.relation-map em').forEach(e=>markElement(e,5));
+    }
+    if(id==='report-shensha'){
+      section.querySelectorAll('.shensha-card,.shensha-deep-title,.shensha-deep-location').forEach(e=>markElement(e,5));
+      section.querySelectorAll('.shensha-deep-body p,.shensha-deep-body small').forEach(e=>markElement(e,7));
+    }
+    if(id==='report-reading'){
+      section.querySelectorAll('.master-summary h3,.master-summary .summary-title,.overall-master-summary .headline').forEach(e=>markElement(e,5));
+    }
+    if(id==='report-luck'||id==='report-years'||id==='report-months'){
+      section.querySelectorAll('.fortune-summary-grid,.fortune-card b,.luck-card b,.month-card b,.month-flow-card b').forEach(e=>markElement(e,3));
+      section.querySelectorAll('.fortune-card,.luck-card,.month-flow-card,.three-year-compare article').forEach(e=>markElement(e,5));
+      section.querySelectorAll('.fortune-detail,.three-year-compare,.month-flow-grid').forEach(e=>markElement(e,7));
+    }
+  }
+  function scan(){
+    const results=$('results');if(!results||!document.body.classList.contains('bazi-personal-full-mode'))return;
+    if(busy)return;busy=true;
+    try{
+      for(const id of targetIDs){const area=$(id);if(!area)continue;addScopedRules(area,id);scanText(area,id);}
+      results.dataset.baziMaskLevel=String(chosen);
+    }finally{busy=false;}
+  }
+  function updateUI(){
+    const personal=document.body.classList.contains('bazi-personal-full-mode');
+    const tool=$('baziMaskCompare');if(tool)tool.hidden=!personal;
+    const results=$('results');if(results)results.dataset.baziMaskLevel=personal?String(chosen):'0';
+    const label=$('baziMaskLevelName');if(label)label.textContent=levels[chosen][0];
+    const description=$('baziMaskLevelDescription');if(description)description.textContent=levels[chosen][1];
+    document.querySelectorAll('[data-bazi-mask-option]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.baziMaskOption)===chosen)));
+  }
+  function schedule(){
+    if(queued)return;queued=true;
+    setTimeout(()=>{queued=false;updateUI();scan();},30);
+  }
+  function init(){
+    const tool=$('baziMaskCompare'),results=$('results');if(!tool||!results)return;
+    tool.addEventListener('click',e=>{
+      const b=e.target.closest('[data-bazi-mask-option]');if(!b)return;
+      const v=Number(b.dataset.baziMaskOption);if(!(v in levels))return;
+      chosen=v;updateUI();scan();
+    });
+    const observer=new MutationObserver(mutations=>{
+      if(busy)return;
+      if(mutations.every(m=>m.addedNodes.length&&[...m.addedNodes].every(n=>n.nodeType===1&&n.classList.contains('bazi-mask-token'))))return;
+      schedule();
+    });
+    observer.observe(results,{childList:true,subtree:true});
+    observer.observe(document.body,{attributes:true,attributeFilter:['class']});
+    window.baziMaskLevelSync=schedule;
+    updateUI();schedule();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
 </body>
