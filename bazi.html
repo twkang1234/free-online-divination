@@ -2843,7 +2843,7 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
           </div>
           <p class="bazi-plain-reading-footer">想進一步了解個人特質、事業、交友、財富、感情或歲運等方向，可使用下方八種專題或下方自訂八字問題。</p>
         </section>
-        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 提供八種專題 AI 解讀供測試；每篇成功產生才使用 1 次今日 AI 額度。每篇目標約 1,300～1,600 個中文字，實際篇幅依模型輸出為準。可單篇測試，也可使用下方「一鍵完成八篇」依序生成；每篇成功依原額度計次，已產生的報告不重複扣除。完成後自動合併下載 TXT。</p>
+        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 提供八種專題 AI 解讀供測試；每篇成功產生才使用 1 次今日 AI 額度。一般專題每篇目標約 1,300～1,600 個中文字，⑥綜合命格目標約 1,800～2,200 字，實際篇幅依模型輸出為準。可單篇測試，也可使用下方「一鍵完成八篇」依序生成；每篇成功依原額度計次，已產生的報告不重複扣除。完成後自動合併下載 TXT。</p>
           <div class="bazi-access-actions" aria-label="八種 AI 解讀測試主題"><button type="button" data-bazi-topic="personality">01 · 個人特質與性格深度解讀</button><button type="button" data-bazi-topic="career_deep">02 · 事業與職涯發展</button><button type="button" data-bazi-topic="social">03 · 人際關係與交友特質</button><button type="button" data-bazi-topic="wealth_life">04 · 財富觀念與賺錢方式</button><button type="button" data-bazi-topic="love_deep">05 · 感情與相處模式</button><button type="button" data-bazi-topic="overall_deep">06 · 綜合命格與人生總覽</button><button type="button" data-bazi-topic="luck_turning">07 · 大運流年與人生轉折</button><button type="button" data-bazi-topic="fortune_risk">08 · 婚姻吉凶、重大災禍、特殊福澤</button></div>
           <section class="bazi-reading-custom" aria-label="自訂八字問題">
             <label for="baziCustomQuestion"><strong>09 · 自訂八字問題</strong><small>直接輸入你最想了解的事，AI 會根據這張八字命盤回答；每次成功解讀使用 1 次現有額度。</small></label>
@@ -2858,7 +2858,7 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
             </div>
             <progress id="baziAiBatchProgress" max="8" value="0" aria-label="八篇 AI 解讀完成進度"></progress>
             <small id="baziAiBatchStatus" role="status" aria-live="polite">請先完成個人八字排盤，再開始批次測試。</small>
-            <small class="bazi-reading-batch-help">目前 AI 解讀測試 V3.1：已通過的 ①～⑤、⑦ 保留 V3 成果；⑥、⑧ 和自訂問題使用新版提示詞。一般批次會跳過本版已完成的篇章；「重新測試本版八篇」會先確認，再重新消耗 AI 額度產生八篇，只重置目前命盤的固定八篇，不清除自訂問答或其他版本。</small>
+            <small class="bazi-reading-batch-help">目前 AI 解讀測試 V3.2：①～⑤與⑦保留上版成果；⑥改為約2,000字的綜合長篇，⑧與自訂問題加強內容核對。一般批次會跳過本版已完成的篇章；「重新測試本版八篇」會先確認，再重新消耗 AI 額度產生八篇，只重置目前命盤的固定八篇，不清除自訂問答或其他版本。</small>
             <small class="bazi-reading-batch-help">關閉頁面、額度不足或某篇失敗時可重新點擊續跑；完成八篇才自動下載單一 TXT，單篇與手動合併下載仍保留。</small>
           </div>
           <div class="bazi-reading-export"><button type="button" id="baziDownloadAllAiTxt" hidden>↓ 下載已完成解讀（合併 TXT）</button><small id="baziAiExportNote" aria-live="polite"></small></div>
@@ -8309,17 +8309,17 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     luck_turning:'大運流年與人生轉折',fortune_risk:'婚姻吉凶、重大災禍、特殊福澤'
   };
   function customHistory(){return Array.isArray(reports.custom_questions)?reports.custom_questions.filter(x=>x&&typeof x.question==='string'&&typeof x.reading==='string').slice(-12):[];}
-  function customTitle(index){const item=customHistory()[index];return item?'自訂問題 '+(index+1)+(item.promptVersion==='v3'?'（舊稿）':'')+'｜'+item.question.slice(0,42)+(item.question.length>42?'…':''):'自訂問題';}
+  function customTitle(index){const item=customHistory()[index];return item?'自訂問題 '+(index+1)+(item.promptVersion&&item.promptVersion!==AI_READING_CACHE_VERSION?'（舊稿）':'')+'｜'+item.question.slice(0,42)+(item.question.length>42?'…':''):'自訂問題';}
   function reportTitle(topic){return topic.startsWith('custom_question_')?customTitle(Number(topic.slice('custom_question_'.length))):topicTitles[topic]||'解讀';}
   function reportEntry(topic){return topic.startsWith('custom_question_')?normalReport(customHistory()[Number(topic.slice('custom_question_'.length))]):normalReport(reports[topic]);}
   const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
   const channelPattern=/^[A-E]$/;
   // Bump this when the eight-topic AI PROMPTS materially change; never mix V2 answers into V3.
   // Versioning affects AI answers only: member records, birth charts and other caches are untouched.
-  const AI_READING_CACHE_VERSION='v3.1';
+  const AI_READING_CACHE_VERSION='v3.2';
   const storePrefix='bazi-personal-v6-eight-reading-'+AI_READING_CACHE_VERSION+':';
-  const previousStorePrefix='bazi-personal-v6-eight-reading-v3:';
-  // On first V3.1 visit, carry over ONLY approved unchanged topics (1..5, 7).
+  const previousStorePrefix='bazi-personal-v6-eight-reading-v3.1:';
+  // On first V3.2 visit, carry over ONLY approved unchanged topics (1..5, 7).
   // Preserve V3 storage unchanged; revised topics (6,8) are regenerated on demand.
   function loadReadingVersion(key){
     try{
@@ -8334,7 +8334,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       if(Array.isArray(older?.custom_questions)){
         migrated.custom_questions=older.custom_questions
           .filter(x=>x&&typeof x.question==='string'&&typeof x.reading==='string')
-          .slice(-12).map(x=>({...x,promptVersion:x.promptVersion||'v3'}));
+          .slice(-12).map(x=>({...x,promptVersion:x.promptVersion||'v3.1'}));
       }
       sessionStorage.setItem(storePrefix+key,JSON.stringify(migrated));
       return migrated;
@@ -8464,7 +8464,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(topic.startsWith('custom_question_')){
       const item=customHistory()[Number(topic.slice('custom_question_'.length))];
       lines.push('使用者問題：'+item.question);
-      if(item.promptVersion==='v3')lines.push('提示詞版本：V3 舊稿（保留供比較）');
+      if(item.promptVersion&&item.promptVersion!==AI_READING_CACHE_VERSION)lines.push('提示詞版本：'+item.promptVersion+' 舊稿（保留供比較）');
     }
     if(channelPattern.test(entry.channel))lines.push('解讀通道：'+entry.channel);
     if(tracePattern.test(entry.traceId))lines.push('追蹤碼：'+entry.traceId);
@@ -8547,7 +8547,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       bottom.addEventListener('click',()=>setReportExpanded(topic,false,true));
       const count=document.createElement('small');count.className='bazi-reading-wordcount';
       const han=personalChineseCount(data.reading);
-      count.textContent='約 '+han.toLocaleString('zh-TW')+(topic.startsWith('custom_question_')?' 個中文字｜依提問深度調整篇幅':' 個中文字｜目標 1,300～1,600');
+      count.textContent='約 '+han.toLocaleString('zh-TW')+(topic.startsWith('custom_question_')?' 個中文字｜依提問深度調整篇幅':topic==='overall_deep'?' 個中文字｜目標 1,800～2,200':' 個中文字｜目標 1,300～1,600');
       const audit=document.createElement('small');audit.className='bazi-reading-audit';
       const alerts=Array.isArray(data.review?.warnings)?data.review.warnings:[];
       audit.textContent=alerts.length?'格式檢查：'+alerts.join('；')+'（僅供測試比對）':'格式檢查：未發現主要格式問題；仍須人工核對內容。';
@@ -8681,6 +8681,10 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(batchRunning||batchPreparing||aiBusy){status.textContent='AI 目前正在產生報告，請等候完成後再提問。';return;}
     const question=String(input?.value||'').trim().replace(/\s+/g,' ');
     if(question.length<5||question.length>400){status.textContent='請輸入 5～400 字的八字問題。';input?.focus();return;}
+    // Unsafe medical-event year rankings cannot be inferred from a BaZi chart.
+    if(/(?:住院|開刀|手術|急診|重病|癌症|罹癌|患癌|疾病|重大傷病|死亡|壽命|骨折|醫療事故)/.test(question)&&/(?:哪.{0,10}年|幾.{0,7}年|哪.{0,10}時|什麼時候|何時|最容易|最可能|機率|高風險|風險最高|會不會|是否會|注定|必定|預測)/.test(question)){
+      status.textContent='八字無法可靠判定哪一年最容易住院、開刀或罹患重大疾病；這類醫療事故年份不提供排名，也不扣 AI 額度。你可以改問「過去十年哪些年份在傳統歲運上有較明顯的變動象徵？」。';return;
+    }
     const existing=customHistory().findIndex(x=>x.question===question&&x.promptVersion===AI_READING_CACHE_VERSION);
     if(existing>=0){drawReports('custom_question_'+existing);status.textContent='同一個問題已保留解讀，不會重複使用額度。';return;}
     if(!confirm('確定讓 AI 回答這個自訂八字問題？成功生成將使用 1 次現有 AI 額度。'))return;
@@ -8734,7 +8738,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(remaining===0){batchStatus='目前 AI 額度已用完；不會發送新的 AI 請求，也不會清除已保存的報告。額度恢復後再試。';updateBatchControls();return;}
     const suffix=remaining!==null&&remaining<missing.length?'（目前可用約 '+remaining+' 次，額度不足時會停止，可日後續跑）':'';
     if(restart){
-      if(!confirm('確定重新測試目前 V3.1 版本的八篇嗎？這將清除「目前這張命盤」在 V3.1 暫存的固定八篇，並重新呼叫 AI，成功一篇就會再次使用 1 次額度。自訂問題、其他命盤和舊版本報告不受影響。'+suffix))return;
+      if(!confirm('確定重新測試目前 V3.2 版本的八篇嗎？這將清除「目前這張命盤」在 V3.2 暫存的固定八篇，並重新呼叫 AI，成功一篇就會再次使用 1 次額度。自訂問題、其他命盤和舊版本報告不受影響。'+suffix))return;
       // Scope the reset to this chart and the current reading version; preserve custom answers.
       if(!current||current.key!==reportKey||batchRunning||batchPreparing||aiBusy||busy)return;
       const saved={...reports};
