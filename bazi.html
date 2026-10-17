@@ -8316,25 +8316,25 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   const channelPattern=/^[A-E]$/;
   // Bump this when the eight-topic AI PROMPTS materially change; never mix V2 answers into V3.
   // Versioning affects AI answers only: member records, birth charts and other caches are untouched.
-  const AI_READING_CACHE_VERSION='v3.2';
+  const AI_READING_CACHE_VERSION='v3.3';
   const storePrefix='bazi-personal-v6-eight-reading-'+AI_READING_CACHE_VERSION+':';
-  const previousStorePrefix='bazi-personal-v6-eight-reading-v3.1:';
-  // On first V3.2 visit, carry over ONLY approved unchanged topics (1..5, 7).
-  // Preserve V3 storage unchanged; revised topics (6,8) are regenerated on demand.
+  const previousStorePrefix='bazi-personal-v6-eight-reading-v3.2:';
+  // V3.3: preserve previously approved topics 1–5 and 8, without AI charges.
+  // Rebuild topic 6 and 7 using their new quality/validation rules.
   function loadReadingVersion(key){
     try{
       const now=sessionStorage.getItem(storePrefix+key);
       if(now!==null)return JSON.parse(now)||{};
       const older=JSON.parse(sessionStorage.getItem(previousStorePrefix+key)||'{}');
       const migrated={};
-      for(const topic of ['personality','career_deep','social','wealth_life','love_deep','luck_turning']){
+      for(const topic of ['personality','career_deep','social','wealth_life','love_deep','fortune_risk']){
         if(older&&older[topic])migrated[topic]=older[topic];
       }
       // Keep historical custom Q&A visibly available, but don't treat it as new-prompt output.
       if(Array.isArray(older?.custom_questions)){
         migrated.custom_questions=older.custom_questions
           .filter(x=>x&&typeof x.question==='string'&&typeof x.reading==='string')
-          .slice(-12).map(x=>({...x,promptVersion:x.promptVersion||'v3.1'}));
+          .slice(-12).map(x=>({...x,promptVersion:x.promptVersion||'v3.2'}));
       }
       sessionStorage.setItem(storePrefix+key,JSON.stringify(migrated));
       return migrated;
@@ -8681,10 +8681,6 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(batchRunning||batchPreparing||aiBusy){status.textContent='AI 目前正在產生報告，請等候完成後再提問。';return;}
     const question=String(input?.value||'').trim().replace(/\s+/g,' ');
     if(question.length<5||question.length>400){status.textContent='請輸入 5～400 字的八字問題。';input?.focus();return;}
-    // Unsafe medical-event year rankings cannot be inferred from a BaZi chart.
-    if(/(?:住院|開刀|手術|急診|重病|癌症|罹癌|患癌|疾病|重大傷病|死亡|壽命|骨折|醫療事故)/.test(question)&&/(?:哪.{0,10}年|幾.{0,7}年|哪.{0,10}時|什麼時候|何時|最容易|最可能|機率|高風險|風險最高|會不會|是否會|注定|必定|預測)/.test(question)){
-      status.textContent='八字無法可靠判定哪一年最容易住院、開刀或罹患重大疾病；這類醫療事故年份不提供排名，也不扣 AI 額度。你可以改問「過去十年哪些年份在傳統歲運上有較明顯的變動象徵？」。';return;
-    }
     const existing=customHistory().findIndex(x=>x.question===question&&x.promptVersion===AI_READING_CACHE_VERSION);
     if(existing>=0){drawReports('custom_question_'+existing);status.textContent='同一個問題已保留解讀，不會重複使用額度。';return;}
     if(!confirm('確定讓 AI 回答這個自訂八字問題？成功生成將使用 1 次現有 AI 額度。'))return;
