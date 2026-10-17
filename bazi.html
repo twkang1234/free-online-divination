@@ -2841,10 +2841,10 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
               <div><b>時柱</b><span>傳統上與長期志向、後期生活等主題相關。</span></div>
             </div>
           </div>
-          <p class="bazi-plain-reading-footer">想進一步了解自己的性格、感情與事業，可繼續閱讀下方的站內 AI 個人解讀。</p>
+          <p class="bazi-plain-reading-footer">想進一步了解自己的性格、職涯與交友特質，可繼續閱讀下方的站內 AI 個人解讀。</p>
         </section>
-        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 請自行選擇綜合命盤、感情或事業；每篇成功產生才使用 1 次今日 AI 額度。已產生的報告可在本次瀏覽工作階段重看，不重複扣額度；每次僅展開一篇，點擊文章上下按鈕即可收合。</p>
-          <div class="bazi-access-actions"><button type="button" data-bazi-topic="overall">綜合命盤</button><button type="button" data-bazi-topic="love">感情與相處</button><button type="button" data-bazi-topic="career">事業與發展</button></div>
+        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 請自行選擇性格、職涯或交友解讀；每篇成功產生才使用 1 次今日 AI 額度。已產生的報告可在本次瀏覽工作階段重看，不重複扣額度；每次僅展開一篇，點擊文章上下按鈕即可收合。</p>
+          <div class="bazi-access-actions"><button type="button" data-bazi-topic="personality">個人特質與性格</button><button type="button" data-bazi-topic="career_deep">事業與職涯發展</button><button type="button" data-bazi-topic="social">人際關係與交友</button></div>
           <p id="baziPersonalAiStatus" class="bazi-access-status" role="status"></p><div id="baziPersonalAiReports"></div>
         </div>
       </section>
@@ -8246,7 +8246,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   const labels=['年柱','月柱','日柱','時柱'];
   let current=null,busy=false,personalFullData=null;
   let reports={},aiBusy=false,expandedTopic=null;
-  const topicTitles={overall:'綜合命盤解析',love:'感情與相處解析',career:'事業與發展解析'};
+  const topicTitles={personality:'個人特質與性格深度解讀',career_deep:'事業與職涯發展解析',social:'人際關係與交友特質解析'};
   const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
   const channelPattern=/^[A-E]$/;
   const storePrefix='bazi-personal-v4:';
@@ -8281,7 +8281,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     reports={};expandedTopic=null;
     if(current)current.key=identity(current);
     drawReports();
-    if($('baziPersonalAiStatus'))$('baziPersonalAiStatus').textContent='🧪 已切換管理員角色，可重新產生綜合、感情及事業 AI 報告。';
+    if($('baziPersonalAiStatus'))$('baziPersonalAiStatus').textContent='🧪 已切換管理員角色，可重新產生性格、職涯及交友 AI 報告。';
     void refreshPersonalQuota();
   };
   function normalReport(value){
@@ -8444,7 +8444,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
         // Keep the chart to restore it after browsing any of the 20 archived examples.
         personalFullData=j.data;window.baziShowPersonalFull(j.data);
       }
-      $('baziPersonalAiStatus').textContent=reports.overall?'已讀取之前產生的綜合命盤 AI 解析；如需其他解讀請點選下方按鈕。':'排盤完成。可自行點選綜合命盤、感情或事業，成功產生後才會扣除 AI 額度。';
+      $('baziPersonalAiStatus').textContent=Object.keys(topicTitles).some(topic=>normalReport(reports[topic]).reading)?'已讀取之前產生的 AI 解析；如需其他解讀請點選下方按鈕。':'排盤完成。可自行點選性格、職涯或交友，成功產生後才會扣除 AI 額度。';
       if(reveal&&scroll)$('baziPersonalCoreNotice')?.scrollIntoView({behavior:'smooth',block:'start'});
       refreshPersonalQuota();
       // 排盤只建立命盤，不主動呼叫 AI；三種解讀必須由使用者點擊按鈕才呼叫。
@@ -8457,11 +8457,11 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(!current||busy){status.textContent='請先建立個人四柱';return;}
     if(aiBusy){status.textContent='AI 正在產生解析，請稍候完成後再選擇其他主題。';return;}
     if(reports[topic]){drawReports(topic);status.textContent='這份報告已保留，不會重複扣額度。';return;}
-    if(!automatic&&!confirm('確定產生'+({overall:'綜合',love:'感情',career:'事業'}[topic])+'報告？成功生成將扣除 1 次免費 AI 額度。'))return;
+    if(!automatic&&!confirm('確定產生'+({personality:'性格',career_deep:'職涯',social:'交友'}[topic])+'報告？成功生成將扣除 1 次免費 AI 額度。'))return;
     const chart={...current},reportKey=current.key;
     aiBusy=true;
     showAiWorking(btn,topic,true);
-    status.textContent=automatic?'正在解析你的綜合命盤，約需 10～20 秒，請稍候…':'AI 正在解析'+topicTitles[topic]+'，約需 10～20 秒，請稍候…';
+    status.textContent='AI 正在解析'+topicTitles[topic]+'，請稍候…';
     try{
       const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic});
       if(!j.reading)throw Error('AI 沒有回傳解析');
@@ -8470,13 +8470,13 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){}
       if(current?.key===reportKey){
         reports=saved;drawReports(topic);
-        status.textContent=automatic?'免費綜合命盤 AI 解析已完成，請直接在下方閱讀。':'解析完成；已保留這份報告。';
+        status.textContent='解析完成；已保留這份報告。';
       }
       if(typeof baziGeminiRefreshQuota==='function')baziGeminiRefreshQuota();
     }catch(e){
       if(current?.key===reportKey){
-        const errors={PERSONAL_DAILY_LIMIT:'今日免費 AI 額度已用完，四柱仍可查看；請在明日 08:00 重置後再產生解析。',GLOBAL_DAILY_LIMIT:'全站今日免費 AI 額度已滿，請明日再試。',SOURCE_DAILY_LIMIT:'本網路來源今日 AI 額度已滿，請明日再試。',AI_SERVICE_TEMPORARILY_UNAVAILABLE:'AI 服務暫時無法使用，四柱仍可查看；請稍後再按「綜合命盤」重試。'};
-        status.textContent=(automatic?'綜合命盤尚未產生：':'')+(errors[e.message]||e.message||'AI 暫時無法產生解析，請稍後重試。');
+        const errors={PERSONAL_DAILY_LIMIT:'今日免費 AI 額度已用完，四柱仍可查看；請在明日 08:00 重置後再產生解析。',GLOBAL_DAILY_LIMIT:'全站今日免費 AI 額度已滿，請明日再試。',SOURCE_DAILY_LIMIT:'本網路來源今日 AI 額度已滿，請明日再試。',AI_SERVICE_TEMPORARILY_UNAVAILABLE:'AI 服務暫時無法使用，四柱仍可查看；請稍後再按相同的解讀主題重試。'};
+        status.textContent=(errors[e.message]||e.message||'AI 暫時無法產生解析，請稍後重試。');
       }
     }finally{
       aiBusy=false;
