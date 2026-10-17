@@ -2563,6 +2563,36 @@ html[data-theme="dark"] .bazi-core-random-controls .bazi-core-random-hint{color:
 }
 @media(prefers-reduced-motion:reduce){.bazi-inline-sample-trigger{transition:none}}
 @media print{.bazi-inline-sample-trigger,.bazi-core-random-controls{display:none!important}}
+
+/* 2026-10-17：01～04 七成、05 完整公開、06～09 只留固定範例入口（視覺測試） */
+body.bazi-personal-full-mode #results #report-shensha .bazi-mask-tier-3,
+body.bazi-personal-full-mode #results #report-shensha .bazi-mask-tier-5,
+body.bazi-personal-full-mode #results #report-shensha .bazi-mask-tier-7,
+body.bazi-personal-full-mode #results #report-shensha .bazi-mask-tier-9{
+ color:inherit!important;-webkit-text-fill-color:currentColor!important;
+ background:revert!important;filter:none!important;opacity:1!important;
+ pointer-events:auto!important;user-select:auto!important;-webkit-user-select:auto!important;
+}
+body.bazi-personal-full-mode #results #report-shensha .bazi-mask-chart-hidden{filter:none!important;opacity:1!important;pointer-events:auto!important}
+/* 個人 06～09 不能只是字體模糊：整個原核心結果視覺上暫不展示。 */
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months) > .report-body > :not(.bazi-private-lock-panel){display:none!important}
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months) > .report-body{
+ min-height:310px!important;display:flex!important;align-items:stretch!important;justify-content:center!important;padding:15px!important;
+}
+.bazi-private-lock-panel{position:relative;isolation:isolate;flex:1;min-height:278px;max-width:100%;border:1px dashed rgba(63,143,150,.34);border-radius:15px;overflow:hidden;background:linear-gradient(135deg,rgba(59,147,160,.07),rgba(183,167,142,.05))}
+.bazi-private-lock-heading{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:20px 16px 150px;color:var(--text);font-size:.83rem}
+.bazi-private-lock-heading>span{font-size:1.5rem}
+.bazi-private-lock-heading strong{font-size:1rem}
+.bazi-private-lock-heading p{max-width:470px;margin:0;color:var(--dim);line-height:1.65;font-size:.75rem}
+.bazi-private-lock-panel.bazi-inline-sample-anchor .bazi-inline-sample-trigger{top:auto!important;bottom:16px;transform:translateX(-50%)!important;min-height:108px;max-width:650px}
+.bazi-private-lock-panel.bazi-inline-sample-anchor .bazi-inline-sample-trigger:hover{transform:translateX(-50%) scale(1.01)!important}
+body.bazi-example-snapshot-mode .bazi-private-lock-panel{display:none!important}
+@media(max-width:700px){
+ body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months) > .report-body{min-height:315px!important;padding:10px!important}
+ .bazi-private-lock-heading{padding:18px 10px 137px}
+ .bazi-private-lock-heading strong{font-size:.90rem}
+ .bazi-private-lock-panel.bazi-inline-sample-anchor .bazi-inline-sample-trigger{bottom:10px;min-height:105px}
+}
 </style>
 
 </head>
@@ -2781,11 +2811,11 @@ html[data-theme="dark"] .bazi-core-random-controls .bazi-core-random-hint{color:
           </div>
           <p class="bazi-plain-reading-footer">想進一步了解自己的性格、感情與事業，可繼續閱讀下方的站內 AI 個人解讀。</p>
         </section>
-        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>首次點擊「免費排八字」，自動產生一篇綜合命盤 AI 解析</strong>，使用 1 次今日免費 AI 額度；感情與事業報告可另外選擇，成功產生各使用 1 次。已產生的報告可在本次瀏覽工作階段重看，不會重複扣額度；每次僅展開一篇，點擊文章上下按鈕即可收合。</p>
-          <div class="bazi-access-actions"><button type="button" data-bazi-topic="overall">綜合命盤（首篇自動解析）</button><button type="button" data-bazi-topic="love">感情與相處</button><button type="button" data-bazi-topic="career">事業與發展</button></div>
+        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 請自行選擇綜合命盤、感情或事業；每篇成功產生才使用 1 次今日 AI 額度。已產生的報告可在本次瀏覽工作階段重看，不重複扣額度；每次僅展開一篇，點擊文章上下按鈕即可收合。</p>
+          <div class="bazi-access-actions"><button type="button" data-bazi-topic="overall">綜合命盤</button><button type="button" data-bazi-topic="love">感情與相處</button><button type="button" data-bazi-topic="career">事業與發展</button></div>
           <p id="baziPersonalAiStatus" class="bazi-access-status" role="status"></p><div id="baziPersonalAiReports"></div>
         </div>
-        <div class="bazi-full-access"><h4>想知道其他人的九大分析長什麼樣子？</h4><p>自己的核心在測試期間暫時完整開放。也可以免費參考 20 筆預先儲存的完整範例，對照不同命盤的分析差異；正式付費解鎖功能仍未開通。</p><button type="button" id="baziPersonalDemoLink">查看 20 筆完整範例</button></div>
+        <div class="bazi-full-access"><h4>想知道其他人的九大分析長什麼樣子？</h4><p>自己的命盤先顯示部分免費分析，其他專業區域可用 20 筆已儲存範例免費試閱完整內容；正式付費解鎖功能尚未開通。</p><button type="button" id="baziPersonalDemoLink">查看 20 筆完整範例</button></div>
       </section>
       <section class="bazi-access-stage" id="baziDemoHall" aria-label="完整八字範例展示廳">
         <div class="bazi-access-head"><span>FULL EXAMPLE · 完整九大分析</span><h3>20 筆完整範例展示廳</h3><p>看完自己的命盤後，也可以瀏覽其他人的九大完整分析。這裡只會讀取已儲存的範例，不會更改你的排盤。</p></div>
@@ -2798,7 +2828,7 @@ html[data-theme="dark"] .bazi-core-random-controls .bazi-core-random-hint{color:
 
       <div class="results" id="results">
       <div id="baziPersonalCoreNotice" class="bazi-personal-core-notice" hidden>
-        <div><strong>你的個人完整命盤｜測試預覽</strong><span>目前採用七成遮罩作為閱讀體驗測試；點擊遮擋區可查看別人的完整範例。這仍是前端視覺模擬，資料尚未藏到後端。</span></div>
+        <div><strong>你的個人命盤｜分級開放預覽</strong><span>01～04 區遮七成；05 常用神煞完整公開；06～09 區暫不顯示個人分析，可隨機試閱他人的完整核心範例。本版仍為前端視覺模擬，資料尚未藏到後端。</span></div>
         <button id="baziCoreBrowse20" type="button">對照 20 筆完整範例</button>
       </div>
       <section id="baziMaskCompare" class="bazi-mask-compare" hidden aria-label="個人九大分析遮罩程度測試">
@@ -5856,7 +5886,11 @@ ${intent}
     });
   };
   window.baziDecodeOpenFirstVisit=id=>{
-    if(baziDecodeVisited.has(id))return;
+    const personal=document.body.classList.contains('bazi-personal-full-mode');
+    // 06～09 的個人專業內容全鎖：不生成或展開個人白話解讀。
+    if(personal&&['report-reading','report-luck','report-years','report-months'].includes(id))return;
+    // 01～04 每次進入章節直接展開；05 完整公開也直接展示；公開範例維持原本自動閱讀。
+    if(!personal&&baziDecodeVisited.has(id))return;
     const section=document.getElementById(id);
     const button=section?.querySelector('.section-decode .decode-open');
     if(!button)return;
@@ -8358,14 +8392,10 @@ html[data-theme="light"] .bazi-personal-core-notice button{background:#166b75}
         // Keep the chart to restore it after browsing any of the 20 archived examples.
         personalFullData=j.data;window.baziShowPersonalFull(j.data);
       }
-      $('baziPersonalAiStatus').textContent=reports.overall?'已讀取你的綜合命盤 AI 解析；可在下方繼續閱讀。':(countUsage&&reveal?'完整核心已排出，下方正準備免費綜合命盤 AI 解析…':'四柱已完成，可選擇下方的站內 AI 解讀。');
+      $('baziPersonalAiStatus').textContent=reports.overall?'已讀取之前產生的綜合命盤 AI 解析；如需其他解讀請點選下方按鈕。':'排盤完成。可自行點選綜合命盤、感情或事業，成功產生後才會扣除 AI 額度。';
       if(reveal&&scroll)$('baziPersonalCoreNotice')?.scrollIntoView({behavior:'smooth',block:'start'});
       refreshPersonalQuota();
-      // Only an explicit "免費排八字" click starts the first AI report.
-      // No additional AI use for old saved reports, background refresh, or example browsing.
-      if(reveal&&countUsage&&!reports.overall){
-        setTimeout(()=>{if(current?.key===key)void topicClick('overall',document.querySelector('[data-bazi-topic="overall"]'),true);},0);
-      }
+      // 排盤只建立命盤，不主動呼叫 AI；三種解讀必須由使用者點擊按鈕才呼叫。
       return true;
     }catch(e){$('baziPersonalAiStatus').textContent=e.message||'排盤失敗';throw e;}
     finally{busy=false;if(btn){btn.disabled=false;btn.textContent=old;}}
@@ -8547,7 +8577,11 @@ html[data-theme="light"] .bazi-personal-core-notice button{background:#166b75}
     const results=$('results');if(!results||!document.body.classList.contains('bazi-personal-full-mode'))return;
     if(busy)return;busy=true;
     try{
-      for(const id of targetIDs){const area=$(id);if(!area)continue;addScopedRules(area,id);scanText(area,id);}
+      for(const id of targetIDs){
+        // 05 公開全部內容；06～09 僅呈現鎖定展示區，絕不把原本的模糊內容當作免費成果。
+        if(['report-shensha','report-reading','report-luck','report-years','report-months'].includes(id))continue;
+        const area=$(id);if(!area)continue;addScopedRules(area,id);scanText(area,id);
+      }
       results.dataset.baziMaskLevel=String(chosen);
     }finally{busy=false;}
   }
@@ -8592,8 +8626,22 @@ const $=id=>document.getElementById(id);
 let entries=null,deck=[],cache=new Map(),inflight=new Map(),loading=false,active='report-pillars',pendingMount=false,inlineMode=false;
 const isPersonal=()=>document.body.classList.contains('bazi-personal-full-mode');
 const isExample=()=>document.body.classList.contains('bazi-example-snapshot-mode');
+const fullyLocked=new Set(['report-reading','report-luck','report-years','report-months']);
 function anchorFor(id){
  const section=$(id);if(!section)return null;
+ if(id==='report-shensha')return null; // 05 全開放，不需要樣本覆蓋按鈕
+ if(fullyLocked.has(id)){
+  // 個人模式：整章只留一個固定的示範面板（原有個人資料仍在 DOM，僅供視覺模擬）。
+  const body=section.querySelector('.report-body');if(!body)return null;
+  let panel=body.querySelector(':scope > .bazi-private-lock-panel');
+  if(!panel){
+   const name=chapters.find(c=>c[0]===id)?.[1]||'進階分析';
+   panel=document.createElement('div');panel.className='bazi-private-lock-panel';
+   panel.innerHTML=`<div class="bazi-private-lock-heading"><span aria-hidden="true">🔒</span><strong>${name}｜個人專業內容尚未解鎖</strong><p>這一章目前只開放完整範例試閱。點擊下方按鈕，即可使用原本核心，隨機觀看另一人的真正完整分析。</p></div>`;
+   body.appendChild(panel);
+  }
+  return panel;
+ }
  if(id==='report-pillars')return $('pillars')||section.querySelector('.report-body');
  const pick={
   'report-elements':'.analysis-grid.two > .panel:nth-child(2)',
@@ -8606,6 +8654,13 @@ function anchorFor(id){
 function syncTriggers(){
  if(!isPersonal())return;
  chapters.forEach(([id,name],i)=>{
+  if(id==='report-shensha'){
+   $(id)?.querySelectorAll('.bazi-inline-sample-trigger,.bazi-inline-sample-anchor').forEach(x=>{
+    if(x.classList.contains('bazi-inline-sample-trigger'))x.remove();
+    else x.classList.remove('bazi-inline-sample-anchor');
+   });
+   return;
+  }
   const section=$(id),anchor=anchorFor(id);if(!section||!anchor)return;
   const found=[...section.querySelectorAll('.bazi-inline-sample-trigger')];
   let btn=found.find(x=>x.dataset.for===id)||null;
