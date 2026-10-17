@@ -2841,10 +2841,10 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
               <div><b>時柱</b><span>傳統上與長期志向、後期生活等主題相關。</span></div>
             </div>
           </div>
-          <p class="bazi-plain-reading-footer">想進一步了解自己的性格、職涯與交友特質，可繼續閱讀下方的站內 AI 個人解讀。</p>
+          <p class="bazi-plain-reading-footer">想進一步了解個人特質、事業、交友、財富、感情或歲運等方向，可使用下方八種站內 AI 個人解讀。</p>
         </section>
-        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 請自行選擇性格、職涯或交友解讀；每篇成功產生才使用 1 次今日 AI 額度。已產生的報告可在本次瀏覽工作階段重看，不重複扣額度；每次僅展開一篇，點擊文章上下按鈕即可收合。</p>
-          <div class="bazi-access-actions"><button type="button" data-bazi-topic="personality">個人特質與性格</button><button type="button" data-bazi-topic="career_deep">事業與職涯發展</button><button type="button" data-bazi-topic="social">人際關係與交友</button></div>
+        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 提供八種專題 AI 解讀供測試；每篇成功產生才使用 1 次今日 AI 額度。每篇目標約 1,300～1,600 個中文字，實際篇幅依模型輸出為準。已產生的報告可在本次瀏覽工作階段重看，不重複扣額度，並可單篇下載 TXT；亦可合併下載已完成的多篇報告。</p>
+          <div class="bazi-access-actions" aria-label="八種 AI 解讀測試主題"><button type="button" data-bazi-topic="personality">01 · 個人特質與性格深度解讀</button><button type="button" data-bazi-topic="career_deep">02 · 事業與職涯發展</button><button type="button" data-bazi-topic="social">03 · 人際關係與交友特質</button><button type="button" data-bazi-topic="wealth_life">04 · 財富觀念與賺錢方式</button><button type="button" data-bazi-topic="love_deep">05 · 感情與相處模式</button><button type="button" data-bazi-topic="overall_deep">06 · 綜合命格與人生總覽</button><button type="button" data-bazi-topic="luck_turning">07 · 大運流年與人生轉折</button><button type="button" data-bazi-topic="fortune_risk">08 · 婚姻吉凶、重大災禍、特殊福澤</button></div><div class="bazi-reading-export"><button type="button" id="baziDownloadAllAiTxt" hidden>↓ 下載已完成解讀（合併 TXT）</button><small id="baziAiExportNote" aria-live="polite"></small></div>
           <p id="baziPersonalAiStatus" class="bazi-access-status" role="status"></p><div id="baziPersonalAiReports"></div>
         </div>
       </section>
@@ -8201,6 +8201,17 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-toggle:hover{backgro
 html[data-theme="light"] .bazi-personal-stage .bazi-reading-article,html[data-theme="light"] .bazi-personal-stage .bazi-reading-article strong,html[data-theme="light"] .bazi-personal-stage .bazi-reading-entry-head h5{color:#2c4554}
 @media(prefers-reduced-motion:reduce){.bazi-personal-stage #baziPersonalAiStatus.bazi-ai-working::before,.bazi-personal-stage .bazi-ai-generating::before{animation:none}}
 @media(max-width:540px){.bazi-personal-stage .bazi-reading-entry{padding:12px}.bazi-personal-stage .bazi-reading-toggle{font-size:.75rem;padding:10px 8px}}
+
+/* Eight-topic AI experiment: responsive topic choices and TXT export only. */
+.bazi-personal-stage .bazi-access-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.bazi-personal-stage .bazi-access-actions button{text-align:left;white-space:normal;line-height:1.55;min-height:48px}
+.bazi-personal-stage .bazi-reading-export{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.bazi-personal-stage .bazi-reading-export button,.bazi-personal-stage .bazi-reading-download{padding:9px 13px;border-radius:9px;border:1px solid rgba(90,163,172,.6);background:rgba(90,163,172,.12);color:var(--text);font-size:.78rem;font-weight:750;cursor:pointer}
+.bazi-personal-stage .bazi-reading-download:hover,.bazi-personal-stage .bazi-reading-export button:hover{background:rgba(90,163,172,.24)}
+.bazi-personal-stage .bazi-reading-download:focus-visible,.bazi-personal-stage .bazi-reading-export button:focus-visible{outline:3px solid var(--gold,#e9bd58);outline-offset:2px}
+.bazi-personal-stage .bazi-reading-export [hidden]{display:none!important}
+.bazi-personal-stage .bazi-reading-wordcount{font-size:.69rem;color:var(--dim);margin-left:auto}
+@media(max-width:700px){.bazi-personal-stage .bazi-access-actions{grid-template-columns:1fr}.bazi-personal-stage .bazi-access-actions button{min-height:45px}}
 </style>
 <style id="baziFullPersonalTestStyle">
 /* Temporary full-core test: detailed personal chart is first; existing AI actions follow it. */
@@ -8246,10 +8257,15 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   const labels=['年柱','月柱','日柱','時柱'];
   let current=null,busy=false,personalFullData=null;
   let reports={},aiBusy=false,expandedTopic=null;
-  const topicTitles={personality:'個人特質與性格深度解讀',career_deep:'事業與職涯發展解析',social:'人際關係與交友特質解析'};
+  const topicTitles={
+    personality:'個人特質與性格深度解讀',career_deep:'事業與職涯發展解析',social:'人際關係與交友特質解析',
+    wealth_life:'財富觀念與賺錢方式',love_deep:'感情與相處模式',overall_deep:'綜合命格與人生總覽',
+    luck_turning:'大運流年與人生轉折',fortune_risk:'婚姻吉凶、重大災禍、特殊福澤'
+  };
   const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
   const channelPattern=/^[A-E]$/;
-  const storePrefix='bazi-personal-v4:';
+  // Use a new session key to avoid mistaking older shorter V1 reports for fresh eight-topic tests.
+  const storePrefix='bazi-personal-v5-eight:';
   const safeText=v=>String(v==null?'':v);
   const adminTestPage=new URLSearchParams(location.search).get('admin')==='1';
   function testRole(){
@@ -8281,7 +8297,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     reports={};expandedTopic=null;
     if(current)current.key=identity(current);
     drawReports();
-    if($('baziPersonalAiStatus'))$('baziPersonalAiStatus').textContent='🧪 已切換管理員角色，可重新產生性格、職涯及交友 AI 報告。';
+    if($('baziPersonalAiStatus'))$('baziPersonalAiStatus').textContent='🧪 已切換管理員角色，可重新產生八種專題 AI 報告。';
     void refreshPersonalQuota();
   };
   function normalReport(value){
@@ -8351,6 +8367,38 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       card?.scrollIntoView({behavior:'smooth',block:'nearest'});
     }
   }
+  // Only text already returned by AI is exported. Never put hidden chart data or prompts into downloads.
+  function personalTxtContent(raw){
+    return safeText(raw).replace(/\r\n?/g,'\n').replace(/^\s*#{1,6}\s+/gm,'').replace(/\*\*/g,'').trim();
+  }
+  function personalChineseCount(raw){
+    return (personalTxtContent(raw).match(/[\u3400-\u9fff]/g)||[]).length;
+  }
+  function personalTxtSection(topic){
+    const entry=normalReport(reports[topic]);
+    if(!entry.reading)return '';
+    const lines=['一念知機｜站內八字 AI 個人解讀','主題：'+topicTitles[topic]];
+    if(channelPattern.test(entry.channel))lines.push('解讀通道：'+entry.channel);
+    if(tracePattern.test(entry.traceId))lines.push('追蹤碼：'+entry.traceId);
+    lines.push('中文字數：約 '+personalChineseCount(entry.reading)+' 字','',personalTxtContent(entry.reading));
+    return lines.join('\n');
+  }
+  function downloadPersonalTxt(filename,text){
+    const url=URL.createObjectURL(new Blob(['\uFEFF'+text],{type:'text/plain;charset=utf-8'}));
+    const link=document.createElement('a');link.href=url;link.download=filename;
+    document.body.append(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+  }
+  function downloadOnePersonalTxt(topic){
+    if(!normalReport(reports[topic]).reading)return;
+    downloadPersonalTxt('bazi-ai-'+topic+'.txt',personalTxtSection(topic));
+  }
+  function refreshAllPersonalDownload(){
+    const ready=Object.keys(topicTitles).filter(t=>normalReport(reports[t]).reading);
+    const btn=$('baziDownloadAllAiTxt'),note=$('baziAiExportNote');
+    if(btn){btn.hidden=ready.length===0;btn.textContent='↓ 合併下載已完成的 '+ready.length+' 篇 TXT';}
+    if(note)note.textContent=ready.length?'目前已產生 '+ready.length+' / 8 篇，可直接下載分享。':'產生第一篇後即可下載 TXT。';
+  }
   function drawReports(selected){
     const root=$('baziPersonalAiReports');root.replaceChildren();
     const topics=Object.keys(topicTitles).filter(topic=>normalReport(reports[topic]).reading);
@@ -8375,9 +8423,16 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       bottom.textContent='↑ 收合'+title;
       top.addEventListener('click',()=>setReportExpanded(topic,expandedTopic!==topic));
       bottom.addEventListener('click',()=>setReportExpanded(topic,false,true));
-      body.append(article,bottom);card.append(head,top,body);root.append(card);
+      const count=document.createElement('small');count.className='bazi-reading-wordcount';
+      const han=personalChineseCount(data.reading);
+      count.textContent='約 '+han.toLocaleString('zh-TW')+' 個中文字｜目標 1,300～1,600';
+      const download=document.createElement('button');download.type='button';
+      download.className='bazi-reading-download';download.textContent='↓ 下載本篇 TXT';
+      download.addEventListener('click',()=>downloadOnePersonalTxt(topic));
+      body.append(article,count,download,bottom);card.append(head,top,body);root.append(card);
     }
     setReportExpanded(expandedTopic,!!expandedTopic);
+    refreshAllPersonalDownload();
   }
   function showAiWorking(btn,topic,on){
     const status=$('baziPersonalAiStatus');
@@ -8444,10 +8499,10 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
         // Keep the chart to restore it after browsing any of the 20 archived examples.
         personalFullData=j.data;window.baziShowPersonalFull(j.data);
       }
-      $('baziPersonalAiStatus').textContent=Object.keys(topicTitles).some(topic=>normalReport(reports[topic]).reading)?'已讀取之前產生的 AI 解析；如需其他解讀請點選下方按鈕。':'排盤完成。可自行點選性格、職涯或交友，成功產生後才會扣除 AI 額度。';
+      $('baziPersonalAiStatus').textContent=Object.keys(topicTitles).some(topic=>normalReport(reports[topic]).reading)?'已讀取之前產生的 AI 解析；如需其他解讀請點選下方按鈕。':'排盤完成。可自行選擇八種專題解讀，成功產生後才會扣除 AI 額度。';
       if(reveal&&scroll)$('baziPersonalCoreNotice')?.scrollIntoView({behavior:'smooth',block:'start'});
       refreshPersonalQuota();
-      // 排盤只建立命盤，不主動呼叫 AI；三種解讀必須由使用者點擊按鈕才呼叫。
+      // 排盤只建立命盤，不主動呼叫 AI；八種解讀必須由使用者點擊按鈕才呼叫。
       return true;
     }catch(e){$('baziPersonalAiStatus').textContent=e.message||'排盤失敗';throw e;}
     finally{busy=false;if(btn){btn.disabled=false;btn.textContent=old;}}
@@ -8457,7 +8512,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(!current||busy){status.textContent='請先建立個人四柱';return;}
     if(aiBusy){status.textContent='AI 正在產生解析，請稍候完成後再選擇其他主題。';return;}
     if(reports[topic]){drawReports(topic);status.textContent='這份報告已保留，不會重複扣額度。';return;}
-    if(!automatic&&!confirm('確定產生'+({personality:'性格',career_deep:'職涯',social:'交友'}[topic])+'報告？成功生成將扣除 1 次免費 AI 額度。'))return;
+    if(!automatic&&!confirm('確定產生'+(topicTitles[topic]||'專題')+'報告？成功生成將扣除 1 次免費 AI 額度。'))return;
     const chart={...current},reportKey=current.key;
     aiBusy=true;
     showAiWorking(btn,topic,true);
@@ -8487,6 +8542,12 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   document.addEventListener('DOMContentLoaded',()=>{
     refreshPersonalQuota();window.addEventListener('bazi-google-login',refreshPersonalQuota);
     document.querySelectorAll('[data-bazi-topic]').forEach(b=>b.addEventListener('click',()=>topicClick(b.dataset.baziTopic,b)));
+    $('baziDownloadAllAiTxt')?.addEventListener('click',()=>{
+      const ready=Object.keys(topicTitles).filter(t=>normalReport(reports[t]).reading);
+      if(!ready.length)return;
+      downloadPersonalTxt('bazi-ai-all-readings.txt',ready.map(t=>personalTxtSection(t)).join('\n\n'+('='.repeat(38))+'\n\n'));
+    });
+    refreshAllPersonalDownload();
     $('baziCoreBrowse20')?.addEventListener('click',()=>window.baziExampleOpenPicker?.());
     // Preserve the original intro layout until the visitor actually casts a chart.
     const results=$('results'),personal=$('baziPersonalPreview');
