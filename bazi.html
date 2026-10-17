@@ -2593,6 +2593,38 @@ body.bazi-example-snapshot-mode .bazi-private-lock-panel{display:none!important}
  .bazi-private-lock-heading strong{font-size:.90rem}
  .bazi-private-lock-panel.bazi-inline-sample-anchor .bazi-inline-sample-trigger{bottom:10px;min-height:105px}
 }
+
+/* 2026-10-17 — Chapter 01–04 calculation and white-language in-content preview triggers. */
+body.bazi-personal-full-mode #report-pillars #pillars.bazi-inline-sample-anchor > .bazi-inline-sample-trigger{
+ top:70%!important;
+}
+body.bazi-personal-full-mode #results :is(#report-pillars,#report-elements,#report-tengods,#report-relations)
+ .section-decode .decode-summary-grid .bazi-inline-sample-anchor > .bazi-inline-sample-trigger{
+ top:min(42%, 350px)!important;
+ width:min(70%,580px);
+ min-height:110px;
+ max-width:calc(100% - 18px);
+}
+@media(max-width:700px){
+ body.bazi-personal-full-mode #report-pillars #pillars.bazi-inline-sample-anchor > .bazi-inline-sample-trigger{top:72%!important}
+ body.bazi-personal-full-mode #results :is(#report-pillars,#report-elements,#report-tengods,#report-relations)
+ .section-decode .decode-summary-grid .bazi-inline-sample-anchor > .bazi-inline-sample-trigger{top:min(42%, 260px)!important;width:calc(100% - 16px);min-height:100px}
+}
+/* Read-through guidance belongs to chapters 01–04 only, never chapters 05–09 or saved examples. */
+@keyframes baziNextChapterHint{0%,100%{box-shadow:0 0 0 0 rgba(17,123,137,0);background:rgba(20,126,143,.06)}45%{box-shadow:0 0 0 5px rgba(17,123,137,.20);background:rgba(20,126,143,.17)}}
+body.bazi-personal-full-mode #results :is(#report-pillars,#report-elements,#report-tengods,#report-relations)
+ > .bazi-chapter-footer [data-bazi-chapter-action="next"]:not([disabled]){
+ border-color:#4a9dab;
+ animation:baziNextChapterHint 2s ease-in-out infinite;
+}
+html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pillars,#report-elements,#report-tengods,#report-relations)
+ > .bazi-chapter-footer [data-bazi-chapter-action="next"]:not([disabled]){color:#155e6a}
+@media(prefers-reduced-motion:reduce){
+ body.bazi-personal-full-mode #results :is(#report-pillars,#report-elements,#report-tengods,#report-relations)
+ > .bazi-chapter-footer [data-bazi-chapter-action="next"]{animation:none!important;border-width:2px}
+}
+@media print{body.has-bazi-chart #results .bazi-chapter-footer [data-bazi-chapter-action="next"]{animation:none!important}}
+
 </style>
 
 </head>
@@ -7761,6 +7793,11 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
       if(!form.dataset.recastBound){form.addEventListener('toggle',syncRecast);form.dataset.recastBound='1';}
       syncRecast();
     }
+    // Chapter 01 is shown as the primary chart without passing through openChapter().
+    // Explicitly expand its interpretation on the initial successful personal cast.
+    if(document.body.classList.contains('bazi-personal-full-mode')){
+      window.baziDecodeOpenFirstVisit?.('report-pillars');
+    }
   };
   document.addEventListener('DOMContentLoaded',()=>{
     const trigger=document.getElementById('baziLayoutTrigger'),menu=document.getElementById('baziLayoutMenu');
@@ -8643,28 +8680,48 @@ function anchorFor(id){
  };
  return section.querySelector(pick[id])||section.querySelector('.report-body');
 }
+function readingAnchor(id){
+  if(!['report-pillars','report-elements','report-tengods','report-relations'].includes(id))return null;
+  const section=$(id);
+  const grid=section?.querySelector('.section-decode .decode-content.show .decode-summary-grid');
+  if(!grid||!grid.children.length)return null;
+  // Attach inside the original article, not to a separately generated preview.
+  return grid.querySelector(':scope > .decode-card, :scope > .master-card, :scope > article')||grid;
+}
 function syncTriggers(){
  if(!isPersonal())return;
  chapters.forEach(([id,name],i)=>{
+  const section=$(id);if(!section)return;
   if(id==='report-shensha'){
-   $(id)?.querySelectorAll('.bazi-inline-sample-trigger,.bazi-inline-sample-anchor').forEach(x=>{
-    if(x.classList.contains('bazi-inline-sample-trigger'))x.remove();
-    else x.classList.remove('bazi-inline-sample-anchor');
-   });
+   section.querySelectorAll('.bazi-inline-sample-trigger').forEach(x=>x.remove());
+   section.querySelectorAll('.bazi-inline-sample-anchor').forEach(x=>x.classList.remove('bazi-inline-sample-anchor'));
    return;
   }
-  const section=$(id),anchor=anchorFor(id);if(!section||!anchor)return;
-  const found=[...section.querySelectorAll('.bazi-inline-sample-trigger')];
-  let btn=found.find(x=>x.dataset.for===id)||null;
-  found.forEach(x=>{if(x!==btn)x.remove();});
-  if(!btn){btn=document.createElement('button');btn.type='button';btn.className='bazi-inline-sample-trigger';btn.dataset.for=id;
-   btn.setAttribute('aria-label',`免費隨機觀看其他人「${name}」原版核心的完整分析`);
-   btn.innerHTML=`<span class="bazi-inline-sample-icon" aria-hidden="true">🎲</span><span class="bazi-inline-sample-title">免費觀看他人的完整核心成果</span><span class="bazi-inline-sample-subtitle">點一下隨機看一筆，繼續按可換另一筆</span>`;
-   btn.addEventListener('click',()=>void change(id));
+  const targets=[['primary',anchorFor(id)]];
+  if(i<4)targets.push(['reading',readingAnchor(id)]);
+  const eligible=new Set(targets.filter(x=>x[1]).map(x=>x[0]));
+  section.querySelectorAll('.bazi-inline-sample-trigger').forEach(x=>{
+    if(x.dataset.for!==id||!eligible.has(x.dataset.samplePosition))x.remove();
+  });
+  const anchors=new Set(targets.map(x=>x[1]).filter(Boolean));
+  section.querySelectorAll('.bazi-inline-sample-anchor').forEach(node=>{
+    if(!anchors.has(node))node.classList.remove('bazi-inline-sample-anchor');
+  });
+  for(const [position,anchor] of targets){
+   if(!anchor)continue;
+   let btn=[...section.querySelectorAll('.bazi-inline-sample-trigger')].find(x=>x.dataset.for===id&&x.dataset.samplePosition===position);
+   if(!btn){
+    btn=document.createElement('button');btn.type='button';btn.className='bazi-inline-sample-trigger';
+    btn.dataset.for=id;btn.dataset.samplePosition=position;
+    btn.setAttribute('aria-label',`免費隨機觀看其他人「${name}」原版核心的完整分析`);
+    btn.innerHTML=`<span class="bazi-inline-sample-icon" aria-hidden="true">🎲</span><span class="bazi-inline-sample-title">免費觀看他人的完整核心成果</span><span class="bazi-inline-sample-subtitle">點一下隨機看一筆，繼續按可換另一筆</span>`;
+    btn.addEventListener('click',()=>void change(id));
+   }
+   anchor.classList.add('bazi-inline-sample-anchor');
+   anchor.style.setProperty('--sample-width',position==='reading'?'min(70%, 580px)':dimensions[i][0]);
+   anchor.style.setProperty('--sample-height',position==='reading'?'110px':dimensions[i][1]);
+   if(btn.parentElement!==anchor)anchor.appendChild(btn);
   }
-  section.querySelectorAll('.bazi-inline-sample-anchor').forEach(node=>{if(node!==anchor)node.classList.remove('bazi-inline-sample-anchor')});
-  anchor.classList.add('bazi-inline-sample-anchor');anchor.style.setProperty('--sample-width',dimensions[i][0]);anchor.style.setProperty('--sample-height',dimensions[i][1]);
-  if(btn.parentElement!==anchor)anchor.appendChild(btn);
  });
 }
 function shuffleDeck(exclude=''){
@@ -8724,9 +8781,9 @@ function randomBar(id){
 }
 async function change(id){
  if(loading)return;loading=true;active=id;
- const btn=$(id)?.querySelector('.bazi-inline-sample-trigger');
+ const buttons=[...($(id)?.querySelectorAll('.bazi-inline-sample-trigger')||[])];
  const reroll=document.querySelector('.bazi-core-random-controls [data-core-random="again"]');
- if(btn){btn.disabled=true;btn.querySelector('.bazi-inline-sample-title').textContent='正在載入完整範例…'}
+ buttons.forEach(btn=>{btn.disabled=true;btn.querySelector('.bazi-inline-sample-title').textContent='正在載入完整範例…'});
  if(reroll){reroll.disabled=true;reroll.textContent='正在換一筆…'}
  try{
   await getEntries();
@@ -8749,11 +8806,11 @@ async function change(id){
  }catch(e){
   const msg=String(e?.message||'範例讀取失敗，請重試');
   const node=isExample()?$(id)?.querySelector('.bazi-core-random-error'):null;
-  if(node){node.hidden=false;node.textContent=msg}else if(btn)btn.querySelector('.bazi-inline-sample-subtitle').textContent=msg;
+  if(node){node.hidden=false;node.textContent=msg}else buttons.forEach(btn=>{btn.querySelector('.bazi-inline-sample-subtitle').textContent=msg;});
   if(!deck.length&&entries)deck=shuffleDeck(window.__baziPreviousSampleKey||'');
  }finally{
   loading=false;
-  if(btn){btn.disabled=false;btn.querySelector('.bazi-inline-sample-title').textContent='免費觀看他人的完整核心成果'}
+  buttons.forEach(btn=>{btn.disabled=false;btn.querySelector('.bazi-inline-sample-title').textContent='免費觀看他人的完整核心成果'});
   const again=$(id)?.querySelector('.bazi-core-random-controls [data-core-random="again"]');
   if(again){again.disabled=false;again.textContent='🎲 再按一次，隨機換一組'}
  }
