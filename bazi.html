@@ -2852,11 +2852,14 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
         </section>
         <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 免費會員可各解析一次①個人性格、②事業職涯、⑤感情相處，合計永久三次，沒有每日重置。其他五篇及自訂問題目前為一次性付費解鎖預留項目，尚未開放付款，暫時無法解讀。請逐篇選擇需要的內容。</p>
           <div class="bazi-access-actions" aria-label="八種個人 AI 解讀主題"><button type="button" data-bazi-topic="personality">01 · 個人特質與性格深度解讀</button><button type="button" data-bazi-topic="career_deep">02 · 事業與職涯發展</button><button type="button" data-bazi-topic="social">03 · 人際關係與交友特質</button><button type="button" data-bazi-topic="wealth_life">04 · 財富觀念與賺錢方式</button><button type="button" data-bazi-topic="love_deep">05 · 感情與相處模式</button><button type="button" data-bazi-topic="overall_deep">06 · 綜合命格與人生總覽</button><button type="button" data-bazi-topic="luck_turning">07 · 大運流年與人生轉折</button><button type="button" data-bazi-topic="fortune_risk">08 · 婚姻吉凶、重大災禍、特殊福澤</button></div>
-          <section class="bazi-reading-custom" aria-label="自訂八字問題">
-            <label for="baziCustomQuestion"><strong>09 · 自訂八字問題</strong><small>一次性付費解鎖項目，暫時鎖定；正式付款方案尚未開放。</small></label>
-            <textarea id="baziCustomQuestion" rows="3" maxlength="400" placeholder="例如：我比較適合創業還是上班？未來三年工作上要注意什麼？" aria-describedby="baziCustomQuestionHelp"></textarea>
-            <div class="bazi-reading-custom-actions"><small id="baziCustomQuestionHelp">自訂問題暫未開放；日後正式推出一次性付費解鎖。</small><button type="button" id="baziCustomQuestionRun" disabled>🔒 付費解鎖（尚未開放）</button></div>
-          </section>
+          <details class="bazi-reading-custom" aria-label="自訂八字問題">
+            <summary class="bazi-reading-custom-toggle"><span><strong>09 · 自訂八字問題</strong><small>付費功能尚未開放，需要時點擊查看</small></span><span class="bazi-reading-custom-arrow" aria-hidden="true">⌄</span></summary>
+            <div class="bazi-reading-custom-body">
+              <label for="baziCustomQuestion"><small>一次性付費解鎖項目，正式方案尚未開放。</small></label>
+              <textarea id="baziCustomQuestion" rows="3" maxlength="400" placeholder="例如：我比較適合創業還是上班？未來三年工作上要注意什麼？" aria-describedby="baziCustomQuestionHelp"></textarea>
+              <div class="bazi-reading-custom-actions"><small id="baziCustomQuestionHelp">自訂問題暫未開放；日後正式推出一次性付費解鎖。</small><button type="button" id="baziCustomQuestionRun" disabled>🔒 付費解鎖（尚未開放）</button></div>
+            </div>
+          </details>
           <p id="baziPersonalAiStatus" class="bazi-access-status" role="status"></p><div id="baziPersonalAiReports"></div>
         </div>
       </section>
@@ -2865,10 +2868,6 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
       <section class="daily-flow-section" id="report-daily-flow" aria-label="每日流日"><div class="daily-flow-content" id="dailyFlowContent"></div></section>
 
       <div class="results" id="results">
-      <div id="baziPersonalCoreNotice" class="bazi-personal-core-notice" hidden>
-        <div><strong>你的個人命盤｜分級開放預覽</strong><span>01～04 區遮七成；05 常用神煞完整公開；06～09 區暫不顯示個人分析，可隨機試閱他人的完整核心範例。未開放的個人專業資料不會傳送至瀏覽器；20 筆固定範例仍提供完整試閱。</span></div>
-        <button id="baziCoreBrowse20" type="button">對照 20 筆完整範例</button>
-      </div>
       <section id="baziMaskCompare" class="bazi-mask-compare" hidden aria-label="個人九大分析遮罩程度測試">
         <div class="bazi-mask-compare-head">
           <div><span class="report-eyebrow">MASK PREVIEW · TEST ONLY</span><h3>九大分析｜遮罩程度比較</h3><p>即時切換同一張命盤，不重新排盤，也不消耗 AI 額度。以命理資訊的敏感程度分級，非隨機遮住指定字數比例。</p></div>
@@ -6948,6 +6947,47 @@ ${intent}
   // Non-paying personal preview: receives only four pillars and public archetype.
   // The nine original panels and section navigation are reused with safe placeholders;
   // the true private core is never present in browser state, DOM, canvas or JSON.
+  // Public four-pillar reference table only. Derived in the browser from the four
+  // already-public stems/branches using the same MIT lunar calendar library.
+  // This does NOT read or expose the Worker private chart or the hidden branch ten-gods.
+  function baziPublicPillarDisplay(data){
+    const bare=(data?.pillars||[]).map(p=>({...p}));
+    const matches=String(data?.solarText||'').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+    if(!matches||typeof Solar==='undefined'||typeof Solar.fromYmdHms!=='function')return bare;
+    try{
+      const [y,m,d,h,minute]=matches.slice(1).map(Number);
+      const sect=Number(document.getElementById('sect')?.value)===1?1:2;
+      const solar=Solar.fromYmdHms(y,m,d,h,minute,0);
+      const eight=solar.getLunar().getEightChar();if(eight.setSect)eight.setSect(sect);
+      let timeEight=eight;
+      if(sect===2&&h===23){
+        timeEight=Solar.fromYmdHms(y,m,d,0,30,0).getLunar().getEightChar();
+        if(timeEight.setSect)timeEight.setSect(sect);
+      }
+      const facts=['year','month','day','time'].map((key,i)=>{
+        const core=i===3?timeEight:eight;
+        const cap=key[0].toUpperCase()+key.slice(1);
+        const read=field=>{
+          const fn=core['get'+cap+field];
+          return typeof fn==='function'?frontendTraditional(fn.call(core)):'';
+        };
+        // Only query explicitly permitted, standard public properties.
+        // Crucially, do not query or build the hidden ShiShenZhi at all.
+        return {gan:read('Gan'),zhi:read('Zhi'),shiShenGan:read('ShiShenGan'),
+          hideGan:read('HideGan'),naYin:read('NaYin'),
+          diShi:read('DiShi'),xunKong:read('XunKong')};
+      });
+      // The public Worker four pillars stay authoritative at late-hour boundaries.
+      if(facts.some((p,i)=>p.gan!==bare[i].gan||p.zhi!==bare[i].zhi))return bare;
+      return bare.map((p,i)=>({...p,
+        zhiElement:FRONT_ZHI_ELEMENT[p.zhi],
+        ganYinYang:FRONT_GAN_YY[p.gan],zhiYinYang:FRONT_ZHI_YY[p.zhi],
+        hideGan:facts[i].hideGan,naYin:facts[i].naYin,
+        shiShenGan:facts[i].shiShenGan,diShi:facts[i].diShi,xunKong:facts[i].xunKong
+      }));
+    }catch(_){return bare;}
+  }
+
   function baziRenderSafePersonal(data){
     if(!data?.publicPreview||data.pillars?.length!==4)throw Error('免費命盤回傳格式不正確');
     const put=(id,markup)=>{const el=$(id);if(el)el.innerHTML=markup};
@@ -6969,11 +7009,12 @@ ${intent}
       ['專業說明','詳細十神、五行、宮位組合與精確判讀依據目前不開放。']
     ].map(([title,copy])=>`<article class="life-card"><h4>${esc(title)}</h4><p>${esc(copy)}</p><small>完整個人分析尚未解鎖</small></article>`).join(''));
     put('scoreGrid',['五行分布均衡','日主支持度','十神出現廣度','干支互動量'].map(t=>`<div class="score-card"><small>${t}</small><div class="score-line"><b>${hidden()}</b><span>詳細計算尚未解鎖</span></div><div class="mini-track"><i style="width:0"></i></div></div>`).join(''));
-    put('pillars',data.pillars.map(p=>{
-      const name=label[p.key]||'四柱';
+    put('pillars',baziPublicPillarDisplay(data).map(p=>{
+      const name=label[p.key]||'四柱',shown=value=>esc(value||'—');
+      const hiddenGan=Array.isArray(p.hideGan)?p.hideGan.join('、'):(p.hideGan||'');
       return `<article class="pillar ${p.key==='day'?'day-master':''}"><div class="pillar-head"><span>${name}</span><small>FOUR PILLARS</small><button type="button" class="bazi-pillar-toggle" aria-expanded="false" aria-label="${name}完整細節">詳細 ▾</button></div>
-      <div class="chars"><div class="char-box gan"><b>${esc(p.gan)}</b><span>${p.key==='day'?'日主':hidden(3)}</span></div><div class="char-box zhi"><b>${esc(p.zhi)}</b><span>${hidden(3)}</span></div></div>
-      <div class="pillar-body"><div class="row"><label>干支</label><strong>${esc(p.ganZhi)}</strong></div><div class="row"><label>陰陽</label><strong>${hidden(6)}</strong></div><div class="row"><label>藏干</label><strong>${hidden(5)}</strong></div><div class="row"><label>支十神</label><strong>${hidden(5)}</strong></div><div class="row"><label>納音</label><strong>${hidden(5)}</strong></div><div class="row"><label>十二長生</label><strong>${hidden(5)}</strong></div><div class="row"><label>旬空</label><strong>${hidden(4)}</strong></div></div></article>`;
+      <div class="chars"><div class="char-box gan"><b>${shown(p.gan)}</b><span>${p.key==='day'?'日主':shown(p.shiShenGan)}</span></div><div class="char-box zhi"><b>${shown(p.zhi)}</b><span>${shown(p.zhiElement)}</span></div></div>
+      <div class="pillar-body"><div class="row"><label>干支</label><strong>${shown(p.ganZhi)}</strong></div><div class="row"><label>陰陽</label><strong>${shown(p.ganYinYang||'—')}干・${shown(p.zhiYinYang||'—')}支</strong></div><div class="row"><label>藏干</label><strong>${shown(hiddenGan)}</strong></div><div class="row"><label>支十神</label><strong>${hidden(5)}</strong></div><div class="row"><label>納音</label><strong>${shown(p.naYin)}</strong></div><div class="row"><label>十二長生</label><strong>${shown(p.diShi)}</strong></div><div class="row"><label>旬空</label><strong>${shown(p.xunKong)}</strong></div></div></article>`;
     }).join(''));
     put('meta',[['公曆',data.solarText],['農曆',data.lunarText],['日主',day+'・'+data.dayMasterElement],['前一節','尚未解鎖'],['下一節','尚未解鎖']].map(([k,v])=>`<div>${esc(k)}<span>${esc(v||'—')}</span></div>`).join(''));
     $('meta')?.classList.add('show');
@@ -7007,7 +7048,6 @@ ${intent}
     if(!data?.publicPreview||data.pillars?.length!==4)throw Error('後端免費命盤資料不完整，請重新排盤');
     document.body.classList.remove('bazi-example-snapshot-mode');
     document.body.classList.add('bazi-personal-full-mode');
-    const notice=$('baziPersonalCoreNotice');if(notice)notice.hidden=false;
     const banner=$('baziExampleSnapshotBanner');if(banner)banner.hidden=true;
     lastData=data;selectedPeriods={};baziGeminiLastReading='';
     const gemOut=$('baziGeminiOutput');if(gemOut)gemOut.hidden=true;
@@ -7030,7 +7070,6 @@ ${intent}
     if(!banner)throw Error('找不到範例預覽畫面');
     window.baziOnDemoEnter?.();
     document.body.classList.remove('bazi-personal-full-mode');
-    const notice=$('baziPersonalCoreNotice');if(notice)notice.hidden=true;
     document.body.classList.add('bazi-example-snapshot-mode');
     lastData=data;
     // Preserve the visitor's own saved input while inspecting an archived example.
@@ -8336,6 +8375,18 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-batch{background:#ef
 .bazi-personal-stage .bazi-reading-custom-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .bazi-personal-stage .bazi-reading-custom-actions button{border:1px solid rgba(181,144,62,.66);background:rgba(181,144,62,.16);color:var(--text);border-radius:9px;padding:10px 14px;font-size:.78rem;font-weight:800;cursor:pointer}
 .bazi-personal-stage .bazi-reading-custom-actions button:disabled{opacity:.55;cursor:not-allowed}
+.bazi-personal-stage details.bazi-reading-custom{padding:0;overflow:hidden}
+.bazi-personal-stage .bazi-reading-custom-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;cursor:pointer;list-style:none}
+.bazi-personal-stage .bazi-reading-custom-toggle::-webkit-details-marker{display:none}
+.bazi-personal-stage .bazi-reading-custom-toggle span:first-child{display:grid;gap:3px}
+.bazi-personal-stage .bazi-reading-custom-toggle strong{font-size:.83rem;color:var(--text)}
+.bazi-personal-stage .bazi-reading-custom-toggle small{font-size:.68rem;color:var(--dim)}
+.bazi-personal-stage .bazi-reading-custom-arrow{flex:none;font-size:1.1rem;color:var(--dim);transition:transform .15s ease}
+.bazi-personal-stage details.bazi-reading-custom[open] .bazi-reading-custom-arrow{transform:rotate(180deg)}
+.bazi-personal-stage .bazi-reading-custom-toggle:hover{background:rgba(90,163,172,.065)}
+.bazi-personal-stage .bazi-reading-custom-toggle:focus-visible{outline:2px solid var(--gold,#e9bd58);outline-offset:-2px}
+.bazi-personal-stage .bazi-reading-custom-body{padding:0 16px 14px;border-top:1px solid rgba(90,163,172,.14)}
+
 .bazi-personal-stage .bazi-reading-article blockquote{margin:18px 0;padding:10px 15px;border-left:3px solid var(--gold,#e9bd58);background:rgba(95,150,160,.06);border-radius:0 9px 9px 0}
 .bazi-personal-stage .bazi-reading-article blockquote p{margin:0;font-weight:650;line-height:1.8}
 @media(max-width:550px){.bazi-personal-stage .bazi-reading-custom{padding:12px}.bazi-personal-stage .bazi-reading-custom-actions button{width:100%}}
@@ -8657,7 +8708,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   window.baziReturnToPersonalCore=()=>{
     if(!personalFullData||!current)return false;
     window.baziShowPersonalFull(personalFullData);drawReports();
-    if(!window.__baziInlineSampleRestore)$('baziPersonalCoreNotice')?.scrollIntoView({behavior:'smooth',block:'start'});
+    if(!window.__baziInlineSampleRestore)$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'});
     return true;
   };
   window.baziMainCast=async function({options,scroll,reveal,countUsage=false}){
@@ -8678,7 +8729,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       }
       $('baziPersonalAiStatus').textContent=loggedIn()?'排盤完成。可選擇三個免費主題，各限本會員成功解析一次；其他內容待付費方案開放。':'排盤完成。免費登入會員後可使用三篇指定 AI 解讀。';
       renderTopicAccess();
-      if(reveal&&scroll)$('baziPersonalCoreNotice')?.scrollIntoView({behavior:'smooth',block:'start'});
+      if(reveal&&scroll)$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'});
       refreshPersonalQuota();
       // 排盤只建立命盤，不主動呼叫 AI；僅三個會員免費主題可各按一次。
       return true;
@@ -8719,7 +8770,6 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     refreshPersonalQuota();window.addEventListener('bazi-google-login',()=>window.baziAiRefreshAccessUi());
     document.querySelectorAll('[data-bazi-topic]').forEach(b=>b.addEventListener('click',()=>topicClick(b.dataset.baziTopic,b)));
     renderTopicAccess();
-    $('baziCoreBrowse20')?.addEventListener('click',()=>window.baziExampleOpenPicker?.());
     // Preserve the original intro layout until the visitor actually casts a chart.
     const results=$('results'),personal=$('baziPersonalPreview');
     if(results&&personal)results.after(personal);
@@ -8745,7 +8795,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   const sensitiveNumeric=/(?:\d+(?:\.\d+)?\s*%|(?:高達|占比|支持度|權重|評分|分數|加權|比例|合計|為|出現)[：\s]*\d+(?:\.\d+)?(?:%|分|次)?)/g;
   // Explicit per-section rules: levels are information sensitivity grades, not literal % of characters.
   const targetIDs=['report-overview','report-pillars','report-elements','report-tengods','report-relations','report-shensha','report-reading','report-luck','report-years','report-months'];
-  const skipSelector='button,a,input,textarea,select,option,summary,script,style,svg,canvas,code,pre,.bazi-mask-token,.bazi-mask-compare,.smart-prompt-box,.section-ai-answer,.bazi-gemini,.bazi-ai-focus,.bazi-personal-core-notice,.bazi-example-snapshot-banner,.bazi-inline-sample-preview';
+  const skipSelector='button,a,input,textarea,select,option,summary,script,style,svg,canvas,code,pre,.bazi-mask-token,.bazi-mask-compare,.smart-prompt-box,.section-ai-answer,.bazi-gemini,.bazi-ai-focus,.bazi-example-snapshot-banner,.bazi-inline-sample-preview';
   function wrapAllText(el,tier){
     if(!el||el.closest('.bazi-mask-token')||el.closest('.bazi-mask-compare'))return;
     // Text is wrapped rather than elements removed, so interactive widgets keep their event listeners.
@@ -8802,8 +8852,10 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       // Sensitive names and exact values are independent of which block contains them.
       const exactNumbers=/(?:\d+(?:[.,]\d+)?\s*[%％]|\b\d+(?:[.,]\d+)?(?:\s*(?:年|歲|月|天|次|組|分|分數|步))?)/g;
       const concat=new RegExp([sensitiveNumeric.source,pillars.source,technical.source,exactNumbers.source].join('|'),'g');
-      // Skip freely public four-pillar characters and birth metadata.
-      if(el.closest('#pillars .chars b,#pillars .pillar-head,#pillars .row:first-child,#meta'))continue;
+      // Chapter 01 basic four-pillar rows are intentionally public; only the
+      // branch-ten-god row holds a server-safe placeholder. Never re-mask the
+      // publicly derived traditional reference information in these cards.
+      if(el.closest('#pillars .pillar,#meta'))continue;
       wrapMatches(node,concat,3);
     }
   }
@@ -8817,15 +8869,8 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       return;
     }
     if(id==='report-pillars'){
-      document.querySelectorAll('#pillars .pillar').forEach(p=>{
-        p.querySelectorAll('.char-box.gan span').forEach(el=>{if(el.textContent.trim()!=='日主')markElement(el,5)});
-        p.querySelectorAll('.row').forEach(row=>{
-          const name=row.querySelector('label')?.textContent.trim();const val=row.querySelector('strong');
-          const tier={'藏干':3,'支十神':3,'十二長生':5,'納音':7,'旬空':7,'陰陽':9}[name];
-          if(tier)markElement(val,tier);
-        });
-      });
-      // In a public preview, the four GanZhi and original dates remain visible.
+      // Basic traditional pillar details are now freely viewable. The branch
+      // ten-gods remain a placeholder rather than real client data.
       document.querySelectorAll('#meta > div:nth-child(n+4) span').forEach(x=>markElement(x,7));
     }
     if(id==='report-elements'){
@@ -8922,7 +8967,7 @@ function anchorFor(id){
   }
   return panel;
  }
- if(id==='report-pillars')return $('pillars')||section.querySelector('.report-body');
+ if(id==='report-pillars')return null; // Chapter 01 public pillar table: remove the large overlaid button; its reading-area example remains available.
  const pick={
   'report-elements':'.analysis-grid.two > .panel:nth-child(2)',
   'report-tengods':'.ten-god-layout .panel:first-child','report-relations':'#relationGrid',
