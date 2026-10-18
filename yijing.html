@@ -1088,6 +1088,18 @@ html[data-theme="light"] .yijing-ai-content code{background:#edf6f0}
 html[data-theme="light"] .yijing-ai-content blockquote{background:#f3faf5;border-left-color:#6baa82}
 @media(max-width:600px){.yijing-ai-content{padding:15px}.yijing-ai-content h2{font-size:1.17rem}.yijing-ai-content h3{font-size:1.08rem}}
 
+
+/* 2026-10-18: long-form custom questions + plain TXT download (front-end only). */
+#yijingExtraContext{display:block;width:100%;box-sizing:border-box;min-height:70px;padding:11px 13px;border-radius:10px;border:1px solid rgba(124,227,161,.22);background:#0d1410;color:#edf4ef;font:inherit;font-size:.88rem;line-height:1.78;outline:none;resize:vertical;white-space:pre-wrap;overflow-wrap:anywhere;color-scheme:dark}
+#yijingExtraContext.yijing-custom-multiline{min-height:174px}
+#yijingExtraContext:focus{border-color:rgba(124,227,161,.52);box-shadow:0 0 0 3px rgba(124,227,161,.08)}
+html[data-theme="light"] #yijingExtraContext{background:#fff;color:#27362c;border-color:rgba(38,83,51,.19);color-scheme:light}
+html[data-theme="light"] #yijingExtraContext:focus{border-color:#7eb190;box-shadow:0 0 0 3px rgba(46,125,82,.08)}
+.yijing-ai-download{display:inline-flex;align-items:center;justify-content:center;margin:7px 0 12px;padding:9px 15px;min-height:40px;border-radius:10px;border:1px solid rgba(124,227,161,.35);background:rgba(124,227,161,.09);color:#beeaca;font-size:.79rem;font-weight:800;cursor:pointer}
+.yijing-ai-download[hidden]{display:none!important}
+.yijing-ai-download:hover{background:rgba(124,227,161,.17)}
+html[data-theme="light"] .yijing-ai-download{background:#eff8f1;color:#246644;border-color:rgba(49,133,78,.35)}
+@media(max-width:600px){#yijingExtraContext.yijing-custom-multiline{min-height:158px}}
 </style>
 </head>
 <body>
@@ -1306,7 +1318,7 @@ html[data-theme="light"] .yijing-ai-content blockquote{background:#f3faf5;border
     </div>
     <div class="field guide-extra-field">
       <label for="yijingExtraContext">補充背景（選填，不會儲存）</label>
-      <input id="yijingExtraContext" type="text" maxlength="500" placeholder="例如：A＝留原公司，B＝接受新工作；可留白">
+      <textarea id="yijingExtraContext" rows="2" maxlength="500" placeholder="例如：A＝留原公司，B＝接受新工作；可留白" aria-label="自訂問題或補充背景"></textarea>
       <div id="yijingSingleLoveShortHint" class="yijing-short-question-hint" hidden aria-live="polite">你的問題目前較簡短，建議補充單身時間、目前的困擾或希望觀察的時間，讓 AI 解卦更貼近你的情況。這只是提醒，不影響起卦。</div>
     </div>
     <div class="custom-quality-warning" id="customQualityWarning" role="alertdialog" aria-modal="true" aria-labelledby="customQualityWarningTitle" hidden>
@@ -2274,6 +2286,13 @@ function cardHTML(h, lines, label, movingLines=[]){
     if(extraWrap)extraWrap.hidden=!show;
     if(castBlock)castBlock.hidden=!show;
   }
+  function autoGrowYijingQuestion(input){
+    if(!input)return;
+    if(!state.custom){input.style.height='';input.style.overflowY='auto';return;}
+    input.style.height='auto';
+    input.style.height=Math.min(Math.max(input.scrollHeight,174),760)+'px';
+    input.style.overflowY=input.scrollHeight>760?'auto':'hidden';
+  }
   function refreshSingleLoveShortHint(){
     const hint=document.getElementById('yijingSingleLoveShortHint');
     const samples=document.getElementById('yijingSingleLoveExamples');
@@ -2302,6 +2321,9 @@ function cardHTML(h, lines, label, movingLines=[]){
     }
     const input=document.getElementById('yijingExtraContext');
     input.value='';
+    input.classList.toggle('yijing-custom-multiline',!!state.custom);
+    input.rows=state.custom?7:2;
+    autoGrowYijingQuestion(input);
     refreshSingleLoveShortHint();
     hideCustomQualityWarning();
     input.placeholder=state.custom?'請輸入你真正想問的問題，例如：我們恢復聯絡後一直都是我主動，這段關係真正卡在哪裡？':'例如補充人物、A／B 代表什麼、事件進度；可留白';
@@ -2427,6 +2449,44 @@ function cardHTML(h, lines, label, movingLines=[]){
     }
     container.replaceChildren(fragment);
   }
+  function twYijingDownloadStamp(date){
+    const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date);
+    const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+    return `${p.year}${p.month}${p.day}-${p.hour}${p.minute}`;
+  }
+  function yijingPlainAnswer(answer){
+    return String(answer||'').replace(/\r\n?/g,'\n')
+      .replace(/^#{1,6}\s+/gm,'')
+      .replace(/\*\*([^*]+)\*\*/g,'$1').replace(/__([^_]+)__/g,'$1')
+      .replace(/`([^`]+)`/g,'$1').replace(/^\s*[-*+]\s+/gm,'・')
+      .replace(/\n{3,}/g,'\n\n').trim();
+  }
+  function downloadYijingAIText(r,answer,channel,traceId,completedAt){
+    const safeChannel=/^[A-E]$/.test(String(channel||''))?channel:'未知';
+    const fileName=`易經解卦-通道${safeChannel}-${twYijingDownloadStamp(completedAt)}.txt`;
+    const text=[
+      '一念知機｜易經 AI 解卦',
+      '通道：'+safeChannel,
+      '時間（台灣）：'+new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(completedAt),
+      '追蹤碼：'+(traceId||'未提供'),
+      '占卜問題：'+r.question,
+      '主題：'+(r.topic?.name||''),
+      '情境：'+(r.scenario?.name||''),
+      '起卦方式：'+(r.castMethod?.label||''),
+      '本卦：第 '+r.base.number+' 卦・'+r.base.name,
+      '動爻：'+(r.movingNames||'無動爻'),
+      '變卦：'+(r.movingLines?.length?'第 '+r.changed.number+' 卦・'+r.changed.name:'無變卦（靜卦）'),
+      '',
+      '【完整 AI 解讀】',
+      yijingPlainAnswer(answer),
+      '',
+      '※ 本文為占卜工具所產生的 AI 解讀，供思考與參考。'
+    ].join('\n').replace(/\n/g,'\r\n');
+    const blob=new Blob(['\uFEFF',text],{type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(blob),link=document.createElement('a');
+    link.href=url;link.download=fileName;document.body.appendChild(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+  }
   function renderCustomAI(r){
     currentReading=r;
     empty.style.display='none';result.style.display='block';
@@ -2456,6 +2516,7 @@ function cardHTML(h, lines, label, movingLines=[]){
           <p>本次將依已經產生的卦象直接解讀，不重新起卦；只有按下按鈕才會消耗一次 AI 呼叫。</p>
           <button class="ai-test-btn" type="button" id="runYijingAi">開始 AI 解卦</button>
           <div class="yijing-ai-status" id="yijingAiStatus" aria-live="polite">卦象已準備好，點擊即可開始解讀。</div>
+          <button type="button" id="downloadYijingAiTxt" class="yijing-ai-download" hidden>↓ 下載這次 AI 解卦 TXT</button>
           <div class="yijing-ai-content" id="yijingAiContent" hidden></div>
         </section>
         <div class="reading-reset"><button id="chooseAnotherQuestion" type="button">← 重新選擇主題／問題</button></div>
@@ -2488,6 +2549,12 @@ function cardHTML(h, lines, label, movingLines=[]){
         // 安全渲染基本 Markdown：以 textContent 產生 DOM，不執行 AI 回傳的 HTML/JS。
         renderSafeYijingMarkdown(content,data.answer.trim());content.hidden=false;
         status.textContent='✓ 已完成 AI 解卦'+(data.channel?'｜通道 '+data.channel:'')+(data.traceId?'｜追蹤碼 '+data.traceId:'');
+        const download=document.getElementById('downloadYijingAiTxt');
+        const finishedAt=new Date();
+        if(download){
+          download.hidden=false;
+          download.onclick=()=>downloadYijingAIText(r,data.answer.trim(),data.channel,data.traceId,finishedAt);
+        }
         btn.textContent='解卦已完成';content.scrollIntoView({behavior:'smooth',block:'nearest'});
       }catch(err){status.classList.add('error');status.textContent=err?.name==='AbortError'?'等待 AI 回應逾時，原卦已保留，可以按下按鈕重試。':String(err?.message||'AI 解讀失敗');btn.disabled=false;btn.textContent='重新嘗試 AI 解卦';}
       finally{clearTimeout(timer);}
@@ -2631,7 +2698,7 @@ function cardHTML(h, lines, label, movingLines=[]){
     input.setSelectionRange(input.value.length,input.value.length);
     input.scrollIntoView({behavior:'smooth',block:'center'});
   });
-  document.getElementById('yijingExtraContext')?.addEventListener('input',()=>{if(state.custom){hideCustomQualityWarning();}refreshSingleLoveShortHint();});
+  document.getElementById('yijingExtraContext')?.addEventListener('input',e=>{if(state.custom){hideCustomQualityWarning();}autoGrowYijingQuestion(e.currentTarget);refreshSingleLoveShortHint();});
   document.querySelectorAll('[data-guide-back]').forEach(b=>b.addEventListener('click',()=>{if(state.customSource==='all'&&b.dataset.guideBack==='question'){resetGuide();return;}showStep(b.dataset.guideBack)}));
   document.querySelectorAll('[data-guide-jump]').forEach(b=>b.addEventListener('click',()=>{if(!b.disabled)showStep(b.dataset.guideJump)}));
   document.getElementById('castModeGrid')?.addEventListener('click',e=>{const b=e.target.closest('[data-cast-mode]');if(b)setCastMode(b.dataset.castMode);});
