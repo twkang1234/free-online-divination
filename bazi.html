@@ -2656,6 +2656,44 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.report-b
 body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-chapter-footer{display:none!important}
 @media(max-width:750px){#baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:1fr!important}#baziAiQuotaPanel .bazi-entitlement-grid>article{min-height:95px;padding:12px 14px}}
 </style>
+<style id="bazi-hero-compact-quota-style">
+/* 成功排盤後：把三種剩餘額度放在摘要右下角空位，避免擠壓命盤主文。 */
+body.has-bazi-chart #report-overview .bazi-hero-quota-compact{
+  position:absolute;right:41px;top:136px;width:310px;max-width:calc(100% - 34px);
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;
+  padding:8px 5px;border:1px solid rgba(53,131,145,.27);border-radius:12px;
+  background:rgba(17,91,107,.045);box-shadow:0 2px 8px rgba(18,55,74,.035);
+  z-index:1;
+}
+.bazi-hero-quota-compact{display:none}
+.bazi-hero-quota-item{display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:0;gap:6px;padding:2px 6px;text-align:center}
+.bazi-hero-quota-item+.bazi-hero-quota-item{border-left:1px solid rgba(129,161,174,.35)}
+.bazi-hero-quota-item small{font-size:.70rem;font-weight:700;white-space:nowrap;color:var(--dim,#8598a9)}
+.bazi-hero-quota-item strong{font-size:1.12rem;line-height:1.15;font-weight:800;white-space:nowrap;letter-spacing:-.025em;color:var(--gold,#dbb366)}
+.bazi-hero-quota-item:nth-child(2) strong{color:var(--cyan,#5bb7c7)}
+.bazi-hero-quota-item:nth-child(3) strong{color:#b79bd8}
+html[data-theme="light"] .bazi-hero-quota-compact{color:#284253}
+html[data-theme="light"] body.has-bazi-chart #report-overview .bazi-hero-quota-compact{background:rgba(255,255,255,.56);border-color:rgba(85,148,159,.33)}
+html[data-theme="light"] .bazi-hero-quota-item small{color:#637889}
+html[data-theme="light"] .bazi-hero-quota-item strong{color:#85591d}
+html[data-theme="light"] .bazi-hero-quota-item:nth-child(2) strong{color:#176477}
+html[data-theme="light"] .bazi-hero-quota-item:nth-child(3) strong{color:#6e4b8d}
+@media(min-width:851px){
+  body.has-bazi-chart #report-overview{min-height:204px}
+  body.has-bazi-chart #report-overview .bazi-recast-slot:not(.is-expanded)+.report-identity{padding-right:325px}
+}
+/* 生辰重填表單展開時，把精簡額度放回正常排版，不與表單重疊。 */
+body.has-bazi-chart #report-overview .bazi-recast-slot.is-expanded~.bazi-hero-quota-compact{position:static;margin:12px 0 0 auto}
+@media(max-width:850px){
+  body.has-bazi-chart #report-overview .bazi-hero-quota-compact{position:static;width:100%;max-width:100%;margin:14px 0 0;padding:9px 2px}
+  .bazi-hero-quota-item{gap:4px;padding:2px 3px}
+  .bazi-hero-quota-item small{font-size:.67rem}
+  .bazi-hero-quota-item strong{font-size:1.04rem}
+}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-overview .bazi-hero-quota-compact{position:static;width:100%;max-width:100%;margin:14px 0 0;padding:9px 2px}
+html[data-bazi-layout="mobile"] body.has-bazi-chart #report-overview .bazi-recast-slot:not(.is-expanded)+.report-identity{padding-right:0}
+@media print{body.has-bazi-chart .bazi-hero-quota-compact{display:none!important}}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -2934,6 +2972,12 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
               </div>
             </div>
           </div>
+          <!-- 命盤摘要右下角：僅鏡像既有三欄額度，不新增計數／呼叫 API -->
+          <aside class="bazi-hero-quota-compact" id="baziHeroQuotaCompact" aria-label="目前可用次數">
+            <div class="bazi-hero-quota-item"><small>免費排盤</small><strong id="baziHeroCastRemain">查詢中…</strong></div>
+            <div class="bazi-hero-quota-item"><small>AI 解讀</small><strong id="baziHeroAiRemain">查詢中…</strong></div>
+            <div class="bazi-hero-quota-item"><small>付費次數</small><strong id="baziHeroPaidRemain">0 次</strong></div>
+          </aside>
           <details class="bazi-overview-extra bazi-aux-panel" id="baziOverviewExtra"><summary class="bazi-aux-native-summary">生活領域與結構重點（選讀）</summary><div class="overview-life-grid" id="overviewLife"></div></details>
           <details class="method-details bazi-aux-panel" id="baziMethodDetails"><summary class="bazi-aux-native-summary">結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">本站會結合四柱與多項結構資訊進行整理；詳細加權方法與個人計算依據屬未解鎖內容。</p><p class="micro-note">歲運評語僅供傳統命理參考；個人的分析規則及歲運細節不在免費模式公開。</p></details>
         </section>
@@ -9296,6 +9340,32 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  },true);
  document.addEventListener('DOMContentLoaded',window.baziRefreshShenshaGate);
  window.addEventListener('bazi-google-login',window.baziRefreshShenshaGate);
+})();
+</script>
+<script id="bazi-hero-compact-quota-sync">
+// 僅同步頁面既有額度，不另呼叫後端、不另建立任何配額。
+(()=>{
+  const mapping=[
+    ['baziCastQuotaCount','baziHeroCastRemain'],
+    ['baziQuotaDailyCount','baziHeroAiRemain'],
+    ['baziQuotaPaidCount','baziHeroPaidRemain']
+  ];
+  const init=()=>{
+    const pairs=mapping.map(([source,dest])=>[document.getElementById(source),document.getElementById(dest)])
+      .filter(([source,dest])=>source&&dest);
+    if(!pairs.length)return;
+    const update=()=>{
+      for(const [source,dest] of pairs){
+        const next=source.textContent.trim()||'—';
+        if(dest.textContent!==next)dest.textContent=next;
+      }
+    };
+    const observer=new MutationObserver(update);
+    for(const [source] of pairs)observer.observe(source,{childList:true,subtree:true,characterData:true});
+    update();
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
 })();
 </script>
 </body>
