@@ -2866,7 +2866,7 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
 
       <div class="results" id="results">
       <div id="baziPersonalCoreNotice" class="bazi-personal-core-notice" hidden>
-        <div><strong>你的個人命盤｜分級開放預覽</strong><span>01～04 區遮七成；05 常用神煞完整公開；06～09 區暫不顯示個人分析，可隨機試閱他人的完整核心範例。目前遮罩僅控制畫面呈現，個人進階資料仍在瀏覽器端，並非後端存取保護。</span></div>
+        <div><strong>你的個人命盤｜分級開放預覽</strong><span>01～04 區遮七成；05 常用神煞完整公開；06～09 區暫不顯示個人分析，可隨機試閱他人的完整核心範例。未開放的個人專業資料不會傳送至瀏覽器；20 筆固定範例仍提供完整試閱。</span></div>
         <button id="baziCoreBrowse20" type="button">對照 20 筆完整範例</button>
       </div>
       <section id="baziMaskCompare" class="bazi-mask-compare" hidden aria-label="個人九大分析遮罩程度測試">
@@ -2881,7 +2881,7 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
           <button type="button" data-bazi-mask-option="7" aria-pressed="false">遮七成</button>
           <button type="button" data-bazi-mask-option="9" aria-pressed="false">遮九成</button>
         </div>
-        <div class="bazi-mask-comparison-feedback" role="status"><span id="baziMaskLevelDescription">隱藏數值及核心分類，保留較多日常白話結論。</span><span class="bazi-mask-demo-warning">僅供視覺測試｜資料仍在前端，不能防止擷取</span></div>
+        <div class="bazi-mask-comparison-feedback" role="status"><span id="baziMaskLevelDescription">隱藏數值及核心分類，保留較多日常白話結論。</span><span class="bazi-mask-demo-warning">未解鎖資料由後端控制</span></div>
       </section>
       <div id="baziExampleSnapshotBanner" class="bazi-example-snapshot-banner" hidden>
         <div><strong>範例資料庫｜已儲存命盤預覽</strong><span id="baziExampleSnapshotTitle"></span><small>直接讀取資料庫快照；沒有重新排盤、沒有呼叫站內 AI，也不是你自己的命盤。</small></div>
@@ -2906,7 +2906,7 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
             </div>
           </div>
           <details class="bazi-overview-extra bazi-aux-panel" id="baziOverviewExtra"><summary class="bazi-aux-native-summary">生活領域與結構重點（選讀）</summary><div class="overview-life-grid" id="overviewLife"></div></details>
-          <details class="method-details bazi-aux-panel" id="baziMethodDetails"><summary class="bazi-aux-native-summary">結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">加權方式：每個天干 1 份，地支按藏干比例分配；月支乘 1.35，其餘支乘 1.05。十神占比不計日干本身；支持度另看同類、生扶、通根與月支。此處未完整判定格局、調候與喜用神。</p><p class="micro-note">歲運比較：支持較足時，以食傷、財星與官殺作為發揮方向；支持較少時，以比劫與印星作為承接方向。原局已集中的主題與沖刑害破增加負擔；合只代表連結，不一律加分。分項說明另外看十神主題及日支、月柱互動。</p></details>
+          <details class="method-details bazi-aux-panel" id="baziMethodDetails"><summary class="bazi-aux-native-summary">結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">本站會結合四柱與多項結構資訊進行整理；詳細加權方法與個人計算依據屬未解鎖內容。</p><p class="micro-note">歲運評語僅供傳統命理參考；個人的分析規則及歲運細節不在免費模式公開。</p></details>
         </section>
 
 
@@ -3567,6 +3567,24 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
       shiShenGan:get('ShiShenGan')||'',shiShenZhi:get('ShiShenZhi')||[],
       diShi:get('DiShi')||'',xunKong:get('XunKong')||''};
   }
+  function buildFrontendPublicPayload(options){
+    if(typeof Solar==='undefined'||!Solar?.fromYmdHms)throw Error('曆法核心尚未載入');
+    const dt=String(options.datetime||''),m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(dt);
+    if(!m)throw Error('出生日期無效');
+    const [y,mo,d,h,mi]=m.slice(1).map(Number),sect=Number(options.sect)===1?1:2;
+    const solar=Solar.fromYmdHms(y,mo,d,h,mi,0),lunar=solar.getLunar(),eight=lunar.getEightChar();
+    if(eight.setSect)eight.setSect(sect);
+    let timeEight=eight;
+    if(sect===2&&h===23){timeEight=Solar.fromYmdHms(y,mo,d,0,30,0).getLunar().getEightChar();if(timeEight.setSect)timeEight.setSect(sect);}
+    const ps=['year','month','day','time'].map((key,i)=>{
+      const source=i===3?timeEight:eight,cap=key.charAt(0).toUpperCase()+key.slice(1),
+        gan=frontendTraditional(source['get'+cap+'Gan']()),zhi=frontendTraditional(source['get'+cap+'Zhi']());
+      return {key,gan,zhi,ganZhi:gan+zhi};
+    });
+    let lunarText='';try{lunarText=`${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`;}catch(_){}
+    return {input:{year:y,month:mo,day:d,hour:h,minute:mi},pillars:ps,lunarText};
+  }
+
   function buildFrontendCalendarPayload(options){
     if(typeof Solar==='undefined'||!Solar||typeof Solar.fromYmdHms!=='function') throw Error('曆法核心尚未載入，請重新整理頁面後再試');
     const m=String(options.datetime||'').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
@@ -4512,6 +4530,12 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
 
   function shenshaDetailModel(hit,data){
     const [tone,image,meaning,good,blind,scene,group]=SHENSHA_DEEP[hit.name]||['吉凶兼具','傳統星煞象徵','輔助判讀訊號','可配合原局發揮長處','留意慣性與盲點','在日常選擇中觀察','印星'];
+    if(data?.publicPreview){
+      const domains={年柱:'家族與早年背景',月柱:'成長與工作環境',日柱:'自我與親密關係',時柱:'長期發展與後續生活'};
+      const chart='本盤在'+hit.positions.join('、')+'查到「'+hit.name+'」，對應'+hit.positions.map(p=>domains[p]||p).join('、')+'。此處只依公開四柱及常用神煞查表解釋，不引用其他專業比例或格局資料。';
+      return {name:hit.name,tone,image,meaning,chart,good,blind,scene,
+        emphasis:hit.positions.length>1?'跨柱重複出現':'依公開四柱查得',positions:hit.positions,basis:hit.basis};
+    }
     const gp=data.tenGodDistribution?.groupPercentages||{},ps=data.tenGodDistribution?.percentages||{};
     const names={年柱:'家族與早年背景',月柱:'成長、工作與社會環境',日柱:'自我立場、核心生活與親密關係',時柱:'後續發展、子女與長期投入'};
     const areas=hit.positions.map(p=>names[p]).filter(Boolean);
@@ -5289,6 +5313,17 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
 
   function sectionExplanation(key, data) {
     if (key === 'shensha') return renderShenshaExplanation(data);
+    if(data?.publicPreview){
+      const publicCards={
+        pillars:[['日主與四柱','日柱天干 '+String(data.dayMaster||'—')+' 是認識這張命盤的基本起點。四柱對應出生年、月、日、時，是傳統命理組合的骨架。'],['四柱代表什麼','年柱常關聯家庭與早期背景；月柱常關聯成長與社會環境；日柱關聯自我與親密關係；時柱關聯後續發展。'],['深入判讀尚未解鎖','真正的格局、主導十神、日主強弱與四柱互動要整合計算；你可以免費參考其他人的完整範例。']],
+        elements:[['認識五行','木、火、土、金、水是傳統命理的五種象徵，並非直接等同人的能力、財富或實際命運。'],['如何閱讀五行圖表','除了表面八個字，進一步判讀還會結合地支內含成分與其他條件。你的精確分布、強弱排序尚未開放。'],['生活上的提醒','遇到人生問題時，先觀察現實中的選擇與習慣，再把命理當成反思工具，不宜只憑單一五行斷言。']],
+        tengods:[['十神在說什麼','十神是以日主為比較中心，描述不同天干與藏干的傳統關係。'],['常見人生主題','學習、表達、資源、責任與人際自主等主題，必須結合命盤整體才能判讀；不能只看名稱定吉凶。'],['你的專業組合','主導十神、比例、強弱排序及細部組合仍為鎖定內容；點選公開範例可完整了解呈現形式。']],
+        relations:[['四柱互動怎麼看','合常象徵連結，沖常象徵變化；刑、害、破等名稱則代表不同的互動關係。'],['不能單憑一個符號斷吉凶','同樣的互動放在不同命盤、不同時期，解讀可能不同。必須與整體結構及現實情況共同理解。'],['個人落點尚未公開','哪些干支互動、涉及哪些柱位以及如何應用到具體人生問題，都保留在完整專業版本。']]
+      };
+      const entries=publicCards[key]||[['解讀說明','此區的個人專業資料尚未解鎖。']];
+      if(key==='pillars'&&data.publicConclusions?.character)entries.splice(1,0,['本命免費生活結論',data.publicConclusions.character]);
+      return entries.map(([title,copy])=>decodeCard(title,esc(copy))).join('');
+    }
     if (!data) return decodeCard('提示', '請先輸入出生時間並點擊「排八字」建立命盤。');
 
     if (key === 'pillars') {
@@ -6051,7 +6086,7 @@ ${intent}
       const controller=new AbortController();
       const timeout=setTimeout(()=>controller.abort(),15000);
       let res,json;
-      try{const flowPath=document.body.classList.contains('bazi-personal-full-mode')?'/v2/full-preview/daily':'/daily';res=await fetch(BAZI_API_BASE+flowPath,{method:'POST',headers,body:JSON.stringify(payload),signal:controller.signal});json=await res.json();}
+      try{const flowPath=document.body.classList.contains('bazi-personal-full-mode')?'/daily-example':'/daily';res=await fetch(BAZI_API_BASE+flowPath,{method:'POST',headers,body:JSON.stringify(payload),signal:controller.signal});json=await res.json();}
       finally{clearTimeout(timeout);}
       if(id!==dailyFlowState.requestId||token!==baziAuthToken()||chartKey!==dailyChartKey(lastData))return;
       if(!res.ok||!json?.success){
@@ -6910,23 +6945,75 @@ ${intent}
     }
   }
 
-  // Temporary personal full-core preview: same complete report renderers as the 20 stored examples.
+  // Non-paying personal preview: receives only four pillars and public archetype.
+  // The nine original panels and section navigation are reused with safe placeholders;
+  // the true private core is never present in browser state, DOM, canvas or JSON.
+  function baziRenderSafePersonal(data){
+    if(!data?.publicPreview||data.pillars?.length!==4)throw Error('免費命盤回傳格式不正確');
+    const put=(id,markup)=>{const el=$(id);if(el)el.innerHTML=markup};
+    const words='██████';
+    const hidden=(width=7)=>`<span class="bazi-mask-token bazi-mask-tier-3" aria-label="完整內容尚未解鎖">${'█'.repeat(width)}</span>`;
+    const day=data.dayMaster,stem=esc(day),elem=esc(data.dayMasterElement||'');
+    const label={year:'年柱',month:'月柱',day:'日柱',time:'時柱'};
+    put('reportSummary', '');
+    $('identitySeal').textContent=day;
+    $('reportTitle').textContent=day+(data.dayMasterElement||'')+'日主 · 免費個人命盤';
+    $('reportSummary').textContent='你的四柱已建立。九大分析中的關鍵數值與判讀依據需解鎖才能觀看；下方仍可查看基本命理意象與公開的神煞分析。';
+    put('summaryTags',[day+' · '+(data.dayMasterYinYang||'')+(data.dayMasterElement||''),'命盤結構：未解鎖','專業比例：未解鎖'].map(x=>`<span>${esc(x)}</span>`).join(''));
+    put('overviewLife',[
+      ['日主基本意象',data.publicIntro||'日主是認識命盤的起點。'],
+      ['性格與行動',data.publicConclusions?.character||'命盤中的不同結構可能影響個人的處事方式。'],
+      ['工作傾向',data.publicConclusions?.career||'工作方式需綜合個人與環境條件理解。'],
+      ['感情與相處',data.publicConclusions?.relationship||'關係中的需求與生活安排需要雙方共同確認。'],
+      ['人生面向','完整事業、感情與財務結構由本站核心整合判讀。'],
+      ['專業說明','詳細十神、五行、宮位組合與精確判讀依據目前不開放。']
+    ].map(([title,copy])=>`<article class="life-card"><h4>${esc(title)}</h4><p>${esc(copy)}</p><small>完整個人分析尚未解鎖</small></article>`).join(''));
+    put('scoreGrid',['五行分布均衡','日主支持度','十神出現廣度','干支互動量'].map(t=>`<div class="score-card"><small>${t}</small><div class="score-line"><b>${hidden()}</b><span>詳細計算尚未解鎖</span></div><div class="mini-track"><i style="width:0"></i></div></div>`).join(''));
+    put('pillars',data.pillars.map(p=>{
+      const name=label[p.key]||'四柱';
+      return `<article class="pillar ${p.key==='day'?'day-master':''}"><div class="pillar-head"><span>${name}</span><small>FOUR PILLARS</small><button type="button" class="bazi-pillar-toggle" aria-expanded="false" aria-label="${name}完整細節">詳細 ▾</button></div>
+      <div class="chars"><div class="char-box gan"><b>${esc(p.gan)}</b><span>${p.key==='day'?'日主':hidden(3)}</span></div><div class="char-box zhi"><b>${esc(p.zhi)}</b><span>${hidden(3)}</span></div></div>
+      <div class="pillar-body"><div class="row"><label>干支</label><strong>${esc(p.ganZhi)}</strong></div><div class="row"><label>陰陽</label><strong>${hidden(6)}</strong></div><div class="row"><label>藏干</label><strong>${hidden(5)}</strong></div><div class="row"><label>支十神</label><strong>${hidden(5)}</strong></div><div class="row"><label>納音</label><strong>${hidden(5)}</strong></div><div class="row"><label>十二長生</label><strong>${hidden(5)}</strong></div><div class="row"><label>旬空</label><strong>${hidden(4)}</strong></div></div></article>`;
+    }).join(''));
+    put('meta',[['公曆',data.solarText],['農曆',data.lunarText],['日主',day+'・'+data.dayMasterElement],['前一節','尚未解鎖'],['下一節','尚未解鎖']].map(([k,v])=>`<div>${esc(k)}<span>${esc(v||'—')}</span></div>`).join(''));
+    $('meta')?.classList.add('show');
+    const elements=['木','火','土','金','水'];
+    const greyBar=t=>`<div class="element-row"><span>${t}</span><div class="bar"><div class="fill" style="width:0"></div></div><b>${hidden(3)}</b></div>`;
+    put('elementBars',elements.map(greyBar).join(''));
+    put('weightedElementBars',elements.map(greyBar).join(''));
+    const donut=$('fiveDonut');if(donut)donut.style.background='linear-gradient(145deg,rgba(120,150,155,.16),rgba(120,150,155,.25))';
+    put('fiveDonutCenter',hidden(5));
+    put('elementTakeaway','<b>五行基本認識：</b>五行用來描述木、火、土、金、水的傳統相互關係。你的個人結構比例及重要組合暫時保留，詳情可透過公開範例了解。');
+    put('yinYangBox',`<div class="yy-numbers"><div class="yy-side yang"><small>陽 YANG</small><b>${hidden(4)}</b></div><div class="yy-side yin"><small>陰 YIN</small><b>${hidden(4)}</b></div></div><div class="yy-track"><i style="width:0"></i><i style="width:0"></i></div><div class="yy-caption">詳細比例尚未解鎖</div>`);
+    put('auxGrid',['胎元','命宮','身宮'].map(t=>`<div class="aux"><small>${t}</small><strong>${hidden(4)}</strong></div>`).join(''));
+    const gods=['比肩','劫財','食神','傷官','偏財','正財','七殺','正官','偏印','正印'];
+    put('tenGodBars',gods.map(t=>`<div class="tg-row"><span>${t}</span><div class="bar"><div class="fill" style="width:0"></div></div><b>${hidden(3)}</b></div>`).join(''));
+    put('tenGodGroups',['比劫','食傷','財星','官殺','印星'].map(t=>`<div class="group-card"><strong>${t} <span>${hidden(3)}</span></strong><p>此類十神的個人占比與結構判斷尚未解鎖。</p></div>`).join(''));
+    put('tenGodInsight','十神代表相對於日主的不同象徵角色。你的主導十神、排序、強弱及交互分析需解鎖後觀看。');
+    put('relationLifeLead','干支之間可能存在合、沖、刑、害、破等傳統互動。你的個人組合及位置明細不在免費版公開。');
+    put('relationGrid',[['合','代表連結與牽引'],['沖','代表變動與拉扯'],['刑害破','代表不同形式的摩擦與調整']].map(([a,b])=>`<article class="relation-card"><small>${a}</small><b>個人互動：${hidden(6)}</b><p>${b}；實際落點需配合整張命盤判讀。</p></article>`).join(''));
+    put('relationMap',data.pillars.map(p=>`<div class="relation-pillar"><small>${label[p.key]||''}</small><b>${esc(p.gan)}</b><span>${esc(p.zhi)}</span><em>${hidden(4)}</em></div>`).join(''));
+    put('relationFocus','<b>位置重點：</b>你的實際干支組合與詳細交互結果，需解鎖完整個人命盤才能觀看。');
+    // Chapter 05 is intentionally freely calculated from the already-public four stems/branches.
+    // It never receives another chapter's weighting, score, assessment or professional guidance.
+    renderShensha(data);
+    // All personalised deep-report containers are cleared when returning from public demos.
+    // The following chapters show only the existing locked panels in personal mode.
+    for(const id of ['readingBody','luckSummary','threeYearCompare','monthSummary'])put(id,'');
+    initSectionDecodeUI();resetExploration();
+  }
+
   window.baziShowPersonalFull=function(data){
-    if(!data||!Array.isArray(data.pillars)||data.pillars.length!==4||!data.overallMasterSummary||!Array.isArray(data.monthFlows)||!data.threeYearStrategicOutlook){
-      throw Error('個人核心資料不完整，請重新排盤');
-    }
+    if(!data?.publicPreview||data.pillars?.length!==4)throw Error('後端免費命盤資料不完整，請重新排盤');
     document.body.classList.remove('bazi-example-snapshot-mode');
     document.body.classList.add('bazi-personal-full-mode');
     const notice=$('baziPersonalCoreNotice');if(notice)notice.hidden=false;
     const banner=$('baziExampleSnapshotBanner');if(banner)banner.hidden=true;
     lastData=data;selectedPeriods={};baziGeminiLastReading='';
     const gemOut=$('baziGeminiOutput');if(gemOut)gemOut.hidden=true;
-    // Worker returns the full today's flow in the same response: do not open old locked /daily.
-    setDailyFlowChart(data);
-    renderOverview(data);renderPillars(data);renderMeta(data);renderElements(data);
-    renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);
-    renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);
-    renderYearFlows(data);renderMonthFlows(data);initSectionDecodeUI();resetExploration();
+    dailyFlowDemo=true;dailyFlowState.day=null;dailyFlowState.error='';
+    renderDailyFlowView();
+    baziRenderSafePersonal(data);
     emptyState.style.display='none';results.classList.add('show');
     document.body.classList.remove('show-bazi-intro');document.body.classList.add('has-bazi-chart');
     window.baziReadingUiSuccess?.(data);
@@ -8580,7 +8667,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     }
     if(busy)return false;busy=true;const btn=$('castBtn'),old=btn?.textContent||'免費排八字';if(btn){btn.disabled=true;btn.textContent='正在排出你的四柱…';}
     try{
-      const j=await post(reveal?'/v2/full-preview':'/v2/basic',{datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect),calendar:buildFrontendCalendarPayload(options),usageIntent:countUsage&&!testRole()?'user-cast':'internal-refresh'});
+      const j=await post(reveal?'/v2/public-preview':'/v2/basic',{datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect),calendar:reveal?buildFrontendPublicPayload(options):buildFrontendCalendarPayload(options),usageIntent:countUsage&&!testRole()?'user-cast':'internal-refresh'});
       if(!j.data||j.data.pillars?.length!==4)throw Error('後端沒有回傳四柱');
       const key=identity(options);if(current?.key!==key)expandedTopic=null;current={key,datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect)};
       reports=loadReadingVersion(key);
