@@ -203,6 +203,23 @@ td.muted{color:var(--muted)}
  .member-usage-results .mobile-hide{display:none}
  .member-usage-detail table th,.member-usage-detail table td{padding:8px 5px;font-size:.71rem}
 }
+
+/* 八字 AI 額度管理：預設收合，只在站長操作時查詢。 */
+.bazi-gift-summary{cursor:pointer;padding:17px 18px;font-weight:800;list-style:none}
+.bazi-gift-summary::-webkit-details-marker{display:none}
+.bazi-gift-summary small{font-weight:400;color:#aebccc;font-size:.75rem;margin-left:8px}
+.bazi-gift-body{border-top:1px solid #313a47;padding:18px;display:grid;gap:14px}
+.bazi-gift-body p{margin:0;color:#b6c2d1;font-size:.81rem;line-height:1.65}
+.bazi-gift-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.bazi-gift-row label{flex:1 1 220px;min-width:0}
+.bazi-gift-body label{display:grid;gap:7px;font-size:.82rem;color:#e9d8bb;font-weight:750}
+.bazi-gift-body input,.bazi-gift-body select{width:100%;min-width:0;min-height:40px;padding:9px 12px;border-radius:9px;border:1px solid #475365;background:#0b1119;color:#e4e8ed;font:inherit;font-size:.82rem}
+.bazi-gift-body button:disabled{opacity:.5;cursor:not-allowed}
+.bazi-gift-member{border:1px solid #406958;border-radius:10px;padding:12px;color:#baf0d5;font-size:.82rem;line-height:1.75}
+.bazi-gift-history{font-size:.8rem;color:#d1dbea;overflow-x:auto}
+.bazi-gift-history table{min-width:580px}
+#baziGiftStatus{font-size:.78rem;color:#a9bfd0;line-height:1.6}
+@media(max-width:600px){.bazi-gift-summary small{display:block;margin-left:0;margin-top:6px}}
 </style>
 </head>
 <body>
@@ -260,6 +277,34 @@ td.muted{color:var(--muted)}
       <div class="tool-cards" id="toolCards"></div>
     </section>
 
+
+
+    <details class="section" id="baziAiGiftPanel" style="margin:0 0 24px">
+      <summary class="bazi-gift-summary">🎁 八字 AI 額度管理 <small>依 Email 查詢、贈送指定會員次數（預設收合）</small></summary>
+      <div class="bazi-gift-body">
+        <p>每個免費會員原有 01／02／05 三篇各一次。額外贈送的次數依你選擇的 A／B 範圍使用；會員前台僅顯示剩餘 AI 總次數。自訂問題與付費功能仍未開放。</p>
+        <div class="bazi-gift-row">
+          <label>已註冊會員 Email <input type="email" id="baziGiftEmail" placeholder="會員的 Google 信箱" autocomplete="off"></label>
+          <button type="button" class="btn secondary" id="baziGiftLookup">查詢會員</button>
+        </div>
+        <div id="baziGiftMember" class="bazi-gift-member" hidden></div>
+        <div class="bazi-gift-row">
+          <label>贈送次數 <input id="baziGiftCount" type="number" min="1" max="1000" step="1" value="10"></label>
+          <label>使用權限
+            <select id="baziGiftScope">
+              <option value="A">A｜僅 01、02、05 三個免費主題，可重複解讀</option>
+              <option value="B" selected>B｜八個固定主題皆可使用、可重複解讀</option>
+            </select>
+          </label>
+        </div>
+        <label class="bazi-gift-note-label">備註（選填）<input type="text" id="baziGiftNote" maxlength="100" placeholder="例如：會員招待／站長測試"></label>
+        <div class="bazi-gift-row">
+          <button class="btn" id="baziGiftSend" type="button" disabled>確認贈送額度</button>
+          <span id="baziGiftStatus" aria-live="polite">先查詢已註冊的會員。</span>
+        </div>
+        <div id="baziGiftHistory" class="bazi-gift-history" hidden></div>
+      </div>
+    </details>
 
     <details class="section member-usage-box" id="memberUsagePanel">
       <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設收合｜依成功起盤排行）</small></span></summary>
@@ -1233,6 +1278,55 @@ document.addEventListener('visibilitychange',()=>{
 
 if(token())loadStats();
 else showLogin();
+</script>
+
+<script id="bazi-admin-ai-gift">
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id),api='https://admin-api.ezgocpu.workers.dev';
+const token=()=>sessionStorage.getItem('divinationhub-admin-session')||(function(){try{const j=JSON.parse(localStorage.getItem('divinationhub-admin-remember-v1')||'null');return j?.expiresAt>Date.now()?j.token||'':''}catch(_){return ''}})();
+let currentEmail='',busy=false;
+async function call(method,path,body){
+ const key=token();if(!key)throw Error('請先登入管理員後台');
+ const res=await fetch(api+path,{method,headers:{Authorization:'Bearer '+key,Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+ const data=await res.json().catch(()=>({}));if(!res.ok||!data.success)throw Error(data.error||'操作失敗');return data;
+}
+function show(data){
+ const area=$('baziGiftMember'),history=$('baziGiftHistory');
+ currentEmail=String(data.member?.email||'').trim().toLowerCase();
+ area.hidden=false;area.textContent='會員：'+(data.member?.name||'')+'｜'+currentEmail+'　｜目前剩餘 AI '+data.aiRemaining+' 次';
+ history.hidden=!data.history?.length;
+ history.replaceChildren();
+ if(data.history?.length){
+  const table=document.createElement('table'),head=document.createElement('tr');
+  ['時間','贈送','權限','剩餘','備註'].forEach(v=>{const t=document.createElement('th');t.textContent=v;head.append(t)});
+  table.append(head);
+  data.history.forEach(x=>{const r=document.createElement('tr');[x.created_at,x.granted,x.scope,x.remaining,x.note||'—'].forEach(v=>{const t=document.createElement('td');t.textContent=String(v);r.append(t)});table.append(r)});
+  history.append(table);
+ }
+ $('baziGiftSend').disabled=false;
+}
+async function lookup(){
+ if(busy)return;busy=true;currentEmail='';$('baziGiftSend').disabled=true;$('baziGiftMember').hidden=true;$('baziGiftHistory').hidden=true;
+ $('baziGiftStatus').textContent='正在查詢會員…';
+ try{
+  const email=$('baziGiftEmail').value.trim();const data=await call('GET','/admin/bazi-ai-gifts?email='+encodeURIComponent(email));
+  show(data);$('baziGiftStatus').textContent='會員已確認。設定贈送次數與 A／B 權限後再送出。';
+ }catch(e){$('baziGiftStatus').textContent=e.message||'查詢失敗'}finally{busy=false}
+}
+async function send(){
+ if(busy||!currentEmail)return;
+ const count=Number($('baziGiftCount').value),scope=$('baziGiftScope').value,note=$('baziGiftNote').value.trim();
+ if(!Number.isInteger(count)||count<1||count>1000){$('baziGiftStatus').textContent='次數請填 1～1000';return;}
+ if(!confirm('確定贈送 '+count+' 次八字 AI 解讀給 '+currentEmail+'？\n使用權限：'+scope+'\n此操作會立即生效。'))return;
+ busy=true;$('baziGiftSend').disabled=true;$('baziGiftStatus').textContent='正在寫入後端…';
+ try{const data=await call('POST','/admin/bazi-ai-gifts',{email:currentEmail,count,scope,note});show(data);$('baziGiftStatus').textContent='已成功贈送 '+count+' 次（'+scope+'）；會員剩餘 '+data.aiRemaining+' 次。';}
+ catch(e){$('baziGiftStatus').textContent=e.message||'贈送失敗'}finally{busy=false; if(currentEmail)$('baziGiftSend').disabled=false}
+}
+$('baziGiftLookup')?.addEventListener('click',lookup);
+$('baziGiftEmail')?.addEventListener('input',()=>{currentEmail='';$('baziGiftSend').disabled=true;$('baziGiftMember').hidden=true;$('baziGiftHistory').hidden=true});
+$('baziGiftSend')?.addEventListener('click',send);
+})();
 </script>
 </body>
 </html>

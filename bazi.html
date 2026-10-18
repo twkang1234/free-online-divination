@@ -2634,6 +2634,28 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
 .bazi-paywall-topic{opacity:.75;border-style:dashed!important}
 #baziCustomQuestion[disabled]{opacity:.65;cursor:not-allowed}
 </style>
+<style id="bazi-member-permission-style">
+/* 會員額度三欄：桌機並排、手機單欄。 */
+#baziAiQuotaPanel .bazi-entitlement-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:11px!important}
+#baziAiQuotaPanel .bazi-entitlement-grid>article{display:flex!important;flex-direction:column;gap:9px;min-width:0;min-height:144px;border-radius:15px;padding:17px;background:rgba(255,255,255,.04);border:1px solid rgba(138,153,174,.38)}
+#baziAiQuotaPanel .bazi-entitlement-grid>article>strong{font-size:.96rem;color:var(--text,#f1e4d7)}
+#baziAiQuotaPanel .bazi-entitlement-grid>article>b{display:block;font-size:1.72rem;color:#ecc486;font-weight:850;line-height:1.25}
+#baziAiQuotaPanel .bazi-entitlement-grid>article>p{margin:0;font-size:.77rem;line-height:1.55;color:var(--muted,#a9b4bc)}
+#baziAiQuotaPanel .bazi-entitlement-grid .bazi-entitlement-paid-card>b{color:#bca1eb}
+#baziAiQuotaPanel .bazi-entitlement-login{padding:8px 10px;border:1px solid #d7a458;background:rgba(183,130,57,.13);color:#e7be78;cursor:pointer;border-radius:10px;font-size:.76rem;margin-top:auto}
+#baziAiQuotaPanel .bazi-entitlement-login[hidden]{display:none!important}
+html[data-theme="light"] #baziAiQuotaPanel .bazi-entitlement-grid>article{background:#fff;color:#1d3851;border-color:#becfd8}
+html[data-theme="light"] #baziAiQuotaPanel .bazi-entitlement-grid>article>strong{color:#25384a}
+html[data-theme="light"] #baziAiQuotaPanel .bazi-entitlement-grid>article>b{color:#865814}
+html[data-theme="light"] #baziAiQuotaPanel .bazi-entitlement-grid .bazi-entitlement-paid-card>b{color:#6c418c}
+html[data-theme="light"] #baziAiQuotaPanel .bazi-entitlement-grid>article>p{color:#566679}
+html[data-theme="light"] #baziAiQuotaPanel .bazi-entitlement-login{color:#775011;background:#fff8eb}
+body.has-bazi-chart #baziAiQuotaPanel{display:block!important;margin:12px auto!important}
+body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{display:grid!important}
+body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.report-body{display:none!important}
+body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-chapter-footer{display:none!important}
+@media(max-width:750px){#baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:1fr!important}#baziAiQuotaPanel .bazi-entitlement-grid>article{min-height:95px;padding:12px 14px}}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -2714,18 +2736,26 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
     </header>
 
     <section class="bazi-ai-quota-shell" id="baziAiQuotaPanel" aria-label="八字 AI 額度資訊">
-      <div class="bazi-ai-quota-grid">
-        <article class="bazi-ai-free-card">
-          <div class="bazi-ai-quota-title"> <strong id="baziQuotaAccountLabel">八字會員｜一次性 AI 解讀</strong><div class="bazi-ai-quota-right"><small>剩餘次數</small><b id="baziQuotaDailyCount">查詢中…</b></div></div>
-          <p id="baziQuotaDailyHint">未登入不能使用 AI｜登入會員三篇各一次，合計三次，不每日重置。</p>
+      <div class="bazi-ai-quota-grid bazi-entitlement-grid">
+        <article class="bazi-ai-free-card bazi-cast-quota-card">
+          <strong>免費排盤次數</strong>
+          <b id="baziCastQuotaCount">查詢中…</b>
+          <p id="baziCastQuotaHint">新訪客每天 3 次｜登入會員每天 5 次</p>
+          <button type="button" id="baziCastQuotaLogin" class="bazi-entitlement-login" hidden>免費登入，立即享有每日 5 次 →</button>
         </article>
-        <article class="bazi-ai-paid-card">
-          <div class="bazi-ai-paid-head"><strong>進階解讀暫時鎖定</strong></div>
+        <article class="bazi-ai-free-card bazi-entitlement-ai-card">
+          <strong id="baziQuotaAccountLabel">AI 解讀次數</strong>
+          <b id="baziQuotaDailyCount">查詢中…</b>
+          <p id="baziQuotaDailyHint">免費會員三篇各一次；額外贈送額度一起顯示</p>
+          <button type="button" id="baziQuotaLogin" class="bazi-entitlement-login" hidden>免費登入，領取三篇 AI 解讀 →</button>
+        </article>
+        <article class="bazi-ai-paid-card bazi-entitlement-paid-card">
+          <strong>付費次數</strong>
           <b id="baziQuotaPaidCount">0 次</b>
-          <p id="baziQuotaPaidHint">其他五篇與自訂問答預留一次性付費解鎖，付款功能尚未開放。</p>
+          <p id="baziQuotaPaidHint">付費功能暫未開放</p>
         </article>
       </div>
-      <div class="bazi-ai-quota-foot"><span id="baziQuotaTestBanner">三種指定主題各免費一次，不隨日期重置。</span><span id="baziQuotaGlobalCount">全站 AI 額度查詢中…</span></div>
+      <div class="bazi-ai-quota-foot"><span id="baziQuotaTestBanner">免費排盤每天重置；AI 解讀額度不每日重置。</span><span id="baziQuotaGlobalCount">全站 AI 額度查詢中…</span></div>
     </section>
 
     <section class="core" aria-label="八字四柱排盤工具">
@@ -2850,7 +2880,7 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
           </div>
           <p class="bazi-plain-reading-footer">想深入了解自己的八字，可登入會員各免費解析一次性格、事業與感情。其他主題及自訂問題暫待付費解鎖。</p>
         </section>
-        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 免費會員可各解析一次①個人性格、②事業職涯、⑤感情相處，合計永久三次，沒有每日重置。其他五篇及自訂問題目前為一次性付費解鎖預留項目，尚未開放付款，暫時無法解讀。請逐篇選擇需要的內容。</p>
+        <div class="bazi-report-group"><h4>✦ 你的站內 AI 個人解讀 <small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></h4><p><strong>免費排盤不會自動產生 AI 解讀。</strong> 免費會員可各解析一次①個人性格、②事業職涯、⑤感情相處，合計永久三次，沒有每日重置。其他五篇只有獲管理員贈送 B 類額度的會員可以使用；自訂問題與正式付費功能仍未開放。請逐篇選擇需要的內容。</p>
           <div class="bazi-access-actions" aria-label="八種個人 AI 解讀主題"><button type="button" data-bazi-topic="personality">01 · 個人特質與性格深度解讀</button><button type="button" data-bazi-topic="career_deep">02 · 事業與職涯發展</button><button type="button" data-bazi-topic="social">03 · 人際關係與交友特質</button><button type="button" data-bazi-topic="wealth_life">04 · 財富觀念與賺錢方式</button><button type="button" data-bazi-topic="love_deep">05 · 感情與相處模式</button><button type="button" data-bazi-topic="overall_deep">06 · 綜合命格與人生總覽</button><button type="button" data-bazi-topic="luck_turning">07 · 大運流年與人生轉折</button><button type="button" data-bazi-topic="fortune_risk">08 · 婚姻吉凶、重大災禍、特殊福澤</button></div>
           <details class="bazi-reading-custom" aria-label="自訂八字問題">
             <summary class="bazi-reading-custom-toggle"><span><strong>09 · 自訂八字問題</strong><small>付費功能尚未開放，需要時點擊查看</small></span><span class="bazi-reading-custom-arrow" aria-hidden="true">⌄</span></summary>
@@ -2926,7 +2956,7 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
             <button type="button" data-bazi-open-section="report-elements" aria-controls="report-elements" aria-expanded="false"><small>02</small><span class="bazi-hub-main"><span class="bazi-hub-name">五行與陰陽</span><em class="bazi-hub-status bazi-hub-status--partial">部分開放</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-tengods" aria-controls="report-tengods" aria-expanded="false"><small>03</small><span class="bazi-hub-main"><span class="bazi-hub-name">十神結構</span><em class="bazi-hub-status bazi-hub-status--partial">部分開放</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-relations" aria-controls="report-relations" aria-expanded="false"><small>04</small><span class="bazi-hub-main"><span class="bazi-hub-name">干支合沖</span><em class="bazi-hub-status bazi-hub-status--partial">部分開放</em></span><b aria-hidden="true">＋</b></button>
-            <button type="button" data-bazi-open-section="report-shensha" aria-controls="report-shensha" aria-expanded="false"><small>05</small><span class="bazi-hub-main"><span class="bazi-hub-name">常用神煞</span><em class="bazi-hub-status bazi-hub-status--full">完整開放</em></span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-shensha" aria-controls="report-shensha" aria-expanded="false"><small>05</small><span class="bazi-hub-main"><span class="bazi-hub-name">常用神煞</span><em class="bazi-hub-status bazi-hub-status--full" id="baziShenshaAccessLabel">登入免費看</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-reading" aria-controls="report-reading" aria-expanded="false"><small>06</small><span class="bazi-hub-main"><span class="bazi-hub-name">命盤結構</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-luck" aria-controls="report-luck" aria-expanded="false"><small>07</small><span class="bazi-hub-main"><span class="bazi-hub-name">八步大運</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-years" aria-controls="report-years" aria-expanded="false"><small>08</small><span class="bazi-hub-main"><span class="bazi-hub-name">三年流年</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
@@ -3322,6 +3352,66 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
   const BAZI_AUTH_KEY = 'divinationhub-bazi-google-credential';
   const BAZI_SESSION_KEY='divinationhub-auth-session-v1';
   let baziSessionMember=null; // only after BOTH Worker checks pass
+  const BAZI_VISITOR_KEY='divinationhub-bazi-guest-browser-v1';
+  const BAZI_WAS_MEMBER_KEY='divinationhub-bazi-was-member-v1';
+  const BAZI_CAST_PERMIT_KEY='divinationhub-bazi-cast-permit-v1';
+  function baziVisitorId(){
+    try{
+      let v=localStorage.getItem(BAZI_VISITOR_KEY)||'';
+      if(!/^[a-f0-9-]{36}$/i.test(v)){v=crypto.randomUUID();localStorage.setItem(BAZI_VISITOR_KEY,v)}
+      return v;
+    }catch(_){if(!window.__baziTempVisitorId)window.__baziTempVisitorId=crypto.randomUUID();return window.__baziTempVisitorId;}
+  }
+  function baziKnownMemberOnDevice(){try{return localStorage.getItem(BAZI_WAS_MEMBER_KEY)==='1'}catch(_){return false}}
+  function baziMarkMemberOnDevice(){try{localStorage.setItem(BAZI_WAS_MEMBER_KEY,'1')}catch(_){}}
+  function baziCastPermitKey(options){return JSON.stringify([options.datetime,Number(options.gender),Number(options.sect),baziSessionMember?.sub||'guest'])}
+  function baziCastPermitRead(options){
+    try{
+      const o=JSON.parse(localStorage.getItem(BAZI_CAST_PERMIT_KEY)||'{}');
+      const key=baziCastPermitKey(options);
+      return String(o?.permits?.[key]?.permit||(o?.key===key?o.permit:'')||'');
+    }catch(_){return ''}
+  }
+  function baziCastPermitSave(options,permit){
+    if(!permit)return;
+    try{
+      const o=JSON.parse(localStorage.getItem(BAZI_CAST_PERMIT_KEY)||'{}');
+      const permits=o?.permits&&typeof o.permits==='object'?o.permits:{};
+      permits[baziCastPermitKey(options)]={permit,at:Date.now()};
+      const entries=Object.entries(permits).sort((a,b)=>Number(b[1]?.at||0)-Number(a[1]?.at||0)).slice(0,30);
+      localStorage.setItem(BAZI_CAST_PERMIT_KEY,JSON.stringify({permits:Object.fromEntries(entries)}));
+    }catch(_){ }
+  }
+  async function baziCastRefreshQuota(){
+    const el=document.getElementById('baziCastQuotaCount');if(!el)return;
+    const t=baziSessionMember?.sub?baziAuthToken():'',known=baziKnownMemberOnDevice();
+    try{
+      const headers={'X-Bazi-Visitor-Id':baziVisitorId(),...(t?{Authorization:'Bearer '+t}:{})};
+      const res=await fetch(BAZI_API_BASE+'/cast/quota',{headers,cache:'no-store'}),data=await res.json();
+      if(!res.ok||!data.ok)throw Error(data.error||'額度查詢失敗');
+      if(t!==(baziSessionMember?.sub?baziAuthToken():''))return;
+      const isMember=!!data.authenticated;
+      const knownAfter=known||!!data.knownMember;
+      const remain=(!isMember&&knownAfter)?0:Math.max(0,Number(data.remaining||0));
+      el.textContent=remain+' / '+(isMember?5:knownAfter?0:3)+' 次';
+      const hint=document.getElementById('baziCastQuotaHint');
+      if(hint)hint.textContent=isMember?'每日 5 次｜台灣時間 00:00 重置':knownAfter?'已是會員，請重新登入繼續排盤':'新訪客每日 3 次｜台灣時間 00:00 重置';
+      const login=document.getElementById('baziCastQuotaLogin');if(login)login.hidden=isMember||remain>0;
+      document.body.classList.toggle('bazi-member-verified',isMember);
+      window.baziRefreshShenshaGate?.();
+    }catch(_){el.textContent='暫時無法查詢';}
+  }
+  window.baziCastRefreshQuota=baziCastRefreshQuota;
+  window.baziCastBrowserHeaders=()=>({'X-Bazi-Visitor-Id':baziVisitorId()});
+  window.baziCastPermitRead=baziCastPermitRead;
+  window.baziCastPermitSave=baziCastPermitSave;
+  document.addEventListener('DOMContentLoaded',()=>{
+    document.getElementById('baziCastQuotaLogin')?.addEventListener('click',baziOpenAuth);
+    document.getElementById('baziQuotaLogin')?.addEventListener('click',baziOpenAuth);
+    baziCastRefreshQuota();
+  });
+  window.addEventListener('bazi-google-login',()=>{baziMarkMemberOnDevice();void baziCastRefreshQuota()});
+
   // 次要會員統計：只在已驗證會員「成功使用」後執行；完全關閉不會 POST 寫入。
   // 關閉／精簡／完整模式由 member-api 控制，失敗絕不影響排盤或 AI。
   let baziUsageModeCache={mode:'off',until:0,pending:null};
@@ -3467,6 +3557,7 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
         if(!check.ok||!cj.success||!cj.authenticated||cj.member?.sub!==j.member.sub)throw Error('BAZI_BACKEND_SESSION_UNAVAILABLE');
         const previous=baziSessionMember?.sub;
         baziSessionMember={sub:j.member.sub,name:j.member.name||j.member.email||'會員',email:j.member.email||'',picture:j.member.picture||''};
+        baziMarkMemberOnDevice();
         window.baziUpdateTopbarMember?.();
         if(previous!==baziSessionMember.sub)window.dispatchEvent(new CustomEvent('bazi-google-login',{detail:{session:true}}));
       }else{
@@ -5685,15 +5776,16 @@ ${tasks}
     }
     return baziHeaderForAuth();
   }
-  function baziPersonalQuotaText(j){return j.authenticated?'會員免費 AI 剩餘 '+Math.max(0,Number(j.personalRemaining||0))+' / 3 次（不重置）':'未登入｜免費 AI 0 次';}
+  function baziPersonalQuotaText(j){return j.authenticated?'AI 剩餘 '+Math.max(0,Number(j.aiRemaining??j.personalRemaining??0))+' 次（不每日重置）':'未登入｜AI 0 次，登入免費會員可領取三篇';}
   function baziAiUpdateVisible(j){
     if(!j||!j.ok)return;
     if(location.search.includes('admin=1')){window.__baziAdminRoleQuota?.(j);return;}
     baziLatestQuota=j;
     const who=j.visitorType==='member'?'免費會員':'未登入訪客';
-    const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent=who+'｜會員三篇一次性 AI 解讀';
-    const count=document.getElementById('baziQuotaDailyCount');if(count)count.textContent=Math.max(0,j.personalRemaining)+' / '+j.personalLimit+' 次';
-    const hint=document.getElementById('baziQuotaDailyHint');if(hint)hint.textContent='免費會員①②⑤各一次，不每日重置｜付費項目暫未開放';
+    const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent='AI 解讀次數';
+    const count=document.getElementById('baziQuotaDailyCount');if(count)count.textContent=Math.max(0,Number(j.aiRemaining??j.personalRemaining??0))+' 次';
+    const hint=document.getElementById('baziQuotaDailyHint');if(hint)hint.textContent=j.authenticated?'會員三篇各一次；管理員贈送額度已合併計算':'登入會員即可領取三篇免費 AI 解讀';
+    const login=document.getElementById('baziQuotaLogin');if(login)login.hidden=!!j.authenticated;
     document.querySelectorAll('.bazi-personal-quota').forEach(el=>el.textContent=baziPersonalQuotaText(j));
   }
   async function baziGeminiRefreshQuota(){
@@ -6912,7 +7004,16 @@ ${intent}
         if(ok){dailyFlowDemo=false;if(!document.body.classList.contains('bazi-personal-full-mode'))lastData=null;}
         if(ok){lastSuccessfulBirthInput=input;if(reveal)rememberMemberBirth(input);if(countUsage&&reveal)baziTrackUsage('cast','');}
         return ok;
-      }catch(err){console.error('[Bazi basic]',err);if(scroll)alert(err?.message||String(err));return false;}
+      }catch(err){
+        console.error('[Bazi basic]',err);
+        const message=err?.message||String(err);
+        if(scroll){
+          if(/今天的免費排盤次數已用完|你已經是會員/.test(message)){
+            if(confirm(message+'\n\n現在前往免費會員登入嗎？'))baziOpenAuth();
+          }else alert(message);
+        }
+        return false;
+      }
     }
     const originalText=castBtn?.textContent;
     try{
@@ -7850,6 +7951,9 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
     }));
   }
   function openChapter(id, source='grid'){
+    if(id==='report-shensha'&&window.baziShenshaMustLogin?.()){
+      window.baziAskShenshaLogin?.();return;
+    }
     const section=document.getElementById(id);
     if(!section||!section.matches('#results .report-section'))return;
     if(id==='report-pillars'){
@@ -8462,10 +8566,11 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     try{return JSON.parse(sessionStorage.getItem(storePrefix+key)||'{}')||{};}
     catch(_){return {};}
   }
-  function loggedIn(){return typeof baziAuthToken==='function'&&!!baziAuthToken();}
+  function loggedIn(){return !!baziSessionMember?.sub;}
   function isFree(topic){return FREE_TOPICS.has(topic);}
-  function canView(topic){return loggedIn()&&isFree(topic);}
-  function lockedMessage(topic){return !loggedIn()?'請先免費登入會員，才能使用三篇指定 AI 解讀。':'🔒 此項為一次性付費解鎖內容，尚未開放付款；目前不能解析。';}
+  function gifted(topic){const x=accessInfo.grantScopes||{};return Number(x.B||0)>0||(isFree(topic)&&Number(x.A||0)>0);}
+  function canView(topic){return loggedIn()&&(isFree(topic)||gifted(topic));}
+  function lockedMessage(topic){return !loggedIn()?'請先免費登入會員，才能使用八字 AI 解讀。':'🔒 此主題尚無可用贈送額度，付費功能目前未開放。';}
   window.baziAiRefreshAccessUi=()=>{
     if(current){
       const key=identity(current);
@@ -8480,8 +8585,10 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       const topic=b.dataset.baziTopic,free=isFree(topic),used=(accessInfo.usedTopics||[]).includes(topic);
       const base=String(b.dataset.accessTitle||b.textContent).replace(/\s*[｜·]\s*(?:會員免費.*|付費解鎖.*)$/,'').replace(/^🔒\s*/,'');
       b.dataset.accessTitle=base;
-      b.textContent=base+(free?'｜'+(!loggedIn()?'登入後免費一次':used?'免費次數已使用':'會員免費一次'):'｜🔒 付費解鎖（尚未開放）');
-      b.classList.toggle('bazi-paywall-topic',!free);
+      const gift=gifted(topic);
+      b.textContent=base+(!loggedIn()?'｜登入免費解讀':free&&used&&!gift?'｜免費次數已使用':free&&!used?'｜會員免費一次':gift?'｜可用 AI 額度解讀':'｜🔒 付費解鎖（尚未開放）');
+      b.classList.toggle('bazi-paywall-topic',!free&&!gift);
+      b.disabled=loggedIn()&&free&&used&&!gift;
       b.setAttribute('aria-label',b.textContent);
     });
     const btn=$('baziCustomQuestionRun'),field=$('baziCustomQuestion');
@@ -8497,11 +8604,19 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   }
   function headers(){
     const t=testRole();
-    if(t)return {'Content-Type':'application/json','Authorization':'Bearer '+t.token,'X-Bazi-Test-Mode':t.mode};
+    if(t)return {'Content-Type':'application/json','Authorization':'Bearer '+t.token,'X-Bazi-Test-Mode':t.mode,...window.baziCastBrowserHeaders()};
     const token=typeof baziAuthToken==='function'?baziAuthToken():'';
-    return {'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})};
+    return {'Content-Type':'application/json',...window.baziCastBrowserHeaders(),...(token?{'Authorization':'Bearer '+token}:{})};
   }
-  async function post(path,body){const r=await fetch(API+path,{method:'POST',headers:headers(),body:JSON.stringify(body),cache:'no-store'});const j=await r.json().catch(()=>({ok:false,error:'INVALID_SERVER_RESPONSE'}));if(!r.ok||!j.ok)throw Error(j.message||j.error||('HTTP '+r.status));return j;}
+  async function post(path,body){const r=await fetch(API+path,{method:'POST',headers:headers(),body:JSON.stringify(body),cache:'no-store'});const j=await r.json().catch(()=>({ok:false,error:'INVALID_SERVER_RESPONSE'}));if(!r.ok||!j.ok){
+      const descriptions={CAST_DAILY_LIMIT:'今天的免費排盤次數已用完。免費登入會員每天可排盤 5 次。',MEMBER_LOGIN_REQUIRED:'你已經是會員，請先登入才能繼續排盤。',CAST_PERMIT_REQUIRED:'請按「免費排八字」重新建立命盤。',CAST_PERMIT_EXPIRED:'上次排盤憑證已過期，請重新排盤。',VISITOR_ID_REQUIRED:'瀏覽器識別暫時無法建立。'};
+      const message=descriptions[j.error]||j.message||j.error||('HTTP '+r.status);
+      if(['CAST_DAILY_LIMIT','MEMBER_LOGIN_REQUIRED'].includes(j.error)){
+        document.getElementById('baziCastQuotaLogin')?.removeAttribute('hidden');
+        setTimeout(()=>window.baziCastRefreshQuota?.(),0);
+      }
+      throw Error(message);
+    }return j;}
   async function refreshPersonalQuota(){
     const target=$('baziPersonalQuota');if(!target)return;
     try{
@@ -8509,7 +8624,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       const r=await fetch(API+'/ai/status',{headers:token?{'Authorization':'Bearer '+token}:{},cache:'no-store'});
       const j=await r.json();if(!r.ok||!j.ok)throw Error('ACCESS_STATUS_UNAVAILABLE');
       accessInfo=j;
-      target.textContent=j.authenticated?'免費 AI 剩餘 '+j.personalRemaining+' / 3 次（每主題一次）':'未登入｜AI 免費次數 0';
+      target.textContent=j.authenticated?'AI 剩餘 '+(j.aiRemaining??j.personalRemaining)+' 次（免費三篇及贈送額度）':'未登入｜請登入領取免費 AI 解讀';
       renderTopicAccess();
     }catch(_){target.textContent='AI 權限暫時無法查詢';accessInfo={authenticated:false,personalRemaining:0,usedTopics:[]};renderTopicAccess();}
   }
@@ -8718,7 +8833,8 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     }
     if(busy)return false;busy=true;const btn=$('castBtn'),old=btn?.textContent||'免費排八字';if(btn){btn.disabled=true;btn.textContent='正在排出你的四柱…';}
     try{
-      const j=await post(reveal?'/v2/public-preview':'/v2/basic',{datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect),calendar:reveal?buildFrontendPublicPayload(options):buildFrontendCalendarPayload(options),usageIntent:countUsage&&!testRole()?'user-cast':'internal-refresh'});
+      const j=await post(reveal?'/v2/public-preview':'/v2/basic',{datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect),calendar:reveal?buildFrontendPublicPayload(options):buildFrontendCalendarPayload(options),usageIntent:countUsage?'user-cast':'internal-refresh',castPermit:countUsage?'':window.baziCastPermitRead(options)});
+      if(j.castPermit)window.baziCastPermitSave(options,j.castPermit);
       if(!j.data||j.data.pillars?.length!==4)throw Error('後端沒有回傳四柱');
       const key=identity(options);if(current?.key!==key)expandedTopic=null;current={key,datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect)};
       reports=loadReadingVersion(key);
@@ -8727,10 +8843,10 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
         // Keep the chart to restore it after browsing any of the 20 archived examples.
         personalFullData=j.data;window.baziShowPersonalFull(j.data);
       }
-      $('baziPersonalAiStatus').textContent=loggedIn()?'排盤完成。可選擇三個免費主題，各限本會員成功解析一次；其他內容待付費方案開放。':'排盤完成。免費登入會員後可使用三篇指定 AI 解讀。';
+      $('baziPersonalAiStatus').textContent=loggedIn()?'排盤完成。免費會員三個主題各一次；若有管理員贈送額度，可依 A／B 權限選擇其他解讀。':'排盤完成。登入免費會員即可領取三篇 AI 解讀。';
       renderTopicAccess();
       if(reveal&&scroll)$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'});
-      refreshPersonalQuota();
+      refreshPersonalQuota();void window.baziCastRefreshQuota?.();
       // 排盤只建立命盤，不主動呼叫 AI；僅三個會員免費主題可各按一次。
       return true;
     }catch(e){$('baziPersonalAiStatus').textContent=e.message||'排盤失敗';throw e;}
@@ -8738,15 +8854,18 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   };
   async function topicClick(topic,btn){
     const status=$('baziPersonalAiStatus');
+    if(!loggedIn()){status.textContent=lockedMessage(topic);if(confirm('站內 AI 解讀需登入會員。登入即可領取三篇各一次的免費 AI 解讀。\n\n現在前往登入嗎？'))window.baziOpenAuth?.();return;}
     if(!current||busy){status.textContent='請先完成免費排盤。';return;}
-    if(!loggedIn()){status.textContent=lockedMessage(topic);return;}
-    if(!isFree(topic)){status.textContent=lockedMessage(topic);return;}
+    if(!isFree(topic)&&!gifted(topic)){status.textContent=lockedMessage(topic);return;}
     if(aiBusy){status.textContent='AI 正在產生另一篇解讀，請稍候。';return;}
-    if(normalReport(reports[topic]).reading){drawReports(topic);status.textContent='已展開本次保存的解讀，不會重複扣免費次數。';return;}
-    if((accessInfo.usedTopics||[]).includes(topic)){
-      status.textContent='這個會員已使用過此主題的唯一一次免費解讀。若先前報告未保存在這個瀏覽器分頁，暫時無法重新產生；付費功能稍後開放。';return;
+    const alreadyUsed=(accessInfo.usedTopics||[]).includes(topic);
+    const extra=gifted(topic),prior=!!normalReport(reports[topic]).reading;
+    if((alreadyUsed||!isFree(topic))&&!extra){
+      if(prior){drawReports(topic);status.textContent='已展開之前暫存的解讀。';}
+      else status.textContent='此主題沒有剩餘免費額度，請聯絡站長或等待付費功能開放。';
+      return;
     }
-    if(!confirm('確定使用「'+topicTitles[topic]+'」的一次免費解讀嗎？每位會員每個免費主題只有一次成功生成機會，不會隔日重置。'))return;
+    if(!confirm('確定解讀「'+topicTitles[topic]+'」？'+((alreadyUsed||!isFree(topic))?'這次會扣除 1 次管理員贈送額度。':'這次使用此主題唯一的免費解讀資格。')+(prior?'將重新生成並取代本次畫面的舊解讀。':'')))return;
     const chart={...current},reportKey=current.key;
     aiBusy=true;showAiWorking(btn,topic,true);
     status.textContent='AI 正在產生「'+topicTitles[topic]+'」，請稍候…';
@@ -9150,5 +9269,34 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<script id="bazi-shensha-login-gate">
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ function member(){return !!(typeof baziSessionMember!=='undefined'&&baziSessionMember?.sub)}
+ function sample(){return document.body.classList.contains('bazi-example-snapshot-mode')}
+ function gated(){return !sample()&&!member()}
+ function ask(){
+   const btn=$('baziShenshaAccessLabel');if(btn)btn.textContent='登入免費看';
+   if(confirm('05 常用神煞｜登入免費會員即可完整觀看。\n現在前往 Google 會員登入嗎？'))window.baziOpenAuth?.();
+ }
+ window.baziShenshaMustLogin=gated;
+ window.baziAskShenshaLogin=ask;
+ window.baziRefreshShenshaGate=()=>{
+   const label=$('baziShenshaAccessLabel');if(label)label.textContent=member()?'完整開放':'登入免費看';
+   const panel=$('report-shensha');if(!panel)return;
+   if(gated()){panel.classList.add('bazi-shensha-login-locked');if(panel.open){panel.open=false;panel.classList.remove('bazi-section-visible');}}
+   else panel.classList.remove('bazi-shensha-login-locked');
+ };
+ document.addEventListener('click',e=>{
+   if(!gated())return;
+   const target=e.target.closest?.('#report-shensha > summary');
+   if(!target)return;
+   e.preventDefault();e.stopImmediatePropagation();ask();
+ },true);
+ document.addEventListener('DOMContentLoaded',window.baziRefreshShenshaGate);
+ window.addEventListener('bazi-google-login',window.baziRefreshShenshaGate);
+})();
+</script>
 </body>
 </html>
