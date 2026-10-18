@@ -2866,7 +2866,7 @@ html[data-theme="light"] body.bazi-personal-full-mode #results :is(#report-pilla
 
       <div class="results" id="results">
       <div id="baziPersonalCoreNotice" class="bazi-personal-core-notice" hidden>
-        <div><strong>你的個人命盤｜分級開放預覽</strong><span>01～04 區遮七成；05 常用神煞完整公開；06～09 區暫不顯示個人分析，可隨機試閱他人的完整核心範例。本版仍為前端視覺模擬，資料尚未藏到後端。</span></div>
+        <div><strong>你的個人命盤｜分級開放預覽</strong><span>01～04 區遮七成；05 常用神煞完整公開；06～09 區暫不顯示個人分析，可隨機試閱他人的完整核心範例。目前遮罩僅控制畫面呈現，個人進階資料仍在瀏覽器端，並非後端存取保護。</span></div>
         <button id="baziCoreBrowse20" type="button">對照 20 筆完整範例</button>
       </div>
       <section id="baziMaskCompare" class="bazi-mask-compare" hidden aria-label="個人九大分析遮罩程度測試">
@@ -8477,13 +8477,8 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     const lines=['一念知機｜站內八字 AI 個人解讀','主題：'+(topic.startsWith('custom_question_')?'自訂八字問題':reportTitle(topic))];
     if(topic.startsWith('custom_question_')){
       const item=customHistory()[Number(topic.slice('custom_question_'.length))];
-      lines.push('使用者問題：'+item.question);
-      if((!item.promptVersion||item.promptVersion!==CUSTOM_QUESTION_PROMPT_VERSION))lines.push('提示詞版本：'+item.promptVersion+' 舊稿（保留供比較）');
+      if(item?.question)lines.push('使用者問題：'+item.question);
     }
-    if(channelPattern.test(entry.channel))lines.push('解讀通道：'+entry.channel);
-    if(tracePattern.test(entry.traceId))lines.push('追蹤碼：'+entry.traceId);
-    lines.push('中文字數：約 '+personalChineseCount(entry.reading)+' 字');
-    if(entry.review&&Array.isArray(entry.review.warnings))lines.push('自動格式檢查：'+(entry.review.warnings.length?entry.review.warnings.join('；'):'未發現主要格式問題（不代表命理推論完全正確）'));
     lines.push('',personalTxtContent(entry.reading));
     return lines.join('\n');
   }
@@ -8508,10 +8503,6 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       const card=document.createElement('section');card.className='bazi-reading-entry';card.dataset.reportTopic=topic;
       const head=document.createElement('div');head.className='bazi-reading-entry-head';
       const h=document.createElement('h5');h.textContent=title+'｜解讀完成';head.append(h);
-      if(channelPattern.test(data.channel)&&tracePattern.test(data.traceId)){
-        const info=document.createElement('small');info.className='bazi-reading-trace';
-        info.textContent='通道 '+data.channel+'｜追蹤碼：'+data.traceId;head.append(info);
-      }
       const top=document.createElement('button');top.type='button';top.className='bazi-reading-toggle';
       top.dataset.reportToggleTop='1';top.setAttribute('aria-controls','bazi-report-'+topic);
       const body=document.createElement('div');body.id='bazi-report-'+topic;body.dataset.reportBody='1';
@@ -8521,16 +8512,10 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       bottom.textContent='↑ 收合'+title;
       top.addEventListener('click',()=>setReportExpanded(topic,expandedTopic!==topic));
       bottom.addEventListener('click',()=>setReportExpanded(topic,false,true));
-      const count=document.createElement('small');count.className='bazi-reading-wordcount';
-      const han=personalChineseCount(data.reading);
-      count.textContent='約 '+han.toLocaleString('zh-TW')+(topic.startsWith('custom_question_')?' 個中文字｜依提問深度調整篇幅':topic==='overall_deep'?' 個中文字｜目標 1,800～2,200':' 個中文字｜目標 1,300～1,600');
-      const audit=document.createElement('small');audit.className='bazi-reading-audit';
-      const alerts=Array.isArray(data.review?.warnings)?data.review.warnings:[];
-      audit.textContent=alerts.length?'格式檢查：'+alerts.join('；')+'（僅供測試比對）':'格式檢查：未發現主要格式問題；仍須人工核對內容。';
       const download=document.createElement('button');download.type='button';
       download.className='bazi-reading-download';download.textContent='↓ 下載本篇 TXT';
       download.addEventListener('click',()=>downloadOnePersonalTxt(topic));
-      body.append(article,count,audit,download,bottom);card.append(head,top,body);root.append(card);
+      body.append(article,download,bottom);card.append(head,top,body);root.append(card);
     }
     setReportExpanded(expandedTopic,!!expandedTopic);
     renderTopicAccess();
