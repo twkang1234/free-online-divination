@@ -1100,6 +1100,12 @@ html[data-theme="light"] #yijingExtraContext:focus{border-color:#7eb190;box-shad
 .yijing-ai-download:hover{background:rgba(124,227,161,.17)}
 html[data-theme="light"] .yijing-ai-download{background:#eff8f1;color:#246644;border-color:rgba(49,133,78,.35)}
 @media(max-width:600px){#yijingExtraContext.yijing-custom-multiline{min-height:158px}}
+/* 指定卦研讀：動爻練習選項，不影響原本指定卦功能。 */
+.cast-moving-sim-option{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;margin:14px 0;border:1px solid rgba(89,160,123,.27);border-radius:12px;background:rgba(91,173,122,.045);cursor:pointer;line-height:1.6}
+.cast-moving-sim-option input{flex:none;width:18px;height:18px;margin:3px 0 0;accent-color:#469d6b;cursor:pointer}
+.cast-moving-sim-option span{display:grid;gap:3px;min-width:0}
+.cast-moving-sim-option b{font-size:.81rem}
+.cast-moving-sim-option small{font-size:.73rem;opacity:.80}
 </style>
 </head>
 <body>
@@ -1313,8 +1319,8 @@ html[data-theme="light"] .yijing-ai-download{background:#eff8f1;color:#246644;bo
         <button class="cast-mode-btn active" data-cast-mode="coin3" type="button"><i>01 / THREE COINS</i><b>三枚硬幣起卦</b><small>一般占問推薦；每次按一下擲 3 枚硬幣，共 6 次，由下往上完成一卦。</small></button>
         <button class="cast-mode-btn" data-cast-mode="meihua2" type="button"><i>02 / TWO NUMBERS</i><b>雙數起卦｜梅花易數</b><small>輸入兩個當下有感覺的正整數，自動換算上卦、下卦與動爻。</small></button>
         <button class="cast-mode-btn" data-cast-mode="manual6" type="button"><i>03 / YOUR COINS</i><b>實體硬幣輸入</b><small>你已在家擲硬幣時，用這裡逐次輸入實際得到的 6／7／8／9。</small></button>
-        <button class="cast-mode-btn" data-cast-mode="number64" type="button"><i>04 / RANDOM STOP</i><b>1～64 亂數停選</b><small>中央數字無規則亂跳，按停時的數字就是本卦。</small></button>
-        <button class="cast-mode-btn" data-cast-mode="yinYangStop" type="button"><i>05 / STOP LINES</i><b>六爻陰陽停選</b><small>陽爻／陰爻快速切換，連續停 6 次完成一卦。</small></button>
+        <button class="cast-mode-btn" data-cast-mode="number64" type="button"><i>04 / RANDOM STOP</i><b>1～64 亂數停選</b><small>按停決定本卦，再隨機判定動爻；仍有機會得到靜卦。</small></button>
+        <button class="cast-mode-btn" data-cast-mode="yinYangStop" type="button"><i>05 / STOP LINES</i><b>六爻陰陽停選</b><small>逐爻按停決定陰陽，各爻另有機會成為動爻。</small></button>
         <button class="cast-mode-btn study" data-cast-mode="select64" type="button"><i>06 / STUDY</i><b>64 卦指定研讀</b><small>學習／研討用：指定某一卦查看，不建議當成一般占問起卦。</small></button>
       </div>
 
@@ -1344,8 +1350,9 @@ html[data-theme="light"] .yijing-ai-download{background:#eff8f1;color:#246644;bo
 
       <div class="cast-panel" data-cast-panel="select64">
         <div class="cast-panel-head"><div><b>64 卦指定研讀｜學習／研討模式</b><p>這個模式是給想研究某一卦、比對卦義或教學討論的人使用。因為卦是由你事先指定，所以不建議把它當成一般「問事占卜」的起卦結果。</p></div><span class="cast-panel-tag">學習研討用</span></div>
-        <div class="cast-learning-note"><b>使用提醒：</b>如果你正在問自己的感情、工作、財運或決策，建議改用「三枚硬幣起卦」「雙數起卦」或其他隨機／停選模式；只有在你本來就想查看某一個指定卦時，再使用這裡。</div>
+        <div class="cast-learning-note"><b>使用提醒：</b>此模式適合研究指定卦；如果你要隨機占問，建議使用其他起卦方式。你也可以勾選下方選項，針對指定的本卦隨機模擬動爻與變卦，但那仍是「指定卦的情境練習」，不是獨立隨機占問。</div>
         <div class="hex64-grid" id="hex64Grid"></div>
+        <label class="cast-moving-sim-option" for="hex64MovingSimulation"><input id="hex64MovingSimulation" type="checkbox"><span><b>額外模擬動爻與變卦（選填）</b><small>不改變指定的本卦；每爻另以三枚硬幣相同的條件機率判定是否變動。未勾選時仍是原本的純研讀模式。</small></span></label>
         <div class="cast-selection-bar"><span id="hex64SelectedText">尚未選擇</span><button class="primary" id="hex64Confirm" type="button" disabled>查看這一卦的解讀</button></div>
       </div>
 
@@ -1364,12 +1371,12 @@ html[data-theme="light"] .yijing-ai-download{background:#eff8f1;color:#246644;bo
       </div>
 
       <div class="cast-panel" data-cast-panel="number64">
-        <div class="cast-panel-head"><div><b>1～64 亂數停選</b><p>中央數字不是照順序跑，而是每次都在 1～64 之間無規則亂跳。不要計算或等特定數字，想停時直接按下；當下顯示的數字就是本卦。</p></div><span class="cast-panel-tag">亂數跳動｜1 次停止</span></div>
+        <div class="cast-panel-head"><div><b>1～64 亂數停選</b><p>中央數字在 1～64 之間無規則亂跳。按停決定本卦後，系統會另外以每爻 1/4 的機率決定動爻與變卦；沒有動爻也屬正常結果。</p></div><span class="cast-panel-tag">隨機本卦＋動爻</span></div>
         <div class="number-spinner-wrap"><div class="number-spinner-label">RANDOM HEXAGRAM NUMBER</div><div class="number-spinner running" id="numberSpinner">01</div><button class="primary spinner-action" id="numberStopBtn" type="button">現在停下</button><div class="spinner-help" id="numberSpinnerHelp">1～64 正在無規則快速亂跳…</div></div>
       </div>
 
       <div class="cast-panel" data-cast-panel="yinYangStop">
-        <div class="cast-panel-head"><div><b>六爻陰陽停選｜共停 6 次</b><p>畫面在「陽爻＝一整條」與「陰爻＝中間斷開」之間切換。每次按停，就固定一爻，由下往上完成。</p></div><span class="cast-panel-tag">6 次停止</span></div>
+        <div class="cast-panel-head"><div><b>六爻陰陽停選｜共停 6 次</b><p>畫面在「陽爻＝一整條」與「陰爻＝中間斷開」之間切換。每次按停先決定陰陽，再以每爻 1/4 機率判定是否為老陽／老陰動爻，由下往上完成六爻。</p></div><span class="cast-panel-tag">六爻陰陽＋動爻</span></div>
         <div class="six-step-status"><b id="yinStopTitle">第 1 爻｜看準就停</b><span class="stop-count" id="yinStopCount">0 / 6</span></div>
         <div class="yinyang-live"><div><div class="yao-live yang" id="yinYangLive"></div><div class="yinyang-name" id="yinYangName">陽爻｜一整條</div></div></div>
         <div class="six-line-stack" id="yinStopStack"></div>
@@ -2124,7 +2131,7 @@ function cardHTML(h, lines, label, movingLines=[]){
     const txt=document.getElementById('hex64SelectedText');
     const confirm=document.getElementById('hex64Confirm');
     if(txt)txt.innerHTML=selectedHex64?`已選：<strong>第 ${selectedHex64} 卦・${KING_WEN_NAMES[selectedHex64-1]}</strong>`:'尚未選擇';
-    if(confirm){confirm.disabled=!selectedHex64;confirm.textContent=state.custom?'確認本卦並進行 AI 解卦':'查看這一卦的解讀';}
+    if(confirm){confirm.disabled=!selectedHex64;const moving=!!document.getElementById('hex64MovingSimulation')?.checked;confirm.textContent=moving?'查看本卦＋模擬動爻':(state.custom?'確認本卦並進行 AI 解卦':'查看這一卦的解讀');}
   }
   function renderManualSix(){
     const n=manualSixValues.length;
@@ -2191,6 +2198,8 @@ function cardHTML(h, lines, label, movingLines=[]){
     if(mode==='meihua2'){const err=document.getElementById('meihuaError');if(err)err.textContent='';}if(mode==='select64')renderHex64Grid();if(mode==='manual6')renderManualSix();if(mode==='coin3')renderCoinThree();if(mode==='number64')startNumberSpinner(true);if(mode==='yinYangStop'){renderYinStop();startYinStop();}return true;
   }
   function resetCastUI(){
+    const movingStudyOption=document.getElementById('hex64MovingSimulation');
+    if(movingStudyOption)movingStudyOption.checked=false;
     clearCastTimers();selectedHex64=null;manualSixValues=[];coinThreeValues=[];coinThreeFaces=[];coinThreeLock=false;yinStopValues=[];yinStopCurrent=7;yinStopLock=false;renderHex64Grid();renderManualSix();renderCoinThree();renderYinStop();applyCastAccess();const first=isLogged()?'coin3':['coin3','meihua2','number64','yinYangStop'].find(isCastAllowed);setCastMode(first||'coin3',true);
   }
   function evaluateCustomQuestionQuality(text=''){
@@ -2703,7 +2712,8 @@ function cardHTML(h, lines, label, movingLines=[]){
     runCast({mode:'meihua2',label:`雙數起卦｜梅花易數｜${a}・${b}`,numbers:[a,b]},e.currentTarget);
   });
   document.getElementById('hex64Grid')?.addEventListener('click',e=>{const b=e.target.closest('[data-hex-no]');if(!b)return;selectedHex64=Number(b.dataset.hexNo);renderHex64Grid();});
-  document.getElementById('hex64Confirm')?.addEventListener('click',e=>{if(!guardDailyQuota())return;if(!guardCustomQuestionQuality())return;if(selectedHex64)runCast({mode:'select64',label:`64 卦指定研讀｜第 ${selectedHex64} 卦・${KING_WEN_NAMES[selectedHex64-1]}`,hexNumber:selectedHex64},e.currentTarget);});
+  document.getElementById('hex64MovingSimulation')?.addEventListener('change',renderHex64Grid);
+  document.getElementById('hex64Confirm')?.addEventListener('click',e=>{if(!guardDailyQuota())return;if(!guardCustomQuestionQuality())return;if(selectedHex64){const moving=!!document.getElementById('hex64MovingSimulation')?.checked;runCast({mode:'select64',label:`64 卦指定研讀｜第 ${selectedHex64} 卦・${KING_WEN_NAMES[selectedHex64-1]}${moving?'｜模擬動爻':''}`,hexNumber:selectedHex64,movingPolicy:moving?'random':'none'},e.currentTarget);}});
   document.getElementById('manualSixChoices')?.addEventListener('click',e=>{const b=e.target.closest('[data-manual-value]');if(!b||manualSixValues.length>=6)return;if(manualSixValues.length===0&&!guardDailyQuota())return;if(manualSixValues.length===0&&!guardCustomQuestionQuality())return;manualSixValues.push(Number(b.dataset.manualValue));renderManualSix();if(manualSixValues.length===6)setTimeout(()=>runCast({mode:'manual6',label:'實體硬幣輸入｜三枚硬幣結果',values:[...manualSixValues]}),420);});
   document.getElementById('manualSixReset')?.addEventListener('click',()=>{manualSixValues=[];renderManualSix();});
   document.getElementById('coinThreeBtn')?.addEventListener('click',e=>{
@@ -2714,8 +2724,10 @@ function cardHTML(h, lines, label, movingLines=[]){
     setTimeout(()=>{coinThreeValues.push(sum);const faceText=faces.map(v=>v===3?'正':'反').join('・');if(result)result.innerHTML=`${faceText} → <strong>${sum}｜${yaoShortLabel(sum)}</strong>`;renderCoinThree();coinThreeLock=false;const btn=document.getElementById('coinThreeBtn');if(btn)btn.disabled=coinThreeValues.length>=6;if(coinThreeValues.length===6)setTimeout(()=>runCast({mode:'coin3',label:'三枚硬幣起卦｜親手擲六次',values:[...coinThreeValues]}),650);},540);
   });
   document.getElementById('coinThreeReset')?.addEventListener('click',()=>{coinThreeValues=[];coinThreeFaces=[];coinThreeLock=false;renderCoinThree();});
-  document.getElementById('numberStopBtn')?.addEventListener('click',e=>{if(!numberSpinnerRunning)return;if(!guardDailyQuota())return;if(!guardCustomQuestionQuality())return;numberSpinnerRunning=false;if(numberSpinnerTimer){clearInterval(numberSpinnerTimer);numberSpinnerTimer=null;}document.getElementById('numberSpinner')?.classList.remove('running');const help=document.getElementById('numberSpinnerHelp');if(help)help.textContent=state.custom?`停在第 ${numberSpinnerValue} 卦，正在整理 卦象…`:`停在第 ${numberSpinnerValue} 卦，正在帶入解讀…`;e.currentTarget.disabled=true;e.currentTarget.textContent=`第 ${numberSpinnerValue} 卦`;setTimeout(()=>runCast({mode:'number64',label:`1～64 亂數停選｜第 ${numberSpinnerValue} 卦`,hexNumber:numberSpinnerValue}),450);});
-  document.getElementById('yinStopBtn')?.addEventListener('click',e=>{if(yinStopLock||yinStopValues.length>=6)return;if(yinStopValues.length===0&&!guardDailyQuota())return;if(yinStopValues.length===0&&!guardCustomQuestionQuality())return;yinStopLock=true;yinStopValues.push(yinStopCurrent);renderYinStop();if(yinStopValues.length===6){if(yinStopTimer){clearInterval(yinStopTimer);yinStopTimer=null;}setTimeout(()=>runCast({mode:'yinYangStop',label:'六爻陰陽停選',values:[...yinStopValues]}),500);}setTimeout(()=>{yinStopLock=false;},220);});
+  document.getElementById('numberStopBtn')?.addEventListener('click',e=>{if(!numberSpinnerRunning)return;if(!guardDailyQuota())return;if(!guardCustomQuestionQuality())return;numberSpinnerRunning=false;if(numberSpinnerTimer){clearInterval(numberSpinnerTimer);numberSpinnerTimer=null;}document.getElementById('numberSpinner')?.classList.remove('running');const help=document.getElementById('numberSpinnerHelp');if(help)help.textContent=state.custom?`停在第 ${numberSpinnerValue} 卦，正在整理 卦象…`:`停在第 ${numberSpinnerValue} 卦，正在帶入解讀…`;e.currentTarget.disabled=true;e.currentTarget.textContent=`第 ${numberSpinnerValue} 卦`;setTimeout(()=>runCast({mode:'number64',label:`1～64 亂數停選｜第 ${numberSpinnerValue} 卦｜含動爻判定`,hexNumber:numberSpinnerValue}),450);});
+  document.getElementById('yinStopBtn')?.addEventListener('click',e=>{if(yinStopLock||yinStopValues.length>=6)return;if(yinStopValues.length===0&&!guardDailyQuota())return;if(yinStopValues.length===0&&!guardCustomQuestionQuality())return;yinStopLock=true;// 這次按停決定陰陽；再獨立判定是否變為老陽（9）或老陰（6）。
+    const stoppedValue=secureRandomInt(4)===0?(yinStopCurrent===7?9:6):yinStopCurrent;
+    yinStopValues.push(stoppedValue);renderYinStop();if(yinStopValues.length===6){if(yinStopTimer){clearInterval(yinStopTimer);yinStopTimer=null;}setTimeout(()=>runCast({mode:'yinYangStop',label:'六爻陰陽停選｜含動爻判定',values:[...yinStopValues]}),500);}setTimeout(()=>{yinStopLock=false;},220);});
   document.getElementById('yinStopReset')?.addEventListener('click',()=>{if(yinStopTimer)clearInterval(yinStopTimer);yinStopValues=[];yinStopCurrent=7;yinStopLock=false;const live=document.getElementById('yinYangLive');if(live){live.classList.add('yang');live.classList.remove('yin');}const name=document.getElementById('yinYangName');if(name)name.textContent='陽爻｜一整條';renderYinStop();startYinStop();});
 })();
 </script>
