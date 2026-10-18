@@ -8309,7 +8309,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     luck_turning:'大運流年與人生轉折',fortune_risk:'婚姻吉凶、重大災禍、特殊福澤'
   };
   function customHistory(){return Array.isArray(reports.custom_questions)?reports.custom_questions.filter(x=>x&&typeof x.question==='string'&&typeof x.reading==='string').slice(-12):[];}
-  function customTitle(index){const item=customHistory()[index];return item?'自訂問題 '+(index+1)+(item.promptVersion&&item.promptVersion!==AI_READING_CACHE_VERSION?'（舊稿）':'')+'｜'+item.question.slice(0,42)+(item.question.length>42?'…':''):'自訂問題';}
+  function customTitle(index){const item=customHistory()[index];return item?'自訂問題 '+(index+1)+((!item.promptVersion||item.promptVersion!==CUSTOM_QUESTION_PROMPT_VERSION)?'（舊稿）':'')+'｜'+item.question.slice(0,42)+(item.question.length>42?'…':''):'自訂問題';}
   function reportTitle(topic){return topic.startsWith('custom_question_')?customTitle(Number(topic.slice('custom_question_'.length))):topicTitles[topic]||'解讀';}
   function reportEntry(topic){return topic.startsWith('custom_question_')?normalReport(customHistory()[Number(topic.slice('custom_question_'.length))]):normalReport(reports[topic]);}
   const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
@@ -8317,6 +8317,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   // Bump this when the eight-topic AI PROMPTS materially change; never mix V2 answers into V3.
   // Versioning affects AI answers only: member records, birth charts and other caches are untouched.
   const AI_READING_CACHE_VERSION='v3.3';
+  const CUSTOM_QUESTION_PROMPT_VERSION='v3-original-readable';
   const storePrefix='bazi-personal-v6-eight-reading-'+AI_READING_CACHE_VERSION+':';
   const previousStorePrefix='bazi-personal-v6-eight-reading-v3.2:';
   // V3.3: preserve previously approved topics 1–5 and 8, without AI charges.
@@ -8464,7 +8465,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(topic.startsWith('custom_question_')){
       const item=customHistory()[Number(topic.slice('custom_question_'.length))];
       lines.push('使用者問題：'+item.question);
-      if(item.promptVersion&&item.promptVersion!==AI_READING_CACHE_VERSION)lines.push('提示詞版本：'+item.promptVersion+' 舊稿（保留供比較）');
+      if((!item.promptVersion||item.promptVersion!==CUSTOM_QUESTION_PROMPT_VERSION))lines.push('提示詞版本：'+item.promptVersion+' 舊稿（保留供比較）');
     }
     if(channelPattern.test(entry.channel))lines.push('解讀通道：'+entry.channel);
     if(tracePattern.test(entry.traceId))lines.push('追蹤碼：'+entry.traceId);
@@ -8681,7 +8682,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(batchRunning||batchPreparing||aiBusy){status.textContent='AI 目前正在產生報告，請等候完成後再提問。';return;}
     const question=String(input?.value||'').trim().replace(/\s+/g,' ');
     if(question.length<5||question.length>400){status.textContent='請輸入 5～400 字的八字問題。';input?.focus();return;}
-    const existing=customHistory().findIndex(x=>x.question===question&&x.promptVersion===AI_READING_CACHE_VERSION);
+    const existing=customHistory().findIndex(x=>x.question===question&&x.promptVersion===CUSTOM_QUESTION_PROMPT_VERSION);
     if(existing>=0){drawReports('custom_question_'+existing);status.textContent='同一個問題已保留解讀，不會重複使用額度。';return;}
     if(!confirm('確定讓 AI 回答這個自訂八字問題？成功生成將使用 1 次現有 AI 額度。'))return;
     const chart={...current},reportKey=current.key;
@@ -8695,8 +8696,8 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       let saved=current?.key===reportKey?{...reports}:{};
       try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){}
       const history=Array.isArray(saved.custom_questions)?saved.custom_questions.filter(x=>x&&typeof x.question==='string'&&typeof x.reading==='string'):[];
-      const prior=history.findIndex(x=>x.question===question&&x.promptVersion===AI_READING_CACHE_VERSION);
-      if(prior<0)history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',review:j.review||null,promptVersion:AI_READING_CACHE_VERSION});
+      const prior=history.findIndex(x=>x.question===question&&x.promptVersion===CUSTOM_QUESTION_PROMPT_VERSION);
+      if(prior<0)history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',review:j.review||null,promptVersion:CUSTOM_QUESTION_PROMPT_VERSION});
       saved.custom_questions=history.slice(-12);
       try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){}
       if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+(customHistory().length-1));status.textContent='自訂問題已解讀完成，可下載本篇 TXT，或再輸入其他問題。';}
