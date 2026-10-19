@@ -2789,14 +2789,14 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-overview .bazi-recas
           </div>
         </article>
         <article class="bazi-ai-free-card dh-quota-card dh-quota-gift">
-          <strong class="dh-quota-section-title">網站贈送額度</strong>
+          <strong class="dh-quota-section-title">網站贈送額度 <span class="dh-quota-origin">（免費會員一次性贈送）</span></strong>
           <div class="dh-quota-lines">
-            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong>占卜使用</strong><b id="baziSharedToolCount">— 次</b></div></div>
-            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong id="baziQuotaAccountLabel">AI 解析</strong><b id="baziQuotaDailyCount">— 次</b></div></div>
+            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong>占卜使用</strong><b id="baziSharedToolCount">— 次</b><small class="dh-quota-no-refill">用完不補</small></div></div>
+            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong id="baziQuotaAccountLabel">AI 解讀</strong><b id="baziQuotaDailyCount">— 次</b><small class="dh-quota-no-refill">用完不補</small></div></div>
           </div>
           <div class="dh-quota-footer">
             <p class="dh-quota-gift-note">平台各項占卜命理工具共用</p>
-            <p class="dh-quota-gift-note">免費用完才扣，用完不補；未來可加購</p>
+            <p class="dh-quota-gift-note">自動補充次數用完才扣；未來可加購</p>
             <p class="dh-quota-gift-note" id="baziQuotaDailyHint" hidden></p>
             <button type="button" id="baziQuotaLogin" class="bazi-entitlement-login" hidden>免費登入，領取共用額度 →</button>
           </div>
@@ -5843,7 +5843,7 @@ ${tasks}
     if(location.search.includes('admin=1')){window.__baziAdminRoleQuota?.(j);return;}
     baziLatestQuota=j;
     const who=j.visitorType==='member'?'免費會員':'未登入訪客';
-    const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent='AI 解析';
+    const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent='AI 解讀';
     const freeAi=document.getElementById('baziQuotaFreeAiCount');if(freeAi)freeAi.textContent=`${j.periodicAi?.remaining??0} / ${j.periodicAi?.limit??0} 次`;
     const freeAiNote=document.getElementById('baziQuotaFreeAiHint');if(freeAiNote)freeAiNote.textContent=`每 ${j.periodicAi?.days||1} 天補充｜下次 ${j.periodicAi?.resetAt||'待查'}`;
     const count=document.getElementById('baziQuotaDailyCount');if(count)count.textContent=j.authenticated?Math.max(0,Number(j.sharedAiRemaining||0))+' 次':'登入後可用';
@@ -9435,5 +9435,38 @@ body.has-bazi-chart #baziAiQuotaPanel #baziQuotaDailyHint{display:block}
 #baziAiQuotaPanel .dh-quota-card.dh-quota-gift,#baziAiQuotaPanel .yijing-quota-card.dh-quota-gift{justify-content:flex-start!important}
 @media(max-width:580px){#baziAiQuotaPanel .dh-quota-card:not(.bazi-ai-paid-card){min-height:232px!important}#baziAiQuotaPanel .dh-quota-section-title{min-height:44px;flex-basis:44px}#baziAiQuotaPanel .dh-quota-lines{grid-template-rows:52px 52px;flex-basis:104px;min-height:104px}#baziAiQuotaPanel .dh-quota-lines .dh-quota-mini,#baziAiQuotaPanel .dh-quota-lines .dh-quota-gift-row{height:52px!important}}
 </style>
+
+<style id="dh-quota-gift-note-20261020">
+/* 網站贈送：說明一次性發放，額度旁以暖橘暗金標明用完不補。 */
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-section-title{
+  display:flex!important;align-items:baseline!important;flex-wrap:wrap!important;
+  justify-content:flex-start!important;column-gap:7px!important;row-gap:1px!important;
+}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-origin{
+  display:inline!important;font-size:.68rem!important;line-height:1.45!important;
+  font-weight:500!important;white-space:nowrap!important;
+  color:var(--dim)!important;opacity:1!important;
+}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-no-refill{
+  display:inline-block!important;position:static!important;flex:0 0 auto!important;
+  width:auto!important;min-width:0!important;margin:0!important;padding:0!important;
+  font-size:.69rem!important;font-weight:750!important;line-height:1.4!important;
+  white-space:nowrap!important;letter-spacing:0!important;
+  color:#dfa45f!important;opacity:1!important;
+}
+html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .dh-quota-no-refill{color:#9c621e!important}
+html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .dh-quota-origin{color:#687887!important}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-lines .dh-quota-gift-row{align-items:stretch!important}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading{
+  display:flex!important;align-items:baseline!important;justify-content:flex-start!important;
+  gap:13px!important;flex-wrap:wrap!important;row-gap:2px!important;
+}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading>b{
+  color:#d5b4ff!important;
+}
+html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading>b{color:#654085!important}
+
+</style>
+
 </body>
 </html>
