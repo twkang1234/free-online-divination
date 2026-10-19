@@ -1513,6 +1513,13 @@ html[data-theme="light"] .yijing-rd-ai-kicker{color:#559669}
   .yijing-fixed-compact .reading-collapse .collapse-title{font-size:.78rem}
   .yijing-fixed-compact .reading-collapse .collapse-hint{font-size:.60rem}
 }
+
+/* 兩類題目的統一展示：固定題目也只公開本卦，動爻及變卦由標題上的同一個低調入口遮擋。 */
+.yijing-fixed-public-main{display:block!important;margin:0!important}
+.yijing-fixed-compact .yijing-fixed-public-main>.hex-card{width:100%;max-width:none;margin:0}
+.yijing-fixed-compact .yijing-fixed-detail-note{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border:1px solid var(--rd-brd);border-radius:9px;background:var(--rd-subtle);color:var(--rd-muted);font-size:.73rem;line-height:1.55}
+.yijing-fixed-compact .yijing-fixed-detail-note>span:first-child{font-weight:900;font-size:.85rem}
+@media(max-width:700px){.yijing-fixed-compact .yijing-fixed-public-main>.hex-card{width:100%}}
 </style>
 </head>
 <body>
@@ -3049,37 +3056,59 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     setTimeout(()=>result.scrollIntoView({behavior:'smooth',block:'start'}),60);
   }
 
-  // 固定題目：沿用緊湊排版但保留既有免費規則解讀的本卦、動爻與變卦資料。
-  function fixedCompactHexCard(h,lines,label,movingLines=[],classic={}){
-    const summary=classic.summary||h.summary||'';
-    return `<article class="hex-card yijing-fixed-hex-card">
-      <div class="hex-title"><div><span class="yijing-rd-core-overline">${esc(label)}</span><h3>第 ${Number(h.number)} 卦・${esc(h.name)}</h3></div></div>
-      <div class="yijing-fixed-hex-body">
-        <div class="yijing-fixed-hex-diagram">${linesHTML(lines,movingLines)}</div>
-        <div class="yijing-fixed-hex-info"><div class="yijing-fixed-hex-trigram">${esc(h.upper)}・${esc(h.upperMeta?.image||'')}　／　${esc(h.lower)}・${esc(h.lowerMeta?.image||'')}</div>${summary?`<p>${esc(summary)}</p>`:''}</div>
-      </div>
-    </article>`;
+  // 固定題目和自訂問題統一：公開「本卦」與經典依據；本次動爻狀態和變卦採相同遮擋。
+  // 這是前端展示規則，不是安全邊界；正式的資料保護日後由後端統一實作。
+  function fixedPublicText(text,original){
+    let value=String(text??'');
+    // 先移除會直接反推出本次具體變化的內容。
+    const changed=original.changed;
+    if(changed && original.movingLines?.length){
+      value=value.replace(new RegExp(`第\\s*${Number(changed.number)}\\s*卦`, 'g'),'變化詳情待解鎖');
+      const name=String(changed.name||'');
+      if(name){
+        value=value.split(`變卦「${name}」`).join('本次卦象變化（詳情待解鎖）');
+        value=value.split(`之卦「${name}」`).join('本次卦象變化（詳情待解鎖）');
+        value=value.split(`「${name}」`).join('「本次變化」');
+        value=value.split(`${name}卦`).join('本次變化');
+      }
+    }
+    value=value
+      .replace(/(?:初六|初九|六二|九二|六三|九三|六四|九四|六五|九五|上六|上九)/g,'具體爻位（待解鎖）')
+      .replace(/(?:[零一二三四五六七八九十兩\d]+[條個]?動爻|動爻[數量為：:]?\s*[0-6一二三四五六]|沒有動爻|無動爻|六爻皆靜|全靜|靜卦|[零一二三四五六七八九十兩\d]+爻(?:動|變)|無變卦|沒有變卦|有變卦)/g,'卦象變化狀態（待解鎖）')
+      .replace(/(?:動於|動在|發動於|動爻為|動爻是)[^，。；\n]{1,25}/g,'本次變化詳情待解鎖')
+      .replace(/(?:變卦(?:是|為|叫|名為)|之卦(?:是|為))[^，。；\n]{1,18}/g,'變化結果待解鎖');
+    return value;
+  }
+  function fixedPublicReadingCopy(r){
+    // 僅複製並處理原本顯示在公開分析區的欄位，完整起卦資料仍保持在 r 中供既有流程使用。
+    const fields=['direct','directDisplay','advice','adviceCards','summary','summaryDisplay'];
+    const publicReading={};
+    const walk=v=>typeof v==='string'?fixedPublicText(v,r):Array.isArray(v)?v.map(walk):(v && typeof v==='object')?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,walk(x)])):v;
+    for(const key of fields)publicReading[key]=walk(r[key]);
+    return publicReading;
+  }
+  function fixedPublicGateHTML(title){
+    return `<div class="yijing-fixed-detail-note"><span aria-hidden="true">⌑</span><span>${esc(title)}屬本次卦象的專屬變化資訊；詳細判讀付費後展示。免費仍可閱讀本卦原典、基礎分析與行動建議。</span></div>`;
   }
 
   function render(r){
     if(state.custom){renderCustomAI(r);return;}
     currentReading=r;
     empty.style.display='none'; result.style.display='block';
-    const hasChange=r.movingLines.length>0;
     const basicClassic=YIJING_PUBLIC_CLASSIC[r.base?.name]||{};
+    const publicReading=fixedPublicReadingCopy(r);
     result.innerHTML = `
       <div class="reading-wrap yijing-rd-layout yijing-rd-rev2 yijing-fixed-compact">
         <header class="yijing-rd-header">
           <div class="yijing-rd-header-title"><span class="yijing-rd-kicker">起卦完成・固定題目</span><h4>你的卦象已產生</h4></div>
-          <span class="yijing-rd-cast-method">${esc(r.castMethod?.label||'三枚硬幣起卦')}｜${esc(r.movingNames||'無動爻')}</span>
+          <span class="yijing-rd-cast-method">${esc(r.castMethod?.label||'三枚硬幣起卦')}</span>
         </header>
         <details class="yijing-rd-question">
           <summary><span class="yijing-rd-question-label">問</span><span class="yijing-rd-question-preview">${esc(r.question)}</span><span class="yijing-rd-question-more">全文 <span aria-hidden="true">⌄</span></span></summary>
           <div class="yijing-rd-question-full">${esc(r.question)}</div>
         </details>
-        <div class="yijing-fixed-hexes ${hasChange?'':'yijing-fixed-still'}">
-          ${fixedCompactHexCard(r.base,r.baseLines,'本卦',r.movingLines,basicClassic)}
-          ${hasChange?fixedCompactHexCard(r.changed,r.changedLines,'變卦',[],YIJING_PUBLIC_CLASSIC[r.changed?.name]||{}):''}
+        <div class="yijing-rd-main yijing-fixed-public-main">
+          ${customCastCardHTML(r.base,r.baseLines,'本卦',[],basicClassic)}
         </div>
         ${publicYijingClassicHTML(r.base,r.baseLines,true)}
 
@@ -3090,8 +3119,8 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
             <div class="reading-quote"><b>本卦卦辭【原典】</b><p>${esc(r.baseClassic.judgment)}</p></div>
             <div class="reading-quote"><b>本卦大象【原典】</b><p>${esc(r.baseClassic.image)}</p></div>
             <p><strong>本卦的陰影面：</strong>${esc(r.baseDepth.shadow)}</p>
-            ${hasChange?`<p><strong>變卦「${esc(r.changed.name)}」</strong>不是保證結果，而是條件改變後可能形成的新局。${esc(r.changedDepth.core)}</p><div class="reading-quote"><b>變卦卦辭【原典】</b><p>${esc(r.changedClassic.judgment)}</p></div><div class="reading-quote"><b>變卦大象【原典】</b><p>${esc(r.changedClassic.image)}</p></div><p><strong>變卦需要警惕：</strong>${esc(r.changedDepth.shadow)}</p>`:'<p>六爻皆靜，因此這次不另外追變卦；本卦本身就是最主要訊息。</p>'}
-            <p><strong>${esc(r.pattern.title)}：</strong>${esc(r.pattern.text)}</p>
+            ${fixedPublicGateHTML('動爻與變卦')}
+            <p>閱讀本卦時，可以先將以上卦意對照自己的現況；這些屬於任何人抽到相同本卦都能參考的基礎內容。</p>
           </div>
         </details>
 
@@ -3105,27 +3134,27 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         </details>
 
         <details class="reading-section reading-collapse lead" data-reading-section="3">
-          <summary><span class="collapse-title">三、從本卦走到變卦｜局勢為什麼會這樣變</span><span class="collapse-hint">查看專業分析</span></summary>
-          <div class="reading-collapse-body"><p>${esc(r.transition)}</p></div>
+          <summary><span class="collapse-title">三、從本卦走到變卦｜局勢為什麼會這樣變</span><span class="collapse-hint">付費後展示</span></summary>
+          <div class="reading-collapse-body">${fixedPublicGateHTML('本卦與變化關係')}<p>完整卦象變化尚未顯示。現階段先依公開本卦的卦意觀察現實中的條件、進展與阻礙。</p></div>
         </details>
 
         <details class="reading-section reading-collapse" data-reading-section="4">
-          <summary><span class="collapse-title">四、動爻逐一解讀</span><span class="collapse-hint">查看動爻分析</span></summary>
-          <div class="reading-collapse-body">${movingHTML(r)}</div>
+          <summary><span class="collapse-title">四、動爻逐一解讀</span><span class="collapse-hint">付費後展示</span></summary>
+          <div class="reading-collapse-body">${fixedPublicGateHTML('動爻位置與爻辭')}<p>本區不顯示是否發動、動爻數量或任何具體爻位。</p></div>
         </details>
 
         <section class="reading-section" data-reading-section="5"><h4>五、直接回答你的問題</h4>
           <div class="reading-answer-grid">
-            <div class="reading-answer-card"><b>目前局勢</b>${readableAnswerHTML(r.directDisplay?.situation,r.direct.situation)}</div>
-            <div class="reading-answer-card"><b>最大阻力</b>${readableAnswerHTML(r.directDisplay?.obstacle,r.direct.obstacle)}</div>
-            <div class="reading-answer-card"><b>目前機會</b>${readableAnswerHTML(r.directDisplay?.opportunity,r.direct.opportunity)}</div>
-            <div class="reading-answer-card"><b>主要風險</b>${readableAnswerHTML(r.directDisplay?.risk,r.direct.risk)}</div>
-            <details class="yijing-fixed-signals"><summary><b>接下來值得觀察的訊號</b><span>展開查看 <span aria-hidden="true">⌄</span></span></summary><div class="yijing-fixed-signals-body">${signalHTML(r)}</div></details>
+            <div class="reading-answer-card"><b>目前局勢</b>${readableAnswerHTML(publicReading.directDisplay?.situation,publicReading.direct?.situation)}</div>
+            <div class="reading-answer-card"><b>最大阻力</b>${readableAnswerHTML(publicReading.directDisplay?.obstacle,publicReading.direct?.obstacle)}</div>
+            <div class="reading-answer-card"><b>目前機會</b>${readableAnswerHTML(publicReading.directDisplay?.opportunity,publicReading.direct?.opportunity)}</div>
+            <div class="reading-answer-card"><b>主要風險</b>${readableAnswerHTML(publicReading.directDisplay?.risk,publicReading.direct?.risk)}</div>
+            <details class="yijing-fixed-signals"><summary><b>接下來值得觀察的訊號</b><span>展開查看 <span aria-hidden="true">⌄</span></span></summary><div class="yijing-fixed-signals-body">${signalHTML(publicReading)}</div></details>
           </div>
         </section>
 
-        <section class="reading-section" data-reading-section="6"><h4>六、5～7 個具體可執行建議</h4>${adviceHTML(r)}</section>
-        ${summaryHTML(r)}
+        <section class="reading-section" data-reading-section="6"><h4>六、5～7 個具體可執行建議</h4>${adviceHTML(publicReading)}</section>
+        ${summaryHTML(publicReading)}
         <div class="reading-reset"><button id="chooseAnotherQuestion" type="button">← 重新選擇主題／問題</button></div>
       </div>`;
 
