@@ -279,7 +279,7 @@ td.muted{color:var(--muted)}
 
 
 
-    <details class="section" id="baziAiGiftPanel" style="margin:0 0 24px">
+    <details class="section" id="baziAiGiftPanel" hidden style="margin:0 0 24px">
       <summary class="bazi-gift-summary">🎁 八字 AI 額度管理 <small>依 Email 查詢、贈送指定會員次數（預設收合）</small></summary>
       <div class="bazi-gift-body">
         <p>每個免費會員原有 01／02／05 三篇各一次。額外贈送的次數依你選擇的 A／B 範圍使用；會員前台僅顯示剩餘 AI 總次數。自訂問題與付費功能仍未開放。</p>
@@ -306,6 +306,16 @@ td.muted{color:var(--muted)}
       </div>
     </details>
 
+    <details class="section" id="dhWalletAdmin" style="margin-bottom:24px">
+      <summary class="bazi-gift-summary">🎁 共用會員額度管理 <small>八字／塔羅／易經共用，舊版八字專用 AI 贈送已停止使用</small></summary>
+      <div class="bazi-gift-body">
+        <p>每位新舊會員首次各有工具 10 次、AI 解讀 10 次；會員帳號共用，用完不每日重置。每日免費次數由各工具獨立管理。</p>
+        <div class="bazi-gift-row"><label>會員 Email <input type="email" id="dhWalletEmail" placeholder="已註冊 Google 會員 Email"></label><button class="btn secondary" type="button" id="dhWalletLookup">查詢</button></div>
+        <div id="dhWalletCurrent" class="bazi-gift-member" hidden></div>
+        <div class="bazi-gift-row"><label>贈送種類<select id="dhWalletBucket"><option value="tool">共用工具額度</option><option value="ai">共用 AI 解讀額度</option><option value="paid">付費額度（站長人工核發）</option></select></label><label>贈送次數<input type="number" id="dhWalletAmount" min="1" max="1000" value="10"></label></div>
+        <div class="bazi-gift-row"><button class="btn" id="dhWalletGrant" type="button" disabled>確認額外贈送</button><small id="dhWalletInfo" style="color:#a9bfd0" aria-live="polite">請先查詢會員。</small></div>
+      </div>
+    </details>
     <details class="section member-usage-box" id="memberUsagePanel">
       <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設收合｜依成功起盤排行）</small></span></summary>
       <div class="member-usage-body">
@@ -506,6 +516,32 @@ function fmtPaymentTime(t){
   return Number.isNaN(d.getTime())?raw:d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false});
 }
 
+// 中央共用額度管理，讀寫都需原管理員 HMAC session。
+let dhWalletSelected='';
+async function dhWalletAdminRequest(email,body){
+ const url=API_BASE+'/admin/shared-wallet'+(body?'':'?email='+encodeURIComponent(email));
+ const r=await fetch(url,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token(),Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify({...body,email}):undefined,cache:'no-store'});
+ const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw Error(j.error||'查詢失敗');return j;
+}
+function dhWalletAdminPaint(d){
+ const w=d.wallet;document.getElementById('dhWalletCurrent').hidden=false;
+ document.getElementById('dhWalletCurrent').textContent=d.member.name+'｜'+d.member.email+'｜共用工具 '+w.tool+' 次｜共用 AI '+w.ai+' 次｜付費 '+w.paid+' 次';
+ document.getElementById('dhWalletGrant').disabled=false;
+}
+document.getElementById('dhWalletLookup').addEventListener('click',async()=>{
+ const email=document.getElementById('dhWalletEmail').value.trim().toLowerCase(),info=document.getElementById('dhWalletInfo');
+ dhWalletSelected='';document.getElementById('dhWalletGrant').disabled=true;info.textContent='查詢中…';
+ try{const d=await dhWalletAdminRequest(email);dhWalletSelected=email;dhWalletAdminPaint(d);info.textContent='查詢成功。';}
+ catch(e){info.textContent='查詢失敗：'+e.message;document.getElementById('dhWalletCurrent').hidden=true}
+});
+document.getElementById('dhWalletGrant').addEventListener('click',async()=>{
+ const bucket=document.getElementById('dhWalletBucket').value,amount=Number(document.getElementById('dhWalletAmount').value),info=document.getElementById('dhWalletInfo');
+ if(!dhWalletSelected||!Number.isSafeInteger(amount)||amount<1||amount>1000)return;
+ if(!confirm('確定贈送 '+amount+' 次 '+(bucket==='tool'?'共用工具':bucket==='ai'?'共用 AI':'付費')+' 額度給 '+dhWalletSelected+'？'))return;
+ const btn=document.getElementById('dhWalletGrant');btn.disabled=true;
+ try{const d=await dhWalletAdminRequest(dhWalletSelected,{bucket,amount});dhWalletAdminPaint(d);info.textContent='✓ 已由後端記帳，餘額已更新';}
+ catch(e){info.textContent='贈送失敗：'+e.message}finally{btn.disabled=false}
+});
 // 站長公告管理：所有寫入動作使用既有後台 HMAC 憑證。
 let announcementAdminBusy=false,announcementAdminLoaded=false;
 function announcementAdminStatus(message,error=false){const e=$('announcementAdminStatus');e.textContent=message;e.classList.toggle('error',error)}

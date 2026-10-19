@@ -9,13 +9,16 @@
 
 const API_URL = window.YIJING_API_URL || "https://yijing-api.ezgocpu.workers.dev/reading";
 
-async function draw(question="", context={}) {
+async function draw(question="", context={}, options={}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
   try {
     const res = await fetch(API_URL, {
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{"Content-Type":"application/json",
+        ...(options.memberToken?{Authorization:'Bearer '+options.memberToken}:{}),
+        ...(options.adminToken?{'X-Yijing-Admin':options.adminToken}:{}),
+        ...(options.sharedConfirmed?{'X-DH-Shared-Confirm':'1'}:{})},
       body:JSON.stringify({question, context}),
       signal:controller.signal,
       cache:"no-store"
@@ -23,7 +26,7 @@ async function draw(question="", context={}) {
     let data={};
     try { data=await res.json(); } catch {}
     if (!res.ok || !data?.ok || !data?.reading) {
-      throw new Error(data?.error || `API 錯誤（${res.status}）`);
+      const err=new Error(data?.error || `API 錯誤（${res.status}）`);err.wallet=data.wallet||null;throw err;
     }
     return data.reading;
   } finally {

@@ -194,6 +194,15 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     <div class="member-announcement-sign">一念知機｜站長</div>
   </aside>
 
+  <section class="section" id="memberSharedWallet" style="margin-top:27px;padding-top:28px" aria-label="會員共用額度">
+    <div class="section-top"><div><div class="eyebrow">MY SHARED CREDITS</div><h2>我的共用額度</h2><p class="section-lead">八字、塔羅、易經共用；首次贈送各 10 次，用完不每日補充。每日免費使用次數請至各工具查看。</p></div><button class="btn small ghost" id="memberWalletRefresh" type="button">重新整理餘額</button></div>
+    <div class="tool-grid" id="memberWalletCards" aria-live="polite">
+      <div class="simple-panel"><b>共用工具額度</b><h3 id="memberWalletTool">— 次</h3><small>起盤／抽牌／起卦共用，用完不補</small></div>
+      <div class="simple-panel"><b>共用 AI 解讀額度</b><h3 id="memberWalletAI">— 次</h3><small>三種工具共用，成功解讀才扣除</small></div>
+      <div class="simple-panel"><b>付費解鎖額度</b><h3 id="memberWalletPaid">— 次</h3><small>獨立額度池，購買功能尚未開放</small></div>
+    </div>
+    <p class="caption" id="memberWalletNote" role="status">登入後即可查看實際剩餘額度。</p>
+  </section>
   <section class="section" style="margin-top:27px;padding-top:28px"><div class="section-top"><div><div class="eyebrow">MY DIVINATION</div><h2>我的占卜與命盤</h2><p class="section-lead">選擇工具，查看你的命盤與占卜紀錄。</p></div></div>
     <div class="tool-grid">
       <button class="tool-tile bazi" data-page="bazi" type="button"><span class="tile-icon">◈</span><h3>我的八字命盤</h3><p>管理本人與家人的出生資料、設定預設命盤。</p><span class="enter">開啟我的八字　↗</span></button>
@@ -320,6 +329,20 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
    function savedSession(){try{return localStorage.getItem(SESSION_KEY)||''}catch(_){return ''}}
    function storeSession(token){try{if(token)localStorage.setItem(SESSION_KEY,token);else localStorage.removeItem(SESSION_KEY);return true}catch(_){return false}}
    function sessionHeaders(){const t=savedSession();return t?{Authorization:'Bearer '+t}:{}}
+  async function refreshSharedWallet(){
+    const note=document.getElementById('memberWalletNote');
+    if(!verifiedSessionMember?.sub){for(const id of ['memberWalletTool','memberWalletAI','memberWalletPaid'])document.getElementById(id).textContent='— 次';note.textContent='登入後即可查看實際剩餘額度。';return;}
+    note.textContent='正在讀取會員共用額度…';
+    try{
+      const r=await fetch(API_MEMBER+'/wallet/status',{cache:'no-store',headers:{Accept:'application/json',...sessionHeaders()}});
+      const j=await r.json().catch(()=>null);if(!r.ok||!j?.success)throw Error(j?.error||'額度暫時無法查詢');
+      document.getElementById('memberWalletTool').textContent=j.wallet.tool+' 次';
+      document.getElementById('memberWalletAI').textContent=j.wallet.ai+' 次';
+      document.getElementById('memberWalletPaid').textContent=j.wallet.paid+' 次';
+      note.textContent='帳號共用額度不每日補充；各工具每日免費次數獨立計算。';
+    }catch(e){note.textContent='目前無法讀取真實餘額：'+e.message}
+  }
+  document.getElementById('memberWalletRefresh').addEventListener('click',refreshSharedWallet);
   const API_PUBLIC_ANNOUNCEMENT='https://admin-api.ezgocpu.workers.dev/member-announcement';
   const AUTH_KEY='divinationhub-bazi-google-credential';
   const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
@@ -453,7 +476,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
         const j=await r.json();if(!r.ok||!j.success||!j.member?.sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(j.sessionToken||''))throw Error(j.error||'會員驗證未通過');
         if(!storeSession(j.sessionToken))throw Error('瀏覽器無法儲存會員 Session，請確認不是限制儲存模式');
         // Keep the short-lived Google credential ONLY for legacy Tarot/Yijing during migration.
-        putToken(credential);verifiedSessionMember=j.member;memberSessionCheckDone=true;updateAuthUI();announceMemberAuth('login');
+        putToken(credential);verifiedSessionMember=j.member;memberSessionCheckDone=true;updateAuthUI();void refreshSharedWallet();announceMemberAuth('login');
         if(currentView==='bazi')loadBazi();
         if(currentView==='tarot'&&$('tarotFrame').src)$('tarotFrame').src='tarot-records.html?embedded=1';
         returnAfterLogin();
@@ -861,7 +884,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     const r=await fetch(API_MEMBER+'/auth/logout',{method:'POST',headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{})},cache:'no-store'});
     const j=await r.json().catch(()=>null);if(!r.ok||!j?.success)throw Error(j?.error||'後端登出失敗');
     ++memberSessionCheckSeq;
-    verifiedSessionMember=null;memberSessionCheckDone=true;storeSession('');putToken('');announceMemberAuth('logout');
+    verifiedSessionMember=null;memberSessionCheckDone=true;storeSession('');putToken('');announceMemberAuth('logout');void refreshSharedWallet();
     try{window.google?.accounts?.id?.disableAutoSelect?.()}catch(_){}
     $('tarotFrame').removeAttribute('src');updateAuthUI();rvResetForm();
     if(currentView!=='home')navigate('home');
@@ -876,7 +899,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       return;
     }
     const token=savedSession();
-    if(!token){verifiedSessionMember=null;memberSessionCheckDone=true;updateAuthUI();return}
+    if(!token){verifiedSessionMember=null;memberSessionCheckDone=true;updateAuthUI();void refreshSharedWallet();return}
     try{
       const r=await fetch(API_MEMBER+'/auth/session',{cache:'no-store',headers:{Accept:'application/json',Authorization:'Bearer '+token}});
       const j=await r.json().catch(()=>null);
