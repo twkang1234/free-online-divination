@@ -2777,23 +2777,23 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-overview .bazi-recas
       <div class="dh-quota-head"><strong>會員使用額度</strong><span>八字／塔羅／易經共用</span></div>
       <div class="bazi-ai-quota-grid bazi-entitlement-grid">
         <article class="bazi-ai-free-card bazi-cast-quota-card dh-quota-card">
-          <strong>本期免費額度</strong>
+          <strong>自動補充次數</strong>
           <div class="dh-quota-mini"><span>排盤</span><b id="baziCastQuotaCount">查詢中…</b></div>
           <div class="dh-quota-mini"><span>AI 解讀</span><b id="baziQuotaFreeAiCount">查詢中…</b></div>
           <p id="baziCastQuotaHint">依後台週期補充，不累積。</p>
           <p id="baziQuotaFreeAiHint" class="dh-quota-subnote">免費 AI 額度由後台設定。</p>
           <button type="button" id="baziCastQuotaLogin" class="bazi-entitlement-login" hidden>免費登入，使用會員額度 →</button>
         </article>
-        <article class="bazi-ai-free-card dh-quota-card">
-          <strong>共用工具額度</strong>
-          <b id="baziSharedToolCount">— 次</b>
-          <p>三工具共用，用完不補。</p>
-        </article>
-        <article class="bazi-ai-free-card bazi-entitlement-ai-card dh-quota-card">
-          <strong id="baziQuotaAccountLabel">共用 AI 額度</strong>
-          <b id="baziQuotaDailyCount">— 次</b>
-          <p id="baziQuotaDailyHint">成功解讀或追問才扣除。</p>
-          <button type="button" id="baziQuotaLogin" class="bazi-entitlement-login" hidden>免費登入，領取共用額度 →</button>
+        <article class="bazi-ai-free-card dh-quota-card dh-quota-gift">
+          <div class="dh-quota-gift-row">
+            <div class="dh-quota-gift-heading"><strong>網站贈送次數</strong><b id="baziSharedToolCount">— 次</b></div>
+            <p class="dh-quota-gift-note">平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。</p>
+          </div>
+          <div class="dh-quota-gift-row">
+            <div class="dh-quota-gift-heading"><strong id="baziQuotaAccountLabel">網站 AI 解析次數</strong><b id="baziQuotaDailyCount">— 次</b></div>
+            <p class="dh-quota-gift-note" id="baziQuotaDailyHint">平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。</p>
+            <button type="button" id="baziQuotaLogin" class="bazi-entitlement-login" hidden>免費登入，領取共用額度 →</button>
+          </div>
         </article>
         <article class="bazi-ai-paid-card bazi-entitlement-paid-card dh-quota-card">
           <strong>付費解鎖額度</strong>
@@ -5837,12 +5837,12 @@ ${tasks}
     if(location.search.includes('admin=1')){window.__baziAdminRoleQuota?.(j);return;}
     baziLatestQuota=j;
     const who=j.visitorType==='member'?'免費會員':'未登入訪客';
-    const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent='共用 AI 額度';
+    const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent='網站 AI 解析次數';
     const freeAi=document.getElementById('baziQuotaFreeAiCount');if(freeAi)freeAi.textContent=`${j.periodicAi?.remaining??0} / ${j.periodicAi?.limit??0} 次`;
     const freeAiNote=document.getElementById('baziQuotaFreeAiHint');if(freeAiNote)freeAiNote.textContent=`每 ${j.periodicAi?.days||1} 天補充｜下次 ${j.periodicAi?.resetAt||'待查'}`;
     const count=document.getElementById('baziQuotaDailyCount');if(count)count.textContent=j.authenticated?Math.max(0,Number(j.sharedAiRemaining||0))+' 次':'登入後可用';
     const hint=document.getElementById('baziQuotaDailyHint');
-    if(hint)hint.textContent='成功解讀或追問才扣除，用完不補。';
+    if(hint)hint.textContent='平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。';
     const login=document.getElementById('baziQuotaLogin');if(login)login.hidden=!!j.authenticated;
     document.querySelectorAll('.bazi-personal-quota').forEach(el=>el.textContent=baziPersonalQuotaText(j));
   }
@@ -9382,25 +9382,32 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script>
 
 <style id="dh-unified-quota-bazi-20261019">
-/* 三工具共通四欄資訊順序；八字沿用原本主題配色 */
+/* 三欄：自動補充、雙層網站贈送、付費（保持原扣點 ID 與主題配色） */
 #baziAiQuotaPanel .dh-quota-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 12px}
 #baziAiQuotaPanel .dh-quota-head strong{font-size:1rem;color:var(--text)}
 #baziAiQuotaPanel .dh-quota-head span{font-size:.70rem;color:var(--dim)}
-#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px!important}
-#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card{display:flex!important;flex-direction:column;gap:6px;min-width:0;min-height:125px;padding:13px!important;border-radius:12px}
-#baziAiQuotaPanel .dh-quota-card>strong{font-size:.80rem!important}
-#baziAiQuotaPanel .dh-quota-card>b{font-size:1.7rem!important;line-height:1.25;margin:4px 0 0}
-#baziAiQuotaPanel .dh-quota-card>p{font-size:.67rem!important;line-height:1.45;margin:3px 0 0!important}
-#baziAiQuotaPanel .dh-quota-card .dh-quota-mini{display:flex;align-items:baseline;justify-content:space-between;gap:5px;border-bottom:1px solid var(--line);padding:1px 0}
-#baziAiQuotaPanel .dh-quota-mini span{font-size:.69rem;color:var(--dim);white-space:nowrap}
-#baziAiQuotaPanel .dh-quota-mini b{font-size:1.03rem;color:var(--gold);white-space:nowrap}
-#baziAiQuotaPanel .dh-quota-subnote{font-size:.62rem!important}
-body.has-bazi-chart #baziAiQuotaPanel .dh-quota-card{padding:11px!important}
+#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{display:grid!important;grid-template-columns:minmax(0,1.25fr) minmax(0,1.78fr) minmax(185px,.78fr)!important;gap:10px!important}
+#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card{display:flex!important;flex-direction:column;gap:7px;min-width:0;min-height:174px;padding:14px!important;border-radius:12px}
+#baziAiQuotaPanel .dh-quota-card>strong{font-size:.87rem!important}
+#baziAiQuotaPanel .dh-quota-card>b{font-size:1.65rem!important;line-height:1.25;margin:4px 0 0}
+#baziAiQuotaPanel .dh-quota-card>p{font-size:.69rem!important;line-height:1.55;margin:3px 0 0!important}
+#baziAiQuotaPanel .dh-quota-card .dh-quota-mini{display:flex;align-items:baseline;justify-content:space-between;gap:5px;border-bottom:1px solid var(--line);padding:3px 0}
+#baziAiQuotaPanel .dh-quota-mini span{font-size:.76rem;color:var(--dim);white-space:nowrap}
+#baziAiQuotaPanel .dh-quota-mini b{font-size:1.05rem;color:var(--gold);white-space:nowrap}
+#baziAiQuotaPanel .dh-quota-subnote{font-size:.66rem!important}
+#baziAiQuotaPanel .dh-quota-gift{gap:0!important;justify-content:space-evenly}
+#baziAiQuotaPanel .dh-quota-gift-row{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:4px 0 8px}
+#baziAiQuotaPanel .dh-quota-gift-row+.dh-quota-gift-row{border-top:1px solid var(--line);padding-top:10px;padding-bottom:2px}
+#baziAiQuotaPanel .dh-quota-gift-heading{display:flex;align-items:baseline;justify-content:space-between;gap:9px}
+#baziAiQuotaPanel .dh-quota-gift-heading>strong{font-size:.84rem!important;white-space:nowrap}
+#baziAiQuotaPanel .dh-quota-gift-heading>b{font-size:1.24rem!important;color:var(--gold);line-height:1.3;white-space:nowrap}
+#baziAiQuotaPanel .dh-quota-gift-row .dh-quota-gift-note{font-size:.75rem!important;line-height:1.5!important;margin:0!important;color:var(--dim)}
+body.has-bazi-chart #baziAiQuotaPanel .dh-quota-card{padding:12px!important}
 body.has-bazi-chart #baziAiQuotaPanel .bazi-ai-paid-card{display:flex!important}
 body.has-bazi-chart #baziAiQuotaPanel .bazi-ai-quota-foot{display:flex}
 body.has-bazi-chart #baziAiQuotaPanel #baziQuotaDailyHint{display:block}
-@media(max-width:900px){#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media(max-width:470px){#baziAiQuotaPanel .dh-quota-head{flex-wrap:wrap}#baziAiQuotaPanel .dh-quota-card{padding:10px!important}#baziAiQuotaPanel .dh-quota-mini{flex-wrap:wrap}#baziAiQuotaPanel .dh-quota-mini b{font-size:.91rem}}
+@media(max-width:980px){#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card:last-child{grid-column:1/-1}}
+@media(max-width:580px){#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:1fr!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card:last-child{grid-column:auto}#baziAiQuotaPanel .dh-quota-head{flex-wrap:wrap}#baziAiQuotaPanel .dh-quota-card{padding:10px!important}#baziAiQuotaPanel .dh-quota-mini{flex-wrap:wrap}}
 </style>
 </body>
 </html>

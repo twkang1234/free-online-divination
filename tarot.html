@@ -3462,22 +3462,22 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       <div class="tarot-quota-panel dh-quota-grid" id="tarotQuotaPanel" aria-live="polite" aria-label="會員使用額度">
         <div class="dh-quota-head"><strong>會員使用額度</strong><span>八字／塔羅／易經共用</span></div>
         <section class="dh-quota-card" id="tarotToolWalletCard">
-          <b class="dh-quota-name">本期免費額度</b>
+          <b class="dh-quota-name">自動補充次數</b>
           <div class="dh-quota-mini"><span>抽牌</span><strong id="tarotToolWalletTitle">查詢中…</strong></div>
           <div class="dh-quota-mini"><span>AI 解讀</span><strong id="tarotQuotaCount">查詢中…</strong></div>
           <small id="tarotToolWalletLabel">免費次數及補充週期依後台設定。</small>
           <small id="tarotQuotaNote">免費 AI 額度由後台設定。</small>
           <b id="tarotQuotaTitle" hidden>免費額度</b>
         </section>
-        <section class="dh-quota-card">
-          <b class="dh-quota-name">共用工具額度</b>
-          <strong class="dh-quota-big" id="tarotSharedToolCount">— 次</strong>
-          <small>三工具共用，用完不補。</small>
-        </section>
-        <section class="dh-quota-card">
-          <b class="dh-quota-name">共用 AI 額度</b>
-          <strong class="dh-quota-big" id="tarotSharedAiCount">— 次</strong>
-          <small>成功解讀或追問才扣除。</small>
+        <section class="dh-quota-card dh-quota-gift">
+          <div class="dh-quota-gift-row">
+            <div class="dh-quota-gift-heading"><b class="dh-quota-name">網站贈送次數</b><strong class="dh-quota-big" id="tarotSharedToolCount">— 次</strong></div>
+            <small>平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。</small>
+          </div>
+          <div class="dh-quota-gift-row">
+            <div class="dh-quota-gift-heading"><b class="dh-quota-name">網站 AI 解析次數</b><strong class="dh-quota-big" id="tarotSharedAiCount">— 次</strong></div>
+            <small>平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。</small>
+          </div>
         </section>
         <section class="dh-quota-card dh-quota-paid">
           <b class="dh-quota-name" id="tarotPaidQuotaTitle">付費解鎖額度</b>
@@ -6935,26 +6935,33 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
 
 
 <style id="dh-unified-quota-tarot-20261019">
-#tarotQuotaPanel.dh-quota-grid,#tarotQuotaPanel.dh-quota-grid.tarot-paid-zero,html[data-tarot-layout="mobile"] #tarotQuotaPanel.dh-quota-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px!important;padding:11px!important;margin:0 0 13px!important;border:1px solid rgba(231,94,215,.19);border-radius:16px;background:rgba(154,114,255,.027)!important}
+/* 三欄額度：自動補充；網站贈送/網站 AI 解析上下對齊；付費欄保留 */
+#tarotQuotaPanel.dh-quota-grid,#tarotQuotaPanel.dh-quota-grid.tarot-paid-zero,html[data-tarot-layout="mobile"] #tarotQuotaPanel.dh-quota-grid{display:grid!important;grid-template-columns:minmax(0,1.25fr) minmax(0,1.78fr) minmax(185px,.78fr)!important;gap:10px!important;padding:12px!important;margin:0 0 13px!important;border:1px solid rgba(231,94,215,.19);border-radius:16px;background:rgba(154,114,255,.027)!important}
 #tarotQuotaPanel .dh-quota-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 4px 3px}
 #tarotQuotaPanel .dh-quota-head strong{font-size:.94rem;color:var(--text)}
 #tarotQuotaPanel .dh-quota-head span{font-size:.69rem;color:var(--dim)}
-#tarotQuotaPanel .dh-quota-card{min-width:0;min-height:123px;padding:12px 13px;border:1px solid rgba(231,94,215,.17);border-radius:12px;background:rgba(154,114,255,.035);display:flex;flex-direction:column;align-items:stretch;gap:6px}
-#tarotQuotaPanel .dh-quota-card .dh-quota-name{font-size:.82rem;color:var(--text)}
-#tarotQuotaPanel .dh-quota-card .dh-quota-big{font-size:1.6rem;line-height:1.25;color:var(--gold);margin-top:6px}
+#tarotQuotaPanel .dh-quota-card{min-width:0;min-height:175px;padding:13px;border:1px solid rgba(231,94,215,.17);border-radius:12px;background:rgba(154,114,255,.035);display:flex;flex-direction:column;align-items:stretch;gap:7px}
+#tarotQuotaPanel .dh-quota-card .dh-quota-name{font-size:.85rem;color:var(--text)}
+#tarotQuotaPanel .dh-quota-card .dh-quota-big{font-size:1.65rem;line-height:1.25;color:var(--gold);margin-top:4px}
 #tarotQuotaPanel .dh-quota-card.dh-quota-paid .dh-quota-big{color:var(--violet)}
-#tarotQuotaPanel .dh-quota-mini{display:flex;justify-content:space-between;align-items:baseline;gap:5px;border-bottom:1px solid var(--line);font-size:.72rem}
-#tarotQuotaPanel .dh-quota-mini>span{white-space:nowrap;color:var(--dim)}
-#tarotQuotaPanel .dh-quota-mini>strong{white-space:nowrap;color:var(--gold);font-size:1.02rem}
-#tarotQuotaPanel .dh-quota-card>small{font-size:.66rem;color:var(--dim);line-height:1.45}
+#tarotQuotaPanel .dh-quota-mini{display:flex;align-items:baseline;justify-content:space-between;gap:6px;padding:3px 0;border-bottom:1px solid rgba(231,94,215,.14)}
+#tarotQuotaPanel .dh-quota-mini>span{font-size:.76rem;color:var(--dim);white-space:nowrap}
+#tarotQuotaPanel .dh-quota-mini>strong{font-size:1.04rem;color:var(--gold);white-space:nowrap}
+#tarotQuotaPanel .dh-quota-card>small{font-size:.69rem;color:var(--dim);line-height:1.55}
+#tarotQuotaPanel .dh-quota-gift{gap:0;justify-content:space-evenly}
+#tarotQuotaPanel .dh-quota-gift-row{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:4px 0 8px}
+#tarotQuotaPanel .dh-quota-gift-row+.dh-quota-gift-row{border-top:1px solid rgba(231,94,215,.16);padding-top:10px;padding-bottom:2px}
+#tarotQuotaPanel .dh-quota-gift-heading{display:flex;align-items:baseline;justify-content:space-between;gap:9px}
+#tarotQuotaPanel .dh-quota-gift-heading .dh-quota-name{font-size:.85rem;white-space:nowrap}
+#tarotQuotaPanel .dh-quota-gift-heading .dh-quota-big{font-size:1.25rem;margin:0;white-space:nowrap}
+#tarotQuotaPanel .dh-quota-gift-row>small{font-size:.75rem;line-height:1.5;color:var(--dim)}
 #tarotQuotaPanel .dh-quota-card button#tarotPaidQuotaMore{align-self:flex-start;margin-top:auto;padding:6px 10px;border:1px solid rgba(154,114,255,.32);border-radius:9px;background:rgba(154,114,255,.075);color:var(--text);font-size:.69rem}
-#tarotQuotaPanel #tarotQuotaTitle[hidden],#tarotQuotaPanel #tarotPaidCompact[hidden]{display:none!important}
 html[data-theme="light"] #tarotQuotaPanel.dh-quota-grid{background:#faf7fb!important}
 html[data-theme="light"] #tarotQuotaPanel .dh-quota-card{background:#fff;border-color:#e1d2e7}
-html[data-theme="light"] #tarotQuotaPanel .dh-quota-mini>strong{color:#875615}
+html[data-theme="light"] #tarotQuotaPanel .dh-quota-gift-row+.dh-quota-gift-row{border-top-color:#e8ddea}
 html[data-theme="light"] #tarotQuotaPanel .dh-quota-card.dh-quota-paid .dh-quota-big{color:#7548a5}
-@media(max-width:900px){#tarotQuotaPanel.dh-quota-grid,#tarotQuotaPanel.dh-quota-grid.tarot-paid-zero,html[data-tarot-layout="mobile"] #tarotQuotaPanel.dh-quota-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media(max-width:470px){#tarotQuotaPanel .dh-quota-head{flex-wrap:wrap}#tarotQuotaPanel .dh-quota-card{padding:9px}#tarotQuotaPanel .dh-quota-mini{flex-wrap:wrap}}
+@media(max-width:980px){#tarotQuotaPanel.dh-quota-grid,#tarotQuotaPanel.dh-quota-grid.tarot-paid-zero,html[data-tarot-layout="mobile"] #tarotQuotaPanel.dh-quota-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}#tarotQuotaPanel>.dh-quota-card:last-child{grid-column:1/-1}}
+@media(max-width:580px){#tarotQuotaPanel.dh-quota-grid,#tarotQuotaPanel.dh-quota-grid.tarot-paid-zero,html[data-tarot-layout="mobile"] #tarotQuotaPanel.dh-quota-grid{grid-template-columns:1fr!important}#tarotQuotaPanel>.dh-quota-card:last-child{grid-column:auto}#tarotQuotaPanel .dh-quota-head{flex-wrap:wrap}#tarotQuotaPanel .dh-quota-card{padding:10px}#tarotQuotaPanel .dh-quota-mini{flex-wrap:wrap}}
 </style>
 </body>
 </html>

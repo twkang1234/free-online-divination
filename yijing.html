@@ -1762,22 +1762,22 @@ html[data-theme="light"] .yijing-ai-quota-modal-actions button{background:#eaf4e
     </div>
     <div class="dh-quota-head"><strong>會員使用額度</strong><span>八字／塔羅／易經共用</span></div>
     <div class="yijing-quota-grid">
-      <section class="yijing-quota-card" aria-label="本期免費額度">
-        <h4>本期免費額度</h4>
+      <section class="yijing-quota-card" aria-label="自動補充次數">
+        <h4>自動補充次數</h4>
         <div class="dh-quota-mini"><span>起卦</span><strong id="yijingQuotaCastCount">查詢中</strong></div>
         <div class="dh-quota-mini"><span>AI 解卦</span><strong id="yijingQuotaFreeAiCount">查詢中</strong></div>
         <p id="yijingQuotaCastNote">免費起卦依後台設定週期補充。</p>
         <p id="yijingQuotaFreeAiNote">免費 AI 額度由後台設定。</p>
       </section>
-      <section class="yijing-quota-card" aria-label="共用工具額度">
-        <h4>共用工具額度</h4>
-        <div class="quota-value is-gold" id="yijingQuotaToolWalletCount">— 次</div>
-        <p id="yijingQuotaCastFuture">三工具共用，用完不補。</p>
-      </section>
-      <section class="yijing-quota-card" aria-label="共用 AI 額度">
-        <h4>共用 AI 額度</h4>
-        <div class="quota-value is-gold" id="yijingQuotaAiCount">— 次</div>
-        <p id="yijingQuotaAiNote">成功解讀或追問才扣除。</p>
+      <section class="yijing-quota-card dh-quota-gift" aria-label="網站贈送額度">
+        <div class="dh-quota-gift-row">
+          <div class="dh-quota-gift-heading"><h4>網站贈送次數</h4><div class="quota-value is-gold" id="yijingQuotaToolWalletCount">— 次</div></div>
+          <p id="yijingQuotaCastFuture">平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。</p>
+        </div>
+        <div class="dh-quota-gift-row">
+          <div class="dh-quota-gift-heading"><h4>網站 AI 解析次數</h4><div class="quota-value is-gold" id="yijingQuotaAiCount">— 次</div></div>
+          <p id="yijingQuotaAiNote">平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。</p>
+        </div>
       </section>
       <section class="yijing-quota-card" aria-label="付費解鎖額度">
         <h4>付費解鎖額度</h4>
@@ -2617,12 +2617,12 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     const paid=$('yijingQuotaPaidCount'),paidNote=$('yijingQuotaPaidNote'),foot=$('yijingQuotaFootnote'),status=$('yijingQuotaStatus');
     if(cast)cast.textContent=full?'本次不限次數':daily?`${daily.remaining} / ${daily.limit} 次`:'查詢中';
     if(castNote)castNote.textContent=full?'管理員完整測試不扣正式額度。':daily?`每 ${daily.days} 天補充，不累積｜下次 ${daily.resetAt}`:'正在取得定期免費起卦額度';
-    if(castFuture)castFuture.textContent=test?'管理員試跑不扣正式額度。':'三工具共用，用完不補。';
+    if(castFuture)castFuture.textContent=test?'管理員試跑不扣正式額度。':'平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。';
     if(toolWallet)toolWallet.textContent=test?'測試模式':wallet?`${wallet.tool} 次`:'登入後可用';
     if(freeAiCount)freeAiCount.textContent=test?'測試模式':aiFree?`${aiFree.remaining} / ${aiFree.limit} 次`:'查詢中';
     if(freeAiNote)freeAiNote.textContent=test?'管理員試跑不影響正式額度。':aiFree?`每 ${aiFree.days} 天補充｜下次 ${aiFree.resetAt||'待查'}`:'免費 AI 額度由後台設定。';
     if(ai)ai.textContent=test?(canRunYijingAI()?'管理員試跑':'測試限制'):wallet?`${wallet.ai} 次`:'登入後可用';
-    if(aiNote)aiNote.textContent=test?'管理員 AI 不扣正式會員額度。':'成功解讀或追問才扣除，用完不補。';
+    if(aiNote)aiNote.textContent=test?'管理員 AI 不扣正式會員額度。':'平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。';
     if(paid)paid.textContent=full?'已完整解鎖':test?`${paidCredits()} 次`:wallet?`${wallet.paid} 次`:'0 次';
     if(paidNote)paidNote.textContent=test?'管理員模擬，不產生付款或扣款。':'付費額度與 AI 解讀額度分開；正式方案尚未開放。';
     if(foot)foot.textContent=test?'管理員模擬不影響正式額度。':'免費額度按台灣時間的後台週期補充；會員共用工具與 AI 額度不會定期補回。';
@@ -3587,26 +3587,35 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
 <div style="width:min(1120px,calc(100% - 40px));margin:0 auto 28px;color:var(--muted);font-size:.64rem;line-height:1.7;text-align:center">經文轉寫參考中文維基文庫《周易正義》（武英殿十三經注疏本）之公開資料；古籍原文屬公有領域，轉寫頁面依其授權條款使用。</div>
 
 <style id="dh-unified-quota-yijing-20261019">
+/* 三欄：自動補充；網站贈送/網站 AI 解析上下分層；付費維持現況 */
 #yijingQuotaPanel{padding:12px 14px!important}
 #yijingQuotaPanel .dh-quota-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 3px 10px}
 #yijingQuotaPanel .dh-quota-head strong{font-size:.96rem;color:#dceee2}
 #yijingQuotaPanel .dh-quota-head span{font-size:.70rem;color:#95a49a}
-#yijingQuotaPanel .yijing-quota-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px}
-#yijingQuotaPanel .yijing-quota-card{min-width:0;min-height:126px!important;padding:12px 13px!important;gap:5px!important;border-radius:12px}
-#yijingQuotaPanel .yijing-quota-card h4{font-size:.83rem;line-height:1.35}
-#yijingQuotaPanel .yijing-quota-card .quota-value{font-size:1.65rem;margin:8px 0 4px;line-height:1.25}
-#yijingQuotaPanel .dh-quota-mini{display:flex;align-items:baseline;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(155,166,151,.17);padding:2px 0}
-#yijingQuotaPanel .dh-quota-mini>span{font-size:.70rem;color:#9caeb0;white-space:nowrap}
-#yijingQuotaPanel .dh-quota-mini>strong{font-size:1.02rem;color:#d59a2d;white-space:nowrap}
-#yijingQuotaPanel .yijing-quota-card p,#yijingQuotaPanel .yijing-quota-card .yijing-quota-next{font-size:.67rem;line-height:1.45;margin:3px 0 0;padding:0;border:0}
+#yijingQuotaPanel .yijing-quota-grid{display:grid!important;grid-template-columns:minmax(0,1.25fr) minmax(0,1.78fr) minmax(185px,.78fr)!important;gap:10px}
+#yijingQuotaPanel .yijing-quota-card{min-width:0;min-height:175px!important;padding:13px!important;gap:7px!important;border-radius:12px}
+#yijingQuotaPanel .yijing-quota-card h4{font-size:.85rem;line-height:1.35}
+#yijingQuotaPanel .yijing-quota-card .quota-value{font-size:1.65rem;margin:5px 0 4px;line-height:1.25}
+#yijingQuotaPanel .dh-quota-mini{display:flex;align-items:baseline;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(155,166,151,.17);padding:4px 0}
+#yijingQuotaPanel .dh-quota-mini>span{font-size:.76rem;color:#9caeb0;white-space:nowrap}
+#yijingQuotaPanel .dh-quota-mini>strong{font-size:1.06rem;color:#d59a2d;white-space:nowrap}
+#yijingQuotaPanel .yijing-quota-card p,#yijingQuotaPanel .yijing-quota-card .yijing-quota-next{font-size:.69rem;line-height:1.55;margin:3px 0 0;padding:0;border:0}
+#yijingQuotaPanel .dh-quota-gift{gap:0!important;justify-content:space-evenly!important}
+#yijingQuotaPanel .dh-quota-gift-row{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:4px 0 8px}
+#yijingQuotaPanel .dh-quota-gift-row+.dh-quota-gift-row{border-top:1px solid rgba(155,166,151,.17);padding-top:10px;padding-bottom:2px}
+#yijingQuotaPanel .dh-quota-gift-heading{display:flex;align-items:baseline;justify-content:space-between;gap:9px}
+#yijingQuotaPanel .dh-quota-gift-heading h4{font-size:.85rem;white-space:nowrap}
+#yijingQuotaPanel .dh-quota-gift-heading .quota-value{font-size:1.25rem;margin:0;white-space:nowrap}
+#yijingQuotaPanel .dh-quota-gift-row>p{font-size:.75rem;line-height:1.5;margin:0;color:#9caeb0}
 #yijingQuotaPanel .yijing-quota-paid-action{font-size:.69rem;margin-top:auto;padding:6px 9px;min-height:30px}
 #yijingQuotaPanel .yijing-quota-foot{margin-top:8px;font-size:.68rem}
 html[data-theme="light"] #yijingQuotaPanel .dh-quota-head strong{color:#223e2c}
 html[data-theme="light"] #yijingQuotaPanel .dh-quota-head span{color:#718274}
 html[data-theme="light"] #yijingQuotaPanel .dh-quota-mini>span{color:#65766e}
 html[data-theme="light"] #yijingQuotaPanel .dh-quota-mini>strong{color:#986012}
-@media(max-width:900px){#yijingQuotaPanel .yijing-quota-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-@media(max-width:470px){#yijingQuotaPanel .dh-quota-head{flex-wrap:wrap}#yijingQuotaPanel .yijing-quota-card{padding:10px!important}#yijingQuotaPanel .dh-quota-mini{flex-wrap:wrap}#yijingQuotaPanel .dh-quota-mini>strong{font-size:.90rem}}
+html[data-theme="light"] #yijingQuotaPanel .dh-quota-gift-row>p{color:#65766e}
+@media(max-width:980px){#yijingQuotaPanel .yijing-quota-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}#yijingQuotaPanel .yijing-quota-card:last-child{grid-column:1/-1}}
+@media(max-width:580px){#yijingQuotaPanel .yijing-quota-grid{grid-template-columns:1fr!important}#yijingQuotaPanel .yijing-quota-card:last-child{grid-column:auto}#yijingQuotaPanel .dh-quota-head{flex-wrap:wrap}#yijingQuotaPanel .yijing-quota-card{padding:10px!important}#yijingQuotaPanel .dh-quota-mini{flex-wrap:wrap}}
 </style>
 </body>
 </html>
