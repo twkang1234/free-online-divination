@@ -18,7 +18,9 @@ async function draw(question="", context={}, options={}) {
       headers:{"Content-Type":"application/json",
         ...(options.memberToken?{Authorization:'Bearer '+options.memberToken}:{}),
         ...(options.adminToken?{'X-Yijing-Admin':options.adminToken}:{}),
-        ...(options.sharedConfirmed?{'X-DH-Shared-Confirm':'1'}:{})},
+        ...(options.sharedConfirmed?{'X-DH-Shared-Confirm':'1'}:{}),
+        ...(options.visitorId?{'X-DH-Yijing-Visitor-Id':options.visitorId}:{}),
+        ...(options.operationId?{'X-DH-Yijing-Op-Id':options.operationId}:{})},
       body:JSON.stringify({question, context}),
       signal:controller.signal,
       cache:"no-store"
