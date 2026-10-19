@@ -1760,29 +1760,30 @@ html[data-theme="light"] .yijing-ai-quota-modal-actions button{background:#eaf4e
     <div class="yijing-access-bar" id="yijingAccessBar">
       <div class="yijing-access-copy"><div class="yijing-access-heading"><b id="yijingAccessTitle">未登入訪客</b><button class="yijing-access-cta" id="yijingAccessLogin" type="button">免費登入解除大部分限制</button></div><span id="yijingAccessText">每日部分內容輪替開放；免費登入後可解除大部分限制。</span></div>
     </div>
+    <div class="dh-quota-head"><strong>會員使用額度</strong><span>八字／塔羅／易經共用</span></div>
     <div class="yijing-quota-grid">
-      <section class="yijing-quota-card" aria-label="免費起卦次數">
-        <div>
-          <h4>免費起卦次數</h4>
-          <div class="quota-value is-gold" id="yijingQuotaCastCount">查詢中</div>
-        </div>
-        <p id="yijingQuotaCastNote">免費起卦次數與補充週期依後台設定。</p>
-        <p class="yijing-quota-next" id="yijingQuotaCastFuture">定期免費用完後，登入會員才使用共用工具額度。</p>
+      <section class="yijing-quota-card" aria-label="本期免費額度">
+        <h4>本期免費額度</h4>
+        <div class="dh-quota-mini"><span>起卦</span><strong id="yijingQuotaCastCount">查詢中</strong></div>
+        <div class="dh-quota-mini"><span>AI 解卦</span><strong id="yijingQuotaFreeAiCount">查詢中</strong></div>
+        <p id="yijingQuotaCastNote">免費起卦依後台設定週期補充。</p>
+        <p id="yijingQuotaFreeAiNote">免費 AI 額度由後台設定。</p>
       </section>
-      <section class="yijing-quota-card" aria-label="AI 解讀次數">
-        <div>
-          <h4>AI 解讀次數</h4>
-          <div class="quota-value is-gold" id="yijingQuotaAiCount">尚未開放</div>
-        </div>
-        <p id="yijingQuotaAiNote">會員共用 AI 額度首次贈送 10 次；每次成功 AI 解讀或追問扣 1 次，用完不補。</p>
+      <section class="yijing-quota-card" aria-label="共用工具額度">
+        <h4>共用工具額度</h4>
+        <div class="quota-value is-gold" id="yijingQuotaToolWalletCount">— 次</div>
+        <p id="yijingQuotaCastFuture">三工具共用，用完不補。</p>
       </section>
-      <section class="yijing-quota-card" aria-label="付費次數">
-        <div>
-          <h4>付費次數</h4>
-          <div class="quota-value is-purple" id="yijingQuotaPaidCount">0 次</div>
-        </div>
-        <p id="yijingQuotaPaidNote">獨立的付費解鎖額度，與 AI 解讀次數分開；尚未正式販售。</p>
-        <button id="yijingPaidEntryButton" class="yijing-quota-paid-action" type="button">了解付費解鎖</button>
+      <section class="yijing-quota-card" aria-label="共用 AI 額度">
+        <h4>共用 AI 額度</h4>
+        <div class="quota-value is-gold" id="yijingQuotaAiCount">— 次</div>
+        <p id="yijingQuotaAiNote">成功解讀或追問才扣除。</p>
+      </section>
+      <section class="yijing-quota-card" aria-label="付費解鎖額度">
+        <h4>付費解鎖額度</h4>
+        <div class="quota-value is-purple" id="yijingQuotaPaidCount">0 次</div>
+        <p id="yijingQuotaPaidNote">付費功能尚未開放。</p>
+        <button id="yijingPaidEntryButton" class="yijing-quota-paid-action" type="button">了解進階</button>
       </section>
     </div>
     <div class="yijing-quota-foot">
@@ -2611,13 +2612,17 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     const $=id=>document.getElementById(id);
     const full=hasFullPaidAccess(),test=isAdminTestActive(),daily=dhYijingLive?.daily,aiFree=dhYijingLive?.ai,wallet=dhYijingLive?.wallet;
     const cast=$('yijingQuotaCastCount'),castNote=$('yijingQuotaCastNote'),castFuture=$('yijingQuotaCastFuture');
+    const toolWallet=$('yijingQuotaToolWalletCount'),freeAiCount=$('yijingQuotaFreeAiCount'),freeAiNote=$('yijingQuotaFreeAiNote');
     const ai=$('yijingQuotaAiCount'),aiNote=$('yijingQuotaAiNote');
     const paid=$('yijingQuotaPaidCount'),paidNote=$('yijingQuotaPaidNote'),foot=$('yijingQuotaFootnote'),status=$('yijingQuotaStatus');
     if(cast)cast.textContent=full?'本次不限次數':daily?`${daily.remaining} / ${daily.limit} 次`:'查詢中';
     if(castNote)castNote.textContent=full?'管理員完整測試不扣正式額度。':daily?`每 ${daily.days} 天補充，不累積｜下次 ${daily.resetAt}`:'正在取得定期免費起卦額度';
-    if(castFuture)castFuture.textContent=test?'管理員試跑不影響正式會員額度。':wallet?`會員共用工具剩餘 ${wallet.tool} 次（跨三工具，用完不補）`:'本期免費次數用完後，登入會員可使用共用工具額度。';
-    if(ai)ai.textContent=test?(canRunYijingAI()?'管理員試跑':'測試限制'):aiFree?`${aiFree.remaining+(wallet?.ai||0)} 次`:'查詢中';
-    if(aiNote)aiNote.textContent=test?'管理員 AI 不扣正式會員額度。':aiFree?`本期免費 AI ${aiFree.remaining}/${aiFree.limit} 次｜每 ${aiFree.days} 天補充${wallet?'｜共用 AI '+wallet.ai+' 次':''}；成功解讀或追問才扣。`:'定期免費 AI 與會員共用 AI 額度分開計算。';
+    if(castFuture)castFuture.textContent=test?'管理員試跑不扣正式額度。':'三工具共用，用完不補。';
+    if(toolWallet)toolWallet.textContent=test?'測試模式':wallet?`${wallet.tool} 次`:'登入後可用';
+    if(freeAiCount)freeAiCount.textContent=test?'測試模式':aiFree?`${aiFree.remaining} / ${aiFree.limit} 次`:'查詢中';
+    if(freeAiNote)freeAiNote.textContent=test?'管理員試跑不影響正式額度。':aiFree?`每 ${aiFree.days} 天補充｜下次 ${aiFree.resetAt||'待查'}`:'免費 AI 額度由後台設定。';
+    if(ai)ai.textContent=test?(canRunYijingAI()?'管理員試跑':'測試限制'):wallet?`${wallet.ai} 次`:'登入後可用';
+    if(aiNote)aiNote.textContent=test?'管理員 AI 不扣正式會員額度。':'成功解讀或追問才扣除，用完不補。';
     if(paid)paid.textContent=full?'已完整解鎖':test?`${paidCredits()} 次`:wallet?`${wallet.paid} 次`:'0 次';
     if(paidNote)paidNote.textContent=test?'管理員模擬，不產生付款或扣款。':'付費額度與 AI 解讀額度分開；正式方案尚未開放。';
     if(foot)foot.textContent=test?'管理員模擬不影響正式額度。':'免費額度按台灣時間的後台週期補充；會員共用工具與 AI 額度不會定期補回。';
@@ -3580,5 +3585,28 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     });
   </script>
 <div style="width:min(1120px,calc(100% - 40px));margin:0 auto 28px;color:var(--muted);font-size:.64rem;line-height:1.7;text-align:center">經文轉寫參考中文維基文庫《周易正義》（武英殿十三經注疏本）之公開資料；古籍原文屬公有領域，轉寫頁面依其授權條款使用。</div>
+
+<style id="dh-unified-quota-yijing-20261019">
+#yijingQuotaPanel{padding:12px 14px!important}
+#yijingQuotaPanel .dh-quota-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 3px 10px}
+#yijingQuotaPanel .dh-quota-head strong{font-size:.96rem;color:#dceee2}
+#yijingQuotaPanel .dh-quota-head span{font-size:.70rem;color:#95a49a}
+#yijingQuotaPanel .yijing-quota-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:9px}
+#yijingQuotaPanel .yijing-quota-card{min-width:0;min-height:126px!important;padding:12px 13px!important;gap:5px!important;border-radius:12px}
+#yijingQuotaPanel .yijing-quota-card h4{font-size:.83rem;line-height:1.35}
+#yijingQuotaPanel .yijing-quota-card .quota-value{font-size:1.65rem;margin:8px 0 4px;line-height:1.25}
+#yijingQuotaPanel .dh-quota-mini{display:flex;align-items:baseline;justify-content:space-between;gap:6px;border-bottom:1px solid rgba(155,166,151,.17);padding:2px 0}
+#yijingQuotaPanel .dh-quota-mini>span{font-size:.70rem;color:#9caeb0;white-space:nowrap}
+#yijingQuotaPanel .dh-quota-mini>strong{font-size:1.02rem;color:#d59a2d;white-space:nowrap}
+#yijingQuotaPanel .yijing-quota-card p,#yijingQuotaPanel .yijing-quota-card .yijing-quota-next{font-size:.67rem;line-height:1.45;margin:3px 0 0;padding:0;border:0}
+#yijingQuotaPanel .yijing-quota-paid-action{font-size:.69rem;margin-top:auto;padding:6px 9px;min-height:30px}
+#yijingQuotaPanel .yijing-quota-foot{margin-top:8px;font-size:.68rem}
+html[data-theme="light"] #yijingQuotaPanel .dh-quota-head strong{color:#223e2c}
+html[data-theme="light"] #yijingQuotaPanel .dh-quota-head span{color:#718274}
+html[data-theme="light"] #yijingQuotaPanel .dh-quota-mini>span{color:#65766e}
+html[data-theme="light"] #yijingQuotaPanel .dh-quota-mini>strong{color:#986012}
+@media(max-width:900px){#yijingQuotaPanel .yijing-quota-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:470px){#yijingQuotaPanel .dh-quota-head{flex-wrap:wrap}#yijingQuotaPanel .yijing-quota-card{padding:10px!important}#yijingQuotaPanel .dh-quota-mini{flex-wrap:wrap}#yijingQuotaPanel .dh-quota-mini>strong{font-size:.90rem}}
+</style>
 </body>
 </html>
