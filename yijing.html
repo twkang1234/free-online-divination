@@ -1521,6 +1521,34 @@ html[data-theme="light"] .yijing-rd-ai-kicker{color:#559669}
 .yijing-fixed-compact .yijing-fixed-detail-note>span:first-child{font-weight:900;font-size:.85rem}
 @media(max-width:700px){.yijing-fixed-compact .yijing-fixed-public-main>.hex-card{width:100%}}
 </style>
+<style id="yijing-followup-ui-styles">
+/* Fixed-question reading choice: compact, intentionally no extra modal. */
+.yi-mode-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 2px}
+.yi-mode-option{display:flex;flex:1 1 220px;gap:9px;align-items:center;min-width:0;padding:10px 12px;border:1px solid rgba(124,227,161,.19);border-radius:11px;background:rgba(124,227,161,.035);cursor:pointer;font-size:.76rem;line-height:1.5}
+.yi-mode-option:has(input:checked){border-color:rgba(124,227,161,.62);background:rgba(124,227,161,.095)}
+.yi-mode-option input{accent-color:#5ebc82;flex:0 0 auto}
+.yi-mode-option b{display:block;color:var(--text,#ddecdf)}
+.yi-mode-option small{display:block;font-size:.68rem;color:#8ea99a}
+.yi-followup{margin:13px 0 6px;border:1px solid rgba(124,227,161,.18);border-radius:12px;background:rgba(124,227,161,.025)}
+.yi-followup>summary{padding:10px 14px;cursor:pointer;color:#9ed5b2;font-weight:750;font-size:.77rem;list-style-position:inside}
+.yi-followup-inner{padding:2px 14px 14px}
+.yi-followup-note{margin:0 0 9px;font-size:.7rem;line-height:1.7;color:#81968b}
+.yi-followup textarea{width:100%;min-height:82px;max-height:260px;resize:vertical;padding:10px 11px;border:1px solid rgba(124,227,161,.23);border-radius:9px;background:rgba(0,0,0,.12);color:inherit;line-height:1.65;font-size:.78rem;box-sizing:border-box}
+.yi-followup-actions{display:flex;gap:12px;align-items:center;justify-content:flex-start;flex-wrap:wrap;margin:9px 0}
+.yi-followup-send{min-height:36px!important;padding:7px 15px!important;border-radius:9px!important;border:1px solid rgba(124,227,161,.36)!important;background:rgba(124,227,161,.17)!important;color:#aedfc0!important;font-size:.74rem!important;font-weight:800!important}
+.yi-followup-status{font-size:.68rem;line-height:1.6;color:#849f90}
+.yi-followup-answer{margin-top:12px;padding:13px 15px;border:1px solid rgba(124,227,161,.15);border-radius:10px;font-size:.78rem;line-height:1.85;overflow-wrap:anywhere}
+.yi-followup-status.is-error{color:#f17e78}
+.yi-basic-to-ai{padding:9px 13px!important;margin:10px 0 0!important;border:1px solid rgba(124,227,161,.24)!important;border-radius:9px!important;background:transparent!important;color:#85c89f!important;font-size:.7rem!important}
+html[data-theme="light"] .yi-mode-option,html[data-theme="light"] .yi-followup{background:#f7fbf8;border-color:#d8e8dc}
+html[data-theme="light"] .yi-mode-option:has(input:checked){background:#eaf5ed;border-color:#87bd98}
+html[data-theme="light"] .yi-mode-option b{color:#234932}
+html[data-theme="light"] .yi-mode-option small,html[data-theme="light"] .yi-followup-note{color:#637c6c}
+html[data-theme="light"] .yi-followup>summary{color:#2d6d49}
+html[data-theme="light"] .yi-followup textarea{color:#234631;background:#fff;border-color:#cfdfd3}
+html[data-theme="light"] .yi-followup-send{background:#d9f3e0!important;color:#245e3a!important}
+@media(max-width:520px){.yi-mode-row{gap:7px}.yi-mode-option{flex-basis:100%}.yi-followup-inner{padding:2px 10px 12px}}
+</style>
 </head>
 <body>
   <header class="page-topbar">
@@ -2106,7 +2134,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
 (() => {
   const empty=document.getElementById('emptyState'), result=document.getElementById('result');
   let currentReading=null;
-  let state={topic:null,scenario:null,question:null,custom:false,customSource:null};
+  let state={topic:null,scenario:null,question:null,custom:false,customSource:null,fixedReadingMode:'basic'};
   let castMode='coin3';
   let customGateConfirmed=false;
   let selectedHex64=null;
@@ -2783,8 +2811,9 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       if(gate)gate.hidden=true;
       setCustomReadyAccess(true);
     }else{
-      if(head)head.innerHTML='<span>STEP 04</span><h4>問題已經整理好了</h4><p>可以直接起卦；若有必要，也可補一句背景，例如 A／B 各代表什麼、目前多久沒聯絡、正在等哪個結果。</p>';
-      document.getElementById('yijingReadyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)} → ${esc(state.scenario.name)}</div><strong>${esc(q)}</strong><p>解讀重點：${esc(state.topic.focus)}</p>`;
+      if(head)head.innerHTML='<span>STEP 04</span><h4>選擇解析方式，再開始起卦</h4><p>固定題目可選站內基本解析或 AI 專業解析。無論選哪一種，後續都保留一次選用的 AI 追問；若有需要，可補充事件背景。</p>';
+      state.fixedReadingMode=state.fixedReadingMode==='ai'?'ai':'basic';
+      document.getElementById('yijingReadyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)} → ${esc(state.scenario.name)}</div><strong>${esc(q)}</strong><p>解讀重點：${esc(state.topic.focus)}</p><div class="yi-mode-row" role="group" aria-label="選擇本次固定題目的解析方式"><label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="basic" ${state.fixedReadingMode==='basic'?'checked':''}><span><b>站內基本解析</b><small>現有規則式解讀；看完可使用一次 AI 追問</small></span></label><label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="ai" ${state.fixedReadingMode==='ai'?'checked':''}><span><b>AI 專業解析</b><small>約 1,500 字個人化解讀；完成後可再追問一次</small></span></label></div>`;
       if(gate)gate.hidden=true;
       setCustomReadyAccess(true);
     }
@@ -2802,7 +2831,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   }
   function resetGuide(){
     clearCastTimers();
-    state={topic:null,scenario:null,question:null,custom:false,customSource:null};
+    state={topic:null,scenario:null,question:null,custom:false,customSource:null,fixedReadingMode:'basic'};
     customGateConfirmed=false;
     hideCustomQualityWarning();
     const customExamples=document.getElementById('yijingCustomExamples');
@@ -2982,6 +3011,65 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     link.href=url;link.download=fileName;document.body.appendChild(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
   }
+
+  const yijingFollowupUsedCasts=new WeakSet();
+  function yijingAiPayload(r,mode='initial',extra={}){
+    return {
+      mode,
+      question:r.question,
+      context:{questionIntent:state.custom?'custom':'guided',topic:{id:r.topic.id,name:r.topic.name,focus:r.topic.focus},scenario:{id:r.scenario.id,name:r.scenario.name,desc:r.scenario.desc},cast:{mode:r.castMethod.mode,label:r.castMethod.label,values:r.values,hexNumber:r.castMethod.hexNumber,numbers:r.castMethod.numbers}},
+      ...(mode==='followup'?{followupQuestion:extra.question,previousKind:extra.kind,previousAnswer:String(extra.answer||'').slice(0,7500)}:{})
+    };
+  }
+  async function requestYijingAI(r,mode='initial',extra={},signal){
+    const token=adminToken();
+    if(!YIJING_PUBLIC_OPEN_TEST&&(!isAdminTestActive()||!token))throw Error('管理員身分已失效，請重新登入。');
+    const payload=yijingAiPayload(r,mode,extra);
+    const api=window.YIJING_API_URL||'https://yijing-api.ezgocpu.workers.dev/reading';
+    const url=new URL(api,location.href);url.pathname='/ai/interpret';url.search='';
+    let res,data;
+    if(YIJING_PUBLIC_OPEN_TEST){
+      // 完整卦象在私有 Worker 重新計算並加密，網頁端不會取得 AI 專業提示詞。
+      url.pathname='/ai/prepare';
+      const prepared=await fetch(url.toString(),{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal,body:JSON.stringify(payload)});
+      const prep=await prepared.json().catch(()=>({}));
+      if(!prepared.ok||!prep.ok||!prep.ticket)throw Error('無法準備 AI '+(mode==='followup'?'追問':'解卦')+'（'+String(prep?.error||prepared.status)+'）');
+      res=await fetch('https://ai-center-api.ezgocpu.workers.dev/api/test/yijing/interpret',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal,body:JSON.stringify({ticket:prep.ticket})});
+      data=await res.json().catch(()=>({}));
+    }else{
+      res=await fetch(url.toString(),{method:'POST',headers:{'Content-Type':'application/json','X-Yijing-Admin':token},cache:'no-store',signal,body:JSON.stringify(payload)});
+      data=await res.json().catch(()=>({}));
+    }
+    if(!res.ok||!data.ok||typeof data.answer!=='string'||data.answer.trim().length<20)throw Error('AI 暫時無法完成'+(mode==='followup'?'追問':'解讀')+'（'+String(data?.error||res.status)+'）'+(data.traceId?'｜'+data.traceId:''));
+    return data;
+  }
+  function yijingFollowupHTML(kind){
+    const help=kind==='basic'?'根據剛才的基本解析與同一次卦象，向 AI 追問一個最想釐清的問題。':'針對剛完成的 AI 解讀，再深入追問一次。';
+    return `<details class="yi-followup" data-followup-kind="${kind}"><summary>✦ AI 追問一次（選用）</summary><div class="yi-followup-inner"><p class="yi-followup-note">${help}不需重抽卦；只有送出才會呼叫 AI。</p><label class="sr-only" for="yiFollowupText">本次 AI 追問</label><textarea id="yiFollowupText" maxlength="500" placeholder="例如：如果對方一直回避溝通，我具體應該怎麼說？"></textarea><div class="yi-followup-actions"><button type="button" class="yi-followup-send">送出 AI 追問</button><span class="yi-followup-status" aria-live="polite">本次可追問一次</span></div><div class="yi-followup-answer" hidden></div></div></details>`;
+  }
+  function bindYijingFollowup(r,kind,firstAnswer=''){
+    const wrapper=result.querySelector(`.yi-followup[data-followup-kind="${kind}"]`);
+    if(!wrapper)return;
+    const send=wrapper.querySelector('.yi-followup-send'),input=wrapper.querySelector('textarea'),status=wrapper.querySelector('.yi-followup-status'),content=wrapper.querySelector('.yi-followup-answer');
+    if(kind==='ai')wrapper.hidden=false;
+    let spent=yijingFollowupUsedCasts.has(r),working=false;
+    if(spent){send.disabled=true;send.textContent='本次追問已使用';input.readOnly=true;status.textContent='同一卦象的追問已使用一次';}
+    send.addEventListener('click',async()=>{
+      if(spent||working||yijingFollowupUsedCasts.has(r))return;
+      const q=input.value.trim();
+      if(q.length<5){status.textContent='請先輸入至少 5 個字的具體追問。';input.focus();return;}
+      working=true;send.disabled=true;status.classList.remove('is-error');status.textContent='正在延續這次卦象回答，請稍候…';
+      const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),160000);
+      try{
+        const data=await requestYijingAI(r,'followup',{question:q,kind,answer:kind==='ai'?firstAnswer:''},ctrl.signal);
+        renderSafeYijingMarkdown(content,data.answer.trim());content.hidden=false;
+        spent=true;yijingFollowupUsedCasts.add(r);input.readOnly=true;send.textContent='已使用本次追問';
+        status.textContent='✓ AI 追問已完成'+(data.channel?'｜通道 '+data.channel:'')+(data.traceId?'｜追蹤碼 '+data.traceId:'');
+      }catch(err){status.classList.add('is-error');status.textContent=err?.name==='AbortError'?'追問逾時，尚未取得結果，可再試一次。':String(err?.message||'追問失敗');send.disabled=false;}
+      finally{working=false;clearTimeout(timer);}
+    });
+  }
+
   function renderCustomAI(r){
     currentReading=r;
     empty.style.display='none';result.style.display='block';
@@ -2990,6 +3078,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       return;
     }
     const thisClassic=YIJING_PUBLIC_CLASSIC[r.base?.name]||{};
+    const isGuidedAI=!state.custom;
     result.innerHTML=`
       <div class="custom-prompt-wrap yijing-rd-layout yijing-rd-rev2">
         <header class="yijing-rd-header">
@@ -3011,6 +3100,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
           <div class="yijing-ai-status" id="yijingAiStatus" aria-live="polite">不重新起卦；只有按下按鈕才會使用一次 AI 呼叫。目前為測試展示，非正式付費功能。</div>
           <button type="button" id="downloadYijingAiTxt" class="yijing-ai-download" hidden>↓ 下載這次 AI 解卦 TXT</button>
           <div class="yijing-ai-content" id="yijingAiContent" hidden></div>
+          <div id="yiAiFollowupHolder" hidden></div>
         </section>
         <div class="reading-reset"><button id="chooseAnotherQuestion" type="button">← 重新選擇主題／問題</button></div>
       </div>`;
@@ -3022,23 +3112,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       status.textContent='已送至站內 AI，正在整理專業解卦文章。請稍候，不需重新起卦。';
       const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),160000);
       try{
-        const payload={question:r.question,context:{questionIntent:'custom',topic:{id:r.topic.id,name:r.topic.name,focus:r.topic.focus},scenario:{id:r.scenario.id,name:r.scenario.name,desc:r.scenario.desc},cast:{mode:r.castMethod.mode,label:r.castMethod.label,values:r.values,hexNumber:r.castMethod.hexNumber,numbers:r.castMethod.numbers}}};
-        const api=window.YIJING_API_URL||'https://yijing-api.ezgocpu.workers.dev/reading';
-        const url=new URL(api,location.href);url.pathname='/ai/interpret';url.search='';
-        let res,data;
-        if(YIJING_PUBLIC_OPEN_TEST){
-          // 先由易經私有 Worker 計算並密封 prompt，瀏覽器僅轉送加密票券，不接觸專業提示詞。
-          url.pathname='/ai/prepare';
-          const prepared=await fetch(url.toString(),{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:ctrl.signal,body:JSON.stringify(payload)});
-          const prep=await prepared.json().catch(()=>({}));
-          if(!prepared.ok||!prep.ok||!prep.ticket)throw Error('無法準備易經 AI 解卦（'+String(prep?.error||prepared.status)+'）');
-          res=await fetch('https://ai-center-api.ezgocpu.workers.dev/api/test/yijing/interpret',{method:'POST',headers:{'Content-Type':'application/json'},cache:'no-store',signal:ctrl.signal,body:JSON.stringify({ticket:prep.ticket})});
-          data=await res.json().catch(()=>({}));
-        }else{
-          res=await fetch(url.toString(),{method:'POST',headers:{'Content-Type':'application/json','X-Yijing-Admin':token},cache:'no-store',signal:ctrl.signal,body:JSON.stringify(payload)});
-          data=await res.json().catch(()=>({}));
-        }
-        if(!res.ok||!data.ok||typeof data.answer!=='string'||data.answer.trim().length<20)throw Error(data?.error==='ADMIN_AUTH_REQUIRED'?'管理員驗證失效，請重新登入後台。':data?.error==='AI_CENTER_NOT_CONFIGURED'?'AI 總控尚未設定 Service Binding 或 Secret。':'AI 暫時無法完成解讀（'+String(data?.error||res.status)+'）'+(data.traceId?'（追蹤碼：'+data.traceId+'）':''));
+        const data=await requestYijingAI(r,'initial',{},ctrl.signal);
         // 安全渲染基本 Markdown：以 textContent 產生 DOM，不執行 AI 回傳的 HTML/JS。
         renderSafeYijingMarkdown(content,data.answer.trim());content.hidden=false;
         status.textContent='✓ 已完成 AI 解卦'+(data.channel?'｜通道 '+data.channel:'')+(data.traceId?'｜追蹤碼 '+data.traceId:'');
@@ -3048,6 +3122,8 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
           download.hidden=false;
           download.onclick=()=>downloadYijingAIText(r,data.answer.trim(),data.channel,data.traceId,finishedAt);
         }
+        const followupHost=document.getElementById('yiAiFollowupHolder');
+        if(followupHost){followupHost.innerHTML=yijingFollowupHTML('ai');followupHost.hidden=false;bindYijingFollowup(r,'ai',data.answer.trim());}
         btn.textContent='解卦已完成';content.scrollIntoView({behavior:'smooth',block:'nearest'});
       }catch(err){status.classList.add('error');status.textContent=err?.name==='AbortError'?'等待 AI 回應逾時，原卦已保留，可以按下按鈕重試。':String(err?.message||'AI 解讀失敗');btn.disabled=false;btn.textContent='重新嘗試 AI 解卦';}
       finally{clearTimeout(timer);}
@@ -3092,7 +3168,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   }
 
   function render(r){
-    if(state.custom){renderCustomAI(r);return;}
+    if(state.custom || state.fixedReadingMode==='ai'){renderCustomAI(r);return;}
     currentReading=r;
     empty.style.display='none'; result.style.display='block';
     const basicClassic=YIJING_PUBLIC_CLASSIC[r.base?.name]||{};
@@ -3155,10 +3231,14 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
 
         <section class="reading-section" data-reading-section="6"><h4>六、5～7 個具體可執行建議</h4>${adviceHTML(publicReading)}</section>
         ${summaryHTML(publicReading)}
+        ${yijingFollowupHTML('basic')}
+        <button type="button" class="yi-basic-to-ai" id="yiUpgradeBasicToAI">改看本次卦象的 AI 完整解析（不重新起卦）</button>
         <div class="reading-reset"><button id="chooseAnotherQuestion" type="button">← 重新選擇主題／問題</button></div>
       </div>`;
 
     applyReadingAccessGates();
+    bindYijingFollowup(r,'basic');
+    document.getElementById('yiUpgradeBasicToAI')?.addEventListener('click',()=>{state.fixedReadingMode='ai';renderCustomAI(r);});
     document.getElementById('chooseAnotherQuestion')?.addEventListener('click',resetGuide);
     setTimeout(()=>result.scrollIntoView({behavior:'smooth',block:'start'}),60);
   }
@@ -3210,7 +3290,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   });
   document.getElementById('yijingScenarioGrid').addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;renderQuestions();showStep('question');});
   document.getElementById('yijingQuestionGrid').addEventListener('click',e=>{const qbtn=e.target.closest('[data-question-index]');const custom=e.target.closest('[data-custom-question]');
-    if(qbtn){if(qbtn.dataset.accessLocked==='1'){openMemberModal('這個固定問題今天未對未登入訪客開放；免費登入後此情境的所有固定問題全部開放。');return;}const qs=questionsFor(state.topic,state.scenario);state.question=qs[Number(qbtn.dataset.questionIndex)];state.custom=false;state.customSource=null;customGateConfirmed=false;renderReady();showStep('ready');}
+    if(qbtn){if(qbtn.dataset.accessLocked==='1'){openMemberModal('這個固定問題今天未對未登入訪客開放；免費登入後此情境的所有固定問題全部開放。');return;}const qs=questionsFor(state.topic,state.scenario);state.question=qs[Number(qbtn.dataset.questionIndex)];state.custom=false;state.customSource=null;state.fixedReadingMode='basic';customGateConfirmed=false;renderReady();showStep('ready');}
     else if(custom){if(YIJING_PUBLIC_OPEN_TEST||isAdminTestActive()){state.question='自訂問題';state.custom=true;state.customSource='scenario';customGateConfirmed=true;renderReady();showStep('ready');return;}openPaidModal('情境內自訂問題是完整進階功能，目前尚未正式開放。');}
   });
   document.getElementById('customQuestionBack')?.addEventListener('click',()=>{if(state.customSource==='all'){resetGuide();return;}state.custom=false;state.question=null;state.customSource=null;customGateConfirmed=false;showStep('question');});
@@ -3231,6 +3311,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     input.setSelectionRange(input.value.length,input.value.length);
     input.scrollIntoView({behavior:'smooth',block:'center'});
   });
+  document.getElementById('yijingReadyCard')?.addEventListener('change',e=>{if(e.target?.name==='yijingFixedReadingMode')state.fixedReadingMode=e.target.value==='ai'?'ai':'basic';});
   document.getElementById('yijingExtraContext')?.addEventListener('input',e=>{if(state.custom){hideCustomQualityWarning();}autoGrowYijingQuestion(e.currentTarget);refreshCustomShortHint();});
   document.querySelectorAll('[data-guide-back]').forEach(b=>b.addEventListener('click',()=>{if(state.customSource==='all'&&b.dataset.guideBack==='question'){resetGuide();return;}showStep(b.dataset.guideBack)}));
   document.querySelectorAll('[data-guide-jump]').forEach(b=>b.addEventListener('click',()=>{if(!b.disabled)showStep(b.dataset.guideJump)}));
