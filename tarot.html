@@ -4769,22 +4769,41 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     else if(isGuestLoginRequired())el.textContent='GUEST 已停用 · 請登入會員';
     else el.textContent=`GUEST · AI 解讀需登入會員`;
   }
-  let dhTarotToolAt=0,dhTarotToolSnapshot=null;
+  // 登入 Session 恢復前後屬不同身分；不可共用 15 秒查詢快取或讓訪客回應覆蓋會員餘額。
+  let dhTarotToolAt=0,dhTarotToolSnapshot=null,dhTarotToolAuthKey='',dhTarotToolRequestId=0;
   async function refreshTarotToolStatus(force=false){
     const label=document.getElementById('tarotToolWalletLabel');if(!label)return;
     const heading=document.getElementById('tarotToolWalletTitle');
     if(isAdminTestActive()){label.textContent='管理員模擬不扣正式額度。';return;}
+    const token=authToken();
+    const authKey=token?'member:'+String(tarotSessionMember?.sub||'')+':'+token:'guest';
+    // 首頁通常先以訪客查詢，稍後才完成 30 天會員 Session 驗證。身分變更必須立即重新查。
+    if(authKey!==dhTarotToolAuthKey){
+      dhTarotToolAuthKey=authKey;
+      dhTarotToolAt=0;
+      dhTarotToolSnapshot=null;
+      force=true;
+      const toolCount=document.getElementById('tarotSharedToolCount');
+      if(toolCount)toolCount.textContent='查詢中…';
+    }
     if(!force&&Date.now()-dhTarotToolAt<15000)return;
     dhTarotToolAt=Date.now();
+    const requestId=++dhTarotToolRequestId;
     try{
-      const headers={'X-Tarot-Visitor-Id':tarotVisitorId(),...(authToken()?{Authorization:'Bearer '+authToken()}: {})};
+      const headers={'X-Tarot-Visitor-Id':tarotVisitorId(),...(token?{Authorization:'Bearer '+token}: {})};
       const r=await fetch(TAROT_API_BASE+'/wallet/tarot/status',{cache:'no-store',headers});
       const d=await r.json();if(!r.ok||!d.ok)throw Error('QUOTA_UNAVAILABLE');
+      // 舊訪客請求延後回傳時，不得蓋掉較新的會員資料。
+      if(requestId!==dhTarotToolRequestId||token!==authToken())return;
       dhTarotToolSnapshot=d;
       if(heading)heading.textContent=d.daily.remaining+' / '+d.daily.limit+' 次';
       const toolCount=document.getElementById('tarotSharedToolCount');if(toolCount)toolCount.textContent=d.wallet?d.wallet.tool+' 次':'登入後可用';
       label.textContent='每 '+d.daily.days+' 天補充｜下次 '+d.daily.resetAt;
-    }catch(_){label.textContent='額度暫時無法取得，抽牌時仍由後端驗證。';}
+    }catch(_){
+      if(requestId!==dhTarotToolRequestId||token!==authToken())return;
+      label.textContent='額度暫時無法取得，抽牌時仍由後端驗證。';
+      const toolCount=document.getElementById('tarotSharedToolCount');if(toolCount)toolCount.textContent='暫時無法查詢';
+    }
   }
   function updateQuotaUI(){
     const panel=$('tarotQuotaPanel');if(!panel)return;
