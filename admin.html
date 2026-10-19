@@ -220,6 +220,14 @@ td.muted{color:var(--muted)}
 .bazi-gift-history table{min-width:580px}
 #baziGiftStatus{font-size:.78rem;color:#a9bfd0;line-height:1.6}
 @media(max-width:600px){.bazi-gift-summary small{display:block;margin-left:0;margin-top:6px}}
+
+/* OneMind quota admin panel: desktop-first, theme-consistent, mobile overflow handled */
+.dh-qc-content{padding:16px 20px 22px}.dh-qc-intro{font-size:.85rem;line-height:1.75;color:var(--muted,#a8b5c7)}
+.dh-qc-toolbar,.dh-qc-actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:14px 0}.dh-qc-muted,.dh-qc-help{font-size:.74rem;color:#a4b1c6;line-height:1.7}
+.dh-qc-scroll{overflow-x:auto;border:1px solid rgba(148,163,184,.18);border-radius:12px}.dh-qc-table{width:100%;min-width:720px;border-collapse:collapse;font-size:.83rem}.dh-qc-table th,.dh-qc-table td{padding:12px 9px;border-bottom:1px solid rgba(148,163,184,.13);text-align:left}.dh-qc-table th{white-space:nowrap;font-size:.76rem;color:#b8cbe1;background:rgba(114,133,153,.10)}.dh-qc-table tr:last-child td{border-bottom:0}.dh-qc-table input,.dh-qc-gifts input{width:95px;max-width:100%;padding:9px;border:1px solid rgba(150,175,200,.35);border-radius:8px;color:inherit;background:rgba(10,22,36,.24)}
+.dh-qc-gifts{margin:16px 0;padding:12px 15px;border:1px solid rgba(148,163,184,.18);border-radius:12px}.dh-qc-gifts h3{font-size:.92rem;margin:0 0 12px}.dh-qc-gift-fields{display:flex;flex-wrap:wrap;gap:18px}.dh-qc-gift-fields label{display:flex;align-items:center;gap:12px;font-size:.8rem}.dh-qc-history{font-size:.76rem;margin-top:16px}.dh-qc-history summary{cursor:pointer}.dh-qc-history div{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.dh-qc-actions #dhQcStatus{font-size:.78rem;line-height:1.6}.dh-qc-caution{font-size:.76rem;line-height:1.6;color:#caa36b}
+@media(max-width:660px){.dh-qc-content{padding:12px}.dh-qc-gift-fields label{width:100%;justify-content:space-between}}
+
 </style>
 </head>
 <body>
@@ -314,6 +322,20 @@ td.muted{color:var(--muted)}
         <div id="dhWalletCurrent" class="bazi-gift-member" hidden></div>
         <div class="bazi-gift-row"><label>贈送種類<select id="dhWalletBucket"><option value="tool">共用工具額度</option><option value="ai">共用 AI 解讀額度</option><option value="paid">付費額度（站長人工核發）</option></select></label><label>贈送次數<input type="number" id="dhWalletAmount" min="1" max="1000" value="10"></label></div>
         <div class="bazi-gift-row"><button class="btn" id="dhWalletGrant" type="button" disabled>確認額外贈送</button><small id="dhWalletInfo" style="color:#a9bfd0" aria-live="polite">請先查詢會員。</small></div>
+      </div>
+    </details>
+
+    <details class="section dh-qc-panel" id="dhQuotaPanel" style="margin-bottom:24px">
+      <summary class="bazi-gift-summary">⚙️ 全站額度設定中心 <small>第一階段：先儲存規則 · 三工具尚待接入</small></summary>
+      <div class="dh-qc-content">
+        <p class="dh-qc-intro">這裡先建立各工具「定期免費」額度設定；目前為整合前準備，儲存不會直接修改現有工具扣點。每項可分別設定補充次數、週期天數；<strong>同一規則的所有人在固定台灣時間 00:00 同步重置</strong>，未用完的免費次數不累積。變更安排在該規則下一個舊週期邊界才生效。</p>
+        <div class="dh-qc-toolbar"><button type="button" class="btn secondary" id="dhQcReload">讀取目前設定</button><span id="dhQcUpdated" class="dh-qc-muted">尚未讀取</span></div>
+        <div class="dh-qc-scroll"><table class="dh-qc-table"><thead><tr><th>工具／類型</th><th>訪客補充次數</th><th>訪客每幾天</th><th>會員補充次數</th><th>會員每幾天</th></tr></thead><tbody id="dhQcRows"><tr><td colspan="5">展開後載入設定…</td></tr></tbody></table></div>
+        <p class="dh-qc-help">次數可填 0～1000（0＝不提供定期免費額度）；週期可填 1～365 天。工具額度與 AI 額度獨立，定期免費使用完後，登入會員才使用共用贈送額度。</p>
+        <div class="dh-qc-gifts"><h3>新會員一次性共用贈送</h3><div class="dh-qc-gift-fields"><label>共用工具贈送次數<input id="dhQcGiftTool" type="number" min="0" max="1000" step="1" value="10"></label><label>共用 AI 贈送次數<input id="dhQcGiftAi" type="number" min="0" max="1000" step="1" value="10"></label></div><p class="dh-qc-help">只影響尚未獲得初始贈送的新會員；既有會員餘額、付費餘額、人工贈送不受影響。</p></div>
+        <div class="dh-qc-actions"><button type="button" class="btn" id="dhQcSave" disabled>確認並儲存額度設定</button><span id="dhQcStatus" role="status" aria-live="polite">請先讀取設定。</span></div>
+        <details class="dh-qc-history"><summary>最近修改紀錄</summary><div id="dhQcHistory">尚未讀取</div></details>
+        <p class="dh-qc-caution">重要：這是設定中心的第一階段。數字保存於 D1，但八字、塔羅、易經目前仍執行既有扣點 Worker。第二階段完成、全數更新後，這些設定才會控制正式額度。</p>
       </div>
     </details>
     <details class="section member-usage-box" id="memberUsagePanel">
@@ -515,6 +537,53 @@ function fmtPaymentTime(t){
   const d=new Date(normalized);
   return Number.isNaN(d.getTime())?raw:d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false});
 }
+
+
+// === Central quota configuration admin editor ===
+const DH_QC_SERVICES=[['bazi','tool','八字｜排盤'],['bazi','ai','八字｜AI 解讀'],['tarot','tool','塔羅｜抽牌'],['tarot','ai','塔羅｜AI 解讀'],['yijing','tool','易經｜起卦'],['yijing','ai','易經｜AI 解卦']];
+let dhQcRevision=null,dhQcBusy=false;
+function dhQcSetStatus(s){const e=document.getElementById('dhQcStatus');if(e)e.textContent=s}
+async function dhQcRequest(method='GET',body){
+ const r=await fetch(API_BASE+'/admin/quota-config',{method,cache:'no-store',headers:{Authorization:'Bearer '+token(),Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
+ const d=await r.json().catch(()=>({}));if(!r.ok||!d.success)throw Error(d.error||'額度設定讀取失敗');return d;
+}
+function dhQcCell(k,field,value){const td=document.createElement('td'),input=document.createElement('input');input.type='number';input.min=field==='days'?'1':'0';input.max=field==='days'?'365':'1000';input.step='1';input.value=String(value);input.dataset.key=k;input.dataset.field=field;td.append(input);return td}
+function dhQcRender(d){
+ dhQcRevision=d.revision;const tbody=document.getElementById('dhQcRows');tbody.replaceChildren();const map=new Map(d.rows.map(x=>[x.key,x]));
+ for(const [tool,kind,name] of DH_QC_SERVICES){const tr=document.createElement('tr'),heading=document.createElement('td');heading.textContent=name;tr.append(heading);
+  for(const role of ['guest','member']){const k=`${tool}.${kind}.${role}`,info=map.get(k);if(!info)throw Error('缺少規則：'+k);
+   tr.append(dhQcCell(k,'limit',info.pending?.limit??info.limit));tr.append(dhQcCell(k,'days',info.pending?.days??info.days));
+   const note=document.createElement('small');note.style.display='block';note.style.color='#99aac4';note.textContent=info.pending?`預定 ${info.pending.at} 生效`:`下次 ${info.nextAt}`;tr.lastChild.append(note);
+  }tbody.append(tr);
+ }
+ document.getElementById('dhQcGiftTool').value=d.gifts.tool;document.getElementById('dhQcGiftAi').value=d.gifts.ai;
+ document.getElementById('dhQcSave').disabled=false;
+ document.getElementById('dhQcUpdated').textContent='版本 '+d.revision+'｜更新 '+(d.updatedAt||'—')+'｜時區 Asia/Taipei';
+ document.getElementById('dhQcHistory').textContent=(d.history||[]).map(x=>{let info='';try{info=JSON.parse(x.detail).join('；')}catch(_){info=x.detail}return `${x.at}｜版本 ${x.revision}｜${info}`}).join('\n')||'尚無設定變更。';
+ dhQcSetStatus('設定已讀取。修改後按「確認並儲存」；此階段只會保存設定，尚不影響目前三工具的免費次數。');
+}
+async function dhQcLoadUI(){if(dhQcBusy||!token())return;dhQcBusy=true;dhQcSetStatus('正在讀取 Cloudflare D1 設定…');try{dhQcRender(await dhQcRequest())}catch(e){dhQcSetStatus('讀取失敗：'+e.message)}finally{dhQcBusy=false}}
+document.getElementById('dhQuotaPanel')?.addEventListener('toggle',e=>{if(e.target.open)dhQcLoadUI()});
+document.getElementById('dhQcReload')?.addEventListener('click',dhQcLoadUI);
+document.getElementById('dhQcSave')?.addEventListener('click',async()=>{
+ if(dhQcBusy||dhQcRevision===null||!token())return;
+ const rows=[];for(const input of document.querySelectorAll('#dhQcRows input[data-key]')){
+  if(input.dataset.field!=='limit')continue;
+  const k=input.dataset.key,days=document.querySelector(`#dhQcRows input[data-key="${k}"][data-field="days"]`);
+  const limit=Number(input.value),n=Number(days?.value);
+  if(!Number.isSafeInteger(limit)||limit<0||limit>1000||!Number.isSafeInteger(n)||n<1||n>365){dhQcSetStatus('請檢查 '+k+' 的次數（0～1000）與天數（1～365）。');return}
+  rows.push({key:k,limit,days:n});
+ }
+ const tool=Number(document.getElementById('dhQcGiftTool').value),ai=Number(document.getElementById('dhQcGiftAi').value);
+ if(rows.length!==12||![tool,ai].every(x=>Number.isSafeInteger(x)&&x>=0&&x<=1000)){dhQcSetStatus('表單不完整或贈送額度超出範圍。');return}
+ if(!confirm('確認修改全站額度政策？定期免費額度會排在舊週期的下個固定補充時間生效；新會員首次贈送設定不會改動舊會員餘額。'))return;
+ dhQcBusy=true;document.getElementById('dhQcSave').disabled=true;dhQcSetStatus('正在安全儲存設定…');
+ try{const result=await dhQcRequest('POST',{revision:dhQcRevision,rows,gifts:{tool,ai}});await dhQcLoadAfterSave();dhQcSetStatus(result.unchanged?'設定未改變。':`已儲存 ${result.changed?.length||0} 項調整。這是規則設定，需等三工具新版扣點 Worker 完成部署才會正式套用。`)}
+ catch(e){dhQcSetStatus('儲存失敗：'+e.message+'。請重新讀取後再確認。')}
+ finally{dhQcBusy=false;document.getElementById('dhQcSave').disabled=false}
+});
+async function dhQcLoadAfterSave(){dhQcRender(await dhQcRequest())}
+// === End quota editor ===
 
 // 中央共用額度管理，讀寫都需原管理員 HMAC session。
 let dhWalletSelected='';
