@@ -1569,6 +1569,34 @@ html[data-theme="light"] .yi-followup textarea{color:#234631;background:#fff;bor
 html[data-theme="light"] .yi-followup-send{background:#d9f3e0!important;color:#245e3a!important}
 @media(max-width:520px){.yi-mode-row{gap:7px}.yi-mode-option{flex-basis:100%}.yi-followup-inner{padding:2px 10px 12px}}
 </style>
+<style id="yijing-compact-quota-v20261019">
+/* Consolidated usage panel: one status header and one three-card row. */
+#yijingQuotaPanel{padding:18px 18px 15px;max-width:100%}
+#yijingQuotaPanel #yijingAccessBar{padding:0 2px 15px;margin:0 0 15px;background:none;border:none;border-bottom:1px solid rgba(138,155,161,.18);border-radius:0}
+#yijingQuotaPanel .yijing-access-copy{width:100%;min-width:0}
+#yijingQuotaPanel .yijing-access-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:5px}
+#yijingQuotaPanel #yijingAccessTitle{font-size:.92rem}
+#yijingQuotaPanel #yijingAccessText{font-size:.78rem;line-height:1.6}
+#yijingQuotaPanel .yijing-quota-card{gap:0;justify-content:flex-start;min-height:190px}
+#yijingQuotaPanel .yijing-quota-card .quota-value{margin:10px 0 7px}
+#yijingQuotaPanel .yijing-quota-card p{font-size:.82rem;line-height:1.6;margin-top:8px}
+#yijingQuotaPanel .yijing-quota-card .yijing-quota-next{font-size:.75rem;border-top:1px solid rgba(155,166,151,.13);padding-top:9px;margin-top:10px}
+#yijingQuotaPanel .yijing-quota-foot{font-size:.74rem;line-height:1.65;margin-top:13px}
+#yijingQuotaPanel .yijing-quota-paid-action{align-self:start;min-height:34px;margin-top:12px;padding:6px 12px;border:1px solid rgba(167,122,255,.3);border-radius:999px;background:rgba(167,122,255,.06);color:#cbb0ff;font-size:.75rem;font-weight:800}
+#yijingQuotaPanel .yijing-quota-paid-action:hover{border-color:rgba(167,122,255,.65)}
+.yijing-ai-quota-modal-notice{margin:13px 0 18px;padding:12px 14px;border:1px solid rgba(225,197,110,.20);border-radius:10px;background:rgba(225,197,110,.05);color:#e8d8ac;font-size:.79rem;line-height:1.75}
+.yijing-ai-quota-modal-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.yijing-ai-quota-modal-actions button{padding:9px 15px;border:1px solid rgba(124,227,161,.24);border-radius:10px;background:rgba(124,227,161,.07);color:#b1e7bd;font-size:.78rem;font-weight:800}
+.yijing-ai-quota-modal-actions button:hover{background:rgba(124,227,161,.15)}
+.yi-mode-option.ai-quota-pending{opacity:.70;cursor:pointer;text-align:left;color:inherit;font:inherit}.yi-disabled-radio{width:13px;height:16px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#86a991}
+.yi-mode-option.ai-quota-pending:hover{opacity:1}
+html[data-theme="light"] #yijingQuotaPanel #yijingAccessBar{border-bottom-color:#dce5de}
+html[data-theme="light"] #yijingQuotaPanel .yijing-quota-card .yijing-quota-next{border-top-color:#e3e6df}
+html[data-theme="light"] #yijingQuotaPanel .yijing-quota-paid-action{background:#f6f0ff;color:#664090;border-color:#ceb5f1}
+html[data-theme="light"] .yijing-ai-quota-modal-notice{color:#80551a;background:#fffbf1;border-color:#edd9ac}
+html[data-theme="light"] .yijing-ai-quota-modal-actions button{background:#eaf4ed;color:#2a704d;border-color:#c3dcca}
+@media(max-width:900px){#yijingQuotaPanel{padding:14px}#yijingQuotaPanel .yijing-quota-grid{grid-template-columns:1fr;gap:10px}#yijingQuotaPanel .yijing-quota-card{min-height:0;padding:15px}#yijingQuotaPanel .yijing-quota-card .quota-value{font-size:1.8rem}#yijingQuotaPanel .yijing-quota-foot{padding:0 3px}}
+</style>
 </head>
 <body>
   <header class="page-topbar">
@@ -1644,6 +1672,18 @@ html[data-theme="light"] .yi-followup-send{background:#d9f3e0!important;color:#2
     </div>
   </div>
 
+  <div class="yijing-member-modal" id="yijingAiQuotaModal" aria-hidden="true">
+    <div class="yijing-member-card" role="dialog" aria-modal="true" aria-labelledby="yijingAiQuotaTitle">
+      <button type="button" class="yijing-member-close" id="yijingAiQuotaClose" aria-label="關閉">×</button>
+      <div class="yijing-member-kicker">AI READING CREDITS</div>
+      <h3 id="yijingAiQuotaTitle">AI 專業解卦｜使用 AI 解讀次數</h3>
+      <p>AI 專業解析與基本卦象解析分開計算。未來每次成功取得 AI 解讀或 AI 追問，將扣除 <strong>1 次 AI 解讀額度</strong>，不是直接扣付費解鎖額度。</p>
+      <p>規劃提供每個已登入會員一次性 10 次 AI 解讀額度，用完不補、不每日重置。正式的跨工具共用與扣點功能仍待後端上線。</p>
+      <div class="yijing-ai-quota-modal-notice">目前一般會員的 AI 解卦尚未開放；站內基本解析仍可正常使用。</div>
+      <div class="yijing-ai-quota-modal-actions"><button id="yijingAiQuotaLogin" type="button">免費登入會員</button><button id="yijingAiQuotaOK" type="button">知道了</button></div>
+    </div>
+  </div>
+
   <div class="admin-test-modal" id="yijingAdminTestModal" aria-hidden="true">
     <div class="admin-test-card" role="dialog" aria-modal="true" aria-labelledby="yijingAdminTestTitle">
       <button class="admin-test-close" id="yijingAdminTestClose" type="button" aria-label="關閉">×</button>
@@ -1716,36 +1756,38 @@ html[data-theme="light"] .yi-followup-send{background:#d9f3e0!important;color:#2
 
     
 <div class="yijing-guide" id="yijingGuide">
-  <div class="yijing-access-bar" id="yijingAccessBar">
-    <div class="yijing-access-copy"><div class="yijing-access-heading"><b id="yijingAccessTitle">未登入訪客</b><button class="yijing-access-cta" id="yijingAccessLogin" type="button">免費登入解除大部分限制</button></div><span id="yijingAccessText">每日部分內容輪替開放；免費登入後可解除大部分限制。</span><div class="yijing-access-balances"><div class="yijing-access-urgent" id="yijingAccessUrgent"><span class="quota-label">今日剩餘</span><span class="quota-number">3 / 3 次</span></div><div class="yijing-paid-entry" id="yijingPaidEntry" hidden><div><span class="paid-pool-label" id="yijingPaidEntryTitle">付費額度池</span><span class="paid-pool-value" id="yijingPaidBalance">0 次</span><span class="paid-pool-note" id="yijingPaidEntryText">額外購買｜與每日免費額度分開計算</span></div><button id="yijingPaidEntryButton" type="button">查看解鎖方案</button></div></div></div>
-  </div>
   <div class="yijing-quota-panel" id="yijingQuotaPanel">
+    <div class="yijing-access-bar" id="yijingAccessBar">
+      <div class="yijing-access-copy"><div class="yijing-access-heading"><b id="yijingAccessTitle">未登入訪客</b><button class="yijing-access-cta" id="yijingAccessLogin" type="button">免費登入解除大部分限制</button></div><span id="yijingAccessText">每日部分內容輪替開放；免費登入後可解除大部分限制。</span></div>
+    </div>
     <div class="yijing-quota-grid">
       <section class="yijing-quota-card" aria-label="免費起卦次數">
         <div>
           <h4>免費起卦次數</h4>
           <div class="quota-value is-gold" id="yijingQuotaCastCount">3 / 3 次</div>
         </div>
-        <p id="yijingQuotaCastNote">每日 3 次免費起卦，依台灣日期重置；同一裝置共用額度。</p>
+        <p id="yijingQuotaCastNote">目前每日 3 次｜同一裝置共用。</p>
+        <p class="yijing-quota-next" id="yijingQuotaCastFuture">未來規劃：每日 1 次＋首次登入贈 10 次（贈送次數用完不補）。</p>
       </section>
       <section class="yijing-quota-card" aria-label="AI 解讀次數">
         <div>
           <h4>AI 解讀次數</h4>
           <div class="quota-value is-gold" id="yijingQuotaAiCount">尚未開放</div>
         </div>
-        <p id="yijingQuotaAiNote">一般會員的站內 AI 解卦權限與額度尚待正式設定。</p>
+        <p id="yijingQuotaAiNote">規劃：每個會員一次性贈送 10 次 AI 解讀額度，用完不補；每次成功解卦或追問扣 1 次。</p>
       </section>
       <section class="yijing-quota-card" aria-label="付費次數">
         <div>
           <h4>付費次數</h4>
           <div class="quota-value is-purple" id="yijingQuotaPaidCount">0 次</div>
         </div>
-        <p id="yijingQuotaPaidNote">付費方案尚未開放；管理員可模擬不同額度狀態。</p>
+        <p id="yijingQuotaPaidNote">獨立的付費解鎖額度，與 AI 解讀次數分開；尚未正式販售。</p>
+        <button id="yijingPaidEntryButton" class="yijing-quota-paid-action" type="button">了解付費解鎖</button>
       </section>
     </div>
     <div class="yijing-quota-foot">
-      <span id="yijingQuotaFootnote">免費起卦每日重置；AI 解讀與付費解鎖將另行設定。</span>
-      <span class="status" id="yijingQuotaStatus">正式 AI 額度尚未啟用</span>
+      <span id="yijingQuotaFootnote">起卦、AI 解讀、付費解鎖是三種獨立額度；未啟用的規劃不計入可用次數。</span>
+      <span class="status" id="yijingQuotaStatus">AI 會員額度待啟用</span>
     </div>
   </div>
   <div class="guide-progress" id="guideProgress" aria-label="易經占問步驟">
@@ -2490,6 +2532,16 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     modal?.classList.add('show');modal?.setAttribute('aria-hidden','false');
   }
   function closePaidModal(){const modal=document.getElementById('yijingPaidModal');modal?.classList.remove('show');modal?.setAttribute('aria-hidden','true')}
+  function openYijingAiQuotaModal(){
+    const modal=document.getElementById('yijingAiQuotaModal');
+    if(!modal)return;
+    const login=document.getElementById('yijingAiQuotaLogin');
+    if(login)login.hidden=!!authProfile();
+    modal.classList.add('show');modal.setAttribute('aria-hidden','false');
+    document.getElementById('yijingAiQuotaOK')?.focus();
+  }
+  function closeYijingAiQuotaModal(){const modal=document.getElementById('yijingAiQuotaModal');modal?.classList.remove('show');modal?.setAttribute('aria-hidden','true')}
+
   function startPaidPreview(){if(isAdminTestActive()){if(paidCredits()<=0)return;const previous=adminTestMode;setAdminTestMode('paid-full');adminTestReturnMode=previous;adminTestCreditSpent=true;saveAdminTestState();closePaidModal();return;}if(location.protocol!=='file:')return;safeWrite(YIJING_LOCAL_MEMBER_KEY,true);paidPreviewActive=true;closePaidModal();refreshAccessUI();}
   function stopPaidPreview(){if(isAdminTestActive()&&adminTestMode==='paid-full'){const back=ADMIN_TEST_MODES[adminTestReturnMode]?adminTestReturnMode:'member',spent=adminTestCreditSpent;setAdminTestMode(back);adminTestCreditSpent=spent&&back==='paid-credit';saveAdminTestState();refreshAccessUI();closePaidModal();return;}paidPreviewActive=false;closePaidModal();refreshAccessUI();}
 
@@ -2551,13 +2603,13 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     const paid=$('yijingQuotaPaidCount'), paidNote=$('yijingQuotaPaidNote');
     const foot=$('yijingQuotaFootnote'), status=$('yijingQuotaStatus');
     if(cast)cast.textContent=full?'本次不限次數':`${left} / ${dailyLimit()} 次`;
-    if(castNote)castNote.textContent=full?'完整解鎖測試不扣免費起卦額度。':(memberDeviceLoginRequired()?'此裝置需重新登入會員，才能繼續使用。':'每日依台灣日期重置；同一裝置共用免費次數。');
+    if(castNote)castNote.textContent=full?'完整解鎖測試不扣免費起卦額度。':(memberDeviceLoginRequired()?'此裝置需重新登入會員，才能繼續使用。':'現行每日 3 次，台灣時間重置；同一裝置共用。');
     if(ai)ai.textContent=canRunYijingAI()?'管理員試跑':'尚未開放';
-    if(aiNote)aiNote.textContent=canRunYijingAI()?'僅限已驗證的管理員完整解鎖測試；正式 AI 額度未開放。':'一般會員的站內 AI 解卦權限與額度尚待正式設定。';
+    if(aiNote)aiNote.textContent=canRunYijingAI()?'僅管理員試跑模式可以測試 AI；不扣正式會員額度。':'預計首次登入贈 10 次 AI 解讀額度，用完不補；每次成功解卦或追問扣 1 次。尚待後端正式啟用。';
     if(paid)paid.textContent=full?'已完整解鎖':`${paidCredits()} 次`;
-    if(paidNote)paidNote.textContent=test?'僅為管理員模擬額度，不會產生實際付款或扣款。':'付費方案尚未正式開放。';
-    if(foot)foot.textContent=test?'目前為管理員權限模擬；不影響真實會員或裝置額度。':'每日免費起卦次數正常計算；AI 與付費功能待正式上線。';
-    if(status)status.textContent=test?'管理員模擬模式':'AI 正式額度尚未開放';
+    if(paidNote)paidNote.textContent=test?'僅為管理員模擬額度，不會產生實際付款或扣款。':'付費解鎖額度與 AI 解讀額度分開；正式方案尚未開放。';
+    if(foot)foot.textContent=test?'管理員模擬不影響真實會員或裝置額度；三種額度仍分別顯示。':'三種額度分別計算；每日 1 次與登入贈 10 次是後續規劃，尚未啟用。';
+    if(status)status.textContent=test?'管理員模擬模式':'AI 會員額度待啟用';
   }
   function updateMemberUI(){
     const p=authProfile();if(p){bindMemberDevice();saveLastMemberProfile(p)}const bound=!p&&memberDeviceBound(),btn=document.getElementById('yijingMemberButton'),txt=document.getElementById('yijingMemberButtonText'),title=document.getElementById('yijingAccessTitle'),copy=document.getElementById('yijingAccessText'),cta=document.getElementById('yijingAccessLogin'),urgent=document.getElementById('yijingAccessUrgent'),benefit=document.getElementById('yijingMemberBenefit'),paidEntry=document.getElementById('yijingPaidEntry'),paidTitle=document.getElementById('yijingPaidEntryTitle'),paidText=document.getElementById('yijingPaidEntryText'),paidBalance=document.getElementById('yijingPaidBalance'),paidBtn=document.getElementById('yijingPaidEntryButton');
@@ -2883,9 +2935,9 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       setCustomReadyAccess(true);
     }else{
       const aiAvailable=canRunYijingAI();
-      if(head)head.innerHTML=aiAvailable?'<span>STEP 04</span><h4>選擇解析方式，再開始起卦</h4><p>固定題目可選站內基本解析或 AI 專業解析。無論選哪一種，後續都保留一次選用的 AI 追問；若有需要，可補充事件背景。</p>':'<span>STEP 04</span><h4>選擇解析方式，再開始起卦</h4><p>你可以使用站內基本解析；AI 專業解析與追問目前尚未正式開放。</p>';
+      if(head)head.innerHTML=aiAvailable?'<span>STEP 04</span><h4>選擇解析方式，再開始起卦</h4><p>固定題目可選站內基本解析或 AI 專業解析。AI 解讀由獨立的 AI 次數計算，後續可選擇追問。</p>':'<span>STEP 04</span><h4>選擇解析方式，再開始起卦</h4><p>站內基本解析目前可用；AI 專業解析需使用 AI 解讀次數，待會員額度功能正式啟用。</p>';
       state.fixedReadingMode=aiAvailable&&state.fixedReadingMode==='ai'?'ai':'basic';
-      document.getElementById('yijingReadyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)} → ${esc(state.scenario.name)}</div><strong>${esc(q)}</strong><p>解讀重點：${esc(state.topic.focus)}</p><div class="yi-mode-row" role="group" aria-label="選擇本次固定題目的解析方式"><label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="basic" ${state.fixedReadingMode==='basic'?'checked':''}><span><b>站內基本解析</b><small>${aiAvailable?'現有規則式解讀；看完可使用一次 AI 追問':'現有規則式解讀｜本身可用'}</small></span></label><label class="yi-mode-option" ${aiAvailable?'':'style="opacity:.5"'}><input type="radio" name="yijingFixedReadingMode" value="ai" ${aiAvailable?'':'disabled'} ${state.fixedReadingMode==='ai'?'checked':''}><span><b>AI 專業解析</b><small>${aiAvailable?'約 1,500 字個人化解讀；完成後可再追問一次':'完整進階測試身分才開放'}</small></span></label></div>`;
+      document.getElementById('yijingReadyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)} → ${esc(state.scenario.name)}</div><strong>${esc(q)}</strong><p>解讀重點：${esc(state.topic.focus)}</p><div class="yi-mode-row" role="group" aria-label="選擇本次固定題目的解析方式"><label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="basic" ${state.fixedReadingMode==='basic'?'checked':''}><span><b>站內基本解析</b><small>${aiAvailable?'現有規則式解讀；看完可使用一次 AI 追問':'現有規則式解讀｜本身可用'}</small></span></label>${aiAvailable?`<label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="ai" ${state.fixedReadingMode==='ai'?'checked':''}><span><b>AI 專業解析</b><small>使用 AI 解讀額度；管理員可測試</small></span></label>`:`<button type="button" class="yi-mode-option ai-quota-pending" data-ai-quota-info="1" aria-haspopup="dialog"><span class="yi-disabled-radio" aria-hidden="true">○</span><span><b>AI 專業解析</b><small>需使用 1 次 AI 解讀額度｜會員功能尚未開放</small></span></button>`}</div>`;
       if(gate)gate.hidden=true;
       setCustomReadyAccess(true);
     }
@@ -3147,7 +3199,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     currentReading=r;
     empty.style.display='none';result.style.display='block';
     if(!canRunYijingAI()){
-      result.innerHTML=`<div class="reading-wrap">${lockedReadingHTML('AI','自訂問題站內 AI 解卦','自訂問題的完整進階解讀尚未開放。')}</div>`;
+      result.innerHTML=`<div class="reading-wrap"><div class="reading-access-lock" data-ai-quota-info="1"><div class="lock-kicker">AI READING · 1 CREDIT</div><h4>站內 AI 專業解卦</h4><p>完整 AI 解讀需使用 1 次 AI 解讀額度；正式會員額度尚未開放。目前可繼續使用站內基本解析。</p><button type="button" class="yi-basic-to-ai">了解 AI 解讀額度</button></div></div>`;
       return;
     }
     const thisClassic=YIJING_PUBLIC_CLASSIC[r.base?.name]||{};
@@ -3313,8 +3365,8 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     bindYijingFollowup(r,'basic');
     const upgradeAI=document.getElementById('yiUpgradeBasicToAI');
     if(upgradeAI){
-      if(!canRunYijingAI())upgradeAI.textContent='站內 AI 完整解析｜需完整進階解鎖';
-      upgradeAI.addEventListener('click',()=>{if(!canRunYijingAI()){openPaidModal('站內 AI 完整解析尚未正式開放。');return;}state.fixedReadingMode='ai';renderCustomAI(r);});
+      if(!canRunYijingAI())upgradeAI.textContent='站內 AI 完整解析｜需使用 1 次 AI 解讀額度';
+      upgradeAI.addEventListener('click',()=>{if(!canRunYijingAI()){openYijingAiQuotaModal();return;}state.fixedReadingMode='ai';renderCustomAI(r);});
     }
     document.getElementById('chooseAnotherQuestion')?.addEventListener('click',resetGuide);
     setTimeout(()=>result.scrollIntoView({behavior:'smooth',block:'start'}),60);
@@ -3324,7 +3376,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   updateMemberUI();
   if(!adminEntryRequested())void restoreYijingSession();
   renderTopics();
-  result.addEventListener('click',e=>{const paid=e.target.closest('[data-paid-lock]');if(paid){openPaidModal(`「${paid.dataset.paidLock||'這項功能'}」目前屬完整進階功能。未來使用 1 個付費額度即可解鎖本次全部進階內容。`);return;}const lock=e.target.closest('[data-login-lock]');if(lock){openMemberModal(`「${lock.dataset.loginLock||'這項功能'}」目前未對未登入訪客開放；先免費登入可解除大部分限制。`);}});
+  result.addEventListener('click',e=>{const aiInfo=e.target.closest('[data-ai-quota-info]');if(aiInfo){openYijingAiQuotaModal();return;}const paid=e.target.closest('[data-paid-lock]');if(paid){openPaidModal(`「${paid.dataset.paidLock||'這項功能'}」目前屬完整進階功能。未來使用 1 個付費額度即可解鎖本次全部進階內容。`);return;}const lock=e.target.closest('[data-login-lock]');if(lock){openMemberModal(`「${lock.dataset.loginLock||'這項功能'}」目前未對未登入訪客開放；先免費登入可解除大部分限制。`);}});
   document.getElementById('yijingMemberButton')?.addEventListener('click',()=>{
     if(isAdminTestActive()){openAdminTestModal();return;}
     if(isLogged()){closeYijingMemberDropdown();location.href='member.html';return;}
@@ -3349,6 +3401,12 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   document.getElementById('yijingDeviceQuotaClose')?.addEventListener('click',closeDeviceQuotaModal);
   document.getElementById('yijingDeviceQuotaModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closeDeviceQuotaModal()});
   document.getElementById('yijingDeviceQuotaMore')?.addEventListener('click',()=>{closeDeviceQuotaModal();setTimeout(()=>openPaidModal('需要更多使用次數時，可參考完整進階解鎖與付費額度。'),80);});
+  document.getElementById('yijingReadyCard')?.addEventListener('click',e=>{if(e.target.closest('[data-ai-quota-info]')){e.preventDefault();openYijingAiQuotaModal();}});
+  document.getElementById('yijingAiQuotaClose')?.addEventListener('click',closeYijingAiQuotaModal);
+  document.getElementById('yijingAiQuotaOK')?.addEventListener('click',closeYijingAiQuotaModal);
+  document.getElementById('yijingAiQuotaLogin')?.addEventListener('click',()=>{closeYijingAiQuotaModal();goToMemberLogin();});
+  document.getElementById('yijingAiQuotaModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closeYijingAiQuotaModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeYijingAiQuotaModal();});
   document.getElementById('yijingPaidEntryButton')?.addEventListener('click',()=>openPaidModal());
   document.getElementById('yijingPaidClose')?.addEventListener('click',closePaidModal);
   document.getElementById('yijingPaidModal')?.addEventListener('click',e=>{if(e.target===e.currentTarget)closePaidModal()});
