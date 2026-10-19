@@ -1107,13 +1107,20 @@ html[data-theme="light"] .yijing-ai-download{background:#eff8f1;color:#246644;bo
 .cast-moving-sim-option b{font-size:.81rem}
 .cast-moving-sim-option small{font-size:.73rem;opacity:.80}
 
-/* 2026-10-19: 自訂問題起卦結果的局部遮擋視覺測試；未改後端、未建立付費權限。 */
+/* 2026-10-19: 視覺預覽：靜卦／動卦統一遮擋卦象變化狀態；不代表已啟用付費或後端權限。 */
 .yijing-preview-blur{filter:blur(7px);opacity:.67;pointer-events:none;user-select:none;-webkit-user-select:none}
 .yijing-preview-lock-mark{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid rgba(225,197,110,.28);border-radius:999px;background:rgba(225,197,110,.08);color:#e4d39d;font-size:.66rem;font-weight:750;white-space:nowrap}
 .yijing-preview-moving-row{margin-top:8px;padding-top:8px;border-top:1px solid rgba(225,197,110,.13);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .yijing-preview-moving-row .yijing-preview-label{font-size:.64rem;color:#899b8d}
 .yijing-preview-moving-row .yijing-preview-blur{display:inline-block;max-width:100%;color:#d9e8db;font-size:.73rem;font-weight:750}
-.yijing-preview-moving-row .yijing-preview-lock-mark{font-size:.57rem;padding:3px 7px}
+.yijing-preview-moving-row .yijing-preview-lock-mark{font-size:.61rem;padding:3px 7px}
+.yijing-preview-unified-note{font-size:.68rem;line-height:1.55;color:#91a69a;margin-top:5px}
+.yijing-preview-masked-title{display:inline-block;height:23px;width:min(178px,38vw);border-radius:6px;background:linear-gradient(90deg,rgba(136,173,152,.37),rgba(119,157,135,.18),rgba(136,173,152,.37));filter:blur(7px);vertical-align:middle}
+.yijing-preview-changed .hex-title{min-height:53px}
+.yijing-preview-changed .hex-lines .yao.yang::before{background:rgba(145,186,158,.75)}
+.yijing-preview-changed .hex-lines .yao.yin::before,.yijing-preview-changed .hex-lines .yao.yin::after{background:rgba(145,186,158,.75)}
+.yijing-preview-changed .hex-meta span{min-width:92px}
+.yijing-preview-changed .hex-meta span::selection{background:transparent}
 .yijing-preview-changed .hex-title{align-items:center}
 .yijing-preview-changed .hex-title h3{margin-top:3px}
 .yijing-preview-changed .hex-lines{filter:blur(9px);opacity:.63;pointer-events:none;user-select:none;-webkit-user-select:none}
@@ -1123,6 +1130,7 @@ html[data-theme="light"] .yijing-ai-download{background:#eff8f1;color:#246644;bo
 html[data-theme="light"] .yijing-preview-lock-mark{background:#fff8e9;border-color:#e8d9b8;color:#806126}
 html[data-theme="light"] .yijing-preview-moving-row{border-color:#eadfc7}
 html[data-theme="light"] .yijing-preview-moving-row .yijing-preview-label{color:#76877c}
+html[data-theme="light"] .yijing-preview-unified-note{color:#708377}
 html[data-theme="light"] .yijing-preview-moving-row .yijing-preview-blur{color:#4d6252}
 html[data-theme="light"] .yijing-preview-changed .yijing-preview-changed-note{background:#fffbf2;border-color:#dfcfae;color:#7f672f}
 html[data-theme="light"] .yijing-preview-free-note{color:#62746a!important}
@@ -2509,13 +2517,15 @@ function publicYijingClassicHTML(base,baseLines){
       <div class="hex-meta"><div>上卦<span>${esc(h.upper)}・${esc(h.upperMeta?.image||'')}・${esc(h.upperMeta?.element||'')}</span></div><div>下卦<span>${esc(h.lower)}・${esc(h.lowerMeta?.image||'')}・${esc(h.lowerMeta?.element||'')}</span></div></div>
     </article>`;
   }
-  // 僅供介面遮擋效果預覽：原始卦象資料仍存在瀏覽器，不能用來阻止 AI/檢視原始碼讀取。
-  function customPreviewChangedCardHTML(h,lines){
-    return `<article class="hex-card yijing-preview-changed" aria-label="變卦細節遮擋預覽">
-      <div class="hex-title"><div><div class="hex-no">變卦</div><h3 class="yijing-preview-blur" aria-hidden="true">第 ${h.number} 卦・${esc(h.name)}</h3></div><span class="yijing-preview-lock-mark">🔒 細節遮擋</span></div>
-      ${linesHTML(lines,[])}
-      <div class="yijing-preview-changed-note">🔒 變卦名稱與卦象，暫以模糊效果呈現</div>
-      <div class="hex-meta"><div>上卦<span aria-hidden="true">${esc(h.upper)}・${esc(h.upperMeta?.image||'')}・${esc(h.upperMeta?.element||'')}</span></div><div>下卦<span aria-hidden="true">${esc(h.lower)}・${esc(h.lowerMeta?.image||'')}・${esc(h.lowerMeta?.element||'')}</span></div></div>
+  // 所有自訂問題起卦（包含六爻皆靜）顯示相同遮擋卡片。
+  // 不把實際動爻、變卦內容輸出到 HTML；僅作為視覺示意，後端/API 目前仍保留真實資料。
+  function customPreviewChangedCardHTML(){
+    const genericSilhouette=[true,false,true,false,true,false]; // 純視覺占位圖，與真實卦象無關。
+    return `<article class="hex-card yijing-preview-changed" aria-label="卦象變化資訊：付費後展示">
+      <div class="hex-title"><div><div class="hex-no">卦象變化</div><h3><span class="yijing-preview-masked-title" aria-hidden="true"></span></h3></div><span class="yijing-preview-lock-mark">🔒 付費後展示</span></div>
+      ${linesHTML(genericSilhouette,[])}
+      <div class="yijing-preview-changed-note">🔒 動爻狀態、爻位及變卦（如有），付費後展示</div>
+      <div class="hex-meta"><div>上卦<span aria-hidden="true">遮擋內容</span></div><div>下卦<span aria-hidden="true">遮擋內容</span></div></div>
     </article>`;
   }
   function copyPlainText(text){
@@ -2613,22 +2623,21 @@ function publicYijingClassicHTML(base,baseLines){
       result.innerHTML=`<div class="reading-wrap">${lockedReadingHTML('AI','自訂問題站內 AI 解卦','自訂問題的完整進階解讀尚未開放。')}</div>`;
       return;
     }
-    const hasChange=r.movingLines.length>0;
     result.innerHTML=`
       <div class="custom-prompt-wrap">
         <div class="custom-prompt-hero">
           <span class="custom-mode-tag">自訂問題 · 站內 AI 解卦</span>
           <h4>起卦完成｜準備 AI 易經解讀</h4>
-          <p>以下是你剛才起出的真實卦象。本卦與動爻數量正常顯示，具體爻位及變卦細節暫時遮擋，讓你預覽未來的介面效果；不影響下方站內 AI 解讀。</p>
+          <p>以下為本次真實起出的本卦。卦象變化狀態與專屬結果一律遮擋，完整資訊付費後展示；不影響目前的站內 AI 測試。</p>
           <div class="custom-cast-summary">
             <div><span>你的問題</span><b>${esc(r.question)}</b></div>
             <div><span>起卦方式</span><b>${esc(r.castMethod?.label||'起卦')}</b></div>
-            <div><span>動爻</span><b>${hasChange?`${r.movingLines.length} 個動爻`:'無動爻'}</b>${hasChange?`<div class="yijing-preview-moving-row"><span class="yijing-preview-label">具體爻位</span><span class="yijing-preview-blur" aria-hidden="true">${esc(r.movingNames)}</span><span class="yijing-preview-lock-mark">🔒 遮擋預覽</span></div>`:''}</div>
+            <div><span>本次卦象變化</span><b><span class="yijing-preview-lock-mark">🔒 付費後展示</span></b><div class="yijing-preview-unified-note">包含是否有動爻、動爻數量、具體爻位及適用的變卦資訊。</div></div>
           </div>
         </div>
-        <div class="reading-grid ${hasChange?'':'one'}" style="margin-top:14px">
+        <div class="reading-grid" style="margin-top:14px">
           ${customCastCardHTML(r.base,r.baseLines,'本卦',[])}
-          ${hasChange?customPreviewChangedCardHTML(r.changed,r.changedLines):''}
+          ${customPreviewChangedCardHTML()}
         </div>
         ${publicYijingClassicHTML(r.base,r.baseLines)}
         <section class="yijing-ai-box">
