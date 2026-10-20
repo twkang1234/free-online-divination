@@ -1854,7 +1854,8 @@ html[data-theme="light"] .yijing-ai-quota-modal-actions button{background:#eaf4e
         <button class="custom-quality-edit" id="customQualityEdit" type="button">← 回去修改問題</button>
       </div>
     </div>
-    <div class="cast-method-block">
+    <div class="cast-method-block" id="yijingCastWorkspace">
+      <div class="yijing-reading-picker" id="yijingReadingChoice" aria-label="本次解析方式" hidden></div>
       <div class="cast-method-heading"><b>選擇這次的起卦方式</b><span>同一個問題，可以用不同方式形成卦象；選你最有感覺的一種。</span></div>
       <div class="cast-mode-grid" id="castModeGrid">
         <button class="cast-mode-btn active" data-cast-mode="coin3" type="button"><i>01 / THREE COINS</i><b>三枚硬幣起卦</b><small>一般占問推薦；每次按一下擲 3 枚硬幣，共 6 次，由下往上完成一卦。</small></button>
@@ -1934,7 +1935,7 @@ html[data-theme="light"] .yijing-ai-quota-modal-actions button{background:#eaf4e
         <div>
           <div class="empty-orbit"></div>
           <h3>結果尚未產生</h3>
-          <p>輸入或選擇條件後開始體驗。這裡刻意保留基礎版本，重點是快速理解工具，而不是取代完整專業解盤。</p>
+          <p>請先選擇問題及起卦方式。</p>
         </div>
       </div>
       <div id="result" style="display:none"></div>
@@ -2783,12 +2784,42 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   const stepOrder=['topic','scenario','question','ready'];
   const stepEl=s=>document.querySelector(`[data-guide-step="${s}"]`);
 
+  function positionTask(element,offset=84){
+    if(!element)return;
+    const y=element.getBoundingClientRect().top+window.scrollY-offset;
+    window.scrollTo({top:Math.max(0,y),behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  }
+  function setYijingFocus(active,withResult=false){
+    document.body.classList.toggle('yijing-focus',active);
+    document.body.classList.toggle('yijing-result',active&&withResult);
+    document.body.classList.toggle('yijing-has-result',active&&withResult);
+  }
+  function showReadingResult(){
+    setYijingFocus(true,true);
+    setTimeout(()=>positionTask(document.getElementById('resultShell'),80),85);
+  }
+  function finishReadingExperience(){
+    const done=document.getElementById('yijingReadingCompletion');
+    if(!done)return;
+    done.classList.remove('is-pending');
+    const heading=done.querySelector('h4');
+    const description=done.querySelector('p');
+    const sub=done.querySelector('.completion-sub');
+    if(heading)heading.textContent='這次解卦已完成';
+    if(description)description.textContent='看完本次解析後，可重新選擇一個問題，開始新的易經起卦。';
+    if(sub)sub.textContent='重新起卦會清空目前畫面；如需保留 AI 解讀，可先下載 TXT。';
+  }
+  function completionHTML(pending=false){
+    return `<section class="reading-completion ${pending?'is-pending':''}" id="yijingReadingCompletion" aria-label="完成本次占卜後的操作"><div class="completion-check" aria-hidden="true">✓</div><h4>${pending?'想再問一件事？':'這次解卦已完成'}</h4><p>${pending?'可繼續完成本次 AI 解卦；若想改問別的事情，也能直接重新開始。':'看完本次解析後，可重新選擇一個問題，開始新的易經起卦。'}</p><button type="button" class="yijing-restart-btn" id="chooseAnotherQuestion">↻ 重新起卦</button><span class="completion-sub">${pending?'重新起卦會清空尚未完成的本次解讀。':'重新起卦會清空目前畫面；如需保留 AI 解讀，可先下載 TXT。'}</span></section>`;
+  }
+
   function showStep(s,scroll=true){
     document.querySelectorAll('.guide-step').forEach(x=>x.classList.remove('active'));
     stepEl(s)?.classList.add('active');
     const idx=stepOrder.indexOf(s);
     document.querySelectorAll('#guideProgress button').forEach((b,i)=>{b.classList.toggle('active',i===idx);b.disabled=i>idx||(state.customSource==='all'&&(i===1||i===2));});
-    if(scroll) setTimeout(()=>stepEl(s)?.scrollIntoView({behavior:'smooth',block:'center'}),30);
+    setYijingFocus(s==='ready');
+    if(scroll)setTimeout(()=>positionTask(stepEl(s),s==='ready'?94:86),70);
   }
   function renderTopics(){
     const bound=memberDeviceLoginRequired();
@@ -2899,7 +2930,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     castMode=mode;clearCastTimers();
     document.querySelectorAll('[data-cast-mode]').forEach(b=>b.classList.toggle('active',b.dataset.castMode===mode));
     document.querySelectorAll('[data-cast-panel]').forEach(p=>p.classList.toggle('active',p.dataset.castPanel===mode));
-    if(mode==='meihua2'){const err=document.getElementById('meihuaError');if(err)err.textContent='';}if(mode==='select64')renderHex64Grid();if(mode==='manual6')renderManualSix();if(mode==='coin3')renderCoinThree();if(mode==='number64')startNumberSpinner(true);if(mode==='yinYangStop'){renderYinStop();startYinStop();}return true;
+    if(mode==='meihua2'){const err=document.getElementById('meihuaError');if(err)err.textContent='';}if(mode==='select64')renderHex64Grid();if(mode==='manual6')renderManualSix();if(mode==='coin3')renderCoinThree();if(mode==='number64')startNumberSpinner(true);if(mode==='yinYangStop'){renderYinStop();startYinStop();}if(!silent&&state.question)setTimeout(()=>{const panel=document.querySelector('[data-cast-panel].active');const picker=document.getElementById('yijingReadingChoice');positionTask(panel,96+(picker&&!picker.hidden?picker.getBoundingClientRect().height:0));},95);return true;
   }
   function resetCastUI(){
     const movingStudyOption=document.getElementById('hex64MovingSimulation');
@@ -3024,6 +3055,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       if(hint&&writingData)hint.textContent=`你的問題目前較簡短，建議補充這個情境的具體現況或困難，並寫清楚最想了解的方向。可以點開上方的專屬寫作指引參考；這只是提醒，不影響起卦。`;
     }
     if(state.custom){
+      const picker=document.getElementById('yijingReadingChoice');if(picker){picker.hidden=true;picker.innerHTML='';}
       if(head)head.innerHTML='<span>STEP 04</span><h4>輸入這次想問的事情</h4><p>請清楚寫下你真正想知道的問題，再選擇起卦方式。完成起卦後可以直接按下「開始 AI 解卦」。</p>';
       document.getElementById('yijingReadyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)}${state.customSource==='all'?'':` → ${esc(state.scenario.name)}`} → 自訂問題</div><strong>本次將由站內 AI 依實際卦象解讀</strong><p>起卦與 AI 解讀分兩步進行，避免重複起卦或不必要的 AI 呼叫。</p>`;
       if(gate)gate.hidden=true;
@@ -3032,7 +3064,9 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       const aiAvailable=canRunYijingAI();
       if(head)head.innerHTML=aiAvailable?'<span>STEP 04</span><h4>選擇解析方式，再開始起卦</h4><p>固定題目可選站內基本解析或 AI 專業解析。AI 解讀由獨立的 AI 次數計算，後續可選擇追問。</p>':'<span>STEP 04</span><h4>選擇解析方式，再開始起卦</h4><p>站內基本解析目前可用；AI 專業解析需使用 AI 解讀次數，待會員額度功能正式啟用。</p>';
       state.fixedReadingMode=aiAvailable&&state.fixedReadingMode==='ai'?'ai':'basic';
-      document.getElementById('yijingReadyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)} → ${esc(state.scenario.name)}</div><strong>${esc(q)}</strong><p>解讀重點：${esc(state.topic.focus)}</p><div class="yi-mode-row" role="group" aria-label="選擇本次固定題目的解析方式"><label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="basic" ${state.fixedReadingMode==='basic'?'checked':''}><span><b>站內基本解析</b><small>${aiAvailable?'現有規則式解讀；看完可使用一次 AI 追問':'現有規則式解讀｜本身可用'}</small></span></label>${aiAvailable?`<label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="ai" ${state.fixedReadingMode==='ai'?'checked':''}><span><b>AI 專業解析</b><small>優先使用本期免費 AI，耗盡才扣會員共用 AI 額度</small></span></label>`:`<button type="button" class="yi-mode-option ai-quota-pending" data-ai-quota-info="1" aria-haspopup="dialog"><span class="yi-disabled-radio" aria-hidden="true">○</span><span><b>AI 專業解析</b><small>需登入｜成功解讀優先使用本期免費 AI</small></span></button>`}</div>`;
+      document.getElementById('yijingReadyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)} → ${esc(state.scenario.name)}</div><strong>${esc(q)}</strong><p>解讀重點：${esc(state.topic.focus)}</p>`;
+      const picker=document.getElementById('yijingReadingChoice');
+      if(picker){picker.hidden=false;picker.innerHTML=`<div class="reading-picker-head"><b>本次解卦要用哪一種方式？</b><span>起卦時隨時可以切換</span></div><div class="yi-mode-row" role="group" aria-label="選擇本次固定題目的解析方式"><label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="basic" ${state.fixedReadingMode==='basic'?'checked':''}><span><b>站內基本解析</b><small>${aiAvailable?'現有規則式解讀；看完可使用一次 AI 追問':'現有規則式解讀｜本身可用'}</small></span></label>${aiAvailable?`<label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="ai" ${state.fixedReadingMode==='ai'?'checked':''}><span><b>AI 專業解析</b><small>優先使用本期免費 AI，耗盡才扣會員共用 AI 額度</small></span></label>`:`<button type="button" class="yi-mode-option ai-quota-pending" data-ai-quota-info="1" aria-haspopup="dialog"><span class="yi-disabled-radio" aria-hidden="true">○</span><span><b>AI 專業解析</b><small>需登入｜成功解讀優先使用本期免費 AI</small></span></button>`}</div>`;}
       if(gate)gate.hidden=true;
       setCustomReadyAccess(true);
     }
@@ -3058,8 +3092,14 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     const shortHint=document.getElementById('yijingCustomShortHint');
     if(shortHint)shortHint.hidden=true;
     currentReading=null;
-    result.style.display='none'; result.innerHTML=''; empty.style.display='grid';
-    showStep('topic');
+    result.style.display='none';result.innerHTML='';empty.style.display='grid';
+    const picker=document.getElementById('yijingReadingChoice');if(picker){picker.hidden=true;picker.innerHTML='';}
+    const extra=document.getElementById('yijingExtraContext');if(extra){extra.value='';extra.style.height='';}
+    const a=document.getElementById('meihuaNumberA'),b=document.getElementById('meihuaNumberB');if(a)a.value='';if(b)b.value='';
+    resetCastUI();
+    setYijingFocus(false);
+    showStep('topic',false);
+    setTimeout(()=>positionTask(document.getElementById('yijingGuide'),86),70);
   }
 
   function movingHTML(r){
@@ -3292,10 +3332,10 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
 
   function renderCustomAI(r){
     currentReading=r;
-    empty.style.display='none';result.style.display='block';
+    empty.style.display='none';result.style.display='block';setYijingFocus(true,true);
     if(!canRunYijingAI()){
-      result.innerHTML=`<div class="reading-wrap"><div class="reading-access-lock" data-ai-quota-info="1"><div class="lock-kicker">AI READING · 1 CREDIT</div><h4>站內 AI 專業解卦</h4><p>AI 解讀優先使用本期免費 AI 額度；免費用完才使用登入會員共用 AI 額度。目前可繼續使用站內基本解析。</p><button type="button" class="yi-basic-to-ai">了解 AI 解讀額度</button></div></div>`;
-      return;
+      result.innerHTML=`<div class="reading-wrap"><div class="reading-access-lock" data-ai-quota-info="1"><div class="lock-kicker">AI READING · 1 CREDIT</div><h4>站內 AI 專業解卦</h4><p>AI 解讀優先使用本期免費 AI 額度；免費用完才使用登入會員共用 AI 額度。目前可繼續使用站內基本解析。</p><button type="button" class="yi-basic-to-ai">了解 AI 解讀額度</button></div>${completionHTML(true)}</div>`;
+      document.getElementById('chooseAnotherQuestion')?.addEventListener('click',resetGuide);showReadingResult();return;
     }
     const thisClassic=YIJING_PUBLIC_CLASSIC[r.base?.name]||{};
     const isGuidedAI=!state.custom;
@@ -3322,7 +3362,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
           <div class="yijing-ai-content" id="yijingAiContent" hidden></div>
           <div id="yiAiFollowupHolder" hidden></div>
         </section>
-        <div class="reading-reset"><button id="chooseAnotherQuestion" type="button">← 重新選擇主題／問題</button></div>
+        ${completionHTML(true)}
       </div>`;
     document.getElementById('runYijingAi')?.addEventListener('click',async e=>{
       const btn=e.currentTarget,status=document.getElementById('yijingAiStatus'),content=document.getElementById('yijingAiContent');
@@ -3344,12 +3384,12 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         }
         const followupHost=document.getElementById('yiAiFollowupHolder');
         if(followupHost){followupHost.innerHTML=yijingFollowupHTML('ai');followupHost.hidden=false;bindYijingFollowup(r,'ai',data.answer.trim());}
-        btn.textContent='解卦已完成';content.scrollIntoView({behavior:'smooth',block:'nearest'});
+        btn.textContent='解卦已完成';finishReadingExperience();content.scrollIntoView({behavior:'smooth',block:'nearest'});
       }catch(err){status.classList.add('error');status.textContent=err?.name==='AbortError'?'等待 AI 回應逾時，原卦已保留，可以按下按鈕重試。':String(err?.message||'AI 解讀失敗');btn.disabled=false;btn.textContent='重新嘗試 AI 解卦';}
       finally{clearTimeout(timer);}
     });
     document.getElementById('chooseAnotherQuestion')?.addEventListener('click',resetGuide);
-    setTimeout(()=>result.scrollIntoView({behavior:'smooth',block:'start'}),60);
+    showReadingResult();
   }
 
   // 固定題目和自訂問題統一：公開「本卦」與經典依據；本次動爻狀態和變卦採相同遮擋。
@@ -3390,7 +3430,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   function render(r){
     if(state.custom || state.fixedReadingMode==='ai'){renderCustomAI(r);return;}
     currentReading=r;
-    empty.style.display='none'; result.style.display='block';
+    empty.style.display='none';result.style.display='block';setYijingFocus(true,true);
     const basicClassic=YIJING_PUBLIC_CLASSIC[r.base?.name]||{};
     const publicReading=fixedPublicReadingCopy(r);
     result.innerHTML = `
@@ -3453,7 +3493,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         ${summaryHTML(publicReading)}
         ${yijingFollowupHTML('basic')}
         <button type="button" class="yi-basic-to-ai" id="yiUpgradeBasicToAI">改看本次卦象的 AI 完整解析（不重新起卦）</button>
-        <div class="reading-reset"><button id="chooseAnotherQuestion" type="button">← 重新選擇主題／問題</button></div>
+        ${completionHTML(false)}
       </div>`;
 
     applyReadingAccessGates();
@@ -3464,7 +3504,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       upgradeAI.addEventListener('click',()=>{if(!canRunYijingAI()){openYijingAiQuotaModal();return;}state.fixedReadingMode='ai';renderCustomAI(r);});
     }
     document.getElementById('chooseAnotherQuestion')?.addEventListener('click',resetGuide);
-    setTimeout(()=>result.scrollIntoView({behavior:'smooth',block:'start'}),60);
+    showReadingResult();
   }
 
   initAdminTestMode();
@@ -3542,7 +3582,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     input.setSelectionRange(input.value.length,input.value.length);
     input.scrollIntoView({behavior:'smooth',block:'center'});
   });
-  document.getElementById('yijingReadyCard')?.addEventListener('change',e=>{if(e.target?.name==='yijingFixedReadingMode')state.fixedReadingMode=e.target.value==='ai'?'ai':'basic';});
+  document.getElementById('yijingReadingChoice')?.addEventListener('change',e=>{if(e.target?.name==='yijingFixedReadingMode')state.fixedReadingMode=e.target.value==='ai'?'ai':'basic';});
   document.getElementById('yijingExtraContext')?.addEventListener('input',e=>{if(state.custom){hideCustomQualityWarning();}autoGrowYijingQuestion(e.currentTarget);refreshCustomShortHint();});
   document.querySelectorAll('[data-guide-back]').forEach(b=>b.addEventListener('click',()=>{if(state.customSource==='all'&&b.dataset.guideBack==='question'){resetGuide();return;}showStep(b.dataset.guideBack)}));
   document.querySelectorAll('[data-guide-jump]').forEach(b=>b.addEventListener('click',()=>{if(!b.disabled)showStep(b.dataset.guideJump)}));
@@ -3645,7 +3685,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       if(location.hash==='#apply-listing')openListing();
     });
   </script>
-<div style="width:min(1120px,calc(100% - 40px));margin:0 auto 28px;color:var(--muted);font-size:.64rem;line-height:1.7;text-align:center">經文轉寫參考中文維基文庫《周易正義》（武英殿十三經注疏本）之公開資料；古籍原文屬公有領域，轉寫頁面依其授權條款使用。</div>
+<div id="yijingClassicCredit" style="width:min(1120px,calc(100% - 40px));margin:0 auto 28px;color:var(--muted);font-size:.64rem;line-height:1.7;text-align:center">經文轉寫參考中文維基文庫《周易正義》（武英殿十三經注疏本）之公開資料；古籍原文屬公有領域，轉寫頁面依其授權條款使用。</div>
 
 <style id="dh-unified-quota-yijing-20261019">
 /* 三欄：自動補充；網站贈送/網站 AI 解析上下分層；付費維持現況 */
@@ -3733,5 +3773,78 @@ html[data-theme="light"] #yijingQuotaPanel .dh-quota-gift .dh-quota-gift-heading
 
 </style>
 
+
+<style id="yijing-ux-flow-20261020">
+/* 起卦導覽：初始頁不預留空卦象；完成選題後只呈現占問作業區。 */
+body:not(.yijing-has-result) #resultShell{display:none!important}
+body.yijing-focus .yijing-hero,
+body.yijing-focus .yijing-seo,
+body.yijing-focus .page-footer,
+body.yijing-focus #yijingClassicCredit,
+body.yijing-focus #yijingQuotaPanel,
+body.yijing-focus #worldSecond>.stage-header,
+body.yijing-focus .core>.notice,
+body.yijing-focus .core>footer{display:none!important}
+body.yijing-focus #worldSecond{padding-top:14px;padding-bottom:36px}
+body.yijing-focus .core{overflow:visible}
+body.yijing-focus .core>.tool-head{padding-bottom:10px}
+body.yijing-focus .tool-head .tool-sub,
+body.yijing-focus .tool-head .tool-mark{display:none}
+body.yijing-result .core>.tool-head,
+body.yijing-result #yijingGuide{display:none!important}
+body.yijing-result #worldSecond{padding-top:12px}
+body.yijing-result .result-shell{padding:12px;min-height:0}
+#yijingReadingChoice[hidden]{display:none!important}
+.yijing-reading-picker{position:sticky;top:72px;z-index:38;margin:0 0 16px;padding:13px 14px;border:1px solid rgba(124,227,161,.27);border-radius:14px;background:rgba(10,23,15,.98);box-shadow:0 10px 28px rgba(0,0,0,.22);backdrop-filter:blur(14px)}
+.yijing-reading-picker>.reading-picker-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.yijing-reading-picker>.reading-picker-head b{color:#d8efdf;font-size:.82rem}
+.yijing-reading-picker>.reading-picker-head span{font-size:.65rem;color:#91a99a}
+.yijing-reading-picker .yi-mode-row{margin:0;gap:9px}
+.yijing-reading-picker .yi-mode-option{min-height:55px;padding:8px 12px;border-radius:10px}
+.yijing-reading-picker .yi-mode-option b{font-size:.77rem}
+.yijing-reading-picker .yi-mode-option small{font-size:.63rem;line-height:1.45}
+body.yijing-focus .cast-method-heading{scroll-margin-top:164px}
+body.yijing-focus .cast-panel{scroll-margin-top:174px}
+.guide-step{scroll-margin-top:88px}
+#yijingGuide{scroll-margin-top:88px}
+/* The final call to action is intentionally stronger than secondary copy / download actions. */
+.reading-completion{margin:26px 0 6px;padding:21px 20px;border:1px solid rgba(124,227,161,.35);border-radius:17px;background:radial-gradient(circle at 50% 0,rgba(124,227,161,.14),transparent 78%),rgba(11,28,16,.78);text-align:center}
+.reading-completion .completion-check{width:37px;height:37px;display:grid;place-items:center;margin:0 auto 7px;border-radius:50%;background:rgba(124,227,161,.15);color:#92efb1;font-size:1.2rem}
+.reading-completion h4{margin:0 0 6px;color:#edf9f0;font-size:1.08rem}
+.reading-completion p{margin:0 auto 13px;max-width:520px;color:#b2c8b9;font-size:.75rem;line-height:1.75}
+.reading-completion .yijing-restart-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:min(380px,100%);min-height:54px!important;padding:12px 22px!important;border:1px solid rgba(124,227,161,.86)!important;border-radius:13px!important;background:linear-gradient(180deg,#a9f5be,#4ac879)!important;color:#07220f!important;font-size:1rem!important;font-weight:900!important;box-shadow:0 12px 30px rgba(67,192,103,.20);transition:transform .18s,box-shadow .18s}
+.reading-completion .yijing-restart-btn:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(67,192,103,.30)}
+.reading-completion .completion-sub{display:block;margin-top:10px;color:#8fae99;font-size:.67rem}
+.reading-completion.is-pending{border-color:rgba(255,255,255,.13);background:rgba(255,255,255,.02)}
+.reading-completion.is-pending .yijing-restart-btn{border-color:rgba(124,227,161,.25)!important;background:rgba(124,227,161,.07)!important;color:#9ddeb1!important;box-shadow:none;font-size:.82rem!important;min-height:44px!important}
+.reading-completion.is-pending .completion-check{display:none}
+.reading-completion.is-pending h4{font-size:.89rem}
+html[data-theme="light"] .yijing-reading-picker{background:rgba(249,253,250,.98);border-color:rgba(39,127,74,.24);box-shadow:0 10px 28px rgba(26,65,37,.11)}
+html[data-theme="light"] .yijing-reading-picker>.reading-picker-head b{color:#254b34}
+html[data-theme="light"] .yijing-reading-picker>.reading-picker-head span{color:#587665}
+html[data-theme="light"] .reading-completion{background:linear-gradient(150deg,#e9f8ed,#f7fbf8);border-color:#a8dab8}
+html[data-theme="light"] .reading-completion h4{color:#214a31}
+html[data-theme="light"] .reading-completion p{color:#4b6755}
+html[data-theme="light"] .reading-completion .completion-sub{color:#587665}
+html[data-theme="light"] .reading-completion.is-pending{background:#f6faf7;border-color:#d2e6d7}
+html[data-theme="light"] .reading-completion.is-pending .yijing-restart-btn{background:#f2f8f3!important;color:#366d49!important}
+@media(max-width:760px){
+  body.yijing-focus #worldSecond{padding:10px 10px 20px}
+  body.yijing-focus .core{padding:12px}
+  body.yijing-focus .core>.tool-head h3{font-size:1.12rem}
+  .yijing-reading-picker{top:64px;padding:10px;margin-bottom:12px}
+  .yijing-reading-picker>.reading-picker-head{margin-bottom:6px}
+  .yijing-reading-picker .yi-mode-option{flex:1 1 0;min-width:0;gap:6px;min-height:62px;padding:7px 8px}
+  .yijing-reading-picker .yi-mode-option b{font-size:.71rem}
+  .yijing-reading-picker .yi-mode-option small{font-size:.59rem}
+  .cast-mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cast-mode-btn{min-height:85px;padding:11px 9px}
+  .cast-mode-btn small{font-size:.62rem}
+  .reading-completion{padding:18px 12px}
+  .reading-completion .yijing-restart-btn{width:100%}
+}
+@media(max-width:380px){.yijing-reading-picker>.reading-picker-head span{display:none}}
+@media(prefers-reduced-motion:reduce){.reading-completion .yijing-restart-btn{transition:none}}
+</style>
 </body>
 </html>
