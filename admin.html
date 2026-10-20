@@ -260,6 +260,23 @@ td.muted{color:var(--muted)}
 .dh-ai-history .dh-ai-line.done{background:#0b1118;border-color:#252e39;border-left:1px solid #303a45;opacity:.77}
 .dh-ai-history .dh-ai-line.done b{font-weight:500;color:#9baabc}
 .dh-ai-history .dh-ai-line.done small{color:#8391a0}
+
+/* 專業解鎖點數：沿用會員共用額度面板，不放在計價頁。 */
+#dhWalletAdmin .dh-point-note[hidden],#dhWalletAdmin .dh-point-test[hidden]{display:none!important}
+#dhWalletAdmin .dh-point-note{flex:1 1 260px;display:grid;gap:6px;font-size:.8rem;color:#d6c9ae}
+#dhWalletAdmin .dh-point-note input,#dhWalletAdmin .dh-point-test select{width:100%;max-width:460px;min-height:39px;padding:8px 10px;border:1px solid #48556a;border-radius:9px;background:#0b1119;color:#e4e8ed;font:inherit;font-size:.84rem}
+#dhWalletAdmin .dh-point-test{border-top:1px solid #2d3948;padding-top:14px;margin-top:8px}
+#dhWalletAdmin .dh-point-test>summary{cursor:pointer;color:#b9d0db;font-size:.83rem;font-weight:700;padding:6px 0}
+#dhWalletAdmin .dh-point-test p{color:#a6b6c4;line-height:1.7;font-size:.76rem;margin:8px 0}
+#dhWalletAdmin .dh-point-test .dh-point-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+#dhWalletAdmin .dh-point-test .dh-point-actions label{display:grid;gap:6px;flex:1 1 260px;color:#d8e1ea;font-size:.8rem}
+#dhWalletAdmin .dh-point-message{color:#a7d9c3;font-size:.77rem;line-height:1.6}
+#dhWalletAdmin .dh-point-ledger{border-top:1px solid #293644;margin-top:13px;padding-top:9px;font-size:.78rem}
+#dhWalletAdmin .dh-point-ledger summary{cursor:pointer;color:#b6c6d7;padding:5px 0}
+#dhWalletAdmin .dh-point-entry{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid #25313c;color:#c8d3df;font-size:.76rem}
+#dhWalletAdmin .dh-point-entry small{display:block;color:#90a3b6;margin-top:3px;word-break:break-word}
+#dhWalletAdmin .dh-point-entry button{padding:5px 8px;font-size:.73rem}
+#dhWalletAdmin .dh-point-entry strong{color:#e7dfca}
 </style>
 </head>
 <body>
@@ -353,8 +370,16 @@ td.muted{color:var(--muted)}
         <p>每位新舊會員首次各有工具 10 次、AI 解讀 10 次；會員帳號共用，用完不每日重置。每日免費次數由各工具獨立管理。</p>
         <div class="bazi-gift-row"><label>會員 Email <input type="email" id="dhWalletEmail" placeholder="已註冊 Google 會員 Email"></label><button class="btn secondary" type="button" id="dhWalletLookup">查詢</button></div>
         <div id="dhWalletCurrent" class="bazi-gift-member" hidden></div>
-        <div class="bazi-gift-row"><label>贈送種類<select id="dhWalletBucket"><option value="tool">共用工具額度</option><option value="ai">共用 AI 解讀額度</option><option value="paid">付費額度（站長人工核發）</option></select></label><label>贈送次數<input type="number" id="dhWalletAmount" min="1" max="1000" value="10"></label></div>
+        <div class="bazi-gift-row"><label>贈送種類<select id="dhWalletBucket"><option value="tool">共用工具額度</option><option value="ai">共用 AI 解讀額度</option><option value="paid">付費額度（站長人工核發）</option><option value="professional_points">專業解鎖點數（獨立點數錢包）</option></select></label><label><span id="dhWalletAmountLabel">贈送次數</span><input type="number" id="dhWalletAmount" min="1" max="1000" value="10"></label></div>
+        <div class="bazi-gift-row"><label class="dh-point-note" id="dhWalletPointsNote" hidden>專業點數贈送備註（選填）<input id="dhWalletPointsNoteInput" type="text" maxlength="100" placeholder="例如：站長測試／活動贈點"></label></div>
         <div class="bazi-gift-row"><button class="btn" id="dhWalletGrant" type="button" disabled>確認額外贈送</button><small id="dhWalletInfo" style="color:#a9bfd0" aria-live="polite">請先查詢會員。</small></div>
+        <details class="dh-point-test" id="dhWalletTestPanel">
+          <summary>展開專業點數測試扣點與異動紀錄（非正式解鎖）</summary>
+          <p>這裡只模擬扣除已設定價格的專業點數，可於紀錄中還原；不會交付付費完整分析，也不會建立真實解鎖權。新會員自動贈點尚未設定。</p>
+          <div class="dh-point-actions"><label>測試解鎖區塊<select id="dhWalletTestSection"><option value="">展開後讀取付費區塊…</option></select></label><button type="button" class="btn secondary" id="dhWalletTestSpend" disabled>測試扣點</button></div>
+          <div class="dh-point-message" id="dhWalletTestStatus" aria-live="polite">先用上方 Email 查詢會員，再選擇測試區塊。</div>
+          <details class="dh-point-ledger"><summary>最近 20 筆專業點數異動紀錄</summary><div id="dhWalletPointsHistory">請先查詢會員。</div></details>
+        </details>
       </div>
     </details>
 
@@ -630,31 +655,111 @@ document.getElementById('dhQcSave')?.addEventListener('click',async()=>{
 async function dhQcLoadAfterSave(){dhQcRender(await dhQcRequest())}
 // === End quota editor ===
 
-// 中央共用額度管理，讀寫都需原管理員 HMAC session。
-let dhWalletSelected='';
+// 共用會員額度＋專業點數：同一個 Email 查詢、同一個會員管理區塊。
+let dhWalletSelected='',dhWalletPointData=null,dhWalletPointReady=false,dhWalletPricingSections=[];
 async function dhWalletAdminRequest(email,body){
  const url=API_BASE+'/admin/shared-wallet'+(body?'':'?email='+encodeURIComponent(email));
  const r=await fetch(url,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token(),Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify({...body,email}):undefined,cache:'no-store'});
  const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw Error(j.error||'查詢失敗');return j;
 }
+async function dhWalletPointsRequest(path,body){
+ const r=await fetch(API_BASE+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token(),Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+ const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw Error(j.error||'專業點數系統操作失敗');return j;
+}
 function dhWalletAdminPaint(d){
- const w=d.wallet;document.getElementById('dhWalletCurrent').hidden=false;
- document.getElementById('dhWalletCurrent').textContent=d.member.name+'｜'+d.member.email+'｜共用工具 '+w.tool+' 次｜共用 AI '+w.ai+' 次｜付費 '+w.paid+' 次';
+ const w=d.wallet,display=document.getElementById('dhWalletCurrent');display.hidden=false;
+ display.textContent=(d.member.name||'已註冊會員')+'｜'+d.member.email+'｜共用工具 '+w.tool+' 次｜共用 AI '+w.ai+' 次｜原有付費額度 '+w.paid+' 次'+(dhWalletPointReady?'｜專業解鎖 '+dhWalletPointData.points.balance+' 點':'｜專業解鎖點數尚未取得');
  document.getElementById('dhWalletGrant').disabled=false;
 }
+function dhWalletTogglePointMode(){
+ const isPoint=document.getElementById('dhWalletBucket').value==='professional_points';
+ document.getElementById('dhWalletPointsNote').hidden=!isPoint;
+ document.getElementById('dhWalletAmountLabel').textContent=isPoint?'贈送點數':'贈送次數';
+ document.getElementById('dhWalletAmount').max=isPoint?'2000':'1000';
+ const btn=document.getElementById('dhWalletGrant');btn.disabled=!dhWalletSelected||(isPoint&&!dhWalletPointReady);
+}
+document.getElementById('dhWalletBucket').addEventListener('change',dhWalletTogglePointMode);
+function dhWalletEventLabel(kind){return ({welcome:'一次性歡迎贈點',admin_gift:'管理員個別贈點',test_spend:'管理員模擬扣點',test_restore:'模擬扣點復原'})[kind]||kind}
+function dhWalletRenderPointHistory(){
+ const box=document.getElementById('dhWalletPointsHistory');box.replaceChildren();
+ const rows=dhWalletPointData?.points?.events||[];
+ if(!rows.length){box.textContent='目前沒有專業點數異動紀錄。';return;}
+ for(const x of rows){
+  const row=document.createElement('div');row.className='dh-point-entry';
+  const left=document.createElement('div');const name=document.createElement('strong');name.textContent=dhWalletEventLabel(x.kind)+(x.toolId?'｜'+x.toolId+' / '+x.sectionId:'');
+  const small=document.createElement('small');small.textContent=(x.note||'')+'　'+(x.createdAt||'');left.append(name,small);
+  const right=document.createElement('div');const sum=document.createElement('strong');sum.textContent=(x.delta>0?'+':'')+x.delta+' 點';right.append(sum);
+  if(x.kind==='test_spend'&&!rows.some(q=>q.kind==='test_restore'&&q.referenceId===x.operationId)){
+   const b=document.createElement('button');b.className='btn secondary';b.type='button';b.textContent='復原測試扣點';
+   b.addEventListener('click',async()=>{
+    if(!dhWalletSelected||!confirm('退回這筆測試扣點？'))return;b.disabled=true;
+    try{await dhWalletPointsRequest('/admin/points/test-restore',{email:dhWalletSelected,referenceId:x.operationId,operationId:crypto.randomUUID()});await dhWalletRefreshPoints();document.getElementById('dhWalletTestStatus').textContent='測試扣點已復原。';}
+    catch(e){document.getElementById('dhWalletTestStatus').textContent='復原失敗：'+e.message;b.disabled=false}
+   });right.append(document.createElement('br'),b);
+  }
+  row.append(left,right);box.append(row);
+ }
+}
+async function dhWalletRefreshPoints(){
+ const fresh=await dhWalletPointsRequest('/admin/points/member?email='+encodeURIComponent(dhWalletSelected));
+ dhWalletPointData=fresh;dhWalletPointReady=true;dhWalletRenderPointHistory();dhWalletTogglePointMode();
+ const label=document.getElementById('dhWalletCurrent');
+ if(!label.hidden){label.textContent=label.textContent.replace(/｜專業解鎖 (?:\d+) 點|｜專業解鎖點數尚未取得/,'')+'｜專業解鎖 '+fresh.points.balance+' 點';}
+ return fresh;
+}
+document.getElementById('dhWalletEmail').addEventListener('input',()=>{
+ if(document.getElementById('dhWalletEmail').value.trim().toLowerCase()!==dhWalletSelected){
+  dhWalletSelected='';dhWalletPointReady=false;dhWalletPointData=null;
+  document.getElementById('dhWalletGrant').disabled=true;document.getElementById('dhWalletTestSpend').disabled=true;
+  document.getElementById('dhWalletCurrent').hidden=true;document.getElementById('dhWalletPointsHistory').textContent='請先查詢會員。';
+ }
+});
 document.getElementById('dhWalletLookup').addEventListener('click',async()=>{
  const email=document.getElementById('dhWalletEmail').value.trim().toLowerCase(),info=document.getElementById('dhWalletInfo');
- dhWalletSelected='';document.getElementById('dhWalletGrant').disabled=true;info.textContent='查詢中…';
- try{const d=await dhWalletAdminRequest(email);dhWalletSelected=email;dhWalletAdminPaint(d);info.textContent='查詢成功。';}
- catch(e){info.textContent='查詢失敗：'+e.message;document.getElementById('dhWalletCurrent').hidden=true}
+ dhWalletSelected='';dhWalletPointReady=false;dhWalletPointData=null;document.getElementById('dhWalletGrant').disabled=true;info.textContent='查詢中…';
+ try{
+  const d=await dhWalletAdminRequest(email);dhWalletSelected=email;
+  let pError='';try{await dhWalletRefreshPoints()}catch(e){pError=e.message;dhWalletPointReady=false}
+  dhWalletAdminPaint(d);dhWalletTogglePointMode();
+  document.getElementById('dhWalletTestSpend').disabled=!dhWalletPointReady;
+  info.textContent=pError?'原有額度已取得，但專業點數查詢失敗：'+pError:'查詢成功，包含專業解鎖點數。';
+ }catch(e){info.textContent='查詢失敗：'+e.message;document.getElementById('dhWalletCurrent').hidden=true;dhWalletSelected=''}
 });
 document.getElementById('dhWalletGrant').addEventListener('click',async()=>{
  const bucket=document.getElementById('dhWalletBucket').value,amount=Number(document.getElementById('dhWalletAmount').value),info=document.getElementById('dhWalletInfo');
- if(!dhWalletSelected||!Number.isSafeInteger(amount)||amount<1||amount>1000)return;
- if(!confirm('確定贈送 '+amount+' 次 '+(bucket==='tool'?'共用工具':bucket==='ai'?'共用 AI':'付費')+' 額度給 '+dhWalletSelected+'？'))return;
+ const isPoint=bucket==='professional_points',limit=isPoint?2000:1000;
+ if(!dhWalletSelected||!Number.isSafeInteger(amount)||amount<1||amount>limit){info.textContent='請先查詢會員並輸入正確數量（1～'+limit+'）。';return;}
+ if(isPoint&&!dhWalletPointReady){info.textContent='專業點數尚未成功查詢，無法贈點。';return;}
+ if(!confirm('確定贈送 '+amount+(isPoint?' 點專業解鎖點數':' 次 '+(bucket==='tool'?'共用工具':bucket==='ai'?'共用 AI':'原有付費')+'額度')+'給 '+dhWalletSelected+'？'))return;
  const btn=document.getElementById('dhWalletGrant');btn.disabled=true;
- try{const d=await dhWalletAdminRequest(dhWalletSelected,{bucket,amount});dhWalletAdminPaint(d);info.textContent='✓ 已由後端記帳，餘額已更新';}
- catch(e){info.textContent='贈送失敗：'+e.message}finally{btn.disabled=false}
+ try{
+  if(isPoint){
+   await dhWalletPointsRequest('/admin/points/grant',{email:dhWalletSelected,points:amount,note:document.getElementById('dhWalletPointsNoteInput').value,operationId:crypto.randomUUID()});
+   await dhWalletRefreshPoints();info.textContent='✓ 專業點數已贈送，餘額及異動紀錄已更新。';
+  }else{
+   const d=await dhWalletAdminRequest(dhWalletSelected,{bucket,amount});dhWalletAdminPaint(d);info.textContent='✓ 已由後端記帳，餘額已更新';
+  }
+ }catch(e){info.textContent='贈送失敗：'+e.message}finally{dhWalletTogglePointMode()}
+});
+document.getElementById('dhWalletTestPanel').addEventListener('toggle',async e=>{
+ if(!e.target.open)return;
+ const sel=document.getElementById('dhWalletTestSection');sel.replaceChildren();
+ const initial=document.createElement('option');initial.value='';initial.textContent='請選擇已設定付費價格的區塊';sel.append(initial);
+ try{
+  const d=await dhWalletPointsRequest('/admin/pricing');
+  dhWalletPricingSections=d.sections.filter(x=>x.mode==='priced').sort((a,b)=>a.toolId.localeCompare(b.toolId)||Number((a.title.match(/^\d+/)||[])[0]||999)-Number((b.title.match(/^\d+/)||[])[0]||999));
+  for(const x of dhWalletPricingSections){const op=document.createElement('option');op.value=x.toolId+'|'+x.sectionId;op.textContent=(d.tools.find(t=>t.id===x.toolId)?.name||x.toolId)+'｜'+x.title+'（'+x.points+' 點）';sel.append(op)}
+ }catch(e){document.getElementById('dhWalletTestStatus').textContent='讀取區塊價格失敗：'+e.message}
+});
+document.getElementById('dhWalletTestSpend').addEventListener('click',async()=>{
+ const key=document.getElementById('dhWalletTestSection').value,status=document.getElementById('dhWalletTestStatus');
+ if(!dhWalletSelected||!dhWalletPointReady||!key){status.textContent='請先查詢會員並選擇已設定付費的區塊。';return;}
+ const [toolId,sectionId]=key.split('|'),item=dhWalletPricingSections.find(x=>x.toolId===toolId&&x.sectionId===sectionId);
+ if(!item)return;
+ if(!confirm('僅為模擬扣點：從 '+dhWalletSelected+' 扣 '+item.points+' 點，不會解鎖內容；可於異動紀錄復原。繼續？'))return;
+ const btn=document.getElementById('dhWalletTestSpend');btn.disabled=true;
+ try{await dhWalletPointsRequest('/admin/points/test-spend',{email:dhWalletSelected,toolId,sectionId,operationId:crypto.randomUUID()});await dhWalletRefreshPoints();status.textContent='已扣除 '+item.points+' 點（測試）。可在下方紀錄按「復原」。';}
+ catch(e){status.textContent='測試失敗：'+e.message}finally{btn.disabled=!dhWalletPointReady}
 });
 // 站長公告管理：所有寫入動作使用既有後台 HMAC 憑證。
 let announcementAdminBusy=false,announcementAdminLoaded=false;
