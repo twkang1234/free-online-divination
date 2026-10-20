@@ -6104,7 +6104,8 @@ ${intent}
           if(!lastData){ try{cast();}catch(_){} }
           if(def.key==='luck'||def.key==='years'){summary.style.display='block';summary.style.width='100%';}
           else{summary.style.display='';summary.style.width='';}
-          summary.innerHTML=lastData?sectionExplanation(def.key,lastData):decodeCard('提示','請先於上方輸入出生日期時間並點選「排八字」建立命盤。');
+          const nativeSource=section.classList.contains('dh-bazi-premium-visible') ? baziNativePaidData.get(def.id) : null;
+          summary.innerHTML=(nativeSource||lastData)?sectionExplanation(def.key,nativeSource||lastData):decodeCard('提示','請先於上方輸入出生日期時間並點選「排八字」建立命盤。');
           content.classList.add('show');
           // 動態解讀插入後立即套用既定七成遮罩，避免展開時短暫露出數值。
           window.baziMaskLevelScan?.();
@@ -6735,6 +6736,39 @@ ${intent}
     $('monthDetail').innerHTML=periodDetail(data,item);refreshSelectedDecode('months',data);trackAction(`month-${item.year}-${item.month}`);
   }
   function selectMonth(data,i){const item=data.monthFlows[i];if(item)selectMonthItem(data,item,i);}
+
+  const baziNativePaidData=new Map();
+  window.baziClearNativePaidData=()=>baziNativePaidData.clear();
+  // Paid chapters 06–09: use the SAME original on-page renderer as archived
+  // complete snapshots. The input is original hydrateCalendarData output,
+  // projected to this *one* authorized chapter by the Worker.
+  window.baziRenderOriginalPaidChapter=function(id,originalData,paidBox){
+    if(!document.body.classList.contains('bazi-personal-full-mode') ||
+       !originalData || typeof originalData!=='object')throw Error('完整命盤狀態未就緒');
+    const r=document.getElementById(id);
+    if(!r || !paidBox || !r.contains(paidBox))throw Error('找不到此區付費內容');
+    if(id==='report-reading'){
+      if(!originalData.overallMasterSummary?.headerTitle)throw Error('命盤核心資料不完整');
+      // The original renderReading replaces readingBody.innerHTML. Preserve
+      // the wallet/unlock UI and reinsert it after the original renderer.
+      renderReading(originalData);
+      document.getElementById('readingBody').prepend(paidBox);
+      initSectionDecodeUI();
+    }else if(id==='report-luck'){
+      if(originalData.daYun?.cycles?.length!==8)throw Error('八步大運資料不完整');
+      renderLuck(originalData);
+    }else if(id==='report-years'){
+      if(originalData.threeYearStrategicOutlook?.yearsData?.length!==3)throw Error('三年流年資料不完整');
+      renderYearFlows(originalData);
+    }else if(id==='report-months'){
+      if(originalData.monthFlows?.length!==12)throw Error('十二流月資料不完整');
+      renderMonthFlows(originalData);
+    }else throw Error('不支援的章節');
+    baziNativePaidData.set(id,originalData);
+    // No third-party/local imitation templates; all cards and interactions
+    // are created by the same four functions as archived complete examples.
+    return true;
+  };
 
   function renderGlossary(data){
     $('glossaryChips').innerHTML=tenGodOrder.map(t=>`<button type="button" data-g="${esc(t)}">${esc(t)}</button>`).join('');
@@ -9909,188 +9943,6 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }
  }
  const PAID_ADVANCED=new Set(['report-reading','report-luck','report-years','report-months']);
- const HUMAN={headerIntro:'整體判讀',patternName:'命格核心',pattern:'命格結構',tag:'特徵',title:'分析主題',summary:'整體摘要',intro:'重點說明',desc:'詳細分析',description:'詳細說明',text:'分析內容',coreLogic:'判斷依據',behaviorMode:'行為模式',fiveElementsBlend:'五行互動',behaviorList:'常見表現',missingText:'需要留意',missingTitle:'不足之處',socialText:'人際觀察',part1:'核心結構',part2:'行動與環境',part3:'挑戰與調整',part4:'實踐方向',tip:'實際建議',tips:'行動建議',h:'重點',b:'判讀',basis:'判讀依據',note:'補充說明',advice:'具體建議',theme:'年度主題',quote:'命理判讀',grade:'相對評級',label:'分類',startYear:'開始年份',endYear:'結束年份',startAge:'起運年齡',endAge:'結束年齡',startSolar:'起始日期',endSolar:'結束日期',ganZhi:'干支',tenGodGan:'天干十神',tenGodZhi:'地支十神',ganElement:'天干五行',zhiElement:'地支五行',gender:'性別',forward:'順排',year:'年份',month:'月份',yearFlow:'流年脈絡',actions:'實際建議',interaction:'干支互動',interactions:'歲運互動',watch:'留意事項',good:'有利方向',coreMotto:'核心原則'};
- const skipKeys=new Set(['input','raw','metadata','kind','version','referenceSolar','index','score','scoring','isCurrent','current','id','type','rank','percentages','resultCode','yearGan','yearZhi']);
- function paidText(parent,text,cls='dh-paid-report-text'){
-  if(text===undefined||text===null||text==='')return;
-  parent.append(el('p',cls,typeof text==='boolean'?(text?'是':'否'):String(text)));
- }
- // This formatter never inserts untrusted analysis text as HTML and avoids exposing JS object keys.
- function paidNested(parent,obj,depth=0){
-  if(obj==null||depth>6)return;
-  if(Array.isArray(obj)){
-   const grid=el('div','dh-paid-report-cards');
-   obj.slice(0,60).forEach((item,i)=>{
-    const box=el('div','dh-paid-report-card');
-    if(item&&typeof item==='object'&&!Array.isArray(item)&&item.title)box.append(el('h4','',String(item.title)));
-    else if(obj.length>1)box.append(el('h4','',`第 ${i+1} 項`));
-    paidNested(box,item,depth+1);grid.append(box);
-   });parent.append(grid);return;
-  }
-  if(typeof obj!=='object'){paidText(parent,obj);return;}
-  for(const [key,data] of Object.entries(obj)){
-   if(skipKeys.has(key)||data==null||data===''||Array.isArray(data)&&!data.length)continue;
-   const title=HUMAN[key]||(/^[\u3400-\u9fff]/u.test(key)?key:'');
-   if(typeof data!=='object'){
-    const p=el('p','dh-paid-report-text');
-    if(title)p.append(el('strong','',title+'：'));
-    p.append(document.createTextNode(key==='forward'?(data?'順排':'逆排'):(typeof data==='boolean'?(data?'是':'否'):String(data))));parent.append(p);
-   }else{
-    const sec=el('div','dh-paid-report-detail');if(title)sec.append(el('h5','',title));
-    paidNested(sec,data,depth+1);if(sec.childNodes.length)parent.append(sec);
-   }
-  }
- }
- function block(doc,title){return (doc?.blocks||[]).find(x=>x.title===title)?.value}
- function pv(tag,cls,text){return el(tag,cls,text)}
- function pvAdd(parent,tag,cls,text){if(text===undefined||text===null||text==='')return null;const n=pv(tag,cls,text);parent.append(n);return n}
- function pvItem(parent,title,text,cls=''){
-   if(text==null||text==='')return;
-   const item=pv('div','dhv-note '+cls);pvAdd(item,'strong','',title);pvAdd(item,'p','',text);parent.append(item);
- }
- function pvPanel(root,title,cls=''){
-   const panel=pv('section','dhv-panel '+cls);pvAdd(panel,'h4','dhv-panel-title',title);root.append(panel);return panel;
- }
- function pvTop(root,kicker,title,description){
-   const banner=pv('header','dhv-hero');pvAdd(banner,'small','',kicker);pvAdd(banner,'h3','',title);
-   if(description)pvAdd(banner,'p','',description);root.append(banner);return banner;
- }
- function pvFacts(parent,values){
-   const facts=pv('div','dhv-facts');values.filter(x=>x[1]!=null&&x[1]!=='').forEach(([k,v])=>{
-     const c=pv('div','dhv-fact');pvAdd(c,'small','',k);pvAdd(c,'b','',v);facts.append(c)
-   });if(facts.children.length)parent.append(facts);
- }
- function pvAssessment(root,a){
-   if(!a||typeof a!=='object')return;
-   const head=pvPanel(root,'本階段相對評估','dhv-assessment');
-   pvAdd(head,'p','dhv-evaluation',a.label||'以原局與本階段互動綜合判斷');
-   if(a.contextText)pvAdd(head,'p','dhv-sub',a.contextText);
-   const domains=pv('div','dhv-domain-grid');
-   (Array.isArray(a.domains)?a.domains:[]).forEach(x=>{
-     const box=pv('article','dhv-domain');pvAdd(box,'small','',x.name);pvAdd(box,'h5','',x.label);
-     pvAdd(box,'p','',x.text);if(x.basis)pvAdd(box,'small','dhv-basis','判讀依據：'+x.basis);domains.append(box);
-   });if(domains.children.length)head.append(domains);
-   if(Array.isArray(a.reasons)&&a.reasons.length){const det=pv('details','dhv-fold');
-     pvAdd(det,'summary','','查看更多判讀依據');a.reasons.forEach(x=>pvAdd(det,'p','dhv-sub',x));head.append(det)}
- }
- function pvReading(root,doc){
-   const summary=block(doc,'命盤整體主軸'),master=block(doc,'個人命格深度解析');
-   if(!summary&&!master)throw Error('此區完整命格資料尚未取得');
-   pvTop(root,'PERSONAL READING · 06',summary?.headerTitle||'個人命盤結構分析',summary?.portraitParagraph||'依照這張命盤的四柱、五行與十神進行綜合分析。');
-   if(Array.isArray(summary?.sections)&&summary.sections.length){
-     const title=pvPanel(root,'人生五大核心領域');title.classList.add('dhv-unstyled');
-     const list=pv('div','dhv-reading-grid');summary.sections.forEach((s,i)=>{
-       const card=pv('details','dhv-reading-card');if(i===0)card.open=true;
-       const head=pv('summary','');pvAdd(head,'span','dhv-reading-number',s.num||String(i+1));pvAdd(head,'span','dhv-reading-title',s.title||'專業分析');card.append(head);
-       const detail=pv('div','dhv-reading-detail');if(s.truth)pvItem(detail,'命理判讀',s.truth,'dhv-hint');
-       (Array.isArray(s.points)?s.points:[]).forEach(p=>pvItem(detail,p.label||'解析',p.text));
-       card.append(detail);list.append(card);
-     });title.append(list);
-     if(summary.finalAdvice){const advice=pvPanel(root,'命理師的建議','dhv-emphasis');const v=summary.finalAdvice;
-       if(v.enemy)pvAdd(advice,'p','',v.enemy);if(v.metaphor)pvAdd(advice,'p','',v.metaphor);if(v.motto)pvAdd(advice,'strong','dhv-quote',v.motto);
-     }
-   }
-   if(master&&typeof master==='object'){
-     const detailed=pvPanel(root,'命格深度研判');detailed.classList.add('dhv-unstyled');
-     const sections=[
-       ['01 · 格局與日主',master.pattern,'pattern'],['02 · 原局合沖與生活',master.clash,'clash'],
-       ['03 · 五行與健康提醒',master.health,'health'],['04 · 喜用神與生涯',master.usefulGod,'god']
-     ];
-     sections.forEach(([title,d,type])=>{if(!d||typeof d!=='object')return;
-       const card=pv('details','dhv-reading-card');const head=pv('summary','');pvAdd(head,'span','dhv-reading-title',d.title||title);card.append(head);
-       const body=pv('div','dhv-reading-detail');
-       if(type==='pattern'){pvItem(body,'四柱依據',d.pillarsDrop);(d.conclusions||[]).forEach(p=>pvItem(body,p.label,p.text))}
-       if(type==='clash'){pvItem(body,'原局分析',d.pillarsDrop);(d.realityLife||[]).forEach(p=>pvItem(body,p.label,p.text));pvItem(body,'五行注意事項',d.elementDepleted)}
-       if(type==='health'){pvAdd(body,'p','dhv-sub',d.intro);(d.items||[]).forEach(p=>pvItem(body,p.label,p.body))}
-       if(type==='god'){pvAdd(body,'p','dhv-sub',d.subtitle);pvItem(body,'整體診斷',d.diagnosis);pvItem(body,'主要用神',d.firstGodDesc);pvItem(body,'次要用神',d.secondGodDesc);pvItem(body,'職涯方向',d.careerGuide);pvItem(body,'方位參考',d.luckyDir)}
-       card.append(body);detailed.append(card);
-     });
-   }
- }
- function pvLuck(root,doc){
-   const items=(doc.blocks||[]).filter(x=>/^第\s*\d+\s*步大運/.test(x.title)&&x.value&&typeof x.value==='object').map(x=>x.value);
-   const guide=block(doc,'大運進階判讀'),start=block(doc,'八步大運起運資料');
-   if(!items.length)throw Error('未取得完整八步大運資料');
-   pvTop(root,'LUCK CYCLES · 07','一生八步大運','每一步十年，依實際起運時間與天干地支推演。點選一張大運卡查看完整內容。');
-   pvFacts(root,[['起運方向',start?.forward===true?'順排':start?.forward===false?'逆排':null],['起運時間',start?.startSolar],['大運數量',items.length+' 步']]);
-   const tabs=pv('div','dhv-cycle-tabs'),detail=pv('div','dhv-cycle-detail');
-   items.forEach((p,i)=>{
-     const b=pv('button','dhv-cycle-tab');b.type='button';b.setAttribute('aria-pressed',String(i===0));
-     pvAdd(b,'small','',`第 ${i+1} 步大運`);pvAdd(b,'b','',p.ganZhi||'—');
-     pvAdd(b,'span','',`${p.startYear||'—'}～${p.endYear||'—'}`);
-     b.addEventListener('click',()=>{
-       [...tabs.children].forEach((x,j)=>x.setAttribute('aria-pressed',String(i===j)));
-       detail.replaceChildren();const panel=pvPanel(detail,`第 ${i+1} 步｜${p.ganZhi||''}大運`);
-       pvFacts(panel,[['流年範圍',`${p.startYear||'—'}～${p.endYear||'—'}`],['年齡',p.startAge!=null&&p.endAge!=null?`${p.startAge}～${p.endAge} 歲`:null],['天干十神',p.tenGodGan],['地支十神',p.tenGodZhi],['起始時間',p.startSolar],['結束時間',p.endSolar]]);
-       if(Array.isArray(p.interactions)&&p.interactions.length){const box=pv('div','dhv-interactions');pvAdd(box,'strong','','原局干支互動');p.interactions.forEach(t=>pvAdd(box,'p','',typeof t==='string'?t:t.label||t.title||''));panel.append(box)}
-       pvAssessment(detail,p.assessment);
-     });tabs.append(b);
-   });root.append(tabs,detail);tabs.firstElementChild?.click();
-   if(guide){
-     const panel=pvPanel(root,'十年大運｜命理師綜合解讀','dhv-emphasis');
-     if(guide.corePrinciple){pvItem(panel,'核心原則',guide.corePrinciple.chartPortrait);pvAdd(panel,'p','dhv-quote',guide.corePrinciple.principleQuestion)}
-     for(const [label,x] of [['目前所處大運',guide.curStep],['下一步大運',guide.nextStep]]){
-       if(!x)continue;const sec=pv('details','dhv-fold');sec.open=label==='目前所處大運';pvAdd(sec,'summary','',`${label}｜${x.title||''}`);
-       pvAdd(sec,'p','',x.intro);if(x.badge)pvAdd(sec,'p','dhv-evaluation',x.badge);
-       if(x.gan?.desc)pvItem(sec,'天干判讀',x.gan.desc);if(x.zhi?.desc)pvItem(sec,'地支判讀',x.zhi.desc);
-       (x.interactions||[]).forEach(it=>pvItem(sec,it.name||'歲運互動',it.text));
-       if(x.verdict)pvAdd(sec,'p','dhv-quote',x.verdict);panel.append(sec);
-     }
-   }
- }
- function pvYears(root,doc){
-   const outlook=block(doc,'三年流年整體戰略');
-   const years=Array.isArray(outlook?.yearsData)&&outlook.yearsData.length?outlook.yearsData:(doc.blocks||[]).filter(x=>/^\d{4}\s*年/.test(x.title)).map(x=>x.value);
-   if(!years.length)throw Error('未取得完整三年流年資料');
-   pvTop(root,'THREE YEAR OUTLOOK · 08','三年流年｜完整趨勢與行動策略','依序閱讀去年、今年及明年的干支主題、相對節奏和行動提醒。');
-   const tabs=pv('div','dhv-year-tabs'),details=pv('div','dhv-year-detail');
-   years.forEach((y,i)=>{
-     const b=pv('button','dhv-year-tab');b.type='button';b.setAttribute('aria-pressed',String(i===1));
-     pvAdd(b,'small','',y.label||['去年','今年','明年'][i]||'流年');pvAdd(b,'b','',`${y.year||''}｜${y.ganZhi||''}`);pvAdd(b,'span','',y.theme||'點選查看年度分析');
-     b.addEventListener('click',()=>{
-       [...tabs.children].forEach((x,j)=>x.setAttribute('aria-pressed',String(i===j)));
-       details.replaceChildren();const head=pvPanel(details,`${y.year||''} 年｜${y.ganZhi||''} 年度綜合判讀`);
-       if(y.grade)pvAdd(head,'span','dhv-chip','相對評級｜'+y.grade);
-       if(y.theme)pvAdd(head,'h4','dhv-panel-subtitle',y.theme);
-       pvFacts(head,[['天干五行',y.ganEl],['地支五行',y.zhiEl],['天干十神',y.tenGodGan],['地支十神',y.tenGodZhi]]);
-       if(y.quote)pvAdd(head,'blockquote','dhv-quote',y.quote);
-       if(y.desc)pvAdd(head,'p','dhv-long',y.desc);
-       if(Array.isArray(y.interactions)&&y.interactions.length){const inter=pvPanel(details,'這一年的五行與干支互動');y.interactions.forEach(it=>pvItem(inter,it.title||'干支互動',it.desc))}
-       if(y.advice){const advice=pvPanel(details,'實際行動方向','dhv-emphasis');pvAdd(advice,'p','',y.advice)}
-       if(!y.desc&&!y.advice&&y.assessment)pvAssessment(details,y.assessment);
-     });tabs.append(b);
-   });root.append(tabs,details);tabs.children[Math.min(1,tabs.children.length-1)]?.click();
- }
- function pvMonths(root,doc){
-   const periods=(doc.blocks||[]).filter(x=>/年\s*\d+\s*月/.test(x.title)&&x.value&&typeof x.value==='object').map(x=>x.value);
-   if(!periods.length)throw Error('未取得完整十二流月資料');
-   const year=block(doc,'流月年度');
-   pvTop(root,'MONTHLY FLOW · 09',`${year||periods[0].year||''} 年｜十二流月`,'以節氣起訖為準，不以國曆每月一日切換。點選月份查看個人命盤與流月的關係。');
-   const tabs=pv('div','dhv-month-tabs'),details=pv('div','dhv-month-detail');
-   periods.forEach((p,i)=>{
-     const b=pv('button','dhv-month-tab');b.type='button';b.setAttribute('aria-pressed',String(i===0));
-     pvAdd(b,'b','',`${p.month||i+1} 月`);pvAdd(b,'small','',p.ganZhi||'');
-     if(p.assessment?.label)pvAdd(b,'span','',p.assessment.label);
-     b.addEventListener('click',()=>{
-       [...tabs.children].forEach((x,j)=>x.setAttribute('aria-pressed',String(i===j)));
-       details.replaceChildren();const card=pvPanel(details,`${p.year||year||''} 年 ${p.month||i+1} 月｜${p.ganZhi||''} 流月`);
-       if(p.assessment?.label)pvAdd(card,'span','dhv-chip',p.assessment.label);
-       pvFacts(card,[['節氣起點',p.startJie||p.startSolar],['節氣終點',p.endJie||p.endSolar],['開始日期',p.startSolar],['結束日期',p.endSolar],['天干十神',p.tenGodGan],['地支十神',p.tenGodZhi]]);
-       if(Array.isArray(p.interactions)&&p.interactions.length){const box=pv('div','dhv-interactions');pvAdd(box,'strong','','原局與流月互動');p.interactions.forEach(it=>pvAdd(box,'p','',typeof it==='string'?it:it.label||''));card.append(box)}
-       pvAssessment(details,p.assessment);
-     });tabs.append(b);
-   });root.append(tabs,details);tabs.firstElementChild?.click();
- }
- function renderAdvanced(target,id,doc){
-   target.replaceChildren();const root=pv('div','dh-paid-visual');
-   if(id==='report-reading')pvReading(root,doc);
-   else if(id==='report-luck')pvLuck(root,doc);
-   else if(id==='report-years')pvYears(root,doc);
-   else if(id==='report-months')pvMonths(root,doc);
-   else throw Error('不支援的章節');
-   if(!root.children.length)throw Error('此區完整內容尚未準備好');
-   target.append(root);target.hidden=false;
- }
  function display(box,doc){
   const section=box.closest('.report-section');
   if(['report-pillars','report-elements','report-tengods','report-relations'].includes(section?.id)){
@@ -10099,7 +9951,14 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
     return;
   }
   const target=box.querySelector('.bazi-premium-content');
-  if(PAID_ADVANCED.has(section?.id)){renderAdvanced(target,section.id,doc);return;}
+  if(PAID_ADVANCED.has(section?.id)){
+   if(doc?.format!=='original-core-section-v1'||!doc.originalData)
+     throw Error('後端原版核心資料未就緒，請先更新 bazi-api Worker。未取得原版資料不會使用替代分析。');
+   if(window.baziRenderOriginalPaidChapter?.(section.id,doc.originalData,box)!==true)
+     throw Error('原版九大分析函式不可用');
+   if(target){target.hidden=true;target.replaceChildren()}
+   return;
+  }
   target.replaceChildren();
   for(const p of doc.blocks||[]){const part=el('article','bazi-premium-part');part.append(el('h4','',p.title));value(part,p.value);target.append(part)}
   target.hidden=false;
@@ -10114,7 +9973,15 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }box.hidden=true;els.set(id,box);
   }
  }
- function reset(){generation++;states.clear();restored.clear();window.baziPurchasedDocs=Object.create(null);document.querySelectorAll('.dh-bazi-premium-visible').forEach(x=>x.classList.remove('dh-bazi-premium-visible'));for(const box of els.values()){box.hidden=true;box.querySelector('.bazi-premium-content').hidden=true;box.querySelector('.bazi-premium-content').replaceChildren()}}
+ function reset(){generation++;states.clear();restored.clear();window.baziPurchasedDocs=Object.create(null);
+  window.baziClearNativePaidData?.();
+  document.querySelectorAll('.dh-bazi-premium-visible').forEach(x=>x.classList.remove('dh-bazi-premium-visible'));
+  // Scrub earlier purchased private DOM when changing charts or opening an example.
+  for(const id of ['luckSummary','luckGrid','luckDetail','threeYearCompare','monthSummary','monthFlowGrid','monthDetail']){
+    const e=document.getElementById(id);if(e)e.replaceChildren();
+  }
+  for(const box of els.values()){box.hidden=true;const content=box.querySelector('.bazi-premium-content');if(content){content.hidden=true;content.replaceChildren()}}
+ }
  window.baziPremiumReset=reset;
  window.baziSectionReady=async()=>{const n=++generation;const payload=chart();if(!payload)return;loading=true;
   try{addBoxes();const result=await post('/v2/section/status',payload);if(n!==generation)return;
@@ -10134,7 +10001,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }catch(e){if(n===generation)for(const box of els.values()){box.hidden=true}}
   finally{loading=false}
  };
- async function purchase(id){const box=els.get(id),s=states.get(id),payload=chart();if(!box||!s||!payload)return;
+ async function purchase(id){const epoch=generation,box=els.get(id),s=states.get(id),payload=chart();if(!box||!s||!payload)return;
   const btn=box.querySelector('button');btn.disabled=true;
   try{
    let path='/v2/section/read';
@@ -10143,7 +10010,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
     path='/v2/section/unlock';
    }
    const j=await post(path,{...payload,sectionId:id,expectedPoints:s.points});
-   if(JSON.stringify([chart()?.datetime,chart()?.gender,chart()?.sect])!==JSON.stringify([payload.datetime,payload.gender,payload.sect]))return;
+   if(epoch!==generation || !document.body.classList.contains('bazi-personal-full-mode') || JSON.stringify([chart()?.datetime,chart()?.gender,chart()?.sect])!==JSON.stringify([payload.datetime,payload.gender,payload.sect]))return;
    const chapter=box.closest('.report-section');
    chapter?.classList.add('dh-bazi-premium-visible');
    try{display(box,j.document)}catch(err){chapter?.classList.remove('dh-bazi-premium-visible');throw err}
@@ -10216,5 +10083,28 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-professional-points-card>b{color:
  window.addEventListener('dh-professional-points-changed',()=>void refresh(true));
 })();
 </script>
+
+<style id="dh-paid-original-core-renderers-20261020">
+/* Only a server-verified unlocked chapter receives this class. */
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body{
+  display:block!important;min-height:0!important;padding:18px!important;
+}
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body > :not(.bazi-private-lock-panel):not(.smart-prompt-mount){
+  display:revert!important;
+}
+body.bazi-personal-full-mode #results #report-luck.dh-bazi-premium-visible #luckSummary{display:grid!important}
+body.bazi-personal-full-mode #results #report-luck.dh-bazi-premium-visible #luckGrid{display:grid!important}
+body.bazi-personal-full-mode #results #report-years.dh-bazi-premium-visible #threeYearCompare{display:block!important}
+body.bazi-personal-full-mode #results #report-months.dh-bazi-premium-visible #monthSummary{display:grid!important}
+body.bazi-personal-full-mode #results #report-months.dh-bazi-premium-visible #monthFlowGrid{display:grid!important}
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible .bazi-premium-box{
+  display:block!important;margin:0 0 18px!important;
+}
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible .bazi-private-lock-panel,
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible .bazi-inline-sample-trigger{
+  display:none!important;
+}
+/* Original monthly and yearly rich cards are NOT recreated inside a generic wrapper. */
+</style>
 </body>
 </html>
