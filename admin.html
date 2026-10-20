@@ -166,6 +166,13 @@ td.muted{color:var(--muted)}
 #announcementAdminStatus.error{color:#f2a3ac}
 @media(max-width:800px){.announcement-admin{grid-template-columns:1fr}}
 
+/* 站長公告預設收合：只調整後台呈現，仍保留原編輯與發佈功能。 */
+.announcement-admin-panel>summary{cursor:pointer;list-style:none;align-items:center}
+.announcement-admin-panel>summary::-webkit-details-marker{display:none}
+.announcement-admin-panel>summary::after{content:'▾';flex:0 0 auto;color:var(--gold);font-size:1rem;margin-left:6px}
+.announcement-admin-panel[open]>summary::after{content:'▴'}
+.announcement-admin-panel>summary span{flex:1 1 auto}
+
 /* 會員使用排行：預設完全收合，展開才讀取，手機只顯示必要欄位。 */
 .member-usage-box{margin-bottom:24px}
 .member-usage-box>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;cursor:pointer;font-weight:760;font-size:1rem}
@@ -284,8 +291,8 @@ td.muted{color:var(--muted)}
       <div class="card"><span>儲存出生資料</span><strong id="savedBirthProfiles">—</strong></div>
     </div>
 
-    <section class="section" id="announcementAdminSection" style="margin-bottom:24px">
-      <div class="section-head"><h2>📣 站長公告</h2><span>同步顯示在 member.html 會員中心標題下方｜一次一則</span></div>
+    <details class="section announcement-admin-panel" id="announcementAdminSection" style="margin-bottom:24px">
+      <summary class="section-head"><h2>📣 站長公告</h2><span>同步顯示在 member.html 會員中心標題下方｜一次一則</span></summary>
       <div class="announcement-admin">
         <form class="announcement-editor" id="announcementAdminForm">
           <div><label for="announcementAdminTitle">公告標題</label><input type="text" id="announcementAdminTitle" maxlength="100" placeholder="例如：一念知機網站建置進度說明" autocomplete="off"></div>
@@ -296,7 +303,7 @@ td.muted{color:var(--muted)}
         </form>
         <aside class="announcement-preview"><span id="announcementAdminBadge" class="announcement-status-chip">未發布</span><h3 id="announcementAdminPreviewTitle">公告預覽</h3><p id="announcementAdminPreviewBody">你輸入的內容會先在這裡預覽，儲存且勾選公開後才顯示給會員。</p><div class="caption">公告只顯示純文字，不接受 HTML。</div></aside>
       </div>
-    </section>
+    </details>
 
     <section class="section" style="margin-bottom:24px">
       <div class="section-head"><h2>各工具使用次數</h2><span>正式使用紀錄｜測試資料不列入</span></div>
@@ -357,7 +364,7 @@ td.muted{color:var(--muted)}
       </div>
     </details>
     <details class="section member-usage-box" id="memberUsagePanel">
-      <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設收合｜依成功起盤排行）</small></span></summary>
+      <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設展開｜依成功起盤排行）</small></span></summary>
       <div class="member-usage-body">
         <p class="member-usage-note">僅統計已登入會員成功完成的起盤、抽牌或起卦；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>八字、塔羅、易經已接入成功事件；啟用統計後才開始累計，不回填過去紀錄。</strong></p>
         <div class="member-usage-settings">
@@ -917,7 +924,10 @@ async function loadStats(){
       </tr>
     `).join('')||'<tr><td colspan="3" class="muted">目前還沒有會員資料。</td></tr>';
 
+    const newlyAuthenticated = !$('loginCard').hidden;
     $('loginCard').hidden=true;
+    // 僅在進入後台的當下自動展開一次；之後尊重站長手動收合，不因重新整理統計再打開。
+    if(newlyAuthenticated && $('memberUsagePanel')) $('memberUsagePanel').open=true;
     // 背景統計更新不能把使用者已開啟的審核假分頁切回首頁。
     $('dashboard').hidden=adminActivePage!=='dashboard';
     $('reviewAdminPage').hidden=adminActivePage!=='reviews';
