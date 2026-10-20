@@ -9736,6 +9736,36 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading
 body.bazi-personal-full-mode .dh-bazi-premium-visible:is(#report-reading,#report-luck,#report-years,#report-months) > .report-body > :is(.time-explain,.fortune-summary-grid,.luck-header,.luck-grid,.detail-console,.three-year-compare,.month-flow-grid,.smart-prompt-mount){display:none!important}
 body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body{display:block!important;min-height:0!important}
 body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body > .bazi-premium-box{display:block!important}
+/* Paid 06–09: old sample-only CSS must not hide the actual checkout entry.
+   It remains hidden if there is no valid server-side price or no member session. */
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months) > .report-body > .bazi-premium-box:not([hidden]){
+  display:block!important;order:-1;flex:0 0 100%;align-self:stretch;width:100%;position:relative;z-index:4;
+}
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months):not(.dh-bazi-premium-visible) > .report-body{
+  flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:12px;
+}
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body > .bazi-premium-box:not([hidden]){display:block!important}
+/* Purchased reports are rendered as semantic sections based on the authorized section only. */
+.dh-paid-report{display:grid;gap:12px;padding:2px 0 6px;color:var(--text,#23333a)}
+.dh-paid-report-heading{font-weight:850;font-size:1rem;margin:3px 0 5px;color:var(--text,#173b45)}
+.dh-paid-report-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.dh-paid-report-card{border:1px solid var(--line,#cfdbdb);background:var(--panel2,#f8faf9);border-radius:12px;padding:13px;min-width:0;overflow-wrap:anywhere}
+.dh-paid-report-card h4{font-size:.91rem;margin:0 0 8px;color:var(--gold,#986b22)}
+.dh-paid-report-card small{font-size:.7rem;color:var(--dim,#60747c)}
+.dh-paid-report-card p{font-size:.79rem;line-height:1.85;margin:7px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.dh-paid-report-card[open]>summary{font-weight:850;margin-bottom:10px;cursor:pointer}
+.dh-paid-report-detail{padding:9px 12px;border:1px solid var(--line,#cedbdc);border-radius:10px;background:var(--panel2,#f9fbfa);margin:8px 0;min-width:0}
+.dh-paid-report-detail>summary{font-weight:800;cursor:pointer}
+.dh-paid-report-section{padding:12px 14px;border:1px solid var(--line,#b7d6d9);border-left:3px solid var(--gold,#ba9662);border-radius:10px;background:var(--panel,#fff)}
+.dh-paid-report-section h4{font-size:.93rem;color:var(--gold,#956820);margin:0 0 9px}
+.dh-paid-report-section strong{color:var(--text,#214852)}
+.dh-paid-report-text{font-size:.8rem;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0}
+.dh-paid-report-meta{font-size:.73rem;color:var(--dim,#6e858c)}
+.dh-paid-report-months{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.dh-paid-month-btn{padding:10px 4px;border:1px solid var(--line,#bdd5d9);border-radius:9px;background:var(--panel2,#f3f8f8);color:var(--text,#21444d);cursor:pointer;font-size:.78rem;font-weight:760}
+.dh-paid-month-btn[aria-pressed=true]{background:var(--bazi-bg-232,#daeff0);border-color:var(--gold,#b18d40)}
+.dh-paid-month-btn small{display:block;font-weight:500;color:var(--dim,#69848d)}
+@media(max-width:650px){.dh-paid-report-cards{grid-template-columns:1fr}.dh-paid-report-months{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /* Paid 01-04: do not let fixed 70% FREE preview overwrite original visual values.
    Do not relax the mask for unopened or unpurchased chapters. */
 body.bazi-personal-full-mode #results[data-bazi-mask-level="7"] #report-elements.dh-bazi-premium-visible #fiveDonut{
@@ -9821,6 +9851,97 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    }
   }
  }
+ const PAID_ADVANCED=new Set(['report-reading','report-luck','report-years','report-months']);
+ const HUMAN={headerIntro:'整體判讀',patternName:'命格核心',pattern:'命格結構',tag:'特徵',title:'分析主題',summary:'整體摘要',intro:'重點說明',desc:'詳細分析',description:'詳細說明',text:'分析內容',coreLogic:'判斷依據',behaviorMode:'行為模式',fiveElementsBlend:'五行互動',behaviorList:'常見表現',missingText:'需要留意',missingTitle:'不足之處',socialText:'人際觀察',part1:'核心結構',part2:'行動與環境',part3:'挑戰與調整',part4:'實踐方向',tip:'實際建議',tips:'行動建議',h:'重點',b:'判讀',basis:'判讀依據',note:'補充說明',advice:'具體建議',theme:'年度主題',quote:'命理判讀',grade:'相對評級',label:'分類',startYear:'開始年份',endYear:'結束年份',startAge:'起運年齡',endAge:'結束年齡',startSolar:'起始日期',endSolar:'結束日期',ganZhi:'干支',tenGodGan:'天干十神',tenGodZhi:'地支十神',ganElement:'天干五行',zhiElement:'地支五行',gender:'性別',forward:'順排',year:'年份',month:'月份',yearFlow:'流年脈絡',actions:'實際建議',interaction:'干支互動',interactions:'歲運互動',watch:'留意事項',good:'有利方向',coreMotto:'核心原則'};
+ const skipKeys=new Set(['input','raw','metadata','kind','version','referenceSolar','index','score','scoring','isCurrent','current','id','type','rank','percentages','resultCode','yearGan','yearZhi']);
+ function paidText(parent,text,cls='dh-paid-report-text'){
+  if(text===undefined||text===null||text==='')return;
+  parent.append(el('p',cls,typeof text==='boolean'?(text?'是':'否'):String(text)));
+ }
+ // This formatter never inserts untrusted analysis text as HTML and avoids exposing JS object keys.
+ function paidNested(parent,obj,depth=0){
+  if(obj==null||depth>6)return;
+  if(Array.isArray(obj)){
+   const grid=el('div','dh-paid-report-cards');
+   obj.slice(0,60).forEach((item,i)=>{
+    const box=el('div','dh-paid-report-card');
+    if(item&&typeof item==='object'&&!Array.isArray(item)&&item.title)box.append(el('h4','',String(item.title)));
+    else if(obj.length>1)box.append(el('h4','',`第 ${i+1} 項`));
+    paidNested(box,item,depth+1);grid.append(box);
+   });parent.append(grid);return;
+  }
+  if(typeof obj!=='object'){paidText(parent,obj);return;}
+  for(const [key,data] of Object.entries(obj)){
+   if(skipKeys.has(key)||data==null||data===''||Array.isArray(data)&&!data.length)continue;
+   const title=HUMAN[key]||(/^[\u3400-\u9fff]/u.test(key)?key:'');
+   if(typeof data!=='object'){
+    const p=el('p','dh-paid-report-text');
+    if(title)p.append(el('strong','',title+'：'));
+    p.append(document.createTextNode(key==='forward'?(data?'順排':'逆排'):(typeof data==='boolean'?(data?'是':'否'):String(data))));parent.append(p);
+   }else{
+    const sec=el('div','dh-paid-report-detail');if(title)sec.append(el('h5','',title));
+    paidNested(sec,data,depth+1);if(sec.childNodes.length)parent.append(sec);
+   }
+  }
+ }
+ function block(doc,title){return (doc?.blocks||[]).find(x=>x.title===title)?.value}
+ function renderAdvanced(target,id,doc){
+  target.replaceChildren();
+  const root=el('div','dh-paid-report'),heading=el('h3','dh-paid-report-heading',{
+   'report-reading':'個人命盤結構｜完整專業解析',
+   'report-luck':'八步大運｜完整十年運勢與判讀',
+   'report-years':'三年流年｜完整趨勢與行動策略',
+   'report-months':'十二流月｜逐月節奏與應對'
+  }[id]);root.append(heading);
+  const section=(title,data,expanded=true)=>{
+   if(data==null||data==='')return;
+   const article=el('section','dh-paid-report-section');article.append(el('h4','',title));
+   paidNested(article,data);root.append(article);
+  };
+  if(id==='report-reading'){
+   section('命盤整體主軸',block(doc,'命盤整體主軸'));
+   section('個人命格深度解析',block(doc,'個人命格深度解析'));
+   section('生活各面向及判斷依據',block(doc,'生活各面向及判斷依據'));
+  } else if(id==='report-luck'){
+   const periods=(doc.blocks||[]).filter(x=>/^第\s*[0-9]+\s*步大運/.test(x.title));
+   section('八步大運起運資料',block(doc,'八步大運起運資料'));
+   if(periods.length){const grid=el('div','dh-paid-report-cards');
+    periods.forEach((it,i)=>{const card=el('details','dh-paid-report-card');card.open=i===0;
+      card.append(el('summary','',it.title));paidNested(card,it.value);grid.append(card);});root.append(grid);
+   }
+   section('大運進階判讀與實際建議',block(doc,'大運進階判讀'));
+  } else if(id==='report-years'){
+   const outlook=block(doc,'三年流年整體戰略');
+   if(outlook?.yearsData?.length){const grid=el('div','dh-paid-report-cards');
+    outlook.yearsData.forEach((y,i)=>{const card=el('article','dh-paid-report-card');
+     card.append(el('h4','',`${y.label||['去年','今年','明年'][i]}｜${y.year||''} ${y.ganZhi||''}`));
+     if(y.theme)card.append(el('h4','',y.theme));
+     if(y.quote)paidText(card,y.quote);
+     if(y.desc)paidText(card,y.desc);
+     if(y.grade)paidText(card,`相對評級：${y.grade}`,'dh-paid-report-meta');
+     if(Array.isArray(y.interactions)&&y.interactions.length){const part=el('div','dh-paid-report-detail');part.append(el('h5','','五行、十神與干支互動'));paidNested(part,y.interactions);card.append(part)}
+     if(y.advice){const part=el('div','dh-paid-report-detail');part.append(el('h5','','實際行動建議'));paidText(part,y.advice);card.append(part)}
+     grid.append(card);
+    });root.append(grid);
+   }
+   const backup=(doc.blocks||[]).filter(x=>/^\d{4}\s*年/.test(x.title));
+   if(!outlook?.yearsData?.length){backup.forEach(it=>section(it.title,it.value))}
+   if(!root.querySelector('.dh-paid-report-section,.dh-paid-report-card'))section('流年整體分析',outlook);
+  } else if(id==='report-months'){
+   const periods=(doc.blocks||[]).filter(x=>/年\s*\d+\s*月/.test(x.title));
+   const y=block(doc,'流月年度');if(y)root.append(el('p','dh-paid-report-meta',`${y} 年｜依節氣換月，不是每月一日`));
+   if(periods.length){const buttons=el('div','dh-paid-report-months'),detail=el('div','dh-paid-report-section');
+    const show=i=>{detail.replaceChildren(el('h4','',periods[i].title));paidNested(detail,periods[i].value);
+     [...buttons.children].forEach((btn,n)=>btn.setAttribute('aria-pressed',String(i===n)));
+    };
+    periods.forEach((it,i)=>{const b=el('button','dh-paid-month-btn',`${i+1} 月`);b.type='button';b.setAttribute('aria-pressed',String(i===0));
+     b.append(el('small','',String(it.value?.ganZhi||'')));b.addEventListener('click',()=>show(i));buttons.append(b)});
+    root.append(buttons,detail);show(0);
+   }
+  }
+  if(root.children.length===1)throw Error('本區尚未取得完整個人分析，請稍後再試');
+  target.append(root);target.hidden=false;
+ }
  function display(box,doc){
   const section=box.closest('.report-section');
   if(['report-pillars','report-elements','report-tengods','report-relations'].includes(section?.id)){
@@ -9828,7 +9949,9 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
     const body=box.querySelector('.bazi-premium-content');if(body){body.hidden=true;body.replaceChildren()}
     return;
   }
-  const target=box.querySelector('.bazi-premium-content');target.replaceChildren();
+  const target=box.querySelector('.bazi-premium-content');
+  if(PAID_ADVANCED.has(section?.id)){renderAdvanced(target,section.id,doc);return;}
+  target.replaceChildren();
   for(const p of doc.blocks||[]){const part=el('article','bazi-premium-part');part.append(el('h4','',p.title));value(part,p.value);target.append(part)}
   target.hidden=false;
  }
@@ -9858,6 +9981,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
        restored.add(chapterId);void purchase(chapterId);
      }
    }
+   for(const id of PAID_ADVANCED){const chapter=document.getElementById(id);if(chapter?.open&&states.get(id)?.unlocked&&!restored.has(id)){restored.add(id);void purchase(id)}}
   }catch(e){if(n===generation)for(const box of els.values()){box.hidden=true}}
   finally{loading=false}
  };
@@ -9882,9 +10006,9 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
      const view=chapter?.querySelector('.ten-god-layout,.analysis-grid,.relation-grid,#pillars');
      (view||chapter)?.scrollIntoView({behavior:'smooth',block:'nearest'});
    }else box.querySelector('.bazi-premium-content')?.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }catch(e){status(box,e.message)}finally{btn.disabled=false}
+  }catch(e){status(box,(e?.message||'讀取失敗')+'；若已成功解鎖，重新閱讀不會重複扣點')}finally{btn.disabled=false}
  }
- const init=()=>{addBoxes();window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
+ const init=()=>{addBoxes();PAID_ADVANCED.forEach(id=>document.getElementById(id)?.addEventListener('toggle',()=>{if(document.getElementById(id)?.open&&states.get(id)?.unlocked&&!restored.has(id)){restored.add(id);void purchase(id)}}));window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
