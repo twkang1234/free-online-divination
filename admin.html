@@ -253,6 +253,13 @@ td.muted{color:var(--muted)}
 .dh-ai-line code{font-size:.73rem;color:#a4b7c8;word-break:break-all}
 @media(max-width:650px){.dh-ai-cards{grid-template-columns:1fr}.dh-ai-monitor>summary{align-items:flex-start}}
 
+
+/* AI 監控：已處理的歷史資料低調收合，不佔用平常後台版面。 */
+.dh-ai-history{margin-top:14px;border-top:1px solid #29323e;padding-top:10px;color:#8e9cab}
+.dh-ai-history>summary{cursor:pointer;font-size:.75rem;color:#8b9aab;padding:8px 2px;list-style:auto}
+.dh-ai-history .dh-ai-line.done{background:#0b1118;border-color:#252e39;border-left:1px solid #303a45;opacity:.77}
+.dh-ai-history .dh-ai-line.done b{font-weight:500;color:#9baabc}
+.dh-ai-history .dh-ai-line.done small{color:#8391a0}
 </style>
 </head>
 <body>
@@ -1502,17 +1509,25 @@ $('baziGiftSend')?.addEventListener('click',send);
    const badge=$('dhAiMonitorBadge');badge.textContent=(!data.centerAvailable?'AI 中心紀錄未就緒':(stat.pending?'待處理 '+stat.pending+' 類':'暫無待處理異常'));badge.classList.toggle('alert',!!stat.pending||!data.centerAvailable);
    const items=$('dhAiItems');items.replaceChildren();
    if(!data.centerAvailable){items.append(textNode('p','⚠ AI 中心歷史紀錄尚未建立或無法讀取，本次只能顯示已接入的工具 Worker 錯誤。','dh-ai-status'))}
-   if(!data.groups?.length){items.append(textNode('p','最近 30 日未查到已接入範圍內的 AI 終局失敗紀錄。','dh-ai-status'))}
-   for(const g of data.groups||[]){
+   const pending=(data.groups||[]).filter(g=>g.pending),done=(data.groups||[]).filter(g=>!g.pending);
+   if(!pending.length)items.append(textNode('p','目前沒有待處理的 AI 系統異常。','dh-ai-status'));
+   function makeRow(g){
      const row=textNode('div','', 'dh-ai-line '+(g.pending?'pending':'done'));
-     row.append(textNode('b',(g.pending?'● 待處理｜':'✓ 已標記｜')+(labels[g.tool]||g.tool)+'｜'+(message[g.code]||g.code)));
+     row.append(textNode('b',(g.pending?'● 待處理｜':'✓ 已處理｜')+(labels[g.tool]||g.tool)+'｜'+(message[g.code]||g.code)));
      row.append(textNode('small','近 30 日 '+g.count+' 次｜今日 '+g.todayCount+' 次｜最後發生 '+dt(g.lastAt)));
      row.append(textNode('small','位置：'+(g.source==='center'?'AI 總控':'工具 Worker')+'｜錯誤碼：'+g.code+(g.detailCode?'｜細節：'+g.detailCode:'')));
      if(g.providerErrors?.length)row.append(textNode('small','失敗通道：'+g.providerErrors.map(x=>(x.channel||'?')+' '+x.error).join('／')));
      const trace=document.createElement('code');trace.textContent='追蹤碼：'+g.traceId;row.append(trace);
      if(g.pending){const bar=textNode('div','', 'dh-ai-buttons');const btn=textNode('button','標記已處理');btn.type='button';btn.className='btn secondary';btn.onclick=async()=>{btn.disabled=true;try{await api('/admin/ai-monitor/ack','POST',{key:g.key});await load(true)}catch(e){$('dhAiStatus').textContent='標記失敗：'+e.message;btn.disabled=false}};bar.append(btn);row.append(bar)}
-     else row.append(textNode('small','已於 '+dt(g.acknowledgedAt)+' 標記處理；若相同錯誤再次發生會重新列為待處理。'));
-     items.append(row);
+     else row.append(textNode('small','處理時間：'+dt(g.acknowledgedAt)));
+     return row;
+   }
+   for(const g of pending)items.append(makeRow(g));
+   if(done.length){
+     const history=document.createElement('details');history.className='dh-ai-history';
+     const summary=document.createElement('summary');summary.textContent='過去異常紀錄（已處理 '+done.length+' 類）';history.append(summary);
+     for(const g of done)history.append(makeRow(g));
+     items.append(history);
    }
    $('dhAiStatus').textContent='更新時間：'+dt(data.asOf)+(data.truncated?'｜資料量較大，僅顯示最近 750 筆來源記錄':'')+'。標記處理不代表 AI 已恢復正常。';
  }
