@@ -2931,7 +2931,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     castMode=mode;clearCastTimers();
     document.querySelectorAll('[data-cast-mode]').forEach(b=>b.classList.toggle('active',b.dataset.castMode===mode));
     document.querySelectorAll('[data-cast-panel]').forEach(p=>p.classList.toggle('active',p.dataset.castPanel===mode));
-    if(mode==='meihua2'){const err=document.getElementById('meihuaError');if(err)err.textContent='';}if(mode==='select64')renderHex64Grid();if(mode==='manual6')renderManualSix();if(mode==='coin3')renderCoinThree();if(mode==='number64')startNumberSpinner(true);if(mode==='yinYangStop'){renderYinStop();startYinStop();}if(!silent&&state.question)setTimeout(()=>{const panel=document.querySelector('[data-cast-panel].active');const picker=document.getElementById('yijingReadingChoice');positionTask(panel,96+(picker&&!picker.hidden?picker.getBoundingClientRect().height:0));},95);return true;
+    if(mode==='meihua2'){const err=document.getElementById('meihuaError');if(err)err.textContent='';}if(mode==='select64')renderHex64Grid();if(mode==='manual6')renderManualSix();if(mode==='coin3')renderCoinThree();if(mode==='number64')startNumberSpinner(true);if(mode==='yinYangStop'){renderYinStop();startYinStop();}if(!silent&&state.question)setTimeout(()=>{const panel=document.querySelector('[data-cast-panel].active');positionTask(panel,96);},95);return true;
   }
   function resetCastUI(){
     const movingStudyOption=document.getElementById('hex64MovingSimulation');
@@ -3796,7 +3796,7 @@ body.yijing-result #yijingGuide{display:none!important}
 body.yijing-result #worldSecond{padding-top:12px}
 body.yijing-result .result-shell{padding:12px;min-height:0}
 #yijingReadingChoice[hidden]{display:none!important}
-.yijing-reading-picker{position:sticky;top:72px;z-index:38;margin:0 0 16px;padding:13px 14px;border:1px solid rgba(124,227,161,.27);border-radius:14px;background:rgba(10,23,15,.98);box-shadow:0 10px 28px rgba(0,0,0,.22);backdrop-filter:blur(14px)}
+.yijing-reading-picker{position:static;margin:0 0 16px;padding:13px 14px;border:1px solid rgba(124,227,161,.27);border-radius:14px;background:rgba(10,23,15,.98);box-shadow:0 10px 28px rgba(0,0,0,.22);}
 .yijing-reading-picker>.reading-picker-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
 .yijing-reading-picker>.reading-picker-head b{color:#d8efdf;font-size:.82rem}
 .yijing-reading-picker>.reading-picker-head span{font-size:.65rem;color:#91a99a}
@@ -3804,8 +3804,8 @@ body.yijing-result .result-shell{padding:12px;min-height:0}
 .yijing-reading-picker .yi-mode-option{min-height:55px;padding:8px 12px;border-radius:10px}
 .yijing-reading-picker .yi-mode-option b{font-size:.77rem}
 .yijing-reading-picker .yi-mode-option small{font-size:.63rem;line-height:1.45}
-body.yijing-focus .cast-method-heading{scroll-margin-top:164px}
-body.yijing-focus .cast-panel{scroll-margin-top:174px}
+body.yijing-focus .cast-method-heading{scroll-margin-top:90px}
+body.yijing-focus .cast-panel{scroll-margin-top:96px}
 .guide-step{scroll-margin-top:88px}
 #yijingGuide{scroll-margin-top:88px}
 /* The final call to action is intentionally stronger than secondary copy / download actions. */
@@ -3833,7 +3833,7 @@ html[data-theme="light"] .reading-completion.is-pending .yijing-restart-btn{back
   body.yijing-focus #worldSecond{padding:10px 10px 20px}
   body.yijing-focus .core{padding:12px}
   body.yijing-focus .core>.tool-head h3{font-size:1.12rem}
-  .yijing-reading-picker{top:64px;padding:10px;margin-bottom:12px}
+  .yijing-reading-picker{padding:10px;margin-bottom:12px}
   .yijing-reading-picker>.reading-picker-head{margin-bottom:6px}
   .yijing-reading-picker .yi-mode-option{flex:1 1 0;min-width:0;gap:6px;min-height:62px;padding:7px 8px}
   .yijing-reading-picker .yi-mode-option b{font-size:.71rem}
@@ -3847,7 +3847,7 @@ html[data-theme="light"] .reading-completion.is-pending .yijing-restart-btn{back
 @media(max-width:380px){.yijing-reading-picker>.reading-picker-head span{display:none}}
 @media(prefers-reduced-motion:reduce){.reading-completion .yijing-restart-btn{transition:none}}
 
-/* 2026-10-20 方案 A：解析方式應比起卦方式更先被看見；純視覺調整，不強制鎖定起卦。 */
+/* 2026-10-20 方案 A：保留高對比選擇卡，解析區不再黏附跟隨視窗。 */
 .yijing-reading-picker{
   padding:18px 19px 19px;
   margin-bottom:20px;
