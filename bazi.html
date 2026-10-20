@@ -2523,8 +2523,7 @@ html[data-theme="light"] .smart-extra-question > summary{color:#684795}
 .bazi-personal-full-mode #results[data-bazi-mask-level="7"] #yinYangBox .yy-track i,
 .bazi-personal-full-mode #results[data-bazi-mask-level="7"] #elementBars .fill,
 .bazi-personal-full-mode #results[data-bazi-mask-level="7"] #weightedElementBars .fill,
-.bazi-personal-full-mode #results[data-bazi-mask-level="7"] #tenGodBars .fill,
-.bazi-personal-full-mode #results[data-bazi-mask-level="7"] #scoreGrid .mini-track i{width:0!important;opacity:0!important}
+.bazi-personal-full-mode #results[data-bazi-mask-level="7"] #tenGodBars .fill{width:0!important;opacity:0!important}
 .bazi-personal-full-mode #results[data-bazi-mask-level="7"] .group-card.dominant{border-color:var(--bazi-line-67,rgba(255,255,255,.08))!important;background:var(--bazi-bg-68,rgba(255,255,255,.03))!important}
 /* 固定每章一個示範入口，不再依照解讀區的展開狀態移動。 */
 #report-pillars #pillars.bazi-inline-sample-anchor,
@@ -3000,7 +2999,7 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-overview .bazi-recas
             <div class="bazi-hero-quota-item"><small>付費次數</small><strong id="baziHeroPaidRemain">0 次</strong></div>
           </aside>
           <details class="bazi-overview-extra bazi-aux-panel" id="baziOverviewExtra"><summary class="bazi-aux-native-summary">生活領域與結構重點（選讀）</summary><div class="overview-life-grid" id="overviewLife"></div></details>
-          <details class="method-details bazi-aux-panel" id="baziMethodDetails"><summary class="bazi-aux-native-summary">結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">本站會結合四柱與多項結構資訊進行整理；詳細加權方法與個人計算依據屬未解鎖內容。</p><p class="micro-note">歲運評語僅供傳統命理參考；個人的分析規則及歲運細節不在免費模式公開。</p></details>
+          <details class="method-details bazi-aux-panel" id="baziMethodDetails"><summary class="bazi-aux-native-summary">結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">本站會結合四柱與多項結構資訊進行整理；本區已提供個人結構指標供參考；詳細加權運算方法及專業公式未公開。</p><p class="micro-note">歲運評語僅供傳統命理參考；大運、流年、流月的完整個人分析仍依下方九大分析章節權限提供。</p></details>
         </section>
 
 
@@ -7221,15 +7220,35 @@ ${intent}
     $('reportTitle').textContent=day+(data.dayMasterElement||'')+'日主 · 免費個人命盤';
     $('reportSummary').textContent='你的四柱已建立。九大分析中的關鍵數值與判讀依據需解鎖才能觀看；下方仍可查看基本命理意象與公開的神煞分析。';
     put('summaryTags',[day+' · '+(data.dayMasterYinYang||'')+(data.dayMasterElement||''),'命盤結構：未解鎖','專業比例：未解鎖'].map(x=>`<span>${esc(x)}</span>`).join(''));
-    put('overviewLife',[
-      ['日主基本意象',data.publicIntro||'日主是認識命盤的起點。'],
-      ['性格與行動',data.publicConclusions?.character||'命盤中的不同結構可能影響個人的處事方式。'],
-      ['工作傾向',data.publicConclusions?.career||'工作方式需綜合個人與環境條件理解。'],
-      ['感情與相處',data.publicConclusions?.relationship||'關係中的需求與生活安排需要雙方共同確認。'],
-      ['人生面向','完整事業、感情與財務結構由本站核心整合判讀。'],
-      ['專業說明','詳細十神、五行、宮位組合與精確判讀依據目前不開放。']
-    ].map(([title,copy])=>`<article class="life-card"><h4>${esc(title)}</h4><p>${esc(copy)}</p><small>完整個人分析尚未解鎖</small></article>`).join(''));
-    put('scoreGrid',['五行分布均衡','日主支持度','十神出現廣度','干支互動量'].map(t=>`<div class="score-card"><small>${t}</small><div class="score-line"><b>${hidden()}</b><span>詳細計算尚未解鎖</span></div><div class="mini-track"><i style="width:0"></i></div></div>`).join(''));
+    // Review only the two optional overview panels, without changing any of
+    // the nine paid chapters or their permissions. The original core returns
+    // these sentences and score values; do not fabricate a replacement.
+    const originalOverview=data.publicOverview;
+    const overviewRows=Array.isArray(originalOverview?.rows)?originalOverview.rows:[];
+    const rowAt=i=>overviewRows[i]||{};
+    const showOverview=!!(originalOverview&&overviewRows.length>=6&&originalOverview.scores);
+    const topLife=showOverview?[
+      ['日主基本意象',data.publicIntro||'日主是認識命盤的起點。',`${data.dayMaster||''} · ${data.dayMasterElement||''}日主`],
+      ['性格與行動',rowAt(0).text,rowAt(0).basis],
+      ['工作傾向',rowAt(1).text,rowAt(1).basis],
+      ['感情與相處',rowAt(3).text,rowAt(3).basis],
+      ['人生面向',originalOverview.readingSummary,rowAt(0).basis],
+      [rowAt(5).title||'生活中的拉扯',rowAt(5).text,rowAt(5).basis]
+    ]:[
+      ['日主基本意象',data.publicIntro||'日主是認識命盤的起點。',''],
+      ['性格與行動',data.publicConclusions?.character||'資料尚未載入',''],
+      ['工作傾向',data.publicConclusions?.career||'資料尚未載入',''],
+      ['感情與相處',data.publicConclusions?.relationship||'資料尚未載入',''],
+      ['人生面向','請更新後端後重新排盤以查看原始完整總覽。',''],
+      ['專業說明','請更新後端後重新排盤以查看原始判讀依據。','']
+    ];
+    put('overviewLife',topLife.map(([title,copy,note])=>`<article class="life-card"><h4>${esc(title)}</h4><p>${esc(copy||'—')}</p>${note?`<small>${esc(note)}</small>`:''}</article>`).join(''));
+    const scoreCards=[['五行分布均衡','balance','描述分布；不代表命運優劣'],['日主支持度','support','同類、生扶、通根的網站指標'],['十神出現廣度','diversity','達到網站權重門檻的類型比例'],['干支互動量','activity','描述互動數量；不是吉凶分數']];
+    put('scoreGrid',scoreCards.map(([label,key,note])=>{
+      const raw=originalOverview?.scores?.[key];
+      const number=showOverview&&Number.isFinite(Number(raw))?Number(raw):null;
+      return `<div class="score-card"><small>${esc(label)}</small><div class="score-line"><b>${number===null?'—':esc(String(number))}</b><span>${number===null?'需更新後端並重新排盤':esc(note)}</span></div><div class="mini-track"><i style="width:${number===null?0:pct(number)}%"></i></div></div>`;
+    }).join(''));
     put('pillars',baziPublicPillarDisplay(data).map(p=>{
       const name=label[p.key]||'四柱',shown=value=>esc(value||'—');
       const hiddenGan=Array.isArray(p.hideGan)?p.hideGan.join('、'):(p.hideGan||'');
@@ -9326,7 +9345,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     try{
       for(const id of targetIDs){
         // 05 公開全部內容；06～09 僅呈現鎖定展示區，絕不把原本的模糊內容當作免費成果。
-        if(['report-shensha','report-reading','report-luck','report-years','report-months'].includes(id))continue;
+        if(['report-overview','report-shensha','report-reading','report-luck','report-years','report-months'].includes(id))continue;
         const area=$(id);if(!area||area.classList.contains('dh-bazi-premium-visible'))continue;addScopedRules(area,id);scanText(area,id);
       }
       results.dataset.baziMaskLevel=String(chosen);
