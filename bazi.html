@@ -7271,6 +7271,54 @@ ${intent}
     return true;
   };
 
+  // Paid-only classical calendar facts: the authenticated section API deliberately
+  // strips display-only lunar library fields from the transport. Restore only the
+  // selected, already-purchased section by recomputing the SAME verified calendar
+  // references used by the site's original four-pillar renderer. No other premium
+  // chapter is fetched or revealed by this function.
+  function baziPaidCalendarFacts(){
+    const input=lastData;
+    const m=/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(input?.solarText||''));
+    if(!m||!Array.isArray(input?.pillars)||input.pillars.length!==4||typeof Solar==='undefined'||typeof Solar.fromYmdHms!=='function')
+      throw Error('完整曆法資料尚未載入；重新整理後再閱讀已解鎖內容，不會再次扣點');
+    try{
+      const [y,mo,d,h,mi]=m.slice(1).map(Number);
+      const solar=Solar.fromYmdHms(y,mo,d,h,mi,0);
+      const lunar=solar.getLunar();
+      const eight=lunar.getEightChar();
+      const sect=Number($('sect')?.value)===1?1:2;
+      if(typeof eight.setSect==='function')eight.setSect(sect);
+      let timeEight=eight;
+      if(sect===2&&h===23){
+        timeEight=Solar.fromYmdHms(y,mo,d,0,30,0).getLunar().getEightChar();
+        if(typeof timeEight.setSect==='function')timeEight.setSect(sect);
+      }
+      const keys=['year','month','day','time'];
+      const pillars=keys.map((k,i)=>frontendBuildPillar(i===3?timeEight:eight,k));
+      if(pillars.some((p,i)=>p.gan!==input.pillars[i].gan||p.zhi!==input.pillars[i].zhi))
+        throw Error('四柱曆法校驗不一致，請重新排盤後再閱讀');
+      const get=method=>{
+        const fn=eight[method];
+        return typeof fn==='function'?frontendTraditional(fn.call(eight))||'':'';
+      };
+      const aux={taiYuan:get('getTaiYuan'),mingGong:get('getMingGong'),shenGong:get('getShenGong')};
+      const fromJie=(fn)=>{
+        try{
+          const jie=lunar[fn]?.();
+          if(!jie)return null;
+          const so=jie.getSolar?.();
+          const date=so?.toYmdHms?.()||'';
+          const name=jie.getName?.()||'';
+          return name?{name:frontendTraditional(name),solar:date}:null;
+        }catch(_){return null}
+      };
+      return {pillars,aux,jie:{prev:fromJie('getPrevJie'),next:fromJie('getNextJie')}};
+    }catch(e){
+      if(/校驗不一致/.test(e.message||''))throw e;
+      throw Error('曆法參考資料讀取失敗，請重新整理後再閱讀；不會再次扣點');
+    }
+  }
+
   // Personal paid chapters: restore the ORIGINAL report renderers, not a JSON inspector.
   // A chapter receives only its own authenticated server document. No cross-chapter data is fetched.
   window.baziApplyPaidSection=function(id,doc){
@@ -7295,29 +7343,35 @@ ${intent}
       item.style.setProperty('opacity','1','important');
     });
     if(id==='report-pillars'){
-      const keys=['year','month','day','time'];
-      const safePillars=Array.isArray(lastData?.pillars)?lastData.pillars:[];
+      const facts=baziPaidCalendarFacts();
       const names=['年柱','月柱','日柱','時柱'];
+      // Always start from the validated lunar facts, not the deliberately
+      // minimal free-preview object (which has no element / ten-god / NaYin).
       const pillars=names.map((name,i)=>{
-        const b=find(name)||{};const base=safePillars[i]||{};
+        const b=find(name)||{};
+        const base=facts.pillars[i];
         const pair=String(b.干支||base.ganZhi||'');
-        return {...base,key:keys[i],gan:base.gan||pair.slice(0,1),zhi:base.zhi||pair.slice(1,2),
-          ganZhi:pair||base.ganZhi,ganYinYang:b.天干陰陽||base.ganYinYang,
-          zhiYinYang:b.地支陰陽||base.zhiYinYang,hideGan:b.藏干??base.hideGan,
-          shiShenGan:b.天干十神??base.shiShenGan,shiShenZhi:b.地支十神??base.shiShenZhi,
-          naYin:b.納音??base.naYin,diShi:b.十二長生??base.diShi,xunKong:b.旬空??base.xunKong};
+        if(pair!==base.ganZhi)throw Error('付費四柱與排盤不一致，請重新閱讀');
+        const preferred=(value,fallback)=>value===undefined||value===null||value===''?fallback:value;
+        return {...base,
+          ganZhi:pair,
+          ganYinYang:preferred(b.天干陰陽,base.ganYinYang),
+          zhiYinYang:preferred(b.地支陰陽,base.zhiYinYang),
+          hideGan:preferred(b.藏干,base.hideGan),
+          shiShenGan:preferred(b.天干十神,base.shiShenGan),
+          shiShenZhi:preferred(b.地支十神,base.shiShenZhi),
+          naYin:preferred(b.納音,base.naYin),
+          diShi:preferred(b.十二長生,base.diShi),
+          xunKong:preferred(b.旬空,base.xunKong)};
       });
-      if(pillars.some(x=>!x.gan||!x.zhi))throw Error('完整四柱資料不足');
       renderPillars({pillars});
-      const jie=find('前後節氣');
-      if(jie){
-        const bits=$('meta')?.querySelectorAll(':scope > div');
-        const format=x=>x?.name?(String(x.name)+' '+String(x.solar||'')):'—';
-        if(bits?.length>=5){
-          const before=bits[3].querySelector('span'),after=bits[4].querySelector('span');
-          if(before)before.textContent=format(jie.prev);
-          if(after)after.textContent=format(jie.next);
-        }
+      const jie=find('前後節氣')||{};
+      const bits=$('meta')?.querySelectorAll(':scope > div');
+      const format=x=>x?.name?(String(x.name)+' '+String(x.solar||'')):'—';
+      if(bits?.length>=5){
+        const before=bits[3].querySelector('span'),after=bits[4].querySelector('span');
+        if(before)before.textContent=format(jie.prev?.name?jie.prev:facts.jie.prev);
+        if(after)after.textContent=format(jie.next?.name?jie.next:facts.jie.next);
       }
       // Keep the original first-chapter layout; do not add a second vertical list of year/month/day/hour.
     }else if(id==='report-elements'){
@@ -7327,9 +7381,16 @@ ${intent}
       const sorted=Object.entries(weighted.percentages).sort((a,b)=>Number(b[1])-Number(a[1]));
       const data={weightedFiveElements:weighted,fiveElements:raw,yinYang,
         highlights:{dominantElement:sorted[0]?.[0]||'五行'}};
-      renderElements(data);renderYinYang(data);
-      const aux=find('胎元命宮與身宮');
-      if(aux)renderAux({taiYuan:aux.胎元,mingGong:aux.命宮,shenGong:aux.身宮});
+      const aux=find('胎元命宮與身宮')||{};
+      // The V2 server intentionally omits client-supplied classical calendar
+      // metadata. Recover these three *only after section 02 was authorized*.
+      const hasAux=aux.胎元&&aux.命宮&&aux.身宮;
+      const localAux=hasAux?null:baziPaidCalendarFacts().aux;
+      const fullAux={taiYuan:aux.胎元||localAux?.taiYuan,
+        mingGong:aux.命宮||localAux?.mingGong,shenGong:aux.身宮||localAux?.shenGong};
+      if(!fullAux.taiYuan||!fullAux.mingGong||!fullAux.shenGong)
+        throw Error('命盤補充資料尚未完整，請重新整理再閱讀，不會再次扣點');
+      renderElements(data);renderYinYang(data);renderAux(fullAux);
       guideInto(renderElementMasterGuideHtml(guide));
       bars('#elementBars .fill,#weightedElementBars .fill,#yinYangBox .yy-track i');
       const donut=$('fiveDonut');if(donut&&donut.style.background)
