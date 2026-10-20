@@ -5470,6 +5470,10 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-overview .bazi-recas
   }
 
   function sectionExplanation(key, data) {
+    if(key==='tengods'&&data?.publicPreview&&window.baziPurchasedDocs?.['report-tengods']){
+      const guide=window.baziPurchasedDocs['report-tengods'].blocks?.find(x=>x.title==='十神詳細解析')?.value;
+      if(guide)return renderTenGodMasterGuideHtml(guide);
+    }
     if (key === 'shensha') return renderShenshaExplanation(data);
     if(data?.publicPreview){
       const publicCards={
@@ -7215,6 +7219,45 @@ ${intent}
     for(const id of ['readingBody','luckSummary','threeYearCompare','monthSummary'])put(id,'');
     initSectionDecodeUI();resetExploration();
   }
+
+  // Paid chapter 03: reuse the site's existing Ten Gods charts and long-form guide.
+  // Never mount other chapters' information into this view.
+  window.baziApplyPaidTenGods = function(doc){
+    const section=$('report-tengods');
+    const blocks=Array.isArray(doc?.blocks)?doc.blocks:[];
+    const find=title=>blocks.find(b=>b.title===title)?.value;
+    const dist=find('十神分布與比重');
+    const guide=find('十神詳細解析');
+    if(!section||!dist?.percentages||!dist?.groupPercentages||!guide?.part1||!guide?.part2||!Array.isArray(guide.part2.behaviorList)||!Array.isArray(guide.part4?.tips)){
+      throw Error('本區完整資料尚未準備好，請稍後重新閱讀。');
+    }
+    const dominant=find('主導結構')?.主導十神群組||Object.entries(dist.groupPercentages)
+      .sort((a,b)=>Number(b[1])-Number(a[1]))[0]?.[0]||'';
+    const data={tenGodDistribution:dist,highlights:{dominantGroup:dominant},reading:{
+      good:guide.part1?.summary||'',stuck:guide.part3?.summary||'',
+      learning:guide.part4?.summary||guide.part4?.title||''}};
+    renderTenGods(data);
+    renderDeepTenGods(data);
+    // Use exactly the original professional guide template, not the generic JSON tree.
+    const html=renderTenGodMasterGuideHtml(guide);
+    if(!html)throw Error('十神專業解讀尚未準備好');
+    const decoder=section.querySelector('.section-decode');
+    if(decoder){
+      const grid=decoder.querySelector('.decode-summary-grid');
+      if(grid)grid.innerHTML=html;
+      const content=decoder.querySelector('.decode-content');
+      if(content)content.classList.add('show');
+      const toggle=decoder.querySelector('.decode-open');
+      if(toggle){toggle.textContent='▾ 收合看懂這一區';toggle.classList.add('active');toggle.setAttribute('aria-expanded','true');}
+    }else{
+      // Older layout fallback still uses the SAME original guide template.
+      const mount=section.querySelector('.bazi-premium-content');if(!mount)throw Error('找不到十神解讀區');
+      mount.innerHTML=html;mount.hidden=false;
+    }
+    window.baziPurchasedDocs=window.baziPurchasedDocs||Object.create(null);
+    window.baziPurchasedDocs['report-tengods']=doc;
+    return true;
+  };
 
   window.baziShowPersonalFull=function(data){
     if(!data?.publicPreview||data.pillars?.length!==4)throw Error('後端免費命盤資料不完整，請重新排盤');
@@ -9097,7 +9140,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       for(const id of targetIDs){
         // 05 公開全部內容；06～09 僅呈現鎖定展示區，絕不把原本的模糊內容當作免費成果。
         if(['report-shensha','report-reading','report-luck','report-years','report-months'].includes(id))continue;
-        const area=$(id);if(!area)continue;addScopedRules(area,id);scanText(area,id);
+        const area=$(id);if(!area||area.classList.contains('dh-bazi-premium-visible'))continue;addScopedRules(area,id);scanText(area,id);
       }
       results.dataset.baziMaskLevel=String(chosen);
     }finally{busy=false;}
@@ -9538,13 +9581,34 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading
 .bazi-premium-content summary{cursor:pointer;font-weight:750}.bazi-premium-value{white-space:pre-wrap;line-height:1.78;overflow-wrap:anywhere;margin:5px 0}
 .bazi-premium-empty{font-size:.75rem;color:var(--dim,#bbb)}
 body.bazi-personal-full-mode .dh-bazi-premium-visible:is(#report-reading,#report-luck,#report-years,#report-months) > .report-body > :is(.time-explain,.fortune-summary-grid,.luck-header,.luck-grid,.detail-console,.three-year-compare,.month-flow-grid,.smart-prompt-mount){display:none!important}
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body{display:block!important;min-height:0!important}
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body > .bazi-premium-box{display:block!important}
+/* Unlocking only one chapter must not affect the other eight. */
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :is(
+ .bazi-inline-sample-trigger,.bazi-private-lock-panel){display:none!important}
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible .bazi-inline-sample-anchor{min-height:0!important;isolation:auto!important}
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible .bazi-mask-chart-hidden{filter:none!important;opacity:1!important;pointer-events:auto!important;user-select:auto!important}
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :is(.bazi-mask-tier-3,.bazi-mask-tier-5,.bazi-mask-tier-7,.bazi-mask-tier-9){
+  color:inherit!important;-webkit-text-fill-color:currentColor!important;background:none!important;filter:none!important;
+  opacity:1!important;pointer-events:auto!important;user-select:text!important;-webkit-user-select:text!important;
+}
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :is(.tg-row .fill,.group-card,.tg-row b,.group-card span){opacity:1!important;filter:none!important}
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible .section-decode .decode-summary-grid > .master-card{grid-column:1/-1}
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :is(.section-takeaway,.decode-card,.deep-life-grid){filter:none!important}
+ .bazi-premium-content .bazi-premium-part{padding:18px;background:var(--panel2,#f8faf9)}
+ .bazi-premium-content .bazi-premium-part>h4{font-size:1rem;margin:0 0 12px}
+ .bazi-paid-items{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+ .bazi-paid-item,.bazi-paid-subgroup{padding:12px 14px;border:1px solid var(--line,#d2d9d8);border-radius:10px;min-width:0}
+ .bazi-paid-subgroup{margin:9px 0}.bazi-premium-content h5{margin:2px 0 8px;color:var(--gold,#b49143);font-size:.84rem}
+ .bazi-premium-content p{font-size:.82rem;line-height:1.95;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:600px){.bazi-paid-items{grid-template-columns:1fr}}
 </style>
 <script id="bazi-premium-section-v1">
 (()=>{'use strict';
  const API='https://bazi-api.ezgocpu.workers.dev',SID='divinationhub-auth-session-v1';
  const SECTION_IDS=['report-pillars','report-elements','report-tengods','report-relations','report-shensha','report-reading','report-luck','report-years','report-months'];
  const LABEL={gan:'天干',zhi:'地支',ganZhi:'干支',year:'年份',month:'月份',startYear:'起始年',endYear:'結束年',startSolar:'開始日期',endSolar:'結束日期',tenGodGan:'天干十神',tenGodZhi:'地支十神',ganElement:'天干五行',zhiElement:'地支五行',interactions:'干支互動',relations:'交互關係',percentages:'各項比例',groupPercentages:'十神群組比例',summary:'整體總結',desc:'解讀說明',title:'分析重點',text:'詳解',basis:'判讀依據',good:'有利特質',watch:'注意事項',stuck:'較易卡住',label:'判斷',score:'結構評估',startJie:'起始節氣',endJie:'結束節氣',coreMotto:'核心原則',coreDetail:'深入判讀',yearsData:'流年詳細分析',rows:'各面向解讀',rules:'行動原則',actions:'實際行動',note:'補充說明',monthFlows:'逐月資訊',forward:'順排',hideGan:'藏干',yinYang:'陰陽'};
- const states=new Map(),els=new Map(); let generation=0,loading=false;
+ const states=new Map(),els=new Map(),restored=new Set(); let generation=0,loading=false;
  const el=(tag,cls,txt)=>{let x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
  const token=()=>{try{return localStorage.getItem(SID)||''}catch(_){return ''}};
  const chart=()=>window.baziPremiumPayload?.();
@@ -9555,25 +9619,45 @@ body.bazi-personal-full-mode .dh-bazi-premium-visible:is(#report-reading,#report
   if(!r.ok||!j?.ok){const code=j?.error||'';throw Error(({LOGIN_REQUIRED:'請先登入會員',PRICE_CHANGED:'區塊價格已變更，請重新讀取後確認',INSUFFICIENT_POINTS:'專業解鎖點數不足',SECTION_LOCKED:'此區尚未解鎖',SECTION_NOT_FOR_SALE:'此區尚未啟用付費',SECTION_CONTENT_UNAVAILABLE:'完整內容尚未準備好，本次未扣點',SECTION_SERVICE_UNAVAILABLE:'服務暫時無法使用'}[code])||j?.message||code||'暫時無法使用');}
   return j;
  }
- function value(node,data,depth=0){if(data===null||data===undefined||data==='')return;
-  if(depth>6){node.append(el('div','bazi-premium-value','詳細內容請以原始資料為準'));return;}
-  if(typeof data!=='object'){node.append(el('div','bazi-premium-value',data===true?'是':data===false?'否':String(data)));return;}
+ // Transform the paid server response into readable structured sections, never a debug object inspector.
+ const names={values:'十神比例',groups:'五大群組',percentages:'比例',groupPercentages:'群組比例',
+  headerIntro:'整體判讀',title:'主題',summary:'摘要',intro:'重點',text:'分析',coreLogic:'命理依據',
+  behaviorMode:'行為模式',fiveElementsBlend:'五行配合',behaviorList:'常見表現',missingTitle:'待補足',
+  missingText:'應注意之處',socialText:'人際相處',part1:'第一部分',part2:'第二部分',
+  part3:'第三部分',part4:'第四部分',tips:'行動建議',h:'重點',b:'解讀',score:'結構分數',
+  startYear:'起始年份',endYear:'結束年份',startAge:'起運年齡',endAge:'結束年齡',
+  ganZhi:'干支',tenGodGan:'天干十神',tenGodZhi:'地支十神',note:'補充',
+  good:'較有利',watch:'值得留意',reason:'判讀依據',basis:'判讀依據',
+  element:'五行',startSolar:'開始日期',endSolar:'結束日期',year:'年份',month:'月份'};
+ function value(node,data,depth=0){
+  if(data==null||data==='')return;
+  if(typeof data!=='object'){const p=el('p','bazi-premium-value',data===true?'是':data===false?'否':String(data));node.append(p);return;}
+  if(depth>=5)return;
   if(Array.isArray(data)){
-   if(!data.length){node.append(el('span','bazi-premium-empty','無相關資料'));return;}
-   data.forEach((item,i)=>{if(item==null||item==='')return;const sec=el('details');if(i===0||data.length<=3)sec.open=true;
-    sec.append(el('summary','',`第 ${i+1} 項`));value(sec,item,depth+1);node.append(sec)});return;
+   const list=el('div','bazi-paid-items');node.append(list);
+   data.forEach((v,i)=>{const item=el('section','bazi-paid-item');
+    if(typeof v==='object'&&v!==null&&v.title)item.append(el('h5','',v.title));
+    else if(data.length>1)item.append(el('h5','',`第 ${i+1} 項`));
+    value(item,v,depth+1);list.append(item)});return;
   }
   for(const [key,v] of Object.entries(data)){
-   if(v===null||v===undefined||v===''||typeof v==='function'||key==='input')continue;
-   const label=LABEL[key]||key.replace(/([A-Z])/g,' $1').trim();
+   if(v==null||v===''||key==='input'||key==='raw'||key==='metadata')continue;
+   const label=names[key]||(/^[A-Za-z][A-Za-z0-9_]*$/.test(key)?'':key);
+   if(!label){if(typeof v==='object')value(node,v,depth+1);continue;}
    if(typeof v==='object'){
-    const d=el('details');if(depth<=1)d.open=true;d.append(el('summary','',label));value(d,v,depth+1);node.append(d);
+    const group=el('div','bazi-paid-subgroup');group.append(el('h5','',label));value(group,v,depth+1);node.append(group);
    }else{
-    const row=el('div','bazi-premium-value');const bold=el('strong','',label+'：');row.append(bold,document.createTextNode(String(v)));node.append(row);
+    const row=el('p','bazi-premium-value');row.append(el('strong','',label+'：'),document.createTextNode(String(v)));node.append(row);
    }
   }
  }
- function display(box,doc){const target=box.querySelector('.bazi-premium-content');target.replaceChildren();
+ function display(box,doc){
+  if(box.closest('#report-tengods')){
+    window.baziApplyPaidTenGods?.(doc);
+    const body=box.querySelector('.bazi-premium-content');if(body){body.hidden=true;body.replaceChildren()}
+    return;
+  }
+  const target=box.querySelector('.bazi-premium-content');target.replaceChildren();
   for(const p of doc.blocks||[]){const part=el('article','bazi-premium-part');part.append(el('h4','',p.title));value(part,p.value);target.append(part)}
   target.hidden=false;
  }
@@ -9587,7 +9671,7 @@ body.bazi-personal-full-mode .dh-bazi-premium-visible:is(#report-reading,#report
   }box.hidden=true;els.set(id,box);
   }
  }
- function reset(){generation++;states.clear();document.querySelectorAll('.dh-bazi-premium-visible').forEach(x=>x.classList.remove('dh-bazi-premium-visible'));for(const box of els.values()){box.hidden=true;box.querySelector('.bazi-premium-content').hidden=true;box.querySelector('.bazi-premium-content').replaceChildren()}}
+ function reset(){generation++;states.clear();restored.clear();window.baziPurchasedDocs=Object.create(null);document.querySelectorAll('.dh-bazi-premium-visible').forEach(x=>x.classList.remove('dh-bazi-premium-visible'));for(const box of els.values()){box.hidden=true;box.querySelector('.bazi-premium-content').hidden=true;box.querySelector('.bazi-premium-content').replaceChildren()}}
  window.baziPremiumReset=reset;
  window.baziSectionReady=async()=>{const n=++generation;const payload=chart();if(!payload)return;loading=true;
   try{addBoxes();const result=await post('/v2/section/status',payload);if(n!==generation)return;
@@ -9597,6 +9681,10 @@ body.bazi-personal-full-mode .dh-bazi-premium-visible:is(#report-reading,#report
     if(x.unlocked||x.mode==='free'){btn.textContent=x.unlocked?'重新閱讀已解鎖內容':'免費閱讀完整分析';btn.disabled=false;status(box,x.unlocked?'此命盤的此區已解鎖，不再扣點':'本區免費開放（需登入會員）')}
     else if(x.mode==='priced'){btn.textContent='使用 '+x.points+' 點解鎖整區';btn.disabled=false;status(box,'專業點數餘額 '+result.balance+' 點｜此命盤本區只需解鎖一次')}
     else{box.hidden=true}
+   }
+   const paidTenGods=states.get('report-tengods');
+   if(paidTenGods?.unlocked&&!restored.has('report-tengods')){
+     restored.add('report-tengods');void purchase('report-tengods');
    }
   }catch(e){if(n===generation)for(const box of els.values()){box.hidden=true}}
   finally{loading=false}
@@ -9611,12 +9699,15 @@ body.bazi-personal-full-mode .dh-bazi-premium-visible:is(#report-reading,#report
    }
    const j=await post(path,{...payload,sectionId:id,expectedPoints:s.points});
    if(JSON.stringify([chart()?.datetime,chart()?.gender,chart()?.sect])!==JSON.stringify([payload.datetime,payload.gender,payload.sect]))return;
-   display(box,j.document);s.unlocked=true;
-   box.closest('.report-section')?.classList.add('dh-bazi-premium-visible');
-   btn.textContent='已解鎖｜重新閱讀';status(box,'已取得本區完整分析｜本次扣除 '+j.charged+' 點｜剩餘 '+j.balance+' 點');
+   const chapter=box.closest('.report-section');
+   chapter?.classList.add('dh-bazi-premium-visible');
+   try{display(box,j.document)}catch(err){chapter?.classList.remove('dh-bazi-premium-visible');throw err}
+   s.unlocked=true;
+   btn.textContent='已解鎖｜重新閱讀';status(box,(j.charged?'本次扣除 '+j.charged+' 點':'已購買區塊，重新閱讀不扣點')+'｜剩餘 '+j.balance+' 點');
    const badge=document.getElementById('dh-sp-balance');if(badge)badge.textContent='專業解鎖點數 '+j.balance+' 點';
    window.dispatchEvent(new Event('dh-professional-points-changed'));
-   box.querySelector('.bazi-premium-content')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+   if(id==='report-tengods')chapter?.querySelector('.ten-god-layout')?.scrollIntoView({behavior:'smooth',block:'start'});
+   else box.querySelector('.bazi-premium-content')?.scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){status(box,e.message)}finally{btn.disabled=false}
  }
  const init=()=>{addBoxes();window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
