@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>專業區塊計價中心｜一念知機</title>
+<style>
+:root{color-scheme:dark;--bg:#080b11;--panel:#101620;--line:#27323e;--text:#e9eced;--muted:#a0aebf;--gold:#ecd392;--ok:#9de3c0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Noto Sans TC',sans-serif;line-height:1.65}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+h1{font-size:1.5rem;margin:2px 0 4px}.eyebrow{font-size:.68rem;color:var(--gold);letter-spacing:.16em}.muted{color:var(--muted)}.desc{font-size:.86rem;margin:8px 0 18px}
+a{color:#c2dff0}.nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.nav a,.btn{border:1px solid #465464;background:#151d26;color:#d9e6ec;padding:9px 13px;border-radius:10px;text-decoration:none;font:inherit;font-size:.83rem;cursor:pointer}
+.btn.primary{background:#594728;border-color:#b79a61;color:#ffe8aa;font-weight:800}.btn:disabled{opacity:.48;cursor:default}.btn:hover:not(:disabled),.nav a:hover{border-color:#c2a876}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;margin-top:14px;overflow:hidden}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}.panel-head h2{font-size:1rem;margin:0}.body{padding:17px 18px}.banner{padding:13px 16px;border:1px solid #725f32;background:#241d13;border-radius:12px;color:#f8deac;margin:14px 0;font-size:.82rem}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px}.tabs button{border:1px solid #334451;background:#121b27;color:#c5cbd2;border-radius:10px;padding:8px 16px;cursor:pointer}.tabs button.active{background:#245044;border-color:#61ae8d;color:#e0fff0}.toolbar{display:flex;justify-content:space-between;flex-wrap:wrap;align-items:center;gap:11px;margin-bottom:13px}.right{display:flex;flex-wrap:wrap;align-items:center;gap:9px}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:720px}td,th{text-align:left;border-bottom:1px solid #263440;padding:12px 10px;font-size:.81rem}th{font-size:.72rem;color:#adbdca;background:#0b131e}tr:last-child td{border-bottom:0}select,input{border:1px solid #415568;background:#0d1521;color:#ebf3f4;border-radius:9px;padding:9px 10px;font:inherit;max-width:100%}input[type=number]{width:88px}input[type=text]{width:200px}.section-name{font-weight:750;color:#e6ecee}.section-id{display:block;color:#8393a3;font: .67rem ui-monospace,monospace;margin-top:3px}.status{padding:10px 16px;min-height:43px;font-size:.8rem;color:#9cd6bc}.status.error{color:#ffacb4}.pill{border:1px solid #44556b;border-radius:99px;padding:2px 8px;font-size:.68rem;color:#cedae2}.pill.pending{border-color:#9c7d37;color:#f1c76c}.pill.free{border-color:#3d8869;color:#a1ebc7}.pill.priced{border-color:#866ab8;color:#d5b8ff}.notice{font-size:.78rem;color:#a8b8c7;margin-top:11px}.newtool{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.newtool label{display:grid;gap:4px;font-size:.75rem;color:var(--muted)}.small{font-size:.71rem}.empty{padding:26px;color:var(--muted);text-align:center}@media(max-width:650px){.wrap{padding:16px 10px}.body{padding:13px}.panel-head{padding:12px}.nav a{padding:7px}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="top"><div><div class="eyebrow">DIVINATION HUB · ADMIN</div><h1>全站專業區塊計價中心</h1><div class="muted small">各工具整區收費・未來自動同步前台價格</div></div><nav class="nav"><a href="/admin.html">← 返回會員管理</a><a href="/">回首頁</a></nav></header>
+<div class="banner"><b>第一階段｜區塊登記與價格規則</b>　這一版只設定未來收費的價格，不會向會員扣點、變更免費次數、解鎖付費內容或啟動正式販售。所有新區塊預設「待設定」。</div>
+<section class="panel" id="mainPanel"><div class="panel-head"><h2>專業區塊管理</h2><button class="btn" type="button" id="syncBtn">重新掃描工具區塊</button></div>
+<div class="body"><div class="tabs" id="tabs"></div><div class="toolbar"><div><b id="toolTitle">讀取中…</b><div class="muted small" id="toolPath"></div></div><div class="right"><span class="pill" id="sectionCount">—</span><button class="btn" id="reloadBtn" type="button">重新讀取</button></div></div>
+<div class="table-wrap"><table><thead><tr><th>區塊（整區解鎖）</th><th>權限模式</th><th>需扣點數</th><th>操作</th></tr></thead><tbody id="rows"><tr><td colspan="4">讀取中…</td></tr></tbody></table></div><p class="notice">模式「待設定」不啟用收費；「免費」保留免費設定；「付費」設定計價點數。目前前台原有免費／限制狀態不變。調價只更新計價設定，不會回頭修改既有解鎖交易。</p></div>
+<div id="status" class="status" role="status" aria-live="polite">準備讀取管理員登入…</div></section>
+<details class="panel"><summary class="panel-head" style="cursor:pointer"><h2>未來新增其他命理工具</h2><span class="muted small">展開新增工具</span></summary><div class="body"><div class="newtool"><label>工具 ID<input id="toolId" type="text" placeholder="ziwei" maxlength="64"></label><label>名稱<input id="toolName" type="text" placeholder="紫微斗數" maxlength="45"></label><label>工具頁面路徑<input id="toolPage" type="text" placeholder="/ziwei.html" maxlength="80"></label><button id="addTool" class="btn primary" type="button">新增工具</button></div><p class="notice">新增工具時，只須在新工具 HTML 宣告固定區塊 ID 及名稱（與目前三工具相同格式），再由此頁自動掃描，不需修改本管理頁程式。</p></div></details>
+</main>
+<script>
+(()=>{'use strict';
+const API='https://admin-api.ezgocpu.workers.dev',TOKEN_KEY='divinationhub-admin-session',REMEMBER_KEY='divinationhub-admin-remember-v1';
+const $=id=>document.getElementById(id);let data={tools:[],sections:[]},current='';
+function token(){try{const x=sessionStorage.getItem(TOKEN_KEY);if(x)return x;const r=JSON.parse(localStorage.getItem(REMEMBER_KEY)||'null');return r?.expiresAt>Date.now()?r.token||'':''} catch(_){return ''}}
+function report(msg,error=false){$('status').textContent=msg;$('status').className='status'+(error?' error':'')}
+async function api(path,method='GET',body){const t=token();if(!t){location.href='/admin.html';throw Error('請先於會員管理頁面登入')}
+ const r=await fetch(API+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+t,Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
+ const j=await r.json().catch(()=>null);if(r.status===401){report('登入已過期，請返回 admin.html 重新登入。',true);throw Error('ADMIN_SESSION_EXPIRED')}
+ if(!r.ok||!j?.success)throw Error(j?.error||'系統讀取失敗');return j}
+function elem(tag,cls,text){let el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el}
+function renderTabs(){const tabs=$('tabs');tabs.replaceChildren();for(const tool of data.tools){const b=elem('button',(tool.id===current?'active':''),tool.name);b.type='button';b.onclick=()=>{current=tool.id;renderTabs();renderRows()};tabs.append(b)}}
+function renderRows(){const tool=data.tools.find(x=>x.id===current);$('toolTitle').textContent=tool?.name||'尚無工具';$('toolPath').textContent=tool?.pagePath||'';
+ const list=data.sections.filter(x=>x.toolId===current);$('sectionCount').textContent=list.length+' 區';const body=$('rows');body.replaceChildren();if(!list.length){const tr=elem('tr');const td=elem('td','empty','尚未登記專業收費區塊。若工具已有區塊，請按「重新掃描工具區塊」。');td.colSpan=4;tr.append(td);body.append(tr);return}
+ for(const x of list){const tr=elem('tr');const name=elem('td');name.append(elem('span','section-name',x.title),elem('span','section-id',x.sectionId));
+ const modeCell=elem('td');const select=elem('select');for(const [v,label] of [['pending','待設定'],['free','免費'],['priced','付費解鎖']]){let o=elem('option','',label);o.value=v;o.selected=x.mode===v;select.append(o)}modeCell.append(select);
+ const pCell=elem('td');const input=elem('input');input.type='number';input.min='1';input.max='10000';input.step='1';input.value=x.points>0?x.points:1;input.disabled=select.value!=='priced';const unit=elem('span','small',' 點');pCell.append(input,unit);
+ select.onchange=()=>{input.disabled=select.value!=='priced';if(select.value==='priced'&&Number(input.value)<1)input.value='1'};
+ const action=elem('td');const btn=elem('button','btn','儲存');btn.type='button';btn.onclick=async()=>{btn.disabled=true;try{const n=Number(input.value);await api('/admin/pricing/section','POST',{toolId:current,sectionId:x.sectionId,mode:select.value,points:select.value==='priced'?n:0});x.mode=select.value;x.points=select.value==='priced'?n:0;report('已儲存「'+x.title+'」：'+(x.mode==='priced'?x.points+' 點':x.mode==='free'?'免費':'待設定')+'。目前未開啟實際扣點與販售。');renderRows()}catch(e){report('儲存失敗：'+e.message,true);btn.disabled=false}};action.append(btn);
+ tr.append(name,modeCell,pCell,action);body.append(tr)}
+}
+async function refresh(){data=await api('/admin/pricing');if(!data.tools.some(x=>x.id===current))current=data.tools[0]?.id||'';renderTabs();renderRows()}
+async function scan(){const btn=$('syncBtn');btn.disabled=true;report('掃描三工具與已登記頁面…');let okay=0,errors=[];
+ try{await refresh();for(const tool of data.tools){try{const url=new URL(tool.pagePath,location.origin);if(url.origin!==location.origin)throw Error('非本站路徑');const r=await fetch(url.href,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);
+ const html=await r.text();const doc=new DOMParser().parseFromString(html,'text/html');const source=doc.querySelector('#dh-billing-sections');if(!source)throw Error('尚未加入區塊登記清單');const manifest=JSON.parse(source.textContent);
+ if(manifest.toolId!==tool.id||!Array.isArray(manifest.sections))throw Error('工具代號或清單格式不符合');await api('/admin/pricing/sync','POST',{toolId:tool.id,sections:manifest.sections});okay++
+ }catch(e){errors.push(tool.name+'：'+e.message)}}await refresh();report('完成同步 '+okay+' 個工具。'+(errors.length?' 尚未同步：'+errors.join('；'):' 新區塊已自動列出，價格需由站長設定。'),errors.length>0)
+ }catch(e){report('同步失敗：'+e.message,true)}finally{btn.disabled=false}}
+$('reloadBtn').onclick=async()=>{try{await refresh();report('已取得最新設定')}catch(e){report('讀取失敗：'+e.message,true)}};
+$('syncBtn').onclick=scan;
+$('addTool').onclick=async()=>{const btn=$('addTool');btn.disabled=true;try{await api('/admin/pricing/tool','POST',{id:$('toolId').value.trim(),name:$('toolName').value.trim(),pagePath:$('toolPage').value.trim()});await refresh();report('已新增工具。請於該頁加入區塊清單，再按重新掃描。');$('toolId').value='';$('toolName').value='';$('toolPage').value=''}catch(e){report('新增失敗：'+e.message,true)}finally{btn.disabled=false}};
+if(!token()){report('尚未登入，將返回管理員登入頁。',true);setTimeout(()=>{location.href='/admin.html'},800)}else scan();
+})();
+</script>
+</body></html>
