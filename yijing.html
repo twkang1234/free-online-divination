@@ -3066,7 +3066,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       state.fixedReadingMode=aiAvailable&&state.fixedReadingMode==='ai'?'ai':'basic';
       document.getElementById('yijingReadyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)} → ${esc(state.scenario.name)}</div><strong>${esc(q)}</strong><p>解讀重點：${esc(state.topic.focus)}</p>`;
       const picker=document.getElementById('yijingReadingChoice');
-      if(picker){picker.hidden=false;picker.innerHTML=`<div class="reading-picker-head"><b>本次解卦要用哪一種方式？</b><span>起卦時隨時可以切換</span></div><div class="yi-mode-row" role="group" aria-label="選擇本次固定題目的解析方式"><label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="basic" ${state.fixedReadingMode==='basic'?'checked':''}><span><b>站內基本解析</b><small>${aiAvailable?'現有規則式解讀；看完可使用一次 AI 追問':'現有規則式解讀｜本身可用'}</small></span></label>${aiAvailable?`<label class="yi-mode-option"><input type="radio" name="yijingFixedReadingMode" value="ai" ${state.fixedReadingMode==='ai'?'checked':''}><span><b>AI 專業解析</b><small>優先使用本期免費 AI，耗盡才扣會員共用 AI 額度</small></span></label>`:`<button type="button" class="yi-mode-option ai-quota-pending" data-ai-quota-info="1" aria-haspopup="dialog"><span class="yi-disabled-radio" aria-hidden="true">○</span><span><b>AI 專業解析</b><small>需登入｜成功解讀優先使用本期免費 AI</small></span></button>`}</div>`;}
+      if(picker){picker.hidden=false;picker.innerHTML=`<div class="reading-picker-head"><div class="reading-picker-head-left"><span class="reading-picker-step">優先步驟 · 先選解析</span><b>請先選擇本次解卦方式</b><p>先確認這次想怎麼看結果，再使用下方的起卦工具。</p></div><span class="reading-picker-switch">起卦時仍可切換</span></div><div class="yi-mode-row" role="group" aria-label="選擇本次固定題目的解析方式"><label class="yi-mode-option yi-mode-basic"><input type="radio" name="yijingFixedReadingMode" value="basic" ${state.fixedReadingMode==='basic'?'checked':''}><span class="yi-mode-emblem" aria-hidden="true">卦</span><span class="yi-mode-copy"><b>站內基本解析</b><small>${aiAvailable?'現有規則式解讀；看完可使用一次 AI 追問':'現有規則式解讀｜本身可用'}</small></span><span class="yi-mode-indicator" aria-hidden="true"></span></label>${aiAvailable?`<label class="yi-mode-option yi-mode-ai"><input type="radio" name="yijingFixedReadingMode" value="ai" ${state.fixedReadingMode==='ai'?'checked':''}><span class="yi-mode-emblem" aria-hidden="true">✦</span><span class="yi-mode-copy"><b>AI 專業解析</b><small>優先使用本期免費 AI，耗盡才扣會員共用 AI 額度</small></span><span class="yi-mode-indicator" aria-hidden="true"></span></label>`:`<button type="button" class="yi-mode-option yi-mode-ai ai-quota-pending" data-ai-quota-info="1" aria-haspopup="dialog"><span class="yi-disabled-radio" aria-hidden="true">○</span><span class="yi-mode-emblem" aria-hidden="true">✦</span><span class="yi-mode-copy"><b>AI 專業解析</b><small>需登入｜成功解讀優先使用本期免費 AI</small></span><span class="yi-mode-indicator" aria-hidden="true"></span></button>`}</div>`;}
       if(gate)gate.hidden=true;
       setCustomReadyAccess(true);
     }
@@ -3845,6 +3845,89 @@ html[data-theme="light"] .reading-completion.is-pending .yijing-restart-btn{back
 }
 @media(max-width:380px){.yijing-reading-picker>.reading-picker-head span{display:none}}
 @media(prefers-reduced-motion:reduce){.reading-completion .yijing-restart-btn{transition:none}}
+
+/* 2026-10-20 方案 A：解析方式應比起卦方式更先被看見；純視覺調整，不強制鎖定起卦。 */
+.yijing-reading-picker{
+  padding:18px 19px 19px;
+  margin-bottom:20px;
+  border:2px solid rgba(225,197,110,.67);
+  border-radius:19px;
+  background:linear-gradient(114deg,rgba(37,34,19,.99) 0%,rgba(13,31,20,.99) 58%,rgba(9,22,17,.99) 100%);
+  box-shadow:0 12px 35px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,238,180,.13),0 0 0 3px rgba(225,197,110,.045);
+}
+.yijing-reading-picker>.reading-picker-head{gap:14px;margin-bottom:14px;align-items:center}
+.yijing-reading-picker>.reading-picker-head .reading-picker-head-left{display:flex;flex-direction:column;min-width:0}
+.yijing-reading-picker .reading-picker-step{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;margin-bottom:5px;color:#f3d98e;font-size:.68rem;font-weight:900;letter-spacing:.08em}
+.yijing-reading-picker .reading-picker-step::before{content:'✦';font-size:.70rem}
+.yijing-reading-picker>.reading-picker-head b{font-size:1.13rem;color:#f8f5e9;font-weight:900;line-height:1.4}
+.yijing-reading-picker>.reading-picker-head p{margin:3px 0 0;color:#d4d8bd;font-size:.75rem;line-height:1.6}
+.yijing-reading-picker>.reading-picker-head .reading-picker-switch{flex:0 0 auto;border:1px solid rgba(225,197,110,.30);border-radius:999px;padding:6px 10px;color:#f0d891;background:rgba(225,197,110,.065);font-size:.67rem;font-weight:750;white-space:nowrap}
+.yijing-reading-picker .yi-mode-row{gap:13px}
+.yijing-reading-picker .yi-mode-option{
+  position:relative;flex:1 1 280px;display:flex;gap:12px;align-items:center;min-height:89px;
+  padding:14px 17px;border:2px solid rgba(225,197,110,.38);border-radius:14px;
+  background:linear-gradient(125deg,rgba(225,197,110,.095),rgba(225,197,110,.025));
+  box-shadow:0 5px 14px rgba(0,0,0,.10);transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+.yijing-reading-picker .yi-mode-option input{width:19px;height:19px;accent-color:#55d58b}
+.yijing-reading-picker .yi-mode-option .yi-mode-emblem{flex:0 0 auto;display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:rgba(225,197,110,.13);color:#f3d68d;font-size:1.23rem;font-weight:850}
+.yijing-reading-picker .yi-mode-option .yi-mode-copy{flex:1 1 0;min-width:0}
+.yijing-reading-picker .yi-mode-option b{color:#f9f3e0;font-size:.98rem;font-weight:900;line-height:1.4}
+.yijing-reading-picker .yi-mode-option small{color:#d3c9a9;font-size:.72rem;line-height:1.55;margin-top:3px}
+.yijing-reading-picker .yi-mode-option .yi-mode-indicator{position:absolute;right:13px;top:9px;font-size:.61rem;color:#f3d992;font-weight:850}
+.yijing-reading-picker .yi-mode-option .yi-mode-indicator::after{content:'點選切換'}
+.yijing-reading-picker .yi-mode-option:hover{transform:translateY(-2px);border-color:#f0d17b;box-shadow:0 10px 22px rgba(0,0,0,.15)}
+.yijing-reading-picker .yi-mode-option:focus-within,.yijing-reading-picker .yi-mode-option:focus-visible{outline:3px solid rgba(133,222,162,.8);outline-offset:3px}
+.yijing-reading-picker .yi-mode-option:has(input:checked){border-color:#70e6a1;background:linear-gradient(128deg,rgba(69,176,108,.28),rgba(67,150,100,.15));box-shadow:0 0 0 1px rgba(112,230,161,.28) inset,0 8px 21px rgba(38,135,76,.16)}
+.yijing-reading-picker .yi-mode-option:has(input:checked) .yi-mode-emblem{background:rgba(112,230,161,.19);color:#bdf9cc}
+.yijing-reading-picker .yi-mode-option:has(input:checked) b{color:#f2fff5}
+.yijing-reading-picker .yi-mode-option:has(input:checked) small{color:#b5d5bd}
+.yijing-reading-picker .yi-mode-option:has(input:checked) .yi-mode-indicator{color:#a7f5c3}
+.yijing-reading-picker .yi-mode-option:has(input:checked) .yi-mode-indicator::after{content:'✓ 已選擇'}
+.yijing-reading-picker .yi-mode-option.ai-quota-pending{opacity:.87;border-style:dashed}
+.yijing-reading-picker .yi-mode-option.ai-quota-pending .yi-disabled-radio{display:none}
+.yijing-reading-picker .yi-mode-option.ai-quota-pending .yi-mode-indicator::after{content:'查看使用條件'}
+.yijing-reading-picker .yi-mode-option.ai-quota-pending:hover{opacity:1}
+html[data-theme="light"] .yijing-reading-picker{border-color:#c79637;background:linear-gradient(120deg,#fffaeb 0%,#fbfdf9 62%,#f2fbf6 100%);box-shadow:0 12px 32px rgba(115,81,24,.13),0 0 0 3px rgba(199,150,55,.065)}
+html[data-theme="light"] .yijing-reading-picker .reading-picker-step{color:#98600c}
+html[data-theme="light"] .yijing-reading-picker>.reading-picker-head b{color:#342b1b}
+html[data-theme="light"] .yijing-reading-picker>.reading-picker-head p{color:#716449}
+html[data-theme="light"] .yijing-reading-picker>.reading-picker-head .reading-picker-switch{color:#8d641d;border-color:#ddc48e;background:#fff5df}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option{border-color:#d7ac5b;background:linear-gradient(120deg,#fff8e7,#fffdf7);box-shadow:0 5px 16px rgba(126,87,27,.07)}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option .yi-mode-emblem{background:#faedce;color:#9b6a21}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option b{color:#57411d}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option small{color:#7f6b45}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option .yi-mode-indicator{color:#93681e}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option:hover{border-color:#ad7b22;box-shadow:0 8px 20px rgba(124,87,35,.12)}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option:has(input:checked){border-color:#31955d;background:linear-gradient(120deg,#d7f3e0,#eefbf0);box-shadow:0 0 0 1px rgba(49,149,93,.14) inset,0 7px 18px rgba(44,130,77,.10)}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option:has(input:checked) .yi-mode-emblem{background:#c3ead0;color:#1f7741}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option:has(input:checked) b{color:#16532e}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option:has(input:checked) small{color:#416d4e}
+html[data-theme="light"] .yijing-reading-picker .yi-mode-option:has(input:checked) .yi-mode-indicator{color:#217043}
+@media(max-width:760px){
+ .yijing-reading-picker{padding:11px 10px 12px;border-radius:14px;margin-bottom:12px}
+ .yijing-reading-picker>.reading-picker-head{align-items:flex-start;gap:7px;margin-bottom:9px}
+ .yijing-reading-picker .reading-picker-step{font-size:.60rem;margin-bottom:2px}
+ .yijing-reading-picker>.reading-picker-head b{font-size:.94rem}
+ .yijing-reading-picker>.reading-picker-head p{font-size:.62rem;margin-top:2px}
+ .yijing-reading-picker>.reading-picker-head .reading-picker-switch{font-size:.56rem;padding:4px 6px}
+ .yijing-reading-picker .yi-mode-row{gap:7px}
+ .yijing-reading-picker .yi-mode-option{flex:1 1 0;min-width:0;min-height:89px;gap:6px;padding:10px 7px;align-items:center;flex-wrap:wrap;justify-content:center;text-align:center}
+ .yijing-reading-picker .yi-mode-option input{width:16px;height:16px}
+ .yijing-reading-picker .yi-mode-option .yi-mode-emblem{width:26px;height:26px;font-size:.94rem;border-radius:8px}
+ .yijing-reading-picker .yi-mode-option .yi-mode-copy{flex:1 1 100%;order:2}
+ .yijing-reading-picker .yi-mode-option b{font-size:.77rem}
+ .yijing-reading-picker .yi-mode-option small{font-size:.61rem;line-height:1.42}
+ .yijing-reading-picker .yi-mode-option .yi-mode-indicator{position:static;order:3;flex:0 0 100%;margin-top:1px;text-align:center;font-size:.55rem}
+ .yijing-reading-picker .yi-mode-option.ai-quota-pending{font-size:.7rem}
+}
+@media(max-width:380px){
+ .yijing-reading-picker>.reading-picker-head .reading-picker-switch{display:none}
+ .yijing-reading-picker .yi-mode-option{padding:8px 5px;min-height:95px}
+ .yijing-reading-picker .reading-picker-step{display:inline-flex}
+ .yijing-reading-picker .yi-mode-option .yi-mode-indicator{font-size:.52rem}
+}
+@media(prefers-reduced-motion:reduce){.yijing-reading-picker .yi-mode-option{transition:none}}
 </style>
 </body>
 </html>
