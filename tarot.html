@@ -3486,12 +3486,17 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
             <small>自動補充次數用完才扣；未來可加購</small>
           </div>
         </section>
-        <section class="dh-quota-card dh-quota-paid">
+        <section class="dh-quota-card dh-quota-paid dh-legacy-paid-card" aria-hidden="true">
           <b class="dh-quota-name" id="tarotPaidQuotaTitle">付費解鎖額度</b>
           <strong class="dh-quota-big" id="tarotPaidQuotaCount">0 次</strong>
           <small id="tarotPaidQuotaNote">付費功能尚未開放。</small>
           <button type="button" id="tarotPaidQuotaMore">了解進階</button>
           <button type="button" id="tarotPaidCompact" hidden style="display:none!important">了解進階</button>
+        </section>
+        <section class="dh-quota-card dh-quota-paid dh-professional-points-card" aria-label="專業解鎖點數">
+          <b class="dh-quota-name">專業解鎖點數</b>
+          <strong class="dh-quota-big" id="dhProfessionalPointsNumber">— 點</strong>
+          <small id="dhProfessionalPointsNote">登入後查看｜三工具共用</small>
         </section>
       </div>
 
@@ -7067,5 +7072,106 @@ html[data-theme="light"] #tarotQuotaPanel .dh-quota-gift .dh-quota-origin{color:
 
 </style>
 
+
+<script id="dh-sp-wallet-bridge-v1">
+/* 專業點數第二階段：只讀取真實會員餘額，觸發一次性歡迎禮；不扣點、不啟用付費內容。 */
+(()=>{'use strict';
+ const memberApi='https://member-api.ezgocpu.workers.dev';
+ const adminApi='https://admin-api.ezgocpu.workers.dev';
+ const sessionKey='divinationhub-auth-session-v1';
+ const toolId='tarot';
+ let requested='',loading=false;
+ async function refreshPoints(){
+   if(location.protocol==='file:'||loading)return;
+   let token='';try{token=localStorage.getItem(sessionKey)||''}catch(_){return}
+   if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token)||token===requested)return;
+   loading=true;requested=token;
+   try{
+     const r=await fetch(memberApi+'/section-points/status',{cache:'no-store',headers:{Authorization:'Bearer '+token}});
+     const data=await r.json();if(!r.ok||!data?.success){requested='';return}
+     if(toolId==='bazi'){
+       const root=document.querySelector('#baziSectionHub .bazi-hub-title');
+       if(root){let badge=document.getElementById('dh-sp-balance');if(!badge){badge=document.createElement('span');badge.id='dh-sp-balance';badge.style.cssText='display:inline-flex;align-items:center;margin:4px 9px;padding:5px 10px;border-radius:999px;border:1px solid rgba(117,220,228,.22);color:var(--cyan,#9bdfd7);font-size:.7rem;white-space:nowrap';root.append(badge)}badge.textContent='專業解鎖點數 '+data.points.balance+' 點（測試）'}
+     }
+   }catch(_){requested=''}finally{loading=false}
+ }
+ async function refreshPrice(){
+   if(toolId!=='bazi'||location.protocol==='file:')return;
+   try{
+     const r=await fetch(adminApi+'/pricing/public?tool='+encodeURIComponent(toolId),{cache:'no-store'});
+     const data=await r.json();if(!r.ok||!data?.success)return;
+     for(const x of data.sections||[]){
+       const area=[...document.querySelectorAll('[data-bazi-open-section]')].find(el=>el.dataset.baziOpenSection===x.sectionId);
+       if(!area)continue;
+       let badge=area.querySelector('.dh-sp-price-preview');
+       if(x.mode==='priced'&&Number(x.points)>0){
+         if(!badge){badge=document.createElement('span');badge.className='dh-sp-price-preview';badge.style.cssText='font-size:.65rem;color:var(--gold,#c8ae71);white-space:nowrap;margin-left:6px';area.querySelector('.bazi-hub-main')?.append(badge)}
+         badge.textContent='預計 '+x.points+' 點（未開放）';
+       }else badge?.remove();
+     }
+   }catch(_){/* 區塊價目提示為次要功能，不影響正常占卜。 */}
+ }
+ function init(){void refreshPrice();void refreshPoints();setTimeout(refreshPoints,1200);setTimeout(refreshPoints,3500)}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+ window.addEventListener('storage',e=>{if(e.key===sessionKey)requested='';void refreshPoints()});
+ window.addEventListener('focus',()=>{void refreshPoints();if(toolId==='bazi')void refreshPrice()});
+ window.addEventListener('bazi-google-login',()=>{requested='';void refreshPoints()});
+ window.addEventListener('divinationhub-auth-event',()=>{requested='';void refreshPoints()});
+})();
+</script>
+<style id="dh-professional-points-ui-v2">
+#tarotQuotaPanel>.dh-legacy-paid-card{display:none!important}
+#tarotQuotaPanel .dh-professional-points-card .dh-quota-big{color:var(--violet,#ad8cf2)!important;font-size:1.8rem;line-height:1.4}
+#tarotQuotaPanel .dh-professional-points-card small{display:block;line-height:1.6}
+</style>
+<script id="dh-professional-points-status-v2">
+(()=>{'use strict';
+ const API='https://member-api.ezgocpu.workers.dev/section-points/status';
+ const STORAGE='divinationhub-auth-session-v1';
+ const number=document.getElementById('dhProfessionalPointsNumber');
+ const note=document.getElementById('dhProfessionalPointsNote');
+ if(!number||!note)return;
+ let lastRequest=0, requestSeq=0;
+ function token(){try{return localStorage.getItem(STORAGE)||''}catch(_){return ''}}
+ function update(value,message){number.textContent=value;note.textContent=message}
+ async function refresh(force=false){
+   if(location.protocol==='file:')return update('— 點','請在正式網站登入後查看');
+   const t=token();
+   if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(t)){
+     requestSeq++;
+     update('— 點','登入後查看｜三工具共用');
+     return;
+   }
+   const now=Date.now();
+   if(!force && now-lastRequest<1500)return;
+   lastRequest=now;
+   const seq=++requestSeq;
+   try{
+     const response=await fetch(API,{cache:'no-store',headers:{Accept:'application/json',Authorization:'Bearer '+t}});
+     const data=await response.json().catch(()=>null);
+     // Avoid painting an old member's result after a logout / account switch.
+     if(token()!==t||seq!==requestSeq)return;
+     if(!response.ok||data?.success!==true||!Number.isSafeInteger(data?.points?.balance)||data.points.balance<0){
+       update('— 點',response.status===401?'登入已失效，請重新登入':'暫時無法查詢餘額，請稍後重試');
+       return;
+     }
+     update(data.points.balance+' 點','八字・塔羅・易經共用｜按區塊計價');
+     // A legacy small badge may already exist in BaZi's chapter navigation.
+     const chapterBadge=document.getElementById('dh-sp-balance');
+     if(chapterBadge)chapterBadge.textContent='專業解鎖點數 '+data.points.balance+' 點';
+   }catch(_){if(token()===t)update('— 點','暫時無法查詢餘額，請稍後重試')}
+ }
+ window.dhRefreshProfessionalPoints=()=>refresh(true);
+ const start=()=>{void refresh(true);setTimeout(()=>void refresh(true),1700)};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
+ window.addEventListener('pageshow',()=>void refresh(true));
+ window.addEventListener('focus',()=>void refresh(true));
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh(true)});
+ window.addEventListener('storage',e=>{if(e.key===STORAGE||e.key==='divinationhub-auth-event')void refresh(true)});
+ window.addEventListener('bazi-google-login',()=>void refresh(true));
+ window.addEventListener('divinationhub-auth-event',()=>void refresh(true));
+ window.addEventListener('dh-professional-points-changed',()=>void refresh(true));
+})();
+</script>
 </body>
 </html>

@@ -199,7 +199,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     <div class="tool-grid" id="memberWalletCards" aria-live="polite">
       <div class="simple-panel"><b>共用工具額度</b><h3 id="memberWalletTool">— 次</h3><small>起盤／抽牌／起卦共用，用完不補</small></div>
       <div class="simple-panel"><b>共用 AI 解讀額度</b><h3 id="memberWalletAI">— 次</h3><small>三種工具共用，成功解讀才扣除</small></div>
-      <div class="simple-panel"><b>付費解鎖額度</b><h3 id="memberWalletPaid">— 次</h3><small>獨立額度池，購買功能尚未開放</small></div>
+      <div class="simple-panel"><b>專業解鎖點數</b><h3 id="memberWalletPoints">— 點</h3><small>八字／塔羅／易經共用，依專業區塊價格解鎖</small></div>
     </div>
     <p class="caption" id="memberWalletNote" role="status">登入後即可查看實際剩餘額度。</p>
   </section>
@@ -329,20 +329,49 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
    function savedSession(){try{return localStorage.getItem(SESSION_KEY)||''}catch(_){return ''}}
    function storeSession(token){try{if(token)localStorage.setItem(SESSION_KEY,token);else localStorage.removeItem(SESSION_KEY);return true}catch(_){return false}}
    function sessionHeaders(){const t=savedSession();return t?{Authorization:'Bearer '+t}:{}}
+  async function refreshProfessionalPoints(){
+    const el=document.getElementById('memberWalletPoints');
+    const sub=verifiedSessionMember?.sub||'';
+    if(!sub){el.textContent='— 點';return}
+    const t=savedSession();
+    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(t)){el.textContent='— 點';return}
+    el.textContent='查詢中…';
+    try{
+      const r=await fetch(API_MEMBER+'/section-points/status',{
+        cache:'no-store',headers:{Accept:'application/json',Authorization:'Bearer '+t}
+      });
+      const data=await r.json().catch(()=>null);
+      if(sub!==verifiedSessionMember?.sub||t!==savedSession())return;
+      if(!r.ok||data?.success!==true||!Number.isSafeInteger(data?.points?.balance)||data.points.balance<0)
+        throw Error('POINTS_UNAVAILABLE');
+      el.textContent=data.points.balance+' 點';
+    }catch(_){if(sub===verifiedSessionMember?.sub)el.textContent='暫時無法查詢'}
+  }
   async function refreshSharedWallet(){
     const note=document.getElementById('memberWalletNote');
-    if(!verifiedSessionMember?.sub){for(const id of ['memberWalletTool','memberWalletAI','memberWalletPaid'])document.getElementById(id).textContent='— 次';note.textContent='登入後即可查看實際剩餘額度。';return;}
+    if(!verifiedSessionMember?.sub){
+      for(const id of ['memberWalletTool','memberWalletAI'])document.getElementById(id).textContent='— 次';
+      document.getElementById('memberWalletPoints').textContent='— 點';
+      note.textContent='登入後即可查看實際剩餘額度。';return;
+    }
+    // Independent: points still update if the legacy tool/AI wallet is temporarily unavailable.
+    void refreshProfessionalPoints();
     note.textContent='正在讀取會員共用額度…';
+    const sub=verifiedSessionMember.sub,token=savedSession();
     try{
       const r=await fetch(API_MEMBER+'/wallet/status',{cache:'no-store',headers:{Accept:'application/json',...sessionHeaders()}});
-      const j=await r.json().catch(()=>null);if(!r.ok||!j?.success)throw Error(j?.error||'額度暫時無法查詢');
+      const j=await r.json().catch(()=>null);
+      if(sub!==verifiedSessionMember?.sub||token!==savedSession())return;
+      if(!r.ok||!j?.success)throw Error(j?.error||'額度暫時無法查詢');
       document.getElementById('memberWalletTool').textContent=j.wallet.tool+' 次';
       document.getElementById('memberWalletAI').textContent=j.wallet.ai+' 次';
-      document.getElementById('memberWalletPaid').textContent=j.wallet.paid+' 次';
-      note.textContent='帳號共用額度不每日補充；各工具每日免費次數獨立計算。';
-    }catch(e){note.textContent='目前無法讀取真實餘額：'+e.message}
+      note.textContent='帳號共用工具／AI 額度不每日補充；專業解鎖點數獨立計算。';
+    }catch(e){if(sub===verifiedSessionMember?.sub)note.textContent='目前無法讀取工具／AI 餘額：'+e.message}
   }
   document.getElementById('memberWalletRefresh').addEventListener('click',refreshSharedWallet);
+  window.addEventListener('focus',()=>{if(verifiedSessionMember?.sub)void refreshProfessionalPoints()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&verifiedSessionMember?.sub)void refreshProfessionalPoints()});
+  window.addEventListener('pageshow',()=>{if(verifiedSessionMember?.sub)void refreshProfessionalPoints()});
   const API_PUBLIC_ANNOUNCEMENT='https://admin-api.ezgocpu.workers.dev/member-announcement';
   const AUTH_KEY='divinationhub-bazi-google-credential';
   const GOOGLE_CLIENT_ID='421861771663-dp080cp717b88fi928s484dbmpaq07v3.apps.googleusercontent.com';
