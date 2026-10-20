@@ -228,6 +228,24 @@ td.muted{color:var(--muted)}
 .dh-qc-gifts{margin:16px 0;padding:12px 15px;border:1px solid rgba(148,163,184,.18);border-radius:12px}.dh-qc-gifts h3{font-size:.92rem;margin:0 0 12px}.dh-qc-gift-fields{display:flex;flex-wrap:wrap;gap:18px}.dh-qc-gift-fields label{display:flex;align-items:center;gap:12px;font-size:.8rem}.dh-qc-history{font-size:.76rem;margin-top:16px}.dh-qc-history summary{cursor:pointer}.dh-qc-history div{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.dh-qc-actions #dhQcStatus{font-size:.78rem;line-height:1.6}.dh-qc-caution{font-size:.76rem;line-height:1.6;color:#caa36b}
 @media(max-width:660px){.dh-qc-content{padding:12px}.dh-qc-gift-fields label{width:100%;justify-content:space-between}}
 
+
+/* AI 自動異常：與會員紅綠燈獨立，預設收合 */
+.dh-ai-monitor>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;cursor:pointer;font-weight:800}
+.dh-ai-monitor>summary::-webkit-details-marker{display:none}.dh-ai-monitor>summary::after{content:'▾';color:var(--gold)}
+.dh-ai-monitor[open]>summary{border-bottom:1px solid var(--line)}.dh-ai-monitor[open]>summary::after{content:'▴'}
+.dh-ai-badge{border-radius:99px;padding:4px 9px;font-size:.7rem;background:#153326;color:#a7e8c0;border:1px solid #295e42}
+.dh-ai-badge.alert{background:#3b1720;color:#ffb9c5;border-color:#9d3d52}
+.dh-ai-inner{padding:16px 18px 20px}.dh-ai-intro{font-size:.76rem;color:#a8b6c4;line-height:1.75;margin:0 0 13px}
+.dh-ai-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0}
+.dh-ai-cards>div{border:1px solid #2c3744;background:#0b141e;padding:14px;border-radius:11px}
+.dh-ai-cards small{display:block;color:#96a8b8;font-size:.71rem}.dh-ai-cards strong{font-size:1.5rem;color:#e8dfca}
+.dh-ai-line{padding:13px 14px;margin:10px 0;border:1px solid #303d4b;border-radius:11px;background:#0b131d;overflow-wrap:anywhere}
+.dh-ai-line.pending{border-left:3px solid #e87682}.dh-ai-line.done{border-left:3px solid #76c59b}
+.dh-ai-line b{display:block;color:#edf2ee;font-size:.87rem}.dh-ai-line small{display:block;font-size:.73rem;color:#b4c4d3;line-height:1.7;margin-top:5px}
+.dh-ai-buttons{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}.dh-ai-status{font-size:.76rem;color:#a9bdcb;margin-top:12px}
+.dh-ai-line code{font-size:.73rem;color:#a4b7c8;word-break:break-all}
+@media(max-width:650px){.dh-ai-cards{grid-template-columns:1fr}.dh-ai-monitor>summary{align-items:flex-start}}
+
 </style>
 </head>
 <body>
@@ -393,6 +411,18 @@ td.muted{color:var(--muted)}
         </div>
       </div>
     </section>
+
+
+    <details class="section dh-ai-monitor" id="dhAiMonitor" style="margin-bottom:24px">
+      <summary>⚠ AI 系統自動異常監控 <span id="dhAiMonitorBadge" class="dh-ai-badge">尚未查詢</span></summary>
+      <div class="dh-ai-inner">
+        <p class="dh-ai-intro">由 AI 總控與工具 Worker 自動記錄真正失敗的呼叫，不需要會員按回報。與上面的會員紅綠燈分開；只儲存錯誤碼、通道狀態、時間與追蹤碼，不保存占卜問題或 AI 解讀。</p>
+        <div class="dh-ai-cards"><div><small>今日失敗請求</small><strong id="dhAiToday">—</strong></div><div><small>待處理異常類型</small><strong id="dhAiPending">—</strong></div><div><small>近 30 日失敗請求</small><strong id="dhAiTotal">—</strong></div></div>
+        <div class="dh-ai-buttons"><button type="button" class="btn secondary" id="dhAiReload">重新查詢 AI 異常</button></div>
+        <div class="dh-ai-status" id="dhAiStatus" role="status" aria-live="polite">開啟管理後台後自動檢查；每分鐘更新一次（僅頁面顯示時）。</div>
+        <div id="dhAiItems"></div>
+      </div>
+    </details>
 
     <section class="section" style="margin-bottom:24px">
       <div class="section-head">
@@ -901,6 +931,7 @@ async function loadStats(){
     loadReviewPendingBadge();
     $('status').textContent='';
     loadIssueStats();
+    window.dispatchEvent(new Event('dh-admin-ready'));
     if(!announcementAdminLoaded)loadAnnouncementAdmin();
 
   }catch(e){
@@ -1431,6 +1462,62 @@ async function send(){
 $('baziGiftLookup')?.addEventListener('click',lookup);
 $('baziGiftEmail')?.addEventListener('input',()=>{currentEmail='';$('baziGiftSend').disabled=true;$('baziGiftMember').hidden=true;$('baziGiftHistory').hidden=true});
 $('baziGiftSend')?.addEventListener('click',send);
+})();
+</script>
+
+<script id="dh-auto-ai-monitor">
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const API='https://admin-api.ezgocpu.workers.dev';
+ const readToken=()=>sessionStorage.getItem('divinationhub-admin-session')||(()=>{try{const x=JSON.parse(localStorage.getItem('divinationhub-admin-remember-v1')||'null');return x?.expiresAt>Date.now()?x.token||'':''}catch(_){return ''}})();
+ let busy=false,lastFetch=0,lastData=null;
+ const labels={bazi:'八字',tarot:'塔羅',yijing:'易經'};
+ const message={NO_AVAILABLE_PROVIDER:'全部 AI 通道暫時不可用',ALL_PROVIDER_ATTEMPTS_FAILED:'所有可用 AI 通道均解讀失敗',CENTER_METERING_UNAVAILABLE:'AI 總控紀錄異常',AI_SERVICE_TEMPORARILY_UNAVAILABLE:'AI 解讀服務異常',AI_CENTER_YIJING_NOT_CONFIGURED:'易經 AI 連接設定異常',WALLET_UNAVAILABLE:'共用額度服務異常',QUOTA_RECORD_UNAVAILABLE:'額度記錄異常',MEMBER_AUTH_UNAVAILABLE:'會員驗證服務異常',QUOTA_UNAVAILABLE:'額度服務異常'};
+ const dt=s=>{try{return new Date(s).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})}catch(_){return String(s)}};
+ async function api(path,method='GET',body){
+   const token=readToken();if(!token)throw Error('管理員尚未登入');
+   const r=await fetch(API+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+token,Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
+   const data=await r.json().catch(()=>null);
+   if(!r.ok||!data?.success)throw Error(data?.error||'讀取 AI 異常監控失敗');
+   return data;
+ }
+ function textNode(tag,value,cls){const e=document.createElement(tag);e.textContent=String(value||'');if(cls)e.className=cls;return e;}
+ function render(data){
+   lastData=data;
+   const stat=data.summary||{};
+   $('dhAiToday').textContent=String(stat.today??0);
+   $('dhAiPending').textContent=String(stat.pending??0);
+   $('dhAiTotal').textContent=String(stat.total??0);
+   const badge=$('dhAiMonitorBadge');badge.textContent=(!data.centerAvailable?'AI 中心紀錄未就緒':(stat.pending?'待處理 '+stat.pending+' 類':'暫無待處理異常'));badge.classList.toggle('alert',!!stat.pending||!data.centerAvailable);
+   const items=$('dhAiItems');items.replaceChildren();
+   if(!data.centerAvailable){items.append(textNode('p','⚠ AI 中心歷史紀錄尚未建立或無法讀取，本次只能顯示已接入的工具 Worker 錯誤。','dh-ai-status'))}
+   if(!data.groups?.length){items.append(textNode('p','最近 30 日未查到已接入範圍內的 AI 終局失敗紀錄。','dh-ai-status'))}
+   for(const g of data.groups||[]){
+     const row=textNode('div','', 'dh-ai-line '+(g.pending?'pending':'done'));
+     row.append(textNode('b',(g.pending?'● 待處理｜':'✓ 已標記｜')+(labels[g.tool]||g.tool)+'｜'+(message[g.code]||g.code)));
+     row.append(textNode('small','近 30 日 '+g.count+' 次｜今日 '+g.todayCount+' 次｜最後發生 '+dt(g.lastAt)));
+     row.append(textNode('small','位置：'+(g.source==='center'?'AI 總控':'工具 Worker')+'｜錯誤碼：'+g.code+(g.detailCode?'｜細節：'+g.detailCode:'')));
+     if(g.providerErrors?.length)row.append(textNode('small','失敗通道：'+g.providerErrors.map(x=>(x.channel||'?')+' '+x.error).join('／')));
+     const trace=document.createElement('code');trace.textContent='追蹤碼：'+g.traceId;row.append(trace);
+     if(g.pending){const bar=textNode('div','', 'dh-ai-buttons');const btn=textNode('button','標記已處理');btn.type='button';btn.className='btn secondary';btn.onclick=async()=>{btn.disabled=true;try{await api('/admin/ai-monitor/ack','POST',{key:g.key});await load(true)}catch(e){$('dhAiStatus').textContent='標記失敗：'+e.message;btn.disabled=false}};bar.append(btn);row.append(bar)}
+     else row.append(textNode('small','已於 '+dt(g.acknowledgedAt)+' 標記處理；若相同錯誤再次發生會重新列為待處理。'));
+     items.append(row);
+   }
+   $('dhAiStatus').textContent='更新時間：'+dt(data.asOf)+(data.truncated?'｜資料量較大，僅顯示最近 750 筆來源記錄':'')+'。標記處理不代表 AI 已恢復正常。';
+ }
+ async function load(force=false){
+   if(busy||!readToken()||document.hidden||$('dashboard').hidden)return;
+   if(!force&&Date.now()-lastFetch<15000)return;
+   busy=true;
+   try{const data=await api('/admin/ai-monitor');render(data);lastFetch=Date.now()}
+   catch(e){$('dhAiMonitorBadge').textContent='查詢失敗';$('dhAiMonitorBadge').classList.add('alert');$('dhAiStatus').textContent='AI 監控資料讀取失敗：'+(e.message||'未知錯誤')}
+   finally{busy=false}
+ }
+ $('dhAiReload').addEventListener('click',()=>load(true));
+ window.addEventListener('dh-admin-ready',()=>load(true));
+ setInterval(()=>{if(!document.hidden)load()},60000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
 })();
 </script>
 </body>
