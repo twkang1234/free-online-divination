@@ -2818,7 +2818,8 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     stepEl(s)?.classList.add('active');
     const idx=stepOrder.indexOf(s);
     document.querySelectorAll('#guideProgress button').forEach((b,i)=>{b.classList.toggle('active',i===idx);b.disabled=i>idx||(state.customSource==='all'&&(i===1||i===2));});
-    setYijingFocus(s==='ready');
+    // 從第一層完成主題選擇起即維持專注模式；只有重新起卦才退出。
+    setYijingFocus(s!=='topic' || document.body.classList.contains('yijing-focus'));
     if(scroll)setTimeout(()=>positionTask(stepEl(s),s==='ready'?94:86),70);
   }
   function renderTopics(){
