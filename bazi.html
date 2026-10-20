@@ -5470,6 +5470,17 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-overview .bazi-recas
   }
 
   function sectionExplanation(key, data) {
+    if(data?.publicPreview&&window.baziPurchasedDocs){
+      const paid=window.baziPurchasedDocs;
+      if(key==='elements'&&paid['report-elements']){
+        const g=paid['report-elements'].blocks?.find(x=>x.title==='五行專業解讀')?.value;
+        if(g)return renderElementMasterGuideHtml(g);
+      }
+      if(key==='relations'&&paid['report-relations']){
+        const g=paid['report-relations'].blocks?.find(x=>x.title==='合沖刑害專業解析')?.value;
+        if(g)return renderRelationsMasterGuideHtml(g);
+      }
+    }
     if(key==='tengods'&&data?.publicPreview&&window.baziPurchasedDocs?.['report-tengods']){
       const guide=window.baziPurchasedDocs['report-tengods'].blocks?.find(x=>x.title==='十神詳細解析')?.value;
       if(guide)return renderTenGodMasterGuideHtml(guide);
@@ -7238,6 +7249,7 @@ ${intent}
       learning:guide.part4?.summary||guide.part4?.title||''}};
     renderTenGods(data);
     renderDeepTenGods(data);
+
     // Use exactly the original professional guide template, not the generic JSON tree.
     const html=renderTenGodMasterGuideHtml(guide);
     if(!html)throw Error('十神專業解讀尚未準備好');
@@ -7256,6 +7268,86 @@ ${intent}
     }
     window.baziPurchasedDocs=window.baziPurchasedDocs||Object.create(null);
     window.baziPurchasedDocs['report-tengods']=doc;
+    return true;
+  };
+
+  // Personal paid chapters: restore the ORIGINAL report renderers, not a JSON inspector.
+  // A chapter receives only its own authenticated server document. No cross-chapter data is fetched.
+  window.baziApplyPaidSection=function(id,doc){
+    const host=$(id), blocks=Array.isArray(doc?.blocks)?doc.blocks:[];
+    if(!host||!blocks.length)throw Error('這個分析區尚未取得完整資料');
+    const find=title=>blocks.find(x=>x.title===title)?.value;
+    const stored=window.baziPurchasedDocs||(window.baziPurchasedDocs=Object.create(null));
+    const guideInto=html=>{
+      if(!html)throw Error('此區的專業分析尚未準備完成');
+      const decode=host.querySelector('.section-decode');
+      if(!decode)throw Error('找不到原有專業分析版面');
+      const grid=decode.querySelector('.decode-summary-grid');
+      if(!grid)throw Error('找不到專業分析圖文容器');
+      grid.innerHTML=html;
+      const area=decode.querySelector('.decode-content');if(area)area.classList.add('show');
+      const toggle=decode.querySelector('.decode-open');
+      if(toggle){toggle.textContent='▾ 收合看懂這一區';toggle.classList.add('active');toggle.setAttribute('aria-expanded','true')}
+    };
+    const bars=(selector)=>host.querySelectorAll(selector).forEach(item=>{
+      const w=item.style.width;
+      if(w && w!=='0px' && w!=='0%')item.style.setProperty('width',w,'important');
+      item.style.setProperty('opacity','1','important');
+    });
+    if(id==='report-pillars'){
+      const keys=['year','month','day','time'];
+      const safePillars=Array.isArray(lastData?.pillars)?lastData.pillars:[];
+      const names=['年柱','月柱','日柱','時柱'];
+      const pillars=names.map((name,i)=>{
+        const b=find(name)||{};const base=safePillars[i]||{};
+        const pair=String(b.干支||base.ganZhi||'');
+        return {...base,key:keys[i],gan:base.gan||pair.slice(0,1),zhi:base.zhi||pair.slice(1,2),
+          ganZhi:pair||base.ganZhi,ganYinYang:b.天干陰陽||base.ganYinYang,
+          zhiYinYang:b.地支陰陽||base.zhiYinYang,hideGan:b.藏干??base.hideGan,
+          shiShenGan:b.天干十神??base.shiShenGan,shiShenZhi:b.地支十神??base.shiShenZhi,
+          naYin:b.納音??base.naYin,diShi:b.十二長生??base.diShi,xunKong:b.旬空??base.xunKong};
+      });
+      if(pillars.some(x=>!x.gan||!x.zhi))throw Error('完整四柱資料不足');
+      renderPillars({pillars});
+      const jie=find('前後節氣');
+      if(jie){
+        const bits=$('meta')?.querySelectorAll(':scope > div');
+        const format=x=>x?.name?(String(x.name)+' '+String(x.solar||'')):'—';
+        if(bits?.length>=5){
+          const before=bits[3].querySelector('span'),after=bits[4].querySelector('span');
+          if(before)before.textContent=format(jie.prev);
+          if(after)after.textContent=format(jie.next);
+        }
+      }
+      // Keep the original first-chapter layout; do not add a second vertical list of year/month/day/hour.
+    }else if(id==='report-elements'){
+      const weighted=find('五行加權分布'), raw=find('五行實際分布');
+      const yinYang=find('陰陽結構'), guide=find('五行專業解讀');
+      if(!weighted?.percentages||!raw||!yinYang||!guide?.firstGod)throw Error('五行個人完整版資料尚未準備好');
+      const sorted=Object.entries(weighted.percentages).sort((a,b)=>Number(b[1])-Number(a[1]));
+      const data={weightedFiveElements:weighted,fiveElements:raw,yinYang,
+        highlights:{dominantElement:sorted[0]?.[0]||'五行'}};
+      renderElements(data);renderYinYang(data);
+      const aux=find('胎元命宮與身宮');
+      if(aux)renderAux({taiYuan:aux.胎元,mingGong:aux.命宮,shenGong:aux.身宮});
+      guideInto(renderElementMasterGuideHtml(guide));
+      bars('#elementBars .fill,#weightedElementBars .fill,#yinYangBox .yy-track i');
+      const donut=$('fiveDonut');if(donut&&donut.style.background)
+        donut.style.setProperty('background',donut.style.background,'important');
+      const track=host.querySelector('#yinYangBox .yy-track');if(track)
+        track.style.setProperty('background','var(--bazi-bg-291,#10212a)','important');
+    }else if(id==='report-tengods'){
+      window.baziApplyPaidTenGods(doc);
+      bars('#tenGodBars .fill');
+    }else if(id==='report-relations'){
+      const rel=find('原局干支互動');const guide=find('合沖刑害專業解析');
+      if(!guide?.part1||rel==null)throw Error('干支合沖完整資料尚未準備好');
+      const pillars=Array.isArray(lastData?.pillars)?lastData.pillars:[];
+      if(pillars.length!==4)throw Error('無法確認目前的四柱命盤');
+      renderRelations({relations:Array.isArray(rel)?rel:[],pillars});
+      guideInto(renderRelationsMasterGuideHtml(guide));
+    }else{return false;}
+    stored[id]=doc;
     return true;
   };
 
@@ -9583,6 +9675,23 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading
 body.bazi-personal-full-mode .dh-bazi-premium-visible:is(#report-reading,#report-luck,#report-years,#report-months) > .report-body > :is(.time-explain,.fortune-summary-grid,.luck-header,.luck-grid,.detail-console,.three-year-compare,.month-flow-grid,.smart-prompt-mount){display:none!important}
 body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body{display:block!important;min-height:0!important}
 body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body > .bazi-premium-box{display:block!important}
+/* Paid 01-04: do not let fixed 70% FREE preview overwrite original visual values.
+   Do not relax the mask for unopened or unpurchased chapters. */
+body.bazi-personal-full-mode #results[data-bazi-mask-level="7"] #report-elements.dh-bazi-premium-visible #fiveDonut{
+  filter:none!important;opacity:1!important;
+}
+body.bazi-personal-full-mode #results[data-bazi-mask-level="7"] #report-elements.dh-bazi-premium-visible #yinYangBox .yy-track{
+  background:var(--bazi-bg-291,#10212a)!important;
+}
+body.bazi-personal-full-mode #results[data-bazi-mask-level="7"] :is(#report-elements,#report-tengods).dh-bazi-premium-visible :is(.element-row .fill,.tg-row .fill,.yy-track i){
+  opacity:1!important;filter:none!important;
+}
+body.bazi-personal-full-mode #results[data-bazi-mask-level="7"] #report-tengods.dh-bazi-premium-visible .group-card.dominant{
+  border-color:var(--bazi-line-228,rgba(233,189,88,.23))!important;
+  background:var(--bazi-bg-302,rgba(233,189,88,.035))!important;
+}
+/* Purchased sections never keep the old sample overlay or obscured text. */
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :is(.bazi-inline-sample-trigger,.bazi-private-lock-panel){display:none!important}
 /* Unlocking only one chapter must not affect the other eight. */
 body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :is(
  .bazi-inline-sample-trigger,.bazi-private-lock-panel){display:none!important}
@@ -9652,8 +9761,9 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }
  }
  function display(box,doc){
-  if(box.closest('#report-tengods')){
-    window.baziApplyPaidTenGods?.(doc);
+  const section=box.closest('.report-section');
+  if(['report-pillars','report-elements','report-tengods','report-relations'].includes(section?.id)){
+    if(window.baziApplyPaidSection?.(section.id,doc)!==true)throw Error('此區尚未接上原有完整分析版型');
     const body=box.querySelector('.bazi-premium-content');if(body){body.hidden=true;body.replaceChildren()}
     return;
   }
@@ -9682,9 +9792,10 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
     else if(x.mode==='priced'){btn.textContent='使用 '+x.points+' 點解鎖整區';btn.disabled=false;status(box,'專業點數餘額 '+result.balance+' 點｜此命盤本區只需解鎖一次')}
     else{box.hidden=true}
    }
-   const paidTenGods=states.get('report-tengods');
-   if(paidTenGods?.unlocked&&!restored.has('report-tengods')){
-     restored.add('report-tengods');void purchase('report-tengods');
+   for(const chapterId of ['report-pillars','report-elements','report-tengods','report-relations']){
+     if(states.get(chapterId)?.unlocked&&!restored.has(chapterId)){
+       restored.add(chapterId);void purchase(chapterId);
+     }
    }
   }catch(e){if(n===generation)for(const box of els.values()){box.hidden=true}}
   finally{loading=false}
@@ -9706,8 +9817,10 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    btn.textContent='已解鎖｜重新閱讀';status(box,(j.charged?'本次扣除 '+j.charged+' 點':'已購買區塊，重新閱讀不扣點')+'｜剩餘 '+j.balance+' 點');
    const badge=document.getElementById('dh-sp-balance');if(badge)badge.textContent='專業解鎖點數 '+j.balance+' 點';
    window.dispatchEvent(new Event('dh-professional-points-changed'));
-   if(id==='report-tengods')chapter?.querySelector('.ten-god-layout')?.scrollIntoView({behavior:'smooth',block:'start'});
-   else box.querySelector('.bazi-premium-content')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+   if(['report-pillars','report-elements','report-tengods','report-relations'].includes(id)){
+     const view=chapter?.querySelector('.ten-god-layout,.analysis-grid,.relation-grid,#pillars');
+     (view||chapter)?.scrollIntoView({behavior:'smooth',block:'nearest'});
+   }else box.querySelector('.bazi-premium-content')?.scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){status(box,e.message)}finally{btn.disabled=false}
  }
  const init=()=>{addBoxes();window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
