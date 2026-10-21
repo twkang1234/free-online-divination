@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <!-- 自訂問題與每次新追問共用一個後台計價項目；實際扣點由 member-api 驗證。 -->
-  <script type="application/json" id="dh-billing-sections">{"toolId":"tarot","sections":[{"id":"custom-question","title":"自訂題目與每次新追問｜每題獨立扣點"}]}</script>
+  <script type="application/json" id="dh-billing-sections">{"toolId":"tarot","sections":[{"id":"custom-question","title":"自訂題目與每次新追問｜每題獨立扣點"},{"id":"rotation-question","title":"每日輪替鎖定固定題目｜當日每題解鎖"}]}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 塔羅占卜｜線上塔羅占卜、站內 AI 自動備援解讀｜一念知機</title>
@@ -4661,7 +4661,9 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   function guestCanUse(){return isLogged()||(!memberDeviceBound()&&!isAdminTestActive())||isAdminTestActive()}
   function guestTopicAvailable(id){return tarotFullPrivilege()||isLogged()||guestPolicy().topics.has(id)}
   function topicAllowedForCurrentUser(id){if(isGuestLoginRequired())return false;return id==='free'?(tarotFullPrivilege()||!!authToken()):guestTopicAvailable(id)}
-  function questionAllowedForCurrentUser(index){return tarotFullPrivilege()||isLogged()||(index%2!==guestPolicy().lockedQuestions)}
+  function tarotQuestionFreeToday(index){return tarotFullPrivilege()||(index%2!==guestPolicy().lockedQuestions)}
+  function tarotRotationKey(index,topic=state.topic?.id,scenario=state.scenario?.id){return `${topic||''}|${scenario||''}|${index}`;}
+  function questionAllowedForCurrentUser(index){return tarotQuestionFreeToday(index)||(isLogged()&&tarotRotationOwned.has(tarotRotationKey(index)));}
   // 牌陣不再受訪客或會員每日輪替鎖定；僅依題目是否涉及雙方互動決定關係牌陣。
   function questionHasTwoPartyInteraction(q=state.question){
     const value=String(q?.text||'').normalize('NFKC').replace(/\s+/g,'');
@@ -4823,10 +4825,12 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       if(heading)heading.textContent=d.daily.remaining+' / '+d.daily.limit+' 次';
       const toolCount=document.getElementById('tarotSharedToolCount');if(toolCount)toolCount.textContent=d.wallet?d.wallet.tool+' 次':'登入後可用';
       label.textContent='每 '+d.daily.days+' 天補充，不累積｜下次 '+d.daily.resetAt;
+      tarotUpdateSelectionHints();
     }catch(_){
       if(requestId!==dhTarotToolRequestId||token!==authToken())return;
       label.textContent='額度暫時無法取得，抽牌時仍由後端驗證。';
       const toolCount=document.getElementById('tarotSharedToolCount');if(toolCount)toolCount.textContent='暫時無法查詢';
+      tarotUpdateSelectionHints();
     }
   }
   function updateQuotaUI(){
@@ -4891,7 +4895,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const mount=$('tarotGoogleMount');if(mount)mount.hidden=!!p;
     const title=$('tarotMemberTitle'),intro=$('tarotMemberIntro');
     if(title)title.textContent=p?'免費會員':'免費登入';
-    if(intro)intro.textContent=p?'已登入一念知機免費會員。一般主題與固定題目全開；抽牌方式、解讀格式與基礎牌義依每日規則輪替；牌陣依題目適用性開放。自訂問題需使用專業點數；實體牌輸入、TXT 下載仍保留進階權限。':isGuestLoginRequired()?'此瀏覽器曾登入過會員，未登入時所有占卜主題已鎖定；請重新登入會員，依當日會員權限使用。登入後可依網站設定使用定期免費及共用 AI 額度；完整進階功能仍另行解鎖。':'訪客免費抽牌及 AI 解讀次數依網站額度設定提供；免費登入可領取共用額度並保存紀錄。';
+    if(intro)intro.textContent=p?'已登入一念知機免費會員。一般主題正常開放；固定題目依台灣日期每日輪替，今日鎖定者可用專業點數逐題解鎖。抽牌方式、解讀格式與基礎牌義維持每日規則；自訂問題另依中央計價扣點。':isGuestLoginRequired()?'此瀏覽器曾登入過會員，未登入時所有占卜主題已鎖定；請重新登入會員，依當日會員權限使用。登入後可依網站設定使用定期免費及共用 AI 額度；完整進階功能仍另行解鎖。':'訪客免費抽牌及 AI 解讀次數依網站額度設定提供；免費登入可領取共用額度並保存紀錄。';
     syncMemberSaveInvites();
   }
   // 登入集中由 member.html 管理；塔羅不呼叫 /me，不額外增加登入次數。
@@ -4996,7 +5000,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   const tarotCustomBindURL=MEMBER_API_BASE+'/professional/custom/bind';
   let tarotCustomPending={sourceKey:'',operationId:'',ticket:'',points:0,boundQuestion:''};
   let tarotCustomPendingBusy=false,tarotRelatedPendingBusy=false,tarotCustomSubmitBusy=false;
-  const tarotCustomErrors={PRICE_NOT_SET:'站長尚未設定自訂題目點數，暫時無法使用。',PRICE_CHANGED:'價格剛剛更新，請重新確認。',INSUFFICIENT_POINTS:'專業解鎖點數不足。',LOGIN_REQUIRED:'請先登入會員。',TAROT_API_NOT_READY:'塔羅後端尚未開放自訂題目扣點驗證，系統未扣點。',CUSTOM_UNLOCK_UNAVAILABLE:'扣點服務暫時無法使用，尚未扣點。',OPERATION_MISMATCH:'解鎖票據與本次問題不符，請重新開始。'};
+  const tarotCustomErrors={PRICE_NOT_SET:'站長尚未設定專業點數價格，暫時無法使用。',PRICE_CHANGED:'價格剛剛更新，請重新確認。',INSUFFICIENT_POINTS:'專業解鎖點數不足。',LOGIN_REQUIRED:'請先登入會員。',TAROT_API_NOT_READY:'塔羅後端尚未開放自訂題目扣點驗證，系統未扣點。',CUSTOM_UNLOCK_UNAVAILABLE:'扣點服務暫時無法使用，尚未扣點。',ROTATION_UNLOCK_UNAVAILABLE:'固定題目解鎖服務暫時無法使用，請稍後再試。',INVALID_ROTATION_REQUEST:'固定題目解鎖資料不完整，請重新選擇題目。',QUESTION_FREE_TODAY:'這題今日免費開放，無需扣點。',OPERATION_MISMATCH:'解鎖票據與本次問題不符，請重新開始。'};
   function tarotCustomError(code){return tarotCustomErrors[code]||code||'專業點數操作失敗';}
   function tarotCustomSource(){return state.topic?.id==='free'?'topic:free':'scenario:'+state.topic?.id+':'+state.scenario?.id;}
   function tarotCustomToken(){return authToken();}
@@ -5051,8 +5055,106 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(!canStartNewFreeReading())return;
     if(!topicAllowedForCurrentUser(state.topic?.id)){enforceAccess(false,'member');return;}
     if(state.question?.custom&&!tarotFullPrivilege()&&!state.question?.customUnlockTicket){alert('自訂題目尚未完成專業點數解鎖，請先返回自訂題目入口。');return;}
+    if(state.question&&!state.question.custom&&!tarotFullPrivilege()){const qi=state.questions?.findIndex(q=>q.id===state.question.id);if(qi<0||!questionAllowedForCurrentUser(qi)){alert('這道題目今天尚未解鎖，請返回問題列表確認。');showStep('question');return;}}
     if(!spreadAllowedForCurrentUser(state.spreadChoice)){openGuestNotice('rotation');return;}
     state.accessTier=accessCategory();state.usageCounted=false;await drawReading();
+  }
+  // 免費抽牌為 0 時提示下一個扣取的「共用占卜次數」，而非誤寫成所有題目免費可選。
+  function tarotSelectionQuotaNote(){
+    if(isAdminTestActive())return '';
+    const snap=dhTarotToolSnapshot;
+    if(!snap?.daily)return '';
+    const daily=Number(snap.daily.remaining||0);
+    if(daily>0)return '';
+    const shared=Number(snap.wallet?.tool||0);
+    if(isLogged()&&snap.wallet){
+      return shared>0?`本期自動補充已用完，下一次抽牌將使用會員共用額度；目前剩 ${shared} 次（用完不補）。`:'本期自動補充及會員共用占卜次數都已用完，請等待下次補充。';
+    }
+    return '本期訪客免費抽牌次數已用完；登入後可查看會員共用額度。';
+  }
+  function tarotUpdateSelectionHints(){
+    const note=tarotSelectionQuotaNote();
+    const top=$('tarotTopicTapHint');if(top){top.hidden=!note;top.textContent=note;}
+    const question=$('tarotQuestionTapHint');if(question){question.hidden=!note||state.topic?.id==='free';question.textContent=note;}
+  }
+  // 收費僅限當日被輪替鎖定的固定問題，免費問題絕不扣點。
+  const tarotRotationAPI=MEMBER_API_BASE+'/professional/tarot/rotation';
+  let tarotRotationOwned=new Set(),tarotRotationOwner='',tarotRotationLastFetch=0,tarotRotationBusy=false,tarotRotationPending=null;
+  let tarotRotationPriceCached=null,tarotRotationPriceUntil=0,tarotRotationPricePending=null;
+  function tarotRotationSyncOwner(){
+    const owner=(authToken()||'guest')+':'+taiwanDateKey();
+    if(owner===tarotRotationOwner)return;
+    tarotRotationOwner=owner;tarotRotationOwned=new Set();tarotRotationLastFetch=0;
+    tarotRotationPriceUntil=0;tarotRotationPriceCached=null;
+  }
+  async function tarotRotationQuote(){
+    if(Date.now()<tarotRotationPriceUntil)return tarotRotationPriceCached;
+    if(tarotRotationPricePending)return tarotRotationPricePending;
+    tarotRotationPricePending=(async()=>{
+      const r=await fetch(tarotCustomPricingURL,{cache:'no-store'});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok||j.success!==true)throw Error('中央價格暫時無法讀取');
+      const p=(j.sections||[]).find(x=>x.sectionId==='rotation-question');
+      tarotRotationPriceCached=p?.mode==='priced'&&Number.isSafeInteger(p.points)&&p.points>0?p.points:null;
+      tarotRotationPriceUntil=Date.now()+10000;
+      return tarotRotationPriceCached;
+    })().finally(()=>{tarotRotationPricePending=null});
+    return tarotRotationPricePending;
+  }
+  async function tarotRefreshRotationPrices(root=document){
+    const labels=[...root.querySelectorAll('[data-tarot-rotation-price]')];
+    if(!labels.length)return;
+    if(!isLogged()){for(const x of labels)x.textContent='🔒 請登入解鎖';return;}
+    try{const p=await tarotRotationQuote();for(const x of labels)if(x.isConnected)x.textContent=p?`🔒 解鎖 ${p} 點`:'🔒 點數待設定';}
+    catch(_){for(const x of labels)if(x.isConnected)x.textContent='🔒 價格讀取失敗';}
+  }
+  async function tarotLoadRotationStatus(force=false){
+    tarotRotationSyncOwner();
+    if(!isLogged()||isAdminTestActive())return;
+    if(tarotRotationPending)return tarotRotationPending;
+    if(!force&&tarotRotationLastFetch&&Date.now()-tarotRotationLastFetch<30000)return;
+    const owner=tarotRotationOwner;
+    tarotRotationPending=(async()=>{
+      const r=await fetch(tarotRotationAPI,{cache:'no-store',headers:{Authorization:'Bearer '+authToken()}});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok||j.success!==true)throw Error('輪替解鎖狀態暫時無法讀取');
+      if(tarotRotationOwner!==owner)return;
+      const next=new Set((j.items||[]).map(x=>tarotRotationKey(Number(x.questionIndex),x.topicId,x.scenarioId)));
+      const changed=next.size!==tarotRotationOwned.size||[...next].some(x=>!tarotRotationOwned.has(x));
+      tarotRotationOwned=next;tarotRotationLastFetch=Date.now();
+      if(changed&&stepEl('question')?.classList.contains('active')&&state.topic?.id!=='free')renderQuestions();
+    })().finally(()=>{tarotRotationPending=null});
+    try{await tarotRotationPending}catch(e){console.warn('Tarot rotation status',e.message);}
+  }
+  async function tarotBuyRotationQuestion(index){
+    if(tarotRotationBusy)return false;
+    if(!isLogged()||!authToken()){openMemberModal();return false;}
+    tarotRotationSyncOwner();
+    if(questionAllowedForCurrentUser(index))return true;
+    if(!state.topic||!state.scenario||!Number.isInteger(index)||index<0||index>8)return false;
+    if(dhTarotToolSnapshot?.daily?.remaining===0&&dhTarotToolSnapshot?.wallet?.tool===0){
+      alert('目前沒有可用的抽牌次數，請等候自動補充後再解鎖題目。');return false;
+    }
+    tarotRotationBusy=true;
+    const topicId=state.topic.id,scenarioId=state.scenario.id,owner=tarotRotationOwner;
+    try{
+      // 第二分頁先解鎖同一題時優先同步，避免重複付費。
+      await tarotLoadRotationStatus(true);
+      if(questionAllowedForCurrentUser(index))return true;
+      const points=await tarotRotationQuote();if(!points)throw Error('PRICE_NOT_SET');
+      if(!confirm(`這是今天輪替鎖定的固定題目。\n支付 ${points} 點可解鎖這一道題目（今日有效；明日恢復輪替）。\n抽牌次數與 AI 解讀次數另行計算。\n\n確定扣除 ${points} 點？`))return false;
+      const operationId=crypto.randomUUID();
+      const r=await fetch(tarotRotationAPI,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({topicId,scenarioId,questionIndex:index,expectedPoints:points,operationId})});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok||j.success!==true)throw Error(tarotCustomError(j.error||'ROTATION_UNLOCK_UNAVAILABLE'));
+      if(owner!==tarotRotationOwner||state.topic?.id!==topicId||state.scenario?.id!==scenarioId)return false;
+      tarotRotationOwned.add(tarotRotationKey(index,topicId,scenarioId));
+      tarotRotationLastFetch=0;
+      window.dispatchEvent(new Event('dh-professional-points-changed'));
+      renderQuestions();
+      return true;
+    }catch(e){alert('固定題目解鎖失敗：'+String(e.message||e));return false}
+    finally{tarotRotationBusy=false;}
   }
   function renderTopics(){
     const loginRequired=isGuestLoginRequired();
@@ -5064,10 +5166,10 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       const lockKind=paid?'member':loginRequired?'login-required':'member';
       const classes=['choice-card',allowed?'topic-ready is-option-open':'v2814-locked is-option-locked',loginRequired?'topic-login-locked':''].filter(Boolean).join(' ');
       const ariaState=allowed?'，可選擇':loginRequired?'，需重新登入會員':paid?'，需登入並扣除專業點數':'，今日輪替鎖定';
-      return `<button type="button" class="${classes}" style="--topic-i:${i}" data-topic="${t.id}" aria-label="${esc(t.name)}${ariaState}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small>${paid?'<span class="tarot-custom-cost" data-tarot-custom-price="topic">正在讀取自訂題目點數…</span>':allowed?'<span class="tarot-available-indicator" aria-hidden="true">✓ 今天可選 <i>點選 →</i></span>':lockedBadgeHTML(lockKind,note)}</button>`;
+      return `<button type="button" class="${classes}" style="--topic-i:${i}" data-topic="${t.id}" aria-label="${esc(t.name)}${ariaState}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small>${paid?'<span class="tarot-custom-cost" data-tarot-custom-price="topic">正在讀取自訂題目點數…</span>':allowed?'':lockedBadgeHTML(lockKind,note)}</button>`;
     }).join('');
     tarotRefreshCustomPrices(els.topic);
-    const hint=$('tarotTopicTapHint');if(hint){const count=TOPICS.filter(t=>topicAllowedForCurrentUser(t.id)).length;hint.textContent=count?'✓ 亮色卡片可選（'+count+' 個）　·　灰色卡片需登入或等待開放':'🔒 目前需登入會員後才能繼續選擇主題';}
+    tarotUpdateSelectionHints();
   }
   function renderScenarios(){const t=state.topic;$('scenarioTitle').textContent=`${t.name}｜你目前處在哪個階段？`;els.scenario.innerHTML=t.scenarios.map((item,i)=>`<button class="choice-card is-option-open scenario-ready" data-scenario="${item[0]}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><b>${item[1]}</b><small>${item[2]}</small></button>`).join('');}
   function questions(){return LOCAL_QUESTIONS[`${state.topic.id}:${state.scenario.id}`]||[];}
@@ -5107,14 +5209,15 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   }
   function renderQuestions(){
     const free=state.topic?.id==='free',qs=free?[]:questions();state.questions=qs;
-    els.qctx.textContent=free?'不限主題｜請輸入你真正想釐清的一件事情。':`${state.topic.name} → ${state.scenario.name}｜9 道固定題目，訪客每日輪替開放約一半；免費登入全開。`;
+    els.qctx.textContent=free?'不限主題｜請輸入你真正想釐清的一件事情。':`${state.topic.name} → ${state.scenario.name}｜9 道固定題目每日輪替開放約一半；今日鎖定者可用專業點數解鎖。`;
     const fixed=qs.map((q,i)=>{
       const allowed=questionAllowedForCurrentUser(i);
-      return `<button type="button" class="question-card ${allowed?'is-option-open question-ready':'v2814-locked is-option-locked'}" data-question="${esc(q.id)}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b>${allowed?'<span class="tarot-available-indicator" aria-hidden="true">✓ 可選 →</span>':lockedBadgeHTML('member','')}</button>`;
+      return `<button type="button" class="question-card ${allowed?'is-option-open question-ready':'v2814-locked is-option-locked'}" data-question="${esc(q.id)}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b>${allowed?'':'<span class="v2814-lock-badge" data-tarot-rotation-price>🔒 讀取點數…</span>'}</button>`;
     }).join('');
     els.question.innerHTML=fixed+customFormHTML(free);
     tarotRefreshCustomPrices(els.question);
-    const qHint=$('tarotQuestionTapHint');if(qHint){const n=qs.filter((_,i)=>questionAllowedForCurrentUser(i)).length;qHint.hidden=free;qHint.textContent='✓ 亮色題目今天可選（'+n+' 題）　·　灰色題目需解鎖';}
+    tarotUpdateSelectionHints();
+    if(!free){void tarotRefreshRotationPrices(els.question);void tarotLoadRotationStatus();}
     const back=document.querySelector('#stepQuestion [data-back]');if(back){back.dataset.back=free?'topic':'scenario';back.textContent=free?'← 返回主題':'← 返回情境';}
   }
   async function selectCustomQuestion(){
@@ -6723,7 +6826,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(e.target.closest('[data-submit-custom]')){void selectCustomQuestion();return;}
     const b=e.target.closest('[data-question]');if(!b)return;
     const qi=state.questions.findIndex(q=>q.id===b.dataset.question);
-    if(qi<0)return;if(!questionAllowedForCurrentUser(qi)){openMemberModal();return;}
+    if(qi<0)return;if(!questionAllowedForCurrentUser(qi)){if(!await tarotBuyRotationQuestion(qi))return;}
     tarotCustomInvalidate();state.question=state.questions[qi];state.spreadChoice=recommendedSpread(state.question);renderReady();showStep('ready');
   });
   $('spreadSelector').addEventListener('click',e=>{const btn=e.target.closest('[data-spread-pick]');if(!btn||!SPREAD_OPTIONS[btn.dataset.spreadPick])return;if(!spreadAllowedForCurrentUser(btn.dataset.spreadPick)){showRotationNotice();return;}state.spreadChoice=btn.dataset.spreadPick;renderReady();});
@@ -7314,5 +7417,15 @@ html[data-theme="light"] #topicGrid [data-topic="free"]{background:linear-gradie
  window.addEventListener('dh-professional-points-changed',()=>void refresh(true));
 })();
 </script>
+
+<style id="tarot-rotation-priced-layout-v1">
+/* 可選題目無多餘標籤；鎖定題目才顯示價格。沿用修好的獨立網格列高度。 */
+#topicGrid .choice-card.is-option-open:not([data-topic="free"]){padding-bottom:15px}
+#questionGrid .question-card .tarot-available-indicator{display:none!important}
+#questionGrid .question-card .v2814-lock-badge[data-tarot-rotation-price]{white-space:nowrap;font-weight:800;max-width:calc(100% - 18px)}
+#tarotTopicTapHint[hidden],#tarotQuestionTapHint[hidden]{display:none!important}
+#tarotTopicTapHint:not([hidden]),#tarotQuestionTapHint:not([hidden]){border-color:rgba(230,189,102,.35);background:rgba(232,198,122,.09);color:var(--text);font-weight:740}
+html[data-theme="light"] #tarotTopicTapHint:not([hidden]),html[data-theme="light"] #tarotQuestionTapHint:not([hidden]){background:#fff5dc;border-color:#edd6a4;color:#75451d}
+</style>
 </body>
 </html>
