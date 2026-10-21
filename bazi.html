@@ -3028,6 +3028,10 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
         <details class="report-section bazi-primary-pillars bazi-section-visible" id="report-pillars" open>
           <summary><span><b>01</b> 完整四柱命盤</span><small>FOUR PILLARS · HIDDEN STEMS · TEN GODS</small></summary>
           <div class="report-body">
+            <div class="bazi-pillar-paid-cta" id="baziPillarPaidCta" hidden>
+              <div><strong>四柱完整資料｜專業解鎖</strong><span id="baziPillarPaidHint">基本四柱可免費看，解鎖後可閱讀本命盤的完整分析。</span></div>
+              <button type="button" id="baziPillarPaidAction">讀取解鎖價格中…</button>
+            </div>
             <div class="pillars" id="pillars"></div>
             <div class="meta" id="meta"></div>
           </div>
@@ -7532,7 +7536,9 @@ ${intent}
     document.body.classList.remove('show-bazi-intro');
     document.body.classList.add('has-bazi-chart');
     window.baziReadingUiSuccess?.(data);
-    $('baziExampleSnapshotTitle').textContent=meta.inline?'他人完整命盤示範｜非你的命盤':String(meta.title||'已存範例')+'｜快照日期 '+String(meta.asOf||'建立時');
+    const exampleDateMatch=String(data.solarText||'').match(/^(\d{4})-(\d{2})-(\d{2})(?=\D|$)/);
+    const exampleBirthDate=exampleDateMatch?`${exampleDateMatch[1]} 年 ${Number(exampleDateMatch[2])} 月 ${Number(exampleDateMatch[3])} 日`:'';
+    $('baziExampleSnapshotTitle').textContent=(meta.inline?'他人完整命盤示範｜非你的命盤':String(meta.title||'已存範例'))+(exampleBirthDate?'｜範例出生日期：'+exampleBirthDate:'')+(meta.inline?'':'｜快照日期 '+String(meta.asOf||'建立時'));
     const back=$('baziExampleExit');if(back)back.textContent=window.baziHasPersonalCore?.()?'返回我的個人命盤':'結束範例／返回排盤';
     const otherExample=$('baziExampleAnother');if(otherExample)otherExample.hidden=!!meta.inline;
     banner.hidden=false;
@@ -9485,7 +9491,7 @@ const API='https://bazi-api.ezgocpu.workers.dev';
 const chapters=[['report-pillars','四柱完整資料'],['report-elements','五行與陰陽'],['report-tengods','十神結構'],['report-relations','干支合沖'],['report-shensha','常用神煞'],['report-reading','命盤結構'],['report-luck','八步大運'],['report-years','三年流年'],['report-months','十二流月']];
 const dimensions=[['66%','146px'],['53%','148px'],['52%','132px'],['60%','120px'],['62%','148px'],['58%','156px'],['52%','142px'],['62%','124px'],['57%','138px']];
 const $=id=>document.getElementById(id);
-let entries=null,deck=[],cache=new Map(),inflight=new Map(),loading=false,active='report-pillars',pendingMount=false,inlineMode=false;
+let entries=null,deck=[],cache=new Map(),inflight=new Map(),loading=false,active='report-pillars',pendingMount=false,inlineMode=false,activeSample=null;
 // Only remind before the user first uses the random-example control (for this page visit).
 let rerollAcknowledged=false,rerollAttentionStarted=false,rerollVisibilityObserver=null;
 const isPersonal=()=>document.body.classList.contains('bazi-personal-full-mode');
@@ -9643,13 +9649,25 @@ function bringFirstReminderIntoView(id){
   }
  }
 }
+function archivedBirthDate(sample){
+  // The saved example has a public calendar timestamp; this is not the visitor's birthday.
+  const text=String(sample?.data?.solarText||'');
+  const m=text.match(/^(\d{4})-(\d{2})-(\d{2})(?=\D|$)/);
+  if(!m)return '';
+  const y=Number(m[1]),mon=Number(m[2]),day=Number(m[3]);
+  if(mon<1||mon>12||day<1||day>31)return '';
+  return `${y} 年 ${mon} 月 ${day} 日`;
+}
 function randomBar(id){
  const section=$(id);if(!section)return;
  const body=section.querySelector('.report-body');if(!body)return;
  let bar=section.querySelector('.bazi-core-random-controls');
- if(!bar){bar=document.createElement('div');bar.className='bazi-core-random-controls';bar.setAttribute('role','group');bar.setAttribute('aria-label','固定範例隨機試閱');bar.innerHTML=`<span class="bazi-core-random-hint">此處是<strong>他人完整命盤範例</strong>，不是你的命盤。以下直接使用網站原有核心的圖表與分析。</span><span class="bazi-core-random-actions"><button type="button" data-core-random="again">🎲 再按一次，隨機換一組</button><button type="button" data-core-random="back">↩ 返回我的命盤</button></span><span class="bazi-core-random-error" role="status" hidden></span>`;
+ if(!bar){bar=document.createElement('div');bar.className='bazi-core-random-controls';bar.setAttribute('role','group');bar.setAttribute('aria-label','固定範例隨機試閱');bar.innerHTML=`<span class="bazi-core-random-hint">此處是<strong>他人完整命盤範例</strong>，不是你的命盤。<span class="bazi-core-example-birthdate" hidden></span><span class="bazi-core-example-intro">以下直接使用網站原有核心的圖表與分析。</span></span><span class="bazi-core-random-actions"><button type="button" data-core-random="again">🎲 再按一次，隨機換一組</button><button type="button" data-core-random="back">↩ 返回我的命盤</button></span><span class="bazi-core-random-error" role="status" hidden></span>`;
  }
  if(bar.parentElement!==body)body.prepend(bar);
+ const birth=archivedBirthDate(activeSample);
+ const birthLabel=bar.querySelector('.bazi-core-example-birthdate');
+ if(birthLabel){birthLabel.textContent=birth?'範例出生日期：'+birth:'';birthLabel.hidden=!birth;}
  bar.querySelector('[data-core-random="again"]')?.toggleAttribute('disabled',loading);
 }
 async function change(id){
@@ -9665,7 +9683,7 @@ async function change(id){
   const key=deck.shift();const snapshot=await loadKey(key);
   // Only the original nine-section core renderer is called. No custom summary or subset.
   window.baziShowArchivedExample(snapshot.data,{title:snapshot.title,asOf:snapshot.asOf,inline:true});
-  window.__baziPreviousSampleKey=key;inlineMode=true;
+  window.__baziPreviousSampleKey=key;inlineMode=true;activeSample=snapshot;
   revealChapter(id);
   randomBar(id);
   // Wait for the core to render before showing the reminder. Put the button visibly
@@ -9697,7 +9715,7 @@ function resetUnclickedReminder(){
  if(!rerollAcknowledged)rerollAttentionStarted=false;
 }
 function goBack(){
- if(loading)return;resetUnclickedReminder();inlineMode=false;
+ if(loading)return;resetUnclickedReminder();inlineMode=false;activeSample=null;
  window.__baziInlineSampleRestore=true;
  try{
   if(window.baziReturnToPersonalCore?.()){
@@ -10052,7 +10070,20 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   if(!output){output=el('p','bazi-hub-payment-notice');output.id='baziHubPaymentNotice';output.setAttribute('role','status');hub.querySelector('.bazi-hub-grid')?.before(output)}
   output.textContent=message||'';output.hidden=!message;
  }
+ function syncPillarPaidCta(x){
+  if(x.id!=='report-pillars')return;
+  const panel=document.getElementById('baziPillarPaidCta');
+  const button=document.getElementById('baziPillarPaidAction');
+  const hint=document.getElementById('baziPillarPaidHint');
+  if(!panel||!button||!hint)return;
+  const show=x.mode==='priced'&&!x.unlocked&&Number(x.points)>0;
+  panel.hidden=!show;
+  if(!show)return;
+  button.textContent='解鎖本區｜'+Number(x.points)+' 點';
+  hint.textContent='目前顯示免費基本四柱；完整資料解鎖需 '+Number(x.points)+' 點（同一命盤只扣一次）。';
+ }
  function updateHub(x){
+  syncPillarPaidCta(x);
   const area=document.querySelector('[data-bazi-open-section="'+x.id+'"]');if(!area)return;
   area.dataset.baziPurchaseStatus=x.unlocked?'unlocked':x.mode;
   const badge=area.querySelector('.bazi-hub-status');
@@ -10143,6 +10174,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }
  }
  function reset(){generation++;statusRequest++;states.clear();restored.clear();window.baziPurchasedDocs=Object.create(null);
+  const pillarCta=document.getElementById('baziPillarPaidCta');if(pillarCta)pillarCta.hidden=true;
   notice('');
   document.querySelectorAll('[data-bazi-open-section]').forEach(area=>{
    delete area.dataset.baziPurchaseStatus;
@@ -10248,7 +10280,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    notice((e?.message||'讀取失敗')+'；若已解鎖，重新開啟此區不會重複扣點。');
   }finally{pendingPurchases.delete(id);btn.disabled=false}
  }
- const init=()=>{addBoxes();PAID_ADVANCED.forEach(id=>document.getElementById(id)?.addEventListener('toggle',()=>{if(document.getElementById(id)?.open&&states.get(id)?.unlocked&&!restored.has(id)){restored.add(id);void purchase(id)}}));window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
+ const init=()=>{addBoxes();document.getElementById('baziPillarPaidAction')?.addEventListener('click',()=>document.querySelector('#baziSectionHub [data-bazi-open-section="report-pillars"]')?.click());PAID_ADVANCED.forEach(id=>document.getElementById(id)?.addEventListener('toggle',()=>{if(document.getElementById(id)?.open&&states.get(id)?.unlocked&&!restored.has(id)){restored.add(id);void purchase(id)}}));window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
@@ -10472,6 +10504,42 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-professional-points-card>b{color:
     height:auto!important;min-height:71px!important;
   }
 }
+</style>
+
+<style id="bazi-archive-birthday-pillar-unlock-light-contrast-20261021">
+/* Archive details are already part of saved examples; never show a user's private birth data here. */
+.bazi-core-random-controls .bazi-core-random-hint{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.bazi-core-example-birthdate:not([hidden]){display:inline-block;margin:4px 0 2px;padding:5px 12px;border:1px solid #4e969f;border-radius:999px;background:#fff;color:#164b58;font-size:.82rem;font-weight:900;letter-spacing:.025em;line-height:1.5}
+.bazi-core-example-birthdate[hidden]{display:none!important}
+html[data-theme="dark"] .bazi-core-example-birthdate:not([hidden]){background:#0d313a;border-color:#70b9c2;color:#e5fafa}
+/* One additional entry near the free four-pillar chart; checkout stays in the existing nine-chapter code. */
+#baziPillarPaidCta[hidden]{display:none!important}
+body:not(.bazi-personal-full-mode) #baziPillarPaidCta{display:none!important}
+.bazi-pillar-paid-cta{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 15px;padding:14px 17px;border:1px solid #c5a05d;border-radius:13px;background:linear-gradient(110deg,#fbf3e4,#f0f6f5)}
+.bazi-pillar-paid-cta>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.bazi-pillar-paid-cta strong{font-size:.85rem;color:#79501a}
+.bazi-pillar-paid-cta span{font-size:.74rem;color:#476374;line-height:1.7}
+.bazi-pillar-paid-cta button{flex:0 0 auto;min-height:42px;padding:9px 16px;border:1px solid #ab8339;border-radius:10px;background:#175e6c;color:#fff;font-weight:850;font-size:.80rem;cursor:pointer}
+.bazi-pillar-paid-cta button:hover{background:#104956}
+html[data-theme="dark"] .bazi-pillar-paid-cta{background:linear-gradient(105deg,#292616,#142c30);border-color:#87713f}
+html[data-theme="dark"] .bazi-pillar-paid-cta strong{color:#f0d38e}
+html[data-theme="dark"] .bazi-pillar-paid-cta span{color:#b7cdd1}
+@media(max-width:620px){.bazi-pillar-paid-cta button{width:100%}}
+/* Critical contrast fix: old ID selector created pale heading with forced white text. */
+html[data-theme="light"] body.has-bazi-chart #results .report-section>summary,
+html[data-theme="light"] body.has-bazi-chart #results #report-pillars>summary,
+html[data-theme="light"] body.has-bazi-chart #results .report-section.bazi-section-visible>summary{
+ background:linear-gradient(110deg,#204e62,#2d6576)!important;
+ border-bottom-color:#246176!important;
+ color:#fff!important;
+}
+html[data-theme="light"] body.has-bazi-chart #results #report-shensha>summary{background:linear-gradient(110deg,#563b73,#714c91)!important}
+html[data-theme="light"] body.has-bazi-chart #results :is(#report-elements,#report-relations,#report-luck)>summary{background:linear-gradient(110deg,#155b63,#297884)!important}
+html[data-theme="light"] body.has-bazi-chart #results .report-section>summary :is(span,small,b){color:#fff!important;opacity:1!important}
+/* Complementary muted text checks in the light theme: no white labels on pale panels. */
+html[data-theme="light"] #results :is(.bazi-private-lock-heading,.bazi-private-lock-heading p,.bazi-premium-status,.bazi-premium-empty){color:#344f60}
+html[data-theme="light"] #results :is(.bazi-chapter-footer,.bazi-hub-activebar) :is(button,span,strong){color:#265466}
+html[data-theme="light"] .bazi-core-random-controls .bazi-core-random-hint{color:#204f5a}
 </style>
 </body>
 </html>
