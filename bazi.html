@@ -10560,5 +10560,73 @@ html[data-theme="light"] .bazi-core-random-controls .bazi-core-random-hint{color
 #castBtn{white-space:normal;line-height:1.4;letter-spacing:.01em;min-height:48px}
 @media(max-width:820px){#castBtn{font-size:.78rem;padding-left:9px;padding-right:9px}}
 </style>
+
+<!-- 九大分析首次進入視野：僅「範例展示」小標籤依序柔和提示一次。 -->
+<style id="bazi-hub-example-once-hint-20261021">
+#baziSectionHub .bazi-hub-grid .bazi-hub-status--example.bazi-example-once-hint {
+  transform-origin:center center;
+  animation:baziExampleGentleHint 1.2s ease-in-out 1 both;
+  animation-delay:var(--bazi-example-hint-delay,0s);
+}
+@keyframes baziExampleGentleHint {
+  0%,100% {transform:scale(1);box-shadow:0 0 0 0 rgba(187,132,50,0)}
+  50% {transform:scale(1.075);background:rgba(226,185,109,.24);border-color:rgba(187,132,50,.8);box-shadow:0 0 0 4px rgba(211,159,71,.12),0 0 11px rgba(187,132,50,.20)}
+}
+@media(prefers-reduced-motion:reduce) {
+  #baziSectionHub .bazi-hub-grid .bazi-hub-status--example.bazi-example-once-hint{animation:none!important}
+}
+</style>
+<script id="bazi-hub-example-once-hint-runtime-20261021">
+(()=>{
+  'use strict';
+  function init(){
+    const hub=document.getElementById('baziSectionHub');
+    if(!hub)return;
+    let started=false,observer=null;
+    const getBadges=()=>Array.from(hub.querySelectorAll('.bazi-hub-grid .bazi-hub-status--example'))
+      .filter(b=>b.textContent.trim()==='範例展示' && b.getAttribute('tabindex')!=='-1');
+    function playOnce(){
+      if(started)return;
+      const badges=getBadges();
+      if(!badges.length)return;
+      started=true;
+      observer?.disconnect();
+      if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+      const clear=()=>badges.forEach(b=>{
+        b.classList.remove('bazi-example-once-hint');
+        b.style.removeProperty('--bazi-example-hint-delay');
+      });
+      badges[badges.length-1].addEventListener('animationend',e=>{
+        if(e.target===badges[badges.length-1] && e.animationName==='baziExampleGentleHint')clear();
+      },{once:true});
+      badges.forEach((badge,index)=>{
+        badge.style.setProperty('--bazi-example-hint-delay',(index*.85).toFixed(2)+'s');
+        badge.classList.add('bazi-example-once-hint');
+      });
+    }
+    const first=getBadges()[0];
+    if(!first)return;
+    if('IntersectionObserver' in window){
+      // Wait until the first preview badge itself is actually visible, not merely the hub heading.
+      observer=new IntersectionObserver(entries=>{
+        if(entries.some(e=>e.isIntersecting&&e.intersectionRatio>=.7))playOnce();
+      },{threshold:[.7],rootMargin:'0px 0px -10% 0px'});
+      observer.observe(first);
+    }else{
+      const fallback=()=>{
+        if(started)return;
+        const r=first.getBoundingClientRect(),h=window.innerHeight||document.documentElement.clientHeight;
+        if(r.top>=0&&r.bottom<h*.9)playOnce();
+      };
+      window.addEventListener('scroll',fallback,{passive:true});
+      window.addEventListener('resize',fallback,{passive:true});
+      fallback();
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+</script>
+
 </body>
 </html>
