@@ -2916,7 +2916,7 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
         <p id="birthTimeNotice" role="status"></p>
 
         <div class="primary-action-row">
-          <button class="cast-btn" id="castBtn" type="button">免費排八字</button>
+          <button class="cast-btn" id="castBtn" type="button">排八字｜正在查詢額度</button>
           <div class="bazi-example-admin-toolbar" id="baziExampleAdminToolbar" hidden>
             <div class="bazi-example-admin-title">管理員｜範例資料庫</div>
             <button type="button" id="baziExampleSeed20">建立20筆隨機範例</button>
@@ -3466,8 +3466,36 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
       localStorage.setItem(BAZI_CAST_PERMIT_KEY,JSON.stringify({permits:Object.fromEntries(entries)}));
     }catch(_){ }
   }
+  // 排盤按鈕依後端實際免費與會員共用工具額度切換文案；不代替伺服器扣額或確認。
+  let baziCastCtaQuota=null;
+  let baziCastCtaMode='unknown';
+  function baziSyncCastCta(){
+    const btn=document.getElementById('castBtn');
+    if(!btn||btn.dataset.baziRunning==='1')return;
+    const quota=baziCastCtaQuota;
+    let label='排八字｜額度待確認',description='尚未取得最新排盤額度，按下後由系統確認。',mode='unknown';
+    if(quota){
+      if(quota.remaining>0){
+        label='免費排八字';description='本期尚有 '+quota.remaining+' 次免費排盤額度。';mode='free';
+      }else if(!quota.isMember){
+        label='免費次數已用完｜登入會員';description='本期免費排盤已用完，登入會員後可查看平台共用工具額度。';mode='login';
+      }else if(quota.sharedLeft>0){
+        label='會員排八字｜扣 1 次（剩 '+quota.sharedLeft+' 次）';
+        description='本期免費排盤已用完。本次需扣除 1 次平台共用工具額度，目前剩餘 '+quota.sharedLeft+' 次；按下後會再次確認。';mode='shared';
+      }else{
+        label='排盤額度已用完';description='本期免費及會員共用工具額度皆已用完，請等候免費次數補充。';mode='empty';
+      }
+    }
+    baziCastCtaMode=mode;
+    btn.textContent=label;
+    btn.title=description;
+    btn.setAttribute('aria-label',description);
+    btn.dataset.quotaMode=mode;
+  }
+  window.baziSyncCastCta=baziSyncCastCta;
   async function baziCastRefreshQuota(){
     const el=document.getElementById('baziCastQuotaCount');if(!el)return;
+    if(!baziCastCtaQuota)baziSyncCastCta();
     const t=baziSessionMember?.sub?baziAuthToken():'',known=baziKnownMemberOnDevice();
     try{
       const headers={'X-Bazi-Visitor-Id':baziVisitorId(),...(t?{Authorization:'Bearer '+t}:{})};
@@ -3480,13 +3508,15 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
       const paidBalance=document.getElementById('baziQuotaPaidCount');if(paidBalance&&!window.__baziAdminRoleTest?.active)paidBalance.textContent=data.authenticated?(data.wallet?.paid??0)+' 次':'0 次';
       const knownAfter=known||!!data.knownMember;
       const remain=(!isMember&&knownAfter)?0:Math.max(0,Number(data.remaining||0));
+      baziCastCtaQuota={remaining:remain,isMember,sharedLeft:isMember?Math.max(0,Number(data.wallet?.tool||0)):0};
+      baziSyncCastCta();
       el.textContent=remain+' / '+Number(data.limit||0)+' 次';
       const hint=document.getElementById('baziCastQuotaHint');
       if(hint)hint.textContent=knownAfter&&!isMember?'已是會員，請重新登入繼續排盤':`每 ${data.days||1} 天補充，不累積｜下次 ${data.resetAt||'待查'}`;
       const login=document.getElementById('baziCastQuotaLogin');if(login)login.hidden=isMember||remain>0;
       document.body.classList.toggle('bazi-member-verified',isMember);
       window.baziRefreshShenshaGate?.();
-    }catch(_){el.textContent='暫時無法查詢';}
+    }catch(_){el.textContent='暫時無法查詢';baziCastCtaQuota=null;baziSyncCastCta();}
   }
   window.baziCastRefreshQuota=baziCastRefreshQuota;
   window.baziCastBrowserHeaders=()=>({'X-Bazi-Visitor-Id':baziVisitorId()});
@@ -3558,6 +3588,7 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
     // 登入、登出後立即更新站內 AI 額度，無須重整網頁。
     if(typeof baziGeminiRefreshQuota==='function')baziGeminiRefreshQuota();
     window.baziAiRefreshAccessUi?.();
+    void window.baziCastRefreshQuota?.();
   }
   let baziGoogleInitialized=false;
 
@@ -7119,9 +7150,8 @@ ${intent}
         return false;
       }
     }
-    const originalText=castBtn?.textContent;
     try{
-      if(castBtn){castBtn.disabled=true;castBtn.textContent='後端排盤中…';}
+      if(castBtn){castBtn.dataset.baziRunning='1';castBtn.disabled=true;castBtn.textContent='後端排盤中…';}
       const options=birthOptions(),input=captureBirthInput(),token=baziAuthToken();
       const data=await requestBaziApi(options, countUsage);
       if(token!==baziAuthToken())return;
@@ -7145,7 +7175,7 @@ ${intent}
       console.error('[Bazi API]',err);
       if (scroll) alert(err&&err.message?err.message:String(err));
     }finally{
-      if(castBtn){castBtn.disabled=false;castBtn.textContent=originalText||'排八字';}
+      if(castBtn){delete castBtn.dataset.baziRunning;castBtn.disabled=false;window.baziSyncCastCta?.();}
     }
   }
 
@@ -7565,6 +7595,7 @@ ${intent}
         if(signal?.kind==='login')baziRestoreSession();
         if(signal?.kind==='logout'){
           baziSessionMember=null;baziSetAuthToken('');window.baziUpdateTopbarMember?.();
+          void window.baziCastRefreshQuota?.();
           resetDailyFlowAccess();refreshSmartPromptLocks?.();baziGeminiRefreshQuota();
           if(lastData)renderYearFlows({...lastData,threeYearStrategicOutlook:null});
         }
@@ -7591,7 +7622,7 @@ ${intent}
     initSectionDecodeUI();
     loadDailyFlowExample();
     restoreMemberBazi();
-    castBtn.addEventListener('click', () => cast(true, true));
+    castBtn.addEventListener('click', () => {if(castBtn.dataset.quotaMode==='login'){baziOpenAuth();return;}cast(true, true);});
     setupReportActions();
 
     document.querySelector('.hero-primary')?.addEventListener('click',e=>{
@@ -9165,7 +9196,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       $('baziPersonalAiStatus').textContent='管理員測試尚未驗證完成，請先選擇測試角色。';
       throw Error('管理員測試尚未驗證完成');
     }
-    if(busy)return false;busy=true;const btn=$('castBtn'),old=btn?.textContent||'免費排八字';if(btn){btn.disabled=true;btn.textContent='正在排出你的四柱…';}
+    if(busy)return false;busy=true;const btn=$('castBtn');if(btn){btn.dataset.baziRunning='1';btn.disabled=true;btn.textContent='正在排出你的四柱…';}
     try{
       const j=await post(reveal?'/v2/public-preview':'/v2/basic',{datetime:options.datetime,gender:Number(options.gender),sect:Number(options.sect),calendar:reveal?buildFrontendPublicPayload(options):buildFrontendCalendarPayload(options),usageIntent:countUsage?'user-cast':'internal-refresh',castOpId:countUsage?crypto.randomUUID():undefined,castPermit:countUsage?'':window.baziCastPermitRead(options)});
       if(j.castPermit)window.baziCastPermitSave(options,j.castPermit);
@@ -9185,7 +9216,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       // 排盤只建立命盤，不主動呼叫 AI；僅三個會員免費主題可各按一次。
       return true;
     }catch(e){$('baziPersonalAiStatus').textContent=e.message||'排盤失敗';throw e;}
-    finally{busy=false;if(btn){btn.disabled=false;btn.textContent=old;}renderTopicAccess();}
+    finally{busy=false;if(btn){delete btn.dataset.baziRunning;btn.disabled=false;window.baziSyncCastCta?.();}renderTopicAccess();}
   };
   async function topicClick(topic,btn){
     const status=$('baziPersonalAiStatus');
@@ -10524,6 +10555,10 @@ html[data-theme="light"] body.has-bazi-chart #results .report-section>summary :i
 html[data-theme="light"] #results :is(.bazi-private-lock-heading,.bazi-private-lock-heading p,.bazi-premium-status,.bazi-premium-empty){color:#344f60}
 html[data-theme="light"] #results :is(.bazi-chapter-footer,.bazi-hub-activebar) :is(button,span,strong){color:#265466}
 html[data-theme="light"] .bazi-core-random-controls .bazi-core-random-hint{color:#204f5a}
+
+/* 排盤額度耗盡時，讓按鈕完整呈現會員扣次數與剩餘額度。 */
+#castBtn{white-space:normal;line-height:1.4;letter-spacing:.01em;min-height:48px}
+@media(max-width:820px){#castBtn{font-size:.78rem;padding-left:9px;padding-right:9px}}
 </style>
 </body>
 </html>

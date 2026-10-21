@@ -5072,10 +5072,52 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     }
     return '本期訪客免費抽牌次數已用完；登入後可查看會員共用額度。';
   }
+  // 會員共用「占卜次數」只有在本期自動補充歸零後才提醒。
+  // 專業點數是獨立錢包，不能拿共用占卜次數直接解鎖輪替題目或抽牌方式。
+  function tarotMemberDrawBalance(){
+    const s=dhTarotToolSnapshot;
+    if(isAdminTestActive()||!isLogged()||!s?.wallet||!s.daily)return null;
+    if(Number(s.daily.remaining)>0)return null;
+    const n=Number(s.wallet.tool);
+    return Number.isSafeInteger(n)&&n>=0?n:null;
+  }
+  function tarotProfessionalBalance(){
+    if(!isLogged())return null;
+    const element=document.getElementById('dhProfessionalPointsNumber');
+    const found=/^(\d+)\s*點$/.exec(element?.textContent?.trim()||'');
+    return found?Number(found[1]):null;
+  }
+  function tarotUpdateLockedQuestionLabels(){
+    const n=tarotMemberDrawBalance(),points=tarotProfessionalBalance();
+    document.querySelectorAll('#questionGrid [data-tarot-rotation-price]').forEach(label=>{
+      const amount=Number(label.dataset.rotationCost);
+      if(!Number.isSafeInteger(amount)||amount<1)return;
+      // 已用完免費次數時才補充點數餘額；每題真正收費仍為專業點數。
+      label.textContent=`🔒 解鎖 ${amount} 點`+(n!==null&&points!==null?`｜專業剩 ${points} 點`:'');
+    });
+  }
+  function tarotSyncMemberBalanceBadges(){
+    const n=tarotMemberDrawBalance();
+    const label=n===null?'':n>0?`會員額度 ${n} 次（用完不補）`:'會員額度 0 次（已用完）';
+    const cards=[...document.querySelectorAll('#topicGrid [data-topic]:not([data-topic="free"]),#drawModeGrid [data-draw-mode]:not([data-draw-mode="physical"])')];
+    for(const card of cards){
+      const existing=card.querySelector('.tarot-member-draw-balance');
+      // 原本的每日輪替禁用維持原樣；這裡只提供資訊，不創造解鎖權限。
+      if(!label){existing?.remove();continue;}
+      const badge=existing||document.createElement('span');
+      badge.className='tarot-member-draw-balance';
+      badge.textContent=label;
+      badge.setAttribute('aria-label','會員共用占卜剩餘額度：'+label);
+      if(!existing)card.appendChild(badge);
+    }
+    tarotUpdateLockedQuestionLabels();
+  }
+  window.addEventListener('dh-tarot-point-balance-updated',()=>tarotUpdateLockedQuestionLabels());
   function tarotUpdateSelectionHints(){
     const note=tarotSelectionQuotaNote();
     const top=$('tarotTopicTapHint');if(top){top.hidden=!note;top.textContent=note;}
     const question=$('tarotQuestionTapHint');if(question){question.hidden=!note||state.topic?.id==='free';question.textContent=note;}
+    tarotSyncMemberBalanceBadges();
   }
   // 收費僅限當日被輪替鎖定的固定問題，免費問題絕不扣點。
   const tarotRotationAPI=MEMBER_API_BASE+'/professional/tarot/rotation';
@@ -5105,8 +5147,14 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const labels=[...root.querySelectorAll('[data-tarot-rotation-price]')];
     if(!labels.length)return;
     if(!isLogged()){for(const x of labels)x.textContent='🔒 請登入解鎖';return;}
-    try{const p=await tarotRotationQuote();for(const x of labels)if(x.isConnected)x.textContent=p?`🔒 解鎖 ${p} 點`:'🔒 點數待設定';}
-    catch(_){for(const x of labels)if(x.isConnected)x.textContent='🔒 價格讀取失敗';}
+    try{
+      const p=await tarotRotationQuote();
+      for(const x of labels)if(x.isConnected){
+        if(p){x.dataset.rotationCost=String(p);x.textContent=`🔒 解鎖 ${p} 點`;}
+        else {delete x.dataset.rotationCost;x.textContent='🔒 點數待設定';}
+      }
+      tarotUpdateLockedQuestionLabels();
+    }catch(_){for(const x of labels)if(x.isConnected)x.textContent='🔒 價格讀取失敗';}
   }
   async function tarotLoadRotationStatus(force=false){
     tarotRotationSyncOwner();
@@ -5439,7 +5487,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       btn.setAttribute('aria-disabled',allowed?'false':'true');
       btn.querySelector('.guest-lock-badge')?.remove();
       btn.querySelector('.tarot-available-indicator')?.remove();
-      if(allowed){const marker=document.createElement('span');marker.className='tarot-available-indicator';marker.setAttribute('aria-hidden','true');marker.textContent='✓ 可立即抽牌 →';btn.appendChild(marker);}
+      // 不再顯示重複的「可立即抽牌」標籤；額度提示由共用錢包狀態決定。
       if(!allowed){
         const badge=document.createElement('span');
         badge.className='guest-lock-badge';
@@ -5448,6 +5496,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       }
     });
     const dHint=$('tarotDrawTapHint');if(dHint){const n=[...document.querySelectorAll('[data-draw-mode]')].filter(b=>b.classList.contains('is-option-open')).length;dHint.textContent='✓ 亮色可選（'+n+' 種）　·　灰色為目前鎖定';}
+    tarotSyncMemberBalanceBadges();
   }
   function showModeSelector(){
     clearRitualTimers();state.drawMode=null;state.ritualSelected=0;
@@ -7377,7 +7426,7 @@ html[data-theme="light"] #topicGrid [data-topic="free"]{background:linear-gradie
  if(!number||!note)return;
  let lastRequest=0, requestSeq=0;
  function token(){try{return localStorage.getItem(STORAGE)||''}catch(_){return ''}}
- function update(value,message){number.textContent=value;note.textContent=message}
+ function update(value,message){number.textContent=value;note.textContent=message;window.dispatchEvent(new Event('dh-tarot-point-balance-updated'));}
  async function refresh(force=false){
    if(location.protocol==='file:')return update('— 點','請在正式網站登入後查看');
    const t=token();
@@ -7426,6 +7475,34 @@ html[data-theme="light"] #topicGrid [data-topic="free"]{background:linear-gradie
 #tarotTopicTapHint[hidden],#tarotQuestionTapHint[hidden]{display:none!important}
 #tarotTopicTapHint:not([hidden]),#tarotQuestionTapHint:not([hidden]){border-color:rgba(230,189,102,.35);background:rgba(232,198,122,.09);color:var(--text);font-weight:740}
 html[data-theme="light"] #tarotTopicTapHint:not([hidden]),html[data-theme="light"] #tarotQuestionTapHint:not([hidden]){background:#fff5dc;border-color:#edd6a4;color:#75451d}
+</style>
+
+<style id="tarot-wallet-card-balance-v1">
+/* 本期自動補充仍有次數：不呈現這類標籤。免費次數歸零後，才顯示剩餘共用次數。 */
+#topicGrid .choice-card,#drawModeGrid .draw-mode-card{position:relative}
+#topicGrid .choice-card .tarot-member-draw-balance,
+#drawModeGrid .draw-mode-card .tarot-member-draw-balance{
+  position:absolute;z-index:9;right:11px;top:31px;max-width:calc(100% - 22px);
+  display:inline-block;width:max-content;margin:0;padding:4px 8px;
+  border:1px solid rgba(173,112,206,.26);border-radius:999px;
+  background:rgba(242,229,249,.94);color:#78418f;
+  font-size:.64rem;font-weight:800;line-height:1.45;white-space:normal;
+  text-align:center;letter-spacing:0;opacity:1!important;filter:none!important;
+}
+#drawModeGrid .draw-mode-card.is-option-locked .tarot-member-draw-balance{top:42px;right:10px;}
+#drawModeGrid .draw-mode-card.is-option-open .tarot-member-draw-balance{top:11px;right:10px;}
+/* 抽牌方式輪替鎖定保留；此提示為剩餘抽牌額度，不能直接解除輪替鎖定。 */
+#drawModeGrid .draw-mode-card.is-option-locked .guest-lock-badge{z-index:10}
+html[data-theme="dark"] #topicGrid .tarot-member-draw-balance,
+html[data-theme="dark"] #drawModeGrid .tarot-member-draw-balance{
+ background:rgba(48,30,64,.96);color:#f1dcff;border-color:rgba(222,175,237,.35)
+}
+@media(max-width:680px){
+ #topicGrid .choice-card .tarot-member-draw-balance{font-size:.58rem;top:29px;right:7px;max-width:calc(100% - 14px);padding:3px 6px}
+ #drawModeGrid .draw-mode-card .tarot-member-draw-balance{font-size:.57rem;right:7px;max-width:calc(100% - 14px);padding:3px 6px}
+ #drawModeGrid .draw-mode-card.is-option-locked .tarot-member-draw-balance{top:39px}
+ #drawModeGrid .draw-mode-card.is-option-open .tarot-member-draw-balance{top:10px}
+}
 </style>
 </body>
 </html>
