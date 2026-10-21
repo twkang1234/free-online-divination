@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <!-- 自訂問題與每次新追問共用一個後台計價項目；實際扣點由 member-api 驗證。 -->
-  <script type="application/json" id="dh-billing-sections">{"toolId":"tarot","sections":[{"id":"custom-question","title":"自訂題目與每次新追問｜每題獨立扣點"},{"id":"rotation-question","title":"每日輪替鎖定固定題目｜當日每題解鎖"}]}</script>
+  <script type="application/json" id="dh-billing-sections">{"toolId":"tarot","sections":[{"id":"custom-question","title":"自訂題目與每次新追問｜每題獨立扣點"}]}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 塔羅占卜｜線上塔羅占卜、站內 AI 自動備援解讀｜一念知機</title>
@@ -3529,7 +3529,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
           </div>
           <button type="button" id="tarotTopicLoginButton">重新免費登入 →</button>
         </div>
-        <p class="tarot-choose-hint" id="tarotTopicTapHint" role="status" aria-live="polite">✦ 亮色卡片為今日可選；灰色卡片可查看解鎖條件。</p>
+        <p class="tarot-choose-hint" id="tarotTopicTapHint" role="status" aria-live="polite">一般主題全部開放；自訂問題另外扣專業點數。</p>
         <div class="choice-grid topic-choice-grid" id="topicGrid"></div>
       </div>
 
@@ -3543,7 +3543,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
         <button class="flow-back" data-back="scenario" type="button">← 返回情境</button>
         <div class="flow-head"><div><span>STEP 03</span><h3>這次最想看清楚哪一件事？</h3><p>每個情境提供 9 道預設問題；自訂問題依中央計價設定，先確認扣點再輸入。</p></div></div>
         <div class="question-context" id="questionContext"></div>
-        <p class="tarot-choose-hint" id="tarotQuestionTapHint" role="status" aria-live="polite">✦ 請先選擇亮色的可用題目。</p>
+        <p class="tarot-choose-hint" id="tarotQuestionTapHint" role="status" aria-live="polite">一般固定題目全部開放。</p>
         <div class="question-grid" id="questionGrid"></div>
       </div>
 
@@ -3551,7 +3551,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
         <button class="flow-back" data-back="question" type="button">← 返回問題</button>
         <div class="flow-head"><div><span>STEP 04</span><h3>問題已經整理好了</h3><p>系統已推薦三張牌陣，也可手動更換；接著選擇抽牌方式。抽完就能使用站內 AI 直接解讀。</p></div></div>
         <div class="ready-card" id="readyCard"></div><div id="spreadSelector" aria-label="選擇三張牌陣"></div>
-        <div class="ready-rules"><span>本期免費次數依網站設定</span><span>五種一般抽牌輪替</span><span>四套 AI 自動備援</span></div>
+        <div class="ready-rules"><span>每抽三張扣 1 次占卜額度</span><span>六種抽牌方式皆可選</span><span>兩輪 AI 各扣 1 次</span></div>
         <button class="start-reading" id="startReading" type="button">選擇抽牌方式</button>
       </div>
 
@@ -4659,11 +4659,10 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   function tarotFullPrivilege(){return isAdminPaidFull()}
   function accessCategory(){return tarotFullPrivilege()?'paid':isLogged()?'member':'guest'}
   function guestCanUse(){return isLogged()||(!memberDeviceBound()&&!isAdminTestActive())||isAdminTestActive()}
-  function guestTopicAvailable(id){return tarotFullPrivilege()||isLogged()||guestPolicy().topics.has(id)}
+  function guestTopicAvailable(id){return TOPICS.some(t=>t.id===id)}
   function topicAllowedForCurrentUser(id){if(isGuestLoginRequired())return false;return id==='free'?(tarotFullPrivilege()||!!authToken()):guestTopicAvailable(id)}
-  function tarotQuestionFreeToday(index){return tarotFullPrivilege()||(index%2!==guestPolicy().lockedQuestions)}
-  function tarotRotationKey(index,topic=state.topic?.id,scenario=state.scenario?.id){return `${topic||''}|${scenario||''}|${index}`;}
-  function questionAllowedForCurrentUser(index){return tarotQuestionFreeToday(index)||(isLogged()&&tarotRotationOwned.has(tarotRotationKey(index)));}
+  // 一般固定題目永遠可選，不額外扣專業點數；每次抽三張仍由 wallet/tarot/draw 收取一次。
+  function questionAllowedForCurrentUser(index){return Number.isInteger(index)&&index>=0&&index<9;}
   // 牌陣不再受訪客或會員每日輪替鎖定；僅依題目是否涉及雙方互動決定關係牌陣。
   function questionHasTwoPartyInteraction(q=state.question){
     const value=String(q?.text||'').normalize('NFKC').replace(/\s+/g,'');
@@ -4676,20 +4675,13 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   function spreadAllowedForCurrentUser(key){
     return key==='past'||key==='advice'||(key==='relation'&&questionHasTwoPartyInteraction());
   }
-  function formatAllowedForCurrentUser(key){
-    if(tarotFullPrivilege())return true;
-    // 三張牌與六張牌共用相同的當日 A／B／C 輪替，會員也每日鎖 1 種。
-    return key!==guestPolicy().lockedFormat;
-  }
-  function drawAllowedForCurrentUser(mode){
-    if(mode==='physical')return tarotFullPrivilege();
-    if(tarotFullPrivilege())return true;
-    return isLogged()?memberPolicy().drawModes.has(mode):guestPolicy().drawModes.has(mode);
-  }
-  function basicMeaningAllowedForCurrentUser(){return tarotFullPrivilege()||!isLogged()||memberPolicy().meaningOpen;}
+  function formatAllowedForCurrentUser(key){return ['A','B','C'].includes(key);}
+  // 六種抽牌方式／牌義全部開放；只計實際完成的三張牌次數。
+  function drawAllowedForCurrentUser(mode){return ['fan','scatter','flow','study','stop','physical'].includes(mode);}
+  function basicMeaningAllowedForCurrentUser(){return true;}
   function rotatingBadgeForCurrentUser(note='明日開放'){return lockedBadgeHTML(isLogged()?'member-rotation':'member',note);}
   function showRotationNotice(){return isLogged()?openGuestNotice('memberRotation'):openMemberModal();}
-  function dailyTarotAccessMessage(){return isGuestLoginRequired()?'此瀏覽器已經登入過會員，訪客資格已停用。請登入 Google 會員繼續。':'免費登入立即解鎖今日輪替限制；自訂問題需使用專業點數，實體牌輸入、TXT 下載仍依進階權限開放。'}
+  function dailyTarotAccessMessage(){return isGuestLoginRequired()?'此瀏覽器已登入過會員，請登入 Google 會員繼續。':'一般題目與六種抽牌方式全面開放；每抽三張使用一次抽牌額度，AI 解讀另扣一次；自訂／自行延伸問題另計專業點數。'}
   function lockedBadgeHTML(kind='member',note=''){
     return `<span class="v2814-lock-badge">🔒 ${kind==='paid'?'完整進階':kind==='login-required'?'需重新登入':kind==='member-rotation'?'今日輪替鎖定':'免費登入解鎖'}</span>${note?`<small class="v2814-lock-note">${esc(note)}</small>`:''}`;
   }
@@ -4778,13 +4770,9 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   function isMemberFollowupAllowed(){return openTesting||isAdminPaidFull()}
   function hasFullPaidAccess(){return openTesting||isAdminPaidFull()||!!state.followupUsed||!!state.advancedCards?.length}
 
-  function isReaderAllowed(key){
-    if(hasFullPaidAccess())return true;
-    if(isLogged())return key!=='d'||memberPolicy().dOpen;
-    return key==='a'||key===guestReaderKey();
-  }
+  function isReaderAllowed(key){return ['a','b','c','d'].includes(key);}
   function canAccessAllReaders(){return ['a','b','c','d'].every(isReaderAllowed)}
-  function requiredReaders(){return isLogged()?['a','b','c',...(isReaderAllowed('d')?['d']:[])]:['a',guestReaderKey()]}
+  function requiredReaders(){return isLogged()?['a','b','c']:['a',guestReaderKey()];}
   function requiredReadersDone(){return requiredReaders().every(k=>state.readersViewed?.has(k))}
 
   function remaining(ms){const total=Math.max(0,Math.ceil(ms/60000));const h=Math.floor(total/60),m=total%60;return h?`${h} 小時${m?` ${m} 分鐘`:''}`:`${m} 分鐘`}
@@ -4895,7 +4883,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const mount=$('tarotGoogleMount');if(mount)mount.hidden=!!p;
     const title=$('tarotMemberTitle'),intro=$('tarotMemberIntro');
     if(title)title.textContent=p?'免費會員':'免費登入';
-    if(intro)intro.textContent=p?'已登入一念知機免費會員。一般主題正常開放；固定題目依台灣日期每日輪替，今日鎖定者可用專業點數逐題解鎖。抽牌方式、解讀格式與基礎牌義維持每日規則；自訂問題另依中央計價扣點。':isGuestLoginRequired()?'此瀏覽器曾登入過會員，未登入時所有占卜主題已鎖定；請重新登入會員，依當日會員權限使用。登入後可依網站設定使用定期免費及共用 AI 額度；完整進階功能仍另行解鎖。':'訪客免費抽牌及 AI 解讀次數依網站額度設定提供；免費登入可領取共用額度並保存紀錄。';
+    if(intro)intro.textContent=p?'一般固定題目、六種抽牌方式、解讀格式全部開放。每次抽三張使用一次抽牌額度（每日免費優先）；AI 解讀另扣一次。自訂與自行延伸問題另依中央計價扣專業點數。':isGuestLoginRequired()?'此瀏覽器曾登入過會員，請重新登入後繼續；一般題目無額外解鎖費用。':'一般題目和六種抽牌方式皆開放；抽牌依免費額度計次。登入會員後可使用共用額度並進行 AI 解讀。';
     syncMemberSaveInvites();
   }
   // 登入集中由 member.html 管理；塔羅不呼叫 /me，不額外增加登入次數。
@@ -5000,7 +4988,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   const tarotCustomBindURL=MEMBER_API_BASE+'/professional/custom/bind';
   let tarotCustomPending={sourceKey:'',operationId:'',ticket:'',points:0,boundQuestion:''};
   let tarotCustomPendingBusy=false,tarotRelatedPendingBusy=false,tarotCustomSubmitBusy=false;
-  const tarotCustomErrors={PRICE_NOT_SET:'站長尚未設定專業點數價格，暫時無法使用。',PRICE_CHANGED:'價格剛剛更新，請重新確認。',INSUFFICIENT_POINTS:'專業解鎖點數不足。',LOGIN_REQUIRED:'請先登入會員。',TAROT_API_NOT_READY:'塔羅後端尚未開放自訂題目扣點驗證，系統未扣點。',CUSTOM_UNLOCK_UNAVAILABLE:'扣點服務暫時無法使用，尚未扣點。',ROTATION_UNLOCK_UNAVAILABLE:'固定題目解鎖服務暫時無法使用，請稍後再試。',INVALID_ROTATION_REQUEST:'固定題目解鎖資料不完整，請重新選擇題目。',QUESTION_FREE_TODAY:'這題今日免費開放，無需扣點。',OPERATION_MISMATCH:'解鎖票據與本次問題不符，請重新開始。'};
+  const tarotCustomErrors={PRICE_NOT_SET:'站長尚未設定專業點數價格，暫時無法使用。',PRICE_CHANGED:'價格剛剛更新，請重新確認。',INSUFFICIENT_POINTS:'專業解鎖點數不足。',LOGIN_REQUIRED:'請先登入會員。',TAROT_API_NOT_READY:'塔羅後端尚未開放自訂題目扣點驗證，系統未扣點。',CUSTOM_UNLOCK_UNAVAILABLE:'扣點服務暫時無法使用，尚未扣點。',OPERATION_MISMATCH:'解鎖票據與本次問題不符，請重新開始。'};
   function tarotCustomError(code){return tarotCustomErrors[code]||code||'專業點數操作失敗';}
   function tarotCustomSource(){return state.topic?.id==='free'?'topic:free':'scenario:'+state.topic?.id+':'+state.scenario?.id;}
   function tarotCustomToken(){return authToken();}
@@ -5015,7 +5003,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(!node)return;
     if(tarotFullPrivilege()){node.textContent='管理員完整測試｜免扣專業點數';return;}
     node.textContent='正在讀取自訂題目價格…';
-    try{const points=await tarotCustomQuote();if(node.isConnected)node.textContent=points?`每次新自訂題目／追問需 ${points} 點（AI 解讀另扣 1 次）`:'自訂題目｜待站長設定點數，暫未開放';}
+    try{const points=await tarotCustomQuote();if(node.isConnected)node.textContent=points?`每個新自訂／延伸問題需 ${points} 點專業點數（抽牌與 AI 額度分別計算）`:'自訂題目｜待站長設定點數，暫未開放';}
     catch(_){if(node.isConnected)node.textContent='價格暫時無法讀取，請稍後再試';}
   }
   function tarotRefreshCustomPrices(root=document){root.querySelectorAll('[data-tarot-custom-price]').forEach(el=>{void tarotShowCustomPrice(el);});}
@@ -5055,8 +5043,8 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(!canStartNewFreeReading())return;
     if(!topicAllowedForCurrentUser(state.topic?.id)){enforceAccess(false,'member');return;}
     if(state.question?.custom&&!tarotFullPrivilege()&&!state.question?.customUnlockTicket){alert('自訂題目尚未完成專業點數解鎖，請先返回自訂題目入口。');return;}
-    if(state.question&&!state.question.custom&&!tarotFullPrivilege()){const qi=state.questions?.findIndex(q=>q.id===state.question.id);if(qi<0||!questionAllowedForCurrentUser(qi)){alert('這道題目今天尚未解鎖，請返回問題列表確認。');showStep('question');return;}}
-    if(!spreadAllowedForCurrentUser(state.spreadChoice)){openGuestNotice('rotation');return;}
+    if(state.question&&!state.question.custom){const qi=state.questions?.findIndex(q=>q.id===state.question.id);if(qi<0){alert('找不到這道題目，請返回題目列表重新選擇。');showStep('question');return;}}
+    if(!spreadAllowedForCurrentUser(state.spreadChoice)){alert('這一道題目不適合雙方關係牌陣，請選擇其他牌陣。');return;}
     state.accessTier=accessCategory();state.usageCounted=false;await drawReading();
   }
   // 免費抽牌為 0 時提示下一個扣取的「共用占卜次數」，而非誤寫成所有題目免費可選。
@@ -5072,8 +5060,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     }
     return '本期訪客免費抽牌次數已用完；登入後可查看會員共用額度。';
   }
-  // 會員共用「占卜次數」只有在本期自動補充歸零後才提醒。
-  // 專業點數是獨立錢包，不能拿共用占卜次數直接解鎖輪替題目或抽牌方式。
+  // 共用占卜次數與專業點數是兩個獨立錢包；只有日常抽牌額度用完才顯示共用次數。
   function tarotMemberDrawBalance(){
     const s=dhTarotToolSnapshot;
     if(isAdminTestActive()||!isLogged()||!s?.wallet||!s.daily)return null;
@@ -5081,28 +5068,15 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const n=Number(s.wallet.tool);
     return Number.isSafeInteger(n)&&n>=0?n:null;
   }
-  function tarotProfessionalBalance(){
-    if(!isLogged())return null;
-    const element=document.getElementById('dhProfessionalPointsNumber');
-    const found=/^(\d+)\s*點$/.exec(element?.textContent?.trim()||'');
-    return found?Number(found[1]):null;
-  }
-  function tarotUpdateLockedQuestionLabels(){
-    const n=tarotMemberDrawBalance(),points=tarotProfessionalBalance();
-    document.querySelectorAll('#questionGrid [data-tarot-rotation-price]').forEach(label=>{
-      const amount=Number(label.dataset.rotationCost);
-      if(!Number.isSafeInteger(amount)||amount<1)return;
-      // 已用完免費次數時才補充點數餘額；每題真正收費仍為專業點數。
-      label.textContent=`🔒 解鎖 ${amount} 點`+(n!==null&&points!==null?`｜專業剩 ${points} 點`:'');
-    });
-  }
   function tarotSyncMemberBalanceBadges(){
     const n=tarotMemberDrawBalance();
     const label=n===null?'':n>0?`會員額度 ${n} 次（用完不補）`:'會員額度 0 次（已用完）';
-    const cards=[...document.querySelectorAll('#topicGrid [data-topic]:not([data-topic="free"]),#drawModeGrid [data-draw-mode]:not([data-draw-mode="physical"])')];
+    // 只在第一層顯示餘額；抽牌方式與固定題目不重複提醒，也不額外解鎖。
+    document.querySelectorAll('#drawModeGrid .tarot-member-draw-balance').forEach(el=>el.remove());
+    const cards=[...document.querySelectorAll('#topicGrid [data-topic]:not([data-topic="free"])')];
     for(const card of cards){
       const existing=card.querySelector('.tarot-member-draw-balance');
-      // 原本的每日輪替禁用維持原樣；這裡只提供資訊，不創造解鎖權限。
+      // 只顯示共用占卜額度；新問題與抽牌方式不會另外扣專業點數。
       if(!label){existing?.remove();continue;}
       const badge=existing||document.createElement('span');
       badge.className='tarot-member-draw-balance';
@@ -5110,99 +5084,12 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       badge.setAttribute('aria-label','會員共用占卜剩餘額度：'+label);
       if(!existing)card.appendChild(badge);
     }
-    tarotUpdateLockedQuestionLabels();
   }
-  window.addEventListener('dh-tarot-point-balance-updated',()=>tarotUpdateLockedQuestionLabels());
   function tarotUpdateSelectionHints(){
     const note=tarotSelectionQuotaNote();
     const top=$('tarotTopicTapHint');if(top){top.hidden=!note;top.textContent=note;}
-    const question=$('tarotQuestionTapHint');if(question){question.hidden=!note||state.topic?.id==='free';question.textContent=note;}
+    const question=$('tarotQuestionTapHint');if(question){question.hidden=true;}
     tarotSyncMemberBalanceBadges();
-  }
-  // 收費僅限當日被輪替鎖定的固定問題，免費問題絕不扣點。
-  const tarotRotationAPI=MEMBER_API_BASE+'/professional/tarot/rotation';
-  let tarotRotationOwned=new Set(),tarotRotationOwner='',tarotRotationLastFetch=0,tarotRotationBusy=false,tarotRotationPending=null;
-  let tarotRotationPriceCached=null,tarotRotationPriceUntil=0,tarotRotationPricePending=null;
-  function tarotRotationSyncOwner(){
-    const owner=(authToken()||'guest')+':'+taiwanDateKey();
-    if(owner===tarotRotationOwner)return;
-    tarotRotationOwner=owner;tarotRotationOwned=new Set();tarotRotationLastFetch=0;
-    tarotRotationPriceUntil=0;tarotRotationPriceCached=null;
-  }
-  async function tarotRotationQuote(){
-    if(Date.now()<tarotRotationPriceUntil)return tarotRotationPriceCached;
-    if(tarotRotationPricePending)return tarotRotationPricePending;
-    tarotRotationPricePending=(async()=>{
-      const r=await fetch(tarotCustomPricingURL,{cache:'no-store'});
-      const j=await r.json().catch(()=>({}));
-      if(!r.ok||j.success!==true)throw Error('中央價格暫時無法讀取');
-      const p=(j.sections||[]).find(x=>x.sectionId==='rotation-question');
-      tarotRotationPriceCached=p?.mode==='priced'&&Number.isSafeInteger(p.points)&&p.points>0?p.points:null;
-      tarotRotationPriceUntil=Date.now()+10000;
-      return tarotRotationPriceCached;
-    })().finally(()=>{tarotRotationPricePending=null});
-    return tarotRotationPricePending;
-  }
-  async function tarotRefreshRotationPrices(root=document){
-    const labels=[...root.querySelectorAll('[data-tarot-rotation-price]')];
-    if(!labels.length)return;
-    if(!isLogged()){for(const x of labels)x.textContent='🔒 請登入解鎖';return;}
-    try{
-      const p=await tarotRotationQuote();
-      for(const x of labels)if(x.isConnected){
-        if(p){x.dataset.rotationCost=String(p);x.textContent=`🔒 解鎖 ${p} 點`;}
-        else {delete x.dataset.rotationCost;x.textContent='🔒 點數待設定';}
-      }
-      tarotUpdateLockedQuestionLabels();
-    }catch(_){for(const x of labels)if(x.isConnected)x.textContent='🔒 價格讀取失敗';}
-  }
-  async function tarotLoadRotationStatus(force=false){
-    tarotRotationSyncOwner();
-    if(!isLogged()||isAdminTestActive())return;
-    if(tarotRotationPending)return tarotRotationPending;
-    if(!force&&tarotRotationLastFetch&&Date.now()-tarotRotationLastFetch<30000)return;
-    const owner=tarotRotationOwner;
-    tarotRotationPending=(async()=>{
-      const r=await fetch(tarotRotationAPI,{cache:'no-store',headers:{Authorization:'Bearer '+authToken()}});
-      const j=await r.json().catch(()=>({}));
-      if(!r.ok||j.success!==true)throw Error('輪替解鎖狀態暫時無法讀取');
-      if(tarotRotationOwner!==owner)return;
-      const next=new Set((j.items||[]).map(x=>tarotRotationKey(Number(x.questionIndex),x.topicId,x.scenarioId)));
-      const changed=next.size!==tarotRotationOwned.size||[...next].some(x=>!tarotRotationOwned.has(x));
-      tarotRotationOwned=next;tarotRotationLastFetch=Date.now();
-      if(changed&&stepEl('question')?.classList.contains('active')&&state.topic?.id!=='free')renderQuestions();
-    })().finally(()=>{tarotRotationPending=null});
-    try{await tarotRotationPending}catch(e){console.warn('Tarot rotation status',e.message);}
-  }
-  async function tarotBuyRotationQuestion(index){
-    if(tarotRotationBusy)return false;
-    if(!isLogged()||!authToken()){openMemberModal();return false;}
-    tarotRotationSyncOwner();
-    if(questionAllowedForCurrentUser(index))return true;
-    if(!state.topic||!state.scenario||!Number.isInteger(index)||index<0||index>8)return false;
-    if(dhTarotToolSnapshot?.daily?.remaining===0&&dhTarotToolSnapshot?.wallet?.tool===0){
-      alert('目前沒有可用的抽牌次數，請等候自動補充後再解鎖題目。');return false;
-    }
-    tarotRotationBusy=true;
-    const topicId=state.topic.id,scenarioId=state.scenario.id,owner=tarotRotationOwner;
-    try{
-      // 第二分頁先解鎖同一題時優先同步，避免重複付費。
-      await tarotLoadRotationStatus(true);
-      if(questionAllowedForCurrentUser(index))return true;
-      const points=await tarotRotationQuote();if(!points)throw Error('PRICE_NOT_SET');
-      if(!confirm(`這是今天輪替鎖定的固定題目。\n支付 ${points} 點可解鎖這一道題目（今日有效；明日恢復輪替）。\n抽牌次數與 AI 解讀次數另行計算。\n\n確定扣除 ${points} 點？`))return false;
-      const operationId=crypto.randomUUID();
-      const r=await fetch(tarotRotationAPI,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+authToken()},body:JSON.stringify({topicId,scenarioId,questionIndex:index,expectedPoints:points,operationId})});
-      const j=await r.json().catch(()=>({}));
-      if(!r.ok||j.success!==true)throw Error(tarotCustomError(j.error||'ROTATION_UNLOCK_UNAVAILABLE'));
-      if(owner!==tarotRotationOwner||state.topic?.id!==topicId||state.scenario?.id!==scenarioId)return false;
-      tarotRotationOwned.add(tarotRotationKey(index,topicId,scenarioId));
-      tarotRotationLastFetch=0;
-      window.dispatchEvent(new Event('dh-professional-points-changed'));
-      renderQuestions();
-      return true;
-    }catch(e){alert('固定題目解鎖失敗：'+String(e.message||e));return false}
-    finally{tarotRotationBusy=false;}
   }
   function renderTopics(){
     const loginRequired=isGuestLoginRequired();
@@ -5210,10 +5097,10 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(gate)gate.hidden=!loginRequired;
     els.topic.innerHTML=TOPICS.map((t,i)=>{
       const allowed=topicAllowedForCurrentUser(t.id),paid=t.id==='free';
-      const note=loginRequired?'請先登入會員':paid?'登入後可用專業點數解鎖':'明日免費輪替開放';
+      const note=loginRequired?'請先登入會員':paid?'登入後以專業點數解鎖':'';
       const lockKind=paid?'member':loginRequired?'login-required':'member';
       const classes=['choice-card',allowed?'topic-ready is-option-open':'v2814-locked is-option-locked',loginRequired?'topic-login-locked':''].filter(Boolean).join(' ');
-      const ariaState=allowed?'，可選擇':loginRequired?'，需重新登入會員':paid?'，需登入並扣除專業點數':'，今日輪替鎖定';
+      const ariaState=allowed?'，可選擇':loginRequired?'，需重新登入會員':'，自訂需另計專業點數';
       return `<button type="button" class="${classes}" style="--topic-i:${i}" data-topic="${t.id}" aria-label="${esc(t.name)}${ariaState}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small>${paid?'<span class="tarot-custom-cost" data-tarot-custom-price="topic">正在讀取自訂題目點數…</span>':allowed?'':lockedBadgeHTML(lockKind,note)}</button>`;
     }).join('');
     tarotRefreshCustomPrices(els.topic);
@@ -5257,15 +5144,14 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   }
   function renderQuestions(){
     const free=state.topic?.id==='free',qs=free?[]:questions();state.questions=qs;
-    els.qctx.textContent=free?'不限主題｜請輸入你真正想釐清的一件事情。':`${state.topic.name} → ${state.scenario.name}｜9 道固定題目每日輪替開放約一半；今日鎖定者可用專業點數解鎖。`;
+    els.qctx.textContent=free?'不限主題｜請輸入你真正想釐清的一件事情。':`${state.topic.name} → ${state.scenario.name}｜9 道固定題目全部開放，不額外扣專業點數；每次抽三張使用 1 次抽牌額度。`;
     const fixed=qs.map((q,i)=>{
       const allowed=questionAllowedForCurrentUser(i);
-      return `<button type="button" class="question-card ${allowed?'is-option-open question-ready':'v2814-locked is-option-locked'}" data-question="${esc(q.id)}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b>${allowed?'':'<span class="v2814-lock-badge" data-tarot-rotation-price>🔒 讀取點數…</span>'}</button>`;
+      return `<button type="button" class="question-card is-option-open question-ready" data-question="${esc(q.id)}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b></button>`;
     }).join('');
     els.question.innerHTML=fixed+customFormHTML(free);
     tarotRefreshCustomPrices(els.question);
     tarotUpdateSelectionHints();
-    if(!free){void tarotRefreshRotationPrices(els.question);void tarotLoadRotationStatus();}
     const back=document.querySelector('#stepQuestion [data-back]');if(back){back.dataset.back=free?'topic':'scenario';back.textContent=free?'← 返回主題':'← 返回情境';}
   }
   async function selectCustomQuestion(){
@@ -5495,7 +5381,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
         btn.appendChild(badge);
       }
     });
-    const dHint=$('tarotDrawTapHint');if(dHint){const n=[...document.querySelectorAll('[data-draw-mode]')].filter(b=>b.classList.contains('is-option-open')).length;dHint.textContent='✓ 亮色可選（'+n+' 種）　·　灰色為目前鎖定';}
+    const dHint=$('tarotDrawTapHint');if(dHint){dHint.textContent='六種抽牌方式全部開放；選擇你喜歡的方式就能開始。';}
     tarotSyncMemberBalanceBadges();
   }
   function showModeSelector(){
@@ -5590,11 +5476,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   async function beginDrawMode(mode){
     // 一局只能選一次抽牌方式；選定後不能因結果不喜歡而換另一種。
     if(state.drawMode && state.drawMode!==mode)return;
-    if(!isDrawModeAllowed(mode)){
-      if(mode==='physical'){openGuestNotice('advanced');return;}
-      if(!isLogged()){openMemberModal();return;}
-      openGuestNotice('rotation');return;
-    }
+    if(!isDrawModeAllowed(mode)){alert('不支援的抽牌方式，請重新選擇。');return;}
 
     clearRitualTimers();
     state.drawMode=mode;
@@ -6163,7 +6045,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(!firstStageReadyForFollowup()){const hint=els.finish.querySelector('[data-follow-error]');if(hint)hint.textContent='請先完成第一階段站內 AI 解讀，再繼續第二階段。';else alert('請先完成第一階段站內 AI 解讀。');els.analysis.scrollIntoView({behavior:'smooth',block:'start'});return;}
     const spread=remainingSpreads().some(([k])=>k===state.advanceSpreadKey)?state.advanceSpreadKey:'';
     if(!spread){alert('請選擇第一次沒有使用過的牌陣。');return;}
-    if(!spreadAllowedForCurrentUser(spread)){openMemberModal();return;}
+    if(!spreadAllowedForCurrentUser(spread)){alert('請重新選擇符合這次問題的牌陣。');return;}
     if(state.followChoice==='related'&&!tarotFullPrivilege()&&!state.relatedPointsTicket){alert('請先於延伸問題入口確認扣點。');return;}
     if(state.followChoice==='related'){
       const error=customQuestionError(state.followText||'');
@@ -6425,7 +6307,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   }
   function renderAIPromptAccess(consensus){
     if(!consensus)return;
-    const full=tarotFullPrivilege(),access=full?'full':'locked';
+    const full=true,access='full';
     const existing=consensus.querySelector('[data-ai-prompt-panel]');
     if(existing?.dataset.access===access){
       // If a follow-up was generated, refresh the displayed prompt without collapsing its details.
@@ -6494,7 +6376,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const copyBtn=`<button class="copy-ai-prompt ${full?'':'guest-feature-disabled'}" type="button" data-copy-ai-prompt>${full?'複製給其他 AI 比對':'完整進階｜複製給其他 AI'}</button>`;
     const txtBtn=`<button class="download-txt ${full?'':'guest-feature-disabled'}" type="button" data-download-txt>${full?'TXT 備份':'完整進階｜TXT 備份'}</button>`;
     const meta=readingMeta(body);
-    const afterA=state.fixedCaseId?fixedCaseControls20():`<section class="solo-after-report" data-consensus-panel><div class="phase-label"><span>A 解讀完成</span><b>需要再深入一點嗎？</b></div><p>A 的完整解讀已提供。${openTesting?'目前開放測試，可直接開始 B 抽牌。':'可選擇 B 進一步探索原問題。'}</p><div class="ab-paid-options" style="grid-template-columns:1fr"><div><h4>B｜進階牌陣</h4><p>另抽三張新牌，先深入解讀 B，再整合 A＋B 六張牌。</p><button type="button" class="phase-next-cta" data-open-b>${openTesting?'B 進階牌陣｜直接抽三張':'B 進階牌陣｜付費解鎖並抽三張'}</button></div></div></section>`;
+    const afterA=state.fixedCaseId?fixedCaseControls20():`<section class="solo-after-report" data-consensus-panel><div class="phase-label"><span>A 解讀完成</span><b>第二輪三張牌</b></div><p>一般 3＋3 每抽三張使用 1 次占卜額度，第二輪 AI 解讀另扣 1 次。請從下方第二階段繼續。</p></section>`;
     els.analysis.innerHTML=`<div class="analysis-headrow"><div><div class="analysis-kicker">A · FREE · THREE CARDS</div><h3 class="analysis-title">A｜免費完整解讀</h3></div><div class="analysis-actions">${copyBtn}${txtBtn}</div></div><div class="solo-shell"><div class="solo-shell-head"><div class="reader-avatar">✦</div><div><h3>塔羅老師｜白話完整解讀</h3><p>逐張理解、連起故事、整理建議，最後回到你的問題。</p></div><span class="solo-reading-time">約 ${meta.mins} 分鐘</span></div>${body}${afterA}</div><details class="guardrail-details"><summary>解讀界線</summary><p>${esc(state.guardrailText||'')}</p></details>`;
     els.analysis.hidden=false;updateReaderJourney();renderPaidResults();
   }
@@ -6836,7 +6718,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const t=topicBy(topicId);
     if(!t)return false;
     if(isGuestLoginRequired()){openMemberModal();return false;}
-    if(!isTopicAllowed(topicId)){renderTopics();showStep('topic');if(topicId==='free')openGuestNotice('advanced');else if(!isLogged())openMemberModal();else openGuestNotice('rotation');return false;}
+    if(!isTopicAllowed(topicId)){renderTopics();showStep('topic');openMemberModal();return false;}
     const aliases=t.id==='love'?{distant:'dating',reconcile:'breakup'}:{newjob:'employed',promotion:'employed',planning:'business',running:'business',leave:'jobhunt'};
     const sc=scenarioBy(t,aliases[scenarioId]||scenarioId);
     if(!sc)return false;
@@ -6875,7 +6757,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(e.target.closest('[data-submit-custom]')){void selectCustomQuestion();return;}
     const b=e.target.closest('[data-question]');if(!b)return;
     const qi=state.questions.findIndex(q=>q.id===b.dataset.question);
-    if(qi<0)return;if(!questionAllowedForCurrentUser(qi)){if(!await tarotBuyRotationQuestion(qi))return;}
+    if(qi<0)return;
     tarotCustomInvalidate();state.question=state.questions[qi];state.spreadChoice=recommendedSpread(state.question);renderReady();showStep('ready');
   });
   $('spreadSelector').addEventListener('click',e=>{const btn=e.target.closest('[data-spread-pick]');if(!btn||!SPREAD_OPTIONS[btn.dataset.spreadPick])return;if(!spreadAllowedForCurrentUser(btn.dataset.spreadPick)){showRotationNotice();return;}state.spreadChoice=btn.dataset.spreadPick;renderReady();});
@@ -6885,9 +6767,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(state.drawMode)return;
     const b=e.target.closest('[data-draw-mode]');if(!b)return;
     if(!isDrawModeAllowed(b.dataset.drawMode)){
-      if(b.dataset.drawMode==='physical'){openGuestNotice('advanced');return;}
-      if(!isLogged()){openMemberModal();return;}
-      showRotationNotice();return;
+      alert('請重新選擇抽牌方式。');return;
     }
     beginDrawMode(b.dataset.drawMode);
   });
@@ -6921,7 +6801,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       }
       state.followChoice=e.target.value;renderFinish();persist3x3();
     }
-    if(e.target.name==='tarot-follow-spread'){if(!spreadAllowedForCurrentUser(e.target.value)){e.target.checked=false;showRotationNotice();return;}state.advanceSpreadKey=e.target.value;persist3x3();}
+    if(e.target.name==='tarot-follow-spread'){if(!spreadAllowedForCurrentUser(e.target.value)){e.target.checked=false;alert('這道題目不適合雙方關係牌陣，請選擇其他牌陣。');return;}state.advanceSpreadKey=e.target.value;persist3x3();}
   });
   els.finish.addEventListener('input',e=>{if(e.target.matches('[data-follow-question]')){state.followText=e.target.value;persist3x3();}});
   document.addEventListener('click',e=>{
@@ -7468,7 +7348,7 @@ html[data-theme="light"] #topicGrid [data-topic="free"]{background:linear-gradie
 </script>
 
 <style id="tarot-rotation-priced-layout-v1">
-/* 可選題目無多餘標籤；鎖定題目才顯示價格。沿用修好的獨立網格列高度。 */
+/* 固定題目全部開放，不顯示逐題扣專業點數；沿用獨立網格列高度。 */
 #topicGrid .choice-card.is-option-open:not([data-topic="free"]){padding-bottom:15px}
 #questionGrid .question-card .tarot-available-indicator{display:none!important}
 #questionGrid .question-card .v2814-lock-badge[data-tarot-rotation-price]{white-space:nowrap;font-weight:800;max-width:calc(100% - 18px)}
@@ -7491,7 +7371,7 @@ html[data-theme="light"] #tarotTopicTapHint:not([hidden]),html[data-theme="light
 }
 #drawModeGrid .draw-mode-card.is-option-locked .tarot-member-draw-balance{top:42px;right:10px;}
 #drawModeGrid .draw-mode-card.is-option-open .tarot-member-draw-balance{top:11px;right:10px;}
-/* 抽牌方式輪替鎖定保留；此提示為剩餘抽牌額度，不能直接解除輪替鎖定。 */
+/* 此提示僅為共用占卜餘額資訊，不影響六種抽牌方式的選用。 */
 #drawModeGrid .draw-mode-card.is-option-locked .guest-lock-badge{z-index:10}
 html[data-theme="dark"] #topicGrid .tarot-member-draw-balance,
 html[data-theme="dark"] #drawModeGrid .tarot-member-draw-balance{
