@@ -10563,14 +10563,26 @@ html[data-theme="light"] .bazi-core-random-controls .bazi-core-random-hint{color
 
 <!-- 九大分析首次進入視野：僅「範例展示」小標籤依序柔和提示一次。 -->
 <style id="bazi-hub-example-once-hint-20261021">
+/* First-view reminder: stronger yet short, so the tiny example badge can be seen on desktop and dark mode. */
 #baziSectionHub .bazi-hub-grid .bazi-hub-status--example.bazi-example-once-hint {
+  position:relative;
+  z-index:2;
   transform-origin:center center;
-  animation:baziExampleGentleHint 1.2s ease-in-out 1 both;
+  animation:baziExampleGentleHint 1.38s ease-in-out 1 both;
   animation-delay:var(--bazi-example-hint-delay,0s);
 }
 @keyframes baziExampleGentleHint {
-  0%,100% {transform:scale(1);box-shadow:0 0 0 0 rgba(187,132,50,0)}
-  50% {transform:scale(1.075);background:rgba(226,185,109,.24);border-color:rgba(187,132,50,.8);box-shadow:0 0 0 4px rgba(211,159,71,.12),0 0 11px rgba(187,132,50,.20)}
+  0%,100% {transform:scale(1);box-shadow:0 0 0 0 rgba(236,165,37,0)}
+  18% {transform:scale(1.06)}
+  33%,68% {
+    transform:scale(1.13);
+    background:#ffca61;
+    border-color:#e49b19;
+    color:#392300;
+    text-shadow:none;
+    box-shadow:0 0 0 4px rgba(255,187,64,.36),0 0 0 8px rgba(255,187,64,.12),0 0 22px rgba(255,166,30,.68);
+  }
+  86% {transform:scale(1.045)}
 }
 @media(prefers-reduced-motion:reduce) {
   #baziSectionHub .bazi-hub-grid .bazi-hub-status--example.bazi-example-once-hint{animation:none!important}
@@ -10600,7 +10612,7 @@ html[data-theme="light"] .bazi-core-random-controls .bazi-core-random-hint{color
         if(e.target===badges[badges.length-1] && e.animationName==='baziExampleGentleHint')clear();
       },{once:true});
       badges.forEach((badge,index)=>{
-        badge.style.setProperty('--bazi-example-hint-delay',(index*.85).toFixed(2)+'s');
+        badge.style.setProperty('--bazi-example-hint-delay',(index*1.08).toFixed(2)+'s');
         badge.classList.add('bazi-example-once-hint');
       });
     }
