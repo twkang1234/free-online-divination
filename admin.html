@@ -192,7 +192,9 @@ td.muted{color:var(--muted)}
 .member-usage-periods button{padding:8px 11px;border-radius:9px;border:1px solid #334050;color:#afbdd0;background:#0b131c;cursor:pointer;font-size:.8rem}
 .member-usage-periods button[aria-pressed=true]{background:#312716;color:#ffe0a0;border-color:#b69456;font-weight:800}
 .member-usage-results{overflow-x:auto}
-.member-usage-results table{min-width:630px}
+.member-usage-results table{min-width:720px}
+.member-usage-country{white-space:nowrap;color:#d2dfec}
+.member-usage-country.unknown{color:#8f9cac}
 .member-usage-results td{vertical-align:middle}
 .member-usage-results button{white-space:nowrap}
 .member-usage-status{color:#acbccb;font-size:.76rem;line-height:1.65;min-height:19px}
@@ -399,7 +401,7 @@ td.muted{color:var(--muted)}
     <details class="section member-usage-box" id="memberUsagePanel">
       <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設展開｜依成功起盤排行）</small></span></summary>
       <div class="member-usage-body">
-        <p class="member-usage-note">僅統計已登入會員成功完成的起盤、抽牌或起卦；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>八字、塔羅、易經已接入成功事件；啟用統計後才開始累計，不回填過去紀錄。</strong></p>
+        <p class="member-usage-note">僅統計已登入會員成功完成的起盤、抽牌或起卦；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>八字、塔羅、易經已接入成功事件；啟用統計後才開始累計，不回填過去紀錄。</strong> 使用地區顯示會員最近一次成功使用時的 Cloudflare 連線國家／地區；舊資料不回推，VPN 可能影響判定。</p>
         <div class="member-usage-settings">
           <div class="member-usage-settings-head"><strong style="font-size:.86rem">統計模式</strong><span class="member-usage-status" id="memberUsageModeTime">尚未讀取設定</span></div>
           <div class="member-usage-fields">
@@ -1084,6 +1086,17 @@ async function loadMemberUsageSettings(){
     $('memberUsageModeTime').textContent=r.updatedAt?'上次儲存：'+fmt(r.updatedAt):'預設關閉';
   }catch(e){usageStatus('讀取設定失敗：'+e.message,true)}
 }
+// ISO 兩碼國家旗幟＋繁中地區名稱；無資料時不猜測所在地。
+const usageCountryNames={TW:'台灣',HK:'香港',MO:'澳門',CN:'中國',MY:'馬來西亞',SG:'新加坡',JP:'日本',KR:'南韓',US:'美國',CA:'加拿大',AU:'澳洲',GB:'英國'};
+const usageCountryNamesIntl=typeof Intl!=='undefined'&&Intl.DisplayNames?new Intl.DisplayNames(['zh-Hant-TW'],{type:'region'}):null;
+function usageCountryLabel(value){
+  const code=String(value||'').toUpperCase();
+  if(!/^[A-Z]{2}$/.test(code)||code==='XX'||code==='T1')return '';
+  const name=usageCountryNames[code]||usageCountryNamesIntl?.of(code);
+  if(!name||name===code)return '';
+  const flag=[...code].map(c=>String.fromCodePoint(127397+c.charCodeAt(0))).join('');
+  return flag+' '+name;
+}
 async function loadMemberUsageLeaderboard(preserveStatus=false){
   if(!$('memberUsagePanel').open||!token())return;
   const seq=++memberUsageRequestSeq;
@@ -1095,7 +1108,7 @@ async function loadMemberUsageLeaderboard(preserveStatus=false){
     const r=await usageAdminRequest('/admin/member-usage/leaderboard?period='+encodeURIComponent(memberUsagePeriod)+'&limit='+encodeURIComponent(limit));
     if(seq!==memberUsageRequestSeq||!$('memberUsagePanel').open)return;
     if(!r.rows?.length){$('memberUsageResults').textContent='這段期間尚無可顯示的會員成功起盤紀錄。請確認已啟用「精簡」或「完整」模式，再以一般登入會員成功使用工具。';return}
-    $('memberUsageResults').innerHTML=`<table aria-label="會員起盤排行榜"><thead><tr><th>排名</th><th>會員</th><th class="mobile-hide">最近使用</th><th>起盤</th><th class="mobile-hide">AI 成功</th><th>詳細</th></tr></thead><tbody>${r.rows.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(m.name||'—')}<small style="display:block;color:#91a2b5;overflow-wrap:anywhere">${esc(m.email||'')}</small></td><td class="mobile-hide muted">${fmt(m.lastUsedAt)}</td><td><strong>${Number(m.castCount||0)}</strong></td><td class="mobile-hide">${Number(m.aiCount||0)}</td><td><button class="btn secondary" type="button" data-usage-member="${esc(m.googleSub)}">查看</button></td></tr>`).join('')}</tbody></table>`;
+    $('memberUsageResults').innerHTML=`<table aria-label="會員起盤排行榜"><thead><tr><th>排名</th><th>會員</th><th>使用地區</th><th class="mobile-hide">最近使用</th><th>起盤</th><th class="mobile-hide">AI 成功</th><th>詳細</th></tr></thead><tbody>${r.rows.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(m.name||'—')}<small style="display:block;color:#91a2b5;overflow-wrap:anywhere">${esc(m.email||'')}</small></td><td class="member-usage-country${usageCountryLabel(m.countryCode)?'':' unknown'}" title="最近成功使用時的連線地區（非國籍）">${esc(usageCountryLabel(m.countryCode)||'尚未記錄')}</td><td class="mobile-hide muted">${fmt(m.lastUsedAt)}</td><td><strong>${Number(m.castCount||0)}</strong></td><td class="mobile-hide">${Number(m.aiCount||0)}</td><td><button class="btn secondary" type="button" data-usage-member="${esc(m.googleSub)}">查看</button></td></tr>`).join('')}</tbody></table>`;
     for(const btn of $('memberUsageResults').querySelectorAll('[data-usage-member]'))btn.addEventListener('click',()=>loadMemberUsageDetails(btn.dataset.usageMember));
   }catch(e){if(seq===memberUsageRequestSeq){$('memberUsageResults').textContent='讀取排行榜失敗';usageStatus(e.message,true)}}
 }
