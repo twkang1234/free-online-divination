@@ -2551,7 +2551,7 @@ body:not(.bazi-personal-full-mode) .bazi-inline-sample-trigger{display:none!impo
 .bazi-core-random-controls .bazi-core-random-actions{display:flex;flex-wrap:wrap;gap:7px}
 .bazi-core-random-controls button{min-height:39px;padding:8px 12px;border-radius:9px;border:1px solid #58959c;background:#165f6b;color:#fff;font-size:.77rem;font-weight:800;cursor:pointer;white-space:normal}
 .bazi-core-random-controls button[data-core-random="back"]{background:#fff;color:#235964;border-color:#92bdc2}
-/* 固定範例：首次展示與每次重新換樣本時，快速閃爍10次，接著持續柔和提醒。 */
+/* 固定範例：首次顯示在視線範圍後才閃爍10次；點擊換樣本後永久停止提示。 */
 .bazi-core-random-controls button[data-core-random="again"].bazi-sample-reroll-attention:not(:disabled){
   animation:bazi-sample-fast-flash .24s step-end 10,
             bazi-sample-gentle-reminder 1.65s ease-in-out 2.4s infinite;
@@ -9486,6 +9486,8 @@ const chapters=[['report-pillars','四柱完整資料'],['report-elements','五�
 const dimensions=[['66%','146px'],['53%','148px'],['52%','132px'],['60%','120px'],['62%','148px'],['58%','156px'],['52%','142px'],['62%','124px'],['57%','138px']];
 const $=id=>document.getElementById(id);
 let entries=null,deck=[],cache=new Map(),inflight=new Map(),loading=false,active='report-pillars',pendingMount=false,inlineMode=false;
+// Only remind before the user first uses the random-example control (for this page visit).
+let rerollAcknowledged=false,rerollAttentionStarted=false,rerollVisibilityObserver=null;
 const isPersonal=()=>document.body.classList.contains('bazi-personal-full-mode');
 const isExample=()=>document.body.classList.contains('bazi-example-snapshot-mode');
 const fullyLocked=new Set(['report-reading','report-luck','report-years','report-months']);
@@ -9603,13 +9605,43 @@ function revealChapter(id){
  }
  refreshOriginalDecode(id);
 }
-function flashRerollReminder(id){
- const btn=$(id)?.querySelector('.bazi-core-random-controls [data-core-random="again"]');
+function stopRerollReminder(){
+ // Once a visitor has noticed and pressed “random another example”, never remind again.
+ rerollAcknowledged=true;
+ rerollVisibilityObserver?.disconnect();rerollVisibilityObserver=null;
+ document.querySelectorAll('.bazi-sample-reroll-attention').forEach(btn=>btn.classList.remove('bazi-sample-reroll-attention'));
+}
+function showFirstRerollReminder(id){
+ if(rerollAcknowledged||rerollAttentionStarted||!isExample()||!inlineMode)return;
+ const section=$(id),btn=section?.querySelector('.bazi-core-random-controls [data-core-random="again"]');
  if(!btn)return;
- // 移除+重排以重啟10次快速閃爍；之後循環輕量閃爍直到離開範例。
- btn.classList.remove('bazi-sample-reroll-attention');
- void btn.offsetWidth;
- btn.classList.add('bazi-sample-reroll-attention');
+ // Start the ten flashes only when the button really enters the viewport.
+ rerollVisibilityObserver?.disconnect();
+ rerollVisibilityObserver=new IntersectionObserver(entries=>{
+  if(rerollAcknowledged||rerollAttentionStarted||!isExample()||!inlineMode){rerollVisibilityObserver?.disconnect();return}
+  if(!entries.some(entry=>entry.isIntersecting&&entry.intersectionRatio>=0.65))return;
+  rerollAttentionStarted=true;
+  rerollVisibilityObserver?.disconnect();rerollVisibilityObserver=null;
+  btn.classList.remove('bazi-sample-reroll-attention');
+  void btn.offsetWidth;
+  btn.classList.add('bazi-sample-reroll-attention');
+ },{threshold:[0.65]});
+ rerollVisibilityObserver.observe(btn);
+}
+function bringFirstReminderIntoView(id){
+ if(rerollAcknowledged||!isExample()||!inlineMode)return;
+ const section=$(id),btn=section?.querySelector('.bazi-core-random-controls [data-core-random="again"]');
+ if(!btn||!btn.getClientRects().length)return;
+ showFirstRerollReminder(id);
+ // The previous implementation let the animation run while this button was off-screen.
+ // Bring it into the user's actual line of sight first (below sticky navigation).
+ if(!rerollAttentionStarted){
+  const rect=btn.getBoundingClientRect();
+  const targetY=Math.max(110,Math.min(260,Math.round(window.innerHeight*.3)));
+  if(rect.top<targetY-35||rect.top>targetY+90 ||rect.bottom>window.innerHeight-55){
+   window.scrollTo({top:Math.max(0,window.scrollY+rect.top-targetY),behavior:'instant'});
+  }
+ }
 }
 function randomBar(id){
  const section=$(id);if(!section)return;
@@ -9636,13 +9668,16 @@ async function change(id){
   window.__baziPreviousSampleKey=key;inlineMode=true;
   revealChapter(id);
   randomBar(id);
-  // Make the viewing area stable, even if switching snapshots of different lengths.
+  // Wait for the core to render before showing the reminder. Put the button visibly
+  // below the fixed topbar; the IntersectionObserver will flash only once visible.
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const section=$(id),target=section?.querySelector('.bazi-core-random-controls');
-    if(!target)return;
-    const top=target.getBoundingClientRect().top;
-    if(top<72||top>window.innerHeight-120)target.scrollIntoView({behavior:'instant',block:'start'});
+    bringFirstReminderIntoView(id);
   }));
+  // Some chapter renderers adjust their heights after the first two frames.
+  // A follow-up positioning pass is only needed before the visitor has seen it.
+  if(!rerollAcknowledged&&!rerollAttentionStarted){
+   setTimeout(()=>{if(!rerollAttentionStarted)bringFirstReminderIntoView(id)},180);
+  }
   warmNext();
  }catch(e){
   const msg=String(e?.message||'範例讀取失敗，請重試');
@@ -9653,11 +9688,16 @@ async function change(id){
   loading=false;
   buttons.forEach(btn=>{btn.disabled=false;btn.querySelector('.bazi-inline-sample-title').textContent='免費觀看他人的完整核心成果'});
   const again=$(id)?.querySelector('.bazi-core-random-controls [data-core-random="again"]');
-  if(again){again.disabled=false;again.textContent='🎲 再按一次，隨機換一組';if(isExample()&&inlineMode)flashRerollReminder(id)}
+  if(again){again.disabled=false;again.textContent='🎲 再按一次，隨機換一組';if(rerollAcknowledged)again.classList.remove('bazi-sample-reroll-attention')}
  }
 }
+function resetUnclickedReminder(){
+ rerollVisibilityObserver?.disconnect();rerollVisibilityObserver=null;
+ document.querySelectorAll('.bazi-sample-reroll-attention').forEach(btn=>btn.classList.remove('bazi-sample-reroll-attention'));
+ if(!rerollAcknowledged)rerollAttentionStarted=false;
+}
 function goBack(){
- if(loading)return;inlineMode=false;
+ if(loading)return;resetUnclickedReminder();inlineMode=false;
  window.__baziInlineSampleRestore=true;
  try{
   if(window.baziReturnToPersonalCore?.()){
@@ -9673,14 +9713,14 @@ function init(){
  const root=$('results');if(!root)return;
  root.addEventListener('click',e=>{
   const btn=e.target.closest('[data-core-random]');if(!btn)return;
-  if(btn.dataset.coreRandom==='again')void change(active);
+  if(btn.dataset.coreRandom==='again'){stopRerollReminder();void change(active)}
   else if(btn.dataset.coreRandom==='back')goBack();
  });
  document.addEventListener('click',e=>{
   if(!isExample()||!inlineMode)return;
-  if(e.target.closest('#baziExampleExit')){inlineMode=false;return}
+  if(e.target.closest('#baziExampleExit')){resetUnclickedReminder();inlineMode=false;return}
   const btn=e.target.closest('[data-bazi-open-section]');
-  if(btn){const id=btn.dataset.baziOpenSection;if(chapters.some(x=>x[0]===id)){active=id;setTimeout(()=>{randomBar(id);flashRerollReminder(id)},100)}}
+  if(btn){const id=btn.dataset.baziOpenSection;if(chapters.some(x=>x[0]===id)){active=id;setTimeout(()=>{randomBar(id);if(!rerollAcknowledged&&!rerollAttentionStarted)bringFirstReminderIntoView(id)},100)}}
  },true);
  // Reinstall original in-area button when the core rerenders its panels.
  const observer=new MutationObserver(m=>{
