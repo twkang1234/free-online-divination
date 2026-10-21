@@ -3,7 +3,7 @@
 <html lang="zh-Hant">
 <head>
   <!-- 僅登記專業大區的收費單位；不啟用扣點與付費解鎖。新增大區時在此清單加入固定 id 與標題即可。 -->
-  <script type="application/json" id="dh-billing-sections">{"toolId":"yijing","sections":[{"id":"reading-1","title":"一、先看整體象義"},{"id":"reading-2","title":"二、本卦真正的核心"},{"id":"reading-3","title":"三、從本卦走到變卦"},{"id":"reading-4","title":"四、動爻逐一解讀"},{"id":"cast-manual6","title":"起卦 03｜實體硬幣輸入（當日輪替鎖定）"},{"id":"cast-select64","title":"起卦 06｜64 卦指定研讀（當日輪替鎖定）"}]}</script>
+  <script type="application/json" id="dh-billing-sections">{"toolId":"yijing","sections":[{"id":"reading-1","title":"一、先看整體象義"},{"id":"reading-2","title":"二、本卦真正的核心"},{"id":"reading-3","title":"三、從本卦走到變卦"},{"id":"reading-4","title":"四、動爻逐一解讀"},{"id":"cast-manual6","title":"起卦 03｜實體硬幣輸入（當日輪替鎖定）"},{"id":"cast-select64","title":"起卦 06｜64 卦指定研讀（當日輪替鎖定）"},{"id":"custom-question","title":"自訂題目與每次新追問｜每題獨立扣點"}]}</script>
   <!-- DivinationHub 易經前端｜V6.5 core + Admin AI Custom Questions｜2026-10-18 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1599,6 +1599,41 @@ html[data-theme="light"] .yijing-ai-quota-modal-notice{color:#80551a;background:
 html[data-theme="light"] .yijing-ai-quota-modal-actions button{background:#eaf4ed;color:#2a704d;border-color:#c3dcca}
 @media(max-width:900px){#yijingQuotaPanel{padding:14px}#yijingQuotaPanel .yijing-quota-grid{grid-template-columns:1fr;gap:10px}#yijingQuotaPanel .yijing-quota-card{min-height:0;padding:15px}#yijingQuotaPanel .yijing-quota-card .quota-value{font-size:1.8rem}#yijingQuotaPanel .yijing-quota-foot{padding:0 3px}}
 </style>
+<script id="dh-custom-points-v1">
+(()=>{'use strict';
+ const P='https://admin-api.ezgocpu.workers.dev/pricing/public?tool=';
+ const M='https://member-api.ezgocpu.workers.dev/professional/custom/unlock';
+ const cache=new Map();
+ const descriptions={PRICE_NOT_SET:'站長尚未設定自訂題目價格，暫時不能使用。',PRICE_CHANGED:'價格已更新，請重新確認。',INSUFFICIENT_POINTS:'專業解鎖點數不足。',LOGIN_REQUIRED:'請先登入會員。',CUSTOM_UNLOCK_UNAVAILABLE:'專業點數暫時無法使用，尚未扣點。',OPERATION_MISMATCH:'這張解鎖憑證與題目不相符，請重新開始。',TAROT_API_NOT_READY:'塔羅後端尚未完成付費權限驗證，暫不扣點。'};
+ async function quote(tool){
+  const r=await fetch(P+encodeURIComponent(tool),{cache:'no-store'});const j=await r.json();
+  if(!r.ok||!j.success)throw Error('目前無法讀取專業點數價格。');
+  const x=(j.sections||[]).find(x=>x.sectionId==='custom-question');
+  return x?.mode==='priced'&&Number.isSafeInteger(x.points)&&x.points>0?x.points:null;
+ }
+ async function label(tool,element){
+  const el=typeof element==='string'?document.getElementById(element):element;if(!el)return;
+  el.textContent='正在讀取自訂題目價格…';
+  try{const p=await quote(tool);el.textContent=p?`每次新自訂題目／追問需 ${p} 點（AI 解讀另扣 1 次）`:'自訂題目｜待後台設定點數，暫未開放';}
+  catch(_){el.textContent='價格暫時無法讀取，請稍後重試。';}
+ }
+ async function buy(tool,question,token,operationId){
+  const q=String(question||'').normalize('NFKC').trim().replace(/\s+/g,' ');
+  if(q.length<5||q.length>500)throw Error('請先輸入 5～500 字的有效自訂問題。');
+  if(!token)throw Error('請先登入會員，才可使用專業點數。');
+  const op=operationId||crypto.randomUUID();const key=tool+':'+op;
+  const old=cache.get(key);if(old&&old.question===q)return old.ticket;
+  const p=await quote(tool);if(!p)throw Error(descriptions.PRICE_NOT_SET);
+  if(!confirm(`自訂題目／本次追問需要 ${p} 點專業解鎖點數。\n每次新問題重新收費，AI 解讀另外扣除 AI 次數。\n\n確定付 ${p} 點解鎖這次問題？`))return null;
+  const r=await fetch(M,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({toolId:tool,question:q,operationId:op,expectedPoints:p})});
+  const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw Error(descriptions[j.error]||('解鎖失敗：'+(j.error||r.status)));
+  cache.set(key,{ticket:j.ticket,question:q});
+  window.dispatchEvent(new Event('dh-professional-points-changed'));
+  return j.ticket;
+ }
+ window.DHCustomPoints={quote,label,buy};
+})();
+</script>
 </head>
 <body>
   <header class="page-topbar">
@@ -1839,6 +1874,7 @@ html[data-theme="light"] .yijing-ai-quota-modal-actions button{background:#eaf4e
     <div class="yijing-custom-examples" id="yijingCustomExamples" hidden aria-label="自訂問題的兩個提問範例與寫作指引"></div>
     <div class="field guide-extra-field">
       <label for="yijingExtraContext">補充背景（選填，不會儲存）</label>
+      <p id="yijingCustomPrice" class="notice" hidden>正在讀取自訂題目價格…</p>
       <textarea id="yijingExtraContext" rows="2" maxlength="500" placeholder="例如：A＝留原公司，B＝接受新工作；可留白" aria-label="自訂問題或補充背景"></textarea>
       <div id="yijingCustomShortHint" class="yijing-short-question-hint" hidden aria-live="polite">你的問題目前較簡短，可依上方的專屬寫作指引補充背景與真正困擾；這只是提醒，不影響起卦。</div>
     </div>
@@ -2374,6 +2410,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   // Professional points are separate from the tool and AI wallet.
   const yjProPrices=new Map(),yjReadingGrants=new Set(),yjCastGrants=new Set();
   let yjActiveCastOp='',yjProBalance=null,yjProLoaded=false,yjSavedReadingHTML=new Map();
+  let yjPendingCustom={question:'',operationId:'',ticket:''},yjActiveCustomTicket='';
   const YJ_PRO_API='https://yijing-api.ezgocpu.workers.dev';
   const YJ_PRICE_API='https://admin-api.ezgocpu.workers.dev/pricing/public?tool=yijing';
   async function yjRefreshPrices(){
@@ -2565,7 +2602,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   // 正式訪客恢復每日輪替與起卦次數限制；管理員測試身分仍獨立模擬。
   function isPublicTrialActive(){return YIJING_PUBLIC_OPEN_TEST&&!isAdminTestActive()}
   function hasFullPaidAccess(){return isAdminTestActive()?!!adminTestConfig().full:(YIJING_PUBLIC_OPEN_TEST||!!paidPreviewActive)}
-  function canAccessCustomQuestion(){return isPublicTrialActive()||hasFullPaidAccess()||isLogged()}
+  function canAccessCustomQuestion(){return isAdminTestActive()?hasFullPaidAccess():isLogged()}
   function canRunYijingAI(){return isPublicTrialActive()||(isAdminTestActive()?hasFullPaidAccess():!!yijingSessionMember?.sub)}
   function paidCredits(){return isAdminTestActive()?Math.max(0,Number(adminTestConfig().credits||0)-(adminTestCreditSpent?1:0)):0} // 正式版待串 payment-api；管理員測試模式可模擬額度。
   function taiwanDateKey(){
@@ -3043,6 +3080,13 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     if(!guardDailyQuota())return;
     if(!guardCustomQuestionQuality())return;
     const data=buildQuestionAndContext(cast);if(!data)return;
+    if(state.custom&&!isAdminTestActive()){
+      const q=data.q;
+      if(yjPendingCustom.question!==q||!yjPendingCustom.operationId)yjPendingCustom={question:q,operationId:crypto.randomUUID(),ticket:''};
+      try{const ticket=await window.DHCustomPoints.buy('yijing',q,yijingSavedSession(),yjPendingCustom.operationId);
+        if(!ticket)return;yjPendingCustom.ticket=ticket;data.context.customTicket=ticket;
+      }catch(e){alert(e.message||'自訂題目尚未解鎖，沒有起卦。');return;}
+    }
     clearCastTimers();
     const panel=document.querySelector(`[data-cast-panel="${cast.mode}"]`);panel?.classList.add('cast-working');
     const oldText=button?.textContent;if(button){button.disabled=true;button.textContent=state.custom?'正在形成卦象與 卦象…':'正在形成卦象與解讀…';}
@@ -3057,7 +3101,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         if(!confirm('易經本期免費起卦已用完。\n\n是否使用 1 次會員共用工具額度？\n目前剩餘 '+left+' 次，八字、塔羅、易經共用。'))return;
         reading=await YijingCore.draw(data.q,data.context,{...options,sharedConfirmed:true});
       }
-      yjActiveCastOp=options.operationId;yjReadingGrants.clear();yjProLoaded=false;await yjRefreshPro();
+      yjActiveCastOp=options.operationId;yjActiveCustomTicket=state.custom?yjPendingCustom.ticket:'';yjPendingCustom={question:'',operationId:'',ticket:''};yjReadingGrants.clear();yjProLoaded=false;await yjRefreshPro();
       markReadingUsed();render(reading);yijingTrackUsage('cast',yijingUsageCategory());
     }
     catch(err){console.error(err);const reason=err?.message==='CAST_PERIOD_LIMIT'?'本期免費起卦次數已用完，請登入會員或等待下一次補充。':err?.message;alert(reason||(state.custom?'目前無法完成起卦，請稍後再試。':'目前無法取得解卦結果，請稍後再試。'));}
@@ -3114,6 +3158,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       const hint=document.getElementById('yijingCustomShortHint');
       if(hint&&writingData)hint.textContent=`你的問題目前較簡短，建議補充這個情境的具體現況或困難，並寫清楚最想了解的方向。可以點開上方的專屬寫作指引參考；這只是提醒，不影響起卦。`;
     }
+    const priceEl=document.getElementById('yijingCustomPrice');if(priceEl){priceEl.hidden=!state.custom;if(state.custom)void window.DHCustomPoints.label('yijing',priceEl);}
     if(state.custom){
       const picker=document.getElementById('yijingReadingChoice');if(picker){picker.hidden=true;picker.innerHTML='';}
       if(head)head.innerHTML='<span>STEP 04</span><h4>輸入這次想問的事情</h4><p>請清楚寫下你真正想知道的問題，再選擇起卦方式。完成起卦後可以直接按下「開始 AI 解卦」。</p>';
@@ -3375,6 +3420,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       mode,
       question:r.question,
       context:{questionIntent:state.custom?'custom':'guided',topic:{id:r.topic.id,name:r.topic.name,focus:r.topic.focus},scenario:{id:r.scenario.id,name:r.scenario.name,desc:r.scenario.desc},cast:{mode:r.castMethod.mode,label:r.castMethod.label,values:r.values,hexNumber:r.castMethod.hexNumber,numbers:r.castMethod.numbers}},
+      ...(state.custom?{customTicket:yjActiveCustomTicket,customCastOp:yjActiveCastOp}:{}),
       ...(mode==='followup'?{followupQuestion:extra.question,previousKind:extra.kind,previousAnswer:String(extra.answer||'').slice(0,7500)}:{})
     };
   }
@@ -3383,6 +3429,12 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     if(!canRunYijingAI())throw Error('此測試身分尚未開放站內 AI，請切換管理員完整進階測試。');
     if(isAdminTestActive()&&!token)throw Error('管理員身分已失效，請重新登入。');
     const payload=yijingAiPayload(r,mode,extra);
+    if(mode==='followup'&&!isAdminTestActive()&&!isPublicTrialActive()){
+      const op=extra.operationId||(extra.operationId=crypto.randomUUID());
+      const ticket=await window.DHCustomPoints.buy('yijing',String(extra.question||''),yijingSavedSession(),op);
+      if(!ticket)throw Error('已取消追問解鎖，沒有扣 AI 解讀次數。');
+      payload.followupTicket=ticket;
+    }
     const api=window.YIJING_API_URL||'https://yijing-api.ezgocpu.workers.dev/reading';
     const url=new URL(api,location.href);url.pathname='/ai/interpret';url.search='';
     let res,data;
@@ -3403,23 +3455,25 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   }
   function yijingFollowupHTML(kind){
     const help=kind==='basic'?'根據剛才的基本解析與同一次卦象，向 AI 追問一個最想釐清的問題。':'針對剛完成的 AI 解讀，再深入追問一次。';
-    return `<details class="yi-followup" data-followup-kind="${kind}"><summary>✦ AI 追問一次（選用）</summary><div class="yi-followup-inner"><p class="yi-followup-note">${help}不需重抽卦；只有送出才會呼叫 AI。</p><label class="sr-only" for="yiFollowupText">本次 AI 追問</label><textarea id="yiFollowupText" maxlength="500" placeholder="例如：如果對方一直回避溝通，我具體應該怎麼說？"></textarea><div class="yi-followup-actions"><button type="button" class="yi-followup-send">送出 AI 追問</button><span class="yi-followup-status" aria-live="polite">本次可追問一次</span></div><div class="yi-followup-answer" hidden></div></div></details>`;
+    return `<details class="yi-followup" data-followup-kind="${kind}"><summary>✦ AI 追問一次（選用）｜專業點數另計</summary><div class="yi-followup-inner"><p class="yi-followup-note">${help}不需重抽卦；<span data-yijing-followup-price>正在讀取追問所需點數…</span></p><label class="sr-only" for="yiFollowupText">本次 AI 追問</label><textarea id="yiFollowupText" maxlength="500" placeholder="例如：如果對方一直回避溝通，我具體應該怎麼說？"></textarea><div class="yi-followup-actions"><button type="button" class="yi-followup-send">送出 AI 追問</button><span class="yi-followup-status" aria-live="polite">本次可追問一次</span></div><div class="yi-followup-answer" hidden></div></div></details>`;
   }
   function bindYijingFollowup(r,kind,firstAnswer=''){
     const wrapper=result.querySelector(`.yi-followup[data-followup-kind="${kind}"]`);
     if(!wrapper)return;
     const send=wrapper.querySelector('.yi-followup-send'),input=wrapper.querySelector('textarea'),status=wrapper.querySelector('.yi-followup-status'),content=wrapper.querySelector('.yi-followup-answer');
     wrapper.hidden=!canRunYijingAI();
-    let spent=yijingFollowupUsedCasts.has(r),working=false;
+    void window.DHCustomPoints.label('yijing',wrapper.querySelector('[data-yijing-followup-price]'));
+    let spent=yijingFollowupUsedCasts.has(r),working=false,followupOp=crypto.randomUUID(),lastFollowupQuestion='';
     if(spent){send.disabled=true;send.textContent='本次追問已使用';input.readOnly=true;status.textContent='同一卦象的追問已使用一次';}
     send.addEventListener('click',async()=>{
       if(spent||working||yijingFollowupUsedCasts.has(r))return;
       const q=input.value.trim();
       if(q.length<5){status.textContent='請先輸入至少 5 個字的具體追問。';input.focus();return;}
+      if(q!==lastFollowupQuestion){followupOp=crypto.randomUUID();lastFollowupQuestion=q;}
       working=true;send.disabled=true;status.classList.remove('is-error');status.textContent='正在延續這次卦象回答，請稍候…';
       const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),160000);
       try{
-        const data=await requestYijingAI(r,'followup',{question:q,kind,answer:kind==='ai'?firstAnswer:''},ctrl.signal);
+        const data=await requestYijingAI(r,'followup',{question:q,kind,answer:kind==='ai'?firstAnswer:'',operationId:followupOp},ctrl.signal);
         renderSafeYijingMarkdown(content,data.answer.trim());content.hidden=false;
         spent=true;yijingFollowupUsedCasts.add(r);input.readOnly=true;send.textContent='已使用本次追問';
         status.textContent='✓ AI 追問已完成'+(data.channel?'｜通道 '+data.channel:'')+(data.traceId?'｜追蹤碼 '+data.traceId:'');
