@@ -3059,9 +3059,9 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-overview .bazi-recas
           <div class="bazi-hub-title"><div><span class="report-eyebrow">CHOOSE YOUR ANALYSIS</span><h3>九大專業分析｜選擇你要深入的部分</h3></div><button id="baziHideSection" type="button" hidden>收合目前章節 ↑</button></div>
           <div class="bazi-hub-grid">
             <button type="button" data-bazi-open-section="report-pillars" aria-controls="report-pillars" aria-expanded="false"><small>01</small><span class="bazi-hub-main"><span class="bazi-hub-name">四柱命盤（上方）</span><em class="bazi-hub-status bazi-hub-status--partial">部分開放</em></span><b aria-hidden="true">↗</b></button>
-            <button type="button" data-bazi-open-section="report-elements" aria-controls="report-elements" aria-expanded="false"><small>02</small><span class="bazi-hub-main"><span class="bazi-hub-name">五行與陰陽</span><em class="bazi-hub-status bazi-hub-status--partial">部分開放</em></span><b aria-hidden="true">＋</b></button>
-            <button type="button" data-bazi-open-section="report-tengods" aria-controls="report-tengods" aria-expanded="false"><small>03</small><span class="bazi-hub-main"><span class="bazi-hub-name">十神結構</span><em class="bazi-hub-status bazi-hub-status--partial">部分開放</em></span><b aria-hidden="true">＋</b></button>
-            <button type="button" data-bazi-open-section="report-relations" aria-controls="report-relations" aria-expanded="false"><small>04</small><span class="bazi-hub-main"><span class="bazi-hub-name">干支合沖</span><em class="bazi-hub-status bazi-hub-status--partial">部分開放</em></span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-elements" aria-controls="report-elements" aria-expanded="false"><small>02</small><span class="bazi-hub-main"><span class="bazi-hub-name">五行與陰陽</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-tengods" aria-controls="report-tengods" aria-expanded="false"><small>03</small><span class="bazi-hub-main"><span class="bazi-hub-name">十神結構</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-relations" aria-controls="report-relations" aria-expanded="false"><small>04</small><span class="bazi-hub-main"><span class="bazi-hub-name">干支合沖</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-shensha" aria-controls="report-shensha" aria-expanded="false"><small>05</small><span class="bazi-hub-main"><span class="bazi-hub-name">常用神煞</span><em class="bazi-hub-status bazi-hub-status--full" id="baziShenshaAccessLabel">登入免費看</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-reading" aria-controls="report-reading" aria-expanded="false"><small>06</small><span class="bazi-hub-main"><span class="bazi-hub-name">命盤結構</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-luck" aria-controls="report-luck" aria-expanded="false"><small>07</small><span class="bazi-hub-main"><span class="bazi-hub-name">八步大運</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
@@ -8846,6 +8846,9 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-article,html[data-th
 /* Eight-topic AI experiment: responsive topic choices and TXT export only. */
 .bazi-personal-stage .bazi-access-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .bazi-personal-stage .bazi-access-actions button{text-align:left;white-space:normal;line-height:1.55;min-height:48px}
+/* Remaining AI uses come from /ai/status (periodic free + shared member balance), not hard-coded. */
+.bazi-personal-stage .bazi-topic-ai-remaining{display:inline-block;white-space:nowrap;margin-left:6px;padding:1px 7px;border-radius:999px;border:1px solid rgba(255,255,255,.36);background:rgba(255,255,255,.11);font-size:.69rem;font-weight:750;vertical-align:baseline}
+html[data-theme="light"] .bazi-personal-stage .bazi-topic-ai-remaining{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.45)}
 .bazi-personal-stage .bazi-reading-export{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
 .bazi-personal-stage .bazi-reading-export button,.bazi-personal-stage .bazi-reading-download{padding:9px 13px;border-radius:9px;border:1px solid rgba(90,163,172,.6);background:rgba(90,163,172,.12);color:var(--text);font-size:.78rem;font-weight:750;cursor:pointer}
 .bazi-personal-stage .bazi-reading-download:hover,.bazi-personal-stage .bazi-reading-export button:hover{background:rgba(90,163,172,.24)}
@@ -8941,6 +8944,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   // Batch generation and merged TXT export retired; only individual reports are available.
   const FREE_TOPICS=new Set(['personality','career_deep','love_deep']);
   let accessInfo={authenticated:false,personalRemaining:0,usedTopics:[]};
+  let quotaReady=false; // Only show a numeric remaining count after a verified server response.
   const topicTitles={
     personality:'個人特質與性格深度解讀',career_deep:'事業與職涯發展解析',social:'人際關係與交友特質解析',
     wealth_life:'財富觀念與賺錢方式',love_deep:'感情與相處模式',overall_deep:'綜合命格與人生總覽',
@@ -8984,7 +8988,14 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       const base=String(b.dataset.accessTitle||b.textContent).replace(/\s*[｜·]\s*(?:會員免費.*|付費解鎖.*)$/,'').replace(/^🔒\s*/,'');
       b.dataset.accessTitle=base;
       const gift=gifted(topic);
-      b.textContent=base+(gift?'｜AI 解讀扣 1 次（先用本期免費）':!loggedIn()?'｜免費 AI 已用完，登入可使用共用額度':'｜AI 額度已用完');
+      const remaining=quotaReady?Math.max(0,Number(accessInfo.aiRemaining)||0):null;
+      b.textContent=base+(gift?'｜AI 解讀扣 1 次':!quotaReady?'｜正在查詢 AI 額度':!loggedIn()?'｜免費 AI 已用完，登入可使用共用額度':'｜AI 額度已用完');
+      if(remaining!==null){
+        const count=document.createElement('span');
+        count.className='bazi-topic-ai-remaining';
+        count.textContent='剩餘 '+remaining+' 次';
+        b.append(' ',count);
+      }
       b.classList.toggle('bazi-paywall-topic',!gift);
       b.disabled=!gift;
       b.setAttribute('aria-label',b.textContent);
@@ -9025,10 +9036,10 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       const token=typeof baziAuthToken==='function'?baziAuthToken():'';
       const r=await fetch(API+'/ai/status',{headers:{...window.baziCastBrowserHeaders(),...(token?{'Authorization':'Bearer '+token}:{})},cache:'no-store'});
       const j=await r.json();if(!r.ok||!j.ok)throw Error('ACCESS_STATUS_UNAVAILABLE');
-      accessInfo=j;
+      accessInfo=j;quotaReady=true;
       target.textContent=`本期免費 AI ${j.periodicAi?.remaining??0} 次`+(j.authenticated?'｜三工具共用 AI '+(j.sharedAiRemaining??0)+' 次（用完不補）':'｜登入後可使用共用 AI 額度');
       renderTopicAccess();
-    }catch(_){target.textContent='AI 權限暫時無法查詢';accessInfo={authenticated:false,personalRemaining:0,usedTopics:[]};renderTopicAccess();}
+    }catch(_){target.textContent='AI 權限暫時無法查詢';accessInfo={authenticated:false,personalRemaining:0,usedTopics:[]};quotaReady=false;renderTopicAccess();}
   }
 
   function identity(options){
