@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <!-- 自訂問題與每次新追問共用一個後台計價項目；實際扣點由 member-api 驗證。 -->
-  <script type="application/json" id="dh-billing-sections">{"toolId":"tarot","sections":[{"id":"custom-question","title":"自訂題目與每次新追問｜每題獨立扣點"}]}</script>
+  <script type="application/json" id="dh-billing-sections">{"toolId":"tarot","sections":[{"id":"fixed-topic","title":"第一層固定題型｜每套獨立收專業點數"},{"id":"custom-topic","title":"第一層完全自訂｜每次獨立收專業點數"},{"id":"custom-question","title":"第三層自行輸入與新延伸問題｜每次另扣點"}]}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 塔羅占卜｜線上塔羅占卜、站內 AI 自動備援解讀｜一念知機</title>
@@ -4416,66 +4416,60 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(d.error==='TOOL_QUOTA_EMPTY')throw Error(isLogged()?'本期免費抽牌及共用工具額度都已用完':'本期免費抽牌已用完，登入會員可使用共用工具額度');
     throw Error(d.error||'TOOL_QUOTA_UNAVAILABLE');
   }
-  // 第一階段：選第一層主題時僅扣第一次三張牌的抽牌權益。
-  // 第二階段要由「繼續第二階段」另外確認；兩輪各用不同的 Worker 操作碼。
+  // 專業解鎖點數是題目授權，不再於塔羅入口或第二輪抽牌額外扣共用工具額度。
+  // 固定題型 / 完全自訂 / 第三層自訂各讀取中央價格；AI 在實際生成時才另外扣額度。
   let tarotEntryChargeBusy=false,tarotSecondChargeBusy=false;
-  async function tarotDrawChargePreview(){
-    const token=authToken();
-    const res=await fetch(TAROT_API_BASE+'/wallet/tarot/status',{
-      cache:'no-store',headers:{'X-Tarot-Visitor-Id':tarotVisitorId(),...(token?{Authorization:'Bearer '+token}:{})}
-    });
-    const snap=await res.json().catch(()=>({}));
-    if(!res.ok||!snap.ok||!snap.daily)throw Error('暫時無法查詢抽牌額度，沒有扣除任何額度。');
-    dhTarotToolSnapshot=snap;
-    const daily=Math.max(0,Number(snap.daily.remaining||0));
-    const shared=Math.max(0,Number(snap.wallet?.tool||0));
-    if(daily<1&&shared<1)throw Error(token?'本期免費抽牌及會員共用占卜額度都已用完。':'本期免費抽牌已用完，請登入會員查看共用額度。');
-    return {daily,shared,token};
-  }
-  async function tarotPrepayFirstStage(){
-    if(state.dhEntryPaid&&state.dhDrawCharged)return true;
+  const tarotEntryReceipts=new Map();
+  async function tarotPrepayFirstStage(topicId){
+    const section=topicId==='free'?'custom-topic':'fixed-topic';
+    if(state.dhEntryPaid&&state.dhEntrySection===section)return true;
+    const cached=tarotEntryReceipts.get(section);
+    if(cached?.ticket){Object.assign(state,{dhEntryPaid:true,dhEntrySection:section,dhEntryTicket:cached.ticket,dhEntryOp:cached.op});
+      if(section==='custom-topic') {const c=tarotCustomCache.get('topic:free');if(c?.ticket&&!c.boundQuestion)tarotCustomPending={...c};}
+      return true;}
     if(tarotEntryChargeBusy)return false;
     if(isAdminTestActive()){
-      state.dhEntryPaid=true;state.dhDrawCharged=true;
+      state.dhEntryPaid=true;state.dhEntrySection=section;
       return true;
     }
     tarotEntryChargeBusy=true;
     try{
-      if(state.dhDrawCharged){state.dhEntryPaid=true;return true;}
-      const {daily,shared}=await tarotDrawChargePreview();
-      const payLabel=daily>0?'本期自動補充抽牌 1 次（目前剩 '+daily+' 次）':'會員共用占卜額度 1 次（目前剩 '+shared+' 次，用完不補）';
-      const message='第一階段｜抽取三張塔羅牌\n\n本次將使用 '+payLabel+'。\n第一次 AI 解讀另外使用 1 次 AI 解讀額度（實際產生解讀時才扣）。\n\n第二階段「再抽三張」到時會另外確認 1 次占卜額度，AI 解讀亦另扣 1 次；現在不預扣第二階段。\n已確認的本階段額度，返回更換主題、情境與題目不會重扣。\n若中途放棄，已使用的抽牌額度不會自動退還。\n\n確定開始第一階段？';
-      if(!confirm(message))return false;
-      await tarotUseDrawCredit('a',true);
-      state.dhDrawCharged=true;state.dhEntryPaid=true;
+      if(section==='custom-topic'){
+        if(!await tarotPrepayCustom('topic:free'))return false;
+        state.dhEntryPaid=true;state.dhEntrySection=section;
+        state.dhEntryTicket=tarotCustomPending.ticket;
+        state.dhEntryOp=tarotCustomPending.operationId;
+        tarotEntryReceipts.set(section,{op:state.dhEntryOp,ticket:state.dhEntryTicket});
+        return true;
+      }
+      if(!isLogged()||!tarotCustomToken()){
+        openMemberModal('固定題型需登入會員，並使用專業解鎖點數。');return false;
+      }
+      const points=await tarotCustomQuote(section);
+      if(!points)throw Error('PRICE_NOT_SET');
+      if(!confirm(`本次固定題型需 ${points} 點專業解鎖點數。\n這套題目的情境、固定問題及抽牌方式，不會重複收點。\n第一階段 AI 解讀另扣 1 次 AI 額度；第二階段六牌整合 AI 解讀再扣 1 次。\n如在第三層改用「自己輸入問題」，須另收該自訂題目的點數。\n\n確定以 ${points} 點開始？`))return false;
+      const op=state.dhEntrySection===section&&state.dhEntryOp?state.dhEntryOp:crypto.randomUUID();
+      state.dhEntryOp=op;state.dhEntrySection=section;
+      const r=await fetch(tarotCustomUnlockURL,{method:'POST',cache:'no-store',headers:{Authorization:'Bearer '+tarotCustomToken(),'Content-Type':'application/json'},body:JSON.stringify({toolId:'tarot',sectionId:section,entryMode:'prepaid',question:'',operationId:op,expectedPoints:points})});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok||j.success!==true||!j.ticket)throw Error(tarotCustomError(j.error||'CUSTOM_UNLOCK_UNAVAILABLE'));
+      state.dhEntryPaid=true;state.dhEntryTicket=j.ticket;
+      tarotEntryReceipts.set(section,{op,ticket:j.ticket});
+      window.dispatchEvent(new Event('dh-professional-points-changed'));
       tarotUpdateSelectionHints();
-      void refreshTarotToolStatus(true);
       return true;
-    }catch(error){
-      alert('尚未完成第一階段額度確認：'+(error?.message||'額度服務暫時無法使用'));
-      return false;
-    }finally{tarotEntryChargeBusy=false;}
+    }catch(e){alert('本次題型尚未完成專業點數確認：'+(e.message||'解鎖服務暫時不可使用'));return false;}
+    finally{tarotEntryChargeBusy=false;}
   }
   async function tarotPrepaySecondStage(){
-    if(state.dhDrawBCharged)return true; // 包含舊版已預扣第二輪的歷史紀錄
-    if(!state.dhDrawCharged&&!isAdminTestActive()){
-      alert('請先完成第一階段的抽牌額度確認。');return false;
+    if(!state.dhEntryPaid&&!isAdminTestActive()){
+      alert('請先在第一層完成本次題目的專業點數授權。');return false;
     }
-    if(isAdminTestActive()){state.dhDrawBCharged=true;return true;}
-    try{
-      const {daily,shared}=await tarotDrawChargePreview();
-      const payLabel=daily>0?'本期自動補充抽牌 1 次（目前剩 '+daily+' 次）':'會員共用占卜額度 1 次（目前剩 '+shared+' 次，用完不補）';
-      const message='第二階段｜另外抽取三張塔羅牌\n\n本次將再使用 '+payLabel+'。\n六張牌 AI 整合解讀另外使用 1 次 AI 解讀額度（產生解讀時才扣）。\n\n如選擇「自行輸入新的延伸問題」，會另外按照中央計價設定收取專業解鎖點數；延續原問題則不收專業點數。\n若中途放棄，已使用的抽牌額度不會自動退還。\n\n確定開啟第二階段？';
-      if(!confirm(message))return false;
-      await tarotUseDrawCredit('b',true);
-      state.dhDrawBCharged=true;
-      persist3x3(); // 記住已成功扣除的第二輪，返回或恢復進度不再重扣
-      void refreshTarotToolStatus(true);
-      return true;
-    }catch(error){
-      alert('尚未完成第二階段額度確認：'+(error?.message||'額度服務暫時無法使用'));
-      return false;
-    }
+    if(state.dhSecondConfirmed)return true;
+    if(!confirm('第二階段會再抽三張牌，延續原問題不另收專業點數，也不扣會員共用抽牌額度。\n完成六張牌整合 AI 解讀時，才使用 1 次 AI 解讀額度。\n如果改為自行輸入新的延伸問題，將另行確認專業點數。\n\n確定繼續第二階段？'))return false;
+    state.dhSecondConfirmed=true;
+    persist3x3();
+    return true;
   }
   function showTarotApiError(err){
     console.error('Tarot API error:',err);
@@ -5077,23 +5071,26 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   const tarotCustomUnlockURL=MEMBER_API_BASE+'/professional/custom/unlock';
   const tarotCustomBindURL=MEMBER_API_BASE+'/professional/custom/bind';
   let tarotCustomPending={sourceKey:'',operationId:'',ticket:'',points:0,boundQuestion:''};
+  const tarotCustomCache=new Map(); // 同一次閱讀已預扣、未綁題的票據，返回上一層可繼續用，不重扣。
   let tarotCustomPendingBusy=false,tarotRelatedPendingBusy=false,tarotCustomSubmitBusy=false;
   const tarotCustomErrors={PRICE_NOT_SET:'站長尚未設定專業點數價格，暫時無法使用。',PRICE_CHANGED:'價格剛剛更新，請重新確認。',INSUFFICIENT_POINTS:'專業解鎖點數不足。',LOGIN_REQUIRED:'請先登入會員。',TAROT_API_NOT_READY:'塔羅後端尚未開放自訂題目扣點驗證，系統未扣點。',CUSTOM_UNLOCK_UNAVAILABLE:'扣點服務暫時無法使用，尚未扣點。',OPERATION_MISMATCH:'解鎖票據與本次問題不符，請重新開始。'};
   function tarotCustomError(code){return tarotCustomErrors[code]||code||'專業點數操作失敗';}
   function tarotCustomSource(){return state.topic?.id==='free'?'topic:free':'scenario:'+state.topic?.id+':'+state.scenario?.id;}
   function tarotCustomToken(){return authToken();}
-  async function tarotCustomQuote(){
+  async function tarotCustomQuote(sectionId='custom-question'){
     const r=await fetch(tarotCustomPricingURL,{cache:'no-store'});
     const j=await r.json().catch(()=>({}));
     if(!r.ok||j.success!==true)throw Error('目前無法讀取塔羅自訂題目的中央價格。');
-    const item=(j.sections||[]).find(x=>x.sectionId==='custom-question');
+    const item=(j.sections||[]).find(x=>x.sectionId===sectionId);
     return item?.mode==='priced'&&Number.isSafeInteger(item.points)&&item.points>0?item.points:null;
   }
   async function tarotShowCustomPrice(node){
     if(!node)return;
     if(tarotFullPrivilege()){node.textContent='管理員完整測試｜免扣專業點數';return;}
     node.textContent='正在讀取自訂題目價格…';
-    try{const points=await tarotCustomQuote();if(node.isConnected)node.textContent=points?`每個新自訂／延伸問題需 ${points} 點專業點數（抽牌與 AI 額度分別計算）`:'自訂題目｜待站長設定點數，暫未開放';}
+    try{const section=node.dataset.tarotCustomPrice==='topic'?'custom-topic':node.dataset.tarotCustomPrice==='fixed'?'fixed-topic':'custom-question';
+      const points=await tarotCustomQuote(section);
+      if(node.isConnected)node.textContent=points?`${section==='custom-topic'?'完全自訂':section==='fixed-topic'?'固定題型':'每個新自訂／延伸問題'}需 ${points} 點專業點數（AI 解讀另扣 1 次）`:'自訂題目｜待站長設定點數，暫未開放';}
     catch(_){if(node.isConnected)node.textContent='價格暫時無法讀取，請稍後再試';}
   }
   function tarotRefreshCustomPrices(root=document){root.querySelectorAll('[data-tarot-custom-price]').forEach(el=>{void tarotShowCustomPrice(el);});}
@@ -5105,17 +5102,21 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     }
     if(tarotCustomPendingBusy)return false;
     if(tarotCustomPending.ticket&&tarotCustomPending.sourceKey===sourceKey&&!tarotCustomPending.boundQuestion)return true;
+    const saved=tarotCustomCache.get(sourceKey);
+    if(saved?.ticket&&!saved.boundQuestion){tarotCustomPending={...saved};return true;}
     tarotCustomPendingBusy=true;
     try{
-      const points=await tarotCustomQuote();if(!points)throw Error('PRICE_NOT_SET');
+      const sectionId=sourceKey==='topic:free'?'custom-topic':'custom-question';
+      const points=await tarotCustomQuote(sectionId);if(!points)throw Error('PRICE_NOT_SET');
       if(!confirm(`本次自訂題目需 ${points} 點專業解鎖點數。\n點選確定後立即扣點並開放輸入問題；放棄輸入不會自動退點。\n每個全新問題需重新扣點，AI 解讀另扣 AI 額度。\n\n確定以 ${points} 點解鎖？`))return false;
       // 重試相同操作碼，避免網路錯誤時重複扣點。更換入口則產生新操作碼。
       const op=tarotCustomPending.sourceKey===sourceKey&&tarotCustomPending.operationId&&!tarotCustomPending.boundQuestion?tarotCustomPending.operationId:crypto.randomUUID();
       tarotCustomPending={sourceKey,operationId:op,ticket:'',points:0,boundQuestion:''};
-      const response=await fetch(tarotCustomUnlockURL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tarotCustomToken()},body:JSON.stringify({toolId:'tarot',entryMode:'prepaid',question:'',operationId:op,expectedPoints:points})});
+      const response=await fetch(tarotCustomUnlockURL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tarotCustomToken()},body:JSON.stringify({toolId:'tarot',sectionId,entryMode:'prepaid',question:'',operationId:op,expectedPoints:points})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok||data.success!==true||!data.ticket)throw Error(tarotCustomError(data.error||'CUSTOM_UNLOCK_UNAVAILABLE'));
       tarotCustomPending={sourceKey,operationId:op,ticket:data.ticket,points:Number(data.pointsPaid||points),boundQuestion:''};
+      tarotCustomCache.set(sourceKey,{...tarotCustomPending});
       window.dispatchEvent(new Event('dh-professional-points-changed'));
       return true;
     }catch(e){alert('自訂題目尚未開放輸入：'+(e.message||'解鎖失敗'));return false;}
@@ -5133,7 +5134,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(!canStartNewFreeReading())return;
     if(!topicAllowedForCurrentUser(state.topic?.id)){enforceAccess(false,'member');return;}
     if(!state.dhEntryPaid&&!isAdminTestActive()){
-      alert('請先返回第一層「主題」確認第一階段 1 次抽牌額度，再選擇題目。');
+      alert('請先返回第一層「主題」確認這次題型的專業點數，再選擇題目。');
       showStep('topic');return;
     }
     if(state.question?.custom&&!tarotFullPrivilege()&&!state.question?.customUnlockTicket){alert('自訂題目尚未完成專業點數解鎖，請先返回自訂題目入口。');return;}
@@ -5141,49 +5142,17 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(!spreadAllowedForCurrentUser(state.spreadChoice)){alert('這一道題目不適合雙方關係牌陣，請選擇其他牌陣。');return;}
     state.accessTier=accessCategory();state.usageCounted=false;await drawReading();
   }
-  // 免費抽牌為 0 時提示下一個扣取的「共用占卜次數」，而非誤寫成所有題目免費可選。
+  // 題型一律以專業解鎖點數定價；共用占卜次數不再充當這套題型的付費提示。
   function tarotSelectionQuotaNote(){
-    if(isAdminTestActive())return '';
-    const snap=dhTarotToolSnapshot;
-    if(state.dhEntryPaid)return '第一階段三張牌抽牌權益已確認（扣 1 次）；返回更換主題、情境或題目不重扣。第二階段須另外確認 1 次，AI 解讀各階段另計。';
-    if(!snap?.daily)return '';
-    const daily=Number(snap.daily.remaining||0);
-    if(daily>0)return '';
-    const shared=Number(snap.wallet?.tool||0);
-    if(isLogged()&&snap.wallet){
-      return shared>0?`本期自動補充已用完，選擇主題時將確認第一階段 1 次抽牌額度；會員共用額度剩 ${shared} 次（用完不補）。`:'本期自動補充及會員共用占卜次數都已用完，請等待下次補充。';
-    }
-    return '本期訪客免費抽牌次數已用完；登入後可查看會員共用額度。';
-  }
-  // 共用占卜次數與專業點數是兩個獨立錢包；只有日常抽牌額度用完才顯示共用次數。
-  function tarotMemberDrawBalance(){
-    const s=dhTarotToolSnapshot;
-    if(isAdminTestActive()||!isLogged()||!s?.wallet||!s.daily)return null;
-    if(Number(s.daily.remaining)>0)return null;
-    const n=Number(s.wallet.tool);
-    return Number.isSafeInteger(n)&&n>=0?n:null;
+    return state.dhEntryPaid?'本次題型已確認專業點數；同一套題目返回各步驟不會重複扣點。AI 解讀依實際產生次數另計。':'';
   }
   function tarotSyncMemberBalanceBadges(){
-    const n=tarotMemberDrawBalance();
-    const label=n===null?'':n>0?`會員額度 ${n} 次（用完不補）`:'會員額度 0 次（已用完）';
-    // 只在第一層顯示餘額；抽牌方式與固定題目不重複提醒，也不額外解鎖。
-    document.querySelectorAll('#drawModeGrid .tarot-member-draw-balance').forEach(el=>el.remove());
-    const cards=[...document.querySelectorAll('#topicGrid [data-topic]:not([data-topic="free"])')];
-    for(const card of cards){
-      const existing=card.querySelector('.tarot-member-draw-balance');
-      // 只顯示共用占卜額度；新問題與抽牌方式不會另外扣專業點數。
-      if(!label){existing?.remove();continue;}
-      const badge=existing||document.createElement('span');
-      badge.className='tarot-member-draw-balance';
-      badge.textContent=label;
-      badge.setAttribute('aria-label','會員共用占卜剩餘額度：'+label);
-      if(!existing)card.appendChild(badge);
-    }
+    document.querySelectorAll('.tarot-member-draw-balance').forEach(el=>el.remove());
   }
   function tarotUpdateSelectionHints(){
     const note=tarotSelectionQuotaNote();
     const top=$('tarotTopicTapHint');if(top){top.hidden=!note;top.textContent=note;}
-    const question=$('tarotQuestionTapHint');if(question){question.hidden=true;}
+    const question=$('tarotQuestionTapHint');if(question)question.hidden=true;
     tarotSyncMemberBalanceBadges();
   }
   function renderTopics(){
@@ -5196,7 +5165,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       const lockKind=paid?'member':loginRequired?'login-required':'member';
       const classes=['choice-card',allowed?'topic-ready is-option-open':'v2814-locked is-option-locked',loginRequired?'topic-login-locked':''].filter(Boolean).join(' ');
       const ariaState=allowed?'，可選擇':loginRequired?'，需重新登入會員':'，自訂需另計專業點數';
-      return `<button type="button" class="${classes}" style="--topic-i:${i}" data-topic="${t.id}" aria-label="${esc(t.name)}${ariaState}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small>${paid?'<span class="tarot-custom-cost" data-tarot-custom-price="topic">正在讀取自訂題目點數…</span>':allowed?'':lockedBadgeHTML(lockKind,note)}</button>`;
+      return `<button type="button" class="${classes}" style="--topic-i:${i}" data-topic="${t.id}" aria-label="${esc(t.name)}${ariaState}"><span class="choice-count">${String(i+1).padStart(2,'0')}</span><div class="choice-icon">${t.icon}</div><b>${t.name}</b><small>${t.desc}</small>${paid?'<span class="tarot-custom-cost" data-tarot-custom-price="topic">正在讀取自訂題目點數…</span>':'<span class="tarot-custom-cost" data-tarot-custom-price="fixed">正在讀取固定題型點數…</span>'}</button>`;
     }).join('');
     tarotRefreshCustomPrices(els.topic);
     tarotUpdateSelectionHints();
@@ -5239,7 +5208,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   }
   function renderQuestions(){
     const free=state.topic?.id==='free',qs=free?[]:questions();state.questions=qs;
-    els.qctx.textContent=free?'不限主題｜請輸入你真正想釐清的一件事情。':`${state.topic.name} → ${state.scenario.name}｜9 道固定題目全部開放，不額外扣專業點數；每次抽三張使用 1 次抽牌額度。`;
+    els.qctx.textContent=free?'不限主題｜請輸入你真正想釐清的一件事情。':`${state.topic.name} → ${state.scenario.name}｜9 道固定題目全部開放；最上層固定題型已計價，第三層自己輸入問題另外計點，AI 解讀另計。`;
     const fixed=qs.map((q,i)=>{
       const allowed=questionAllowedForCurrentUser(i);
       return `<button type="button" class="question-card is-option-open question-ready" data-question="${esc(q.id)}"><span>QUESTION ${String(i+1).padStart(2,'0')}</span><b>${esc(q.text)}</b></button>`;
@@ -5260,6 +5229,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
         if(!tarotCustomPending.ticket||tarotCustomPending.sourceKey!==tarotCustomSource()||tarotCustomPending.boundQuestion)throw Error('請先點擊自訂題目入口，完成這次的專業點數解鎖。');
         await tarotBindCustom(value,tarotCustomPending.ticket);
         tarotCustomPending.boundQuestion=value;
+        tarotCustomCache.set(tarotCustomPending.sourceKey,{...tarotCustomPending});
       }
       state.question={id:'custom',text:value,custom:true,type:'custom',customUnlockTicket:tarotFullPrivilege()?'':tarotCustomPending.ticket};
       state.spreadChoice='past';renderReady();showStep('ready');
@@ -5913,7 +5883,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   }
   async function showFormalResults(){
     if(state.drawPhase==='b'){await completeSixPromptDraw();return;}
-    if(!isAdminTestActive()&&!state.dhDrawCharged){
+    if(!isAdminTestActive()&&!state.dhEntryPaid){
       alert('第一階段尚未完成抽牌額度確認。請重新選擇主題後再抽牌；不會在顯示牌面時突然扣點。');
       return;
     }
@@ -6007,7 +5977,9 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       followText:state.followText||'',advanceSpreadKey:state.advanceSpreadKey||'',
       // 還原 Worker 已扣取的各階段抽牌額度；第二輪只在按繼續時扣，已扣者不重扣。
       prepaidOwner:authToken()?('member:'+authToken().slice(-16)):('guest:'+tarotVisitorId()),
-      dhEntryPaid:!!state.dhEntryPaid,dhDrawCharged:!!state.dhDrawCharged,dhDrawBCharged:!!state.dhDrawBCharged,
+      dhEntryPaid:!!state.dhEntryPaid,dhEntrySection:state.dhEntrySection||'',dhEntryTicket:state.dhEntryTicket||'',
+      dhEntryOp:state.dhEntryOp||'',dhSecondConfirmed:!!state.dhSecondConfirmed,
+      dhDrawCharged:!!state.dhDrawCharged,dhDrawBCharged:!!state.dhDrawBCharged,
       dhDrawOperations:state.dhDrawOperations||{}});
   }
   function clear3x3(){try{if(isIsolatedAdminTest())sessionStorage.removeItem(TAROT_3X3_ADMIN_SESSION);else localStorage.removeItem(TAROT_3X3_SESSION)}catch(_){}}
@@ -6024,7 +5996,10 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     // 僅能替相同 Session/訪客還原已扣額度；避免不同帳號沿用前人的扣點紀錄。
     const samePayer=saved.prepaidOwner===(authToken()?('member:'+authToken().slice(-16)):('guest:'+tarotVisitorId()));
     if(samePayer){
-      state.dhEntryPaid=!!saved.dhEntryPaid;state.dhDrawCharged=!!saved.dhDrawCharged;state.dhDrawBCharged=!!saved.dhDrawBCharged;
+      state.dhEntryPaid=!!saved.dhEntryPaid;state.dhEntrySection=saved.dhEntrySection||'';
+      state.dhEntryTicket=saved.dhEntryTicket||'';state.dhEntryOp=saved.dhEntryOp||'';
+      state.dhSecondConfirmed=!!saved.dhSecondConfirmed||!!saved.dhDrawBCharged;
+      state.dhDrawCharged=!!saved.dhDrawCharged;state.dhDrawBCharged=!!saved.dhDrawBCharged;
       state.dhDrawOperations=saved.dhDrawOperations&&typeof saved.dhDrawOperations==='object'?saved.dhDrawOperations:{};
     }
     state.current=saved.firstCards;state.revealed=new Set([0,1,2]);state.advancedCards=saved.secondCards||[];
@@ -6093,7 +6068,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }else{
-      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">完成第一階段站內 AI 解讀後，即可繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，由本次選定的 AI 產生六張牌整合解讀。</small></div><p class="v285-journey-desc">${state.dhDrawBCharged?'本次第二階段抽牌額度已確認，無須重扣。':'點擊繼續時才確認第二階段 1 次抽牌額度；六張牌 AI 整合解讀另扣 1 次 AI 額度。'}</p><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second ${firstStageReadyForFollowup()?'':'disabled aria-disabled="true"'}>${firstStageReadyForFollowup()?'繼續第二階段 →':'先完成三張牌 AI 解讀，開啟第二階段'}</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
+      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">完成第一階段站內 AI 解讀後，即可繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，由本次選定的 AI 產生六張牌整合解讀。</small></div><p class="v285-journey-desc">${state.dhSecondConfirmed?'已確認第二階段，不重複收取題型專業點數。':'第二階段延續原問題不再收專業點數，也不扣共用占卜額度；六張牌 AI 解讀另扣 1 次 AI 額度。'}</p><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second ${firstStageReadyForFollowup()?'':'disabled aria-disabled="true"'}>${firstStageReadyForFollowup()?'繼續第二階段 →':'先完成三張牌 AI 解讀，開啟第二階段'}</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }
     tarotRefreshCustomPrices(els.finish);
     // Reserve phase-II CTA until phase-I AI has actually finished.
@@ -6108,8 +6083,8 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(state.bDraft?.current?.length!==3)return;
     const duplicates=state.bDraft.current.some(c=>state.current.some(first=>first.id===c.id));
     if(duplicates){alert('第二輪的牌不能和第一輪重複，請重新抽第二組三張牌。');state.bDraft={current:[]};state.drawMode=null;if(state.firstDrawMode)beginDrawMode(state.firstDrawMode);else showModeSelector();return;}
-    if(!isAdminTestActive()&&!state.dhDrawBCharged){
-      alert('第二階段尚未確認抽牌額度，請返回「繼續第二階段」確認後再抽牌。');
+    if(!isAdminTestActive()&&!state.dhSecondConfirmed){
+      alert('請先返回「繼續第二階段」確認，再抽第二組三張牌。');
       return;
     }
     state.advancedCards=state.bDraft.current.map(c=>({...c}));
@@ -6133,7 +6108,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       const points=await tarotCustomQuote();if(!points)throw Error('PRICE_NOT_SET');
       if(!confirm(`新增一個自訂延伸問題需要 ${points} 點專業解鎖點數。\n確認後立即扣點並開放輸入，放棄輸入不自動退還。\n六張牌 AI 解讀另扣 AI 額度。\n\n確定解鎖？`))return false;
       const op=state.relatedPointsOp||crypto.randomUUID();state.relatedPointsOp=op;
-      const r=await fetch(tarotCustomUnlockURL,{method:'POST',cache:'no-store',headers:{Authorization:'Bearer '+tarotCustomToken(),'Content-Type':'application/json'},body:JSON.stringify({toolId:'tarot',entryMode:'prepaid',question:'',operationId:op,expectedPoints:points})});
+      const r=await fetch(tarotCustomUnlockURL,{method:'POST',cache:'no-store',headers:{Authorization:'Bearer '+tarotCustomToken(),'Content-Type':'application/json'},body:JSON.stringify({toolId:'tarot',sectionId:'custom-question',entryMode:'prepaid',question:'',operationId:op,expectedPoints:points})});
       const j=await r.json().catch(()=>({}));if(!r.ok||!j.success||!j.ticket)throw Error(tarotCustomError(j.error||'CUSTOM_UNLOCK_UNAVAILABLE'));
       state.relatedPointsTicket=j.ticket;state.relatedPointsPaid=Number(j.pointsPaid||points);
       window.dispatchEvent(new Event('dh-professional-points-changed'));
@@ -6144,9 +6119,9 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   async function beginFollowupDraw(){
     if(isGuestLoginRequired()){openMemberModal();return;}
     if(!firstStageReadyForFollowup()){const hint=els.finish.querySelector('[data-follow-error]');if(hint)hint.textContent='請先完成第一階段站內 AI 解讀，再繼續第二階段。';else alert('請先完成第一階段站內 AI 解讀。');els.analysis.scrollIntoView({behavior:'smooth',block:'start'});return;}
-    if(!state.dhDrawBCharged&&!isAdminTestActive()){
+    if(!state.dhSecondConfirmed&&!isAdminTestActive()){
       state.followFormOpen=false;renderFinish();
-      alert('請先點擊「繼續第二階段」確認 1 次抽牌額度，再選擇第二組牌。');return;
+      alert('請先點擊「繼續第二階段」確認下一輪，再選擇第二組牌。');return;
     }
     const spread=remainingSpreads().some(([k])=>k===state.advanceSpreadKey)?state.advanceSpreadKey:'';
     if(!spread){alert('請選擇第一次沒有使用過的牌陣。');return;}
@@ -6817,7 +6792,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(!window.confirm(msg))return false;
     resetToTopic();return true;
   }
-  function resetToTopic(){tarotCustomInvalidate();els.workspace.classList.remove('tarot-six-stage','tarot-followup-drawing');onsiteAiRequestSerial++;onsiteAiLockedModel=null;onsiteAiSelectedModel='auto';onsiteAiPhaseResults={auto:{three:null,six:null}};onsiteAiAnswer='';closeResumeNotice();clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,firstAiInterpretationCompleted:false,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();syncNewQuestionUI();showStep('topic');}
+  function resetToTopic(){tarotEntryReceipts.clear();tarotCustomCache.clear();tarotCustomInvalidate();els.workspace.classList.remove('tarot-six-stage','tarot-followup-drawing');onsiteAiRequestSerial++;onsiteAiLockedModel=null;onsiteAiSelectedModel='auto';onsiteAiPhaseResults={auto:{three:null,six:null}};onsiteAiAnswer='';closeResumeNotice();clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,firstAiInterpretationCompleted:false,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();syncNewQuestionUI();showStep('topic');}
   
   // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
   // 例：tarot.html?topic=love&scenario=single#worldSecond。深連結也要先在第一層確認額度。
@@ -6830,7 +6805,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const aliases=t.id==='love'?{distant:'dating',reconcile:'breakup'}:{newjob:'employed',promotion:'employed',planning:'business',running:'business',leave:'jobhunt'};
     const sc=scenarioBy(t,aliases[scenarioId]||scenarioId);
     if(!sc)return false;
-    if(!await tarotPrepayFirstStage()){showStep('topic');return false;}
+    if(!await tarotPrepayFirstStage(t.id)){showStep('topic');return false;}
     state.topic=t;state.scenario=sc;state.question=null;state.tarotFurthestStep=0;
     renderScenarios();
     // 直接進入該情境的正式選題流程；第一階段已先扣 1 次，第二階段稍後另確認。
@@ -6844,9 +6819,8 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const topicId=b.dataset.topic;
     if(isGuestLoginRequired()){openMemberModal();return;}
     if(!isTopicAllowed(topicId)){if(topicId==='free')openMemberModal();else openMemberModal();return;}
-    // 特殊自由提問另收專業點數；第一層只扣第一階段抽牌 1 次。
-    if(topicId==='free'&&!await tarotPrepayCustom('topic:free'))return;
-    if(!await tarotPrepayFirstStage())return;
+    // 第一層只收一筆：完全自訂使用 custom-topic，固定題型使用 fixed-topic。
+    if(!await tarotPrepayFirstStage(topicId))return;
     if(topicId!=='free')tarotCustomInvalidate();
     cancelFixedCase20();state.fixedCaseId='';state.topic=topicBy(topicId);state.scenario=state.question=null;state.spreadChoice=null;state.tarotFurthestStep=0;
     if(state.topic.id==='free'){state.scenario={id:'free',name:'自由提問'};renderQuestions();showStep('question');}
