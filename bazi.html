@@ -9986,7 +9986,10 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
  const API='https://bazi-api.ezgocpu.workers.dev',SID='divinationhub-auth-session-v1';
  const SECTION_IDS=['report-pillars','report-elements','report-tengods','report-relations','report-shensha','report-reading','report-luck','report-years','report-months'];
  const LABEL={gan:'天干',zhi:'地支',ganZhi:'干支',year:'年份',month:'月份',startYear:'起始年',endYear:'結束年',startSolar:'開始日期',endSolar:'結束日期',tenGodGan:'天干十神',tenGodZhi:'地支十神',ganElement:'天干五行',zhiElement:'地支五行',interactions:'干支互動',relations:'交互關係',percentages:'各項比例',groupPercentages:'十神群組比例',summary:'整體總結',desc:'解讀說明',title:'分析重點',text:'詳解',basis:'判讀依據',good:'有利特質',watch:'注意事項',stuck:'較易卡住',label:'判斷',score:'結構評估',startJie:'起始節氣',endJie:'結束節氣',coreMotto:'核心原則',coreDetail:'深入判讀',yearsData:'流年詳細分析',rows:'各面向解讀',rules:'行動原則',actions:'實際行動',note:'補充說明',monthFlows:'逐月資訊',forward:'順排',hideGan:'藏干',yinYang:'陰陽'};
- const states=new Map(),els=new Map(),restored=new Set(); let generation=0,loading=false;
+ // Confirm dialogs temporarily blur and refocus the page. A focus-triggered
+ // status refresh must never invalidate an in-flight paid unlock.
+ const states=new Map(),els=new Map(),restored=new Set(),pendingPurchases=new Set();
+ let generation=0,loading=false,statusRequest=0;
  const el=(tag,cls,txt)=>{let x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
  const token=()=>{try{return localStorage.getItem(SID)||''}catch(_){return ''}};
  const chart=()=>window.baziPremiumPayload?.();
@@ -10060,7 +10063,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }box.hidden=true;els.set(id,box);
   }
  }
- function reset(){generation++;states.clear();restored.clear();window.baziPurchasedDocs=Object.create(null);
+ function reset(){generation++;statusRequest++;states.clear();restored.clear();window.baziPurchasedDocs=Object.create(null);
   window.baziClearNativePaidData?.();
   document.querySelectorAll('.dh-bazi-premium-visible').forEach(x=>x.classList.remove('dh-bazi-premium-visible'));
   // Scrub earlier purchased private DOM when changing charts or opening an example.
@@ -10070,8 +10073,12 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   for(const box of els.values()){box.hidden=true;const content=box.querySelector('.bazi-premium-content');if(content){content.hidden=true;content.replaceChildren()}}
  }
  window.baziPremiumReset=reset;
- window.baziSectionReady=async()=>{const n=++generation;const payload=chart();if(!payload)return;loading=true;
-  try{addBoxes();const result=await post('/v2/section/status',payload);if(n!==generation)return;
+ window.baziSectionReady=async()=>{
+  // Native confirm() fires window.focus when dismissed; ignore that refresh while
+  // the user's already-approved purchase is still completing.
+  if(pendingPurchases.size)return;
+  const n=++generation,request=++statusRequest;const payload=chart();if(!payload)return;loading=true;
+  try{addBoxes();const result=await post('/v2/section/status',payload);if(n!==generation||request!==statusRequest||pendingPurchases.size)return;
    for(const x of result.sections||[]){const box=els.get(x.id);if(!box)continue;states.set(x.id,{...x,balance:result.balance});
     const btn=box.querySelector('button');box.hidden=x.id==='report-shensha'||x.mode==='pending'&&!x.unlocked;
     if(box.hidden)continue;
@@ -10088,28 +10095,40 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }catch(e){if(n===generation)for(const box of els.values()){box.hidden=true}}
   finally{loading=false}
  };
- async function purchase(id){const epoch=generation,box=els.get(id),s=states.get(id),payload=chart();if(!box||!s||!payload)return;
+ async function purchase(id){
+  if(pendingPurchases.has(id))return; // One request at a time per section.
+  const epoch=generation,box=els.get(id),s=states.get(id),payload=chart();if(!box||!s||!payload)return;
+  pendingPurchases.add(id);
+  statusRequest++; // Discard older status responses captured before this purchase.
   const btn=box.querySelector('button');btn.disabled=true;
   try{
    let path='/v2/section/read';
    if(!s.unlocked&&s.mode==='priced'){
     if(!confirm('確定使用 '+s.points+' 點，永久解鎖此筆八字命盤的「'+s.title+'」？'))return;
     path='/v2/section/unlock';
+    btn.textContent='正在解鎖…';
+    status(box,'已確認，正在完成專業點數解鎖');
    }
    const j=await post(path,{...payload,sectionId:id,expectedPoints:s.points});
    if(epoch!==generation || !document.body.classList.contains('bazi-personal-full-mode') || JSON.stringify([chart()?.datetime,chart()?.gender,chart()?.sect])!==JSON.stringify([payload.datetime,payload.gender,payload.sect]))return;
+   // Once the server confirms the entitlement, never prompt for this chapter
+   // again, even if rendering its content fails after a successful charge.
+   s.unlocked=true;
+   restored.add(id);
+   btn.textContent='已解鎖｜重新閱讀';
    const chapter=box.closest('.report-section');
    chapter?.classList.add('dh-bazi-premium-visible');
-   try{display(box,j.document)}catch(err){chapter?.classList.remove('dh-bazi-premium-visible');throw err}
-   s.unlocked=true;
-   btn.textContent='已解鎖｜重新閱讀';status(box,(j.charged?'本次扣除 '+j.charged+' 點':'已購買區塊，重新閱讀不扣點')+'｜剩餘 '+j.balance+' 點');
+   try{display(box,j.document)}catch(err){chapter?.classList.remove('dh-bazi-premium-visible');throw err}status(box,(j.charged?'本次扣除 '+j.charged+' 點':'已購買區塊，重新閱讀不扣點')+'｜剩餘 '+j.balance+' 點');
    const badge=document.getElementById('dh-sp-balance');if(badge)badge.textContent='專業解鎖點數 '+j.balance+' 點';
    window.dispatchEvent(new Event('dh-professional-points-changed'));
    if(['report-pillars','report-elements','report-tengods','report-relations'].includes(id)){
      const view=chapter?.querySelector('.ten-god-layout,.analysis-grid,.relation-grid,#pillars');
      (view||chapter)?.scrollIntoView({behavior:'smooth',block:'nearest'});
    }else box.querySelector('.bazi-premium-content')?.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }catch(e){status(box,(e?.message||'讀取失敗')+'；若已成功解鎖，重新閱讀不會重複扣點')}finally{btn.disabled=false}
+  }catch(e){
+   btn.textContent=s.unlocked?'已解鎖｜重新閱讀':(s.mode==='priced'?'使用 '+s.points+' 點解鎖整區':'免費閱讀完整分析');
+   status(box,(e?.message||'讀取失敗')+'；若已成功解鎖，重新閱讀不會重複扣點');
+  }finally{pendingPurchases.delete(id);btn.disabled=false}
  }
  const init=()=>{addBoxes();PAID_ADVANCED.forEach(id=>document.getElementById(id)?.addEventListener('toggle',()=>{if(document.getElementById(id)?.open&&states.get(id)?.unlocked&&!restored.has(id)){restored.add(id);void purchase(id)}}));window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
