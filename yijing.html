@@ -2394,6 +2394,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       yjProBalance=j.balance;yjProLoaded=true;
       window.dispatchEvent(new Event('dh-professional-points-changed'));
       applyCastAccess();
+      yjRefreshCastChangeDetails();
     }catch(_){/* fail closed: never spend when inaccessible */}
   }
   async function yjPurchase(id,scope){
@@ -3208,21 +3209,59 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     return `<div class="reading-summary" data-reading-section="7"><b>七、整體總結</b><div class="summary-headline">${esc(s.headline||r.summary||'')}</div>${s.intro?`<p class="summary-intro">${esc(s.intro)}</p>`:''}${paras}${s.stages?.length?`<div class="summary-stage-grid">${s.stages.map(x=>`<article class="summary-stage"><span class="stage-label">${esc(x.label)}</span><h5>${esc(x.title)}</h5><p>${esc(x.body)}</p></article>`).join('')}</div>`:''}${s.note?`<p class="summary-note">最後提醒｜${esc(s.note)}</p>`:''}</div>`;
   }
 
-  function customCastCardHTML(h,lines,label,movingLines=[],classic={}){
-    return `<article class="hex-card yijing-rd-core">
-      <div class="hex-title">
-        <div><span class="yijing-rd-core-overline">本卦</span><h3>第 ${h.number} 卦・${esc(h.name)}</h3></div>
-        <details class="yijing-rd-locked yijing-rd-lock-inline">
+  // 「本次卦象變化」和第四區動爻解讀共用同一筆權限：
+  // 第四區免費輪替開放或付費解鎖後，顯示原本 YijingCore 的實際動爻及變卦，不另扣點。
+  function yjCastChangeDetailsHTML(reading){
+    const isOpen=Boolean(reading&&isReadingSectionAllowed(4));
+    if(!isOpen){
+      return `<details class="yijing-rd-locked yijing-rd-lock-inline" data-yj-change-detail="locked">
           <summary aria-label="查看付費後展示的動爻與變卦資訊">變化詳情 <small>付費後展示</small><span class="yijing-rd-lock-arrow" aria-hidden="true">⌄</span></summary>
           <div class="yijing-rd-lock-body">
             <b>本次卦象變化</b>
-            <p>動爻狀態、具體爻位與變卦（如有），付費後展示。</p>
+            <p>動爻狀態、具體爻位與變卦（如有），解鎖「四、動爻逐一解讀」後同步開放。</p>
             <div class="yijing-rd-lock-grid">
-              <div class="yijing-rd-lock-item"><span>動爻狀態與爻位</span><div class="yijing-rd-fake-text" aria-hidden="true"></div><small>付費後展示</small></div>
-              <div class="yijing-rd-lock-item"><span>變卦及專屬卦象</span><div class="yijing-rd-fake-text short" aria-hidden="true"></div><small>付費後展示</small></div>
+              <div class="yijing-rd-lock-item"><span>動爻狀態與爻位</span><div class="yijing-rd-fake-text" aria-hidden="true"></div><small>待解鎖</small></div>
+              <div class="yijing-rd-lock-item"><span>變卦及專屬卦象</span><div class="yijing-rd-fake-text short" aria-hidden="true"></div><small>待解鎖</small></div>
             </div>
           </div>
-        </details>
+        </details>`;
+    }
+    const moving=Array.isArray(reading.movingLines)?reading.movingLines:[];
+    const lineNames=Array.isArray(reading.lineReadings)?reading.lineReadings.map(x=>String(x.label||'').trim()).filter(Boolean):[];
+    const movingLabel=moving.length?(lineNames.length?lineNames.map(x=>x+'動').join('、'):moving.map(n=>'第 '+Number(n)+' 爻動').join('、')):'六爻皆靜（無動爻）';
+    const changed=Boolean(moving.length&&reading.changed);
+    const name=changed?`第 ${Number(reading.changed.number)} 卦・${esc(reading.changed.name||'')}`:'無變卦（靜卦）';
+    const trigram=changed?`${esc(reading.changed.upper||'')}・${esc(reading.changed.upperMeta?.image||'')} ／ ${esc(reading.changed.lower||'')}・${esc(reading.changed.lowerMeta?.image||'')}`:'本次卦象維持原狀';
+    const diagram=changed&&Array.isArray(reading.changedLines)&&reading.changedLines.length===6?`<div class="yj-change-hex-diagram">${linesHTML(reading.changedLines,[])}</div>`:'';
+    return `<details class="yijing-rd-locked yijing-rd-lock-inline yijing-rd-change-open" data-yj-change-detail="unlocked">
+        <summary aria-label="查看已開放的動爻與變卦資訊">變化詳情 <small>✓ 已開放</small><span class="yijing-rd-lock-arrow" aria-hidden="true">⌄</span></summary>
+        <div class="yijing-rd-lock-body">
+          <b>本次卦象變化</b>
+          <p>已隨「四、動爻逐一解讀」開放，不需額外扣點。</p>
+          <div class="yijing-rd-lock-grid">
+            <div class="yijing-rd-lock-item"><span>動爻狀態與爻位</span><strong>${esc(movingLabel)}</strong><small>${moving.length?'共 '+moving.length+' 爻變動':'本次沒有變動爻位'}</small></div>
+            <div class="yijing-rd-lock-item"><span>變卦及專屬卦象</span><strong>${name}</strong><small>${trigram}</small>${diagram}</div>
+          </div>
+        </div>
+      </details>`;
+  }
+  // 付費成功後直接更新本卦卡，保留已展開狀態，不需要重算或重抽卦。
+  function yjRefreshCastChangeDetails(){
+    if(!currentReading||!result)return;
+    const old=result.querySelector('.yijing-rd-main [data-yj-change-detail]');
+    if(!old)return;
+    const wrapper=document.createElement('template');
+    wrapper.innerHTML=yjCastChangeDetailsHTML(currentReading);
+    const next=wrapper.content.firstElementChild;
+    if(!next||old.dataset.yjChangeDetail===next.dataset.yjChangeDetail)return;
+    next.open=old.open;
+    old.replaceWith(next);
+  }
+  function customCastCardHTML(h,lines,label,movingLines=[],classic={},reading=null){
+    return `<article class="hex-card yijing-rd-core">
+      <div class="hex-title">
+        <div><span class="yijing-rd-core-overline">本卦</span><h3>第 ${h.number} 卦・${esc(h.name)}</h3></div>
+        ${yjCastChangeDetailsHTML(reading)}
       </div>
       <div class="yijing-rd-core-body">
         <div class="yijing-rd-core-diagram">${linesHTML(lines,[])}<div class="yijing-rd-core-trigrams">${esc(h.upper)}・${esc(h.upperMeta?.image||'')}　／　${esc(h.lower)}・${esc(h.lowerMeta?.image||'')}</div></div>
@@ -3409,7 +3448,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
           <div class="yijing-rd-question-full">${esc(r.question)}</div>
         </details>
         <div class="yijing-rd-main">
-          ${customCastCardHTML(r.base,r.baseLines,'本卦',[],thisClassic)}
+          ${customCastCardHTML(r.base,r.baseLines,'本卦',[],thisClassic,r)}
         </div>
         ${publicYijingClassicHTML(r.base,r.baseLines,true)}
         <section class="yijing-ai-box yijing-rd-ai">
@@ -3503,7 +3542,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
           <div class="yijing-rd-question-full">${esc(r.question)}</div>
         </details>
         <div class="yijing-rd-main yijing-fixed-public-main">
-          ${customCastCardHTML(r.base,r.baseLines,'本卦',[],basicClassic)}
+          ${customCastCardHTML(r.base,r.baseLines,'本卦',[],basicClassic,r)}
         </div>
         ${publicYijingClassicHTML(r.base,r.baseLines,true)}
 
@@ -3577,7 +3616,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   updateMemberUI();
   if(!adminEntryRequested())void restoreYijingSession();
   renderTopics();
-  result.addEventListener('click',e=>{const unlock=e.target.closest('[data-yj-unlock-section]');if(unlock){e.preventDefault();const id=unlock.dataset.yjUnlockSection,n=Number(id.split('-')[1]);unlock.disabled=true;void yjPurchase(id,'reading').then(ok=>{if(ok){const area=result.querySelector('[data-yj-locked-section=\"'+n+'\"]'),html=yjSavedReadingHTML.get(n);if(area&&html)area.outerHTML=html;}unlock.disabled=false;});return;}const aiInfo=e.target.closest('[data-ai-quota-info]');if(aiInfo){openYijingAiQuotaModal();return;}const paid=e.target.closest('[data-paid-lock]');if(paid){openPaidModal(`「${paid.dataset.paidLock||'這項功能'}」請直接在對應鎖定區使用專業點數解鎖。`);return;}const lock=e.target.closest('[data-login-lock]');if(lock){openMemberModal(`「${lock.dataset.loginLock||'這項功能'}」目前未對未登入訪客開放；先免費登入可解除大部分限制。`);}});
+  result.addEventListener('click',e=>{const unlock=e.target.closest('[data-yj-unlock-section]');if(unlock){e.preventDefault();const id=unlock.dataset.yjUnlockSection,n=Number(id.split('-')[1]);unlock.disabled=true;void yjPurchase(id,'reading').then(ok=>{if(ok){const area=result.querySelector('[data-yj-locked-section=\"'+n+'\"]'),html=yjSavedReadingHTML.get(n);if(area&&html)area.outerHTML=html;if(id==='reading-4')yjRefreshCastChangeDetails();}unlock.disabled=false;});return;}const aiInfo=e.target.closest('[data-ai-quota-info]');if(aiInfo){openYijingAiQuotaModal();return;}const paid=e.target.closest('[data-paid-lock]');if(paid){openPaidModal(`「${paid.dataset.paidLock||'這項功能'}」請直接在對應鎖定區使用專業點數解鎖。`);return;}const lock=e.target.closest('[data-login-lock]');if(lock){openMemberModal(`「${lock.dataset.loginLock||'這項功能'}」目前未對未登入訪客開放；先免費登入可解除大部分限制。`);}});
   document.getElementById('yijingMemberButton')?.addEventListener('click',()=>{
     if(isAdminTestActive()){openAdminTestModal();return;}
     if(isLogged()){closeYijingMemberDropdown();location.href='member.html';return;}
@@ -4276,6 +4315,10 @@ html[data-theme="light"] .yijing-reading-picker .yi-mode-option:has(input:checke
 .yj-pro-unlock{display:inline-block;margin-top:12px;padding:11px 17px;border:1px solid #b88a43;background:#fff9ee;color:#865619;border-radius:9px;font:inherit;font-weight:750;cursor:pointer}
 .yj-pro-unlock:disabled{opacity:.5;cursor:wait}
 @media(max-width:790px){#yijingQuotaPanel .yijing-quota-grid{grid-template-columns:minmax(0,1fr)!important}}
+.yijing-rd-change-open .yijing-rd-lock-item strong{color:var(--rd-ink);font-size:.83rem;line-height:1.7;overflow-wrap:anywhere}
+.yijing-rd-change-open .yj-change-hex-diagram{margin-top:2px;max-width:130px}
+.yijing-rd-change-open .yj-change-hex-diagram .hex-lines{width:105px;max-width:100%;margin:8px 0;gap:5px}
+.yijing-rd-change-open .yijing-rd-lock-item small{line-height:1.55;overflow-wrap:anywhere}
 </style>
 </body>
 </html>
