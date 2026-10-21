@@ -8419,6 +8419,23 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
     document.addEventListener('click',e=>{if(!e.target.closest('#baziLayoutSelect')){if(menu)menu.hidden=true;trigger?.setAttribute('aria-expanded','false');}});
     document.getElementById('baziDesktopRescue')?.addEventListener('click',()=>setLayout('auto'));
     prepareChapterFooters();
+    // The status pill is a distinct, keyboard-operable preview action.
+    // Keep the rest of each card as the paid-unlock action.
+    document.querySelectorAll('#baziSectionHub .bazi-hub-status--partial, #baziSectionHub .bazi-hub-status--example').forEach(pill=>{
+      const card=pill.closest('[data-bazi-open-section]');
+      if(!card)return;
+      pill.dataset.baziHubPreview='1';
+      pill.setAttribute('role','button');
+      pill.tabIndex=0;
+      const subject=card.querySelector('.bazi-hub-name')?.textContent?.trim()||'此區';
+      pill.setAttribute('aria-label',`${subject}：${pill.textContent.trim()}，不扣點`);
+      pill.title='免費查看'+pill.textContent.trim()+'（不扣點）';
+      pill.addEventListener('keydown',e=>{
+        if(e.key!=='Enter'&&e.key!==' ')return;
+        e.preventDefault();e.stopPropagation();
+        pill.click();
+      });
+    });
     document.addEventListener('click',e=>{
       const extraButton=e.target.closest('[data-bazi-summary-panel]');
       if(extraButton){
@@ -8462,6 +8479,17 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
       }
       const nav=e.target.closest('[data-bazi-chapter-action]');
       if(nav){navigateChapter(nav.dataset.baziChapterAction);return;}
+      // Keep the original free/preview route separate from paid unlocking.
+      // Clicking the small status pill never invokes the paid-section checkout.
+      const preview=e.target.closest('[data-bazi-hub-preview]');
+      if(preview){
+        const item=preview.closest('[data-bazi-open-section]');
+        if(item&&item.dataset.baziPurchaseStatus!=='unlocked'){
+          e.preventDefault();e.stopPropagation();
+          openChapter(item.dataset.baziOpenSection,'grid');
+          return;
+        }
+      }
       const b=e.target.closest('[data-bazi-open-section]');
       if(b)enterChapter(b.dataset.baziOpenSection,b.closest('#baziSectionHub')?'grid':'quick-link');
     });
@@ -10022,6 +10050,11 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    if(!badge.dataset.originalLabel)badge.dataset.originalLabel=badge.textContent;
    badge.textContent=x.unlocked?'已解鎖':x.mode==='free'?'免費開放':badge.dataset.originalLabel;
    badge.classList.toggle('bazi-hub-status--full',!!x.unlocked||x.mode==='free');
+   if(badge.hasAttribute('data-bazi-hub-preview')){
+     badge.tabIndex=x.unlocked?-1:0;
+     badge.setAttribute('aria-label',x.unlocked?'已解鎖，點擊卡片閱讀完整內容':(area.querySelector('.bazi-hub-name')?.textContent?.trim()||'此區')+'：免費預覽（不扣點）');
+     badge.title=x.unlocked?'已解鎖，點擊卡片閱讀完整內容':'點此免費預覽（不扣點）';
+   }
   }
   let preview=area.querySelector('.dh-sp-price-preview');
   if(!x.unlocked&&x.mode==='priced'&&Number(x.points)>0){
@@ -10104,7 +10137,14 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   document.querySelectorAll('[data-bazi-open-section]').forEach(area=>{
    delete area.dataset.baziPurchaseStatus;
    const badge=area.querySelector('.bazi-hub-status');
-   if(badge?.dataset.originalLabel){badge.textContent=badge.dataset.originalLabel;badge.classList.remove('bazi-hub-status--full')}
+   if(badge?.dataset.originalLabel){
+    badge.textContent=badge.dataset.originalLabel;badge.classList.remove('bazi-hub-status--full');
+    if(badge.hasAttribute('data-bazi-hub-preview')){
+      badge.tabIndex=0;
+      badge.setAttribute('aria-label',(area.querySelector('.bazi-hub-name')?.textContent?.trim()||'此區')+'：'+badge.textContent+'，不扣點');
+      badge.title='免費查看'+badge.textContent+'（不扣點）';
+    }
+   }
   });
   window.baziClearNativePaidData?.();
   document.querySelectorAll('.dh-bazi-premium-visible').forEach(x=>x.classList.remove('dh-bazi-premium-visible'));
@@ -10279,6 +10319,16 @@ body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-y
   display:none!important;
 }
 /* Original monthly and yearly rich cards are NOT recreated inside a generic wrapper. */
+</style>
+<style id="bazi-premium-preview-badges-20261021">
+/* The status pill is its own preview action, distinct from the paid card. */
+#baziSectionHub .bazi-hub-status[data-bazi-hub-preview]:not([tabindex="-1"]){
+ cursor:pointer;position:relative;z-index:1;transition:background .18s,border-color .18s,box-shadow .18s;
+}
+#baziSectionHub .bazi-hub-status[data-bazi-hub-preview]:not([tabindex="-1"]):is(:hover,:focus-visible){
+ border-color:var(--gold,#b28740);box-shadow:0 0 0 2px rgba(191,151,82,.18);
+}
+#baziSectionHub .bazi-hub-status[data-bazi-hub-preview]:focus-visible{outline:2px solid var(--gold,#b28740);outline-offset:2px}
 </style>
 <style id="bazi-premium-hub-only-20261021">
 /* First-level checkout: any legacy second checkout is hidden, while renderer mounts survive. */
