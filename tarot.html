@@ -2068,20 +2068,32 @@ html[data-theme="light"] .tarot-prompt-download{background:#fbf3ff;color:#553269
 /* V28.6 · compact YiJing-style 9 question cards and an independent custom drawer */
 .question-grid{align-items:stretch;grid-auto-rows:auto}
 .question-grid .question-card{align-self:stretch;min-height:78px}
-.question-custom-drawer{grid-column:1 / -1;align-self:start;margin-top:2px;border:1px dashed rgba(231,94,215,.25);border-radius:13px;background:rgba(231,94,215,.018);overflow:hidden}
-.question-custom-drawer>summary{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;cursor:pointer;list-style:none;color:#e4c8e9}
+.question-custom-drawer{grid-column:1 / -1;align-self:start;margin-top:6px;border:1px dashed rgba(231,94,215,.25);border-radius:13px;background:rgba(231,94,215,.018);overflow:hidden}
+.question-custom-drawer>summary{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'main toggle' 'price price';align-items:start;column-gap:12px;row-gap:8px;padding:13px 15px;cursor:pointer;list-style:none;color:#e4c8e9}
 .question-custom-drawer>summary::-webkit-details-marker{display:none}
-.question-custom-drawer>summary::after{content:'＋';font-size:1rem;color:#c98abb;flex:none}
-.question-custom-drawer[open]>summary::after{content:'－'}
+.question-custom-drawer>summary::after{display:none}
 .question-custom-drawer>summary:hover{background:rgba(231,94,215,.04)}
-.question-custom-title{font-size:.83rem;font-weight:750}
-.question-custom-drawer>summary small{font-size:.67rem;color:#9887a3;text-align:right}
-.question-custom-drawer .custom-question-box{margin:0;border:0;border-top:1px solid rgba(231,94,215,.14);border-radius:0;background:rgba(231,94,215,.035);padding:15px}
-.question-custom-drawer .custom-question-box textarea{min-height:76px}
-html[data-theme="light"] .question-custom-drawer{background:#fff;border-color:rgba(173,88,175,.24)}
-html[data-theme="light"] .question-custom-drawer>summary{color:#59395b}
-html[data-theme="light"] .question-custom-drawer>summary small{color:#756578}
-@media(max-width:620px){.question-custom-drawer>summary{align-items:flex-start;flex-direction:column;gap:2px}.question-custom-drawer>summary small{text-align:left}.question-custom-drawer>summary::after{position:absolute;right:20px}}
+.question-custom-title{font-size:.94rem;font-weight:800;line-height:1.45}
+.question-custom-drawer .tarot-custom-summary-main{grid-area:main;min-width:0;display:flex;flex-direction:column;gap:4px}
+.question-custom-drawer .tarot-custom-state{font-size:.72rem;color:#9887a3;line-height:1.5}
+.question-custom-drawer .tarot-custom-cost{grid-area:price;margin-top:0}
+.question-custom-drawer .tarot-custom-toggle{grid-area:toggle;align-self:center;justify-self:end;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;border:1px solid rgba(231,94,215,.28);background:rgba(231,94,215,.05);color:#c98abb;font-size:1rem;line-height:1;flex:none}
+.question-custom-drawer .tarot-custom-toggle::before{content:'＋'}
+.question-custom-drawer[open] .tarot-custom-toggle::before{content:'－'}
+.question-custom-drawer .custom-question-box{margin:0;border:0;border-top:1px solid rgba(231,94,215,.14);border-radius:0;background:rgba(231,94,215,.035);padding:18px 18px 16px}
+.question-custom-drawer .custom-question-box textarea{min-height:110px}
+.question-custom-drawer .custom-question-box button{min-width:194px;min-height:50px}
+.tarot-custom-entry-free{grid-column:1 / -1;align-self:start;margin-top:6px;border:1px dashed rgba(231,94,215,.25);border-radius:13px;background:rgba(231,94,215,.018);overflow:hidden}
+.tarot-custom-entry-free .tarot-custom-summary{display:grid;grid-template-columns:minmax(0,1fr);row-gap:8px;padding:13px 15px;color:#e4c8e9}
+.tarot-custom-entry-free .tarot-custom-summary-main{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tarot-custom-entry-free .tarot-custom-state{font-size:.72rem;color:#9887a3;line-height:1.5}
+.tarot-custom-entry-free .custom-question-box{margin:0;border:0;border-top:1px solid rgba(231,94,215,.14);border-radius:0;background:rgba(231,94,215,.035);padding:18px 18px 16px}
+.tarot-custom-entry-free .custom-question-box textarea{min-height:110px}
+.tarot-custom-entry-free .custom-question-box button{min-width:194px;min-height:50px}
+html[data-theme="light"] .question-custom-drawer,html[data-theme="light"] .tarot-custom-entry-free{background:#fff;border-color:rgba(173,88,175,.24)}
+html[data-theme="light"] .question-custom-drawer>summary,html[data-theme="light"] .tarot-custom-entry-free .tarot-custom-summary{color:#59395b}
+html[data-theme="light"] .question-custom-drawer .tarot-custom-state,html[data-theme="light"] .tarot-custom-entry-free .tarot-custom-state{color:#756578}
+@media(max-width:620px){.question-custom-drawer>summary{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'main toggle' 'price price';column-gap:10px}.question-custom-drawer .custom-question-box,.tarot-custom-entry-free .custom-question-box{padding:16px 15px 14px}.question-custom-title{font-size:.9rem}.question-custom-drawer .custom-question-box button,.tarot-custom-entry-free .custom-question-box button{width:100%;min-width:0}}
 /* V28.7 · next-step guidance: 4 AI providers light up from left to right,
    then the second-stage button softly draws attention. */
 @keyframes v287-ai-chase {
@@ -5086,7 +5098,12 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   }
   function customFormHTML(free=false){
     const unlocked=tarotFullPrivilege()||(tarotCustomPending.ticket&&tarotCustomPending.sourceKey===tarotCustomSource()&&!tarotCustomPending.boundQuestion);
-    return `<details class="question-custom-drawer tarot-custom-entry" ${free&&unlocked?'open':''}><summary data-tarot-custom-open><span class="question-custom-title">✎ 其他｜自己輸入問題</span><small>${unlocked?'✓ 本次已解鎖，可輸入問題':'登入後以專業點數解鎖'}</small><span class="tarot-custom-cost" data-tarot-custom-price="question">正在讀取自訂題目點數…</span></summary><section class="custom-question-box"><label for="tarotCustomQuestion">你的問題</label><textarea id="tarotCustomQuestion" maxlength="120" placeholder="例如：我最近適合換工作嗎？" aria-describedby="customQuestionHelp customQuestionError"></textarea><p id="customQuestionHelp">用自然的文字提問，可包含日期與數字；不接受純數字、符號或重複亂碼。</p><p id="customQuestionError" class="input-error" role="status" aria-live="polite"></p><button type="button" data-submit-custom>使用這個問題 →</button></section></details>`;
+    const stateText=unlocked?'✓ 本次已解鎖，可輸入問題':'登入後以專業點數解鎖';
+    const formBody=`<section class="custom-question-box"><label for="tarotCustomQuestion">你的問題</label><textarea id="tarotCustomQuestion" maxlength="120" placeholder="例如：我最近適合換工作嗎？" aria-describedby="customQuestionHelp customQuestionError"></textarea><p id="customQuestionHelp">用自然的文字提問，可包含日期與數字；不接受純數字、符號或重複亂碼。</p><p id="customQuestionError" class="input-error" role="status" aria-live="polite"></p><button type="button" data-submit-custom>使用這個問題 →</button></section>`;
+    if(free){
+      return `<section class="tarot-custom-entry-free tarot-custom-entry"><div class="tarot-custom-summary"><div class="tarot-custom-summary-main"><span class="question-custom-title">✎ 其他｜自己輸入問題</span><small class="tarot-custom-state">${stateText}</small></div><span class="tarot-custom-cost" data-tarot-custom-price="question">正在讀取自訂題目點數…</span></div>${formBody}</section>`;
+    }
+    return `<details class="question-custom-drawer tarot-custom-entry"><summary data-tarot-custom-open><div class="tarot-custom-summary-main"><span class="question-custom-title">✎ 其他｜自己輸入問題</span><small class="tarot-custom-state">${stateText}</small></div><span class="tarot-custom-cost" data-tarot-custom-price="question">正在讀取自訂題目點數…</span><span class="tarot-custom-toggle" aria-hidden="true"></span></summary>${formBody}</details>`;
   }
   function renderQuestions(){
     const free=state.topic?.id==='free',qs=free?[]:questions();state.questions=qs;
