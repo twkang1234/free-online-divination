@@ -4416,6 +4416,55 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(d.error==='TOOL_QUOTA_EMPTY')throw Error(isLogged()?'本期免費抽牌及共用工具額度都已用完':'本期免費抽牌已用完，登入會員可使用共用工具額度');
     throw Error(d.error||'TOOL_QUOTA_UNAVAILABLE');
   }
+  // 每次全新 3＋3 占卜在第一層主題先確認並預扣兩次抽牌權益。
+  // 兩次採用不同的 Worker operation ID，返回更換情境、問題或抽牌法皆沿用，不會再扣。
+  let tarotEntryChargeBusy=false;
+  async function tarotPrepay3Plus3(){
+    if(state.dhEntryPaid)return true;
+    if(tarotEntryChargeBusy)return false;
+    if(isAdminTestActive()){
+      state.dhEntryPaid=true;state.dhDrawCharged=true;state.dhDrawBCharged=true;
+      return true;
+    }
+    tarotEntryChargeBusy=true;
+    try{
+      const token=authToken();
+      const res=await fetch(TAROT_API_BASE+'/wallet/tarot/status',{
+        cache:'no-store',headers:{'X-Tarot-Visitor-Id':tarotVisitorId(),...(token?{Authorization:'Bearer '+token}:{})}
+      });
+      const snap=await res.json().catch(()=>({}));
+      if(!res.ok||!snap.ok||!snap.daily)throw Error('暫時無法查詢抽牌額度，沒有扣點。');
+      dhTarotToolSnapshot=snap;
+      const remaining=(state.dhDrawCharged?0:1)+(state.dhDrawBCharged?0:1);
+      const daily=Math.max(0,Number(snap.daily.remaining||0));
+      const shared=Math.max(0,Number(snap.wallet?.tool||0));
+      const useDaily=Math.min(remaining,daily);
+      const useShared=remaining-useDaily;
+      if(useShared>shared){
+        throw Error(token?'剩餘抽牌額度不足以完成 3＋3：今日免費 '+daily+' 次、會員共用 '+shared+' 次。':'今日免費抽牌額度不足以完成 3＋3，請登入查看會員共用額度。');
+      }
+      let message='這次塔羅 3＋3 將在進入主題時，預先使用兩次抽牌權益（每組三張各 1 次）。\n\n';
+      if(state.dhDrawCharged||state.dhDrawBCharged)message+='先前已成功扣除的次數不會重扣。\n';
+      message+='這次還需：';
+      if(useDaily)message+='每日免費 '+useDaily+' 次';
+      if(useShared)message+=(useDaily?' ＋ ':'')+'會員共用額度 '+useShared+' 次（剩 '+shared+' 次，用完不補）';
+      message+='。\n\n確認後可以返回修改主題、情境、題目與抽牌方式，不再重複收取占卜額度。\n';
+      message+='兩次 AI 解讀各扣 AI 額度 1 次。自訂及自行延伸問題的專業點數另計。\n';
+      message+='若中途放棄，已使用的抽牌額度不會自動退還。\n\n確定開始這次占卜？';
+      if(!confirm(message))return false;
+      if(!state.dhDrawOperations)state.dhDrawOperations={};
+      if(!state.dhDrawCharged){await tarotUseDrawCredit('a',true);state.dhDrawCharged=true;}
+      if(!state.dhDrawBCharged){await tarotUseDrawCredit('b',true);state.dhDrawBCharged=true;}
+      state.dhEntryPaid=true;
+      tarotUpdateSelectionHints();
+      void refreshTarotToolStatus(true);
+      return true;
+    }catch(error){
+      const partiallyPaid=!!state.dhDrawCharged||!!state.dhDrawBCharged;
+      alert((partiallyPaid?'部分抽牌額度已扣除，但尚未完成兩次預扣。請勿重新整理，點擊主題即可沿用已扣的次數重試。\n\n':'尚未完成抽牌額度確認。\n\n')+(error?.message||'額度服務暫時無法使用'));
+      return false;
+    }finally{tarotEntryChargeBusy=false;}
+  }
   function showTarotApiError(err){
     console.error('Tarot API error:',err);
     alert(`塔羅核心暫時無法連線，請稍後再試。\n\n錯誤：${err?.message||'UNKNOWN'}`);
@@ -4429,7 +4478,36 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   const topicBy=id=>TOPICS.find(x=>x.id===id);
   const scenarioBy=(t,id)=>{const old=t?.id==='work'?{leave:'jobhunt'}:{};const a=t.scenarios.find(x=>x[0]===(old[id]||id));return a?{id:a[0],name:a[1],desc:a[2]}:null};
   const stepEl=s=>document.querySelector(`[data-step="${s}"]`);
-  function showStep(s){document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));stepEl(s)?.classList.add('active');document.querySelectorAll('#flowProgress button').forEach((b,i)=>{const map=['topic','scenario','question','ready'];const idx=map.indexOf(s);b.classList.toggle('active',i===idx);b.disabled=i>idx});stepEl(s)?.scrollIntoView({behavior:'smooth',block:'start'});}
+  // 01～04 可點擊返回已完成的步驟；未選過的步驟仍不可跳過。
+  function tarotStepAvailable(step){
+    if(step==='topic')return true;
+    if(step==='scenario')return !!state.topic&&state.topic.id!=='free';
+    if(step==='question')return !!state.topic&&!!state.scenario;
+    if(step==='ready')return !!state.topic&&!!state.scenario&&!!state.question;
+    return false;
+  }
+  function showStep(s){
+    const order=['topic','scenario','question','ready'],idx=order.indexOf(s);
+    if(idx<0||!tarotStepAvailable(s))return;
+    state.tarotFurthestStep=Math.max(Number(state.tarotFurthestStep||0),idx);
+    document.querySelectorAll('.flow-step').forEach(x=>x.classList.remove('active'));
+    stepEl(s)?.classList.add('active');
+    document.querySelectorAll('#flowProgress button').forEach((b,i)=>{
+      const reachable=i<=state.tarotFurthestStep&&tarotStepAvailable(order[i]);
+      b.classList.toggle('active',i===idx);b.classList.toggle('tarot-step-visited',reachable&&i!==idx);
+      b.disabled=!reachable;
+      b.setAttribute('aria-current',i===idx?'step':'false');
+      b.title=reachable&&i!==idx?'點擊返回'+(['主題','情境','問題','起牌'][i])+'（不重複扣點）':i===idx?'目前所在步驟':'請先完成前一個步驟';
+    });
+    stepEl(s)?.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  els.progress.addEventListener('click',e=>{
+    const b=e.target.closest('button[data-jump]');
+    if(!b||b.disabled||!tarotStepAvailable(b.dataset.jump))return;
+    // 正式抽牌開始後，進度條本來就隱藏，不能由此回頭改牌或偷跳流程。
+    if(!els.workspace.hidden)return;
+    showStep(b.dataset.jump);
+  });
   
   const TAROT_DEVICE_BOUND_KEY='divinationhub-tarot-ever-google-member-v1';
   const TAROT_AUTH_KEY='divinationhub-bazi-google-credential';
@@ -5042,6 +5120,10 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   async function requestStartReading(){
     if(!canStartNewFreeReading())return;
     if(!topicAllowedForCurrentUser(state.topic?.id)){enforceAccess(false,'member');return;}
+    if(!state.dhEntryPaid&&!isAdminTestActive()){
+      alert('請先返回第一層「主題」確認這次 3＋3 的抽牌權益，再選擇題目。');
+      showStep('topic');return;
+    }
     if(state.question?.custom&&!tarotFullPrivilege()&&!state.question?.customUnlockTicket){alert('自訂題目尚未完成專業點數解鎖，請先返回自訂題目入口。');return;}
     if(state.question&&!state.question.custom){const qi=state.questions?.findIndex(q=>q.id===state.question.id);if(qi<0){alert('找不到這道題目，請返回題目列表重新選擇。');showStep('question');return;}}
     if(!spreadAllowedForCurrentUser(state.spreadChoice)){alert('這一道題目不適合雙方關係牌陣，請選擇其他牌陣。');return;}
@@ -5051,12 +5133,13 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   function tarotSelectionQuotaNote(){
     if(isAdminTestActive())return '';
     const snap=dhTarotToolSnapshot;
+    if(state.dhEntryPaid)return '本次 3＋3 抽牌權益已確認：兩次抽牌額度已使用；返回更換主題、情境或題目不會重扣。AI 解讀另外計算。';
     if(!snap?.daily)return '';
     const daily=Number(snap.daily.remaining||0);
     if(daily>0)return '';
     const shared=Number(snap.wallet?.tool||0);
     if(isLogged()&&snap.wallet){
-      return shared>0?`本期自動補充已用完，下一次抽牌將使用會員共用額度；目前剩 ${shared} 次（用完不補）。`:'本期自動補充及會員共用占卜次數都已用完，請等待下次補充。';
+      return shared>0?`本期自動補充已用完，選擇主題時將確認本局 3＋3 的抽牌額度；會員共用額度剩 ${shared} 次（用完不補）。`:'本期自動補充及會員共用占卜次數都已用完，請等待下次補充。';
     }
     return '本期訪客免費抽牌次數已用完；登入後可查看會員共用額度。';
   }
@@ -5819,6 +5902,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   async function showFormalResults(){
     if(state.drawPhase==='b'){await completeSixPromptDraw();return;}
     if(!isAdminTestActive()&&!state.dhDrawCharged){
+      // 僅相容舊版已開始、尚未預扣的歷史進度。新版一律在第一層完成。
       try{
         await tarotUseDrawCredit('a');state.dhDrawCharged=true;
       }catch(e){
@@ -5846,7 +5930,8 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     try{
       if(startBtn){startBtn.disabled=true;startBtn.textContent='正在準備抽牌方式…';}
       document.getElementById('tarotSixExtraCards')?.remove();clear3x3();state.stage3x3='first';state.firstPromptSnapshot='';state.firstAiInterpretationCompleted=false;state.sixPromptSnapshot='';state.sixPromptCopied=false;state.followFormOpen=false;state.followChoice='same';state.followText='';state.advanceSpreadKey='';state.archiveRecordId='';state.readingId='';state.advancedCards=[];selectedSixPromptFormat='A';state.firstDrawMode='';state.aiGuidanceStage='idle';state.advancedReadingHTML='';state.integrationHTML='';state.integrationText=[];state.followupBusy=false;state.advancedBusy=false;sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();
-      state.current=[];state.dhDrawCharged=false;state.dhDrawBCharged=false;state.dhDrawOperations={};state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;state.usageBCounted=false;
+      // 第一層已預扣過兩次抽牌權益，進入抽牌動畫絕不可清空授權／操作碼。
+      state.current=[];state.drawPackReady=false;state.drawMode=null;state.ritualSelected=0;state.usageCounted=false;state.usageBCounted=false;
       state.readingToken='';state.consensusHTML='';state.guardrailText='';state.readerBodies=null;state.singleReadingHTML='';state.followupOptions=[];
       state.revealed=new Set();state.followupReadingHTML='';state.followupUsed=false;state.followupQuestion=null;state.followupCards=[];state.followupText=[];state.finalSynthesisHTML='';state.finalSynthesisText=[];
       els.cards.innerHTML='';els.cards.className='cards';els.interp.innerHTML='';els.interp.classList.remove('show');const meaningGroup=$('tarotMeaningGroup');if(meaningGroup){meaningGroup.open=false;meaningGroup.hidden=true;}els.analysis.hidden=true;els.follow.hidden=true;els.followResult.hidden=true;els.finish.hidden=true;
@@ -5913,7 +5998,11 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       hubLockedModel:onsiteAiLockedModel||'',hubSelectedModel:'auto',
       stage:state.stage3x3==='complete'?'complete':'first',recordId:state.archiveRecordId||'',
       selectedPromptFormat,selectedSixPromptFormat,selectedPromptStyle,followChoice:state.followChoice||'same',
-      followText:state.followText||'',advanceSpreadKey:state.advanceSpreadKey||''});
+      followText:state.followText||'',advanceSpreadKey:state.advanceSpreadKey||'',
+      // 還原原本已由 Worker 扣取的 3＋3 兩輪抽牌額度；避免第一輪 AI 完成後重整再扣第二輪。
+      prepaidOwner:authToken()?('member:'+authToken().slice(-16)):('guest:'+tarotVisitorId()),
+      dhEntryPaid:!!state.dhEntryPaid,dhDrawCharged:!!state.dhDrawCharged,dhDrawBCharged:!!state.dhDrawBCharged,
+      dhDrawOperations:state.dhDrawOperations||{}});
   }
   function clear3x3(){try{if(isIsolatedAdminTest())sessionStorage.removeItem(TAROT_3X3_ADMIN_SESSION);else localStorage.removeItem(TAROT_3X3_SESSION)}catch(_){}}
   function firstSpreadKey(){return state.spreadChoice||'past';}
@@ -5926,6 +6015,12 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     if(!scenario||!SPREAD_OPTIONS[saved.spreadChoice])return false;
     const qq={...saved.question,spread:{...SPREAD_OPTIONS[saved.spreadChoice]}};
     state.topic=topic;state.scenario=scenario;state.question=qq;state.spreadChoice=spreadAllowedForCurrentUser(saved.spreadChoice)?saved.spreadChoice:recommendedSpread(qq);
+    // 僅能替相同 Session/訪客還原已扣額度；舊版紀錄仍走相容流程。
+    const samePayer=saved.prepaidOwner===(authToken()?('member:'+authToken().slice(-16)):('guest:'+tarotVisitorId()));
+    if(samePayer){
+      state.dhEntryPaid=!!saved.dhEntryPaid;state.dhDrawCharged=!!saved.dhDrawCharged;state.dhDrawBCharged=!!saved.dhDrawBCharged;
+      state.dhDrawOperations=saved.dhDrawOperations&&typeof saved.dhDrawOperations==='object'?saved.dhDrawOperations:{};
+    }
     state.current=saved.firstCards;state.revealed=new Set([0,1,2]);state.advancedCards=saved.secondCards||[];
     state.stage3x3=saved.stage==='complete'&&state.advancedCards.length===3?'complete':'first';
     state.firstPromptSnapshot=saved.firstPromptSnapshot||'';state.firstAiInterpretationCompleted=!!saved.firstAiInterpretationCompleted;state.sixPromptSnapshot=saved.sixPromptSnapshot||'';state.sixPromptCopied=!!saved.sixPromptCopied&&state.stage3x3==='complete';
@@ -6008,6 +6103,7 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const duplicates=state.bDraft.current.some(c=>state.current.some(first=>first.id===c.id));
     if(duplicates){alert('第二輪的牌不能和第一輪重複，請重新抽第二組三張牌。');state.bDraft={current:[]};state.drawMode=null;if(state.firstDrawMode)beginDrawMode(state.firstDrawMode);else showModeSelector();return;}
     if(!isAdminTestActive()&&!state.dhDrawBCharged){
+      // 僅給舊版恢復進度使用；新版在第一層已預扣第二輪。
       try{await tarotUseDrawCredit('b');state.dhDrawBCharged=true;}
       catch(e){alert(String(e?.message||'')==='SHARED_TOOL_CANCELLED'?'已取消，本次未使用共用額度。':'第二輪額度確認失敗：'+String(e?.message||e));return;}
     }
@@ -6054,7 +6150,10 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
       if(!tarotFullPrivilege())try{await tarotBindCustom(state.followText,state.relatedPointsTicket);}catch(e){const warn=els.finish.querySelector('[data-follow-error]');if(warn)warn.textContent=e.message||'無法確認延伸問題的扣點票據';return;}
     }
     state.question.advancedSpread={...SPREAD_OPTIONS[spread]};
-    state.stage3x3='first';state.drawPhase='b';state.bDraft={current:[]};state.ritualSelected=0;state.drawMode=null;state.dhDrawBCharged=false;if(!state.dhDrawOperations)state.dhDrawOperations={};state.dhDrawOperations.b=crypto.randomUUID();
+    state.stage3x3='first';state.drawPhase='b';state.bDraft={current:[]};state.ritualSelected=0;state.drawMode=null;
+    // 第二輪沿用第一層已支付的 b 操作碼，不能重新建立 b 扣額度操作。
+    if(!state.dhDrawOperations)state.dhDrawOperations={};
+    if(!state.dhDrawOperations.b)state.dhDrawOperations.b=crypto.randomUUID();
     state.followFormOpen=false;state.advancedCards=[];state.aiGuidanceStage='idle';
     persist3x3();els.finish.hidden=true;els.analysis.hidden=true;
     els.workspace.classList.add('tarot-followup-drawing');
@@ -6712,17 +6811,18 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
   function resetToTopic(){tarotCustomInvalidate();els.workspace.classList.remove('tarot-six-stage','tarot-followup-drawing');onsiteAiRequestSerial++;onsiteAiLockedModel=null;onsiteAiSelectedModel='auto';onsiteAiPhaseResults={auto:{three:null,six:null}};onsiteAiAnswer='';closeResumeNotice();clear3x3();document.getElementById('tarotSixExtraCards')?.remove();cancelFixedCase20();restoreDrawHosts();sessionWrite(readingProgressKey(),null);$('tarotAdvancedResult')?.remove();els.follow.hidden=true;els.followResult.hidden=true;state={topic:null,scenario:null,question:null,firstAiInterpretationCompleted:false,current:[],revealed:new Set(),followupUsed:false,followupQuestion:null,followupCards:[],followupText:[],finalSynthesisHTML:'',finalSynthesisText:[],readerBodies:null,singleReadingHTML:'',readersViewed:new Set(),readerClicked:new Set(),accessTier:null,pendingReader:null,readingToken:'',consensusHTML:'',guardrailText:'',followupOptions:[],drawMode:null,drawPackReady:false,ritualSelected:0,ritualFlowTimers:[],usageCounted:false};els.workspace.hidden=true;renderTopics();updateMemberUI();syncNewQuestionUI();showStep('topic');}
   
   // SEO 子頁只負責導流；真正占卜永遠回到這一套主引擎。
-  // 例：tarot.html?topic=love&scenario=single#worldSecond
-  window.openTarotDeepLink=(topicId,scenarioId)=>{
+  // 例：tarot.html?topic=love&scenario=single#worldSecond。深連結也要先在第一層確認額度。
+  window.openTarotDeepLink=async(topicId,scenarioId)=>{
     cancelFixedCase20();state.fixedCaseId='';
     const t=topicBy(topicId);
     if(!t)return false;
     if(isGuestLoginRequired()){openMemberModal();return false;}
     if(!isTopicAllowed(topicId)){renderTopics();showStep('topic');openMemberModal();return false;}
+    if(!await tarotPrepay3Plus3()){showStep('topic');return false;}
     const aliases=t.id==='love'?{distant:'dating',reconcile:'breakup'}:{newjob:'employed',promotion:'employed',planning:'business',running:'business',leave:'jobhunt'};
     const sc=scenarioBy(t,aliases[scenarioId]||scenarioId);
     if(!sc)return false;
-    state.topic=t;state.scenario=sc;state.question=null;
+    state.topic=t;state.scenario=sc;state.question=null;state.tarotFurthestStep=0;
     renderScenarios();
     // 直接進入該情境的正式選題流程；第一次／第二次提醒仍由主引擎統一判斷。
     enterQuestionStage();
@@ -6735,9 +6835,11 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
     const topicId=b.dataset.topic;
     if(isGuestLoginRequired()){openMemberModal();return;}
     if(!isTopicAllowed(topicId)){if(topicId==='free')openMemberModal();else openMemberModal();return;}
+    // 特殊自由提問另收專業點數；一般占卜 3＋3 的兩次抽牌額度集中在第一層確認。
     if(topicId==='free'&&!await tarotPrepayCustom('topic:free'))return;
+    if(!await tarotPrepay3Plus3())return;
     if(topicId!=='free')tarotCustomInvalidate();
-    cancelFixedCase20();state.fixedCaseId='';state.topic=topicBy(topicId);state.scenario=state.question=null;state.spreadChoice=null;
+    cancelFixedCase20();state.fixedCaseId='';state.topic=topicBy(topicId);state.scenario=state.question=null;state.spreadChoice=null;state.tarotFurthestStep=0;
     if(state.topic.id==='free'){state.scenario={id:'free',name:'自由提問'};renderQuestions();showStep('question');}
     else{renderScenarios();showStep('scenario');}
   });
@@ -6966,10 +7068,9 @@ html[data-theme="light"] .tarot-restart-warning{color:#776681}
         // 有完整情境就直接進正式選題流程（提醒／冷卻仍由主引擎負責）。
         setTimeout(()=>window.openTarotDeepLink(topicId,scenarioId),0);
       }else{
-        // 只有主題時，至少直接展開該主題的情境，不退回八大主題首頁。
-        state.topic=t;state.scenario=state.question=null;
-        renderScenarios();
-        setTimeout(()=>showStep('scenario'),0);
+        // 只有主題的 SEO 入口不可跳過第一層扣額度確認，讓訪客點選主題卡片進入。
+        showStep('topic');
+        setTimeout(()=>document.querySelector('#topicGrid [data-topic="'+CSS.escape(topicId)+'"]')?.scrollIntoView({behavior:'smooth',block:'center'}),0);
       }
     }catch(err){
       console.warn('Tarot deep-link init skipped:',err);
@@ -7383,6 +7484,14 @@ html[data-theme="dark"] #drawModeGrid .tarot-member-draw-balance{
  #drawModeGrid .draw-mode-card.is-option-locked .tarot-member-draw-balance{top:39px}
  #drawModeGrid .draw-mode-card.is-option-open .tarot-member-draw-balance{top:10px}
 }
+</style>
+<style id="tarot-progress-clickable-20261021">
+#flowProgress button.tarot-step-visited{cursor:pointer;color:var(--text)!important;border-color:rgba(170,100,182,.26)!important;background:rgba(226,166,233,.045)!important}
+#flowProgress button.tarot-step-visited:hover,#flowProgress button.tarot-step-visited:focus-visible{border-color:rgba(209,86,199,.65)!important;background:rgba(227,94,215,.12)!important;box-shadow:0 0 0 2px rgba(231,94,215,.06)!important}
+#flowProgress button.tarot-step-visited:focus-visible{outline:2px solid rgba(209,86,199,.68);outline-offset:2px}
+#flowProgress button.active{font-weight:850}
+html[data-theme="light"] #flowProgress button.tarot-step-visited{color:#785478!important;background:#fff!important}
+@media(max-width:620px){#flowProgress button{font-size:.66rem!important}#flowProgress button span{display:inline-block;margin-right:3px}}
 </style>
 </body>
 </html>
