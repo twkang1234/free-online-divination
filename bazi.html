@@ -2840,7 +2840,6 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
           <p id="dhProfessionalPointsNote">登入後查看｜三工具共用</p>
         </article>
       </div>
-      <div class="bazi-ai-quota-foot"><span id="baziQuotaTestBanner">免費額度定期補充；共用額度用完不補。</span><span id="baziQuotaGlobalCount">全站 AI 額度查詢中…</span></div>
     </section>
 
     <section class="core" aria-label="八字四柱排盤工具">
@@ -3014,13 +3013,11 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
                 <div class="tag-row" id="summaryTags"></div>
                 <div class="bazi-summary-actions" role="group" aria-label="命盤補充分析">
                   <button type="button" data-bazi-summary-panel="baziOverviewExtra" aria-controls="baziOverviewExtra" aria-expanded="false">▸ 生活領域</button>
-                  <button type="button" data-bazi-summary-panel="baziMethodDetails" aria-controls="baziMethodDetails" aria-expanded="false">▸ 判讀依據</button>
                 </div>
               </div>
             </div>
           </div>
           <details class="bazi-overview-extra bazi-aux-panel" id="baziOverviewExtra"><summary class="bazi-aux-native-summary">生活領域與結構重點（選讀）</summary><div class="overview-life-grid" id="overviewLife"></div></details>
-          <details class="method-details bazi-aux-panel" id="baziMethodDetails"><summary class="bazi-aux-native-summary">結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">本站會結合四柱與多項結構資訊進行整理；本區僅說明一般判讀原則；個人計算數值與詳細分析依權限解鎖。</p><p class="micro-note">歲運評語僅供傳統命理參考；大運、流年、流月的完整個人分析仍依下方九大分析章節權限提供。</p></details>
         </section>
 
 
@@ -6108,71 +6105,36 @@ ${intent}
 
   function initSectionDecodeUI(){
     sectionDefinitions.forEach(def=>{
-      // 九大章節統一提供『看懂這一區』，首次打開章節會自動展開。
       const section=$(def.id);
       const body=section?.querySelector('.report-body');
       if(!body||body.querySelector('.section-decode'))return;
+      // 「看懂這一區」免費泛用說明已移除。只保留正式付費內容的原生承載區。
+      // 未解鎖或瀏覽他人範例時，不呈現任何空白框或舊有的簡介文字。
       const box=document.createElement('div');
       box.className='section-decode';
       box.dataset.section=def.key;
-      box.innerHTML=`<div class="decode-bar"><div class="decode-copy"><strong>想知道這些數字、符號對你可能代表什麼？</strong><span>點開後直接看白話解讀與深層結構。</span></div><button type="button" class="decode-open">看懂這一區</button></div><div class="decode-content"><div class="decode-summary-grid"></div><nav class="bazi-decode-end-actions" aria-label="白話解讀閱讀完成"><button type="button" data-bazi-decode-action="hub">↩ 返回九大專業分析</button></nav></div>`;
+      box.hidden=true;
+      box.innerHTML='<div class="decode-content"><div class="decode-summary-grid"></div></div>';
       body.appendChild(box);
-      const open=box.querySelector('.decode-open');
-      const content=box.querySelector('.decode-content');
-      const summary=box.querySelector('.decode-summary-grid');
-      open.addEventListener('click',()=>{
-        const show=!content.classList.contains('show');
-        if(show){
-          if(!lastData){ try{cast();}catch(_){} }
-          if(def.key==='luck'||def.key==='years'){summary.style.display='block';summary.style.width='100%';}
-          else{summary.style.display='';summary.style.width='';}
-          const nativeSource=section.classList.contains('dh-bazi-premium-visible') ? baziNativePaidData.get(def.id) : null;
-          summary.innerHTML=(nativeSource||lastData)?sectionExplanation(def.key,nativeSource||lastData):decodeCard('提示','請先於上方輸入出生日期時間並點選「排八字」建立命盤。');
-          content.classList.add('show');
-          // 動態解讀插入後立即套用既定七成遮罩，避免展開時短暫露出數值。
-          window.baziMaskLevelScan?.();
-          open.classList.add('active');
-          open.textContent='▾ 收合看懂這一區';
-          markSectionExplored(def.key);
-          trackAction(`decode-${def.key}`);
-        }else{
-          content.classList.remove('show');
-          open.classList.remove('active');
-          open.textContent='看懂這一區';
-        }
-      });
-      // 不在任何章節另放隨機範例按鈕，維持每章固定一顆。
+      const nav=document.createElement('nav');
+      nav.className='bazi-decode-end-actions';
+      nav.setAttribute('aria-label','閱讀完畢，返回九大專業分析');
+      nav.innerHTML='<button type="button" data-bazi-decode-action="hub">↩ 返回九大專業分析</button>';
+      body.appendChild(nav);
     });
     initSmartPromptUI();
     refreshSmartPromptLocks();
   }
 
-
-  const baziDecodeVisited=new Set();
+  // 新命盤或切換範例時清空舊付費說明；無免費白話解讀可自動展開。
   window.baziDecodeResetVisits=()=>{
-    baziDecodeVisited.clear();
-    // 新命盤或另一筆公開範例載入時，關閉舊命盤的解讀 DOM，避免混到上一筆的文字。
     document.querySelectorAll('#results .section-decode').forEach(box=>{
+      box.hidden=true;
       box.querySelector('.decode-content')?.classList.remove('show');
-      const trigger=box.querySelector('.decode-open');
-      if(trigger){trigger.classList.remove('active');trigger.textContent='看懂這一區';}
-      const grid=box.querySelector('.decode-summary-grid');if(grid)grid.replaceChildren();
+      box.querySelector('.decode-summary-grid')?.replaceChildren();
     });
   };
-  window.baziDecodeOpenFirstVisit=id=>{
-    // 第 05 章「常用神煞」全文較長，預設收合；僅在使用者自行點擊後展開。
-    if(id==='report-shensha')return;
-    const personal=document.body.classList.contains('bazi-personal-full-mode');
-    // 06～09 的個人專業內容全鎖：不生成或展開個人白話解讀。
-    if(personal&&['report-reading','report-luck','report-years','report-months'].includes(id))return;
-    // 01～04 每次進入章節直接展開；05 完整公開也直接展示；公開範例維持原本自動閱讀。
-    if(!personal&&baziDecodeVisited.has(id))return;
-    const section=document.getElementById(id);
-    const button=section?.querySelector('.section-decode .decode-open');
-    if(!button)return;
-    baziDecodeVisited.add(id);
-    if(!section.querySelector('.section-decode .decode-content.show'))button.click();
-  };
+  window.baziDecodeOpenFirstVisit=()=>{};
 
   function buildAiPrompt(data){ return buildSmartPrompt(data,'full','工作事業','deep'); }
 
@@ -6404,7 +6366,7 @@ ${intent}
     $('summaryTags').innerHTML=[`${data.dayMasterYinYang}${data.dayMasterElement}`,`主要十神：${top[0]}`,`五行較多：${data.highlights.dominantElement}`,`支持方向：${supportText(data.scores.support)}`].map(x=>`<span>${esc(x)}</span>`).join('');
     $('overviewLife').innerHTML=[['主要特點',profile?.mind||r.title,`${top[0]} ${top[1]}%`],['較能發揮的地方',profile?.strength||r.good,`十神主題：${data.highlights.dominantGroup}`],['容易卡住的情境',r.stuck,'往下看工作、財務與感情中的具體表現']].map(([t,p,b])=>`<article class="life-card"><h4>${esc(t)}</h4><p>${esc(p)}</p><small>${esc(b)}</small></article>`).join('');
     const cards=[['五行分布均衡',data.scores.balance,'描述分布；不代表命運優劣'],['日主支持度',data.scores.support,'同類、生扶、通根的網站指標'],['十神出現廣度',data.scores.diversity,'達到網站權重門檻的類型比例'],['干支互動量',data.scores.activity,'描述互動數量；不是吉凶分數']];
-    $('scoreGrid').innerHTML=cards.map(([k,v,n])=>`<div class="score-card"><small>${esc(k)}</small><div class="score-line"><b>${v}</b><span>${esc(n)}</span></div><div class="mini-track"><i style="width:${pct(v)}%"></i></div></div>`).join('');
+    // 此冗餘判讀依據面板已從總覽移除，不再將分數插入公開 DOM。
   }
 
   function supportText(v){v=Number(v)||0;return v>=63?'偏強傾向':v>=54?'稍強傾向':v>=47?'中和附近':v>=38?'稍弱傾向':'偏弱傾向';}
@@ -7242,7 +7204,7 @@ ${intent}
     $('identitySeal').textContent=day;
     $('reportTitle').textContent=day+(data.dayMasterElement||'')+'日主 · 免費個人命盤';
     $('reportSummary').textContent='你的四柱已建立。九大分析中的關鍵數值與判讀依據需解鎖才能觀看；下方仍可查看基本命理意象與公開的神煞分析。';
-    put('summaryTags',[day+' · '+(data.dayMasterYinYang||'')+(data.dayMasterElement||''),'命盤結構：未解鎖','專業比例：未解鎖'].map(x=>`<span>${esc(x)}</span>`).join(''));
+    put('summaryTags',[day+' · '+(data.dayMasterYinYang||'')+(data.dayMasterElement||'')].map(x=>`<span>${esc(x)}</span>`).join(''));
     // Review only the two optional overview panels, without changing any of
     // the nine paid chapters or their permissions. The original core returns
     // these sentences and score values; do not fabricate a replacement.
@@ -7269,7 +7231,6 @@ ${intent}
     ];
     put('overviewLife',topLife.map(([title,copy])=>`<article class="life-card"><h4>${esc(title)}</h4><p>${esc(copy||'—')}</p></article>`).join(''));
     // 公開預覽不顯示精確的四大結構分數；顯示付費提示，避免免費介面洩露演算結果。
-    put('scoreGrid','<div class="score-card"><small>結構指標與判讀方式</small><div class="score-line"><span>個人計算數值與詳細判讀依據需解鎖對應專業章節後查看。</span></div></div>');
     put('pillars',baziPublicPillarDisplay(data).map(p=>{
       const name=label[p.key]||'四柱',shown=value=>esc(value||'—');
       const hiddenGan=Array.isArray(p.hideGan)?p.hideGan.join('、'):(p.hideGan||'');
@@ -7333,8 +7294,7 @@ ${intent}
       if(grid)grid.innerHTML=html;
       const content=decoder.querySelector('.decode-content');
       if(content)content.classList.add('show');
-      const toggle=decoder.querySelector('.decode-open');
-      if(toggle){toggle.textContent='▾ 收合看懂這一區';toggle.classList.add('active');toggle.setAttribute('aria-expanded','true');}
+      decoder.hidden=false;
     }else{
       // Older layout fallback still uses the SAME original guide template.
       const mount=section.querySelector('.bazi-premium-content');if(!mount)throw Error('找不到十神解讀區');
@@ -7408,8 +7368,7 @@ ${intent}
       if(!grid)throw Error('找不到專業分析圖文容器');
       grid.innerHTML=html;
       const area=decode.querySelector('.decode-content');if(area)area.classList.add('show');
-      const toggle=decode.querySelector('.decode-open');
-      if(toggle){toggle.textContent='▾ 收合看懂這一區';toggle.classList.add('active');toggle.setAttribute('aria-expanded','true')}
+      decode.hidden=false;
     };
     const bars=(selector)=>host.querySelectorAll(selector).forEach(item=>{
       const w=item.style.width;
@@ -8320,7 +8279,7 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
   }
   function foldOpenDecode(id){
     const sec=document.getElementById(id);
-    if(sec?.querySelector('.section-decode .decode-content.show'))sec.querySelector('.section-decode .decode-open')?.click();
+    // 免費解讀面板已移除；付費解讀區沒有收合按鈕。
   }
   // One clear exit: returning from archived examples restores the visitor's own chart.
   function returnToHub(){
@@ -8354,8 +8313,7 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
     document.querySelectorAll('#pillars .bazi-pillar-toggle').forEach(btn=>{btn.setAttribute('aria-expanded','false');btn.closest('.pillar')?.classList.remove('bazi-pillar-detail-open');});
     const ai=document.getElementById('baziAiFocus');if(ai)ai.open=false;
     const overview=document.getElementById('baziOverviewExtra');if(overview)overview.open=false;
-    const method=document.getElementById('baziMethodDetails');if(method)method.open=false;
-    document.querySelectorAll('[data-bazi-summary-panel]').forEach(btn=>{btn.setAttribute('aria-expanded','false');btn.classList.remove('is-active');btn.textContent=btn.dataset.baziSummaryPanel==='baziOverviewExtra'?'▸ 生活領域':'▸ 判讀依據';});
+    document.querySelectorAll('[data-bazi-summary-panel]').forEach(btn=>{btn.setAttribute('aria-expanded','false');btn.classList.remove('is-active');btn.textContent='▸ 生活領域';});
     // 本頁首次成功排盤後才把今日流日原元件移到「十二流月」內；首頁保持原樣。
     // move() 而非重建：保留流日資料、DOM 事件及原本的權限判斷。
     const flow=document.getElementById('report-daily-flow');flow?.classList.remove('bazi-daily-expanded');
@@ -8421,7 +8379,7 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
         document.querySelectorAll('[data-bazi-summary-panel]').forEach(btn=>{
           const on=btn.dataset.baziSummaryPanel===id&&opening;
           btn.setAttribute('aria-expanded',String(on));btn.classList.toggle('is-active',on);
-          const label=btn.dataset.baziSummaryPanel==='baziOverviewExtra'?'生活領域':'判讀依據';
+          const label='生活領域';
           btn.textContent=(on?'▾ ':'▸ ')+label;
         });
         return;
@@ -10222,7 +10180,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }
   for(const box of els.values()){box.hidden=true;const content=box.querySelector('.bazi-premium-content');if(content){content.hidden=true;content.replaceChildren()}}
  }
- window.baziPremiumReset=reset;
+ window.baziPremiumReset=()=>{reset();window.baziDecodeResetVisits?.()};
  window.baziSectionReady=async()=>{
   // Native confirm() fires window.focus when dismissed; ignore that refresh while
   // the user's already-approved purchase is still completing.
