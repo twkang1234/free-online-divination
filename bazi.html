@@ -2551,6 +2551,24 @@ body:not(.bazi-personal-full-mode) .bazi-inline-sample-trigger{display:none!impo
 .bazi-core-random-controls .bazi-core-random-actions{display:flex;flex-wrap:wrap;gap:7px}
 .bazi-core-random-controls button{min-height:39px;padding:8px 12px;border-radius:9px;border:1px solid #58959c;background:#165f6b;color:#fff;font-size:.77rem;font-weight:800;cursor:pointer;white-space:normal}
 .bazi-core-random-controls button[data-core-random="back"]{background:#fff;color:#235964;border-color:#92bdc2}
+/* 固定範例：首次展示與每次重新換樣本時，快速閃爍10次，接著持續柔和提醒。 */
+.bazi-core-random-controls button[data-core-random="again"].bazi-sample-reroll-attention:not(:disabled){
+  animation:bazi-sample-fast-flash .24s step-end 10,
+            bazi-sample-gentle-reminder 1.65s ease-in-out 2.4s infinite;
+  will-change:filter,box-shadow;
+}
+@keyframes bazi-sample-fast-flash{
+  0%,100%{filter:brightness(1);box-shadow:0 0 0 0 rgba(24,123,144,0)}
+  50%{filter:brightness(2.1);box-shadow:0 0 0 5px rgba(255,174,45,.7)}
+}
+@keyframes bazi-sample-gentle-reminder{
+  0%,100%{box-shadow:0 0 0 0 rgba(24,123,144,0);outline:2px solid transparent}
+  50%{box-shadow:0 0 0 5px rgba(15,110,129,.35);outline:2px solid #f6b73b}
+}
+@media(prefers-reduced-motion:reduce){
+ .bazi-core-random-controls button[data-core-random="again"].bazi-sample-reroll-attention:not(:disabled){animation:none;outline:2px solid #e6ae49}
+}
+
 .bazi-core-random-controls .bazi-core-random-error{flex-basis:100%;font-size:.70rem;color:#b44036}
 body:not(.bazi-example-snapshot-mode) .bazi-core-random-controls{display:none!important}
 html[data-theme="dark"] .bazi-core-random-controls{background:linear-gradient(110deg,#193f49,#213e47);border-color:#457c84;color:#e3f5f7}
@@ -3041,7 +3059,7 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-overview .bazi-recas
             <div class="bazi-hero-quota-item"><small>付費次數</small><strong id="baziHeroPaidRemain">0 次</strong></div>
           </aside>
           <details class="bazi-overview-extra bazi-aux-panel" id="baziOverviewExtra"><summary class="bazi-aux-native-summary">生活領域與結構重點（選讀）</summary><div class="overview-life-grid" id="overviewLife"></div></details>
-          <details class="method-details bazi-aux-panel" id="baziMethodDetails"><summary class="bazi-aux-native-summary">結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">本站會結合四柱與多項結構資訊進行整理；本區已提供個人結構指標供參考；詳細加權運算方法及專業公式未公開。</p><p class="micro-note">歲運評語僅供傳統命理參考；大運、流年、流月的完整個人分析仍依下方九大分析章節權限提供。</p></details>
+          <details class="method-details bazi-aux-panel" id="baziMethodDetails"><summary class="bazi-aux-native-summary">結構指標與判讀方式</summary><div class="score-grid" id="scoreGrid"></div><p class="micro-note">結構指標用來描述分布，不是命好壞的成績。五行較平均不等於比較好命；支持較多也不代表凡事順利。</p><p class="micro-note">本站會結合四柱與多項結構資訊進行整理；本區僅說明一般判讀原則；個人計算數值與詳細分析依權限解鎖。</p><p class="micro-note">歲運評語僅供傳統命理參考；大運、流年、流月的完整個人分析仍依下方九大分析章節權限提供。</p></details>
         </section>
 
 
@@ -7268,29 +7286,27 @@ ${intent}
     const originalOverview=data.publicOverview;
     const overviewRows=Array.isArray(originalOverview?.rows)?originalOverview.rows:[];
     const rowAt=i=>overviewRows[i]||{};
-    const showOverview=!!(originalOverview&&overviewRows.length>=6&&originalOverview.scores);
+    const showOverview=!!(originalOverview&&overviewRows.length>=6);
+    // 免費生活領域只展示白話內容：不產生百分比、十神排行、干支組合、依據小字。
+    // 敏感個人數值必須由後端公共接口直接省略，不能靠 CSS 遮蔽。
     const topLife=showOverview?[
-      ['日主基本意象',data.publicIntro||'日主是認識命盤的起點。',`${data.dayMaster||''} · ${data.dayMasterElement||''}日主`],
-      ['性格與行動',rowAt(0).text,rowAt(0).basis],
-      ['工作傾向',rowAt(1).text,rowAt(1).basis],
-      ['感情與相處',rowAt(3).text,rowAt(3).basis],
-      ['人生面向',originalOverview.readingSummary,rowAt(0).basis],
-      [rowAt(5).title||'生活中的拉扯',rowAt(5).text,rowAt(5).basis]
+      ['日主基本意象',data.publicIntro||'日主是認識命盤的起點。'],
+      ['性格與行動',rowAt(0).text],
+      ['工作傾向',rowAt(1).text],
+      ['感情與相處',rowAt(3).text],
+      ['人生面向','性格、工作、人際與生活安排會互相影響；完整個人判讀與細節需解鎖後查看。'],
+      [rowAt(5).title||'生活中的拉扯',rowAt(5).text]
     ]:[
-      ['日主基本意象',data.publicIntro||'日主是認識命盤的起點。',''],
-      ['性格與行動',data.publicConclusions?.character||'資料尚未載入',''],
-      ['工作傾向',data.publicConclusions?.career||'資料尚未載入',''],
-      ['感情與相處',data.publicConclusions?.relationship||'資料尚未載入',''],
-      ['人生面向','請更新後端後重新排盤以查看原始完整總覽。',''],
-      ['專業說明','請更新後端後重新排盤以查看原始判讀依據。','']
+      ['日主基本意象',data.publicIntro||'日主是認識命盤的起點。'],
+      ['性格與行動',data.publicConclusions?.character||'資料尚未載入'],
+      ['工作傾向',data.publicConclusions?.career||'資料尚未載入'],
+      ['感情與相處',data.publicConclusions?.relationship||'資料尚未載入'],
+      ['人生面向','不同生活領域需要一起考量，詳細個人分析需解鎖後查看。'],
+      ['生活中的拉扯','可以觀察自己如何調整家庭、工作與個人的不同需要。']
     ];
-    put('overviewLife',topLife.map(([title,copy,note])=>`<article class="life-card"><h4>${esc(title)}</h4><p>${esc(copy||'—')}</p>${note?`<small>${esc(note)}</small>`:''}</article>`).join(''));
-    const scoreCards=[['五行分布均衡','balance','描述分布；不代表命運優劣'],['日主支持度','support','同類、生扶、通根的網站指標'],['十神出現廣度','diversity','達到網站權重門檻的類型比例'],['干支互動量','activity','描述互動數量；不是吉凶分數']];
-    put('scoreGrid',scoreCards.map(([label,key,note])=>{
-      const raw=originalOverview?.scores?.[key];
-      const number=showOverview&&Number.isFinite(Number(raw))?Number(raw):null;
-      return `<div class="score-card"><small>${esc(label)}</small><div class="score-line"><b>${number===null?'—':esc(String(number))}</b><span>${number===null?'需更新後端並重新排盤':esc(note)}</span></div><div class="mini-track"><i style="width:${number===null?0:pct(number)}%"></i></div></div>`;
-    }).join(''));
+    put('overviewLife',topLife.map(([title,copy])=>`<article class="life-card"><h4>${esc(title)}</h4><p>${esc(copy||'—')}</p></article>`).join(''));
+    // 公開預覽不顯示精確的四大結構分數；顯示付費提示，避免免費介面洩露演算結果。
+    put('scoreGrid','<div class="score-card"><small>結構指標與判讀方式</small><div class="score-line"><span>個人計算數值與詳細判讀依據需解鎖對應專業章節後查看。</span></div></div>');
     put('pillars',baziPublicPillarDisplay(data).map(p=>{
       const name=label[p.key]||'四柱',shown=value=>esc(value||'—');
       const hiddenGan=Array.isArray(p.hideGan)?p.hideGan.join('、'):(p.hideGan||'');
@@ -9627,6 +9643,14 @@ function revealChapter(id){
  }
  refreshOriginalDecode(id);
 }
+function flashRerollReminder(id){
+ const btn=$(id)?.querySelector('.bazi-core-random-controls [data-core-random="again"]');
+ if(!btn)return;
+ // 移除+重排以重啟10次快速閃爍；之後循環輕量閃爍直到離開範例。
+ btn.classList.remove('bazi-sample-reroll-attention');
+ void btn.offsetWidth;
+ btn.classList.add('bazi-sample-reroll-attention');
+}
 function randomBar(id){
  const section=$(id);if(!section)return;
  const body=section.querySelector('.report-body');if(!body)return;
@@ -9669,7 +9693,7 @@ async function change(id){
   loading=false;
   buttons.forEach(btn=>{btn.disabled=false;btn.querySelector('.bazi-inline-sample-title').textContent='免費觀看他人的完整核心成果'});
   const again=$(id)?.querySelector('.bazi-core-random-controls [data-core-random="again"]');
-  if(again){again.disabled=false;again.textContent='🎲 再按一次，隨機換一組'}
+  if(again){again.disabled=false;again.textContent='🎲 再按一次，隨機換一組';if(isExample()&&inlineMode)flashRerollReminder(id)}
  }
 }
 function goBack(){
@@ -9696,7 +9720,7 @@ function init(){
   if(!isExample()||!inlineMode)return;
   if(e.target.closest('#baziExampleExit')){inlineMode=false;return}
   const btn=e.target.closest('[data-bazi-open-section]');
-  if(btn){const id=btn.dataset.baziOpenSection;if(chapters.some(x=>x[0]===id)){active=id;setTimeout(()=>randomBar(id),100)}}
+  if(btn){const id=btn.dataset.baziOpenSection;if(chapters.some(x=>x[0]===id)){active=id;setTimeout(()=>{randomBar(id);flashRerollReminder(id)},100)}}
  },true);
  // Reinstall original in-area button when the core rerenders its panels.
  const observer=new MutationObserver(m=>{
