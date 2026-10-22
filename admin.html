@@ -19,7 +19,7 @@ body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-
 .nav a:hover{border-color:#4a4130;color:#e2c574}
 .nav a.reviews-link{border-color:#756040;background:#211b11;color:#ffe2a1;font-weight:750}
 .nav a.reviews-link:hover{border-color:#d9b65d;background:#302613;color:#fff2cd}
-.nav a[hidden]{display:none!important}.nav a.bazi-test-link{border-color:#806534;background:#21190c;color:#ffdc81}.nav a.bazi-test-link:hover{border-color:#d0a54c;color:#ffe6a3}.nav a.yijing-test-link{border-color:#4f3c6f;background:#130f1c;color:#d7c1ff}.nav a.yijing-test-link:hover{border-color:#8a68bf;background:#1a1228;color:#f0e7ff}.nav a.tarot-test-link{border-color:#6a2d66;background:#1a0d1b;color:#f0b5e8}.nav a.tarot-test-link:hover{border-color:#b858ad;background:#251027;color:#ffd9f7}
+.nav a[hidden]{display:none!important}.nav a.bazi-test-link{border-color:#806534;background:#21190c;color:#ffdc81}.nav a.bazi-test-link:hover{border-color:#d0a54c;color:#ffe6a3}.nav a.yijing-test-link{border-color:#4f3c6f;background:#130f1c;color:#d7c1ff}.nav a.yijing-test-link:hover{border-color:#8a68bf;background:#1a1228;color:#f0e7ff}.nav a.tarot-test-link{border-color:#6a2d66;background:#1a0d1b;color:#f0b5e8}.nav a.cezi-test-link{border-color:#766341;background:#1d180d;color:#f2d79c}.nav a.cezi-test-link:hover{border-color:#c9a767;background:#281e0f;color:#fff0ce}.nav a.tarot-test-link:hover{border-color:#b858ad;background:#251027;color:#ffd9f7}
 .btn{border:1px solid #3b3321;background:#17140d;color:#e3c778;border-radius:10px;padding:9px 13px;cursor:pointer}
 .btn.secondary{border-color:#24313a;background:#0b1217;color:#a9cdd0}
 .login-card{max-width:520px;margin:80px auto 0;background:var(--panel);border:1px solid #282e37;border-radius:18px;padding:26px;text-align:center}
@@ -289,6 +289,7 @@ td.muted{color:var(--muted)}
       <nav class="nav" aria-label="管理導覽">
         <a class="yijing-test-link" id="yijingTestLink" href="/yijing.html?admin=1" hidden>🧪 易經測試</a>
         <a class="tarot-test-link" id="tarotTestLink" href="/tarot.html?admin=1" hidden>🃏 塔羅測試</a>
+        <a class="cezi-test-link" id="ceziTestLink" href="/cezi.html?admin=1" hidden>✒️ 測字測試</a>
         <button class="btn secondary review-admin-top" id="reviewAdminOpen" type="button" hidden>✍️ 心得審核 <span id="reviewPendingBadge" class="review-pending-badge" hidden>0</span></button><a class="reviews-link" id="reviewsLink" href="/member-reviews.html" hidden>✦ 心得展示牆</a>
         <a href="/billing-center.html" id="dhPricingNav" hidden style="border-color:#6f6341;color:#f4d493;background:#1d1a12">✦ 專業區塊計價</a>
         <a href="/">回首頁</a>
@@ -855,6 +856,7 @@ function showLogin(message=''){
   $('logoutBtn').hidden=true;
   if($('yijingTestLink'))$('yijingTestLink').hidden=true;
   if($('tarotTestLink'))$('tarotTestLink').hidden=true;
+  if($('ceziTestLink'))$('ceziTestLink').hidden=true;
   if($('baziTestLink'))$('baziTestLink').hidden=true;
   if($('reviewsLink'))$('reviewsLink').hidden=true;
   if($('dhPricingNav'))$('dhPricingNav').hidden=true;
@@ -1051,6 +1053,7 @@ async function loadStats(){
     $('logoutBtn').hidden=false;
     if($('yijingTestLink'))$('yijingTestLink').hidden=false;
     if($('tarotTestLink'))$('tarotTestLink').hidden=false;
+    if($('ceziTestLink'))$('ceziTestLink').hidden=false;
     if($('baziTestLink'))$('baziTestLink').hidden=false;
     if($('reviewsLink'))$('reviewsLink').hidden=false;
     if($('dhPricingNav'))$('dhPricingNav').hidden=false;
@@ -1182,7 +1185,7 @@ $('loginForm').addEventListener('submit',e=>{
 $('refreshBtn').addEventListener('click',loadStats);
 
 // 導覽前再同步一次，避免記住登入後只有 localStorage 有憑證。
-['yijingTestLink','tarotTestLink','baziTestLink','reviewsLink'].forEach(id=>{
+['yijingTestLink','tarotTestLink','ceziTestLink','baziTestLink','reviewsLink'].forEach(id=>{
   $(id)?.addEventListener('click',()=>{syncAdminTestSession()});
 });
 
