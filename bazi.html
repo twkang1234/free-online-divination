@@ -3683,28 +3683,6 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .quota-triple > .quota
   window.baziCastBrowserHeaders=()=>({'X-Bazi-Visitor-Id':baziVisitorId()});
   window.baziCastPermitRead=baziCastPermitRead;
   window.baziCastPermitSave=baziCastPermitSave;
-  async function sendCustomFollowup(index,input,btn){
-    const status=$('baziPersonalAiStatus');
-    if(!loggedIn()||!current||aiBusy||busy)return;
-    const question=String(input?.value||'').normalize('NFKC').trim().replace(/\s+/g,' ');
-    if(question.length<5||question.length>400){status.textContent='追問請輸入 5～400 字。';input?.focus();return;}
-    const record=customHistory()[index];if(!record?.followupId||record.followupReading)return;
-    if(!gifted('custom_question')){status.textContent='AI 額度不足，這次不扣除任何次數。';return;}
-    if(!confirm('要針對這篇自訂問題追問一次嗎？\n不再扣專業點數，成功後另扣 AI 解讀 1 次。'))return;
-    const chart={...current},reportKey=current.key;
-    aiBusy=true;btn.disabled=true;btn.textContent='正在回答追問…';
-    try{
-      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_followup',question,followupId:record.followupId,aiOpId:crypto.randomUUID()});
-      if(!j.reading)throw Error('AI 未回傳追問答案');
-      let saved={...reports};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){}
-      const history=Array.isArray(saved.custom_questions)?saved.custom_questions.slice(-12):[];
-      if(history[index]&&history[index].followupId===record.followupId){history[index]={...history[index],followupQuestion:question,followupReading:j.reading,followupId:''};}
-      saved.custom_questions=history;
-      try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){}
-      if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+index);status.textContent='追問成功，已扣 AI 解讀 1 次，沒有再扣專業點數。';}
-    }catch(e){status.textContent=e?.message||'追問暫時失敗，未成功不扣 AI 額度。';}
-    finally{aiBusy=false;btn.disabled=false;btn.textContent='送出追問｜AI 1 次';void refreshPersonalQuota();}
-  }
 
   document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('baziCastQuotaLogin')?.addEventListener('click',baziOpenAuth);
@@ -9085,6 +9063,31 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     wealth_life:'財富觀念與賺錢方式',love_deep:'感情與相處模式',overall_deep:'綜合命格與人生總覽',
     luck_turning:'大運流年與人生轉折',fortune_risk:'婚姻吉凶、重大災禍、特殊福澤'
   };
+  async function sendCustomFollowup(index,input,btn){
+    const status=btn.closest('.bazi-followup-box')?.querySelector('.bazi-followup-status')||$('baziPersonalAiStatus');
+    if(!loggedIn()){status.textContent='請先登入會員。';return;}
+    if(!current){status.textContent='請先完成排盤。';return;}
+    if(aiBusy||busy){status.textContent='上一筆解讀仍在進行，請稍後再試。';return;}
+    const question=String(input?.value||'').normalize('NFKC').trim().replace(/\s+/g,' ');
+    if(question.length<5||question.length>400){status.textContent='追問請輸入 5～400 字。';input?.focus();return;}
+    const record=customHistory()[index];if(!record?.followupId||record.followupReading){status.textContent='這篇解讀目前沒有可用的追問次數。';return;}
+    if(!gifted('custom_question')){status.textContent='AI 額度不足，這次不扣除任何次數。';return;}
+    if(!confirm('要針對這篇自訂問題追問一次嗎？\n不再扣專業點數，成功後另扣 AI 解讀 1 次。'))return;
+    const chart={...current},reportKey=current.key;
+    aiBusy=true;btn.disabled=true;btn.textContent='正在回答追問…';
+    try{
+      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_followup',question,followupId:record.followupId,aiOpId:crypto.randomUUID()});
+      if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未回傳完整追問答案');
+      let saved={...reports};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){}
+      const history=Array.isArray(saved.custom_questions)?saved.custom_questions.slice(-12):[];
+      if(history[index]&&history[index].followupId===record.followupId){history[index]={...history[index],followupQuestion:question,followupReading:j.reading,followupId:''};}
+      saved.custom_questions=history;
+      try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){}
+      if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+index);$('baziPersonalAiStatus').textContent='追問完成，已扣 AI 解讀 1 次，沒有再扣專業點數。';}
+    }catch(e){status.textContent=e?.message||'追問暫時失敗，未成功不扣 AI 額度。';}
+    finally{aiBusy=false;btn.disabled=false;btn.textContent='送出追問｜AI 1 次';void refreshPersonalQuota();}
+  }
+
   function customHistory(){return Array.isArray(reports.custom_questions)?reports.custom_questions.filter(x=>x&&typeof x.question==='string'&&typeof x.reading==='string').slice(-12):[];}
   function customTitle(index){const item=customHistory()[index];return item?'自訂問題 '+(index+1)+((!item.promptVersion||item.promptVersion!==CUSTOM_QUESTION_PROMPT_VERSION)?'（舊稿）':'')+'｜'+item.question.slice(0,42)+(item.question.length>42?'…':''):'自訂問題';}
   function reportTitle(topic){return topic.startsWith('custom_question_')?customTitle(Number(topic.slice('custom_question_'.length))):topicTitles[topic]||'解讀';}
@@ -9332,7 +9335,8 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
           suggestions.forEach(q=>{const b=document.createElement('button');b.type='button';b.textContent=q;b.addEventListener('click',()=>{input.value=q;input.focus()});chips.append(b)});
           const send=document.createElement('button');send.type='button';send.className='bazi-reading-followup-send';send.textContent='送出追問｜AI 1 次';
           send.addEventListener('click',()=>sendCustomFollowup(idx,input,send));
-          follow.append(name,note,chips,input,send);body.append(follow);
+          const inlineStatus=document.createElement('small');inlineStatus.className='bazi-followup-status';inlineStatus.setAttribute('role','status');inlineStatus.setAttribute('aria-live','polite');
+          follow.append(name,note,chips,input,send,inlineStatus);body.append(follow);
         }
       }
       body.append(download,bottom);card.append(head,top,body);root.append(card);
