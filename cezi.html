@@ -13,12 +13,28 @@
 .ai-report-table tr:last-child td{border-bottom:0}.ai-report-table tbody tr:nth-child(even){background:rgba(255,255,255,.025)}
 .ai-report-table strong{color:#ffe2a1}
 @media(max-width:800px){.ai-report-table{min-width:560px;font-size:14px}.ai-report-table th,.ai-report-table td{padding:12px 13px}}
+
+/* V10: visibly separate the static word-analysis report from generated interpretation. */
+.cezi-foundation{padding-bottom:20px}
+.foundation-next{margin:20px 0 0;color:#bbafc2;font-size:14px;line-height:1.85}
+.cezi-phase-break{max-width:1550px;margin:12px auto 24px;padding:30px 18px 17px;text-align:center;border-top:1px solid rgba(234,203,139,.26);background:linear-gradient(180deg,rgba(234,203,139,.048),transparent 80%);border-radius:0 0 14px 14px;display:grid;grid-template-columns:minmax(25px,1fr) auto minmax(25px,1fr);column-gap:18px;align-items:center}
+.phase-rule{display:block;height:1px;background:linear-gradient(90deg,transparent,rgba(234,203,139,.42));max-width:260px;width:100%;justify-self:end}
+.phase-rule:nth-of-type(3){background:linear-gradient(90deg,rgba(234,203,139,.42),transparent);justify-self:start}
+.phase-mark{font-size:20px;font-weight:800;color:var(--gold);letter-spacing:.065em}
+.phase-descr{grid-column:1/-1;color:#c8bacc;font-size:14px;margin:11px 0 0;line-height:1.8}
+#result>#interpret{max-width:1550px;display:block;margin:10px auto 0}
+#result>#interpret.hidden{display:none}
+#readingstatus{max-width:1550px;margin:16px auto}
+#result #reading{border-top:1px solid rgba(234,203,139,.25);padding-top:25px}
+#result #reading:empty{border-top:0;padding-top:0;margin-top:0}
+#followupbox{max-width:1550px;margin-left:auto;margin-right:auto}
+@media(max-width:600px){.cezi-phase-break{column-gap:8px;padding:23px 8px 14px}.phase-mark{font-size:16px;letter-spacing:0}.phase-descr{font-size:13px}.foundation-next{font-size:13px}}
 </style></head><body><main><header><a href="/admin.html" class="brand">← 返回站長後台</a><span class="small">站長內部測試 · 未公開上架</span></header><section class="hero"><h1>一字知機</h1><p>心念所繫，書一字以問事。以字為引，觀其意象。</p><div class="quota"><span>內部測試｜不扣會員額度、不設每日免費次數</span></div></section>
 <div id="steps-area"><section class="panel"><div class="step">STEP 01 · 問事類別</div><h2>你想詢問哪方面的事情？</h2><div id="topics" class="grid"></div></section>
 <section class="panel" id="scpanel"><div class="step">STEP 02 · 問事情境</div><h2>選擇目前的情況</h2><div id="scenarios" class="grid"></div></section>
 <section class="panel" id="qpanel"><div class="step">STEP 03 · 問事題目</div><h2>選擇你想知道的問題</h2><div id="questions" class="options"></div><div id="customQuestionBox" class="hidden custom-question"><label for="customQuestion">自行輸入完整問題（6～160 字）</label><textarea id="customQuestion" maxlength="160" rows="3" placeholder="例如：我明年是否適合到國外工作？"></textarea><p class="small">自訂問題會配合目前選擇的問事情境與所測中文字一起分析。</p></div></section>
 <section class="panel" id="charpanel"><div class="step">STEP 04 · 一字測事</div><h2>專心默念問題，輸入第一個浮現的中文字</h2><p id="selectedQuestion" class="small"></p><div class="hanzi"><input id="hanzi" type="text" maxlength="2" inputmode="text" autocomplete="off" placeholder="" aria-label="一個中文字"></div><div class="small" style="text-align:center">請輸入一個中文字。單字本身不保證能預測實際發生時間。</div><button class="primary" id="start">開始測字</button><p id="notice" role="status"></p></section>
-</div><section id="result" class="panel hidden"><div class="reporthead"><div class="step">一念知機 · 測字問事</div><div id="resultchar" class="largechar"></div><div id="resultquestion"></div></div><section id="foundation" class="cezi-foundation" aria-label="第一階段固定測字分析"></section><button id="interpret" class="primary">第二階段｜AI 深度解讀 · 約 1,500 字</button><div id="loading" class="loading hidden" role="status"><div class="spinner"></div><span>正在整合字形取象與問事脈絡，撰寫專業解讀…</span></div><p id="readingstatus" class="reading-status" role="status"></p><article id="reading" class="reading-prose"></article><p id="readnotice" class="small"></p><div id="followupbox" class="hidden" style="margin-top:28px;padding-top:20px;border-top:1px solid var(--line)"><h2>針對這個字繼續追問</h2><p class="small">內部測試：追問不扣會員 AI 額度，不必重新測字。</p><textarea id="followquestion" rows="3" maxlength="500" placeholder="例如：我該如何增加遇到對象的機會？" style="width:100%;border:1px solid var(--line);background:#090915;color:var(--text);border-radius:12px;padding:14px;font:inherit"></textarea><button id="followbutton" class="primary">AI 追問解讀</button><div id="followloading" class="loading hidden"><div class="spinner"></div><span>正在整理本次追問…</span></div><div id="followanswers"></div></div><div class="result-actions"><button id="restart" class="hidden">↻ 重新測字</button></div></section><p class="small" style="text-align:center">本工具提供傳統測字文化與象徵性解讀，不能作為醫療、法律、投資等重大決策的唯一依據。</p></main>
+</div><section id="result" class="panel hidden"><div class="reporthead"><div class="step">一念知機 · 測字問事</div><div id="resultchar" class="largechar"></div><div id="resultquestion"></div></div><section id="foundation" class="cezi-foundation" aria-label="第一階段固定測字分析"></section><div class="cezi-phase-break" role="separator" aria-label="固定分析與 AI 解讀分界"><span class="phase-rule"></span><span class="phase-mark">✦ 第二階段 · AI 問事深度解讀</span><span class="phase-rule"></span><p class="phase-descr">下方解讀以第一階段的字義與取象為依據，針對你的問題進一步分析。</p></div><button id="interpret" class="primary">開始 AI 深度解讀 · 約 1,500 字</button><div id="loading" class="loading hidden" role="status"><div class="spinner"></div><span>正在整合字形取象與問事脈絡，撰寫專業解讀…</span></div><p id="readingstatus" class="reading-status" role="status"></p><article id="reading" class="reading-prose"></article><p id="readnotice" class="small"></p><div id="followupbox" class="hidden" style="margin-top:28px;padding-top:20px;border-top:1px solid var(--line)"><h2>針對這個字繼續追問</h2><p class="small">內部測試：追問不扣會員 AI 額度，不必重新測字。</p><textarea id="followquestion" rows="3" maxlength="500" placeholder="例如：我該如何增加遇到對象的機會？" style="width:100%;border:1px solid var(--line);background:#090915;color:var(--text);border-radius:12px;padding:14px;font:inherit"></textarea><button id="followbutton" class="primary">AI 追問解讀</button><div id="followloading" class="loading hidden"><div class="spinner"></div><span>正在整理本次追問…</span></div><div id="followanswers"></div></div><div class="result-actions"><button id="restart" class="hidden">↻ 重新測字</button></div></section><p class="small" style="text-align:center">本工具提供傳統測字文化與象徵性解讀，不能作為醫療、法律、投資等重大決策的唯一依據。</p></main>
 <script>
 const API='https://cezi-api.ezgocpu.workers.dev'; // 部署 Worker 後請依實際網址修改
 const $=id=>document.getElementById(id);let bank={},topic='',scenario='',question='',readingId='',aiOp='',followOp='',busy=false;
@@ -42,7 +58,7 @@ function renderFoundation(a, hanzi, q){
  card('對應這次問題',a?.questionBridge||a?.topicLens||'將此字義與具體問題分開核對，不直接將象徵當作已發生的事實。');
  card('問事判斷方向',a?.questionLens||'由問題確認主要阻礙、變化條件與可觀察線索。');
  card('分析方法',Array.isArray(a?.methodology)?a.methodology.join(' → '):'字義、可核對字形與題型取象');
- const p=document.createElement('p');p.className='foundation-next';p.textContent='以上為固定核心資料，未使用 AI，也未把筆畫、五行或卦象當成沒有依據的吉凶分數。按下方按鈕進入第二階段，結合「'+q+'」進行完整問事解讀。';root.append(p);
+ const p=document.createElement('p');p.className='foundation-next';p.textContent='第一階段固定取象資料已整理完成，接下來可進行問事深度解讀。';root.append(p);
 }
 
 // 僅使用 DOM text nodes 建立允許的標記，不將 AI 字串注入 innerHTML。
