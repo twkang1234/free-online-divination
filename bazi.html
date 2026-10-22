@@ -2801,10 +2801,10 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
       
       <div class="bazi-ai-quota-grid bazi-entitlement-grid">
         <article class="bazi-ai-free-card bazi-cast-quota-card dh-quota-card">
-          <strong class="dh-quota-section-title">自動補充次數</strong>
+          <strong class="dh-quota-section-title">定期免費額度</strong>
           <div class="dh-quota-lines">
             <div class="dh-quota-mini">
-              <div class="dh-quota-row-head"><span>排盤</span><b id="baziCastQuotaCount">查詢中…</b></div>
+              <div class="dh-quota-row-head"><span>八字排盤</span><b id="baziCastQuotaCount">查詢中…</b></div>
               <p class="dh-quota-row-note" id="baziCastQuotaHint">依後台週期補充，不累積。</p>
             </div>
             <div class="dh-quota-mini">
@@ -2817,14 +2817,14 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
           </div>
         </article>
         <article class="bazi-ai-free-card dh-quota-card dh-quota-gift">
-          <strong class="dh-quota-section-title">網站贈送額度 <span class="dh-quota-origin">（免費會員一次性贈送）</span></strong>
+          <strong class="dh-quota-section-title">會員共用額度</strong>
           <div class="dh-quota-lines">
-            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong>占卜使用</strong><b id="baziSharedToolCount">— 次</b><small class="dh-quota-no-refill">用完不補</small></div></div>
-            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong id="baziQuotaAccountLabel">AI 解讀</strong><b id="baziQuotaDailyCount">— 次</b><small class="dh-quota-no-refill">用完不補</small></div></div>
+            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong>工具額度（全平台共用）</strong><b id="baziSharedToolCount">— 次</b><span class="dh-quota-gift-detail">八字、塔羅、易經皆可使用</span></div></div>
+            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong id="baziQuotaAccountLabel">AI 解讀（全平台共用）</strong><b id="baziQuotaDailyCount">— 次</b><span class="dh-quota-gift-detail">各工具 AI 解讀皆可使用</span></div></div>
           </div>
           <div class="dh-quota-footer">
-            <p class="dh-quota-gift-note">平台各項占卜命理工具共用</p>
-            <p class="dh-quota-gift-note">自動補充次數用完才扣；未來可加購</p>
+            <p class="dh-quota-gift-note">八字、塔羅、易經等工具共用</p>
+            <p class="dh-quota-gift-note">定期免費額度用完才扣；用完可加購</p>
             <p class="dh-quota-gift-note" id="baziQuotaDailyHint" hidden></p>
             <button type="button" id="baziQuotaLogin" class="bazi-entitlement-login" hidden>免費登入，領取共用額度 →</button>
           </div>
@@ -2837,7 +2837,7 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
         <article class="bazi-ai-paid-card dh-quota-card dh-professional-points-card" aria-label="專業解鎖點數">
           <strong>專業解鎖點數</strong>
           <b id="dhProfessionalPointsNumber">— 點</b>
-          <p id="dhProfessionalPointsNote">登入後查看｜三工具共用</p>
+          <p id="dhProfessionalPointsNote">八字、塔羅、易經共用</p><p class="dh-points-unit-note">依各專業區塊扣點</p><button type="button" class="dh-points-buy-coming" disabled aria-label="加購額度與點數，即將開放"><span>🛒 加購額度與點數</span><small>即將開放</small></button>
         </article>
       </div>
     </section>
@@ -3512,7 +3512,7 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
       baziSyncCastCta();
       el.textContent=remain+' / '+Number(data.limit||0)+' 次';
       const hint=document.getElementById('baziCastQuotaHint');
-      if(hint)hint.textContent=knownAfter&&!isMember?'已是會員，請重新登入繼續排盤':`每 ${data.days||1} 天補充，不累積｜下次 ${data.resetAt||'待查'}`;
+      if(hint)hint.textContent=knownAfter&&!isMember?'已是會員，請重新登入繼續排盤':`每 ${data.days||1} 天補充，不累積`;
       const login=document.getElementById('baziCastQuotaLogin');if(login)login.hidden=isMember||remain>0;
       document.body.classList.toggle('bazi-member-verified',isMember);
       window.baziRefreshShenshaGate?.();
@@ -5915,9 +5915,9 @@ ${tasks}
     if(location.search.includes('admin=1')){window.__baziAdminRoleQuota?.(j);return;}
     baziLatestQuota=j;
     const who=j.visitorType==='member'?'免費會員':'未登入訪客';
-    const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent='AI 解讀';
+    const label=document.getElementById('baziQuotaAccountLabel');if(label)label.textContent='AI 解讀（全平台共用）';
     const freeAi=document.getElementById('baziQuotaFreeAiCount');if(freeAi)freeAi.textContent=`${j.periodicAi?.remaining??0} / ${j.periodicAi?.limit??0} 次`;
-    const freeAiNote=document.getElementById('baziQuotaFreeAiHint');if(freeAiNote)freeAiNote.textContent=`每 ${j.periodicAi?.days||1} 天補充｜下次 ${j.periodicAi?.resetAt||'待查'}`;
+    const freeAiNote=document.getElementById('baziQuotaFreeAiHint');if(freeAiNote)freeAiNote.textContent=(Number(j.periodicAi?.limit||0)>0?`每 ${j.periodicAi?.days||1} 天補充，不累積`:'目前未提供免費額度');
     const count=document.getElementById('baziQuotaDailyCount');if(count)count.textContent=j.authenticated?Math.max(0,Number(j.sharedAiRemaining||0))+' 次':'登入後可用';
     const hint=document.getElementById('baziQuotaDailyHint');
     if(hint)hint.textContent='平台各種占卜算命工具共用額度，用完不補充；未來可額外付費購買。';
@@ -10314,7 +10314,7 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-professional-points-card>b{color:
  if(!number||!note)return;
  let lastRequest=0, requestSeq=0;
  function token(){try{return localStorage.getItem(STORAGE)||''}catch(_){return ''}}
- function update(value,message){number.textContent=value;note.textContent=message}
+ function update(value,message){number.textContent=value;note.textContent=(value==='— 點'?message:'八字、塔羅、易經共用')}
  async function refresh(force=false){
    if(location.protocol==='file:')return update('— 點','請在正式網站登入後查看');
    const t=token();
@@ -10640,5 +10640,32 @@ html[data-theme="light"] .bazi-core-random-controls .bazi-core-random-hint{color
 })();
 </script>
 
+<style id="bazi-quota-compact-final-20261022">
+/* 只限八字額度卡：緊湊三欄，保留原有動態額度 ID 與扣點流程。 */
+#baziAiQuotaPanel{padding:12px!important;margin:10px auto 16px!important}
+#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:minmax(0,1.18fr) minmax(0,1.85fr) minmax(205px,.78fr)!important;gap:9px!important}
+#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card:not(.dh-legacy-paid-card){padding:13px 15px!important;min-height:205px!important;gap:0!important}
+#baziAiQuotaPanel .dh-quota-section-title{min-height:33px!important;flex:0 0 33px!important;border-bottom:1px solid var(--line);font-size:.91rem!important}
+#baziAiQuotaPanel .dh-quota-card:not(.dh-legacy-paid-card) .dh-quota-lines{grid-template-rows:82px 82px!important;min-height:164px!important;flex:0 0 164px!important}
+#baziAiQuotaPanel .dh-quota-lines .dh-quota-mini,#baziAiQuotaPanel .dh-quota-gift .dh-quota-lines .dh-quota-gift-row{min-height:82px!important;height:82px!important;padding:9px 0 6px!important;justify-content:center!important}
+#baziAiQuotaPanel .dh-quota-row-head,#baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:2px!important;min-height:0!important}
+#baziAiQuotaPanel .dh-quota-row-head>b,#baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading>b{font-size:1.35rem!important;margin:0!important}
+#baziAiQuotaPanel .dh-quota-gift-heading>strong{white-space:normal!important;font-size:.77rem!important;line-height:1.35!important}
+#baziAiQuotaPanel .dh-quota-row-note,#baziAiQuotaPanel .dh-quota-gift-detail{display:block!important;font-size:.68rem!important;line-height:1.4!important;margin-top:2px!important;color:var(--dim)!important;opacity:1!important}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading{gap:0!important}
+#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-gift{grid-template-columns:minmax(0,1.15fr) minmax(0,.95fr)!important;grid-template-rows:33px 164px!important;column-gap:10px!important}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-footer{padding:6px 0 6px 11px!important;gap:7px!important;align-self:center!important}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-footer p{font-size:.70rem!important;line-height:1.4!important}
+#baziAiQuotaPanel .dh-professional-points-card{position:relative!important;display:flex!important;flex-direction:column!important;gap:6px!important}
+#baziAiQuotaPanel .dh-professional-points-card>b{font-size:1.85rem!important;margin:3px 0 0!important}
+#baziAiQuotaPanel .dh-professional-points-card>p{margin:0!important;font-size:.70rem!important;line-height:1.5!important}
+#baziAiQuotaPanel .dh-points-buy-coming{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;margin-top:auto!important;min-height:51px;padding:7px 8px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--text);opacity:.8;cursor:not-allowed;font-size:.72rem}
+#baziAiQuotaPanel .dh-points-buy-coming small{color:var(--dim);font-size:.67rem}
+#baziAiQuotaPanel .dh-quota-no-refill{display:none!important}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-footer [hidden]{display:none!important}
+@media(max-width:1100px){#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-gift{display:flex!important;flex-direction:column!important}#baziAiQuotaPanel .dh-quota-gift .dh-quota-footer{border-left:0!important;border-top:1px solid var(--line)!important;padding:6px 0 0!important;margin-top:5px!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card:not(.dh-legacy-paid-card){min-height:0!important}}
+@media(max-width:980px){#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card:last-child{grid-column:1/-1}}
+@media(max-width:620px){#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:1fr!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card:last-child{grid-column:auto}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-gift{display:flex!important}#baziAiQuotaPanel .dh-quota-card:not(.dh-legacy-paid-card) .dh-quota-lines{flex:0 0 auto!important}}
+</style>
 </body>
 </html>
