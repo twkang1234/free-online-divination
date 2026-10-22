@@ -123,7 +123,7 @@ body.tool-engaged .site-footer .footer-landing{display:none}
 .cezi-top-control{border:1px solid var(--cezi-control-line,#d5bfb133);background:var(--cezi-control-bg,#251f31);color:var(--text);border-radius:999px;min-height:37px;padding:7px 12px;font-size:12px;white-space:nowrap;box-shadow:none;line-height:1.5}
 .cezi-top-control:hover{border-color:var(--gold);color:var(--gold)}
 .header-actions{gap:8px;flex-wrap:wrap;justify-content:flex-end}.header-actions .staff-note{margin-right:7px}.staff-back{margin-left:4px}
-.cezi-layout-control,.cezi-member-control{position:relative;display:flex;gap:3px;align-items:center}.cezi-member-btn{display:inline-flex;align-items:center;gap:5px}.cezi-member-btn.logged{color:var(--gold);border-color:#d8b47888}.cezi-drop-toggle{padding:7px 9px}
+.cezi-layout-control,.cezi-member-control{position:relative;display:flex;gap:3px;align-items:center}.cezi-member-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;text-decoration:none}.cezi-member-btn.logged{color:var(--gold);border-color:#d8b47888}.cezi-drop-toggle{padding:7px 9px}
 .cezi-mini-menu{position:absolute;top:calc(100% + 9px);right:0;z-index:100;background:var(--cezi-menu-bg,#201c2d);border:1px solid #deb87c55;box-shadow:0 16px 35px #0005;border-radius:13px;min-width:220px;padding:10px;display:grid;gap:5px}
 .cezi-mini-menu[hidden]{display:none!important}.cezi-mini-menu button,.cezi-mini-menu a{display:block;text-decoration:none;text-align:left;border:0;border-radius:7px;background:transparent;color:var(--text);font-size:13px;min-height:39px;padding:9px 10px}
 .cezi-mini-menu button:hover,.cezi-mini-menu a:hover{background:#b68e7040}.cezi-mini-menu button[aria-pressed="true"]{color:var(--gold);background:#bd9d7930}
@@ -524,7 +524,7 @@ html[data-cezi-layout="mobile"] .hub-tool-nav{width:100%;flex:1 1 100%;}
     </div>
   </div>
   <div class="cezi-member-control" id="ceziMemberControl">
-    <button type="button" class="cezi-top-control cezi-member-btn" id="ceziMemberButton">● <span id="ceziMemberText">免費登入</span></button>
+    <a class="cezi-top-control cezi-member-btn" id="ceziMemberButton" href="member.html" aria-label="前往會員中心或登入">● <span id="ceziMemberText">免費登入</span></a>
     <button type="button" class="cezi-top-control cezi-drop-toggle" id="ceziMemberMore" aria-label="會員選單" aria-controls="ceziMemberMenu" aria-expanded="false" hidden>▾</button>
     <div class="cezi-mini-menu" id="ceziMemberMenu" hidden><div class="cezi-mini-title" id="ceziMemberName">會員</div><a href="member.html" id="ceziCenterLink">會員中心</a><a href="member.html" id="ceziLogoutLink">登出</a></div>
   </div>
@@ -756,10 +756,11 @@ document.querySelectorAll('[data-start-cezi]').forEach(a=>a.addEventListener('cl
  const readToken=()=>{try{return localStorage.getItem(AUTH_KEY)||''}catch(_){return ''}};
  const verifiedToken=()=>/^dhs_[A-Za-z0-9_-]{43}$/.test(readToken())?readToken():'';
  let seq=0,verifiedMember=null;
- function goMember(logout=false){const back=location.pathname+location.search+location.hash;location.href='member.html?'+(logout?'logout=1&':'')+'return='+encodeURIComponent(back)}
- el('ceziMemberButton').addEventListener('click',()=>goMember());
- el('ceziCenterLink').addEventListener('click',e=>{e.preventDefault();goMember()});
- el('ceziLogoutLink').addEventListener('click',e=>{e.preventDefault();goMember(true)});
+ // Visit the member centre directly. A ?return= parameter can cause the member page
+ // to treat a normal visit as a post-login return and bounce back to this tool.
+ // Keep the original return target only for an explicit logout action.
+ function goMemberLogout(){const back=location.pathname+location.search+location.hash;location.href='member.html?logout=1&return='+encodeURIComponent(back)}
+ el('ceziLogoutLink').addEventListener('click',e=>{e.preventDefault();goMemberLogout()});
  const more=el('ceziMemberMore'),menu=el('ceziMemberMenu');
  const closeMember=()=>{menu.hidden=true;more.setAttribute('aria-expanded','false')};
  more.addEventListener('click',()=>{menu.hidden=!menu.hidden;more.setAttribute('aria-expanded',String(!menu.hidden))});
