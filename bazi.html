@@ -2429,6 +2429,7 @@ html[data-theme="light"] .bazi-gemini select{background:#fff;color:#43321d}
   .mask-note span{display:block; color:var(--bazi-text-715,#9da7b6); font-size:.72rem; line-height:1.7;}
   .mask-note b{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; border:1px solid var(--bazi-line-325,rgba(117,220,228,.28)); background:var(--bazi-bg-400,rgba(117,220,228,.06)); color:var(--bazi-text-171,#89dfe6); font-size:.66rem; font-weight:800; letter-spacing:.08em; white-space:nowrap;}
 
+.bazi-followup-box{margin:12px 0;padding:13px;border:1px solid #b7d5d9;border-radius:10px;background:rgba(62,149,158,.045);display:grid;gap:8px}.bazi-followup-box>small{color:#6b7d85}.bazi-followup-box textarea{width:100%;min-height:68px;resize:vertical;border:1px solid #bad2d7;border-radius:8px;padding:10px;background:var(--bazi-bg-76,#fff);color:var(--text)}.bazi-followup-chips{display:flex;flex-wrap:wrap;gap:5px}.bazi-followup-chips button{border:1px solid #9cbec6;border-radius:999px;background:transparent;color:inherit;padding:4px 9px;font-size:.7rem}.bazi-reading-followup-send{justify-self:end;border:1px solid #d5b66c;background:#f3ead1;color:#214356;border-radius:8px;padding:9px 14px;font-weight:700}
 </style>
 <script src="/_aistudio-iframe.js?v=2c34bde1"></script><style>
 #baziGeminiOutput .bazi-ai-output-bottom{display:flex;justify-content:center;padding:18px 6px 6px;margin-top:18px;border-top:1px solid rgba(233,189,88,.18)}
@@ -3682,6 +3683,29 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .quota-triple > .quota
   window.baziCastBrowserHeaders=()=>({'X-Bazi-Visitor-Id':baziVisitorId()});
   window.baziCastPermitRead=baziCastPermitRead;
   window.baziCastPermitSave=baziCastPermitSave;
+  async function sendCustomFollowup(index,input,btn){
+    const status=$('baziPersonalAiStatus');
+    if(!loggedIn()||!current||aiBusy||busy)return;
+    const question=String(input?.value||'').normalize('NFKC').trim().replace(/\s+/g,' ');
+    if(question.length<5||question.length>400){status.textContent='追問請輸入 5～400 字。';input?.focus();return;}
+    const record=customHistory()[index];if(!record?.followupId||record.followupReading)return;
+    if(!gifted('custom_question')){status.textContent='AI 額度不足，這次不扣除任何次數。';return;}
+    if(!confirm('要針對這篇自訂問題追問一次嗎？\n不再扣專業點數，成功後另扣 AI 解讀 1 次。'))return;
+    const chart={...current},reportKey=current.key;
+    aiBusy=true;btn.disabled=true;btn.textContent='正在回答追問…';
+    try{
+      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_followup',question,followupId:record.followupId,aiOpId:crypto.randomUUID()});
+      if(!j.reading)throw Error('AI 未回傳追問答案');
+      let saved={...reports};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){}
+      const history=Array.isArray(saved.custom_questions)?saved.custom_questions.slice(-12):[];
+      if(history[index]&&history[index].followupId===record.followupId){history[index]={...history[index],followupQuestion:question,followupReading:j.reading,followupId:''};}
+      saved.custom_questions=history;
+      try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){}
+      if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+index);status.textContent='追問成功，已扣 AI 解讀 1 次，沒有再扣專業點數。';}
+    }catch(e){status.textContent=e?.message||'追問暫時失敗，未成功不扣 AI 額度。';}
+    finally{aiBusy=false;btn.disabled=false;btn.textContent='送出追問｜AI 1 次';void refreshPersonalQuota();}
+  }
+
   document.addEventListener('DOMContentLoaded',()=>{
     document.getElementById('baziCastQuotaLogin')?.addEventListener('click',baziOpenAuth);
     document.getElementById('baziQuotaLogin')?.addEventListener('click',baziOpenAuth);
@@ -9251,6 +9275,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       if(item?.question)lines.push('使用者問題：'+item.question);
     }
     lines.push('',personalTxtContent(entry.reading));
+    if(topic.startsWith('custom_question_')){const item=customHistory()[Number(topic.slice('custom_question_'.length))];if(item?.followupReading)lines.push('','追問：'+(item.followupQuestion||''),'',personalTxtContent(item.followupReading));}
     return lines.join('\n');
   }
   function downloadPersonalTxt(filename,text){
@@ -9286,7 +9311,29 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       const download=document.createElement('button');download.type='button';
       download.className='bazi-reading-download';download.textContent='↓ 下載本篇 TXT';
       download.addEventListener('click',()=>downloadOnePersonalTxt(topic));
-      body.append(article,download,bottom);card.append(head,top,body);root.append(card);
+      // 只有已完成的第 09 自訂題目可再追問一次；固定八題不開放追問。
+      if(topic.startsWith('custom_question_')){
+        const idx=Number(topic.slice('custom_question_'.length));
+        const record=customHistory()[idx];
+        if(record?.followupReading){
+          const follow=document.createElement('section');follow.className='bazi-followup-box';
+          const label=document.createElement('strong');label.textContent='追問｜'+(record.followupQuestion||'');
+          const result=document.createElement('article');result.className='bazi-reading-article';
+          renderPersonalReading(result,record.followupReading);follow.append(label,result);body.append(follow);
+        }else if(record?.followupId){
+          const follow=document.createElement('section');follow.className='bazi-followup-box';
+          const name=document.createElement('strong');name.textContent='還想深入了解嗎？可延續本篇追問 1 次';
+          const note=document.createElement('small');note.textContent='不再扣專業點數；另扣 AI 解讀 1 次。';
+          const chips=document.createElement('div');chips.className='bazi-followup-chips';
+          const suggestions=['哪段時間比較值得留意？','能給我更具體的建議嗎？','這個判斷有哪些限制？'];
+          const input=document.createElement('textarea');input.rows=2;input.maxLength=400;input.placeholder='輸入你想接著問的問題（5～400 字）';
+          suggestions.forEach(q=>{const b=document.createElement('button');b.type='button';b.textContent=q;b.addEventListener('click',()=>{input.value=q;input.focus()});chips.append(b)});
+          const send=document.createElement('button');send.type='button';send.className='bazi-reading-followup-send';send.textContent='送出追問｜AI 1 次';
+          send.addEventListener('click',()=>sendCustomFollowup(idx,input,send));
+          follow.append(name,note,chips,input,send);body.append(follow);
+        }
+      }
+      body.append(download,bottom);card.append(head,top,body);root.append(card);
     }
     setReportExpanded(expandedTopic,!!expandedTopic);
     renderTopicAccess();
@@ -9421,7 +9468,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 尚未回傳完整解讀。');
       let saved={...reports};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){ }
       const history=Array.isArray(saved.custom_questions)?saved.custom_questions.slice(-11):[];
-      history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',promptVersion:CUSTOM_QUESTION_PROMPT_VERSION});
+      history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',followupId:j.followupId||'',promptVersion:CUSTOM_QUESTION_PROMPT_VERSION});
       saved.custom_questions=history;
       try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){ }
       if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+(history.length-1));status.textContent='自訂問題解讀完成；專業點數已解鎖，AI 額度另行扣除。';}
