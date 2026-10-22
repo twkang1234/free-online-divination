@@ -2718,6 +2718,49 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
  window.DHCustomPoints={quote,label,buy};
 })();
 </script>
+
+<style id="dh-quota-triple-cell-final">
+/* Fixed 3-row internal grid: LABEL / VALUE / NOTE. No visible sub-box borders. */
+#baziAiQuotaPanel .dh-quota-lines .quota-triple,
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading.quota-triple,
+#baziAiQuotaPanel .bazi-cast-quota-card .dh-quota-row-head.quota-triple {
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ grid-template-rows:auto auto auto!important;align-content:center!important;
+ align-items:start!important;justify-content:stretch!important;
+ gap:2px!important;row-gap:2px!important;width:100%!important;min-width:0!important;
+ height:auto!important;padding:0!important;margin:0!important;position:static!important;
+}
+#baziAiQuotaPanel .quota-triple > .quota-cell{
+ display:block!important;float:none!important;position:static!important;grid-column:1!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ margin:0!important;padding:0!important;text-align:left!important;justify-self:start!important;
+ transform:none!important;white-space:normal!important;letter-spacing:normal!important;
+}
+#baziAiQuotaPanel .quota-triple > .quota-cell-label{grid-row:1!important;line-height:1.35!important;font-size:.78rem!important;font-weight:600!important;opacity:.90!important}
+#baziAiQuotaPanel .quota-triple > .quota-cell-value{grid-row:2!important;line-height:1.16!important;font-size:1.47rem!important;font-weight:850!important;white-space:nowrap!important;color:var(--gold)!important}
+#baziAiQuotaPanel .quota-triple > .quota-cell-note{grid-row:3!important;line-height:1.35!important;font-size:.70rem!important;font-weight:400!important;opacity:.80!important;overflow-wrap:anywhere!important}
+html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .quota-triple > .quota-cell-value{color:#7442a7!important}
+/* Equal two-row units with dividers, compact vertical rhythm */
+#baziAiQuotaPanel .dh-quota-card:not(.dh-legacy-paid-card) > .dh-quota-lines{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ grid-template-rows:minmax(88px,auto) minmax(88px,auto)!important;
+ min-height:176px!important;height:auto!important;flex:initial!important;
+ align-content:start!important;gap:0!important;overflow:visible!important;
+}
+#baziAiQuotaPanel .bazi-cast-quota-card .dh-quota-lines > .dh-quota-mini,
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-lines > .dh-quota-gift-row{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ justify-content:center!important;min-width:0!important;height:auto!important;min-height:88px!important;
+ padding:7px 0!important;margin:0!important;gap:0!important;border:0!important;
+}
+#baziAiQuotaPanel .bazi-cast-quota-card .dh-quota-lines > .dh-quota-mini:nth-child(2),
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-lines > .dh-quota-gift-row:nth-child(2){border-top:1px solid var(--line)!important}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-footer{align-self:center!important}
+#baziAiQuotaPanel .dh-quota-gift .dh-quota-footer .dh-quota-gift-note{line-height:1.45!important}
+@media(max-width:650px){
+ #baziAiQuotaPanel .dh-quota-card:not(.dh-legacy-paid-card) > .dh-quota-lines{grid-template-rows:minmax(86px,auto) minmax(86px,auto)!important;min-height:172px!important}
+}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -2804,12 +2847,10 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
           <strong class="dh-quota-section-title">定期免費額度</strong>
           <div class="dh-quota-lines">
             <div class="dh-quota-mini">
-              <div class="dh-quota-row-head"><span>八字排盤</span><b id="baziCastQuotaCount">查詢中…</b></div>
-              <p class="dh-quota-row-note" id="baziCastQuotaHint">依後台週期補充，不累積。</p>
+              <div class="dh-quota-row-head quota-triple"><span class="quota-cell quota-cell-label">八字排盤</span><b class="quota-cell quota-cell-value" id="baziCastQuotaCount">查詢中…</b><p class="dh-quota-row-note quota-cell quota-cell-note" id="baziCastQuotaHint">依後台週期補充，不累積。</p></div>
             </div>
             <div class="dh-quota-mini">
-              <div class="dh-quota-row-head"><span>AI 解讀</span><b id="baziQuotaFreeAiCount">查詢中…</b></div>
-              <p class="dh-quota-row-note" id="baziQuotaFreeAiHint">免費 AI 額度由後台設定。</p>
+              <div class="dh-quota-row-head quota-triple"><span class="quota-cell quota-cell-label">AI 解讀</span><b class="quota-cell quota-cell-value" id="baziQuotaFreeAiCount">查詢中…</b><p class="dh-quota-row-note quota-cell quota-cell-note" id="baziQuotaFreeAiHint">免費 AI 額度由後台設定。</p></div>
             </div>
           </div>
           <div class="dh-quota-footer">
@@ -2819,8 +2860,8 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
         <article class="bazi-ai-free-card dh-quota-card dh-quota-gift">
           <strong class="dh-quota-section-title">會員共用額度</strong>
           <div class="dh-quota-lines">
-            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong>工具額度（全平台共用）</strong><b id="baziSharedToolCount">— 次</b><span class="dh-quota-gift-detail">八字、塔羅、易經皆可使用</span></div></div>
-            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading"><strong id="baziQuotaAccountLabel">AI 解讀（全平台共用）</strong><b id="baziQuotaDailyCount">— 次</b><span class="dh-quota-gift-detail">各工具 AI 解讀皆可使用</span></div></div>
+            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading quota-triple"><strong class="quota-cell quota-cell-label">工具額度（全平台共用）</strong><b class="quota-cell quota-cell-value" id="baziSharedToolCount">— 次</b><span class="dh-quota-gift-detail quota-cell quota-cell-note">八字、塔羅、易經皆可使用</span></div></div>
+            <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading quota-triple"><strong class="quota-cell quota-cell-label" id="baziQuotaAccountLabel">AI 解讀（全平台共用）</strong><b class="quota-cell quota-cell-value" id="baziQuotaDailyCount">— 次</b><span class="dh-quota-gift-detail quota-cell quota-cell-note">各工具 AI 解讀皆可使用</span></div></div>
           </div>
           <div class="dh-quota-footer">
             <p class="dh-quota-gift-note">八字、塔羅、易經等工具共用</p>
@@ -10668,6 +10709,30 @@ html[data-theme="light"] .bazi-core-random-controls .bazi-core-random-hint{color
 @media(max-width:1080px){#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:1fr 1fr!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card:last-child{grid-column:1/-1!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-gift{grid-template-columns:minmax(0,1fr) minmax(160px,.95fr)!important}}
 @media(max-width:680px){#baziAiQuotaPanel .bazi-entitlement-grid,body.has-bazi-chart #baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:1fr!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card:last-child{grid-column:auto!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-gift{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(140px,.9fr)!important}#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-card:not(.dh-legacy-paid-card){min-height:0!important}}
 @media(max-width:430px){#baziAiQuotaPanel .bazi-entitlement-grid>.dh-quota-gift{display:flex!important;flex-direction:column!important}#baziAiQuotaPanel .dh-quota-gift .dh-quota-lines{width:100%!important}#baziAiQuotaPanel .dh-quota-gift .dh-quota-footer{border-left:0!important;border-top:1px solid var(--line)!important;padding:8px 0 0!important;align-self:stretch!important}}
+</style>
+
+<style id="bazi-quota-left-vertical-correction-20261022">
+/* 修正左側數字被早期高權重規則推到右邊的問題：文字、數字、說明固定逐行靠左 */
+#baziAiQuotaPanel .bazi-cast-quota-card .dh-quota-lines .dh-quota-mini{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:center!important;
+}
+#baziAiQuotaPanel .bazi-cast-quota-card .dh-quota-lines .dh-quota-mini .dh-quota-row-head{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto!important;
+  justify-items:start!important;align-items:start!important;justify-content:start!important;
+  width:100%!important;gap:2px!important;min-height:0!important;height:auto!important;
+  margin:0!important;padding:0!important;
+}
+#baziAiQuotaPanel .bazi-cast-quota-card .dh-quota-lines .dh-quota-mini .dh-quota-row-head > span{
+  display:block!important;grid-column:1!important;grid-row:1!important;margin:0!important;padding:0!important;line-height:1.3!important;
+}
+#baziAiQuotaPanel .bazi-cast-quota-card .dh-quota-lines .dh-quota-mini .dh-quota-row-head > b{
+  display:block!important;position:static!important;float:none!important;grid-column:1!important;grid-row:2!important;
+  margin:0!important;padding:0!important;transform:none!important;justify-self:start!important;text-align:left!important;
+  font-size:1.35rem!important;line-height:1.18!important;
+}
+#baziAiQuotaPanel .bazi-cast-quota-card .dh-quota-lines .dh-quota-mini .dh-quota-row-note{
+  display:block!important;width:100%!important;margin:3px 0 0!important;padding:0!important;text-align:left!important;
+}
 </style>
 </body>
 </html>
