@@ -2850,7 +2850,7 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .quota-triple > .quota
 .bazi-custom-suggestions button{min-height:27px!important;padding:3px 9px!important;font-size:.67rem!important}
 .bazi-personal-stage .bazi-reading-custom label{display:flex;gap:8px;align-items:baseline;margin-top:6px!important;font-size:.73rem}
 .bazi-personal-stage .bazi-reading-custom label small{font-size:.65rem}
-.bazi-personal-stage .bazi-reading-custom textarea{margin-top:3px!important;min-height:76px!important;height:76px;line-height:1.55;padding:8px 10px!important;font-size:.77rem;resize:vertical}
+.bazi-personal-stage .bazi-reading-custom textarea{margin-top:3px!important;min-height:76px!important;max-height:180px;line-height:1.55;padding:8px 10px!important;font-size:.77rem;resize:vertical}
 .bazi-personal-stage .bazi-reading-custom-actions{margin-top:7px!important;gap:8px}
 .bazi-personal-stage .bazi-reading-custom-actions small{font-size:.67rem}
 .bazi-personal-stage .bazi-reading-custom-actions button{min-height:36px;padding:7px 11px;font-size:.72rem}
@@ -3129,8 +3129,8 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .quota-triple > .quota
                 <button type="button" data-custom-category="life" aria-pressed="false">人生</button>
               </div>
               <div id="baziCustomSuggestions" class="bazi-custom-suggestions" aria-label="熱門自訂問題範例"></div>
-              <label for="baziCustomQuestion">你的問題 <small>可修改範例或自行輸入</small></label>
-              <textarea id="baziCustomQuestion" rows="3" maxlength="400" placeholder="點選熱門範例，或輸入你的問題（5～400 字）" aria-describedby="baziCustomQuestionHelp"></textarea>
+              <label for="baziCustomQuestion">你的問題 <small>點選範例自動帶入，也能自由修改</small></label>
+              <textarea id="baziCustomQuestion" rows="3" maxlength="400" placeholder="選擇上方題目，或直接輸入你想問的事（5～400 字）" aria-describedby="baziCustomQuestionHelp"></textarea>
               <div class="bazi-reading-custom-actions"><small id="baziCustomQuestionHelp">讀取點數價格中…</small><button type="button" id="baziCustomQuestionRun">解鎖本次自訂問題並 AI 解讀</button></div>
             </div>
           </details>
@@ -9099,14 +9099,8 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       const base=String(b.dataset.accessTitle||b.textContent).replace(/\s*[｜·]\s*(?:會員免費.*|付費解鎖.*)$/,'').replace(/^🔒\s*/,'');
       b.dataset.accessTitle=base;
       const gift=gifted(topic);
-      const remaining=quotaReady?Math.max(0,Number(accessInfo.aiRemaining)||0):null;
       b.textContent=base+(gift?'｜AI 解讀扣 1 次':!quotaReady?'｜正在查詢 AI 額度':!loggedIn()?'｜免費 AI 已用完，登入可使用共用額度':'｜AI 額度已用完');
-      if(remaining!==null){
-        const count=document.createElement('span');
-        count.className='bazi-topic-ai-remaining';
-        count.textContent='剩餘 '+remaining+' 次';
-        b.append(' ',count);
-      }
+      // 額度統一顯示於區塊右上角，不再為每個選項重複建立剩餘次數徽章。
       b.classList.toggle('bazi-paywall-topic',!gift);
       b.disabled=!gift;
       b.setAttribute('aria-label',b.textContent);
@@ -10944,7 +10938,9 @@ const init=()=>{
    b.addEventListener('click',()=>{field.value=value;field.dispatchEvent(new Event('input',{bubbles:true}));host.querySelectorAll('button').forEach(x=>x.classList.toggle('is-active',x===b));field.focus({preventScroll:true});});host.appendChild(b);
  }};
  cats.forEach(b=>b.addEventListener('click',()=>{cats.forEach(x=>{x.classList.toggle('is-active',x===b);x.setAttribute('aria-pressed',String(x===b));});render(b.dataset.customCategory);}));
- field.addEventListener('input',()=>host.querySelectorAll('button').forEach(b=>b.classList.toggle('is-active',b.dataset.template===field.value)));
+ const fitQuestion=()=>{field.style.height='auto';field.style.height=Math.min(Math.max(field.scrollHeight,76),180)+'px';};
+ field.addEventListener('input',()=>{host.querySelectorAll('button').forEach(b=>b.classList.toggle('is-active',b.dataset.template===field.value));fitQuestion();});
+ fitQuestion();
  render('career');
 };
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
