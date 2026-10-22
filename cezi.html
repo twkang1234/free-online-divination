@@ -3,6 +3,15 @@
 
 /* V6: fixed, non-AI stage-one report */
 .cezi-foundation{max-width:1550px;width:100%;margin:0 auto 22px}.cezi-foundation h2{font-size:22px;color:var(--gold);margin:0 0 15px}.foundation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.foundation-card{padding:19px 22px;background:linear-gradient(145deg,#1d182b,#121321);border:1px solid #eacb8b32;border-radius:14px}.foundation-card.wide{grid-column:1/-1}.foundation-card h3{font-size:17px;color:#f1cd95;margin:0 0 10px}.foundation-card p{font-size:16px;line-height:1.9;margin:4px 0;color:#f1eafa}.foundation-card .hint{color:#aba0b7;font-size:13px}.foundation-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.foundation-chips span{padding:5px 12px;border:1px solid #eacb8b45;background:#eacb8b12;color:#f0d8a5;border-radius:9px;font-size:15px}.foundation-next{margin:17px 0 6px;color:#bcb1c4;font-size:14px}.foundation-kicker{font-size:12px;letter-spacing:.14em;color:var(--gold);font-weight:800}@media(max-width:650px){.foundation-grid{grid-template-columns:1fr}.foundation-card.wide{grid-column:auto}.foundation-card{padding:16px}}
+
+/* V8 AI report comparison tables: readable on desktop, scrollable on smaller screens. */
+.ai-table-scroll{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;margin:18px 0 28px;border:1px solid rgba(234,203,139,.25);border-radius:13px;background:rgba(255,255,255,.025);scrollbar-width:thin}
+.ai-report-table{width:100%;min-width:650px;border-collapse:separate;border-spacing:0;text-align:left;line-height:1.8;font-size:.94em;table-layout:auto}
+.ai-report-table th{padding:15px 17px;background:rgba(234,203,139,.11);color:#f7d795;font-weight:750;white-space:nowrap;border-bottom:1px solid rgba(234,203,139,.25)}
+.ai-report-table td{padding:15px 17px;color:#f0e8f2;vertical-align:top;border-bottom:1px solid rgba(255,255,255,.09);overflow-wrap:anywhere;min-width:125px}
+.ai-report-table tr:last-child td{border-bottom:0}.ai-report-table tbody tr:nth-child(even){background:rgba(255,255,255,.025)}
+.ai-report-table strong{color:#ffe2a1}
+@media(max-width:800px){.ai-report-table{min-width:560px;font-size:14px}.ai-report-table th,.ai-report-table td{padding:12px 13px}}
 </style></head><body><main><header><a href="/admin.html" class="brand">← 返回站長後台</a><span class="small">站長內部測試 · 未公開上架</span></header><section class="hero"><h1>一字知機</h1><p>心念所繫，書一字以問事。以字為引，觀其意象。</p><div class="quota"><span>內部測試｜不扣會員額度、不設每日免費次數</span></div></section>
 <div id="steps-area"><section class="panel"><div class="step">STEP 01 · 問事類別</div><h2>你想詢問哪方面的事情？</h2><div id="topics" class="grid"></div></section>
 <section class="panel" id="scpanel"><div class="step">STEP 02 · 問事情境</div><h2>選擇目前的情況</h2><div id="scenarios" class="grid"></div></section>
@@ -44,13 +53,63 @@ function inlineMarkdown(parent,source){
     else parent.append(document.createTextNode(item.replace(/(?<!\*)\*(?!\*)/g,'')));
   }
 }
+// V8: safely render regular and flattened Markdown pipe tables from AI responses.
+// Never inject model output via innerHTML.
+function renderPipeTable(node,source){
+ const raw=String(source||'').trim();
+ if(!raw.includes('|'))return false;
+ const rows=raw.split('\n').map(x=>x.trim()).filter(Boolean);
+ const cells=line=>line.replace(/^\|/,'').replace(/\|$/,'').split(/(?<!\\)\|/).map(x=>x.replace(/\\\|/g,'|').trim());
+ const divider=x=>/^:?-{3,}:?$/.test(x.replace(/\s/g,''));
+ let head=[],body=[];
+ if(rows.length>=2 && rows[0].includes('|') && cells(rows[1]).every(divider)){
+  head=cells(rows[0]);body=rows.slice(2).filter(x=>x.includes('|')).map(cells);
+ }else{
+  // Some models flatten an entire table into one line, including the --- separator.
+  const parts=raw.replace(/\n/g,' ').split(/(?<!\\)\|/).map(x=>x.trim()).filter(Boolean);
+  const sepStart=parts.findIndex(x=>divider(x));
+  if(sepStart<2 || sepStart>6)return false;
+  const width=sepStart;
+  if(!parts.slice(sepStart,sepStart+width).every(divider))return false;
+  head=parts.slice(0,width);
+  let rest=parts.slice(sepStart+width);
+  while(rest.length>=width){body.push(rest.splice(0,width));}
+  if(rest.length){if(body.length)body[body.length-1].push(...rest);else return false}
+ }
+ if(head.length<2||head.length>6||!body.length)return false;
+ const wrapper=document.createElement('div');wrapper.className='ai-table-scroll';wrapper.setAttribute('role','region');wrapper.setAttribute('aria-label','AI 分析比較表');wrapper.tabIndex=0;
+ const table=document.createElement('table');table.className='ai-report-table';
+ const thead=document.createElement('thead'),hr=document.createElement('tr');
+ for(const text of head){const th=document.createElement('th');th.scope='col';inlineMarkdown(th,text);hr.append(th)}thead.append(hr);table.append(thead);
+ const tbody=document.createElement('tbody');
+ for(const parts of body){const tr=document.createElement('tr');for(let i=0;i<head.length;i++){
+  const td=document.createElement('td');inlineMarkdown(td,i===head.length-1?parts.slice(i).join('；'):parts[i]||'');tr.append(td)
+ }tbody.append(tr)}
+ table.append(tbody);wrapper.append(table);node.append(wrapper);return true;
+}
 function formatReading(node,raw){
  node.replaceChildren();let src=String(raw||'').replace(/\r\n?/g,'\n').trim();const lines=src.split('\n');let paragraph=[],list=null,quote=[];
  const flushParagraph=()=>{if(!paragraph.length)return;const p=document.createElement('p');inlineMarkdown(p,paragraph.join(' ').trim());node.append(p);paragraph=[]};
  const flushQuote=()=>{if(!quote.length)return;const b=document.createElement('blockquote');inlineMarkdown(b,quote.join(' '));node.append(b);quote=[]};
  const flushList=()=>{list=null};
- for(const rawLine of lines){const line=rawLine.trim();if(!line){flushParagraph();flushQuote();flushList();continue}
+ for(let lineIndex=0;lineIndex<lines.length;lineIndex++){const line=lines[lineIndex].trim();if(!line){flushParagraph();flushQuote();flushList();continue}
   if(/^([-*_])\1{2,}$/.test(line)){flushParagraph();flushQuote();flushList();node.append(document.createElement('hr'));continue}
+  // Pipe tables may arrive on separate lines or flattened into one long line.
+  if(line.includes('|')){
+   let tableText=line,consumed=0;
+   if(!/\|\s*:?-{3,}:?\s*\|/.test(line)){
+    for(let j=lineIndex+1;j<lines.length&&j<lineIndex+30;j++){
+     const next=lines[j].trim();if(!next||!next.includes('|'))break;
+     tableText+='\n'+next;consumed++;
+    }
+   }
+   const temp=document.createElement('div');
+   if(renderPipeTable(temp,tableText)){
+    flushParagraph();flushQuote();flushList();
+    while(temp.firstChild)node.append(temp.firstChild);
+    lineIndex+=consumed;continue;
+   }
+  }
   const head=line.match(/^(#{1,4})\s+(.+)$/);if(head){flushParagraph();flushQuote();flushList();const h=document.createElement(head[1].length<=2?'h2':'h3');inlineMarkdown(h,head[2]);node.append(h);continue}
   const standalone=line.match(/^\*\*(.+)\*\*[:：]?$/);if(standalone&&standalone[1].length<55){flushParagraph();flushQuote();flushList();const h=document.createElement('h3');h.textContent=standalone[1];node.append(h);continue}
   const bullet=line.match(/^([-*•]|\d+[.)、])\s+(.+)$/);if(bullet){flushParagraph();flushQuote();const ordered=/^\d/.test(bullet[1]);if(!list||list.tagName!==(ordered?'OL':'UL')){list=document.createElement(ordered?'ol':'ul');node.append(list)}const li=document.createElement('li');inlineMarkdown(li,bullet[2]);list.append(li);continue}
