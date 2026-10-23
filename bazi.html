@@ -9169,6 +9169,10 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
 .bazi-personal-stage .bazi-ai-history-list .is-selected .bazi-reading-toggle:not(.bazi-reading-toggle-bottom){transform:rotate(90deg)}
 .bazi-personal-stage .bazi-ai-history-list [data-report-body]{flex:0 0 100%;padding:5px 13px 14px;border-top:1px solid rgba(100,165,174,.18);scroll-margin-top:90px}
 .bazi-personal-stage .bazi-ai-history-list [data-report-body][hidden]{display:none!important}
+.bazi-personal-stage .bazi-personal-ai-trace{font-size:.69rem;line-height:1.7;color:var(--dim);overflow-wrap:anywhere;margin:2px 0 10px;font-weight:500}
+.bazi-personal-stage #baziPersonalAiStatus .bazi-personal-ai-trace{display:inline-block;margin:0 0 0 8px;font-size:.68rem}
+.bazi-personal-stage .bazi-followup-box .bazi-personal-ai-trace{margin-top:6px}
+.bazi-personal-stage .bazi-personal-ai-failure{margin:8px 0 14px}
 .bazi-personal-stage #baziPersonalAiStatus.bazi-ai-working{display:flex!important;justify-content:center;padding:18px 14px!important;border-radius:11px;border:1px solid rgba(75,163,172,.5);background:rgba(75,163,172,.09);font-size:.84rem!important;font-weight:800;min-height:66px;scroll-margin-top:100px}
 .bazi-personal-stage #baziPersonalAiStatus.bazi-ai-working::before{width:24px;height:24px;border-width:3px}
 @media(max-width:640px){.bazi-ai-history-heading{align-items:flex-start}.bazi-ai-history-heading span{text-align:right}.bazi-personal-stage .bazi-ai-history-list .bazi-reading-entry-head h5{font-size:.72rem}}
@@ -9202,17 +9206,17 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(!gifted('custom_question')){status.textContent='AI 額度不足，這次不扣除任何次數。';return;}
     if(!confirm('要針對這篇自訂問題追問一次嗎？\n不再扣專業點數，成功後另扣 AI 解讀 1 次。'))return;
     const chart={...current},reportKey=current.key;
-    aiBusy=true;btn.disabled=true;btn.textContent='正在回答追問…';status.textContent='AI 正在延續上一份報告回答，請稍候…';status.classList.add('bazi-ai-working');status.setAttribute('aria-busy','true');
+    clearPersonalAiFailure(status);aiBusy=true;btn.disabled=true;btn.textContent='正在回答追問…';status.textContent='AI 正在延續上一份報告回答，請稍候…';status.classList.add('bazi-ai-working');status.setAttribute('aria-busy','true');
     try{
       const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_followup',question,followupId:record.followupId,aiOpId:crypto.randomUUID()});
       if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未回傳完整追問答案');
       let saved={...reports};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){}
       const history=Array.isArray(saved.custom_questions)?saved.custom_questions.slice(-12):[];
-      if(history[index]&&history[index].followupId===record.followupId){history[index]={...history[index],followupQuestion:question,followupReading:j.reading,followupId:''};}
+      if(history[index]&&history[index].followupId===record.followupId){history[index]={...history[index],followupQuestion:question,followupReading:j.reading,followupChannel:j.channel||'',followupTraceId:j.traceId||'',followupId:''};}
       saved.custom_questions=history;
       try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){}
-      if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+index);$('baziPersonalAiStatus').textContent='✓ 追問完成，可查看下方補充回答。';scrollToAiReport('custom_question_'+index);}
-    }catch(e){status.textContent=e?.message||'追問暫時失敗，未成功不扣 AI 額度。';}
+      if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+index);personalAiSucceeded($('baziPersonalAiStatus'),j,'✓ 追問完成，可查看下方補充回答。');scrollToAiReport('custom_question_'+index);}
+    }catch(e){personalAiFailed(status,e,e?.message||'追問暫時失敗，未成功不扣 AI 額度。','custom_followup');}
     finally{aiBusy=false;btn.disabled=false;btn.textContent='送出追問｜AI 1 次';status.classList.remove('bazi-ai-working');status.setAttribute('aria-busy','false');void refreshPersonalQuota();}
   }
 
@@ -9222,6 +9226,54 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   function reportEntry(topic){return topic.startsWith('custom_question_')?normalReport(customHistory()[Number(topic.slice('custom_question_'.length))]):normalReport(reports[topic]);}
   const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
   const channelPattern=/^[A-E]$/;
+  // Keep exactly the metadata returned by the AI worker. Never infer or invent a provider.
+  function appendPersonalAiTrace(parent,channel,traceId){
+    const trace=safeText(traceId),provider=safeText(channel).trim();
+    if(!tracePattern.test(trace))return null;
+    const line=document.createElement(parent.id==='baziPersonalAiStatus'?'span':'div');line.className='bazi-personal-ai-trace';
+    line.textContent=(channelPattern.test(provider)?'通道 '+provider+'｜':'')+'追蹤碼：'+trace;
+    parent.append(line);return line;
+  }
+  function clearPersonalAiFailure(status){
+    if(status?.nextElementSibling?.classList.contains('bazi-personal-ai-failure'))status.nextElementSibling.remove();
+  }
+  function personalAiSucceeded(status,j,message){
+    clearPersonalAiFailure(status);
+    status.textContent=message;
+    // In addition to each saved report's label, surface the current successful request immediately.
+    appendPersonalAiTrace(status,j?.channel,j?.traceId);
+  }
+  function personalAiFailed(status,error,message,section){
+    clearPersonalAiFailure(status);status.textContent=message;
+    const trace=safeText(error?.traceId);
+    // Quota/validation/login errors and failures without an actual AI trace never show report UI.
+    if(!tracePattern.test(trace)||(!Number.isFinite(error?.httpStatus)||error.httpStatus<500))return;
+    const wrap=document.createElement('div');wrap.className='bazi-personal-ai-failure bazi-ai-report bazi-ai-service-report';
+    const bar=document.createElement('div');bar.className='bazi-ai-report-bar';
+    const detail=document.createElement('small');detail.textContent='故障追蹤碼：'+trace;
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='bazi-ai-report-button';
+    toggle.textContent='回報站內 AI 異常';toggle.setAttribute('aria-expanded','false');
+    bar.append(detail,toggle);wrap.append(bar);
+    const form=document.createElement('div');form.className='bazi-ai-report-form';form.hidden=true;
+    const input=document.createElement('textarea');input.rows=2;input.maxLength=400;
+    input.placeholder='簡述遇到的異常（至少 5 字）；請勿填入出生資料、完整命盤或其他隱私。';
+    input.setAttribute('aria-label','AI 失敗情況');
+    const submit=document.createElement('button');submit.type='button';submit.className='bazi-ai-report-button';submit.textContent='送出異常回報';
+    const state=document.createElement('small');state.setAttribute('role','status');
+    form.append(input,submit,state);wrap.append(form);
+    toggle.addEventListener('click',()=>{form.hidden=!form.hidden;toggle.setAttribute('aria-expanded',String(!form.hidden));toggle.textContent=form.hidden?'回報站內 AI 異常':'收合回報';});
+    submit.addEventListener('click',async()=>{
+      const comment=input.value.trim();if(comment.length<5){state.textContent='請至少填寫 5 個字。';return;}
+      submit.disabled=true;state.textContent='正在傳送回報…';
+      try{
+        const response=await fetch(API+'/ai/feedback',{method:'POST',headers:headers(),cache:'no-store',body:JSON.stringify({traceId:trace,section,category:'service',comment})});
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok||!data.ok)throw Error(data.error==='ALREADY_REPORTED'?'這次異常已回報過。':data.error==='FEEDBACK_DAILY_LIMIT'?'今日回報次數已達上限。':'系統暫時無法接收回報，請保留上方追蹤碼。');
+        form.hidden=true;toggle.hidden=true;detail.textContent='故障追蹤碼：'+trace+'｜已收到異常回報';
+      }catch(e){state.textContent=e?.message||'回報失敗，請保留追蹤碼。';submit.disabled=false;}
+    });
+    status.insertAdjacentElement('afterend',wrap);
+  }
   // Bump this when the eight-topic AI PROMPTS materially change; never mix V2 answers into V3.
   // Versioning affects AI answers only: member records, birth charts and other caches are untouched.
   const AI_READING_CACHE_VERSION='member-free-stage-v1';
@@ -9288,7 +9340,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
         document.getElementById('baziCastQuotaLogin')?.removeAttribute('hidden');
         setTimeout(()=>window.baziCastRefreshQuota?.(),0);
       }
-      throw Error(message);
+      const fault=new Error(message);fault.code=String(j.error||'');fault.traceId=String(j.traceId||'');fault.httpStatus=r.status;throw fault;
     }return j;}
   async function refreshPersonalQuota(){
     const target=$('baziPersonalQuota');if(!target)return;
@@ -9414,8 +9466,13 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       const item=customHistory()[Number(topic.slice('custom_question_'.length))];
       if(item?.question)lines.push('使用者問題：'+item.question);
     }
+    if(tracePattern.test(entry.traceId))lines.push((channelPattern.test(entry.channel)?'通道 '+entry.channel+'｜':'')+'追蹤碼：'+entry.traceId);
     lines.push('',personalTxtContent(entry.reading));
-    if(topic.startsWith('custom_question_')){const item=customHistory()[Number(topic.slice('custom_question_'.length))];if(item?.followupReading)lines.push('','追問：'+(item.followupQuestion||''),'',personalTxtContent(item.followupReading));}
+    if(topic.startsWith('custom_question_')){const item=customHistory()[Number(topic.slice('custom_question_'.length))];if(item?.followupReading){
+      lines.push('','追問：'+(item.followupQuestion||''));
+      if(tracePattern.test(safeText(item.followupTraceId)))lines.push((channelPattern.test(safeText(item.followupChannel))?'通道 '+item.followupChannel+'｜':'')+'追蹤碼：'+item.followupTraceId);
+      lines.push('',personalTxtContent(item.followupReading));
+    }}
     return lines.join('\n');
   }
   function downloadPersonalTxt(filename,text){
@@ -9465,6 +9522,8 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       const download=document.createElement('button');download.type='button';
       download.className='bazi-reading-download';download.textContent='↓ 下載本篇 TXT';
       download.addEventListener('click',()=>downloadOnePersonalTxt(topic));
+      // Trace belongs to this exact report; historical records without metadata show no fabricated channel.
+      appendPersonalAiTrace(body,data.channel,data.traceId);
       // 正文必須先插入報告內容；追問框再附加於正文後方。
       body.append(article);
       // 只有已完成的第 09 自訂題目可再追問一次；固定八題不開放追問。
@@ -9475,7 +9534,9 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
           const follow=document.createElement('section');follow.className='bazi-followup-box';
           const label=document.createElement('strong');label.textContent='追問｜'+(record.followupQuestion||'');
           const result=document.createElement('article');result.className='bazi-reading-article';
-          renderPersonalReading(result,record.followupReading);follow.append(label,result);body.append(follow);
+          renderPersonalReading(result,record.followupReading);follow.append(label);
+          appendPersonalAiTrace(follow,record.followupChannel,record.followupTraceId);
+          follow.append(result);body.append(follow);
         }else if(record?.followupId){
           const follow=document.createElement('section');follow.className='bazi-followup-box';
           const name=document.createElement('strong');name.textContent='還想深入了解嗎？可延續本篇追問 1 次';
@@ -9585,7 +9646,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     const prior=!!normalReport(reports[topic]).reading;
     if(!confirm('確定解讀「'+topicTitles[topic]+'」？成功後先扣本期免費 AI 1 次，免費用完才扣三工具共用 AI 額度。'+(prior?'\n此操作會取代本次畫面的舊解讀。':'')))return;
     const chart={...current},reportKey=current.key;
-    aiBusy=true;showAiWorking(btn,topic,true);
+    clearPersonalAiFailure(status);aiBusy=true;showAiWorking(btn,topic,true);
     status.textContent='AI 正在深入分析命盤，請保持頁面開啟…';scrollToAiProgress();
     try{
       const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic,aiOpId:crypto.randomUUID()});
@@ -9594,10 +9655,10 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){ }
       saved[topic]={reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',review:j.review||null,createdAt:Date.now()};
       try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){ }
-      if(current?.key===reportKey){reports=saved;drawReports(topic);status.textContent='✓ AI 解讀完成，可在下方閱讀或下載。';scrollToAiReport(topic);}
+      if(current?.key===reportKey){reports=saved;drawReports(topic);personalAiSucceeded(status,j,'✓ AI 解讀完成，可在下方閱讀或下載。');scrollToAiReport(topic);}
     }catch(e){
       const errors={LOGIN_REQUIRED:'登入狀態已失效，請重新登入會員。',PAID_LOCKED:'此內容尚未開放付費解鎖。',FREE_TOPIC_USED:'會員共用 AI 解讀額度不足，請確認餘額。',AI_SERVICE_TEMPORARILY_UNAVAILABLE:'AI 暫時無法完成，會員共用 AI 額度不會扣除，稍後可再試。',ACCESS_DATABASE_UNAVAILABLE:'會員權限資料庫暫時無法讀取，請稍後再試。'};
-      status.textContent=errors[e.message]||e.message||'AI 解讀暫時無法完成。';
+      personalAiFailed(status,e,errors[e.code]||errors[e.message]||e.message||'AI 解讀暫時無法完成。',topic);
     }finally{
       aiBusy=false;showAiWorking(btn,topic,false);void refreshPersonalQuota();
       if(typeof baziGeminiRefreshQuota==='function')void baziGeminiRefreshQuota();
@@ -9615,7 +9676,7 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
     if(question.length<5||question.length>400){status.textContent='請輸入 5～400 字的有效問題。';field?.focus();return;}
     const chart={...current},reportKey=current.key;
     if(pendingCustom.question!==question||!pendingCustom.op)pendingCustom={question,op:crypto.randomUUID(),ticket:''};
-    aiBusy=true;showAiWorking(btn,'custom_question',true);
+    clearPersonalAiFailure(status);aiBusy=true;showAiWorking(btn,'custom_question',true);
     try{
       const ticket=await window.DHCustomPoints.buy('bazi',question,baziAuthToken(),pendingCustom.op);
       if(!ticket){status.textContent='已取消，本次沒有扣專業點數。';return;}
@@ -9628,9 +9689,9 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',followupId:j.followupId||'',promptVersion:CUSTOM_QUESTION_PROMPT_VERSION,createdAt:Date.now()});
       saved.custom_questions=history;
       try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){ }
-      if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+(history.length-1));status.textContent='✓ 專屬問題解讀完成，已開啟下方報告。';scrollToAiReport('custom_question_'+(history.length-1));}
+      if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+(history.length-1));personalAiSucceeded(status,j,'✓ 專屬問題解讀完成，已開啟下方報告。');scrollToAiReport('custom_question_'+(history.length-1));}
       pendingCustom={question:'',op:'',ticket:''};
-    }catch(e){status.textContent=e?.message||'自訂問題暫時無法完成。已解鎖的同一題可重新嘗試，不會重複扣專業點數。';}
+    }catch(e){personalAiFailed(status,e,e?.message||'自訂問題暫時無法完成。已解鎖的同一題可重新嘗試，不會重複扣專業點數。','custom_question');}
     finally{aiBusy=false;showAiWorking(btn,'custom_question',false);void refreshPersonalQuota();}
   }
 
