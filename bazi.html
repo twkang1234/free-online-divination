@@ -7740,8 +7740,8 @@ ${intent}
     document.body.classList.remove('bazi-example-snapshot-mode');
     document.body.classList.add('bazi-personal-full-mode');
     const banner=$('baziExampleSnapshotBanner');if(banner)banner.hidden=true;
-    window.baziPremiumReset?.();
-    window.baziExamplePersonalUnlocked=null;
+    window.baziPremiumReset?.({preservePersonalOwnership:!!window.__baziReturningFromExample});
+    if(!window.__baziReturningFromExample)window.baziExamplePersonalUnlocked=null;
     lastData=data;selectedPeriods={};baziGeminiLastReading='';
     const gemOut=$('baziGeminiOutput');if(gemOut)gemOut.hidden=true;
     setDailyFlowChart(data); // Free public API, personalized using only the user's four pillars.
@@ -7760,7 +7760,8 @@ ${intent}
     }
     const banner=$('baziExampleSnapshotBanner');
     if(!banner)throw Error('找不到範例預覽畫面');
-    window.baziPremiumReset?.();
+    // An archived preview must never revoke an entitlement verified for the visitor's own chart.
+    window.baziPremiumReset?.({preservePersonalOwnership:true});
     window.baziOnDemoEnter?.();
     document.body.classList.remove('bazi-personal-full-mode');
     document.body.classList.add('bazi-example-snapshot-mode');
@@ -9612,7 +9613,9 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
   window.baziHasPersonalCore=()=>!!(personalFullData&&current);
   window.baziReturnToPersonalCore=()=>{
     if(!personalFullData||!current)return false;
-    window.baziShowPersonalFull(personalFullData);drawReports();window.baziSectionReady?.();
+    window.__baziReturningFromExample=true;
+    try{window.baziShowPersonalFull(personalFullData);}finally{window.__baziReturningFromExample=false;}
+    drawReports();window.baziSectionReady?.();
     if(!window.__baziInlineSampleRestore)$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'});
     return true;
   };
@@ -10053,7 +10056,10 @@ function archivedBirthDate(sample){
   return `${y} 年 ${mon} 月 ${day} 日`;
 }
 function randomBar(id){
- if(id==='report-pillars')return; // No footer/control bar in the free four-pillar area.
+ if(id==='report-pillars')return;
+ if(window.baziIsPersonalChapterOwned?.(id)){
+  $(id)?.querySelectorAll('.bazi-core-random-controls').forEach(x=>x.remove());return;
+ } // No footer/control bar in the free four-pillar area.
  const section=$(id);if(!section)return;
  const body=section.querySelector('.report-body');if(!body)return;
  let bar=section.querySelector('.bazi-core-random-controls');
@@ -10066,7 +10072,7 @@ function randomBar(id){
  bar.querySelector('[data-core-random="again"]')?.toggleAttribute('disabled',loading);
 }
 async function change(id,options={}){
- if(loading)return;
+ if(loading||window.baziIsPersonalChapterOwned?.(id))return;
  const footerButton=options.footerButton;
  const keepFooter=footerButton?.isConnected&&isExample();
  const startingTop=keepFooter?footerButton.getBoundingClientRect().top:null;
@@ -10080,6 +10086,8 @@ async function change(id,options={}){
   const prev=window.__baziPreviousSampleKey||'';
   if(!deck.length)deck=shuffleDeck(prev);
   const key=deck.shift();const snapshot=await loadKey(key);
+  // A purchase/status update may arrive while the sample is downloading.
+  if(window.baziIsPersonalChapterOwned?.(id))return;
   // Keep the bottom-action button stationary when changing examples from the footer.
   // Suppress the normal automatic jump to the top of the newly opened chapter.
   if(keepFooter)window.__baziKeepExampleFooterPosition=true;
@@ -10151,7 +10159,16 @@ function goBack(){
   }
  }finally{window.__baziInlineSampleRestore=false}
 }
-function schedule(){if(pendingMount)return;pendingMount=true;setTimeout(()=>{pendingMount=false;if(isPersonal())syncTriggers();else if(isExample()&&inlineMode)randomBar(active);},65)}
+function schedule(){if(pendingMount)return;pendingMount=true;setTimeout(()=>{
+ pendingMount=false;
+ if(isPersonal())syncTriggers();
+ else if(isExample()&&inlineMode){
+   document.querySelectorAll('.bazi-core-random-controls').forEach(bar=>{
+     if(window.baziIsPersonalChapterOwned?.(bar.closest('.report-section')?.id))bar.remove();
+   });
+   randomBar(active);
+ }
+},65)}
 function init(){
  const root=$('results');if(!root)return;
  root.addEventListener('click',e=>{
@@ -10160,11 +10177,25 @@ function init(){
   else if(btn.dataset.coreRandom==='back')goBack();
  });
  document.addEventListener('click',e=>{
-  if(!isExample()||!inlineMode)return;
+  if(!isExample())return;
   if(e.target.closest('#baziExampleExit')){resetUnclickedReminder();inlineMode=false;return}
-  const btn=e.target.closest('[data-bazi-open-section]');
+  const btn=e.target.closest('[data-bazi-open-section],#results .report-section > summary');
   if(btn){
-   const id=btn.dataset.baziOpenSection;
+   const id=btn.dataset.baziOpenSection||btn.closest('.report-section')?.id;
+   // An already purchased chapter always opens the visitor's ORIGINAL chart, never a sample.
+   if(window.baziIsPersonalChapterOwned?.(id)){
+    e.preventDefault();e.stopImmediatePropagation();
+    const restored=inlineMode?window.baziInlineSampleReturnToHub?.():window.baziReturnToPersonalCore?.();
+    if(!restored){document.getElementById('baziExampleExit')?.click();return}
+    void (async()=>{
+      await window.baziSectionReady?.();
+      if(!isPersonal()||!window.baziIsPersonalChapterOwned?.(id))return;
+      const card=document.querySelector(`[data-bazi-open-section="${id}"]`);
+      if(card)card.click();
+    })();
+    return;
+   }
+   if(!inlineMode)return;
    if(id==='report-shensha'){
     // 05 is a free logged-in personal chapter: do not show an archived example for it.
     e.preventDefault();e.stopImmediatePropagation();
@@ -10547,6 +10578,29 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
  // status refresh must never invalidate an in-flight paid unlock.
  const states=new Map(),els=new Map(),restored=new Set(),pendingPurchases=new Set();
  let generation=0,loading=false,statusRequest=0;
+ // Entitlements are verified only by /v2/section/status or a successful purchase.
+ // Keep them through a SAMPLE view, but never reuse them for another birth chart or session.
+ let verifiedOwnerKey='',verifiedOwnerSession='',ownershipKnown=false;
+ let verifiedOwned=new Set();
+ const ownerKey=payload=>payload?JSON.stringify([payload.datetime,payload.gender,payload.sect]):'';
+ const ownershipContextValid=()=>{
+  if(!ownershipKnown||verifiedOwnerSession!==token())return false;
+  if(document.body.classList.contains('bazi-example-snapshot-mode'))return !!window.baziHasPersonalCore?.();
+  const payload=chart();return !!payload&&ownerKey(payload)===verifiedOwnerKey;
+ };
+ function exposeOwnership(){window.baziExamplePersonalUnlocked=ownershipKnown?new Set(verifiedOwned):null;window.baziExampleFooterRender?.()}
+ window.baziIsPersonalChapterOwned=id=>ownershipContextValid()&&verifiedOwned.has(id);
+ window.baziPersonalOwnershipKnown=()=>ownershipContextValid();
+ function verifyOwnership(payload,ids){
+  verifiedOwnerKey=ownerKey(payload);verifiedOwnerSession=token();ownershipKnown=true;
+  verifiedOwned=new Set(ids);exposeOwnership();
+ }
+ function rememberPurchased(id,payload){
+  if(!ownershipKnown||verifiedOwnerKey!==ownerKey(payload)||verifiedOwnerSession!==token()){
+   verifiedOwned=new Set();verifiedOwnerKey=ownerKey(payload);verifiedOwnerSession=token();ownershipKnown=true;
+  }
+  verifiedOwned.add(id);exposeOwnership();
+ }
  const el=(tag,cls,txt)=>{let x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=String(txt);return x};
  const token=()=>{try{return localStorage.getItem(SID)||''}catch(_){return ''}};
  const chart=()=>window.baziPremiumPayload?.();
@@ -10573,11 +10627,9 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   const section=document.getElementById(x.id);
   section?.classList.toggle('bazi-chapter-owned',!!x.unlocked);
   // V5: synchronize owned chapters with the example footer, including a just-finished purchase.
-  if(document.body.classList.contains('bazi-personal-full-mode')){
-    if(!(window.baziExamplePersonalUnlocked instanceof Set))window.baziExamplePersonalUnlocked=new Set();
-    if(x.unlocked)window.baziExamplePersonalUnlocked.add(x.id);
-    else window.baziExamplePersonalUnlocked.delete(x.id);
-  }
+  // Project only the server-confirmed chart-scoped state into example controls.
+  // updateHub does not change the verified collection: a stale UI redraw cannot revoke a purchase.
+  if(ownershipContextValid())exposeOwnership();
   if(x.unlocked){
     section?.querySelectorAll('.bazi-inline-sample-trigger').forEach(n=>n.remove());
     section?.querySelectorAll('.bazi-inline-sample-anchor').forEach(n=>n.classList.remove('bazi-inline-sample-anchor'));
@@ -10672,7 +10724,9 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }box.hidden=true;els.set(id,box);
   }
  }
- function reset(){generation++;statusRequest++;states.clear();restored.clear();window.baziPurchasedDocs=Object.create(null);
+ function reset(options={}){generation++;statusRequest++;states.clear();restored.clear();window.baziPurchasedDocs=Object.create(null);
+  if(!options.preservePersonalOwnership){verifiedOwnerKey='';verifiedOwnerSession='';ownershipKnown=false;verifiedOwned.clear();}
+  exposeOwnership();
   const pillarCta=document.getElementById('baziPillarPaidCta');if(pillarCta)pillarCta.hidden=true;
   notice('');
   document.querySelectorAll('[data-bazi-open-section]').forEach(area=>{
@@ -10696,14 +10750,14 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }
   for(const box of els.values()){box.hidden=true;const btn=box.querySelector('button');if(btn){btn.hidden=false;btn.disabled=false;}const content=box.querySelector('.bazi-premium-content');if(content){content.hidden=true;content.replaceChildren()}}
  }
- window.baziPremiumReset=()=>{reset();window.baziDecodeResetVisits?.()};
+ window.baziPremiumReset=(options={})=>{reset(options);window.baziDecodeResetVisits?.()};
  window.baziSectionReady=async()=>{
   // Native confirm() fires window.focus when dismissed; ignore that refresh while
   // the user's already-approved purchase is still completing.
   if(pendingPurchases.size)return;
   const n=++generation,request=++statusRequest;const payload=chart();if(!payload)return;loading=true;
   try{addBoxes();const result=await post('/v2/section/status',payload);if(n!==generation||request!==statusRequest||pendingPurchases.size)return;
-   window.baziExamplePersonalUnlocked=new Set((result.sections||[]).filter(x=>x.unlocked).map(x=>x.id));
+   verifyOwnership(payload,(result.sections||[]).filter(x=>x.unlocked).map(x=>x.id));
    for(const x of result.sections||[]){const box=els.get(x.id);if(!box)continue;states.set(x.id,{...x,balance:result.balance});updateHub(x);
     const btn=box.querySelector('button');box.hidden=x.id==='report-shensha'||x.mode==='pending'&&!x.unlocked;
     if(box.hidden)continue;
@@ -10766,6 +10820,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    // Once the server confirms the entitlement, never prompt for this chapter
    // again, even if rendering its content fails after a successful charge.
    s.unlocked=true;
+   rememberPurchased(id,payload);
    restored.add(id);
    updateHub(s);
    const chapter=box.closest('.report-section');
@@ -11374,7 +11429,7 @@ body.has-bazi-chart #results .bazi-decode-end-actions[data-bazi-example-owned="1
    const id=nav.closest('.report-section')?.id, name=CHAPTERS[id];
    // Ownership is per chapter, not per site or just the sample currently being viewed.
    // When purchased, remove the entire birthdate/reroll/checkout cluster from this footer.
-   const chapterOwned=!!owned?.has(id);
+   const chapterOwned=!!window.baziIsPersonalChapterOwned?.(id)||!!owned?.has(id);
    nav.dataset.baziExampleOwned=chapterOwned?'1':'0';
    opts.hidden=!isExample||id==='report-shensha'||chapterOwned;
    if(opts.hidden)continue;
@@ -11399,7 +11454,7 @@ body.has-bazi-chart #results .bazi-decode-end-actions[data-bazi-example-owned="1
  };
  window.baziExampleFooterUnlock=async id=>{
   if(!CHAPTERS[id]||id==='report-shensha'||!document.body.classList.contains('bazi-example-snapshot-mode'))return;
-  if(window.baziExamplePersonalUnlocked?.has(id)){render();return;}
+  if(window.baziIsPersonalChapterOwned?.(id)||window.baziExamplePersonalUnlocked?.has(id)){render();return;}
   const entry=prices.get(id);
   if(id!=='report-shensha'&&!window.baziExamplePersonalUnlocked?.has(id)&&!(entry?.mode==='free'||entry?.mode==='priced'&&Number(entry.points)>0))return;
   if(!window.baziHasPersonalCore?.()){
@@ -11485,6 +11540,23 @@ html[data-theme="light"] body.has-bazi-chart #results .bazi-ux-chapter-finish{ba
 html[data-theme="light"] body.has-bazi-chart #results .bazi-ux-chapter-finish button{background:#fffaf0;color:#815915;border-color:#d8be89}
 @media(max-width:700px){body.has-bazi-chart .bazi-ux-chapter-finish button{width:100%}}
 @media print{body.has-bazi-chart .bazi-ux-chapter-finish{display:none!important}}
+</style>
+
+<style id="bazi-owned-state-20261024-v6">
+/* One visual rule for 02-09: confirmed ownership hides every sample/checkout advertisement. */
+#results .report-section.bazi-chapter-owned :is(
+  .bazi-private-lock-panel,.bazi-inline-sample-trigger,.bazi-core-random-controls,
+  .bazi-example-footer-options){display:none!important}
+#results .report-section.bazi-chapter-owned .bazi-inline-sample-anchor{
+  min-height:0!important;isolation:auto!important;
+}
+body.bazi-personal-full-mode #results .report-section.bazi-chapter-owned .bazi-premium-box[hidden],
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible .bazi-premium-box[hidden]{
+  display:none!important;
+}
+body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body > .bazi-decode-end-actions{
+  display:flex!important;
+}
 </style>
 </body>
 </html>
