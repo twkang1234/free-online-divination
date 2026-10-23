@@ -3250,7 +3250,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
 
 
         <section class="bazi-section-hub" id="baziSectionHub" aria-label="九大專業分析目錄">
-          <div class="bazi-hub-title"><div><span class="report-eyebrow">CHOOSE YOUR ANALYSIS</span><h3>九大專業分析｜選擇你要深入的部分</h3></div><button id="baziHideSection" type="button" hidden>↩ 返回九大專業分析</button></div>
+          <div class="bazi-hub-title"><div><span class="report-eyebrow">CHOOSE YOUR ANALYSIS</span><h3>九大專業分析｜選擇你要深入的部分</h3></div></div>
           <div class="bazi-hub-grid">
             <button type="button" data-bazi-open-section="report-daily" aria-controls="report-daily" aria-expanded="false"><small>01</small><span class="bazi-hub-main"><span class="bazi-hub-name">今日流日</span><em class="bazi-hub-status bazi-hub-status--full">完整開放</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-elements" aria-controls="report-elements" aria-expanded="false"><small>02</small><span class="bazi-hub-main"><span class="bazi-hub-name">五行與陰陽</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
@@ -3262,16 +3262,11 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
             <button type="button" data-bazi-open-section="report-years" aria-controls="report-years" aria-expanded="false"><small>08</small><span class="bazi-hub-main"><span class="bazi-hub-name">三年流年</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-months" aria-controls="report-months" aria-expanded="false"><small>09</small><span class="bazi-hub-main"><span class="bazi-hub-name">十二流月</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
           </div>
-          <div class="bazi-hub-activebar" id="baziHubActivebar" hidden aria-label="目前分析章節與快速切換">
-            <strong id="baziHubActiveTitle">目前章節</strong>
-            <div class="bazi-hub-active-actions">
-              <button type="button" data-bazi-chapter-action="hub" id="baziHubChoose">↩ 返回九大專業分析</button>
-            </div>
-          </div>
         </section>
         <details class="report-section bazi-daily-free-chapter" id="report-daily">
           <summary><span><b>01</b> 今日流日</span><small>DAILY FLOW · FREE</small></summary>
           <div class="report-body" id="baziDailyChapterSlot"></div>
+          <div class="bazi-ux-chapter-finish"><button type="button" data-bazi-chapter-action="hub">✓ 看完今日流日｜返回九大專業分析</button></div>
         </details>
         <details class="report-section" id="report-elements">
           <summary><span><b>02</b> 五行能量與陰陽</span><small>VISIBLE + WEIGHTED STRUCTURE</small></summary>
@@ -6355,7 +6350,7 @@ ${intent}
       const nav=document.createElement('nav');
       nav.className='bazi-decode-end-actions';
       nav.setAttribute('aria-label','閱讀完畢，返回九大專業分析');
-      nav.innerHTML='<button type="button" data-bazi-decode-action="hub">↩ 返回九大專業分析</button>'
+      nav.innerHTML='<button type="button" data-bazi-decode-action="hub">✓ 閱讀完成｜收合並返回九大專業分析</button>'
         +'<span class="bazi-example-footer-options" hidden>'
         +'<span class="bazi-example-footer-pair"><span class="bazi-example-footer-birthdate" aria-label="目前範例出生日期"></span><button type="button" data-bazi-decode-action="reroll">🎲 再看一筆範例</button></span>'
         +'<button type="button" class="bazi-example-footer-unlock" data-bazi-decode-action="unlock" disabled>讀取專業解鎖點數…</button>'
@@ -8517,10 +8512,11 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
     const index=chapterIds.indexOf(activeChapterId),active=index>=0;
     document.body.classList.toggle('bazi-chapter-reading-active',active);
     document.querySelectorAll('[data-bazi-open-section]').forEach(btn=>{
-      const primary=btn.dataset.baziOpenSection==='report-pillars';
       const selected=active&&btn.dataset.baziOpenSection===activeChapterId;
-      btn.setAttribute('aria-expanded',String(primary?true:selected));
-      const symbol=btn.querySelector('b[aria-hidden]');if(symbol)symbol.textContent=primary?'↖':(selected?'－':'＋');
+      btn.setAttribute('aria-expanded',String(selected));
+      const name=btn.querySelector('.bazi-hub-name')?.textContent?.trim()||'分析章節';
+      btn.setAttribute('aria-label',`${name}｜${selected?'目前展開，點擊收合':'點擊閱讀或解鎖'}`);
+      const symbol=btn.querySelector('b[aria-hidden]');if(symbol)symbol.textContent=selected?'－':'＋';
     });
     const hide=document.getElementById('baziHideSection');if(hide)hide.hidden=!active;
     const bar=document.getElementById('baziHubActivebar');if(bar)bar.hidden=!active;
@@ -8558,7 +8554,8 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
       section.scrollIntoView({behavior:'smooth',block:'start'});
       return;
     }
-    const reopen=activeChapterId!==id||(source==='grid'&&section.classList.contains('dh-bazi-premium-visible'));
+    // An already-purchased chapter is still an ordinary toggle, not a forced reopen.
+    const reopen=activeChapterId!==id;
     collapseChapters();
     if(reopen){
       activeChapterId=id;
@@ -8567,10 +8564,11 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
       updateChapterNavigation();
       if(id!=='report-daily')window.baziDecodeOpenFirstVisit?.(id);
     }
-    // 開章時自動展開首次白話解讀；不讓桌機使用者留在上方目錄。
-    if(source==='grid'&&isCompactChapterLayout()&&!reopen)return;
-    if(reopen&&!window.__baziKeepExampleFooterPosition)scrollToChapter(section);
-    else if(source!=='grid')document.getElementById('baziSectionHub')?.scrollIntoView({behavior:'instant',block:'start'});
+    // Both mobile and desktop: pressing the same card returns to the visible menu.
+    if(!reopen){
+      const hub=document.getElementById('baziSectionHub');
+      requestAnimationFrame(()=>requestAnimationFrame(()=>hub?.scrollIntoView({behavior:'instant',block:'start'})));
+    }else if(!window.__baziKeepExampleFooterPosition)scrollToChapter(section);
   }
   // Only the premium hub owner can authorize entry to a paid chapter.
   // This hook also handles chapter next/previous and the in-chapter continue button.
@@ -8669,6 +8667,15 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
       });
     });
     document.addEventListener('click',e=>{
+      const chapterSummary=e.target.closest('#results .report-section:not(#report-pillars) > summary');
+      if(chapterSummary){
+        e.preventDefault();
+        const chapterId=chapterSummary.parentElement?.id;
+        if(!chapterId)return;
+        if(activeChapterId===chapterId)returnToHub();
+        else enterChapter(chapterId,'section-summary');
+        return;
+      }
       const extraButton=e.target.closest('[data-bazi-summary-panel]');
       if(extraButton){
         const id=extraButton.dataset.baziSummaryPanel;
@@ -9918,7 +9925,9 @@ function syncTriggers(){
  chapters.forEach(([id,name],i)=>{
   if(id==='report-pillars')return; // Basic four pillars are already fully free; no sample overlay.
   const section=$(id);if(!section)return;
-  if(id==='report-shensha'){
+  const unlocked=section.classList.contains('bazi-chapter-owned') ||
+    document.querySelector(`[data-bazi-open-section="${id}"]`)?.dataset.baziPurchaseStatus==='unlocked';
+  if(id==='report-shensha'||unlocked){
    section.querySelectorAll('.bazi-inline-sample-trigger').forEach(x=>x.remove());
    section.querySelectorAll('.bazi-inline-sample-anchor').forEach(x=>x.classList.remove('bazi-inline-sample-anchor'));
    return;
@@ -10560,6 +10569,13 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
  }
  function updateHub(x){
   syncPillarPaidCta(x);
+  // The server's per-chart entitlement controls all sales/preview UI in this chapter.
+  const section=document.getElementById(x.id);
+  section?.classList.toggle('bazi-chapter-owned',!!x.unlocked);
+  if(x.unlocked){
+    section?.querySelectorAll('.bazi-inline-sample-trigger').forEach(n=>n.remove());
+    section?.querySelectorAll('.bazi-inline-sample-anchor').forEach(n=>n.classList.remove('bazi-inline-sample-anchor'));
+  }
   const area=document.querySelector('[data-bazi-open-section="'+x.id+'"]');if(!area)return;
   area.dataset.baziPurchaseStatus=x.unlocked?'unlocked':x.mode;
   const badge=area.querySelector('.bazi-hub-status');
@@ -10666,11 +10682,12 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   });
   window.baziClearNativePaidData?.();
   document.querySelectorAll('.dh-bazi-premium-visible').forEach(x=>x.classList.remove('dh-bazi-premium-visible'));
+  document.querySelectorAll('.bazi-chapter-owned').forEach(x=>x.classList.remove('bazi-chapter-owned'));
   // Scrub earlier purchased private DOM when changing charts or opening an example.
   for(const id of ['luckSummary','luckGrid','luckDetail','threeYearCompare','monthSummary','monthFlowGrid','monthDetail']){
     const e=document.getElementById(id);if(e)e.replaceChildren();
   }
-  for(const box of els.values()){box.hidden=true;const content=box.querySelector('.bazi-premium-content');if(content){content.hidden=true;content.replaceChildren()}}
+  for(const box of els.values()){box.hidden=true;const btn=box.querySelector('button');if(btn){btn.hidden=false;btn.disabled=false;}const content=box.querySelector('.bazi-premium-content');if(content){content.hidden=true;content.replaceChildren()}}
  }
  window.baziPremiumReset=()=>{reset();window.baziDecodeResetVisits?.()};
  window.baziSectionReady=async()=>{
@@ -10683,8 +10700,12 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    for(const x of result.sections||[]){const box=els.get(x.id);if(!box)continue;states.set(x.id,{...x,balance:result.balance});updateHub(x);
     const btn=box.querySelector('button');box.hidden=x.id==='report-shensha'||x.mode==='pending'&&!x.unlocked;
     if(box.hidden)continue;
-    if(x.unlocked||x.mode==='free'){btn.textContent=x.unlocked?'重新閱讀已解鎖內容':'免費閱讀完整分析';btn.disabled=false;status(box,x.unlocked?'此命盤的此區已解鎖，不再扣點':'本區免費開放（需登入會員）')}
-    else if(x.mode==='priced'){btn.textContent='使用 '+x.points+' 點解鎖整區';btn.disabled=false;status(box,'專業點數餘額 '+result.balance+' 點｜此命盤本區只需解鎖一次')}
+    if(x.unlocked){
+      if(document.getElementById(x.id)?.classList.contains('dh-bazi-premium-visible')){box.hidden=true;btn.hidden=true}
+      else {btn.hidden=true;btn.disabled=false;status(box,'正在載入已解鎖的完整內容…')}
+    }
+    else if(x.mode==='free'){box.hidden=true;continue}
+    else if(x.mode==='priced'){btn.hidden=false;btn.textContent='使用 '+x.points+' 點解鎖整區';btn.disabled=false;status(box,'專業點數餘額 '+result.balance+' 點｜此命盤本區只需解鎖一次')}
     else{box.hidden=true}
    }
    for(const chapterId of ['report-elements','report-tengods','report-relations']){
@@ -10740,10 +10761,12 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    s.unlocked=true;
    restored.add(id);
    updateHub(s);
-   btn.textContent='已解鎖｜重新閱讀';
    const chapter=box.closest('.report-section');
    chapter?.classList.add('dh-bazi-premium-visible');
-   try{display(box,j.document)}catch(err){chapter?.classList.remove('dh-bazi-premium-visible');throw err}status(box,(j.charged?'本次扣除 '+j.charged+' 點':'已購買區塊，重新閱讀不扣點')+'｜剩餘 '+j.balance+' 點');
+   try{display(box,j.document)}catch(err){chapter?.classList.remove('dh-bazi-premium-visible');throw err}
+   // Paid content is already on screen; no second "re-read" or sales action.
+   status(box,'');box.hidden=true;btn.hidden=true;
+   // Server-approved entitlement has already removed this section's preview controls.
    const badge=document.getElementById('dh-sp-balance');if(badge)badge.textContent='專業解鎖點數 '+j.balance+' 點';
    window.dispatchEvent(new Event('dh-professional-points-changed'));
    if(typeof onOpen==='function'){onOpen();return;}
@@ -10752,8 +10775,9 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
      (view||chapter)?.scrollIntoView({behavior:'smooth',block:'nearest'});
    }else box.querySelector('.bazi-premium-content')?.scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){
-   btn.textContent=s.unlocked?'已解鎖｜重新閱讀':(s.mode==='priced'?'使用 '+s.points+' 點解鎖整區':'免費閱讀完整分析');
-   status(box,(e?.message||'讀取失敗')+'；若已成功解鎖，重新閱讀不會重複扣點');
+   box.hidden=false;btn.hidden=false;
+   btn.textContent=s.unlocked?'重新載入完整內容（不扣點）':(s.mode==='priced'?'使用 '+s.points+' 點解鎖整區':'免費閱讀完整分析');
+   status(box,(e?.message||'讀取失敗')+'；若已成功解鎖，重新載入不會重複扣點');
    notice((e?.message||'讀取失敗')+'；若已解鎖，重新開啟此區不會重複扣點。');
   }finally{pendingPurchases.delete(id);btn.disabled=false}
  }
@@ -11338,7 +11362,7 @@ html[data-theme="light"] body.has-bazi-chart .bazi-decode-end-actions .bazi-exam
   for(const nav of footers()){
    const opts=nav.querySelector('.bazi-example-footer-options');if(!opts)continue;
    const id=nav.closest('.report-section')?.id, name=CHAPTERS[id];
-   opts.hidden=!isExample||id==='report-shensha';
+   opts.hidden=!isExample||id==='report-shensha'||!!window.baziExamplePersonalUnlocked?.has(id);
    if(opts.hidden)continue;
    const birth=opts.querySelector('.bazi-example-footer-birthdate');
    if(birth){birth.textContent=lastDate?'範例出生日期：'+lastDate:'範例出生日期：載入中';}
@@ -11426,6 +11450,25 @@ body.has-bazi-chart #report-daily .report-body{padding:12px}
 body.has-bazi-chart #report-daily-flow{margin:0;display:block}
 body.has-bazi-chart #report-daily .daily-flow-section{margin:0}
 @media(max-width:650px){body.has-bazi-chart #report-daily .report-body{padding:7px}}
+</style>
+
+<style id="bazi-unlock-reader-ux-20261024-v4">
+/* Once server-confirmed as owned, this chapter no longer displays sample or sales UI. */
+body.bazi-personal-full-mode #results .report-section.bazi-chapter-owned :is(.bazi-inline-sample-trigger,.bazi-private-lock-panel,.bazi-core-random-controls){display:none!important}
+body.bazi-personal-full-mode #results .report-section.bazi-chapter-owned .bazi-inline-sample-anchor{min-height:0!important;isolation:auto!important}
+/* Several older themes forced every 06–09 premium box visible; hidden wins here. */
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible .report-body .bazi-premium-box[hidden]{display:none!important}
+body.bazi-personal-full-mode #results .report-section.bazi-chapter-owned .bazi-premium-box[hidden]{display:none!important}
+body.has-bazi-chart #baziSectionHub .bazi-hub-grid{display:grid!important}
+body.has-bazi-chart #baziSectionHub .bazi-hub-grid button[aria-expanded="true"]{box-shadow:inset 3px 0 0 var(--gold);border-color:var(--gold);background:rgba(233,189,88,.11)}
+body.has-bazi-chart #results .report-section.bazi-section-visible > summary{cursor:pointer;scroll-margin-top:75px}
+body.has-bazi-chart .bazi-ux-chapter-finish{display:flex;justify-content:center;margin:14px 11px 16px;padding:11px;border:1px solid rgba(117,220,228,.25);border-radius:11px;background:rgba(117,220,228,.03)}
+body.has-bazi-chart .bazi-ux-chapter-finish button{min-height:43px;padding:8px 16px;border:1px solid rgba(233,189,88,.32);border-radius:10px;background:rgba(233,189,88,.07);color:var(--gold);font-size:.79rem;font-weight:800;cursor:pointer}
+body.has-bazi-chart .bazi-ux-chapter-finish button:hover{background:rgba(233,189,88,.15)}
+html[data-theme="light"] body.has-bazi-chart #results .bazi-ux-chapter-finish{background:#f5fbfa;border-color:#bddcda}
+html[data-theme="light"] body.has-bazi-chart #results .bazi-ux-chapter-finish button{background:#fffaf0;color:#815915;border-color:#d8be89}
+@media(max-width:700px){body.has-bazi-chart .bazi-ux-chapter-finish button{width:100%}}
+@media print{body.has-bazi-chart .bazi-ux-chapter-finish{display:none!important}}
 </style>
 </body>
 </html>
