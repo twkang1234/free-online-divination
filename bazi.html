@@ -6364,7 +6364,11 @@ ${intent}
       const nav=document.createElement('nav');
       nav.className='bazi-decode-end-actions';
       nav.setAttribute('aria-label','閱讀完畢，返回九大專業分析');
-      nav.innerHTML='<button type="button" data-bazi-decode-action="hub">↩ 返回九大專業分析</button>';
+      nav.innerHTML='<button type="button" data-bazi-decode-action="hub">↩ 返回九大專業分析</button>'
+        +'<span class="bazi-example-footer-options" hidden>'
+        +'<span class="bazi-example-footer-pair"><span class="bazi-example-footer-birthdate" aria-label="目前範例出生日期"></span><button type="button" data-bazi-decode-action="reroll">🎲 再看一筆範例</button></span>'
+        +'<button type="button" class="bazi-example-footer-unlock" data-bazi-decode-action="unlock" disabled>讀取專業解鎖點數…</button>'
+        +'</span>';
       body.appendChild(nav);
     });
     initSmartPromptUI();
@@ -7725,6 +7729,7 @@ ${intent}
     document.body.classList.add('bazi-personal-full-mode');
     const banner=$('baziExampleSnapshotBanner');if(banner)banner.hidden=true;
     window.baziPremiumReset?.();
+    window.baziExamplePersonalUnlocked=null;
     lastData=data;selectedPeriods={};baziGeminiLastReading='';
     const gemOut=$('baziGeminiOutput');if(gemOut)gemOut.hidden=true;
     dailyFlowDemo=true;dailyFlowState.day=null;dailyFlowState.error='';
@@ -7775,6 +7780,7 @@ ${intent}
     const back=$('baziExampleExit');if(back)back.textContent=window.baziHasPersonalCore?.()?'返回我的個人命盤':'結束範例／返回排盤';
     const otherExample=$('baziExampleAnother');if(otherExample)otherExample.hidden=!!meta.inline;
     banner.hidden=false;
+    window.baziExampleFooterRefresh?.(exampleBirthDate);
     if(!meta.inline)banner.scrollIntoView({behavior:'smooth',block:'start'});
   };
 
@@ -8546,7 +8552,7 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
     }
     // 開章時自動展開首次白話解讀；不讓桌機使用者留在上方目錄。
     if(source==='grid'&&isCompactChapterLayout()&&!reopen)return;
-    if(reopen)scrollToChapter(section);
+    if(reopen&&!window.__baziKeepExampleFooterPosition)scrollToChapter(section);
     else if(source!=='grid')document.getElementById('baziSectionHub')?.scrollIntoView({behavior:'instant',block:'start'});
   }
   // Only the premium hub owner can authorize entry to a paid chapter.
@@ -8672,7 +8678,10 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
 
       const decodeAction=e.target.closest('[data-bazi-decode-action]');
       if(decodeAction){
-        if(decodeAction.dataset.baziDecodeAction==='hub')returnToHub();
+        const action=decodeAction.dataset.baziDecodeAction;
+        if(action==='hub')returnToHub();
+        else if(action==='reroll')window.baziInlineSampleRerollFromFooter?.(decodeAction.closest('.report-section')?.id,decodeAction);
+        else if(action==='unlock')void window.baziExampleFooterUnlock?.(decodeAction.closest('.report-section')?.id);
         return;
       }
       const nav=e.target.closest('[data-bazi-chapter-action]');
@@ -9975,8 +9984,12 @@ function randomBar(id){
  if(birthLabel){birthLabel.textContent=birth?'範例出生日期：'+birth:'';birthLabel.hidden=!birth;}
  bar.querySelector('[data-core-random="again"]')?.toggleAttribute('disabled',loading);
 }
-async function change(id){
- if(loading)return;loading=true;active=id;
+async function change(id,options={}){
+ if(loading)return;
+ const footerButton=options.footerButton;
+ const keepFooter=footerButton?.isConnected&&isExample();
+ const startingTop=keepFooter?footerButton.getBoundingClientRect().top:null;
+ loading=true;active=id;
  const buttons=[...($(id)?.querySelectorAll('.bazi-inline-sample-trigger')||[])];
  const reroll=document.querySelector('.bazi-core-random-controls [data-core-random="again"]');
  buttons.forEach(btn=>{btn.disabled=true;btn.querySelector('.bazi-inline-sample-title').textContent='正在載入完整範例…'});
@@ -9986,11 +9999,24 @@ async function change(id){
   const prev=window.__baziPreviousSampleKey||'';
   if(!deck.length)deck=shuffleDeck(prev);
   const key=deck.shift();const snapshot=await loadKey(key);
-  // Only the original nine-section core renderer is called. No custom summary or subset.
-  window.baziShowArchivedExample(snapshot.data,{title:snapshot.title,asOf:snapshot.asOf,inline:true});
-  window.__baziPreviousSampleKey=key;inlineMode=true;activeSample=snapshot;
-  revealChapter(id);
-  randomBar(id);
+  // Keep the bottom-action button stationary when changing examples from the footer.
+  // Suppress the normal automatic jump to the top of the newly opened chapter.
+  if(keepFooter)window.__baziKeepExampleFooterPosition=true;
+  try{
+   window.baziShowArchivedExample(snapshot.data,{title:snapshot.title,asOf:snapshot.asOf,inline:true});
+   window.__baziPreviousSampleKey=key;inlineMode=true;activeSample=snapshot;
+   revealChapter(id);
+   randomBar(id);
+  }finally{if(keepFooter)window.__baziKeepExampleFooterPosition=false;}
+  if(keepFooter){
+    const stabilize=()=>{
+      if(!footerButton.isConnected||!isExample())return;
+      const delta=footerButton.getBoundingClientRect().top-startingTop;
+      if(Math.abs(delta)>1)window.scrollBy({top:delta,behavior:'instant'});
+    };
+    stabilize();
+    requestAnimationFrame(()=>{stabilize();requestAnimationFrame(stabilize)});
+  }
   // Wait for the core to render before showing the reminder. Put the button visibly
   // below the fixed topbar; the IntersectionObserver will flash only once visible.
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
@@ -10014,6 +10040,11 @@ async function change(id){
   if(again){again.disabled=false;again.textContent='🎲 再按一次，隨機換一組';if(rerollAcknowledged)again.classList.remove('bazi-sample-reroll-attention')}
  }
 }
+window.baziInlineSampleRerollFromFooter=(id,footerButton)=>{
+ if(!isExample()||!inlineMode||!chapters.some(row=>row[0]===id))return;
+ stopRerollReminder();
+ void change(id,{footerButton});
+};
 function resetUnclickedReminder(){
  rerollVisibilityObserver?.disconnect();rerollVisibilityObserver=null;
  document.querySelectorAll('.bazi-sample-reroll-attention').forEach(btn=>btn.classList.remove('bazi-sample-reroll-attention'));
@@ -10567,6 +10598,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   if(pendingPurchases.size)return;
   const n=++generation,request=++statusRequest;const payload=chart();if(!payload)return;loading=true;
   try{addBoxes();const result=await post('/v2/section/status',payload);if(n!==generation||request!==statusRequest||pendingPurchases.size)return;
+   window.baziExamplePersonalUnlocked=new Set((result.sections||[]).filter(x=>x.unlocked).map(x=>x.id));
    for(const x of result.sections||[]){const box=els.get(x.id);if(!box)continue;states.set(x.id,{...x,balance:result.balance});updateHub(x);
     const btn=box.querySelector('button');box.hidden=x.id==='report-shensha'||x.mode==='pending'&&!x.unlocked;
     if(box.hidden)continue;
@@ -11139,6 +11171,121 @@ const init=()=>{
  render('career');
 };
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
+<style id="bazi-example-footer-20261024">
+/* One compact footer row for each of the nine archived-example chapters. */
+body.has-bazi-chart .bazi-decode-end-actions:has(.bazi-example-footer-options:not([hidden])){
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ padding:8px 10px;margin-top:13px;flex-wrap:nowrap;
+}
+body.has-bazi-chart .bazi-decode-end-actions:has(.bazi-example-footer-options:not([hidden]))>button[data-bazi-decode-action="hub"]{
+ flex:0 0 auto;min-width:0!important;min-height:38px!important;
+ margin:0;padding:7px 10px;font-size:.69rem;
+}
+.bazi-example-footer-options[hidden]{display:none!important}
+body.bazi-example-snapshot-mode .bazi-example-footer-options:not([hidden]){
+ display:flex;min-width:0;flex:1;align-items:center;justify-content:flex-end;gap:10px;
+}
+.bazi-example-footer-pair{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;white-space:nowrap}
+.bazi-example-footer-birthdate{
+ display:inline-flex;align-items:center;justify-content:center;min-height:33px;
+ padding:5px 9px;border:1px solid #4e969f;border-radius:999px;
+ color:#d5f5fa;background:#0d313a;font-weight:800;font-size:.69rem;white-space:nowrap;
+}
+body.has-bazi-chart .bazi-decode-end-actions .bazi-example-footer-options button{
+ margin:0;min-width:0!important;min-height:38px!important;flex:0 0 auto;
+ padding:7px 10px;font-size:.69rem;line-height:1.35;white-space:nowrap;
+ border-radius:8px;
+}
+body.has-bazi-chart .bazi-decode-end-actions .bazi-example-footer-pair button{
+ background:#174d58;border-color:#367986;color:#efffff;
+}
+body.has-bazi-chart .bazi-decode-end-actions .bazi-example-footer-unlock{
+ background:rgba(233,189,88,.13);color:#f1d07f;border:1px solid rgba(233,189,88,.56);
+ font-weight:850;
+}
+body.has-bazi-chart .bazi-decode-end-actions .bazi-example-footer-unlock:disabled{opacity:.60;cursor:default}
+html[data-theme="light"] .bazi-example-footer-birthdate{color:#16535e;background:#edf9f9;border-color:#65a3a9}
+html[data-theme="light"] body.has-bazi-chart .bazi-decode-end-actions .bazi-example-footer-unlock{color:#76500c;background:#fff6dd;border-color:#c49b4a}
+@media(max-width:1200px){
+ body.has-bazi-chart .bazi-decode-end-actions:has(.bazi-example-footer-options:not([hidden])){flex-wrap:wrap}
+ body.bazi-example-snapshot-mode .bazi-example-footer-options:not([hidden]){flex-wrap:wrap;justify-content:flex-start}
+}
+@media(max-width:650px){
+ body.has-bazi-chart .bazi-decode-end-actions:has(.bazi-example-footer-options:not([hidden])){align-items:stretch}
+ body.bazi-example-snapshot-mode .bazi-example-footer-options:not([hidden]){flex-basis:100%;gap:7px}
+ .bazi-example-footer-pair{flex-wrap:wrap;gap:6px}
+ body.has-bazi-chart .bazi-decode-end-actions .bazi-example-footer-unlock{max-width:100%;white-space:normal!important;text-align:center}
+}
+@media print{.bazi-example-footer-options{display:none!important}}
+</style>
+<script id="bazi-example-footer-20261024">
+(()=>{'use strict';
+ const API='https://admin-api.ezgocpu.workers.dev/pricing/public?tool=bazi';
+ const CHAPTERS={
+  'report-pillars':'四柱命盤（上方）','report-elements':'五行與陰陽',
+  'report-tengods':'十神結構','report-relations':'干支合沖',
+  'report-shensha':'常用神煞','report-reading':'命盤結構',
+  'report-luck':'八步大運','report-years':'三年流年','report-months':'十二流月'
+ };
+ const prices=new Map();
+ let priceLoaded=false,loading=null,lastDate='';
+ const footers=()=>document.querySelectorAll('#results .report-section .bazi-decode-end-actions');
+ async function readPricing(){
+  if(loading)return loading;
+  loading=(async()=>{
+   try{
+    const r=await fetch(API,{cache:'no-store'}),j=await r.json();
+    if(!r.ok||!j?.success||!Array.isArray(j.sections))return;
+    prices.clear();for(const row of j.sections)prices.set(row.sectionId,row);
+    priceLoaded=true;render();
+   }catch(_){/* Read-only price feed failure must never affect sample viewing. */}
+  })().finally(()=>{loading=null});
+  return loading;
+ }
+ function render(){
+  const isExample=document.body.classList.contains('bazi-example-snapshot-mode');
+  for(const nav of footers()){
+   const opts=nav.querySelector('.bazi-example-footer-options');if(!opts)continue;
+   opts.hidden=!isExample;
+   if(!isExample)continue;
+   const id=nav.closest('.report-section')?.id, name=CHAPTERS[id];
+   const birth=opts.querySelector('.bazi-example-footer-birthdate');
+   if(birth){birth.textContent=lastDate?'範例出生日期：'+lastDate:'範例出生日期：載入中';}
+   const btn=opts.querySelector('.bazi-example-footer-unlock');if(!btn||!name)continue;
+   const entry=prices.get(id);
+   if(window.baziExamplePersonalUnlocked?.has(id)){btn.textContent='查看自己命盤的「'+name+'」區｜已解鎖';btn.disabled=false;continue}
+   if(!priceLoaded){btn.textContent='解鎖自己命盤的「'+name+'」區｜專業解鎖點數讀取中';btn.disabled=true;continue}
+   if(id==='report-shensha'||entry?.mode==='free'){
+    btn.textContent='查看自己命盤的「'+name+'」區｜免費開放';btn.disabled=false;
+   }else if(entry?.mode==='priced'&&Number.isFinite(Number(entry.points))&&Number(entry.points)>0){
+    btn.textContent='解鎖自己命盤的「'+name+'」區｜使用專業解鎖點數 '+Number(entry.points)+' 點';btn.disabled=false;
+   }else{btn.textContent='自己命盤的「'+name+'」區｜尚未開放解鎖';btn.disabled=true}
+  }
+ }
+ window.baziExampleFooterRefresh=date=>{
+  lastDate=String(date||'');render();
+  // Never hardcode a cost: read the same administrator-maintained public pricing feed.
+  if(!priceLoaded&&!loading)void readPricing();
+ };
+ window.baziExampleFooterUnlock=async id=>{
+  if(!CHAPTERS[id]||!document.body.classList.contains('bazi-example-snapshot-mode'))return;
+  const entry=prices.get(id);
+  if(id!=='report-shensha'&&!window.baziExamplePersonalUnlocked?.has(id)&&!(entry?.mode==='free'||entry?.mode==='priced'&&Number(entry.points)>0))return;
+  if(!window.baziHasPersonalCore?.()){
+   alert('請先建立自己的八字命盤，再解鎖個人專業分析。');
+   document.getElementById('baziExampleExit')?.click();return;
+  }
+  // Restore personal data before the pre-existing purchase confirmation/check.
+  const back=window.baziInlineSampleReturnToHub?.();
+  if(!back){alert('請先返回自己的命盤，再選擇需要解鎖的專區。');return}
+  await window.baziSectionReady?.();
+  document.querySelector('#baziSectionHub [data-bazi-open-section="'+id+'"]')?.click();
+ };
+ document.addEventListener('DOMContentLoaded',()=>{render();void readPricing()});
+ window.addEventListener('focus',()=>{if(document.body.classList.contains('bazi-example-snapshot-mode'))void readPricing()});
 })();
 </script>
 </body>
