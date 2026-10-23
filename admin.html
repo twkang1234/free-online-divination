@@ -64,7 +64,7 @@ td.muted{color:var(--muted)}
 }
 
 /* 網站異常回報監控：獨立區塊，不動原有會員／金流顯示 */
-.issue-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:17px 18px}
+.issue-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:17px 18px}
 .issue-admin-card{padding:17px;border:1px solid #323845;border-radius:13px;background:#0a1017}
 .issue-admin-card.alert{border-color:#ae505d;background:#1e1016}
 .issue-admin-card strong{display:block;font-size:1rem;color:#eee7da;margin:2px 0 8px}
@@ -113,7 +113,7 @@ td.muted{color:var(--muted)}
 .issue-chat-status{color:#b4c6d5;font-size:.76rem;margin-top:9px;line-height:1.7}
 .issue-chat-status.error{color:#ffacb0}
 @media(max-width:720px){.issue-chat-columns{grid-template-columns:1fr}.issue-reporter-list{max-height:260px}}
-@media(max-width:700px){.issue-summary{grid-template-columns:1fr}}
+@media(max-width:1050px){.issue-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.issue-summary{grid-template-columns:1fr}}
 
 /* 正式會員心得：管理員單頁切換，不影響原有會員、付款與異常管理。 */
 #reviewAdminPage[hidden]{display:none!important}
@@ -368,9 +368,9 @@ td.muted{color:var(--muted)}
     </details>
 
     <details class="section" id="dhWalletAdmin" style="margin-bottom:24px">
-      <summary class="bazi-gift-summary">🎁 共用會員額度管理 <small>八字／塔羅／易經共用，舊版八字專用 AI 贈送已停止使用</small></summary>
+      <summary class="bazi-gift-summary">🎁 共用會員額度管理 <small>八字／塔羅／易經／測字共用，舊版八字專用 AI 贈送已停止使用</small></summary>
       <div class="bazi-gift-body">
-        <p>每位新舊會員首次各有工具 10 次、AI 解讀 10 次；會員帳號共用，用完不每日重置。每日免費次數由各工具獨立管理。</p>
+        <p>每位新舊會員首次各有工具 10 次、AI 解讀 10 次；會員帳號共用，用完不每日重置。各工具定期免費次數另外計算。</p>
         <div class="bazi-gift-row"><label>會員 Email <input type="email" id="dhWalletEmail" placeholder="已註冊 Google 會員 Email"></label><button class="btn secondary" type="button" id="dhWalletLookup">查詢</button></div>
         <div id="dhWalletCurrent" class="bazi-gift-member" hidden></div>
         <div class="bazi-gift-row"><label>贈送種類<select id="dhWalletBucket"><option value="tool">共用工具額度</option><option value="ai">共用 AI 解讀額度</option><option value="paid">付費額度（站長人工核發）</option><option value="professional_points">專業解鎖點數（獨立點數錢包）</option></select></label><label><span id="dhWalletAmountLabel">贈送次數</span><input type="number" id="dhWalletAmount" min="1" max="1000" value="10"></label></div>
@@ -387,22 +387,22 @@ td.muted{color:var(--muted)}
     </details>
 
     <details class="section dh-qc-panel" id="dhQuotaPanel" style="margin-bottom:24px">
-      <summary class="bazi-gift-summary">⚙️ 全站額度設定中心 <small>第一階段：先儲存規則 · 三工具尚待接入</small></summary>
+      <summary class="bazi-gift-summary">⚙️ 全站額度設定中心 <small>測字已連動 · 其他工具陸續接入</small></summary>
       <div class="dh-qc-content">
-        <p class="dh-qc-intro">這裡先建立各工具「定期免費」額度設定；目前為整合前準備，儲存不會直接修改現有工具扣點。每項可分別設定補充次數、週期天數；<strong>同一規則的所有人在固定台灣時間 00:00 同步重置</strong>，未用完的免費次數不累積。變更安排在該規則下一個舊週期邊界才生效。</p>
+        <p class="dh-qc-intro">測字的「定期免費」額度已正式與此處連動；八字、塔羅、易經暫時仍由各自原有 Worker 管理，儲存不會改變它們的現行額度。每項可分別設定補充次數、週期天數；<strong>同一規則的所有人在固定台灣時間 00:00 同步重置</strong>，未用完的免費次數不累積。變更安排在該規則下一個舊週期邊界才生效。</p>
         <div class="dh-qc-toolbar"><button type="button" class="btn secondary" id="dhQcReload">讀取目前設定</button><span id="dhQcUpdated" class="dh-qc-muted">尚未讀取</span></div>
         <div class="dh-qc-scroll"><table class="dh-qc-table"><thead><tr><th>工具／類型</th><th>訪客補充次數</th><th>訪客每幾天</th><th>會員補充次數</th><th>會員每幾天</th></tr></thead><tbody id="dhQcRows"><tr><td colspan="5">展開後載入設定…</td></tr></tbody></table></div>
         <p class="dh-qc-help">次數可填 0～1000（0＝不提供定期免費額度）；週期可填 1～365 天。工具額度與 AI 額度獨立，定期免費使用完後，登入會員才使用共用贈送額度。</p>
         <div class="dh-qc-gifts"><h3>新會員一次性共用贈送</h3><div class="dh-qc-gift-fields"><label>共用工具贈送次數<input id="dhQcGiftTool" type="number" min="0" max="1000" step="1" value="10"></label><label>共用 AI 贈送次數<input id="dhQcGiftAi" type="number" min="0" max="1000" step="1" value="10"></label></div><p class="dh-qc-help">只影響尚未獲得初始贈送的新會員；既有會員餘額、付費餘額、人工贈送不受影響。</p></div>
         <div class="dh-qc-actions"><button type="button" class="btn" id="dhQcSave" disabled>確認並儲存額度設定</button><span id="dhQcStatus" role="status" aria-live="polite">請先讀取設定。</span></div>
         <details class="dh-qc-history"><summary>最近修改紀錄</summary><div id="dhQcHistory">尚未讀取</div></details>
-        <p class="dh-qc-caution">重要：這是設定中心的第一階段。數字保存於 D1，但八字、塔羅、易經目前仍執行既有扣點 Worker。第二階段完成、全數更新後，這些設定才會控制正式額度。</p>
+        <p class="dh-qc-caution">重要：測字已連動 D1 的正式額度規則；八字、塔羅、易經仍執行原有扣點 Worker，等各工具正式接入後才會使用這裡的設定。</p>
       </div>
     </details>
     <details class="section member-usage-box" id="memberUsagePanel">
-      <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設展開｜依成功起盤排行）</small></span></summary>
+      <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設展開｜依成功使用排行）</small></span></summary>
       <div class="member-usage-body">
-        <p class="member-usage-note">僅統計已登入會員成功完成的起盤、抽牌或起卦；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>八字、塔羅、易經已接入成功事件；啟用統計後才開始累計，不回填過去紀錄。</strong> 使用地區顯示會員最近一次成功使用時的 Cloudflare 連線國家／地區；舊資料不回推，VPN 可能影響判定。</p>
+        <p class="member-usage-note">僅統計已登入會員成功完成的排盤、抽牌、起卦或第二階段深度測字；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>八字、塔羅、易經、測字已接入成功事件；啟用統計後才開始累計，不回填過去紀錄。</strong> 使用地區顯示會員最近一次成功使用時的 Cloudflare 連線國家／地區；舊資料不回推，VPN 可能影響判定。</p>
         <div class="member-usage-settings">
           <div class="member-usage-settings-head"><strong style="font-size:.86rem">統計模式</strong><span class="member-usage-status" id="memberUsageModeTime">尚未讀取設定</span></div>
           <div class="member-usage-fields">
@@ -445,7 +445,7 @@ td.muted{color:var(--muted)}
         <button class="btn secondary" id="issueRefresh" type="button">重新查詢紅燈</button>
       </div>
       <p class="issue-info" id="issueAdminStatus" role="status" aria-live="polite">達到門檻時，此後台會亮起警告；目前不會發送 Email 或自動關閉工具。</p>
-      <p class="issue-info">站長可針對個別工具開啟「全面紅燈｜維修中」。會員中心會顯示維修訊息，並暫停該工具個人回報；只要有任一工具維修，心得測試投稿區便暫時停用。<strong>不會停止八字、塔羅、易經核心功能。</strong> 站長解除維修時會清除該工具全部會員的紅燈，展開新一輪統計。可在下方「查看回報會員」中由站長主動詢問；會員無法先傳訊。</p>
+      <p class="issue-info">站長可針對個別工具開啟「全面紅燈｜維修中」。會員中心會顯示維修訊息，並暫停該工具個人回報；只要有任一工具維修，心得測試投稿區便暫時停用。<strong>不會停止八字、塔羅、易經、測字核心功能。</strong> 站長解除維修時會清除該工具全部會員的紅燈，展開新一輪統計。可在下方「查看回報會員」中由站長主動詢問；會員無法先傳訊。</p>
       <div class="issue-chat-admin" id="issueChatAdmin" hidden>
         <div class="issue-chat-toolbar"><div><h3 id="issueChatHeading">站長主動詢問會員</h3><p class="issue-chat-desc">只有目前回報過紅燈的會員才能由站長首次開啟對話；解決後可結束並永久刪除對話訊息。開啟對話後約每 5 秒自動更新。</p></div><button class="btn secondary" type="button" id="issueChatHide">收起此區</button></div>
         <div class="issue-chat-columns">
@@ -613,7 +613,7 @@ function fmtPaymentTime(t){
 
 
 // === Central quota configuration admin editor ===
-const DH_QC_SERVICES=[['bazi','tool','八字｜排盤'],['bazi','ai','八字｜AI 解讀'],['tarot','tool','塔羅｜抽牌'],['tarot','ai','塔羅｜AI 解讀'],['yijing','tool','易經｜起卦'],['yijing','ai','易經｜AI 解卦']];
+const DH_QC_SERVICES=[['bazi','tool','八字｜排盤'],['bazi','ai','八字｜AI 解讀'],['tarot','tool','塔羅｜抽牌'],['tarot','ai','塔羅｜AI 解讀'],['yijing','tool','易經｜起卦'],['yijing','ai','易經｜AI 解卦'],['cezi','tool','測字｜深度測字'],['cezi','ai','測字｜AI 解讀']];
 let dhQcRevision=null,dhQcBusy=false;
 function dhQcSetStatus(s){const e=document.getElementById('dhQcStatus');if(e)e.textContent=s}
 async function dhQcRequest(method='GET',body){
@@ -633,7 +633,7 @@ function dhQcRender(d){
  document.getElementById('dhQcSave').disabled=false;
  document.getElementById('dhQcUpdated').textContent='版本 '+d.revision+'｜更新 '+(d.updatedAt||'—')+'｜時區 Asia/Taipei';
  document.getElementById('dhQcHistory').textContent=(d.history||[]).map(x=>{let info='';try{info=JSON.parse(x.detail).join('；')}catch(_){info=x.detail}return `${x.at}｜版本 ${x.revision}｜${info}`}).join('\n')||'尚無設定變更。';
- dhQcSetStatus('設定已讀取。修改後按「確認並儲存」；此階段只會保存設定，尚不影響目前三工具的免費次數。');
+ dhQcSetStatus('設定已讀取。修改後按「確認並儲存」；測字已正式連動；八字、塔羅、易經現行免費次數不受影響。');
 }
 async function dhQcLoadUI(){if(dhQcBusy||!token())return;dhQcBusy=true;dhQcSetStatus('正在讀取 Cloudflare D1 設定…');try{dhQcRender(await dhQcRequest())}catch(e){dhQcSetStatus('讀取失敗：'+e.message)}finally{dhQcBusy=false}}
 document.getElementById('dhQuotaPanel')?.addEventListener('toggle',e=>{if(e.target.open)dhQcLoadUI()});
@@ -648,10 +648,10 @@ document.getElementById('dhQcSave')?.addEventListener('click',async()=>{
   rows.push({key:k,limit,days:n});
  }
  const tool=Number(document.getElementById('dhQcGiftTool').value),ai=Number(document.getElementById('dhQcGiftAi').value);
- if(rows.length!==12||![tool,ai].every(x=>Number.isSafeInteger(x)&&x>=0&&x<=1000)){dhQcSetStatus('表單不完整或贈送額度超出範圍。');return}
+ if(rows.length!==16||![tool,ai].every(x=>Number.isSafeInteger(x)&&x>=0&&x<=1000)){dhQcSetStatus('表單不完整或贈送額度超出範圍。');return}
  if(!confirm('確認修改全站額度政策？定期免費額度會排在舊週期的下個固定補充時間生效；新會員首次贈送設定不會改動舊會員餘額。'))return;
  dhQcBusy=true;document.getElementById('dhQcSave').disabled=true;dhQcSetStatus('正在安全儲存設定…');
- try{const result=await dhQcRequest('POST',{revision:dhQcRevision,rows,gifts:{tool,ai}});await dhQcLoadAfterSave();dhQcSetStatus(result.unchanged?'設定未改變。':`已儲存 ${result.changed?.length||0} 項調整。這是規則設定，需等三工具新版扣點 Worker 完成部署才會正式套用。`)}
+ try{const result=await dhQcRequest('POST',{revision:dhQcRevision,rows,gifts:{tool,ai}});await dhQcLoadAfterSave();dhQcSetStatus(result.unchanged?'設定未改變。':`已儲存 ${result.changed?.length||0} 項調整。測字會在舊週期下一個台灣時間 00:00 生效；其餘三工具仍待接入。`)}
  catch(e){dhQcSetStatus('儲存失敗：'+e.message+'。請重新讀取後再確認。')}
  finally{dhQcBusy=false;document.getElementById('dhQcSave').disabled=false}
 });
@@ -971,7 +971,9 @@ async function loadStats(){
       {tool:'tarot',event:'draw',label:'塔羅抽牌'},
       {tool:'qimen',event:'cast',label:'奇門排盤'},
       {tool:'ziwei',event:'cast',label:'紫微排盤'},
-      {tool:'yijing',event:'cast',label:'易經占卜'}
+      {tool:'yijing',event:'cast',label:'易經占卜'},
+      {tool:'cezi',event:'cast',label:'測字深度解讀'},
+      {tool:'cezi',event:'ai_success',label:'測字 AI 成功（含追問）'}
     ];
 
     const totals=new Map();
@@ -1110,12 +1112,12 @@ async function loadMemberUsageLeaderboard(preserveStatus=false){
   try{
     const r=await usageAdminRequest('/admin/member-usage/leaderboard?period='+encodeURIComponent(memberUsagePeriod)+'&limit='+encodeURIComponent(limit));
     if(seq!==memberUsageRequestSeq||!$('memberUsagePanel').open)return;
-    if(!r.rows?.length){$('memberUsageResults').textContent='這段期間尚無可顯示的會員成功起盤紀錄。請確認已啟用「精簡」或「完整」模式，再以一般登入會員成功使用工具。';return}
+    if(!r.rows?.length){$('memberUsageResults').textContent='這段期間尚無可顯示的會員成功使用紀錄。請確認已啟用「精簡」或「完整」模式，再以一般登入會員成功使用工具。';return}
     $('memberUsageResults').innerHTML=`<table aria-label="會員起盤排行榜"><thead><tr><th>排名</th><th>會員</th><th>使用地區</th><th class="mobile-hide">最近使用</th><th>起盤</th><th class="mobile-hide">AI 成功</th><th>詳細</th></tr></thead><tbody>${r.rows.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(m.name||'—')}<small style="display:block;color:#91a2b5;overflow-wrap:anywhere">${esc(m.email||'')}</small></td><td class="member-usage-country${usageCountryLabel(m.countryCode)?'':' unknown'}" title="最近成功使用時的連線地區（非國籍）">${esc(usageCountryLabel(m.countryCode)||'尚未記錄')}</td><td class="mobile-hide muted">${fmt(m.lastUsedAt)}</td><td><strong>${Number(m.castCount||0)}</strong></td><td class="mobile-hide">${Number(m.aiCount||0)}</td><td><button class="btn secondary" type="button" data-usage-member="${esc(m.googleSub)}">查看</button></td></tr>`).join('')}</tbody></table>`;
     for(const btn of $('memberUsageResults').querySelectorAll('[data-usage-member]'))btn.addEventListener('click',()=>loadMemberUsageDetails(btn.dataset.usageMember));
   }catch(e){if(seq===memberUsageRequestSeq){$('memberUsageResults').textContent='讀取排行榜失敗';usageStatus(e.message,true)}}
 }
-const usageToolNames={bazi:'八字',tarot:'塔羅',yijing:'易經',qimen:'奇門',ziwei:'紫微',liuyao:'六爻',meihua:'梅花易數'};
+const usageToolNames={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字',qimen:'奇門',ziwei:'紫微',liuyao:'六爻',meihua:'梅花易數'};
 async function loadMemberUsageDetails(sub){
   if(!sub)return;
   const seq=memberUsageRequestSeq;
@@ -1613,7 +1615,7 @@ $('baziGiftSend')?.addEventListener('click',send);
  const API='https://admin-api.ezgocpu.workers.dev';
  const readToken=()=>sessionStorage.getItem('divinationhub-admin-session')||(()=>{try{const x=JSON.parse(localStorage.getItem('divinationhub-admin-remember-v1')||'null');return x?.expiresAt>Date.now()?x.token||'':''}catch(_){return ''}})();
  let busy=false,lastFetch=0,lastData=null;
- const labels={bazi:'八字',tarot:'塔羅',yijing:'易經'};
+ const labels={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字'};
  const message={NO_AVAILABLE_PROVIDER:'全部 AI 通道暫時不可用',ALL_PROVIDER_ATTEMPTS_FAILED:'所有可用 AI 通道均解讀失敗',CENTER_METERING_UNAVAILABLE:'AI 總控紀錄異常',AI_SERVICE_TEMPORARILY_UNAVAILABLE:'AI 解讀服務異常',AI_CENTER_YIJING_NOT_CONFIGURED:'易經 AI 連接設定異常',WALLET_UNAVAILABLE:'共用額度服務異常',QUOTA_RECORD_UNAVAILABLE:'額度記錄異常',MEMBER_AUTH_UNAVAILABLE:'會員驗證服務異常',QUOTA_UNAVAILABLE:'額度服務異常'};
  const dt=s=>{try{return new Date(s).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})}catch(_){return String(s)}};
  async function api(path,method='GET',body){

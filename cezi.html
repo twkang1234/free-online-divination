@@ -722,11 +722,11 @@ html[data-theme="light"] .cezi-topic-network{--ctn-ground:#f9f2f8;--ctn-card:#ff
       <h2>定期免費額度</h2>
       <div class="cezi-quota-group">
         <span class="cezi-quota-label">深度測字（第二階段）</span>
-        <div class="cezi-quota-value-line"><strong id="ceziDailyTool">查詢中…</strong><small>每天補充，不累積</small></div>
+        <div class="cezi-quota-value-line"><strong id="ceziDailyTool">查詢中…</strong><small id="ceziToolCycle">每天補充，不累積</small></div>
       </div>
       <div class="cezi-quota-group">
         <span class="cezi-quota-label">AI 解讀</span>
-        <div class="cezi-quota-value-line"><strong id="ceziDailyAi">查詢中…</strong><small>每天補充，不累積</small></div>
+        <div class="cezi-quota-value-line"><strong id="ceziDailyAi">查詢中…</strong><small id="ceziAiCycle">每天補充，不累積</small></div>
       </div>
     </div>
     <div class="cezi-entitlement-card cezi-common-card">
@@ -835,6 +835,27 @@ let visitor=localStorage.getItem('dh-cezi-visitor-v1');if(!visitor){visitor=cryp
 function ceziAuthToken(){try{const t=localStorage.getItem('divinationhub-auth-session-v1')||'';return /^dhs_[A-Za-z0-9_-]{43}$/.test(t)?t:''}catch(_){return ''}}
 async function api(path,body){const headers={'X-Cezi-Visitor-Id':visitor};const token=ceziAuthToken();if(token)headers.Authorization='Bearer '+token;if(body)headers['Content-Type']='application/json';const r=await fetch(API+path,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined,cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok||d?.ok===false){const e=new Error(d?.error||'服務暫時無法使用');e.traceId=d?.traceId||'';e.wallet=d?.wallet||null;throw e}return d}
 function ceziQuotaUpdated(d){syncQuota(d);window.dispatchEvent(new Event('cezi:quota-changed'))}
+// 只有登入會員的第二階段成功執行才送出統計；第一階段固定取象完全不計入。
+// 後台若關閉統計不記錄；不傳測字文字、問題、答案或追蹤碼。
+const CEZI_MEMBER_API='https://member-api.ezgocpu.workers.dev';
+async function ceziTrackUsage(events){
+ try{
+  const token=ceziAuthToken();if(!token)return;
+  // 每次成功時查詢目前模式，確保站長關閉統計後不會繼續寫入。
+  const modeResponse=await fetch(CEZI_MEMBER_API+'/member-usage/mode',{cache:'no-store'});
+  const modeData=await modeResponse.json().catch(()=>({}));
+  if(!modeResponse.ok||!modeData.success||!['simple','full'].includes(modeData.mode))return;
+  const cats={love:'感情',work:'工作',money:'財運',relations:'人際',family:'其他',general:'其他'};
+  for(const event of events){
+   const r=await fetch(CEZI_MEMBER_API+'/member-usage/record',{
+    method:'POST',cache:'no-store',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    body:JSON.stringify({tool:'cezi',event,category:cats[topic]||'其他',count:1})
+   });
+   if(!r.ok)break;
+  }
+ }catch(_){/* 統計是輔助功能，不得影響解讀與扣點 */}
+}
+
 async function ceziApiWithConfirm(path,body,kind){
  try{return await api(path,body)}catch(e){
   const code=String(e?.message||'');
@@ -848,16 +869,16 @@ async function ceziApiWithConfirm(path,body,kind){
    const aiShared=Number(daily.ai?.remaining||0)<=0;
    if(toolShared&&Number(wallet.tool||0)<=0)throw Error('SHARED_TOOL_EMPTY');
    if(aiShared&&Number(wallet.ai||0)<=0)throw Error('SHARED_AI_EMPTY');
-   const lines=['本次第二階段 AI 深度解讀需要：','工具額度 1 次＋AI 解讀額度 1 次。','','每日免費額度優先使用；用完才會扣會員共用額度。',''];
-   lines.push(`工具額度：${toolShared?'扣會員共用 1 次（剩餘 '+Number(wallet.tool||0)+' 次）':'使用每日免費 1 次'}`);
-   lines.push(`AI 額度：${aiShared?'扣會員共用 1 次（剩餘 '+Number(wallet.ai||0)+' 次）':'使用每日免費 1 次'}`);
+   const lines=['本次第二階段 AI 深度解讀需要：','工具額度 1 次＋AI 解讀額度 1 次。','','定期免費額度優先使用；用完才會扣會員共用額度。',''];
+   lines.push(`工具額度：${toolShared?'扣會員共用 1 次（剩餘 '+Number(wallet.tool||0)+' 次）':'使用本期免費 1 次'}`);
+   lines.push(`AI 額度：${aiShared?'扣會員共用 1 次（剩餘 '+Number(wallet.ai||0)+' 次）':'使用本期免費 1 次'}`);
    lines.push('','是否確認繼續？取消則完全不扣額度。');
    message=lines.join('\n');
   }else{
    const n=Number(wallet[kind]||0);
    if(n<=0)throw Error(kind==='tool'?'SHARED_TOOL_EMPTY':'SHARED_AI_EMPTY');
    const item=kind==='tool'?'測字':'AI 解讀',bucket=kind==='tool'?'工具':'AI';
-   message=`今日免費${item}次數已用完（台灣時間每日 00:00 補充）。\n\n是否扣除 1 次「會員共用${bucket}額度」繼續使用？\n目前剩餘 ${n} 次，與其他平台工具共用；用完不會自動補充。`;
+   message=`本期免費${item}次數已用完（下次補充：${daily[kind]?.nextAt||'依後台週期設定'}）。\n\n是否扣除 1 次「會員共用${bucket}額度」繼續使用？\n目前剩餘 ${n} 次，與其他平台工具共用；用完不會自動補充。`;
   }
   if(!window.confirm(message))throw Error('SHARED_QUOTA_CANCELLED');
   return api(path,{...body,sharedConfirm:true});
@@ -979,10 +1000,14 @@ function syncQuota(d){
  const q=d?.freeQuota;if(!q)return;
  if($('ceziDailyTool'))$('ceziDailyTool').textContent=`${q.tool.remaining} / ${q.tool.limit} 次`;
  if($('ceziDailyAi'))$('ceziDailyAi').textContent=`${q.ai.remaining} / ${q.ai.limit} 次`;
+ for(const [kind,id] of [['tool','ceziToolCycle'],['ai','ceziAiCycle']]){
+  const el=$(id),entry=q[kind];if(!el||!entry)continue;
+  el.textContent=(entry.days===1?'每天':`每 ${entry.days} 天`)+'補充，不累積｜下次 '+(entry.nextAt||'依後台規則');
+ }
 }
 function ceziFriendlyError(err){
  const raw=String(err?.message||err||'SERVER_ERROR');
- const map={CEZI_TOOL_QUOTA_EXHAUSTED:'深度測字的免費工具額度已用完，登入會員可使用共用工具額度；第一階段固定取象仍可免費使用。',CEZI_AI_QUOTA_EXHAUSTED:'今日免費 AI 次數已用完，登入會員可使用共用 AI 額度，或於台灣時間明日 00:00 後再使用。',SHARED_QUOTA_CANCELLED:'已取消使用共用額度，本次不扣點，輸入內容已保留。',SHARED_TOOL_EMPTY:'會員共用工具額度已用完，無法進行第二階段深度解讀；第一階段固定取象仍可免費使用。',SHARED_AI_EMPTY:'會員共用 AI 額度已用完，可於明日 00:00 等待免費次數補充。',LOGIN_REQUIRED:'登入狀態已失效，請重新登入會員。',AI_SERVICE_TEMPORARILY_UNAVAILABLE:'AI 通道暫時無法完成解讀，系統已嘗試可用備援。',AI_READING_INCOMPLETE:'AI 解讀內容尚未完整，請重試。',AI_FOLLOWUP_INCOMPLETE:'AI 追問內容尚未完整，請重試。'};
+ const map={CEZI_TOOL_QUOTA_EXHAUSTED:'深度測字的免費工具額度已用完，登入會員可使用共用工具額度；第一階段固定取象仍可免費使用。',CEZI_AI_QUOTA_EXHAUSTED:'今日免費 AI 次數已用完，登入會員可使用共用 AI 額度，或等待本期免費次數重新補充。',SHARED_QUOTA_CANCELLED:'已取消使用共用額度，本次不扣點，輸入內容已保留。',SHARED_TOOL_EMPTY:'會員共用工具額度已用完，無法進行第二階段深度解讀；第一階段固定取象仍可免費使用。',SHARED_AI_EMPTY:'會員共用 AI 額度已用完，可等待下次定期免費額度補充。',LOGIN_REQUIRED:'登入狀態已失效，請重新登入會員。',AI_SERVICE_TEMPORARILY_UNAVAILABLE:'AI 通道暫時無法完成解讀，系統已嘗試可用備援。',AI_READING_INCOMPLETE:'AI 解讀內容尚未完整，請重試。',AI_FOLLOWUP_INCOMPLETE:'AI 追問內容尚未完整，請重試。'};
  return map[raw]||raw;
 }
 let ceziReportTrace='',ceziReportReading='';
@@ -1020,8 +1045,8 @@ $('ceziFaultSubmit').addEventListener('click',async()=>{
 })();
 $('hanzi').addEventListener('input',()=>{$('hanzi').value=Array.from($('hanzi').value.normalize('NFC')).slice(0,1).join('')});
 $('start').onclick=async()=>{if(busy)return;enterCeziTool();const hanzi=$('hanzi').value.trim();if(Array.from(hanzi).length!==1||!/[\u3400-\u9fff\uf900-\ufaff]/u.test(hanzi)){setNotice('請輸入一個中文字');return}busy=true;$('start').disabled=true;setNotice('正在建立測字結果…');try{const custom=question==='__custom__';const finalQuestion=custom?$('customQuestion').value.trim():question;if(custom&&(Array.from(finalQuestion).length<6||Array.from(finalQuestion).length>160))throw Error('請輸入 6～160 字的完整自訂問題');const fp=JSON.stringify([topic,scenario,finalQuestion,hanzi]);if(!startOp||fp!==startFingerprint){startOp=crypto.randomUUID();startFingerprint=fp;}let body={topic,scenario,question:finalQuestion,customQuestion:custom,hanzi,operationId:startOp};let d=await api('/start',body);if(!d.ok)throw Error(d.error||'無法完成測字');readingId=d.readingId;startOp='';startFingerprint='';aiOp='';ceziQuotaUpdated(d);$('resultchar').textContent=hanzi;$('resultquestion').textContent=finalQuestion;renderFoundation(d.analysis||{},hanzi,finalQuestion);$('reading').textContent='';$('readnotice').textContent='';showCeziErrorReport('');$('ceziAiMetrics').classList.add('hidden');$('ceziAiMetricsText').textContent='';$('interpret').classList.remove('hidden');$('followupbox').classList.add('hidden');$('followanswers').replaceChildren();$('restart').classList.add('hidden');$('result').classList.remove('hidden');$('result').scrollIntoView({behavior:'smooth',block:'start'});setNotice('');refresh()}catch(e){setNotice('測字未完成：'+ceziFriendlyError(e));refresh()}finally{busy=false;$('start').disabled=false}};
-$('interpret').onclick=async()=>{if(busy||!readingId)return;busy=true;$('interpret').disabled=true;$('loading').classList.remove('hidden');$('readnotice').textContent='';try{if(!aiOp)aiOp=crypto.randomUUID();let body={readingId,operationId:aiOp};let d=await ceziApiWithConfirm('/interpret',body,'deep');if(!d.ok)throw Error(d.error||'AI 解讀失敗');if(typeof d.answer!=='string'||!d.answer.trim())throw Error('AI 解讀內容尚未取得，請再試一次');ceziQuotaUpdated(d);formatReading($('reading'),d.answer);showCeziMetrics(d);showCeziErrorReport('');$('interpret').classList.add('hidden');$('restart').classList.remove('hidden');$('followupbox').classList.remove('hidden');revealReading();refresh()}catch(e){$('readnotice').textContent='AI 解讀未完成：'+ceziFriendlyError(e)+(e.traceId?'｜故障追蹤碼：'+e.traceId:'')+(/QUOTA_EXHAUSTED|SHARED_|LOGIN_REQUIRED/.test(String(e.message))?'':'。若 AI 未產生結果，額度不會扣除，可重試。');showCeziErrorReport(e.traceId||'');refresh()}finally{busy=false;$('interpret').disabled=false;$('loading').classList.add('hidden')}};
-$('followbutton').onclick=async()=>{if(busy||!readingId)return;const q=$('followquestion').value.trim();if(q.length<5){$('readnotice').textContent='請先輸入至少 5 個字的追問。';return}busy=true;$('followbutton').disabled=true;$('followloading').classList.remove('hidden');$('readnotice').textContent='';try{if(!followOp||followFingerprint!==q){followOp=crypto.randomUUID();followFingerprint=q;}const body={readingId,operationId:followOp,question:q};let d=await ceziApiWithConfirm('/followup',body,'ai');if(!d.ok)throw Error(d.error||'追問失敗');ceziQuotaUpdated(d);const article=document.createElement('section');article.className='follow-entry';const h=document.createElement('h3');h.textContent='追問：'+q;const a=document.createElement('div');a.className='follow-answer';formatReading(a,d.answer);article.append(h,a);const meta=document.createElement('div');meta.className='cezi-ai-metadata';const dot=document.createElement('span');dot.className='cezi-ai-dot';dot.textContent='●';dot.setAttribute('aria-hidden','true');const info=document.createElement('span');info.textContent='通道 '+(d.channel||'—')+'｜追蹤碼：'+(d.traceId||'未取得');meta.append(dot,info);article.append(meta);$('followanswers').append(article);$('followquestion').value='';followOp='';followFingerprint='';article.scrollIntoView({behavior:'smooth',block:'start'});refresh()}catch(e){$('readnotice').textContent='追問未完成：'+ceziFriendlyError(e)+(e.traceId?'｜故障追蹤碼：'+e.traceId:'')+(/QUOTA_EXHAUSTED|SHARED_|LOGIN_REQUIRED/.test(String(e.message))?'':'。若 AI 未產生結果，額度不會扣除。');showCeziErrorReport(e.traceId||'');refresh()}finally{busy=false;$('followbutton').disabled=false;$('followloading').classList.add('hidden')}};
+$('interpret').onclick=async()=>{if(busy||!readingId)return;busy=true;$('interpret').disabled=true;$('loading').classList.remove('hidden');$('readnotice').textContent='';try{if(!aiOp)aiOp=crypto.randomUUID();let body={readingId,operationId:aiOp};let d=await ceziApiWithConfirm('/interpret',body,'deep');if(!d.ok)throw Error(d.error||'AI 解讀失敗');if(typeof d.answer!=='string'||!d.answer.trim())throw Error('AI 解讀內容尚未取得，請再試一次');ceziQuotaUpdated(d);formatReading($('reading'),d.answer);showCeziMetrics(d);showCeziErrorReport('');$('interpret').classList.add('hidden');$('restart').classList.remove('hidden');$('followupbox').classList.remove('hidden');revealReading();if(!d.replayed)void ceziTrackUsage(['cast','ai_success']);refresh()}catch(e){$('readnotice').textContent='AI 解讀未完成：'+ceziFriendlyError(e)+(e.traceId?'｜故障追蹤碼：'+e.traceId:'')+(/QUOTA_EXHAUSTED|SHARED_|LOGIN_REQUIRED/.test(String(e.message))?'':'。若 AI 未產生結果，額度不會扣除，可重試。');showCeziErrorReport(e.traceId||'');refresh()}finally{busy=false;$('interpret').disabled=false;$('loading').classList.add('hidden')}};
+$('followbutton').onclick=async()=>{if(busy||!readingId)return;const q=$('followquestion').value.trim();if(q.length<5){$('readnotice').textContent='請先輸入至少 5 個字的追問。';return}busy=true;$('followbutton').disabled=true;$('followloading').classList.remove('hidden');$('readnotice').textContent='';try{if(!followOp||followFingerprint!==q){followOp=crypto.randomUUID();followFingerprint=q;}const body={readingId,operationId:followOp,question:q};let d=await ceziApiWithConfirm('/followup',body,'ai');if(!d.ok)throw Error(d.error||'追問失敗');ceziQuotaUpdated(d);const article=document.createElement('section');article.className='follow-entry';const h=document.createElement('h3');h.textContent='追問：'+q;const a=document.createElement('div');a.className='follow-answer';formatReading(a,d.answer);article.append(h,a);const meta=document.createElement('div');meta.className='cezi-ai-metadata';const dot=document.createElement('span');dot.className='cezi-ai-dot';dot.textContent='●';dot.setAttribute('aria-hidden','true');const info=document.createElement('span');info.textContent='通道 '+(d.channel||'—')+'｜追蹤碼：'+(d.traceId||'未取得');meta.append(dot,info);article.append(meta);$('followanswers').append(article);$('followquestion').value='';followOp='';followFingerprint='';article.scrollIntoView({behavior:'smooth',block:'start'});if(!d.replayed)void ceziTrackUsage(['ai_success']);refresh()}catch(e){$('readnotice').textContent='追問未完成：'+ceziFriendlyError(e)+(e.traceId?'｜故障追蹤碼：'+e.traceId:'')+(/QUOTA_EXHAUSTED|SHARED_|LOGIN_REQUIRED/.test(String(e.message))?'':'。若 AI 未產生結果，額度不會扣除。');showCeziErrorReport(e.traceId||'');refresh()}finally{busy=false;$('followbutton').disabled=false;$('followloading').classList.add('hidden')}};
 $('restart').onclick=()=>{document.body.classList.remove('reading-active');window.scrollTo({top:0,behavior:'smooth'});location.reload()};
 (async()=>{try{let d=await api('/topics');if(!d.ok)throw Error(d.error);bank=d.topics;chooseTopic(Object.keys(bank)[0]);refresh()}catch(e){setNotice('測字題庫暫時無法載入，請重新整理頁面後再試。')}})();
 // 首次從導覽開始操作，主視覺與 SEO 區塊收起，並將焦點移至測字流程。
