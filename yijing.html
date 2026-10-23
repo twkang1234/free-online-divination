@@ -2494,11 +2494,11 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   let currentReading=null;
   let state={topic:null,scenario:null,question:null,custom:false,customSource:null,fixedReadingMode:'basic'};
   let yjAiBeforeCast={ticket:'',charge:'',question:''},yjAiBeforeCastBusy=false;
-  // 固定題目在選題時先保留本次起卦額度；同一次卦象只結算一次。
-  let yjToolBeforeCast={ticket:'',operationId:'',charge:'',question:''},yjToolBeforeCastBusy=false;
+  // 固定主題在第一層就預留本次起卦額度；第二、三層沿用，起卦不再重扣。
+  let yjToolBeforeCast={ticket:'',operationId:'',charge:'',topicId:''},yjToolBeforeCastBusy=false;
   const yjToolPrecastUrl='https://yijing-api.ezgocpu.workers.dev/tool/precast';
   async function yjCancelToolBeforeCast(){
-    const t=yjToolBeforeCast.ticket||yjToolBeforeCast.operationId;yjToolBeforeCast={ticket:'',operationId:'',charge:'',question:''};
+    const t=yjToolBeforeCast.ticket||yjToolBeforeCast.operationId;yjToolBeforeCast={ticket:'',operationId:'',charge:'',topicId:''};
     if(!t||isAdminTestActive())return;
     try{
       const res=await fetch(yjToolPrecastUrl+'/cancel',{method:'POST',cache:'no-store',
@@ -2508,43 +2508,46 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     }catch(e){console.warn('易經起卦額度取消失敗，系統稍後會自動退還',e)}
     void refreshYijingLive();
   }
-  async function yjChooseToolBeforeCast(question){
-    if(yjToolBeforeCastBusy)return false;
-    if(isAdminTestActive()||hasFullPaidAccess())return true;
-    if(yjToolBeforeCast.ticket&&yjToolBeforeCast.question===question)return true;
-    yjToolBeforeCastBusy=true;
-    try{
-      if(yjToolBeforeCast.question!==question&&yjToolBeforeCast.operationId)await yjCancelToolBeforeCast();
-      if(memberDeviceLoginRequired()){openMemberModal('請重新登入會員後選擇固定題目。');return false;}
-      const retryOp=yjToolBeforeCast.question===question?yjToolBeforeCast.operationId:'';
-      if(!retryOp){
-        await refreshYijingLive();
-        const daily=dhYijingLive?.daily, left=dhYijingLive?.wallet?.tool;
-        if(!daily){alert('無法確認最新起卦額度，請稍後再選題；目前沒有扣除任何次數。');return false;}
-        // 訪客沒有共用工具額度；只由原後端免費額度規則控管。
-        if(!isLogged()){
-          if(Number(daily.remaining||0)<=0){openMemberModal('本期免費起卦額度已用完，請登入會員後再使用共用工具額度。');return false;}
-          return true;
-        }
-        if(Number(daily.remaining||0)<=0){
-          if(!Number.isSafeInteger(Number(left))||Number(left)<1){alert('本期免費起卦與會員共用工具額度都已用完，不能開始新問題。');return false;}
-          if(!confirm(`本期免費起卦已用完。\n\n選擇此固定問題需使用 1 次會員共用工具額度。\n目前剩餘 ${left} 次，八字、塔羅、易經共用（用完不補）。\n\n確定預扣 1 次後繼續選擇解析與起卦方式？`))return false;
-        }
-      }
-      const op=retryOp||crypto.randomUUID();
-      // 回應遺失時沿用同一操作碼重試，不可再次扣費。
-      yjToolBeforeCast={ticket:'',operationId:op,charge:'',question};
-      const response=await fetch(yjToolPrecastUrl,{method:'POST',cache:'no-store',headers:{
-        'Content-Type':'application/json',Authorization:'Bearer '+yijingSavedSession()},
-        body:JSON.stringify({operationId:op,question,topicId:state.topic.id,scenarioId:state.scenario.id})});
-      const info=await response.json().catch(()=>({}));
-      if(!response.ok||!info.ok||!info.ticket)throw Error(info.error==='SHARED_TOOL_EMPTY'?'會員共用工具額度已用完。':(info.error||'起卦額度尚未成功預留。'));
-      yjToolBeforeCast={ticket:info.ticket,operationId:op,charge:info.charge,question};
-      void refreshYijingLive();
-      return true;
-    }catch(e){alert((e.message||'暫時無法預留起卦額度。')+'\n請重新點選同一題重試，系統不會再次扣費；或切換題目取消預留。');return false;}
-    finally{yjToolBeforeCastBusy=false;}
-  }
+   async function yjChooseToolBeforeCast(topic){
+     if(yjToolBeforeCastBusy)return false;
+     if(!topic?.id)return false;
+     if(isAdminTestActive()||hasFullPaidAccess())return true;
+     // 第一層已確認過同一主題：返回上一層再進入不重複收費。
+     if(yjToolBeforeCast.ticket&&yjToolBeforeCast.topicId===topic.id)return true;
+     yjToolBeforeCastBusy=true;
+     try{
+       // 更換主題前，先退回舊主題尚未起卦的預留額度。
+       if(yjToolBeforeCast.topicId!==topic.id&&yjToolBeforeCast.operationId)await yjCancelToolBeforeCast();
+       if(memberDeviceLoginRequired()){openMemberModal('請重新登入會員後選擇主題。');return false;}
+       const retryOp=yjToolBeforeCast.topicId===topic.id?yjToolBeforeCast.operationId:'';
+       if(!retryOp){
+         await refreshYijingLive();
+         const daily=dhYijingLive?.daily,left=dhYijingLive?.wallet?.tool;
+         if(!daily){alert('無法確認最新起卦額度，請稍後重新選擇主題；目前沒有扣除任何次數。');return false;}
+         // 訪客沒有會員共用額度，維持既有免費額度規則。
+         if(!isLogged()){
+           if(Number(daily.remaining||0)<=0){openMemberModal('本期免費起卦額度已用完，請登入會員後再使用共用工具額度。');return false;}
+           return true;
+         }
+         if(Number(daily.remaining||0)<=0){
+           if(!Number.isSafeInteger(Number(left))||Number(left)<1){alert('本期免費起卦與會員共用工具額度都已用完，無法進入主題。');return false;}
+           if(!confirm(`本期免費起卦已用完。\n\n進入「${topic.name}」前，需使用 1 次會員共用工具額度。\n目前剩餘 ${left} 次，八字、塔羅、易經共用（用完不補）。\n\n確定預留 1 次後，繼續選擇情境與題目？`))return false;
+         }
+       }
+       const op=retryOp||crypto.randomUUID();
+       // 網路回應遺失時重試同一操作碼，不重新扣額。
+       yjToolBeforeCast={ticket:'',operationId:op,charge:'',topicId:topic.id};
+       const response=await fetch(yjToolPrecastUrl,{method:'POST',cache:'no-store',headers:{
+         'Content-Type':'application/json',Authorization:'Bearer '+yijingSavedSession()},
+         body:JSON.stringify({operationId:op,question:'',topicId:topic.id,scenarioId:''})});
+       const info=await response.json().catch(()=>({}));
+       if(!response.ok||!info.ok||!info.ticket)throw Error(info.error==='SHARED_TOOL_EMPTY'?'會員共用工具額度已用完。':(info.error||'起卦額度尚未成功預留。'));
+       yjToolBeforeCast={ticket:info.ticket,operationId:op,charge:info.charge,topicId:topic.id};
+       void refreshYijingLive();
+       return true;
+     }catch(e){alert((e.message||'暫時無法預留起卦額度。')+'\n請重新點選同一主題重試，系統不會重複扣額。');return false;}
+     finally{yjToolBeforeCastBusy=false;}
+   }
   const yjAiPrecastUrl='https://yijing-api.ezgocpu.workers.dev/ai/precast';
   async function yjCancelAiBeforeCast(){
     const t=yjAiBeforeCast.ticket;yjAiBeforeCast={ticket:'',charge:'',question:''};
@@ -3194,7 +3197,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   }
   function yjUpdateFixedQuotaBadges(){
     const msg=yjFixedQuotaNotice();
-    document.querySelectorAll('#yijingTopicGrid .guide-choice:not([data-topic="custom-all"]), #yijingQuestionGrid .question-choice[data-question-index]').forEach(card=>{
+    document.querySelectorAll('#yijingTopicGrid .guide-choice:not([data-topic="custom-all"])').forEach(card=>{
       let tag=card.querySelector('.yj-fixed-quota');
       if(!msg){tag?.remove();return;}
       if(!tag){tag=document.createElement('span');tag.className='yj-fixed-quota';card.appendChild(tag);}
@@ -3398,7 +3401,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       alert('請先選擇 AI 專業解析並確認預扣 1 次 AI 額度，才可以起卦。');return;
     }
     if(yjAiBeforeCastBusy||yjToolBeforeCastBusy)return;
-    if(!state.custom&&isLogged()&&!isAdminTestActive()&&!hasFullPaidAccess()&&(!yjToolBeforeCast.ticket||yjToolBeforeCast.question!==state.question)){
+    if(!state.custom&&isLogged()&&!isAdminTestActive()&&!hasFullPaidAccess()&&(!yjToolBeforeCast.ticket||yjToolBeforeCast.topicId!==state.topic?.id)){
       alert('請返回固定題目選項，先確認本次起卦額度，才能開始起卦。');return;
     }
     if(!guardDailyQuota())return;
@@ -3420,7 +3423,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       let reading;
       try{reading=await YijingCore.draw(data.q,data.context,options)}
       catch(err){
-        // 固定題目已在選題時預留，這裡不得再次要求扣共用工具額度。
+        // 固定主題已在第一層預留，這裡不得再次要求扣共用工具額度。
         if(!state.custom)throw Error('本次起卦預留額度無效，請返回固定題目重新選擇。');
         if(err.message!=='SHARED_TOOL_CONFIRM_REQUIRED'||!authProfile()?.sub||isAdminTestActive())throw err;
         const left=Number(err.wallet?.tool||0);
@@ -3434,7 +3437,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         }
         reading=await YijingCore.draw(data.q,data.context,{...options,sharedConfirmed:true});
       }
-      yjToolBeforeCast={ticket:'',operationId:'',charge:'',question:''};void refreshYijingLive();
+      yjToolBeforeCast={ticket:'',operationId:'',charge:'',topicId:''};void refreshYijingLive();
       yjActiveCastOp=options.operationId;yjActiveCustomTicket=state.custom?yjPendingCustom.ticket:'';yjPendingCustom={question:'',operationId:'',ticket:'',sourceKey:'',paidPoints:0};yjReadingGrants.clear();yjProLoaded=false;await yjRefreshPro();
       yjArchiveId=options.operationId;markReadingUsed();render(reading);yijingTrackUsage('cast',yijingUsageCategory());
       if(!state.custom&&state.fixedReadingMode==='ai'&&yjAiBeforeCast.ticket){
@@ -4073,7 +4076,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   document.getElementById('yijingPaidPreviewStop')?.addEventListener('click',stopPaidPreview);
   document.getElementById('yijingMemberLogout')?.addEventListener('click',logoutMember);
   document.getElementById('yijingLocalLogin')?.addEventListener('click',()=>{if(isAdminTestActive()){setAdminTestMode('member');return;}const previous=lastMemberProfile();safeWrite(YIJING_LOCAL_MEMBER_KEY,true);memberLoginSucceeded(previous)});
-  document.getElementById('yijingTopicGrid').addEventListener('click',async e=>{const b=e.target.closest('[data-topic]');if(!b||yjCustomEntryBusy)return;
+  document.getElementById('yijingTopicGrid').addEventListener('click',async e=>{const b=e.target.closest('[data-topic]');if(!b||yjCustomEntryBusy||yjToolBeforeCastBusy)return;
     if(b.dataset.topic==='custom-all'){
       if(!await yjCustomEntry('all'))return;
       void yjCancelToolBeforeCast();void yjCancelAiBeforeCast();
@@ -4081,16 +4084,23 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       customGateConfirmed=true;renderReady();showStep('ready');return;
     }
     if(b.dataset.accessLocked==='1'){openMemberModal(memberDeviceLoginRequired()?'這台瀏覽器已成功登入過會員，因此不再提供未登入訪客模式。請登入會員後繼續使用。':`「${topicBy(b.dataset.topic)?.name||'這個主題'}」今天未對未登入訪客開放；免費登入後 8 大主題全部開放。`);return;}
-    void yjCancelToolBeforeCast();void yjCancelAiBeforeCast();
-    yjPendingCustom={question:'',operationId:'',ticket:'',sourceKey:'',paidPoints:0};state.topic=topicBy(b.dataset.topic);state.scenario=null;state.question=null;state.custom=false;state.customSource=null;renderScenarios();showStep('scenario');
+    const chosenTopic=topicBy(b.dataset.topic);
+    // 第一層選主題便先確認並預留（免費或共用）工具額度。
+    // 取消付款時停留在第一層；第三層不再另問。
+    if(!await yjChooseToolBeforeCast(chosenTopic))return;
+    void yjCancelAiBeforeCast();
+    yjPendingCustom={question:'',operationId:'',ticket:'',sourceKey:'',paidPoints:0};state.topic=chosenTopic;state.scenario=null;state.question=null;state.custom=false;state.customSource=null;renderScenarios();showStep('scenario');
   });
-  document.getElementById('yijingScenarioGrid').addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;yjPendingCustom={question:'',operationId:'',ticket:'',sourceKey:'',paidPoints:0};void yjCancelToolBeforeCast();void yjCancelAiBeforeCast();state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;renderQuestions();showStep('question');});
+  document.getElementById('yijingScenarioGrid').addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;yjPendingCustom={question:'',operationId:'',ticket:'',sourceKey:'',paidPoints:0};void yjCancelAiBeforeCast();state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;renderQuestions();showStep('question');});
   document.getElementById('yijingQuestionGrid').addEventListener('click',async e=>{if(yjCustomEntryBusy||yjToolBeforeCastBusy)return;const qbtn=e.target.closest('[data-question-index]');const custom=e.target.closest('[data-custom-question]');
     if(qbtn){
       if(qbtn.dataset.accessLocked==='1'){openMemberModal('這個固定問題今天未對未登入訪客開放；免費登入後此情境的所有固定問題全部開放。');return;}
       const qs=questionsFor(state.topic,state.scenario),chosen=qs[Number(qbtn.dataset.questionIndex)];if(!chosen)return;
-      // 題目一選定即核對並預扣（免費或共用）起卦額度，取消不進入 STEP04。
-      if(!await yjChooseToolBeforeCast(chosen))return;
+      // 第一層已預留本次固定主題的起卦額度，第三層僅選題、不扣次。
+      if(isLogged()&&!isAdminTestActive()&&!hasFullPaidAccess()&&
+          (!yjToolBeforeCast.ticket||yjToolBeforeCast.topicId!==state.topic?.id)){
+        alert('請返回第一層選擇主題並確認本次起卦額度。');showStep('topic');return;
+      }
       void yjCancelAiBeforeCast();
       state.question=chosen;yjPendingCustom={question:'',operationId:'',ticket:'',sourceKey:'',paidPoints:0};state.custom=false;state.customSource=null;state.fixedReadingMode='basic';customGateConfirmed=false;renderReady();showStep('ready');
     }
