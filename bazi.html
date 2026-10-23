@@ -10572,6 +10572,12 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   // The server's per-chart entitlement controls all sales/preview UI in this chapter.
   const section=document.getElementById(x.id);
   section?.classList.toggle('bazi-chapter-owned',!!x.unlocked);
+  // V5: synchronize owned chapters with the example footer, including a just-finished purchase.
+  if(document.body.classList.contains('bazi-personal-full-mode')){
+    if(!(window.baziExamplePersonalUnlocked instanceof Set))window.baziExamplePersonalUnlocked=new Set();
+    if(x.unlocked)window.baziExamplePersonalUnlocked.add(x.id);
+    else window.baziExamplePersonalUnlocked.delete(x.id);
+  }
   if(x.unlocked){
     section?.querySelectorAll('.bazi-inline-sample-trigger').forEach(n=>n.remove());
     section?.querySelectorAll('.bazi-inline-sample-anchor').forEach(n=>n.classList.remove('bazi-inline-sample-anchor'));
@@ -10594,6 +10600,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    if(!preview){preview=el('span','dh-sp-price-preview');area.querySelector('.bazi-hub-main')?.append(preview)}
    preview.textContent='解鎖需 '+x.points+' 點';
   }else preview?.remove();
+  window.baziExampleFooterRender?.();
  }
 
  async function post(path,payload){const t=token();if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(t))throw Error('請先登入會員');
@@ -11331,6 +11338,8 @@ html[data-theme="light"] body.has-bazi-chart .bazi-decode-end-actions .bazi-exam
  .bazi-example-footer-pair{flex-wrap:wrap;gap:6px}
  body.has-bazi-chart .bazi-decode-end-actions .bazi-example-footer-unlock{max-width:100%;white-space:normal!important;text-align:center}
 }
+/* Owned chapters display only the reading-finished action even when a saved example is active. */
+body.has-bazi-chart #results .bazi-decode-end-actions[data-bazi-example-owned="1"] .bazi-example-footer-options{display:none!important}
 @media print{.bazi-example-footer-options{display:none!important}}
 </style>
 <script id="bazi-example-footer-20261024">
@@ -11359,16 +11368,20 @@ html[data-theme="light"] body.has-bazi-chart .bazi-decode-end-actions .bazi-exam
  }
  function render(){
   const isExample=document.body.classList.contains('bazi-example-snapshot-mode');
+  const owned=window.baziExamplePersonalUnlocked instanceof Set?window.baziExamplePersonalUnlocked:null;
   for(const nav of footers()){
    const opts=nav.querySelector('.bazi-example-footer-options');if(!opts)continue;
    const id=nav.closest('.report-section')?.id, name=CHAPTERS[id];
-   opts.hidden=!isExample||id==='report-shensha'||!!window.baziExamplePersonalUnlocked?.has(id);
+   // Ownership is per chapter, not per site or just the sample currently being viewed.
+   // When purchased, remove the entire birthdate/reroll/checkout cluster from this footer.
+   const chapterOwned=!!owned?.has(id);
+   nav.dataset.baziExampleOwned=chapterOwned?'1':'0';
+   opts.hidden=!isExample||id==='report-shensha'||chapterOwned;
    if(opts.hidden)continue;
    const birth=opts.querySelector('.bazi-example-footer-birthdate');
    if(birth){birth.textContent=lastDate?'範例出生日期：'+lastDate:'範例出生日期：載入中';}
    const btn=opts.querySelector('.bazi-example-footer-unlock');if(!btn||!name)continue;
    const entry=prices.get(id);
-   if(window.baziExamplePersonalUnlocked?.has(id)){btn.textContent='查看自己命盤的「'+name+'」區｜已解鎖';btn.disabled=false;continue}
    if(!priceLoaded){btn.textContent='解鎖自己命盤的「'+name+'」區｜專業解鎖點數讀取中';btn.disabled=true;continue}
    if(entry?.mode==='free'){
     btn.textContent='查看自己命盤的「'+name+'」區｜免費開放';btn.disabled=false;
@@ -11377,6 +11390,8 @@ html[data-theme="light"] body.has-bazi-chart .bazi-decode-end-actions .bazi-exam
    }else{btn.textContent='自己命盤的「'+name+'」區｜尚未開放解鎖';btn.disabled=true}
   }
  }
+ // Allow the existing entitlement flow to refresh footers the moment a purchase succeeds.
+ window.baziExampleFooterRender=render;
  window.baziExampleFooterRefresh=date=>{
   lastDate=String(date||'');render();
   // Never hardcode a cost: read the same administrator-maintained public pricing feed.
@@ -11384,6 +11399,7 @@ html[data-theme="light"] body.has-bazi-chart .bazi-decode-end-actions .bazi-exam
  };
  window.baziExampleFooterUnlock=async id=>{
   if(!CHAPTERS[id]||id==='report-shensha'||!document.body.classList.contains('bazi-example-snapshot-mode'))return;
+  if(window.baziExamplePersonalUnlocked?.has(id)){render();return;}
   const entry=prices.get(id);
   if(id!=='report-shensha'&&!window.baziExamplePersonalUnlocked?.has(id)&&!(entry?.mode==='free'||entry?.mode==='priced'&&Number(entry.points)>0))return;
   if(!window.baziHasPersonalCore?.()){
