@@ -880,16 +880,28 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     finally{rvQuietBusy=false}
   }
 
+  // 以台灣時間每天 00:00 為分界。所有訪客同一天看見同一組；候選池僅限最近 50 篇正式通過審核的心得。
+  // 每天沿候選池向前輪播三篇；只要至少六篇，相鄰兩天就不會選到同一位置。
+  const rvTaiwanDayIndex=()=>Math.floor((Date.now()+8*3600000)/86400000);
+  function rvDailyShowcase(reviews,dayIndex){
+    if(!reviews.length)return [];
+    const size=Math.min(3,reviews.length),start=(dayIndex*3)%reviews.length;
+    return Array.from({length:size},(_,i)=>reviews[(start+i)%reviews.length]);
+  }
   let rvPublicSignature='';
   async function rvLoadPublished(){
     const root=$('rvPublicWall');try{
-      const r=await fetch(API_MEMBER+'/reviews/public',{headers:{Accept:'application/json'},cache:'no-store'});
+      const r=await fetch(API_MEMBER+'/reviews/public?limit=50',{headers:{Accept:'application/json'},cache:'no-store'});
       const data=await r.json();if(!r.ok||!data.success||!Array.isArray(data.reviews))throw Error(data.error||'公開心得暫時無法讀取');
-      const fingerprint=JSON.stringify(data.reviews);if(fingerprint===rvPublicSignature)return;rvPublicSignature=fingerprint;
-      root.replaceChildren();if(!data.reviews.length){root.append(textNode('p','目前尚無通過審核的會員心得。','caption'));return}
-      for(const v of data.reviews.slice(0,3)){const item=textNode('article','','review-my-item review-public-card');
+      const dayIndex=rvTaiwanDayIndex();
+      const fingerprint=dayIndex+'|'+JSON.stringify(data.reviews);if(fingerprint===rvPublicSignature)return;
+      const chosen=rvDailyShowcase(data.reviews,dayIndex);
+      root.replaceChildren();
+      if(!chosen.length){root.append(textNode('p','目前尚無通過審核的會員心得。','caption'));rvPublicSignature=fingerprint;return}
+      for(const v of chosen){const item=textNode('article','','review-my-item review-public-card');
         item.append(textNode('div',(REVIEW_TOOLS[v.tool]||v.tool)+' · '+v.nickname+' · 發布中','review-public-meta'),textNode('div','★'.repeat(v.rating)+'☆'.repeat(5-v.rating),'review-public-stars'),textNode('p',v.body));root.append(item)}
-    }catch(e){root.replaceChildren(textNode('p','讀取公開心得失敗：'+e.message,'caption'))}
+      rvPublicSignature=fingerprint;
+    }catch(e){if(!rvPublicSignature)root.replaceChildren(textNode('p','讀取公開心得失敗：'+e.message,'caption'))}
   }
   function prepareReviews(){rvAuthSync();rvRefreshMineQuiet();rvLoadPublished()}
   function reviewInit(){

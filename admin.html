@@ -245,7 +245,7 @@ td.muted{color:var(--muted)}
 .dh-ai-badge{border-radius:99px;padding:4px 9px;font-size:.7rem;background:#153326;color:#a7e8c0;border:1px solid #295e42}
 .dh-ai-badge.alert{background:#3b1720;color:#ffb9c5;border-color:#9d3d52}
 .dh-ai-inner{padding:16px 18px 20px}.dh-ai-intro{font-size:.76rem;color:#a8b6c4;line-height:1.75;margin:0 0 13px}
-.dh-ai-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0}
+.dh-ai-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:13px 0}
 .dh-ai-cards>div{border:1px solid #2c3744;background:#0b141e;padding:14px;border-radius:11px}
 .dh-ai-cards small{display:block;color:#96a8b8;font-size:.71rem}.dh-ai-cards strong{font-size:1.5rem;color:#e8dfca}
 .dh-ai-line{padding:13px 14px;margin:10px 0;border:1px solid #303d4b;border-radius:11px;background:#0b131d;overflow-wrap:anywhere}
@@ -253,7 +253,13 @@ td.muted{color:var(--muted)}
 .dh-ai-line b{display:block;color:#edf2ee;font-size:.87rem}.dh-ai-line small{display:block;font-size:.73rem;color:#b4c4d3;line-height:1.7;margin-top:5px}
 .dh-ai-buttons{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}.dh-ai-status{font-size:.76rem;color:#a9bdcb;margin-top:12px}
 .dh-ai-line code{font-size:.73rem;color:#a4b7c8;word-break:break-all}
-@media(max-width:650px){.dh-ai-cards{grid-template-columns:1fr}.dh-ai-monitor>summary{align-items:flex-start}}
+.dh-ai-tool-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:15px 0 18px}
+.dh-ai-tool{padding:12px 14px;border:1px solid #304051;border-radius:11px;background:#0c1620}
+.dh-ai-tool b{display:block;color:#e9e6de;margin-bottom:7px;font-size:.84rem}
+.dh-ai-tool span{display:block;font-size:.76rem;color:#b1c4d1;line-height:1.9}
+.dh-ai-tool .dh-ai-recovered{color:#89dcb0}.dh-ai-tool .dh-ai-ongoing{color:#ffb7bd}
+@media(max-width:900px){.dh-ai-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.dh-ai-cards,.dh-ai-tool-list{grid-template-columns:1fr}.dh-ai-monitor>summary{align-items:flex-start}}
 
 
 /* AI 監控：已處理的歷史資料低調收合，不佔用平常後台版面。 */
@@ -459,8 +465,10 @@ td.muted{color:var(--muted)}
     <details class="section dh-ai-monitor" id="dhAiMonitor" style="margin-bottom:24px">
       <summary>⚠ AI 系統自動異常監控 <span id="dhAiMonitorBadge" class="dh-ai-badge">尚未查詢</span></summary>
       <div class="dh-ai-inner">
-        <p class="dh-ai-intro">由 AI 總控與工具 Worker 自動記錄真正失敗的呼叫，不需要會員按回報。與上面的會員紅綠燈分開；只儲存錯誤碼、通道狀態、時間與追蹤碼，不保存占卜問題或 AI 解讀。</p>
-        <div class="dh-ai-cards"><div><small>今日失敗請求</small><strong id="dhAiToday">—</strong></div><div><small>待處理異常類型</small><strong id="dhAiPending">—</strong></div><div><small>近 30 日失敗請求</small><strong id="dhAiTotal">—</strong></div></div>
+        <p class="dh-ai-intro">由 AI 總控與工具 Worker 的實際紀錄計算請求成功／失敗，並顯示最後成功時間；不需要會員手動回報。此處與會員紅綠燈獨立，不儲存占卜問題或 AI 解讀。<strong>「後續有成功」不代表異常已完全排除。</strong></p>
+        <div class="dh-ai-cards"><div><small>今日成功請求</small><strong id="dhAiSuccess">—</strong></div><div><small>今日失敗請求</small><strong id="dhAiToday">—</strong></div><div><small>今日觀測成功率</small><strong id="dhAiRate">—</strong></div><div><small>待處理異常類型</small><strong id="dhAiPending">—</strong></div></div>
+        <p class="dh-ai-status" id="dhAiThirtyDay">近 30 日失敗請求：<b id="dhAiTotal">—</b>｜近 30 日成功率：<b id="dhAiMonthRate">—</b></p>
+        <div class="dh-ai-tool-list" id="dhAiToolStats" aria-label="各工具的 AI 呼叫成功率與最後成功時間"><p class="dh-ai-status">正在查詢各工具最新狀態……</p></div>
         <div class="dh-ai-buttons"><button type="button" class="btn secondary" id="dhAiReload">重新查詢 AI 異常</button></div>
         <div class="dh-ai-status" id="dhAiStatus" role="status" aria-live="polite">開啟管理後台後自動檢查；每分鐘更新一次（僅頁面顯示時）。</div>
         <div id="dhAiItems"></div>
@@ -1629,9 +1637,27 @@ $('baziGiftSend')?.addEventListener('click',send);
  function render(data){
    lastData=data;
    const stat=data.summary||{};
+   const outcomes=data.outcomes;
    $('dhAiToday').textContent=String(stat.today??0);
+   $('dhAiSuccess').textContent=outcomes?String(outcomes.todaySuccess):'—';
+   $('dhAiRate').textContent=outcomes?(outcomes.todayRate==null?'無呼叫':outcomes.todayRate.toFixed(1)+'%'):'無資料';
    $('dhAiPending').textContent=String(stat.pending??0);
    $('dhAiTotal').textContent=String(stat.total??0);
+   $('dhAiMonthRate').textContent=outcomes?(outcomes.monthRate==null?'無呼叫':outcomes.monthRate.toFixed(1)+'%'):'無資料';
+   const toolStats=$('dhAiToolStats');toolStats.replaceChildren();
+   if(!outcomes){toolStats.append(textNode('p','AI 中心成功／失敗統計目前無法讀取，請勿以現有失敗數推算成功率。','dh-ai-status'))}
+   else for(const tool of ['bazi','tarot','yijing','cezi']){
+     const v=outcomes.byTool?.[tool]||{},cell=textNode('div','', 'dh-ai-tool');
+     cell.append(textNode('b',(labels[tool]||tool)+'｜今日成功 '+(v.todaySuccess??0)+' 次・失敗 '+(v.todayFailure??0)+' 次'));
+     cell.append(textNode('span','今日成功率：'+(v.todayRate==null?'無呼叫':Number(v.todayRate).toFixed(1)+'%')+'｜近 30 日成功率：'+(v.monthRate==null?'無呼叫':Number(v.monthRate).toFixed(1)+'%')));
+     cell.append(textNode('span','最後成功時間：'+(v.lastSuccessAt?dt(v.lastSuccessAt):'尚無成功紀錄')));
+     let recovery='尚無觀察紀錄',cls='';
+     if(v.lastFailureAt){
+       if(v.lastSuccessAt&&v.lastSuccessAt>v.lastFailureAt){recovery='故障後有成功紀錄（仍須觀察）';cls='dh-ai-recovered'}
+       else {recovery='最後一次記錄仍為失敗（需留意）';cls='dh-ai-ongoing'}
+     }else if(v.lastSuccessAt)recovery='近 30 日未記錄終局失敗';
+     cell.append(textNode('span',recovery,cls));toolStats.append(cell);
+   }
    const badge=$('dhAiMonitorBadge');badge.textContent=(!data.centerAvailable?'AI 中心紀錄未就緒':(stat.pending?'待處理 '+stat.pending+' 類':'暫無待處理異常'));badge.classList.toggle('alert',!!stat.pending||!data.centerAvailable);
    const items=$('dhAiItems');items.replaceChildren();
    if(!data.centerAvailable){items.append(textNode('p','⚠ AI 中心歷史紀錄尚未建立或無法讀取，本次只能顯示已接入的工具 Worker 錯誤。','dh-ai-status'))}
@@ -1655,7 +1681,7 @@ $('baziGiftSend')?.addEventListener('click',send);
      for(const g of done)history.append(makeRow(g));
      items.append(history);
    }
-   $('dhAiStatus').textContent='更新時間：'+dt(data.asOf)+(data.truncated?'｜資料量較大，僅顯示最近 750 筆來源記錄':'')+'。標記處理不代表 AI 已恢復正常。';
+   $('dhAiStatus').textContent='更新時間：'+dt(data.asOf)+(data.truncated?'｜異常明細僅展示最近 750 筆來源記錄；上方成功率依完整 30 日記錄計算':'')+'。成功率分母為已記錄的終局請求（含已記錄 Worker 失敗）；標記已處理不代表 AI 已恢復正常。';
  }
  async function load(force=false){
    if(busy||!readToken()||document.hidden||$('dashboard').hidden)return;
