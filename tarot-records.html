@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#100b1c"/>
 <meta name="robots" content="noindex,nofollow"/>
 <title>我的塔羅占卜紀錄｜一念知機</title>
-<meta name="description" content="登入一念知機，回顧個人塔羅占卜紀錄、保存的原版 AI 提示詞、50 字心得與回顧提醒。"/>
+<meta name="description" content="登入一念知機，回顧個人塔羅占卜紀錄、牌面、精簡 AI 結論、個人心得與回顧提醒。"/>
 <style>
 :root{color-scheme:dark;--bg:#0b0914;--panel:#151020;--panel2:#1e152b;--line:#473455;--ink:#f2e8f4;--muted:#b3a4c1;--accent:#e48acb;--accent2:#ae8add;--good:#93d9bc}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,'Noto Sans TC','Microsoft JhengHei',sans-serif;background:radial-gradient(circle at 15% 0,rgba(146,68,158,.15),transparent 36%),var(--bg);color:var(--ink);min-height:100vh;line-height:1.65}
@@ -49,19 +49,19 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
 <main>
   <div class="eyebrow">MEMBER · TAROT ARCHIVE · V28.14</div>
   <h1>我的塔羅占卜紀錄</h1>
-  <p class="lead">記住每次的問題與牌面，隨時取回當時真正產生的 AI 提示詞。你也可以留下 50 字心得，設定日後的回顧時間。</p>
+  <p class="lead">記住每次的問題與牌面，回顧當時的精簡 AI 結論。你也可以留下 50 字心得，設定日後的回顧時間。</p>
   <section id="loginPanel" class="panel" hidden>
-    <h2>免費登入，查看自己的紀錄</h2><p class="small">使用一念知機原有的 Google 會員帳號。登入只用於保存及查看紀錄，抽牌與取得提示詞仍然免費。</p>
+    <h2>免費登入，查看自己的紀錄</h2><p class="small">使用一念知機原有的 Google 會員帳號。登入只用於保存及查看紀錄，抽牌與使用 AI 依站內既有免費額度計算。</p>
     <p class="small" id="loginHint">請到會員中心使用 Google 登入；登入後會自動返回塔羅紀錄。</p><a id="memberLoginLink" class="btn primary" href="member.html?return=%2Ftarot-records.html" target="_top">前往會員中心 Google 登入 ↗</a>
     <a class="btn" href="tarot.html">返回塔羅抽牌</a>
   </section>
   <section id="dashboard" hidden>
     <div id="notice" class="notice status-space" role="status" aria-live="polite">正在讀取會員資料……</div>
     <div class="summary">
-      <div class="panel"><small>已儲存紀錄</small><b><span id="recordCount">0</span> <small>/ 10 筆</small></b></div>
+      <div class="panel"><small>已儲存紀錄</small><b><span id="recordCount">0</span> <small id="recordLimitText">/ 3 組</small></b></div>
       <div class="panel"><small>待回顧提醒</small><b id="dueCount">0</b></div>
     </div>
-    <p class="archive-cap">免費會員保留最近 10 筆占卜紀錄；第 11 筆存入時，系統會自動刪除最舊的一筆（包含牌面、提示詞、心得與提醒）。重要提示詞可先複製另行留存；TXT 一鍵下載保留給未來完整進階。3＋3 六張牌算同一筆。</p>
+    <p class="archive-cap">免費會員自動保留最近 3 組；舊版超過 3 組的既有資料不會在部署時刪除，而是在下次成功保存後依新規則整理。第 4 組保存成功後，系統會取代最舊一組（含心得與回顧提醒）。3＋3 六張牌合計一組，不保存完整 AI 解讀全文。未來可規劃使用專業點數升級，現階段不開放。</p>
     <section id="duePanel" class="panel" hidden><h2>🔔 值得回顧的占卜</h2><div id="dueList"></div></section>
     <h2>歷史占卜</h2>
     <div id="recordsList"></div>
@@ -185,11 +185,12 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
   function renderList(){
     const root=$('recordsList');root.replaceChildren();
     $('recordCount').textContent=String(totalRecords||items.length);
+    $('recordLimitText').textContent=(totalRecords>3?' 筆（既有舊版紀錄）':' / 3 組');
     const due=dueItems;
     $('dueCount').textContent=String(due.length);
     const dueEl=$('dueList');dueEl.replaceChildren();$('duePanel').hidden=due.length===0;
     for(const r of due){const row=dom('div','record');put(row,dom('b','',r.question),dom('p','small',`原占卜：${formatDate(r.createdAt)}｜原訂回顧：${r.reminderDate}`),button('查看回顧',()=>openRecord(r.id)));dueEl.append(row)}
-    if(!items.length)root.append(dom('div','empty','目前沒有已保存的紀錄。回塔羅頁完成三張牌並登入後，複製提示詞即可自動保存。'));
+    if(!items.length)root.append(dom('div','empty','目前沒有已保存的紀錄。請登入會員完成塔羅站內 AI 解讀，即可自動保存。'));
     for(const r of items){
       const row=dom('article','record');const head=dom('div','recordhead');const right=dom('div','recordhead-right');
       const remove=dom('button','remove-record','♲');remove.type='button';remove.textContent='🗑';remove.title='刪除這筆占卜';remove.setAttribute('aria-label',`刪除：${r.question}`);remove.addEventListener('click',()=>deleteRecord(r));
@@ -220,12 +221,13 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
     let pending=null;
     try{pending=JSON.parse(localStorage.getItem(PENDING_KEY)||'null')}catch(_){}
     if(!pending?.record||!pending.at||Date.now()-pending.at>7*86400000)return '';
+    if(!pending.record.summary3&&!pending.record.summary6)return ''; // Legacy prompt-only records must not auto-save.
     const email=String(identity()?.email||'').toLowerCase();
     if(pending.ownerHint&&pending.ownerHint!==email)return '';
     try{
       await api('/member/records',{record:pending.record});
       try{localStorage.removeItem(PENDING_KEY)}catch(_){}
-      return '已自動保存登入前取得的提示詞。';
+      return '已同步之前的會員占卜紀錄。';
     }catch(err){return '尚未儲存上次提示詞：'+err.message}
   }
   async function loadPage(first=false){
@@ -236,7 +238,7 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
       const data=await api('/member/records?page='+currentPage);
       items.push(...data.records);more=!!data.more;currentPage++;totalRecords=Number.isInteger(data.total)?data.total:items.length;
       if(first)dueItems=data.due||[];
-      renderList();message(syncMessage|| (items.length?'你的歷史占卜紀錄已載入。':'尚無紀錄，第一次抽牌取得提示詞後就能保存。'),/尚未儲存/.test(syncMessage));
+      renderList();message(syncMessage|| (items.length?'你的歷史占卜紀錄已載入。':'尚無紀錄，完成站內 AI 解讀後就會自動保存。'),/尚未儲存/.test(syncMessage));
     }catch(err){message(err.message,true)}finally{$('loadMore').disabled=false}
   }
   function renderPromptBox(container,title,text,stage){
@@ -272,8 +274,11 @@ label{display:block;font-size:.86rem;font-weight:750;margin-bottom:6px}textarea,
       const list=dom('ol','cardlines');g.cards.forEach(c=>list.append(dom('li','',`${c.position}：${c.name}（${c.reversed?'逆位':'正位'}）`)));box.append(list);wraps.append(box);
     });
     const prompt=$('promptActions');prompt.replaceChildren();
-    renderPromptBox(prompt,'第一階段｜當時的三張牌提示詞',r.prompt3,'3');
-    renderPromptBox(prompt,'第二階段｜當時的六張牌提示詞',r.prompt6,'6');
+    for(const [heading,txt] of [['第一階段｜AI 精簡結論',r.summary3],['第二階段｜AI 精簡結論',r.summary6]]){
+      if(!txt)continue;
+      const panel=dom('div','subpanel');panel.style.marginTop='12px';panel.append(dom('h3','',heading),dom('p','',txt));prompt.append(panel);
+    }
+    if(!r.summary3&&!r.summary6){prompt.append(dom('p','small','舊版紀錄僅保留牌面；新版成功解讀後才會產生精簡 AI 結論。'));}
     $('noteInput').value=r.note||'';updateNoteCounter();reminderForm(r);$('settingStatus').textContent='';$('markReviewed').hidden=!!r.reviewedAt||!r.reminderDate||r.reminderDate>todayTaiwan();
     window.scrollTo({top:0,behavior:'smooth'});
   }

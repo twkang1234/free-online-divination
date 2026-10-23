@@ -3261,6 +3261,29 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     const q=state.custom?extra:(extra?`${state.question}（補充背景：${extra}）`:state.question);
     return {q,context:{topic:{id:state.topic.id,name:state.topic.name,focus:state.topic.focus},scenario:{id:state.scenario.id,name:state.scenario.name,desc:state.scenario.desc},questionIntent:state.custom?'custom':'guided',cast}};
   }
+
+  // Three free records per logged-in member. No full reading/AI text stored.
+  let yjArchiveId='';
+  function yjShortText(x){return Array.from(String(x||'').replace(/\*\*/g,'').replace(/^#{1,5}\s*/gm,'').replace(/\s+/g,' ').trim()).slice(0,300).join('')}
+  function yjArchivePayload(r,aiText=''){
+    if(!r?.base?.name||!r?.question||!yjArchiveId)return null;
+    const move=Array.isArray(r.movingLines)?r.movingLines.join('、'):String(r.movingNames||'無');
+    const summary=yjShortText(aiText||r.base?.summary||r.baseDepth?.core||r.summaryDisplay||r.summary||'');
+    return {id:yjArchiveId,question:String(r.question),title:`${r.base.number||''}・${r.base.name}卦`,summary,
+      details:{topic:r.topic?.name||'',scenario:r.scenario?.name||'',method:r.castMethod?.label||'',base:r.base.name,
+        changed:r.changed?.name||'',moving:move,mode:r.castMethod?.mode||''}};
+  }
+  async function yjArchiveSave(r,aiText=''){
+    const token=yijingSavedSession();
+    if(!yijingSessionMember?.sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(token)||isAdminTestActive()||location.protocol==='file:')return;
+    const body=yjArchivePayload(r,aiText);if(!body)return;
+    try{
+      const response=await fetch('https://member-api.ezgocpu.workers.dev/member/archive/yijing',{
+        method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store',keepalive:true});
+      const obj=await response.json().catch(()=>({}));if(!response.ok||!obj.success)console.warn('易經會員紀錄未儲存',obj.error||response.status);
+    }catch(e){console.warn('易經會員紀錄暫時無法連線',String(e).slice(0,60))}
+  }
+
   async function runCast(cast,button=null){
     if(!guardDailyQuota())return;
     if(!guardCustomQuestionQuality())return;
@@ -3288,7 +3311,8 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         reading=await YijingCore.draw(data.q,data.context,{...options,sharedConfirmed:true});
       }
       yjActiveCastOp=options.operationId;yjActiveCustomTicket=state.custom?yjPendingCustom.ticket:'';yjPendingCustom={question:'',operationId:'',ticket:'',sourceKey:'',paidPoints:0};yjReadingGrants.clear();yjProLoaded=false;await yjRefreshPro();
-      markReadingUsed();render(reading);yijingTrackUsage('cast',yijingUsageCategory());
+      yjArchiveId=options.operationId;markReadingUsed();render(reading);yijingTrackUsage('cast',yijingUsageCategory());
+      void yjArchiveSave(reading);
     }
     catch(err){console.error(err);const reason=err?.message==='CAST_PERIOD_LIMIT'?'本期免費起卦次數已用完，請登入會員或等待下一次補充。':err?.message;alert(reason||(state.custom?'目前無法完成起卦，請稍後再試。':'目前無法取得解卦結果，請稍後再試。'));}
     finally{panel?.classList.remove('cast-working');if(button){button.disabled=false;if(oldText)button.textContent=oldText;}}
@@ -3716,6 +3740,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         const data=await requestYijingAI(r,'initial',{},ctrl.signal);
         // 安全渲染基本 Markdown：以 textContent 產生 DOM，不執行 AI 回傳的 HTML/JS。
         renderSafeYijingMarkdown(content,data.answer.trim());content.hidden=false;
+        void yjArchiveSave(r,data.answer.trim());
         status.textContent='✓ 已完成 AI 解卦'+(data.channel?'｜通道 '+data.channel:'')+(data.traceId?'｜追蹤碼 '+data.traceId:'');
         const download=document.getElementById('downloadYijingAiTxt');
         const finishedAt=new Date();

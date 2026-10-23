@@ -315,13 +315,13 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 </section>
 <section id="pageYijing" class="view" hidden>
   <div class="subnav"><button class="btn ghost small" data-back type="button">← 返回會員中心</button><small>MEMBER / YIJING</small></div>
-  <div class="heading-row"><div><div class="kicker">MY YIJING</div><h1 class="page-heading">我的易經占卜紀錄</h1><p class="lead">未來會在這裡保存每一次的起卦問題、本卦、動爻、變卦，以及當時的占卜紀錄與心得。</p></div><a href="yijing.html" class="btn primary">前往易經占卜 ↗</a></div>
-  <div class="empty-state"><div class="sign">☯</div><h3>易經會員歷史紀錄尚待串接</h3><p>目前上傳的易經網站檔案沒有可確認的歷史紀錄 API。為避免出現虛假的「已儲存」，這裡先建立獨立假分頁，待後端確認後再啟用真實紀錄。</p><a href="yijing.html" class="btn">返回易經工具</a></div>
+  <div class="heading-row"><div><div class="kicker">MY YIJING</div><h1 class="page-heading">我的易經占卜紀錄</h1><p class="lead">免費自動保留最近 3 組起卦紀錄，包含問題、卦象及精簡結論。</p></div><a href="yijing.html" class="btn primary">前往易經占卜 ↗</a></div>
+  <div id="yijingArchiveList" class="record-list"><div class="empty-state">登入後查詢最近 3 組易經紀錄。</div></div>
 </section>
 <section id="pageCezi" class="view" hidden>
   <div class="subnav"><button class="btn ghost small" data-back type="button">← 返回會員中心</button><small>MEMBER / CEZI</small></div>
-  <div class="heading-row"><div><div class="kicker">MY CEZI</div><h1 class="page-heading">我的測字</h1><p class="lead">從免費固定字形與字義開始，第二階段再決定是否使用 AI 深度解讀。</p></div><a href="cezi.html" class="btn primary">前往線上測字 ↗</a></div>
-  <div class="empty-state"><div class="sign">✎</div><h3>開啟測字問事</h3><p>測字歷史紀錄尚未提供獨立會員查詢 API；此處不會虛構已儲存的測字紀錄。</p><a href="cezi.html" class="btn">開始測字 ↗</a></div>
+  <div class="heading-row"><div><div class="kicker">MY CEZI</div><h1 class="page-heading">我的測字</h1><p class="lead">完成第二階段站內 AI 解讀後，自動保存最近 3 組測字紀錄。</p></div><a href="cezi.html" class="btn primary">前往線上測字 ↗</a></div>
+  <div id="ceziArchiveList" class="record-list"><div class="empty-state">登入後查詢最近 3 組測字紀錄。</div></div>
 </section>
 <footer class="footer">© 一念知機 Divination Hub · 全站共用 Google 會員帳號<br>占卜紀錄僅限帳號本人存取；網站異常回報不是私人占卜諮詢服務。<div style="margin-top:8px"><a href="index.html">網站首頁</a><a href="bazi.html">八字</a><a href="tarot.html">塔羅</a><a href="yijing.html">易經</a><a href="cezi.html">測字</a></div></footer>
 </main>
@@ -475,10 +475,37 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     finally{announcementLoading=false}
   }
   function taiwanDate(value){if(!value)return '—';const t=new Date(value);return Number.isNaN(t.getTime())?'—':t.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'})}
-  function pageFromHash(){return ['bazi','tarot','yijing'].includes(location.hash.slice(1))?location.hash.slice(1):'home'}
+
+  async function loadCompactArchive(tool){
+    const node=$(tool+'ArchiveList'),initial=getToken();if(!node)return;
+    if(!profile()){node.replaceChildren(textNode('div','請先登入會員再查看私人紀錄。','empty-state'));return}
+    node.replaceChildren(textNode('div','讀取會員歷史紀錄中…','empty-state'));
+    try{
+      const data=await api('/member/archive/'+tool);
+      if(initial!==getToken()||currentView!==tool)return;
+      node.replaceChildren();
+      if(!Array.isArray(data.records)||!data.records.length){node.append(textNode('div','尚未保存紀錄。完成'+(tool==='cezi'?'第二階段 AI 解讀':'易經起卦')+'後即可自動保存。','empty-state'));return}
+      const heading=textNode('p','免費保留最近 3 組，第 4 組成功儲存後替換最舊一組。','caption');node.append(heading);
+      for(const r of data.records){
+        const card=textNode('article','','record-row');
+        const head=textNode('div','','record-head');
+        head.append(textNode('h3',r.title||'占卜紀錄'),textNode('span',taiwanDate(r.createdAt),'caption'));card.append(head);
+        card.append(textNode('p','問題：'+r.question,'muted'));
+        const info=r.details||{};const bits=tool==='yijing'?[info.base?'本卦：'+info.base:'',info.changed?'變卦：'+info.changed:'',info.moving?'動爻：'+info.moving:'']:[info.hanzi?'測字：'+info.hanzi:'',info.topic||''];
+        if(bits.filter(Boolean).length)card.append(textNode('p',bits.filter(Boolean).join('｜'),'muted'));
+        if(r.summary){card.append(textNode('p','精簡結論：'+r.summary,'muted'))}
+        const actions=textNode('div','','row-actions');const remove=document.createElement('button');remove.type='button';remove.className='btn danger small';remove.textContent='刪除這組';
+        remove.addEventListener('click',async()=>{if(!confirm('刪除這組歷史紀錄？刪除後無法復原。'))return;remove.disabled=true;try{await api('/member/archive/'+tool+'/'+r.id,{method:'DELETE'});await loadCompactArchive(tool)}catch(e){remove.disabled=false;alert('刪除失敗：'+e.message)}});
+        actions.append(remove);card.append(actions);node.append(card);
+      }
+    }catch(e){node.replaceChildren(textNode('div','讀取失敗：'+e.message,'empty-state'))}
+  }
+
+  function pageFromHash(){return ['bazi','tarot','yijing','cezi'].includes(location.hash.slice(1))?location.hash.slice(1):'home'}
   function navigate(page){const p=tools.includes(page)?page:'home';if(p==='home'){if(location.hash){history.pushState(null,'',location.pathname+location.search);showPage()}else showPage()}else{if(location.hash==='#'+p)showPage();else location.hash=p}}
   function showPage(){const page=pageFromHash();currentView=page;for(const p of ['home',...tools])$('page'+(p==='home'?'Home':p[0].toUpperCase()+p.slice(1))).hidden=p!==page;window.scrollTo({top:0,behavior:'instant'});document.title=(page==='home'?'會員中心':page==='bazi'?'我的八字命盤':page==='tarot'?'我的塔羅紀錄':page==='yijing'?'我的易經紀錄':'我的測字')+'｜一念知機';
     if(page==='bazi')loadBazi();
+    if(page==='yijing'||page==='cezi')void loadCompactArchive(page);
     if(page==='tarot'&&!$('tarotFrame').src){$('tarotFrame').src='tarot-records.html?embedded=1';}
     if(page==='home'){refreshMemberAnnouncement();if(profile())loadIssues();prepareReviews();}
   }
@@ -500,6 +527,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     $('logout').textContent=isOn?'登出':'免費登入';setHeaderLoginMenu(false);
     if(isOn){setMemberLoginError('');if(sessionKey!==p.sub){sessionKey=p.sub||p.email||'logged';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;}if(currentView==='home')loadIssues();}
     else{sessionKey='';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;renderLights();renderChat();if(memberSessionCheckDone)renderGoogleLogin();}
+    if(isOn&&(currentView==='yijing'||currentView==='cezi'))void loadCompactArchive(currentView);
     rvAuthSync();
   }
   let googleHeaderReady=false,googleCenterReady=false,googleRetryScheduled=false;

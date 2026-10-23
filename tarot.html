@@ -6299,8 +6299,12 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
   }
 
   const TAROT_RECORD_PENDING='divinationhub-tarot-pending-record-v1';
-  function activeTarotRecord(prompt){
-    if(!prompt||!state.question||state.current?.length!==3)return null;
+  function dhShortConclusion(text){
+    const s=String(text||'').replace(/\*\*/g,'').replace(/^#{1,5}\s*/gm,'').replace(/\s+/g,' ').trim();
+    return Array.from(s).slice(0,300).join('');
+  }
+  function activeTarotRecord(prompt=''){
+    if(!state.question||state.current?.length!==3)return null;
     if(!state.archiveRecordId)state.archiveRecordId=(window.crypto?.randomUUID?.()||('00000000-0000-4000-8000-'+Math.random().toString(16).slice(2).padEnd(12,'0')));
     const six=state.stage3x3==='complete'&&state.advancedCards?.length===3;
     return {id:state.archiveRecordId,stage:six?6:3,topic:state.topic?.name||'自由提問',scenario:state.scenario?.name||'自行提問',question:state.question.text,
@@ -6309,7 +6313,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       followupMode:six?(state.followChoice==='related'?'related':'same'):'',followupQuestion:six?(state.followChoice==='related'?state.followText:state.question.text):'',
       format:six?`六張整合-${selectedSixPromptFormat}`:selectedPromptFormat,style:PROMPT_STYLES[selectedPromptStyle]?.name||'溫和陪伴',
       cards:[...state.current,...(six?state.advancedCards:[])].map((c,i)=>({name:c.name,position:c.position||`第${i+1}張`,reversed:!!c.reversed})),
-      prompt3:state.firstPromptSnapshot||(!six?prompt:''),prompt6:six?prompt:''};
+      summary3:dhShortConclusion(onsiteAiPhaseResults.auto?.three?.answer),summary6:six?dhShortConclusion(onsiteAiPhaseResults.auto?.six?.answer):''};
   }
   function archiveNotice(text){
     const el=els.analysis.querySelector('[data-record-status]');if(el)el.textContent=text;
@@ -6321,33 +6325,26 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     if(!response.ok||!data.ok)throw Error(data.error||'SAVE_FAILED');
     const queued=safeRead(TAROT_RECORD_PENDING,null);
     if(queued?.record?.id===record.id){try{localStorage.removeItem(TAROT_RECORD_PENDING)}catch(_){}}
-    archiveNotice('✓ 已保存會員紀錄。你可以在「我的塔羅紀錄」重新複製或下載當時的提示詞。');
+    archiveNotice('✓ 已保存會員紀錄（最近 3 組）；可在「我的塔羅紀錄」查看牌面與 AI 結論。');
     return true;
   }
   async function syncPendingTarotRecord(){
-    const saved=safeRead(TAROT_RECORD_PENDING,null);
-    if(!saved?.record||!saved.at||Date.now()-saved.at>7*86400000||!authToken()||isAdminTestActive())return;
-    if(saved.ownerHint&&saved.ownerHint!==String(authProfile()?.email||'').toLowerCase())return;
-    try{await submitTarotRecord(saved.record)}
-    catch(err){archiveNotice('尚未成功同步會員紀錄（'+String(err.message).slice(0,55)+'），請稍後重試或重新複製提示詞。')}
+    // Legacy prompt-only pending items must not create new member records.
+    return;
   }
   function rememberIssuedPrompt(prompt){
     if(state.stage3x3==='complete')state.sixPromptSnapshot=prompt;
     else state.firstPromptSnapshot=prompt;
-    const record=activeTarotRecord(prompt);if(!record)return;
-    persist3x3();
-    syncV5StepCues();
-    if(isIsolatedAdminTest()){
-      archiveNotice('管理員模擬：提示詞已產生，但不會寫入正式會員紀錄或待儲存佇列。');
-      return;
-    }
+    persist3x3();syncV5StepCues();
+  }
+  function dhAutoArchiveTarot(){
+    if(!authToken()||isAdminTestActive()||location.protocol==='file:')return;
+    const record=activeTarotRecord();if(!record)return;
+    const phase=record.stage===6?'six':'three';
+    if(!onsiteAiPhaseResults.auto?.[phase])return;
+    // Local rescue copy is compact and contains no long interpretation.
     safeWrite(TAROT_RECORD_PENDING,{record,at:Date.now(),ownerHint:authProfile()?.email?.toLowerCase()||''});
-    if(authToken()&&!isAdminTestActive()){
-      archiveNotice('正在將本次占卜保存到會員紀錄……');
-      submitTarotRecord(record).catch(err=>archiveNotice('會員紀錄尚未保存成功（'+String(err.message).slice(0,55)+'），可以稍後再試。'));
-    }else{
-      archiveNotice('提示詞已備妥。免費登入會員即可自動保存本次題目、三張牌和完整提示詞。');
-    }
+    void submitTarotRecord(record).catch(err=>archiveNotice('會員紀錄尚未儲存成功（'+String(err.message).slice(0,65)+'）。請再試一次 AI 紀錄同步。'));
   }
   // V28.17 · server-generated AI prompts; never silently fall back to client templates.
   let cachedV1Prompt={key:'',text:''};
@@ -6839,6 +6836,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       }
       status.textContent=`${aiPhaseName(phase)}完成｜通道 ${data.channel||'—'}｜追蹤碼：${data.traceId||'—'}`;
       tarotTrackUsage('ai_success',tarotUsageCategory());
+      dhAutoArchiveTarot();
       if(phase==='three'){state.firstAiInterpretationCompleted=true;persist3x3();setAIGuidanceStage('return');}
       renderFinish();updateAccessMini();updateQuotaUI();renderAdminTestBanner();
     }catch(e){
