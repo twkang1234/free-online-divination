@@ -9888,6 +9888,7 @@ const $=id=>document.getElementById(id);
 let entries=null,deck=[],cache=new Map(),inflight=new Map(),loading=false,active='report-pillars',pendingMount=false,inlineMode=false,activeSample=null;
 // Only remind before the user first uses the random-example control (for this page visit).
 let rerollAcknowledged=false,rerollAttentionStarted=false,rerollVisibilityObserver=null;
+let returningForHub=false;
 const isPersonal=()=>document.body.classList.contains('bazi-personal-full-mode');
 const isExample=()=>document.body.classList.contains('bazi-example-snapshot-mode');
 const fullyLocked=new Set(['report-reading','report-luck','report-years','report-months']);
@@ -10182,7 +10183,25 @@ function init(){
   const btn=e.target.closest('[data-bazi-open-section],#results .report-section > summary');
   if(btn){
    const id=btn.dataset.baziOpenSection||btn.closest('.report-section')?.id;
-   // An already purchased chapter always opens the visitor's ORIGINAL chart, never a sample.
+   // The grid shows the visitor's chapters, never a navigation inside a stranger's chart.
+   // V6 relied on an ephemeral owned flag; this missed 09 when that flag was invalidated.
+   // Restore the actual personal chart for ANY grid choice, then fetch the server's
+   // chart-scoped entitlement before opening. Preview still works after the return.
+   if(btn.hasAttribute('data-bazi-open-section')&&window.baziHasPersonalCore?.()){
+    e.preventDefault();e.stopImmediatePropagation();
+    if(returningForHub)return;
+    returningForHub=true;
+    const restored=inlineMode?window.baziInlineSampleReturnToHub?.():window.baziReturnToPersonalCore?.();
+    if(!restored){returningForHub=false;document.getElementById('baziExampleExit')?.click();return}
+    void (async()=>{
+      try{
+        await window.baziSectionReady?.();
+        if(!isPersonal())return;
+        document.querySelector(`[data-bazi-open-section="${id}"]`)?.click();
+      }finally{returningForHub=false}
+    })();
+    return;
+   }
    if(window.baziIsPersonalChapterOwned?.(id)){
     e.preventDefault();e.stopImmediatePropagation();
     const restored=inlineMode?window.baziInlineSampleReturnToHub?.():window.baziReturnToPersonalCore?.();
@@ -10190,8 +10209,7 @@ function init(){
     void (async()=>{
       await window.baziSectionReady?.();
       if(!isPersonal()||!window.baziIsPersonalChapterOwned?.(id))return;
-      const card=document.querySelector(`[data-bazi-open-section="${id}"]`);
-      if(card)card.click();
+      document.querySelector(`[data-bazi-open-section="${id}"]`)?.click();
     })();
     return;
    }
@@ -10576,7 +10594,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
  const LABEL={gan:'天干',zhi:'地支',ganZhi:'干支',year:'年份',month:'月份',startYear:'起始年',endYear:'結束年',startSolar:'開始日期',endSolar:'結束日期',tenGodGan:'天干十神',tenGodZhi:'地支十神',ganElement:'天干五行',zhiElement:'地支五行',interactions:'干支互動',relations:'交互關係',percentages:'各項比例',groupPercentages:'十神群組比例',summary:'整體總結',desc:'解讀說明',title:'分析重點',text:'詳解',basis:'判讀依據',good:'有利特質',watch:'注意事項',stuck:'較易卡住',label:'判斷',score:'結構評估',startJie:'起始節氣',endJie:'結束節氣',coreMotto:'核心原則',coreDetail:'深入判讀',yearsData:'流年詳細分析',rows:'各面向解讀',rules:'行動原則',actions:'實際行動',note:'補充說明',monthFlows:'逐月資訊',forward:'順排',hideGan:'藏干',yinYang:'陰陽'};
  // Confirm dialogs temporarily blur and refocus the page. A focus-triggered
  // status refresh must never invalidate an in-flight paid unlock.
- const states=new Map(),els=new Map(),restored=new Set(),pendingPurchases=new Set();
+ const states=new Map(),els=new Map(),restored=new Set(),pendingPurchases=new Set(),failedAutomaticReads=new Set();
  let generation=0,loading=false,statusRequest=0;
  // Entitlements are verified only by /v2/section/status or a successful purchase.
  // Keep them through a SAMPLE view, but never reuse them for another birth chart or session.
@@ -10721,10 +10739,10 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
     top.append(btn);box.append(top,el('div','bazi-premium-status','完成排盤後讀取解鎖狀態'));
     const out=el('div','bazi-premium-content');out.hidden=true;box.append(out);
     const container=host.querySelector('.report-body')||host;container.prepend(box);
-  }box.hidden=true;els.set(id,box);
+  }box.hidden=true;box.style.setProperty('display','none','important');els.set(id,box);
   }
  }
- function reset(options={}){generation++;statusRequest++;states.clear();restored.clear();window.baziPurchasedDocs=Object.create(null);
+ function reset(options={}){generation++;statusRequest++;states.clear();restored.clear();failedAutomaticReads.clear();window.baziPurchasedDocs=Object.create(null);
   if(!options.preservePersonalOwnership){verifiedOwnerKey='';verifiedOwnerSession='';ownershipKnown=false;verifiedOwned.clear();}
   exposeOwnership();
   const pillarCta=document.getElementById('baziPillarPaidCta');if(pillarCta)pillarCta.hidden=true;
@@ -10748,7 +10766,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   for(const id of ['luckSummary','luckGrid','luckDetail','threeYearCompare','monthSummary','monthFlowGrid','monthDetail']){
     const e=document.getElementById(id);if(e)e.replaceChildren();
   }
-  for(const box of els.values()){box.hidden=true;const btn=box.querySelector('button');if(btn){btn.hidden=false;btn.disabled=false;}const content=box.querySelector('.bazi-premium-content');if(content){content.hidden=true;content.replaceChildren()}}
+  for(const box of els.values()){box.hidden=true;box.style.setProperty('display','none','important');const btn=box.querySelector('button');if(btn){btn.hidden=false;btn.disabled=false;}const content=box.querySelector('.bazi-premium-content');if(content){content.hidden=true;content.replaceChildren()}}
  }
  window.baziPremiumReset=(options={})=>{reset(options);window.baziDecodeResetVisits?.()};
  window.baziSectionReady=async()=>{
@@ -10763,7 +10781,8 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
     if(box.hidden)continue;
     if(x.unlocked){
       if(document.getElementById(x.id)?.classList.contains('dh-bazi-premium-visible')){box.hidden=true;btn.hidden=true}
-      else {btn.hidden=true;btn.disabled=false;status(box,'正在載入已解鎖的完整內容…')}
+      else if(failedAutomaticReads.has(x.id)){box.style.removeProperty('display');box.classList.add('bazi-read-error');btn.hidden=false;btn.disabled=false;btn.textContent='重新載入完整內容（不扣點）';status(box,'完整內容尚未成功載入，請點此重新讀取（不重扣點）')}
+      else {box.classList.remove('bazi-read-error');btn.hidden=true;btn.disabled=false;status(box,'正在載入已解鎖的完整內容…')}
     }
     else if(x.mode==='free'){box.hidden=true;continue}
     else if(x.mode==='priced'){btn.hidden=false;btn.textContent='使用 '+x.points+' 點解鎖整區';btn.disabled=false;status(box,'專業點數餘額 '+result.balance+' 點｜此命盤本區只需解鎖一次')}
@@ -10771,10 +10790,10 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    }
    for(const chapterId of ['report-elements','report-tengods','report-relations']){
      if(states.get(chapterId)?.unlocked&&!restored.has(chapterId)){
-       restored.add(chapterId);void purchase(chapterId);
+       if(!failedAutomaticReads.has(chapterId))void purchase(chapterId);
      }
    }
-   for(const id of PAID_ADVANCED){const chapter=document.getElementById(id);if(chapter?.open&&states.get(id)?.unlocked&&!restored.has(id)){restored.add(id);void purchase(id)}}
+   for(const id of PAID_ADVANCED){const chapter=document.getElementById(id);if(chapter?.open&&states.get(id)?.unlocked&&!restored.has(id)&&!failedAutomaticReads.has(id))void purchase(id)}
   }catch(e){if(n===generation)for(const box of els.values()){box.hidden=true}}
   finally{loading=false}
  };
@@ -10791,7 +10810,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   if(section.mode==='free'||section.unlocked){
    notice('');onOpen();
    // 05 常用神煞是原生免費內容，不需要要求後端產生付費報告。
-   if(id!=='report-shensha'&&!restored.has(id))void purchase(id);
+   if(id!=='report-shensha'&&!restored.has(id)&&!failedAutomaticReads.has(id))void purchase(id);
    return true;
   }
   if(section.mode==='priced'){
@@ -10821,13 +10840,15 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    // again, even if rendering its content fails after a successful charge.
    s.unlocked=true;
    rememberPurchased(id,payload);
-   restored.add(id);
    updateHub(s);
    const chapter=box.closest('.report-section');
-   chapter?.classList.add('dh-bazi-premium-visible');
+   // Do not falsely claim a complete read before the original 06-09 renderer has succeeded.
+   // On failure the entitlement stays owned, but the loading guard remains unset.
    try{display(box,j.document)}catch(err){chapter?.classList.remove('dh-bazi-premium-visible');throw err}
+   chapter?.classList.add('dh-bazi-premium-visible');
+   restored.add(id);failedAutomaticReads.delete(id);box.classList.remove('bazi-read-error');
    // Paid content is already on screen; no second "re-read" or sales action.
-   status(box,'');box.hidden=true;btn.hidden=true;
+   status(box,'');box.hidden=true;box.style.setProperty('display','none','important');btn.hidden=true;
    // Server-approved entitlement has already removed this section's preview controls.
    const badge=document.getElementById('dh-sp-balance');if(badge)badge.textContent='專業解鎖點數 '+j.balance+' 點';
    window.dispatchEvent(new Event('dh-professional-points-changed'));
@@ -10837,13 +10858,16 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
      (view||chapter)?.scrollIntoView({behavior:'smooth',block:'nearest'});
    }else box.querySelector('.bazi-premium-content')?.scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){
-   box.hidden=false;btn.hidden=false;
+   if(s.unlocked){failedAutomaticReads.add(id);box.classList.add('bazi-read-error');}
+   restored.delete(id);
+   box.closest('.report-section')?.classList.remove('dh-bazi-premium-visible');
+   box.hidden=false;box.style.removeProperty('display');btn.hidden=false;
    btn.textContent=s.unlocked?'重新載入完整內容（不扣點）':(s.mode==='priced'?'使用 '+s.points+' 點解鎖整區':'免費閱讀完整分析');
    status(box,(e?.message||'讀取失敗')+'；若已成功解鎖，重新載入不會重複扣點');
    notice((e?.message||'讀取失敗')+'；若已解鎖，重新開啟此區不會重複扣點。');
   }finally{pendingPurchases.delete(id);btn.disabled=false}
  }
- const init=()=>{addBoxes();document.getElementById('baziPillarPaidAction')?.addEventListener('click',()=>document.querySelector('#baziSectionHub [data-bazi-open-section="report-pillars"]')?.click());PAID_ADVANCED.forEach(id=>document.getElementById(id)?.addEventListener('toggle',()=>{if(document.getElementById(id)?.open&&states.get(id)?.unlocked&&!restored.has(id)){restored.add(id);void purchase(id)}}));window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
+ const init=()=>{addBoxes();document.getElementById('baziPillarPaidAction')?.addEventListener('click',()=>document.querySelector('#baziSectionHub [data-bazi-open-section="report-pillars"]')?.click());PAID_ADVANCED.forEach(id=>document.getElementById(id)?.addEventListener('toggle',()=>{if(document.getElementById(id)?.open&&states.get(id)?.unlocked&&!restored.has(id)&&!failedAutomaticReads.has(id))void purchase(id)}));window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
@@ -11557,6 +11581,24 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible .b
 body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-years,#report-months).dh-bazi-premium-visible > .report-body > .bazi-decode-end-actions{
   display:flex!important;
 }
+</style>
+
+<style id="bazi-v7-premium-state-cleanup">
+/* HTML hidden must win over legacy paid-card display!important overrides, in ALL modes. */
+body #results .report-section .report-body .bazi-premium-box[hidden],
+body #results .report-section.dh-bazi-premium-visible .report-body .bazi-premium-box[hidden],
+body.bazi-example-snapshot-mode #results .report-section .bazi-premium-box[hidden]{display:none!important}
+/* Never show the old paid panel beside an archived example. */
+body.bazi-example-snapshot-mode #results .report-section .bazi-premium-box{display:none!important}
+/* Once original data is verified and rendered, purchase panels and sample banners must not compete. */
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible .bazi-premium-box{display:none!important}
+body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible .bazi-private-lock-panel{display:none!important}
+/* Only after a paid read genuinely fails, expose ONE retry control; ordinary checkout
+   stays hub-only, and purchased content stays free of a second action. */
+body.bazi-personal-full-mode #results .report-section .report-body .bazi-premium-box.bazi-read-error:not([hidden]){display:block!important;flex:0 0 100%;width:100%;min-height:0!important;padding:13px 16px!important;border:1px solid var(--gold,#b89448)!important}
+body.bazi-personal-full-mode #results .report-section .report-body .bazi-premium-box.bazi-read-error:not([hidden]) .bazi-premium-top{display:flex!important;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px}
+body.bazi-personal-full-mode #results .report-section .report-body .bazi-premium-box.bazi-read-error:not([hidden]) .bazi-premium-status{display:block!important}
+body.bazi-personal-full-mode #results .report-section .report-body .bazi-premium-box.bazi-read-error:not([hidden]) button{display:inline-block!important}
 </style>
 </body>
 </html>
