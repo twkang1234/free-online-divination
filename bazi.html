@@ -6371,7 +6371,7 @@ ${intent}
     refreshSmartPromptLocks();
   }
 
-  // 新命盤或切換範例時清空舊付費說明；無免費白話解讀可自動展開。
+  // 每次換命盤／換範例都清空上一次的說明，避免跨樣本混用資料。
   window.baziDecodeResetVisits=()=>{
     document.querySelectorAll('#results .section-decode').forEach(box=>{
       box.hidden=true;
@@ -6379,7 +6379,37 @@ ${intent}
       box.querySelector('.decode-summary-grid')?.replaceChildren();
     });
   };
-  window.baziDecodeOpenFirstVisit=()=>{};
+
+  // 只為後端儲存的完整範例恢復原本「看懂這一區」圖文內容。
+  // 未解鎖的個人四柱資料不進入此路徑，付費章節維持原有後端驗權。
+  window.baziDecodeOpenFirstVisit=(id)=>{
+    if(!document.body.classList.contains('bazi-example-snapshot-mode'))return;
+    if(!lastData || lastData.publicPreview)return;
+    const def=sectionDefinitions.find(item=>item.id===id);
+    const box=def&&$(id)?.querySelector('.section-decode');
+    const content=box?.querySelector('.decode-content');
+    const grid=content?.querySelector('.decode-summary-grid');
+    if(!def||!grid)return;
+    if(grid.children.length){content.classList.add('show');box.hidden=false;return;}
+    try{
+      // 第 08 區優先使用已儲存的完整三年戰略，而不只展示三張摘要卡。
+      // 其餘八區直接使用原本的完整「看懂這一區」解讀產生器。
+      const detailed=(def.key==='years' && lastData.threeYearStrategicOutlook?.survivalBlueprint)
+        ? renderThreeYearMasterGuideHtml(lastData.threeYearStrategicOutlook,lastData)
+        : '';
+      const explanation=sectionExplanation(def.key,lastData);
+      if(!detailed&&!explanation)return;
+      grid.innerHTML='<div class="bazi-example-decode-heading"><strong>看懂這一區｜完整範例解讀</strong><small>依目前展示的這筆已儲存範例命盤解析；不是你的個人命盤。</small></div>'
+        +detailed+explanation;
+      content.classList.add('show');
+      box.hidden=false;
+    }catch(error){
+      console.warn('無法呈現這筆已儲存範例的分區詳解',id,error);
+      // 個別範例資料缺漏時保留既有上半部，不以任何個人盤資料補足。
+      grid.replaceChildren();
+      box.hidden=true;
+    }
+  };
 
   function buildAiPrompt(data){ return buildSmartPrompt(data,'full','工作事業','deep'); }
 
@@ -7737,6 +7767,8 @@ ${intent}
     document.body.classList.remove('show-bazi-intro');
     document.body.classList.add('has-bazi-chart');
     window.baziReadingUiSuccess?.(data);
+    // 01 四柱主區預設展開，立即補回完整範例的下半部；其餘章節由開章時載入。
+    window.baziDecodeOpenFirstVisit?.('report-pillars');
     const exampleDateMatch=String(data.solarText||'').match(/^(\d{4})-(\d{2})-(\d{2})(?=\D|$)/);
     const exampleBirthDate=exampleDateMatch?`${exampleDateMatch[1]} 年 ${Number(exampleDateMatch[2])} 月 ${Number(exampleDateMatch[3])} 日`:'';
     $('baziExampleSnapshotTitle').textContent=(meta.inline?'他人完整命盤示範｜非你的命盤':String(meta.title||'已存範例'))+(exampleBirthDate?'｜範例出生日期：'+exampleBirthDate:'')+(meta.inline?'':'｜快照日期 '+String(meta.asOf||'建立時'));
@@ -10192,6 +10224,19 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift .dh-quota-gift-heading
 })();
 </script>
 
+<style id="bazi-archived-full-decode-20261023">
+/* Only archived examples receive the restored, complete nine-chapter explanation. */
+body.bazi-example-snapshot-mode .bazi-example-decode-heading{
+  grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;
+  padding:12px 15px;border:1px solid var(--bazi-line-115,rgba(233,189,88,.45));
+  border-radius:11px;background:var(--bazi-bg-209,rgba(233,189,88,.04));
+}
+body.bazi-example-snapshot-mode .bazi-example-decode-heading strong{font-size:.87rem;color:var(--bazi-text-6,#e9bd58)}
+body.bazi-example-snapshot-mode .bazi-example-decode-heading small{font-size:.71rem;color:var(--dim,#9ca7b8)}
+body.bazi-example-snapshot-mode .section-decode:not([hidden]){display:block}
+body.bazi-example-snapshot-mode .section-decode .decode-content.show{display:block}
+@media(max-width:680px){body.bazi-example-snapshot-mode .bazi-example-decode-heading{padding:10px}}
+</style>
 <style id="bazi-compact-example-and-nav-20261021">
 /* 範例提醒：說明、生日、換樣本並列，使用原本空白區域，不再增加行高。 */
 body.bazi-example-snapshot-mode .bazi-core-random-controls{
