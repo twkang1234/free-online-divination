@@ -3334,7 +3334,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
           <summary><span><b>05</b> 常用神煞</span><small>25 COMMON SHENSHA · AUXILIARY SIGNALS</small></summary>
           <div class="report-body">
             <div class="shensha-headline" id="shenshaHeadline"></div>
-            <div class="shensha-pillar-title stage-title"><h4>依四柱位置看神煞</h4><span>年柱 · 月柱 · 日柱 · 時柱</span></div>
+            <div class="shensha-pillar-title"><h4>依四柱位置看神煞</h4><span>年柱 · 月柱 · 日柱 · 時柱</span></div>
             <p class="shensha-stage-guide"><b>四欄仍保留人生階段提示，但以「四柱位置」為主：</b>年柱看家族與早年背景、月柱看成長環境與工作社會關係、日柱看自身與伴侶、時柱看子女與後續發展。神煞落在哪一柱，<b>不等於只在那個年齡階段作用</b>；真正應期仍需結合大運、流年判讀。</p>
             <div class="shensha-pillar-grid integrated" id="shenshaPillars"></div>
             <div id="shenshaGlobalAnalysis"></div>
@@ -10082,7 +10082,18 @@ function init(){
   if(!isExample()||!inlineMode)return;
   if(e.target.closest('#baziExampleExit')){resetUnclickedReminder();inlineMode=false;return}
   const btn=e.target.closest('[data-bazi-open-section]');
-  if(btn){const id=btn.dataset.baziOpenSection;if(chapters.some(x=>x[0]===id)){active=id;setTimeout(()=>{randomBar(id);if(!rerollAcknowledged&&!rerollAttentionStarted)bringFirstReminderIntoView(id)},100)}}
+  if(btn){
+   const id=btn.dataset.baziOpenSection;
+   if(id==='report-shensha'){
+    // 05 is a free logged-in personal chapter: do not show an archived example for it.
+    e.preventDefault();e.stopImmediatePropagation();
+    const restored=window.baziInlineSampleReturnToHub?.();
+    if(restored){requestAnimationFrame(()=>document.querySelector('#baziSectionHub [data-bazi-open-section="report-shensha"]')?.click());}
+    else document.getElementById('baziExampleExit')?.click();
+    return;
+   }
+   if(chapters.some(x=>x[0]===id)){active=id;setTimeout(()=>{randomBar(id);if(!rerollAcknowledged&&!rerollAttentionStarted)bringFirstReminderIntoView(id)},100)}
+  }
  },true);
  // Reinstall original in-area button when the core rerenders its panels.
  const observer=new MutationObserver(m=>{
@@ -11174,6 +11185,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<style id="bazi-shensha-heading-polish-20261024">
+/* The section label is a small inline heading, not the page-wide large gradient title. */
+#report-shensha .shensha-pillar-title{align-items:center;gap:14px;margin:17px 0 11px;line-height:1.5;letter-spacing:normal}
+#report-shensha .shensha-pillar-title h4{margin:0;font-size:.88rem;line-height:1.5;letter-spacing:0;font-weight:800;white-space:normal}
+#report-shensha .shensha-pillar-title span{font-size:.55rem;line-height:1.5;white-space:normal;text-align:right}
+@media(max-width:600px){#report-shensha .shensha-pillar-title{align-items:flex-start;flex-wrap:wrap;gap:4px 10px}#report-shensha .shensha-pillar-title span{text-align:left}}
+</style>
 <style id="bazi-example-footer-20261024">
 /* One compact footer row for each of the nine archived-example chapters. */
 body.has-bazi-chart .bazi-decode-end-actions:has(.bazi-example-footer-options:not([hidden])){
@@ -11249,16 +11267,16 @@ html[data-theme="light"] body.has-bazi-chart .bazi-decode-end-actions .bazi-exam
   const isExample=document.body.classList.contains('bazi-example-snapshot-mode');
   for(const nav of footers()){
    const opts=nav.querySelector('.bazi-example-footer-options');if(!opts)continue;
-   opts.hidden=!isExample;
-   if(!isExample)continue;
    const id=nav.closest('.report-section')?.id, name=CHAPTERS[id];
+   opts.hidden=!isExample||id==='report-shensha';
+   if(opts.hidden)continue;
    const birth=opts.querySelector('.bazi-example-footer-birthdate');
    if(birth){birth.textContent=lastDate?'範例出生日期：'+lastDate:'範例出生日期：載入中';}
    const btn=opts.querySelector('.bazi-example-footer-unlock');if(!btn||!name)continue;
    const entry=prices.get(id);
    if(window.baziExamplePersonalUnlocked?.has(id)){btn.textContent='查看自己命盤的「'+name+'」區｜已解鎖';btn.disabled=false;continue}
    if(!priceLoaded){btn.textContent='解鎖自己命盤的「'+name+'」區｜專業解鎖點數讀取中';btn.disabled=true;continue}
-   if(id==='report-shensha'||entry?.mode==='free'){
+   if(entry?.mode==='free'){
     btn.textContent='查看自己命盤的「'+name+'」區｜免費開放';btn.disabled=false;
    }else if(entry?.mode==='priced'&&Number.isFinite(Number(entry.points))&&Number(entry.points)>0){
     btn.textContent='解鎖自己命盤的「'+name+'」區｜使用專業解鎖點數 '+Number(entry.points)+' 點';btn.disabled=false;
@@ -11271,7 +11289,7 @@ html[data-theme="light"] body.has-bazi-chart .bazi-decode-end-actions .bazi-exam
   if(!priceLoaded&&!loading)void readPricing();
  };
  window.baziExampleFooterUnlock=async id=>{
-  if(!CHAPTERS[id]||!document.body.classList.contains('bazi-example-snapshot-mode'))return;
+  if(!CHAPTERS[id]||id==='report-shensha'||!document.body.classList.contains('bazi-example-snapshot-mode'))return;
   const entry=prices.get(id);
   if(id!=='report-shensha'&&!window.baziExamplePersonalUnlocked?.has(id)&&!(entry?.mode==='free'||entry?.mode==='priced'&&Number(entry.points)>0))return;
   if(!window.baziHasPersonalCore?.()){
