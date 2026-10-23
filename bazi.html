@@ -8493,6 +8493,7 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
   const isCompactChapterLayout=()=>root.dataset.baziLayout==='mobile'||(root.dataset.baziLayout!=='desktop'&&window.matchMedia('(max-width:700px)').matches);
   function updateChapterNavigation(){
     const index=chapterIds.indexOf(activeChapterId),active=index>=0;
+    document.body.classList.toggle('bazi-chapter-reading-active',active);
     document.querySelectorAll('[data-bazi-open-section]').forEach(btn=>{
       const primary=btn.dataset.baziOpenSection==='report-pillars';
       const selected=active&&btn.dataset.baziOpenSection===activeChapterId;
@@ -9102,6 +9103,8 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-batch{background:#ef
 .bazi-personal-core-notice span{font-size:.71rem;color:var(--dim);line-height:1.7}
 .bazi-personal-core-notice button{padding:9px 13px;min-height:38px;border:1px solid #4d999c;border-radius:10px;background:#205f69;color:#fff;font-size:.73rem;font-weight:750;cursor:pointer}
 body.bazi-personal-full-mode #baziPersonalPreview{display:block!important;margin:22px 0 12px}
+/* 九大專區詳情聚焦閱讀；回到九大目錄才恢復個人 AI 選題。 */
+body.bazi-personal-full-mode.bazi-chapter-reading-active #baziPersonalPreview{display:none!important}
 body.bazi-personal-full-mode #baziPersonalPreview :is(.bazi-access-head,.bazi-personal-pillars,.bazi-plain-reading,#baziPersonalBasicInfo){display:none!important}
 body.bazi-personal-full-mode #baziPersonalPreview .bazi-report-group{border-top:0;padding-top:0}
 /* All nine professional analysis chapters remain available; old extra AI tools use a locked legacy API. */
