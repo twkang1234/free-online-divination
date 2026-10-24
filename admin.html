@@ -244,6 +244,18 @@ td.muted{color:var(--muted)}
 .dh-ai-monitor[open]>summary{border-bottom:1px solid var(--line)}.dh-ai-monitor[open]>summary::after{content:'▴'}
 .dh-ai-badge{border-radius:99px;padding:4px 9px;font-size:.7rem;background:#153326;color:#a7e8c0;border:1px solid #295e42}
 .dh-ai-badge.alert{background:#3b1720;color:#ffb9c5;border-color:#9d3d52}
+/* 雙來源警示：會員手動回報優先顯示，兩者不可互相遮蔽。 */
+.dh-ai-monitor>summary{flex-wrap:wrap;justify-content:flex-start}
+.dh-ai-summary-title{font-weight:800;white-space:nowrap}
+.dh-ai-alert-pair{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-left:auto}
+.dh-ai-alert-pair .dh-ai-badge{display:inline-flex;align-items:center;min-height:29px;padding:4px 12px;white-space:nowrap;font-size:.76rem;line-height:1.35}
+.dh-ai-badge-manual{font-weight:850;order:0}
+.dh-ai-badge-system{font-weight:720;order:1}
+.dh-ai-badge-manual.alert{background:#52202a;border-color:#d96c80;color:#ffccd3;box-shadow:0 0 0 1px rgba(220,104,125,.13)}
+.dh-ai-badge-system.alert{background:#382a15;border-color:#9b7538;color:#ffdda0}
+.dh-ai-monitor>summary::after{margin-left:0;flex:0 0 auto}
+@media(max-width:690px){.dh-ai-monitor>summary{position:relative;padding-right:40px}.dh-ai-alert-pair{margin-left:0;width:100%}.dh-ai-monitor>summary::after{position:absolute;right:17px;top:18px;margin-left:0}.dh-ai-summary-title{white-space:normal}}
+
 .dh-ai-inner{padding:16px 18px 20px}.dh-ai-intro{font-size:.76rem;color:#a8b6c4;line-height:1.75;margin:0 0 13px}
 .dh-ai-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:13px 0}
 .dh-ai-cards>div{border:1px solid #2c3744;background:#0b141e;padding:14px;border-radius:11px}
@@ -679,9 +691,9 @@ td.muted{color:var(--muted)}
 
 
     <details class="section dh-ai-monitor" id="dhAiMonitor" style="margin-bottom:24px">
-      <summary>⚠ 網站功能異常分析 <span id="dhAiMonitorBadge" class="dh-ai-badge">尚未查詢</span></summary>
+      <summary><span class="dh-ai-summary-title">⚠ 網站功能異常分析</span><span class="dh-ai-alert-pair" role="group" aria-label="手動回報與系統自動偵測的獨立警示"><span id="dhAiManualBadge" class="dh-ai-badge dh-ai-badge-manual" title="會員主動回報，優先查看">手動：等待讀取</span><span id="dhAiSystemBadge" class="dh-ai-badge dh-ai-badge-system" title="根據已記錄的 AI 最終失敗，無法涵蓋所有瀏覽器連線問題">系統：等待讀取</span></span></summary>
       <div class="dh-ai-inner">
-        <p class="dh-ai-intro">此處專看<strong>使用者整次 AI 解讀的最終失敗</strong>及<strong>會員主動回報</strong>。AI A／B／C 等個別供應商的失敗及備援，請看既有「AI 總控」，此處不重複計算。無新請求時只能說「尚未確認恢復」，不能判定網站一直故障。</p>
+        <p class="dh-ai-intro">此處把<strong>會員主動回報</strong>及<strong>使用者整次 AI 解讀的最終失敗</strong>分開警示，優先查看會員回報。AI A／B／C 等個別供應商的失敗及備援，請看既有「AI 總控」，此處不重複計算。無新請求時只能說「尚未確認恢復」，不能判定網站一直故障。</p>
         <div class="dh-ai-monitor-filters" aria-label="異常監控查詢條件">
           <div class="dh-ai-periods" role="group" aria-label="日期區間">
             <button type="button" data-dh-period="1" aria-pressed="false">今天</button>
@@ -708,14 +720,14 @@ td.muted{color:var(--muted)}
           <div id="dhAiDailyTable" class="dh-ai-daily-wrap"></div>
         </section>
         <section class="dh-ai-monitor-section">
-          <h3>系統自動偵測｜尚未確認恢復 <span class="dh-ai-section-count" id="dhAiUnresolvedCount">—</span></h3>
-          <p class="dh-ai-muted">只列整次 AI 解讀的終局故障。假如已經有後續成功，將移至下方歷史區；若沒有後續請求，狀態為「無法確認」，不等於持續停機。</p>
-          <div id="dhAiItems"></div>
-        </section>
-        <section class="dh-ai-monitor-section">
           <h3>使用者手動回報 <span class="dh-ai-section-count" id="dhAiManualCount">—</span></h3>
           <p class="dh-ai-muted">接入現有的「會員異常紅燈」。目前只知道哪一個工具被會員回報、回報時間；原始紅燈沒有附錯誤碼或問題描述，不能從這裡直接推定原因。詳細原因可使用原本的站長詢問功能。</p>
           <div id="dhAiManualReports"></div>
+        </section>
+        <section class="dh-ai-monitor-section">
+          <h3>系統自動偵測｜尚未確認恢復 <span class="dh-ai-section-count" id="dhAiUnresolvedCount">—</span></h3>
+          <p class="dh-ai-muted">只列整次 AI 解讀的終局故障。假如已經有後續成功，將移至下方歷史區；若沒有後續請求，狀態為「無法確認」，不等於持續停機。</p>
+          <div id="dhAiItems"></div>
         </section>
         <details class="dh-ai-history" id="dhAiHistory">
           <summary>過去異常／故障後已出現成功（<span id="dhAiHistoryCount">0</span> 類）</summary>
@@ -1928,8 +1940,18 @@ function render(data){
  $('dhAiManualCount').textContent=data.manual?.available?String(memberCount)+' 人':'查詢失敗';
  $('dhAiUnresolvedCount').textContent=String(unresolved.length)+' 類';
  $('dhAiHistoryCount').textContent=String(historical.length);
- const badge=$('dhAiMonitorBadge'),alert=unresolved.length>0||memberCount>0||!data.centerAvailable||!data.dailyAvailable||!data.manual?.available;
- badge.textContent=(!data.centerAvailable||!data.dailyAvailable)?'部分數據未就緒':unresolved.length?'尚無後續成功 '+unresolved.length+' 類':memberCount?'會員回報 '+memberCount+' 人':'暫無需追查的紀錄';badge.classList.toggle('alert',alert);
+ // 頂部標示永遠是「全站」待處理狀態，不因下方日期／工具篩選而隱藏警示。
+ const manualBadge=$('dhAiManualBadge'),systemBadge=$('dhAiSystemBadge');
+ const manualAvailable=data.manual?.available===true;
+ const allManualCount=Math.max(0,Number(data.manual?.total||0));
+ manualBadge.textContent=!manualAvailable?'手動：資料無法讀取':allManualCount?'手動：'+allManualCount+' 人回報':'手動：0 人回報';
+ manualBadge.classList.toggle('alert',!manualAvailable||allManualCount>0);
+ const allUnresolved=(data.groups||[]).filter(g=>!g.recoveryObserved).length;
+ const systemAvailable=data.centerAvailable===true&&data.dailyAvailable===true;
+ systemBadge.textContent=!systemAvailable?(allUnresolved?'系統：至少 '+allUnresolved+' 類待查（資料不全）':'系統：資料未齊'):
+   allUnresolved?(data.truncated?'系統：至少 '+allUnresolved+' 類待確認':'系統：'+allUnresolved+' 類待確認'):
+   data.truncated?'系統：紀錄不完整':'系統：0 類待確認';
+ systemBadge.classList.toggle('alert',!systemAvailable||!!data.truncated||allUnresolved>0);
  const notice=[];
  if(!data.centerAvailable)notice.push('AI 總控歷史資料無法讀取（不能把沒有數據當成正常）');
  if(!data.dailyAvailable)notice.push('每日成功／失敗統計暫時無法讀取');
@@ -1992,7 +2014,7 @@ async function load(force=false){
  if(busy||!readToken()||document.hidden||$('dashboard').hidden)return;
  if(!force&&Date.now()-lastFetch<15000)return;
  busy=true;try{render(await api('/admin/ai-monitor'));lastFetch=Date.now()}
- catch(e){$('dhAiMonitorBadge').textContent='監控查詢失敗';$('dhAiMonitorBadge').classList.add('alert');$('dhAiStatus').textContent='查詢失敗：'+(e.message||'未知問題')}
+ catch(e){for(const [id,label] of [['dhAiManualBadge','手動'],['dhAiSystemBadge','系統']]){const b=$(id);b.textContent=label+'：查詢失敗';b.classList.add('alert')} $('dhAiStatus').textContent='查詢失敗：'+(e.message||'未知問題')}
  finally{busy=false}
 }
 for(const btn of document.querySelectorAll('[data-dh-period]'))btn.addEventListener('click',()=>{
