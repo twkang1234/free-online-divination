@@ -6799,6 +6799,14 @@ ${intent}
   // Read-only scoring used ONLY to label public examples in independent gallery 09.
   // No chart mutation, no entitlement changes, no paid renderer invocation.
   window.baziGalleryAssess=(data,period)=>BaziCore.assessment(data,period);
+  window.baziGalleryNativeTools=Object.freeze({
+    assessment:(data,item)=>timeAssessment(data,item),
+    ranks:(data,items)=>rankEntries(data,items),
+    currentLuck:(data)=>BaziCore.currentLuck(data),
+    threeYear:(data)=>BaziCore.generateThreeYearStrategicOutlook(data),
+    luckDetail:(data,item,rank)=>renderLuckPeriodDetail(data,item,rank),
+    monthDetail:(data,item)=>periodDetail(data,item)
+  });
   function renderLuck(data){
     const y=data.daYun||{},cycles=y.cycles||[];
     if(y.error||!cycles.length){$('luckMeta').textContent=y.error||'目前沒有大運資料';$('luckGrid').innerHTML='';$('luckSummary').innerHTML='';$('luckDetail').textContent='大運資料尚未取得，請重新排盤。';return;}
@@ -11898,6 +11906,22 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
 </style>
 
 
+<style id="bazi-gallery-native-legacy-v15">
+/* Gallery 09 is isolated in state, not in visual language. Original native
+   07/08 card classes, colors, spacing and type scale are preserved. */
+#report-examples .bazi-gallery-native{display:block;width:100%;min-width:0;color:var(--text)}
+#report-examples .bazi-gallery-native .fortune-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px}
+#report-examples .bazi-gallery-native .luck-grid{display:grid;grid-template-columns:repeat(8,minmax(92px,1fr));gap:8px}
+#report-examples .bazi-gallery-native .luck-header{display:flex;justify-content:space-between;align-items:flex-end;gap:14px}
+#report-examples .bazi-gallery-native .three-year-compare{display:block;width:100%}
+#report-examples .bazi-gallery-native .three-year-cards-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#report-examples .bazi-gallery-native .luck-top-card button{cursor:pointer}
+#report-examples .bazi-gallery-native .month-flow-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin:10px 0}
+#report-examples .bazi-gallery-native .month-card{min-width:0;cursor:pointer}
+@media(max-width:1040px){#report-examples .bazi-gallery-native .luck-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:760px){#report-examples .bazi-gallery-native .month-flow-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#report-examples .bazi-gallery-native .fortune-summary-grid{grid-template-columns:1fr}#report-examples .bazi-gallery-native .three-year-cards-grid{grid-template-columns:1fr!important}}
+@media(max-width:470px){#report-examples .bazi-gallery-native .month-flow-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#report-examples .bazi-gallery-native .luck-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
 <script id="bazi-isolated-gallery-v14">
 (()=>{'use strict';
   const API='https://bazi-api.ezgocpu.workers.dev';
@@ -11909,6 +11933,265 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
   let tab='luck',archive=null,catalog=null,serial=0,loading=false,selectedIndex=0;
   let lastKey='',controller=null;
   const esc=x=>String(x??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  // Original 07/08 HTML generators run with gallery-only DOM slots and public
+  // archived input. Nothing in this closure opens paid areas or modifies the
+  // personal chart; only pure scoring is provided by the main, original core.
+  const nativeTools=()=>window.baziGalleryNativeTools;
+  const $=id=>view.querySelector('[data-bazi-gallery-slot="'+id+'"]');
+  const BaziCore={
+    currentLuck:d=>nativeTools()?.currentLuck(d)||null,
+    generateThreeYearStrategicOutlook:d=>nativeTools()?.threeYear(d)||d?.threeYearStrategicOutlook||null
+  };
+  const timeAssessment=(d,item)=>nativeTools()?.assessment(d,item)||{cls:'fortune-steady',label:'平穩',score:0};
+  const rankEntries=(d,items)=>nativeTools()?.ranks(d,items)||[];
+  const renderLuckPeriodDetail=(d,item,rank)=>nativeTools()?.luckDetail(d,item,rank)||'';
+  const selectedPeriods={};
+  const refreshSelectedDecode=()=>{};
+  const trackAction=()=>{};
+
+  function renderLuck(data){
+    const y=data.daYun||{},cycles=y.cycles||[];
+    if(y.error||!cycles.length){$('luckMeta').textContent=y.error||'目前沒有大運資料';$('luckGrid').innerHTML='';$('luckSummary').innerHTML='';$('luckDetail').textContent='大運資料尚未取得，請重新排盤。';return;}
+    const startAgeText=[[y.startYears,'年'],[y.startMonths,'月'],[y.startDays,'日'],[y.startHours,'時']].filter(([v])=>v).map(([v,u])=>`${v}${u}`).join('');
+    $('luckMeta').textContent=`${y.forward?'順排':'逆排'}｜出生後約 ${startAgeText||'0歲'}起運｜${y.startSolar}`;
+    const list=rankEntries(data,cycles),rankMap=new Map(list.map(x=>[x.index,x.rank]));
+    const current=BaziCore.currentLuck(data),ci=cycles.indexOf(current),cur=ci>=0?list.find(x=>x.index===ci):null;
+    
+    // 一開頭區分：最好、次之、最差的十年
+    const best = list[0];
+    const secondBest = list[1] || list[0];
+    const worst = list[list.length - 1];
+
+    $('luckSummary').innerHTML = `
+      <article class="luck-top-card best-decade" style="border: 2px solid var(--bazi-line-782,#34d399); background: radial-gradient(circle at 10% 10%, var(--bazi-bg-809,rgba(52,211,153,.22)), transparent 75%), var(--bazi-bg-810,rgba(12,28,22,.96)); border-radius: 14px; padding: 20px; box-shadow: 0 10px 30px var(--bazi-shadow-811,rgba(52,211,153,.22)); display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: var(--bazi-text-781,#6ee7b7); font-weight: 850; font-size: .75rem; letter-spacing: .06em;">🌟 一生黃金大運（最好的十年）</span>
+            <span style="background: var(--bazi-bg-812,rgba(52,211,153,.25)); border: 1px solid var(--bazi-line-782,#34d399); color: var(--bazi-text-783,#a7f3d0); font-size: .68rem; font-weight: 800; border-radius: 999px; padding: 2px 10px;">相對第 1/8 · ${esc(best.a.label)}</span>
+          </div>
+          <h4 style="margin: 0 0 6px; font-size: 1.35rem; color: var(--bazi-text-806,#fdfcf7); font-weight: 900;">${esc(best.item.ganZhi)}大運 <span style="font-size: .95rem; color: var(--bazi-text-781,#6ee7b7);">${esc(best.item.startYear)}～${esc(best.item.endYear)}</span></h4>
+          <div style="font-size: .76rem; color: var(--bazi-text-783,#a7f3d0); font-weight: 600; margin-bottom: 8px;">${best.item.startAge}～${best.item.endAge} 虛歲 · ${esc(best.item.tenGodGan)} · ${esc(best.item.tenGodZhi)}</div>
+          <p style="margin: 0; font-size: .74rem; color: var(--bazi-text-813,#d1fae5); line-height: 1.7;">天干地支協同催旺有利發揮方向，各項阻力最低，為一生中最值得把握、大展身手的黃金順運！</p>
+        </div>
+        <button type="button" class="btn-select-decade" style="margin-top: 14px; background: var(--bazi-bg-793,rgba(52,211,153,.2)); border: 1px solid var(--bazi-line-782,#34d399); color: var(--bazi-text-781,#6ee7b7); border-radius: 8px; padding: 6px 12px; font-size: .72rem; font-weight: 750; cursor: pointer; text-align: center;" data-bazi-gallery-luck-jump="${best.index}">查看這十年的深度分析 ↗</button>
+      </article>
+
+      <article class="luck-top-card second-decade" style="border: 1px solid var(--bazi-line-814,#f59e0b); background: radial-gradient(circle at 10% 10%, var(--bazi-bg-815,rgba(245,158,11,.16)), transparent 75%), var(--bazi-bg-816,rgba(26,20,12,.96)); border-radius: 14px; padding: 20px; box-shadow: 0 10px 25px var(--bazi-shadow-817,rgba(245,158,11,.15)); display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: var(--bazi-text-799,#fbbf24); font-weight: 850; font-size: .75rem; letter-spacing: .06em;">⚡ 關鍵機遇大運（次之的十年）</span>
+            <span style="background: var(--bazi-bg-818,rgba(245,158,11,.25)); border: 1px solid var(--bazi-line-814,#f59e0b); color: var(--bazi-text-819,#fde68a); font-size: .68rem; font-weight: 800; border-radius: 999px; padding: 2px 10px;">相對第 2/8 · ${esc(secondBest.a.label)}</span>
+          </div>
+          <h4 style="margin: 0 0 6px; font-size: 1.35rem; color: var(--bazi-text-806,#fdfcf7); font-weight: 900;">${esc(secondBest.item.ganZhi)}大運 <span style="font-size: .95rem; color: var(--bazi-text-799,#fbbf24);">${esc(secondBest.item.startYear)}～${esc(secondBest.item.endYear)}</span></h4>
+          <div style="font-size: .76rem; color: var(--bazi-text-819,#fde68a); font-weight: 600; margin-bottom: 8px;">${secondBest.item.startAge}～${secondBest.item.endAge} 虛歲 · ${esc(secondBest.item.tenGodGan)} · ${esc(secondBest.item.tenGodZhi)}</div>
+          <p style="margin: 0; font-size: .74rem; color: var(--bazi-text-820,#fef3c7); line-height: 1.7;">轉型突破與機遇顯現之運，具備顯著的推進動能，利於鞏固成果、承接關鍵資源！</p>
+        </div>
+        <button type="button" class="btn-select-decade" style="margin-top: 14px; background: var(--bazi-bg-821,rgba(245,158,11,.18)); border: 1px solid var(--bazi-line-814,#f59e0b); color: var(--bazi-text-799,#fbbf24); border-radius: 8px; padding: 6px 12px; font-size: .72rem; font-weight: 750; cursor: pointer; text-align: center;" data-bazi-gallery-luck-jump="${secondBest.index}">查看這十年的深度分析 ↗</button>
+      </article>
+
+      <article class="luck-top-card worst-decade" style="border: 1px solid var(--bazi-line-822,#ef4444); background: radial-gradient(circle at 10% 10%, var(--bazi-bg-823,rgba(239,68,68,.14)), transparent 75%), var(--bazi-bg-824,rgba(28,14,16,.96)); border-radius: 14px; padding: 20px; box-shadow: 0 10px 25px var(--bazi-shadow-825,rgba(239,68,68,.15)); display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="color: var(--bazi-text-794,#f87171); font-weight: 850; font-size: .75rem; letter-spacing: .06em;">⚠️ 磨礪考驗大運（最需防守的十年）</span>
+            <span style="background: var(--bazi-bg-826,rgba(239,68,68,.25)); border: 1px solid var(--bazi-line-822,#ef4444); color: var(--bazi-text-827,#fecaca); font-size: .68rem; font-weight: 800; border-radius: 999px; padding: 2px 10px;">相對第 ${cycles.length}/${cycles.length} · ${esc(worst.a.label)}</span>
+          </div>
+          <h4 style="margin: 0 0 6px; font-size: 1.35rem; color: var(--bazi-text-806,#fdfcf7); font-weight: 900;">${esc(worst.item.ganZhi)}大運 <span style="font-size: .95rem; color: var(--bazi-text-794,#f87171);">${esc(worst.item.startYear)}～${esc(worst.item.endYear)}</span></h4>
+          <div style="font-size: .76rem; color: var(--bazi-text-805,#fca5a5); font-weight: 600; margin-bottom: 8px;">${worst.item.startAge}～${worst.item.endAge} 虛歲 · ${esc(worst.item.tenGodGan)} · ${esc(worst.item.tenGodZhi)}</div>
+          <p style="margin: 0; font-size: .74rem; color: var(--bazi-text-828,#fee2e2); line-height: 1.7;">原局沖刑、失衡或環境變革壓力集中。宜沉潛厚積、守成避險，不宜盲目擴張大額投資。</p>
+        </div>
+        <button type="button" class="btn-select-decade" style="margin-top: 14px; background: var(--bazi-bg-803,rgba(239,68,68,.18)); border: 1px solid var(--bazi-line-822,#ef4444); color: var(--bazi-text-794,#f87171); border-radius: 8px; padding: 6px 12px; font-size: .72rem; font-weight: 750; cursor: pointer; text-align: center;" data-bazi-gallery-luck-jump="${worst.index}">查看這十年的防守指引 ↗</button>
+      </article>
+    `;
+
+    // 八步大運卡片渲染 (全新設計)
+    $('luckGrid').innerHTML=cycles.map((c,i)=>{
+      const a=timeAssessment(data,c);
+      const rank = rankMap.get(i);
+      const isCur = ci === i;
+
+      let tierBorder = 'border: 1px solid var(--bazi-line-807,rgba(255,255,255,.1));';
+      let rankBadge = '';
+      let badgeStyle = '';
+
+      if (rank <= 2) {
+        tierBorder = 'border: 1px solid var(--bazi-line-829,rgba(52,211,153,.55)); background: radial-gradient(circle at 50% 0%, var(--bazi-bg-830,rgba(52,211,153,.15)), transparent 75%), var(--bazi-bg-831,rgba(16,24,20,.95));';
+        rankBadge = `<span style="background: var(--bazi-bg-793,rgba(52,211,153,.2)); border: 1px solid var(--bazi-line-782,#34d399); color: var(--bazi-text-781,#6ee7b7); border-radius: 6px; padding: 2px 7px; font-size: .65rem; font-weight: 850;">第 ${rank}/8</span>`;
+        badgeStyle = 'background: var(--bazi-bg-809,rgba(52,211,153,.22)); border: 1px solid var(--bazi-line-782,#34d399); color: var(--bazi-text-783,#a7f3d0);';
+      } else if (rank <= 5) {
+        tierBorder = 'border: 1px solid var(--bazi-line-770,rgba(233,189,88,.4)); background: radial-gradient(circle at 50% 0%, var(--bazi-bg-832,rgba(233,189,88,.1)), transparent 75%), var(--bazi-bg-833,rgba(20,20,26,.95));';
+        rankBadge = `<span style="background: var(--bazi-bg-392,rgba(233,189,88,.16)); border: 1px solid var(--bazi-line-526,#e9bd58); color: var(--bazi-text-778,#fce8a6); border-radius: 6px; padding: 2px 7px; font-size: .65rem; font-weight: 750;">第 ${rank}/8</span>`;
+        badgeStyle = 'background: var(--bazi-bg-798,rgba(233,189,88,.2)); border: 1px solid var(--bazi-line-526,#e9bd58); color: var(--bazi-text-778,#fce8a6);';
+      } else {
+        tierBorder = 'border: 1px solid var(--bazi-line-800,rgba(239,68,68,.4)); background: radial-gradient(circle at 50% 0%, var(--bazi-bg-801,rgba(239,68,68,.1)), transparent 75%), var(--bazi-bg-834,rgba(26,16,18,.95));';
+        rankBadge = `<span style="background: var(--bazi-bg-803,rgba(239,68,68,.18)); border: 1px solid var(--bazi-line-822,#ef4444); color: var(--bazi-text-805,#fca5a5); border-radius: 6px; padding: 2px 7px; font-size: .65rem; font-weight: 750;">第 ${rank}/8</span>`;
+        badgeStyle = 'background: var(--bazi-bg-835,rgba(239,68,68,.2)); border: 1px solid var(--bazi-line-822,#ef4444); color: var(--bazi-text-805,#fca5a5);';
+      }
+
+      return `
+        <button type="button" class="luck-card modern-luck-card ${a.cls} ${isCur?'is-current':''}" data-i="${i}" aria-pressed="false" style="${tierBorder} position: relative; border-radius: 12px; padding: 16px 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; cursor: pointer;">
+          ${isCur ? `<span class="cur-pulse-badge" style="position: absolute; top: -9px; right: -4px; background: linear-gradient(135deg, var(--bazi-bg-836,#10b981), var(--bazi-bg-837,#059669)); color: var(--bazi-text-45,#fff); font-size: .62rem; font-weight: 900; padding: 2px 8px; border-radius: 999px; box-shadow: 0 0 12px var(--bazi-shadow-838,rgba(16,185,129,.7)); letter-spacing: .04em;">目前在走</span>` : ''}
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 2px;">
+            <span style="font-size: .65rem; color: var(--bazi-text-779,#8fa3b8); font-weight: 700;">第 ${i+1} 步</span>
+            ${rankBadge}
+          </div>
+          <div class="luck-gz-display" style="font-size: 1.85rem; font-weight: 900; letter-spacing: .06em; color: var(--bazi-text-767,#fdf6e7); line-height: 1.2; text-shadow: 0 2px 10px var(--bazi-shadow-839,rgba(0,0,0,.6));">${esc(c.ganZhi)}</div>
+          <div style="font-size: .72rem; color: var(--bazi-text-394,#ecd084); font-weight: 750;">${esc(c.tenGodGan)} · ${esc(c.tenGodZhi)}</div>
+          <div style="font-size: .74rem; color: var(--bazi-text-731,#cbd6e4); font-weight: 600; margin-top: 2px;">${c.startAge}～${c.endAge} 虛歲</div>
+          <div style="font-size: .68rem; color: var(--bazi-text-779,#8fa3b8);">${c.startYear}～${c.endYear}</div>
+          <div style="margin-top: 6px; width: 100%;">
+            <span style="${badgeStyle} display: block; border-radius: 999px; padding: 3px 0; font-size: .68rem; font-weight: 800;">${esc(a.label)}</span>
+          </div>
+        </button>
+      `;
+    }).join('');
+
+    $('luckGrid').querySelectorAll('.luck-card').forEach(btn=>btn.addEventListener('click',()=>selectLuck(data,Number(btn.dataset.i),btn,rankMap)));
+    selectLuck(data,ci>=0?ci:0,null,rankMap);
+  }
+  function setActive(id,selector,i){$(id)?.querySelectorAll(selector).forEach((b,k)=>{b.classList.toggle('active',Number(b.dataset.i)===i);b.setAttribute('aria-pressed',String(Number(b.dataset.i)===i));});}
+  function selectLuck(data,i,btn,rankMap){
+    const item=data.daYun.cycles[i];if(!item)return;setActive('luckGrid','.luck-card',i);selectedPeriods.luck=item;
+    $('luckDetail').innerHTML=renderLuckPeriodDetail(data,item,rankMap?.get(i));refreshSelectedDecode('luck',data);trackAction(`luck-${i}`);
+  }
+
+  const annualClass=g=>({'大凶':'fortune-watch','偏凶':'fortune-mixed','平':'fortune-steady','偏吉':'fortune-good','大吉':'fortune-best'}[g]||'fortune-steady');
+  function timeBuildYear(data,year){return baziGetYearFlow(year,data);}
+
+  function renderYearFlows(data) {
+    const outlook = BaziCore.generateThreeYearStrategicOutlook(data);
+    if (!outlook || !outlook.yearsData) {
+      const previewCard = center => `
+        <article class="three-year-preview-card ${center ? 'is-center' : ''}">
+          <div class="preview-kicker"></div>
+          <div class="preview-title"></div>
+          <div class="preview-line long"></div>
+          <div class="preview-line mid"></div>
+          <div class="preview-line short"></div>
+          <div class="preview-box">
+            <div class="preview-line long"></div>
+            <div class="preview-line mid"></div>
+            <div class="preview-line long"></div>
+          </div>
+          <div class="preview-box">
+            <div class="preview-line mid"></div>
+            <div class="preview-line long"></div>
+            <div class="preview-line short"></div>
+          </div>
+        </article>`;
+
+      $('threeYearCompare').innerHTML = `
+        <div class="three-year-locked-preview">
+          <div class="three-year-preview-grid" aria-hidden="true">
+            ${previewCard(false)}
+            ${previewCard(true)}
+            ${previewCard(false)}
+          </div>
+          <div class="three-year-lock-overlay">
+            <div class="three-year-lock-box">
+              <div class="three-year-lock-icon">🔒</div>
+              <h3>完整三年進階分析</h3>
+              <p>免費版提供基本命盤與流年資訊；完整三年策略、進階解讀與深度分析採單次付費解鎖。</p>
+              <div class="three-year-payment-note">站內專業點數解鎖｜請使用本區上方的按鈕</div>
+              <div style="margin:0 auto 12px;color:var(--bazi-text-840,#f0d07b);font-weight:850;font-size:.86rem;">依專業點數計價中心設定</div>
+              <button type="button" class="three-year-paid-btn" disabled>付費解鎖</button>
+              <div class="three-year-coming">本區專業資訊將依上方會員解鎖狀態提供。</div>
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    $('threeYearCompare').innerHTML = `
+      <div class="three-year-cards-grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;width:100%;box-sizing:border-box;align-items:start;">
+        ${outlook.yearsData.map((y, idx) => {
+          const isThisYear = y.label === '今年';
+          const cardBorder = isThisYear 
+            ? 'border: 2px solid var(--bazi-line-841,rgba(233,189,88,.6)); background: radial-gradient(circle at 10% 10%, var(--bazi-bg-265,rgba(233,189,88,.12)), transparent 75%), var(--bazi-bg-842,rgba(16,20,30,.98)); box-shadow: 0 12px 36px var(--bazi-shadow-843,rgba(233,189,88,.15));' 
+            : 'border: 1px solid var(--bazi-line-807,rgba(255,255,255,.1)); background: var(--bazi-bg-776,rgba(14,18,26,.95));';
+
+          const badgeBg = isThisYear 
+            ? 'background: var(--bazi-bg-844,rgba(233,189,88,.25)); border: 1px solid var(--bazi-line-526,#e9bd58); color: var(--bazi-text-819,#fde68a);' 
+            : 'background: var(--bazi-bg-845,rgba(255,255,255,.08)); border: 1px solid var(--bazi-line-846,rgba(255,255,255,.15)); color: var(--bazi-text-731,#cbd6e4);';
+
+          return `
+            <article class="three-year-card ${isThisYear ? 'is-current-year' : ''}" style="${cardBorder} border-radius: 14px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-sizing: border-box;">
+              <div>
+                <!-- 標題與標籤 -->
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                  <span style="color: var(--bazi-text-779,#8fa3b8); font-size: .74rem; font-weight: 800; letter-spacing: .06em;">${esc(y.label)} · ${y.year}年</span>
+                  <span style="${badgeBg} font-size: .68rem; font-weight: 850; border-radius: 999px; padding: 2px 10px;">${isThisYear ? '🌟 當前進行中 · ' : ''}${esc(y.grade)}</span>
+                </div>
+
+                <h3 style="margin: 0 0 10px; font-size: 1.18rem; color: var(--bazi-text-806,#fdfcf7); font-weight: 900; line-height: 1.4;">
+                  ${['一、', '二、', '三、'][idx]} ${y.year}年（${esc(y.ganZhi)}年）：<span style="color: ${isThisYear ? 'var(--bazi-text-394,#ecd084)' : 'var(--bazi-text-781,#6ee7b7)'}; font-size: 1.05rem;">${esc(y.theme)}</span>
+                </h3>
+
+                <!-- 干支與十神 -->
+                <div style="padding: 8px 12px; border-radius: 8px; background: var(--bazi-bg-557,rgba(255,255,255,.03)); border: 1px solid var(--bazi-line-40,rgba(255,255,255,.06)); margin-bottom: 14px;">
+                  <span style="color: var(--bazi-text-731,#cbd6e4); font-size: .76rem; font-weight: 750;">
+                    流年干支：<strong style="color: var(--bazi-text-778,#fce8a6); font-size: .86rem;">${esc(y.gan)}${esc(y.ganEl)}（${esc(y.tenGodGan)}）</strong> ＋ <strong style="color: var(--bazi-text-778,#fce8a6); font-size: .86rem;">${esc(y.zhi)}${esc(y.zhiEl)}（${esc(y.tenGodZhi)}）</strong>
+                  </span>
+                </div>
+
+                <!-- 五行與十神互動 -->
+                <div style="margin-bottom: 14px;">
+                  <b style="color: var(--bazi-text-754,#edd18a); font-size: .76rem; display: block; margin-bottom: 8px;">五行與十神互動：</b>
+                  <div style="display: grid; gap: 8px;">
+                    ${y.interactions.map(it => `
+                      <div style="font-size: .74rem; line-height: 1.75; color: var(--bazi-text-731,#cbd6e4); padding-left: 8px; border-left: 2px solid var(--bazi-line-847,rgba(110,231,183,.4));">
+                        <strong style="color: var(--bazi-text-106,#72d7df);">${esc(it.title)}：</strong>${esc(it.desc)}
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <!-- 命理師斷語 -->
+                <div style="border-radius: 8px; padding: 12px 14px; background: var(--bazi-bg-47,rgba(233,189,88,.05)); border: 1px solid var(--bazi-line-528,rgba(233,189,88,.2)); margin-bottom: 14px;">
+                  <b style="color: var(--bazi-text-768,#f6eedb); font-size: .75rem; display: block; margin-bottom: 4px;">命理師斷語（${y.year}年運勢）：</b>
+                  <div style="color: var(--bazi-text-819,#fde68a); font-weight: 850; font-size: .78rem; margin-bottom: 6px;">${esc(y.quote)}</div>
+                  <p style="margin: 0; color: var(--bazi-text-848,#e2e8f0); font-size: .73rem; line-height: 1.8;">${esc(y.desc)}</p>
+                </div>
+              </div>
+
+              <!-- 行動建議 -->
+              <div style="border-left: 3px solid ${isThisYear ? '#e9bd58' : '#34d399'}; padding: 10px 14px; background: var(--bazi-bg-68,rgba(255,255,255,.02)); border-radius: 0 8px 8px 0; margin-top: 6px;">
+                <b style="color: ${isThisYear ? 'var(--bazi-text-778,#fce8a6)' : 'var(--bazi-text-781,#6ee7b7)'}; font-size: .74rem; display: block; margin-bottom: 3px;">行動建議：</b>
+                <p style="margin: 0; color: var(--bazi-text-796,#ecfdf5); font-size: .74rem; line-height: 1.8;">${esc(y.advice)}</p>
+              </div>
+            </article>
+          `;
+        }).join('')}
+      </div>
+    `;
+
+    if ($('yearFlowIntro')) $('yearFlowIntro').innerHTML = '';
+    if ($('yearSummary')) $('yearSummary').innerHTML = '';
+    if ($('yearFlowGrid')) $('yearFlowGrid').innerHTML = '';
+    if ($('yearDetail')) $('yearDetail').innerHTML = '';
+  }
+
+
+  const timeBadge=a=>'<span class="fortune-badge">'+esc(a.label||'平穩')+'</span>';
+  const shortDate=v=>v?String(v).slice(5,10).replace('-','/'):'—';
+  const nowValue=()=>new Date().toISOString().slice(0,16);
+  const periodDetail=(d,item)=>nativeTools()?.monthDetail(d,item)||'';
+  function renderMonthFlows(data){
+    const flows=data.monthFlows||[],list=rankEntries(data,flows),watch=[...list].reverse().slice(0,2);
+    $('monthFlowIntro').textContent=`${data.monthFlowYear||data.monthFlows?.[0]?.year||new Date().getFullYear()} 年的十二個節氣月：實際以卡片上的節氣起訖為準。`;
+    const best=list.filter(x=>['較順','偏順'].includes(x.a.label)).slice(0,3);
+    $('monthSummary').innerHTML=`<article class="fortune-summary-card fortune-steady"><small>較有利的節氣段</small><b>${best.length?best.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、'):'本組無特別偏吉月份'}</b><p>點卡片看各領域差異。</p></article><article class="fortune-summary-card fortune-steady"><small>相對調整負擔較多</small><b>${watch.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、')}</b><p>較需要協調的時間。</p></article>`;
+    $('monthFlowGrid').innerHTML=flows.map((f,i)=>{const a=timeAssessment(data,f);return `<button type="button" class="month-card ${a.cls}" data-i="${i}" aria-pressed="false"><small>${f.month} 月節氣段</small><b>${esc(f.ganZhi)}</b>${timeBadge(a)}<span>${esc(f.tenGodGan)} · ${esc(f.tenGodZhi)}</span><span class="period-mini">${esc(f.startJie)} ${shortDate(f.startSolar)}<br>至 ${esc(f.endJie)} ${shortDate(f.endSolar)}</span></button>`;}).join('');
+    $('monthFlowGrid').querySelectorAll('.month-card').forEach(btn=>btn.addEventListener('click',()=>selectMonth(data,Number(btn.dataset.i))));
+    const now=nowValue().replace('T',' ')+':00',index=flows.findIndex(f=>now>=f.startSolar&&now<f.endSolar);
+    if(index>=0)selectMonth(data,index);else if(flows.length)selectMonth(data,0);
+  }
+  function selectMonthItem(data,item,index){
+    selectedPeriods.months=item;setActive('monthFlowGrid','.month-card',index);
+    $('monthDetail').innerHTML=periodDetail(data,item);refreshSelectedDecode('months',data);trackAction(`month-${item.year}-${item.month}`);
+  }
+  function selectMonth(data,i){const item=data.monthFlows[i];if(item)selectMonthItem(data,item,i);}
+
+
   const listText=a=>Array.isArray(a)?a.map(x=>typeof x==='string'?x:x?.label||x?.name||'').filter(Boolean).join('、'):'';
   const assess=(data,item)=>{try{return window.baziGalleryAssess?.(data,item)||null}catch(_){return null}};
   const detailBlock=(title,lead,domains,tail='')=>`<section class="bazi-showcase-detail"><h4>${esc(title)}</h4><p>${esc(lead||'請依命盤資料與現實情況綜合判讀。')}</p>${domains?.length?`<div class="bazi-showcase-insights">${domains.slice(0,6).map(d=>`<div><b>${esc(d.name||d.title||'命盤線索')}</b><p>${esc(d.text||d.desc||d.label||'')}</p></div>`).join('')}</div>`:''}${tail?`<p>${esc(tail)}</p>`:''}</section>`;
@@ -11922,30 +12205,61 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
     const d=archive.data||{};
     let html='';
     if(tab==='luck'){
-      const c=d?.daYun?.cycles||[];
-      if(c.length<8)html='<div class="bazi-showcase-empty">這筆範例未包含完整八步大運資料，請按「換一張公開範例」。</div>';
-      else{
-        const ranked=c.map((x,i)=>({i,x,a:assess(d,x)}));
-        ranked.sort((a,b)=>(Number(b.a?.score)||0)-(Number(a.a?.score)||0)||a.i-b.i);
-        const best=ranked[0],second=ranked[1],watch=ranked[ranked.length-1];
-        const selected=c[Math.max(0,Math.min(selectedIndex,7))];const a=assess(d,selected);
-        const show=(entry,title)=>`<div><small>${esc(title)}</small><strong>${esc(entry.x.ganZhi||'大運')}</strong><small>${esc(entry.x.startYear||'')}～${esc(entry.x.endYear||'')} · ${esc(entry.a?.label||'命盤解讀')}</small></div>`;
-        html='<div class="bazi-showcase-keypoints">'+show(best,'✨ 相對順利的十年')+show(second,'⚡ 次要機遇的十年')+show(watch,'⚠ 相對需要留意的十年')+'</div>';
-        html+='<div class="bazi-showcase-grid">'+c.slice(0,8).map((x,i)=>{const a=assess(d,x);const label=a?.label||`${x.tenGodGan||'十神'} · ${x.tenGodZhi||'支十神'}`;
-          return `<article class="bazi-showcase-card luck${i===selectedIndex?' featured':''}"><small>第 ${i+1} 步 · ${esc(x.startYear||'—')}～${esc(x.endYear||'—')}</small><b>${esc(x.ganZhi||[x.gan,x.zhi].join(''))}</b><span class="bazi-sx-pill">${esc(label)}</span><p class="bazi-sx-detail">${esc(x.startAge??'?')}～${esc(x.endAge??'?')} 虛歲 · ${esc(x.tenGodGan||'')} / ${esc(x.tenGodZhi||'')}</p><button type="button" data-bazi-gallery-select="${i}">查看此十年的詳細示範 ↗</button></article>`
-        }).join('')+'</div>';
-        html+=detailBlock(`${selected.ganZhi||''}大運｜公開範例的個別分析`,a?.contextText||`起運 ${selected.startSolar||''}；${selected.tenGodGan||''}、${selected.tenGodZhi||''}`,a?.domains||[],[listText(selected.interactions),Array.isArray(a?.reasons)?a.reasons.join('；'):null].filter(Boolean).join('。'));
+      if((d.daYun?.cycles||[]).length!==8){
+        html='<div class="bazi-showcase-empty">這筆公開範例的八步大運資料不足，請換一筆範例。</div>';
+      }else if(!nativeTools()){
+        html='<div class="bazi-showcase-empty">原始大運分析畫面尚未就緒，請稍後重新展開。</div>';
+      }else{
+        view.innerHTML=`<div class="bazi-gallery-native bazi-gallery-native-luck">
+          <div class="time-explain"><strong>先看一生的「十年級別」變化</strong><span>比較所列八步大運的發揮方向與調整負擔。點選任一時段，分開看事業、財務、感情與判讀依據；排名靠前仍可能有壓力。</span></div>
+          <div class="fortune-summary-grid" data-bazi-gallery-slot="luckSummary"></div>
+          <div class="luck-header"><h3>八步大運比較</h3><div class="luck-meta" data-bazi-gallery-slot="luckMeta"></div></div>
+          <div class="luck-grid interactive" data-bazi-gallery-slot="luckGrid"></div>
+          <div class="detail-console fortune-detail" data-bazi-gallery-slot="luckDetail"></div>
+        </div>`;
+        try {
+          renderLuck(d); // byte-for-byte HTML templates reused from original 07
+          if(view.querySelectorAll('.luck-card').length!==8||view.querySelectorAll('.luck-top-card').length!==3){
+            throw Error('大運卡片未完整呈現');
+          }
+        }catch(err){console.warn('Public original luck renderer:',err);view.innerHTML='<div class="bazi-showcase-empty">範例大運詳細畫面暫時無法呈現，請再換一筆範例。</div>'}
+        status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。與本人命盤、解鎖狀態和點數完全獨立。`;
+        return;
       }
     } else if(tab==='years'){
-      const ys=d?.threeYearStrategicOutlook?.yearsData||[];
-      if(ys.length<3)html='<div class="bazi-showcase-empty">這筆範例尚未保存三年流年完整畫面，請更換另一筆範例。</div>';
-      else{
-        const selected=ys[Math.max(0,Math.min(selectedIndex,2))];
-        html='<div class="bazi-showcase-grid years">'+ys.slice(0,3).map((x,i)=>`<article class="bazi-showcase-card year${i===selectedIndex?' featured':''}"><small>${esc(x.label||['去年','今年','明年'][i])} · ${esc(x.year||'')} 年</small><b>${esc(x.ganZhi||'')} · ${esc(x.theme||'年度重點')}</b><span class="bazi-sx-pill">${esc(x.grade||'年度評估')}</span><p class="bazi-sx-detail">${esc(x.quote||x.desc||x.summary||'流年互動和行動建議')}</p><button type="button" data-bazi-gallery-select="${i}">查看這一年的完整示範 ↗</button></article>`).join('')+'</div>';
-        html+=detailBlock(`${selected.year||''} 年（${selected.ganZhi||''}）｜${selected.theme||'流年評估'}`,selected.desc||selected.overview||selected.summary||selected.quote,(selected.interactions||[]).map(x=>({name:x.title,text:x.desc})),selected.advice?`行動建議：${selected.advice}`:'');
+      if((d.threeYearStrategicOutlook?.yearsData||[]).length!==3){
+        html='<div class="bazi-showcase-empty">這筆公開範例沒有完整三年流年資料，請換一筆範例。</div>';
+      }else if(!nativeTools()){
+        html='<div class="bazi-showcase-empty">原始流年分析畫面尚未就緒，請稍後重新展開。</div>';
+      }else{
+        view.innerHTML=`<div class="bazi-gallery-native bazi-gallery-native-years">
+          <div class="time-explain"><strong>關鍵三年戰略：以當前年份為軸心，推演關鍵三年的轉折與應對</strong><span>整合四柱五行、十神透藏與歲運刑沖會合，提供各年深度互動分析、命理師斷語與實質行動指引。</span></div>
+          <div class="three-year-compare" data-bazi-gallery-slot="threeYearCompare"></div>
+        </div>`;
+        try {
+          renderYearFlows(d); // byte-for-byte HTML templates reused from original 08
+          if(view.querySelectorAll('.three-year-card').length!==3)throw Error('三年流年卡片未完整呈現');
+        }catch(err){console.warn('Public original annual renderer:',err);view.innerHTML='<div class="bazi-showcase-empty">範例三年流年畫面暫時無法呈現，請再換一筆範例。</div>'}
+        status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。與本人命盤、解鎖狀態和點數完全獨立。`;
+        return;
       }
     } else {
       const months=d.monthFlows||[];
+      if(months.length===12 && nativeTools()){
+        view.innerHTML=`<div class="bazi-gallery-native bazi-gallery-native-months">
+          <div class="time-explain"><strong>十二節氣流月｜依月份觀察運勢起伏</strong><span>沿用原版流月月份卡片、相對評估和點選後的詳細內容，僅供公開示範。</span></div>
+          <div class="flow-intro" data-bazi-gallery-slot="monthFlowIntro"></div>
+          <div class="fortune-summary-grid" data-bazi-gallery-slot="monthSummary"></div>
+          <div class="month-flow-grid" data-bazi-gallery-slot="monthFlowGrid"></div>
+          <div class="detail-console fortune-detail" data-bazi-gallery-slot="monthDetail"></div>
+        </div>`;
+        try {
+          renderMonthFlows(d);
+          if(view.querySelectorAll('.month-card').length!==12)throw Error('十二流月卡片尚未全部生成');
+        }catch(err){console.warn('Public original month renderer:',err);view.innerHTML='<div class="bazi-showcase-empty">公開流月範例暫時無法完整展示，請再換一筆。</div>'}
+        status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。與本人命盤、解鎖狀態和點數完全獨立。`;
+        return;
+      }
       if(months.length!==12)html='<div class="bazi-showcase-empty">這筆範例未儲存完整十二節氣月資料。十二流月的正式逐月解讀，請改用下方站內 AI 自訂問題。</div>';
       else{
         const selected=months[Math.max(0,Math.min(selectedIndex,11))];
@@ -11990,6 +12304,7 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
   root.addEventListener('toggle',()=>{if(root.open&&!archive&&!loading)void loadArchive()});
   root.addEventListener('click',e=>{
     const tabButton=e.target.closest('[data-bazi-gallery-tab]');if(tabButton){chooseTab(tabButton.dataset.baziGalleryTab);return}
+    const luckJump=e.target.closest('[data-bazi-gallery-luck-jump]');if(luckJump){const i=Number(luckJump.dataset.baziGalleryLuckJump);view.querySelectorAll('.luck-card')[i]?.click();return}
     const pick=e.target.closest('[data-bazi-gallery-select]');if(pick){selectedIndex=Number(pick.dataset.baziGallerySelect)||0;render();return}
     const go=e.target.closest('[data-bazi-gallery-go]');if(go){document.querySelector(`#baziSectionHub [data-bazi-open-section="${go.dataset.baziGalleryGo}"]`)?.click();return}
   });
