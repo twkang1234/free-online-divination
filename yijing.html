@@ -3423,8 +3423,18 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       let reading;
       try{reading=await YijingCore.draw(data.q,data.context,options)}
       catch(err){
-        // 固定主題已在第一層預留，這裡不得再次要求扣共用工具額度。
-        if(!state.custom)throw Error('本次起卦預留額度無效，請返回固定題目重新選擇。');
+        // 固定主題的工具額度已在第一層預留，任何錯誤都不可直接再扣第二次。
+        // 保留後端真實錯誤；不可將 CORS／網路錯誤誤報成「預留額度無效」。
+        if(!state.custom){
+          const code=String(err?.message||'');
+          if(code==='TOOL_PRECAST_INVALID_OR_USED'||code==='TOOL_PRECAST_INVALID')
+            throw Error('本次起卦預留憑證已失效或使用過。請返回第一層重新選擇；系統會嘗試退回尚未使用的預留額度。');
+          if(code==='LOGIN_REQUIRED')throw Error('會員登入狀態已失效，請重新登入後再起卦。');
+          if(code==='INVALID_GUIDED_QUESTION')throw Error('固定題目與後端版本不一致，請同步部署最新易經頁面及 API。');
+          if(err?.name==='AbortError'||err instanceof TypeError||/Failed to fetch|NetworkError|Load failed/i.test(code))
+            throw Error('起卦服務連線失敗，請檢查網路與 API 版本。系統會嘗試退回尚未使用的預留額度。');
+          throw err;
+        }
         if(err.message!=='SHARED_TOOL_CONFIRM_REQUIRED'||!authProfile()?.sub||isAdminTestActive())throw err;
         const left=Number(err.wallet?.tool||0);
         if(left<1)throw Error('會員共用工具額度已用完');
