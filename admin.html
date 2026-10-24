@@ -262,6 +262,40 @@ td.muted{color:var(--muted)}
 @media(max-width:650px){.dh-ai-cards,.dh-ai-tool-list{grid-template-columns:1fr}.dh-ai-monitor>summary{align-items:flex-start}}
 
 
+/* 異常分析 V2：僅增加獨立監控區樣式，不改動其他管理表單 */
+.dh-ai-monitor-filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0 15px}
+.dh-ai-monitor-filters label{font-size:.78rem;color:#b6c8d6}
+.dh-ai-monitor-filters select{color:#e6edf4;background:#0b1520;border:1px solid #34485c;border-radius:9px;padding:10px}
+.dh-ai-periods{display:flex;gap:7px;flex-wrap:wrap;margin-right:auto}
+.dh-ai-periods button{border:1px solid #344254;background:#101923;color:#b5c5d8;border-radius:8px;padding:9px 13px;cursor:pointer}
+.dh-ai-periods button[aria-pressed="true"]{background:#294b43;color:#b7ffe0;border-color:#4b917b;font-weight:800}
+.dh-ai-card-note{display:block;color:#9eafbe;font-size:.68rem;line-height:1.55;margin-top:6px}
+.dh-ai-monitor-section{border-top:1px solid #26323e;padding-top:17px;margin-top:19px}
+.dh-ai-monitor-section h3{font-size:.97rem;margin:0 0 9px;color:#f0e6d6;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.dh-ai-monitor-section h3 small{font-weight:400;font-size:.71rem;color:#8f9faf}
+.dh-ai-muted{font-size:.76rem;line-height:1.72;color:#9eb0bf;margin:5px 0 11px}
+.dh-ai-section-count{font-size:.72rem;padding:2px 9px;border:1px solid #3d5263;border-radius:20px;color:#b6cad8}
+.dh-ai-tool-list{margin:12px 0 0}
+.dh-ai-tool span{line-height:1.6}
+.dh-ai-tool .dh-ai-nocalls{color:#9ea9ba}
+.dh-ai-daily-wrap{overflow-x:auto;border:1px solid #2b3a49;border-radius:10px}
+.dh-ai-daily-table{border-collapse:collapse;min-width:510px;width:100%}
+.dh-ai-daily-table th,.dh-ai-daily-table td{font-size:.75rem;padding:10px 12px;border-bottom:1px solid #293441}
+.dh-ai-daily-table th{background:#111d2a;color:#b6cad9}
+.dh-ai-daily-table tr:last-child td{border-bottom:0}
+.dh-ai-daily-table td.dh-ai-fail{color:#ffb0b8;font-weight:800}
+.dh-ai-daily-table td.dh-ai-good{color:#8de0b5}
+.dh-ai-line .dh-ai-error-desc{color:#d2e3ed;font-size:.78rem}
+.dh-ai-line .dh-ai-recovery{color:#b9c9d4}
+.dh-ai-line .dh-ai-raw{opacity:.8;font-size:.7rem}
+.dh-ai-line .dh-ai-monitor-chip{display:inline-block;border:1px solid #855962;border-radius:7px;color:#ffd5d8;padding:3px 8px;font-size:.68rem;margin:5px 0}
+.dh-ai-reported{padding:13px 14px;border-radius:11px;background:#101a23;border:1px solid #354757;margin-top:8px}
+.dh-ai-reported strong{display:block;color:#e7eff0;font-size:.85rem;margin-bottom:5px}
+.dh-ai-reported span{color:#b0c2cb;font-size:.76rem;line-height:1.65}
+.dh-ai-history{margin:20px 0 0;padding:14px 0;border-top:1px solid #293844}
+.dh-ai-history>summary{cursor:pointer;color:#bacddd;font-weight:750;font-size:.8rem}
+@media(max-width:700px){.dh-ai-monitor-filters{align-items:stretch}.dh-ai-periods{width:100%}.dh-ai-periods button{flex:1}.dh-ai-monitor-filters select{flex:1}}
+
 /* AI 監控：已處理的歷史資料低調收合，不佔用平常後台版面。 */
 .dh-ai-history{margin-top:14px;border-top:1px solid #29323e;padding-top:10px;color:#8e9cab}
 .dh-ai-history>summary{cursor:pointer;font-size:.75rem;color:#8b9aab;padding:8px 2px;list-style:auto}
@@ -645,15 +679,49 @@ td.muted{color:var(--muted)}
 
 
     <details class="section dh-ai-monitor" id="dhAiMonitor" style="margin-bottom:24px">
-      <summary>⚠ AI 系統自動異常監控 <span id="dhAiMonitorBadge" class="dh-ai-badge">尚未查詢</span></summary>
+      <summary>⚠ 網站功能異常分析 <span id="dhAiMonitorBadge" class="dh-ai-badge">尚未查詢</span></summary>
       <div class="dh-ai-inner">
-        <p class="dh-ai-intro">由 AI 總控與工具 Worker 的實際紀錄計算請求成功／失敗，並顯示最後成功時間；不需要會員手動回報。此處與會員紅綠燈獨立，不儲存占卜問題或 AI 解讀。<strong>「後續有成功」不代表異常已完全排除。</strong></p>
-        <div class="dh-ai-cards"><div><small>今日成功請求</small><strong id="dhAiSuccess">—</strong></div><div><small>今日失敗請求</small><strong id="dhAiToday">—</strong></div><div><small>今日觀測成功率</small><strong id="dhAiRate">—</strong></div><div><small>待處理異常類型</small><strong id="dhAiPending">—</strong></div></div>
-        <p class="dh-ai-status" id="dhAiThirtyDay">近 30 日失敗請求：<b id="dhAiTotal">—</b>｜近 30 日成功率：<b id="dhAiMonthRate">—</b></p>
-        <div class="dh-ai-tool-list" id="dhAiToolStats" aria-label="各工具的 AI 呼叫成功率與最後成功時間"><p class="dh-ai-status">正在查詢各工具最新狀態……</p></div>
-        <div class="dh-ai-buttons"><button type="button" class="btn secondary" id="dhAiReload">重新查詢 AI 異常</button></div>
-        <div class="dh-ai-status" id="dhAiStatus" role="status" aria-live="polite">開啟管理後台後自動檢查；每分鐘更新一次（僅頁面顯示時）。</div>
-        <div id="dhAiItems"></div>
+        <p class="dh-ai-intro">此處專看<strong>使用者整次 AI 解讀的最終失敗</strong>及<strong>會員主動回報</strong>。AI A／B／C 等個別供應商的失敗及備援，請看既有「AI 總控」，此處不重複計算。無新請求時只能說「尚未確認恢復」，不能判定網站一直故障。</p>
+        <div class="dh-ai-monitor-filters" aria-label="異常監控查詢條件">
+          <div class="dh-ai-periods" role="group" aria-label="日期區間">
+            <button type="button" data-dh-period="1" aria-pressed="false">今天</button>
+            <button type="button" data-dh-period="7" aria-pressed="true">近 7 天</button>
+            <button type="button" data-dh-period="30" aria-pressed="false">近 30 天</button>
+          </div>
+          <label for="dhAiToolFilter">工具</label>
+          <select id="dhAiToolFilter"><option value="all">全部工具</option><option value="bazi">八字</option><option value="tarot">塔羅</option><option value="yijing">易經</option><option value="cezi">測字</option></select>
+          <button type="button" class="btn secondary" id="dhAiReload">重新查詢</button>
+        </div>
+        <div class="dh-ai-cards">
+          <div><small>尚未確認恢復的錯誤類型</small><strong id="dhAiUnresolved">—</strong><span class="dh-ai-card-note">須有同工具後續成功，才能視為觀察到恢復</span></div>
+          <div><small>期間 AI 完整解讀失敗</small><strong id="dhAiToday">—</strong><span class="dh-ai-card-note" id="dhAiFailureRate">失敗率 —</span></div>
+          <div><small>期間 AI 完整解讀成功</small><strong id="dhAiSuccess">—</strong><span class="dh-ai-card-note" id="dhAiRate">成功率 —</span></div>
+          <div><small>會員目前主動回報</small><strong id="dhAiManualTotal">—</strong><span class="dh-ai-card-note">會員紅燈與技術失敗分開計算</span></div>
+        </div>
+        <p class="dh-ai-status" id="dhAiDataNotice" role="status" aria-live="polite">等待讀取資料……</p>
+        <section class="dh-ai-monitor-section">
+          <h3>各工具完成情況 <small>AI 整次解讀，不是單一 AI 通道</small></h3>
+          <div id="dhAiToolStats" class="dh-ai-tool-list"></div>
+        </section>
+        <section class="dh-ai-monitor-section">
+          <h3>每日成功／失敗紀錄 <small>台灣時間，每日 0 次請求不計成功率</small></h3>
+          <div id="dhAiDailyTable" class="dh-ai-daily-wrap"></div>
+        </section>
+        <section class="dh-ai-monitor-section">
+          <h3>系統自動偵測｜尚未確認恢復 <span class="dh-ai-section-count" id="dhAiUnresolvedCount">—</span></h3>
+          <p class="dh-ai-muted">只列整次 AI 解讀的終局故障。假如已經有後續成功，將移至下方歷史區；若沒有後續請求，狀態為「無法確認」，不等於持續停機。</p>
+          <div id="dhAiItems"></div>
+        </section>
+        <section class="dh-ai-monitor-section">
+          <h3>使用者手動回報 <span class="dh-ai-section-count" id="dhAiManualCount">—</span></h3>
+          <p class="dh-ai-muted">接入現有的「會員異常紅燈」。目前只知道哪一個工具被會員回報、回報時間；原始紅燈沒有附錯誤碼或問題描述，不能從這裡直接推定原因。詳細原因可使用原本的站長詢問功能。</p>
+          <div id="dhAiManualReports"></div>
+        </section>
+        <details class="dh-ai-history" id="dhAiHistory">
+          <summary>過去異常／故障後已出現成功（<span id="dhAiHistoryCount">0</span> 類）</summary>
+          <div id="dhAiHistoryItems"></div>
+        </details>
+        <p class="dh-ai-status" id="dhAiStatus" role="status" aria-live="polite">後台開啟時每分鐘重新整理；沒有寄信或推播。</p>
       </div>
     </details>
 
@@ -1800,83 +1868,141 @@ $('baziGiftSend')?.addEventListener('click',send);
 
 <script id="dh-auto-ai-monitor">
 (()=>{
- 'use strict';
- const $=id=>document.getElementById(id);
- const API='https://admin-api.ezgocpu.workers.dev';
- const readToken=()=>sessionStorage.getItem('divinationhub-admin-session')||(()=>{try{const x=JSON.parse(localStorage.getItem('divinationhub-admin-remember-v1')||'null');return x?.expiresAt>Date.now()?x.token||'':''}catch(_){return ''}})();
- let busy=false,lastFetch=0,lastData=null;
- const labels={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字'};
- const message={NO_AVAILABLE_PROVIDER:'全部 AI 通道暫時不可用',ALL_PROVIDER_ATTEMPTS_FAILED:'所有可用 AI 通道均解讀失敗',CENTER_METERING_UNAVAILABLE:'AI 總控紀錄異常',AI_SERVICE_TEMPORARILY_UNAVAILABLE:'AI 解讀服務異常',AI_CENTER_YIJING_NOT_CONFIGURED:'易經 AI 連接設定異常',WALLET_UNAVAILABLE:'共用額度服務異常',QUOTA_RECORD_UNAVAILABLE:'額度記錄異常',MEMBER_AUTH_UNAVAILABLE:'會員驗證服務異常',QUOTA_UNAVAILABLE:'額度服務異常'};
- const dt=s=>{try{return new Date(s).toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})}catch(_){return String(s)}};
- async function api(path,method='GET',body){
-   const token=readToken();if(!token)throw Error('管理員尚未登入');
-   const r=await fetch(API+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+token,Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
-   const data=await r.json().catch(()=>null);
-   if(!r.ok||!data?.success)throw Error(data?.error||'讀取 AI 異常監控失敗');
-   return data;
+'use strict';
+const $=id=>document.getElementById(id),API='https://admin-api.ezgocpu.workers.dev';
+const labels={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字'};
+// 中文名稱是問題分類，不能單憑瀏覽器文字確定根因；仍需保留原始碼供排查。
+const errorInfo={
+ NO_AVAILABLE_PROVIDER:['全部 AI 通道暫時不可用','AI 總控沒有可使用的解讀通道，請檢查備援服務設定。'],
+ ALL_PROVIDER_ATTEMPTS_FAILED:['所有 AI 備援均失敗','此請求的可用通道都沒有成功，可能是外部服務、額度或請求限制。'],
+ AI_SERVICE_TEMPORARILY_UNAVAILABLE:['AI 解讀服務暫時無法完成','工具未能完成整次解讀，請查看 Worker 與 AI 總控的終局紀錄。'],
+ CENTER_METERING_UNAVAILABLE:['AI 總控計量紀錄異常','AI 呼叫紀錄未能正常完成，請確認 AI 總控服務及資料庫。'],
+ AI_CENTER_YIJING_NOT_CONFIGURED:['易經 AI 連接設定異常','易經工具與 AI 總控間的設定可能缺漏。'],
+ WALLET_UNAVAILABLE:['會員共用額度服務異常','會員額度系統無法正常讀取或預留額度。'],
+ QUOTA_RECORD_UNAVAILABLE:['扣額度紀錄失敗','會員額度紀錄未能正常寫入，請確認交易紀錄。'],
+ QUOTA_UNAVAILABLE:['額度系統無法使用','目前無法正常核對會員的可用額度。'],
+ MEMBER_AUTH_UNAVAILABLE:['會員驗證服務異常','無法確認會員的登入或權限狀態。'],
+ FETCH_FAILED:['網站無法連上伺服器','可能是網路中斷、Worker 未回應或瀏覽器安全限制；需看瀏覽器網路紀錄才能判定原因。'],
+ FAILED_TO_FETCH:['網站無法連上伺服器','請檢查網址、CORS、網路與 Worker 回應。單憑此錯誤不能確認一定是 CORS。'],
+ NETWORK_ERROR:['網站連線發生問題','瀏覽器或網路未取得有效回應，請檢查連線與 Worker。'],
+ CORS_ERROR:['網站連線權限可能有誤','瀏覽器跨來源檢查未通過，需比對 OPTIONS 回應標頭。'],
+ TIMEOUT:['伺服器等待逾時','請求超過等待期限，可能是服務忙碌或上游回應延遲。'],
+ HTTP_500:['伺服器內部錯誤','服務程式執行異常，請檢查 Worker 錯誤日誌。'],
+ UNKNOWN_ERROR:['尚未分類的系統異常','需查看追蹤碼、原始錯誤碼和 Worker 日誌來判斷。']
+};
+const readToken=()=>sessionStorage.getItem('divinationhub-admin-session')||(()=>{try{const x=JSON.parse(localStorage.getItem('divinationhub-admin-remember-v1')||'null');return x?.expiresAt>Date.now()?x.token||'':''}catch(_){return ''}})();
+const fmt=s=>{if(!s)return '尚無記錄';const d=new Date(s);return Number.isNaN(d.getTime())?'時間格式異常':d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})};
+const node=(tag,content='',cls='')=>{const e=document.createElement(tag);e.textContent=String(content??'');if(cls)e.className=cls;return e};
+const pct=(good,bad)=>good+bad?((good/(good+bad))*100).toFixed(1)+'%':'無請求';
+let last=null,busy=false,lastFetch=0,period=7,tool='all';
+async function api(path,method='GET',body){
+ const token=readToken();if(!token)throw Error('管理員尚未登入');
+ const r=await fetch(API+path,{method,cache:'no-store',headers:{Authorization:'Bearer '+token,Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
+ const d=await r.json().catch(()=>null);
+ if(!r.ok||!d?.success)throw Error(d?.error||'讀取失敗 (HTTP '+r.status+')');return d;
+}
+function startDay(asOf){const now=new Date(new Date(asOf).getTime()+8*3600000),d=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()));d.setUTCDate(d.getUTCDate()-(period-1));return d.toISOString().slice(0,10)}
+function dailyTotals(data){
+ const since=startDay(data.asOf),list=(data.daily||[]).filter(x=>x.day>=since&&(tool==='all'||x.tool===tool));
+ const total=new Map();for(const r of list){let item=total.get(r.day)||{day:r.day,success:0,failure:0};item.success+=r.success;item.failure+=r.failure;total.set(r.day,item)}
+ const byTool={};for(const key of ['bazi','tarot','yijing','cezi'])byTool[key]={success:0,failure:0};
+ for(const r of list){byTool[r.tool].success+=r.success;byTool[r.tool].failure+=r.failure}
+ const summary=[...total.values()].reduce((sum,v)=>({success:sum.success+v.success,failure:sum.failure+v.failure}),{success:0,failure:0});
+ return {byTool,days:[...total.values()].sort((a,b)=>b.day.localeCompare(a.day)),summary};
+}
+function formatError(code){return errorInfo[code]||['未分類的系統錯誤','尚無對應的中文說明，請保留原始錯誤碼交由站長查核。']}
+function render(data){
+ last=data;
+ const stats=dailyTotals(data),raw=data.groups||[],since=startDay(data.asOf),rangeLabel=period===1?'今天':'近 '+period+' 天';
+ const events=raw.filter(g=>(tool==='all'||tool===g.tool)&&g.lastAt>=since);
+ const unresolved=events.filter(g=>!g.recoveryObserved);
+ const historical=events.filter(g=>g.recoveryObserved);
+ const member=(data.manual?.byTool||[]).filter(m=>tool==='all'||m.tool===tool);
+ const memberCount=member.reduce((n,x)=>n+x.count,0);
+ $('dhAiUnresolved').textContent=String(unresolved.length);
+ $('dhAiToday').textContent=data.dailyAvailable?String(stats.summary.failure):'—';
+ $('dhAiSuccess').textContent=data.dailyAvailable?String(stats.summary.success):'—';
+ $('dhAiFailureRate').textContent='失敗率 '+(data.dailyAvailable&&stats.summary.success+stats.summary.failure?(100-Number(pct(stats.summary.success,stats.summary.failure).slice(0,-1))).toFixed(1)+'%':'無資料');
+ $('dhAiRate').textContent='成功率 '+(data.dailyAvailable?pct(stats.summary.success,stats.summary.failure):'無資料');
+ $('dhAiManualTotal').textContent=data.manual?.available?String(memberCount):'—';
+ $('dhAiManualCount').textContent=data.manual?.available?String(memberCount)+' 人':'查詢失敗';
+ $('dhAiUnresolvedCount').textContent=String(unresolved.length)+' 類';
+ $('dhAiHistoryCount').textContent=String(historical.length);
+ const badge=$('dhAiMonitorBadge'),alert=unresolved.length>0||memberCount>0||!data.centerAvailable||!data.dailyAvailable||!data.manual?.available;
+ badge.textContent=(!data.centerAvailable||!data.dailyAvailable)?'部分數據未就緒':unresolved.length?'尚無後續成功 '+unresolved.length+' 類':memberCount?'會員回報 '+memberCount+' 人':'暫無需追查的紀錄';badge.classList.toggle('alert',alert);
+ const notice=[];
+ if(!data.centerAvailable)notice.push('AI 總控歷史資料無法讀取（不能把沒有數據當成正常）');
+ if(!data.dailyAvailable)notice.push('每日成功／失敗統計暫時無法讀取');
+ if(!data.manual?.available)notice.push('會員回報資料暫時無法讀取');
+ if(data.truncated)notice.push('異常明細有截斷，詳細次數可能偏少');
+ if(!notice.length)notice.push('已載入 '+rangeLabel+'、'+(tool==='all'?'全部工具':labels[tool])+' 的已記錄資料；以下失敗率不包含未回到伺服器的瀏覽器連線問題。');
+ $('dhAiDataNotice').textContent=notice.join('；');
+ const toolStats=$('dhAiToolStats');toolStats.replaceChildren();
+ if(!data.dailyAvailable)toolStats.append(node('p','AI 最終結果資料目前無法讀取，不能計算各工具成功率。','dh-ai-status'));
+ else for(const key of ['bazi','tarot','yijing','cezi']){
+   if(tool!=='all'&&tool!==key)continue;
+   const r=stats.byTool[key],card=node('div','','dh-ai-tool'),recent=data.outcomes?.byTool?.[key]||{};
+   card.append(node('b',labels[key]+'｜成功 '+r.success+' 次／失敗 '+r.failure+' 次'));
+   card.append(node('span','成功率：'+pct(r.success,r.failure)+(r.success+r.failure?'（僅計已記錄的完整請求）':''),r.success+r.failure?'':'dh-ai-nocalls'));
+   const afterFailure=recent.lastSuccessAt&&recent.lastFailureAt&&recent.lastSuccessAt>recent.lastFailureAt;
+   card.append(node('span','最後成功：'+fmt(recent.lastSuccessAt)));
+   card.append(node('span','最後失敗：'+fmt(recent.lastFailureAt)));
+   card.append(node('span',recent.lastFailureAt?(afterFailure?'故障後有成功紀錄（不代表根因已修復）':'最後記錄為失敗或沒有後續成功（狀況待確認）'):'近 30 日沒有已記錄終局失敗',recent.lastFailureAt?(afterFailure?'dh-ai-recovered':'dh-ai-ongoing'):'dh-ai-nocalls'));
+   toolStats.append(card);
  }
- function textNode(tag,value,cls){const e=document.createElement(tag);e.textContent=String(value||'');if(cls)e.className=cls;return e;}
- function render(data){
-   lastData=data;
-   const stat=data.summary||{};
-   const outcomes=data.outcomes;
-   $('dhAiToday').textContent=String(stat.today??0);
-   $('dhAiSuccess').textContent=outcomes?String(outcomes.todaySuccess):'—';
-   $('dhAiRate').textContent=outcomes?(outcomes.todayRate==null?'無呼叫':outcomes.todayRate.toFixed(1)+'%'):'無資料';
-   $('dhAiPending').textContent=String(stat.pending??0);
-   $('dhAiTotal').textContent=String(stat.total??0);
-   $('dhAiMonthRate').textContent=outcomes?(outcomes.monthRate==null?'無呼叫':outcomes.monthRate.toFixed(1)+'%'):'無資料';
-   const toolStats=$('dhAiToolStats');toolStats.replaceChildren();
-   if(!outcomes){toolStats.append(textNode('p','AI 中心成功／失敗統計目前無法讀取，請勿以現有失敗數推算成功率。','dh-ai-status'))}
-   else for(const tool of ['bazi','tarot','yijing','cezi']){
-     const v=outcomes.byTool?.[tool]||{},cell=textNode('div','', 'dh-ai-tool');
-     cell.append(textNode('b',(labels[tool]||tool)+'｜今日成功 '+(v.todaySuccess??0)+' 次・失敗 '+(v.todayFailure??0)+' 次'));
-     cell.append(textNode('span','今日成功率：'+(v.todayRate==null?'無呼叫':Number(v.todayRate).toFixed(1)+'%')+'｜近 30 日成功率：'+(v.monthRate==null?'無呼叫':Number(v.monthRate).toFixed(1)+'%')));
-     cell.append(textNode('span','最後成功時間：'+(v.lastSuccessAt?dt(v.lastSuccessAt):'尚無成功紀錄')));
-     let recovery='尚無觀察紀錄',cls='';
-     if(v.lastFailureAt){
-       if(v.lastSuccessAt&&v.lastSuccessAt>v.lastFailureAt){recovery='故障後有成功紀錄（仍須觀察）';cls='dh-ai-recovered'}
-       else {recovery='最後一次記錄仍為失敗（需留意）';cls='dh-ai-ongoing'}
-     }else if(v.lastSuccessAt)recovery='近 30 日未記錄終局失敗';
-     cell.append(textNode('span',recovery,cls));toolStats.append(cell);
-   }
-   const badge=$('dhAiMonitorBadge');badge.textContent=(!data.centerAvailable?'AI 中心紀錄未就緒':(stat.pending?'待處理 '+stat.pending+' 類':'暫無待處理異常'));badge.classList.toggle('alert',!!stat.pending||!data.centerAvailable);
-   const items=$('dhAiItems');items.replaceChildren();
-   if(!data.centerAvailable){items.append(textNode('p','⚠ AI 中心歷史紀錄尚未建立或無法讀取，本次只能顯示已接入的工具 Worker 錯誤。','dh-ai-status'))}
-   const pending=(data.groups||[]).filter(g=>g.pending),done=(data.groups||[]).filter(g=>!g.pending);
-   if(!pending.length)items.append(textNode('p','目前沒有待處理的 AI 系統異常。','dh-ai-status'));
-   function makeRow(g){
-     const row=textNode('div','', 'dh-ai-line '+(g.pending?'pending':'done'));
-     row.append(textNode('b',(g.pending?'● 待處理｜':'✓ 已處理｜')+(labels[g.tool]||g.tool)+'｜'+(message[g.code]||g.code)));
-     row.append(textNode('small','近 30 日 '+g.count+' 次｜今日 '+g.todayCount+' 次｜最後發生 '+dt(g.lastAt)));
-     row.append(textNode('small','位置：'+(g.source==='center'?'AI 總控':'工具 Worker')+'｜錯誤碼：'+g.code+(g.detailCode?'｜細節：'+g.detailCode:'')));
-     if(g.providerErrors?.length)row.append(textNode('small','失敗通道：'+g.providerErrors.map(x=>(x.channel||'?')+' '+x.error).join('／')));
-     const trace=document.createElement('code');trace.textContent='追蹤碼：'+g.traceId;row.append(trace);
-     if(g.pending){const bar=textNode('div','', 'dh-ai-buttons');const btn=textNode('button','標記已處理');btn.type='button';btn.className='btn secondary';btn.onclick=async()=>{btn.disabled=true;try{await api('/admin/ai-monitor/ack','POST',{key:g.key});await load(true)}catch(e){$('dhAiStatus').textContent='標記失敗：'+e.message;btn.disabled=false}};bar.append(btn);row.append(bar)}
-     else row.append(textNode('small','處理時間：'+dt(g.acknowledgedAt)));
-     return row;
-   }
-   for(const g of pending)items.append(makeRow(g));
-   if(done.length){
-     const history=document.createElement('details');history.className='dh-ai-history';
-     const summary=document.createElement('summary');summary.textContent='過去異常紀錄（已處理 '+done.length+' 類）';history.append(summary);
-     for(const g of done)history.append(makeRow(g));
-     items.append(history);
-   }
-   $('dhAiStatus').textContent='更新時間：'+dt(data.asOf)+(data.truncated?'｜異常明細僅展示最近 750 筆來源記錄；上方成功率依完整 30 日記錄計算':'')+'。成功率分母為已記錄的終局請求（含已記錄 Worker 失敗）；標記已處理不代表 AI 已恢復正常。';
+ const dailyBox=$('dhAiDailyTable');dailyBox.replaceChildren();
+ if(!data.dailyAvailable)dailyBox.append(node('div','每日紀錄尚無法讀取。','dh-ai-status'));
+ else {
+   const table=node('table','','dh-ai-daily-table');const thead=node('thead');const tr=node('tr');
+   for(const h of ['日期','完成成功','最終失敗','成功率'])tr.append(node('th',h));thead.append(tr);table.append(thead);
+   const tbody=node('tbody');
+   if(!stats.days.length){const r=node('tr'),c=node('td','這個期間沒有已記錄請求；不能當作 100% 正常。');c.colSpan=4;r.append(c);tbody.append(r)}
+   for(const day of stats.days){const r=node('tr');r.append(node('td',day.day));r.append(node('td',day.success,'dh-ai-good'));r.append(node('td',day.failure,day.failure?'dh-ai-fail':''));r.append(node('td',pct(day.success,day.failure)));tbody.append(r)}
+   table.append(tbody);dailyBox.append(table);
  }
- async function load(force=false){
-   if(busy||!readToken()||document.hidden||$('dashboard').hidden)return;
-   if(!force&&Date.now()-lastFetch<15000)return;
-   busy=true;
-   try{const data=await api('/admin/ai-monitor');render(data);lastFetch=Date.now()}
-   catch(e){$('dhAiMonitorBadge').textContent='查詢失敗';$('dhAiMonitorBadge').classList.add('alert');$('dhAiStatus').textContent='AI 監控資料讀取失敗：'+(e.message||'未知錯誤')}
-   finally{busy=false}
+ function incident(g){
+   const box=node('article','','dh-ai-line '+(g.recoveryObserved?'done':'pending'));
+   const [name,why]=formatError(g.code);
+   box.append(node('b',(g.recoveryObserved?'✓ 有後續成功｜':'● 尚未確認恢復｜')+labels[g.tool]+'｜'+name));
+   box.append(node('div',why,'dh-ai-error-desc'));
+   const n=period===1?g.todayCount:period===7?g.weekCount:g.count;
+   const spanHours=Math.round((new Date(g.lastAt).getTime()-new Date(g.firstAt).getTime())/360000)/10;
+   box.append(node('small',rangeLabel+'記錄 '+(n??g.count)+' 次｜近 30 日 '+g.count+' 次｜最早 '+fmt(g.firstAt)+'｜最近 '+fmt(g.lastAt)));
+   if(g.count>1&&Number.isFinite(spanHours))box.append(node('small','這類錯誤的首末出現間隔約 '+spanHours+' 小時（不代表連續故障時間）'));
+   box.append(node('small','故障後是否成功：'+(g.recoveryObserved?'有，同工具最近成功於 '+fmt(g.lastSuccessAt):'目前沒有可比對的後續成功紀錄，不代表一直停機'),'dh-ai-recovery'));
+   box.append(node('div','原始代碼：'+g.code+'｜位置：'+(g.source==='worker'?'工具 Worker':'AI 總控終局失敗')+(g.detailCode?'｜細節 '+g.detailCode:''),'dh-ai-raw'));
+   if(g.traceId)box.append(node('code','追蹤碼：'+g.traceId));
+   if(!g.recoveryObserved){
+     box.append(node('small',g.acknowledgedAt?'管理員已標記處理（'+fmt(g.acknowledgedAt)+'），仍需確認後續成功。':'尚未標記處理；標記只代表已看過，不代表系統修復。'));
+     if(g.pending){const controls=node('div','','dh-ai-buttons'),btn=node('button','標記已處理');btn.type='button';btn.className='btn secondary';btn.addEventListener('click',async()=>{btn.disabled=true;try{await api('/admin/ai-monitor/ack','POST',{key:g.key});await load(true)}catch(e){$('dhAiStatus').textContent='標記失敗：'+e.message;btn.disabled=false}});controls.append(btn);box.append(controls)}
+   }
+   return box;
  }
- $('dhAiReload').addEventListener('click',()=>load(true));
- window.addEventListener('dh-admin-ready',()=>load(true));
- setInterval(()=>{if(!document.hidden)load()},60000);
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+ const items=$('dhAiItems');items.replaceChildren();if(!unresolved.length)items.append(node('p','此期間沒有「失敗後尚無成功」的已記錄錯誤。','dh-ai-status'));else for(const g of unresolved)items.append(incident(g));
+ const hist=$('dhAiHistoryItems');hist.replaceChildren();if(!historical.length)hist.append(node('p','此期間尚無後續成功的錯誤類型。','dh-ai-status'));else for(const g of historical)hist.append(incident(g));
+ const mb=$('dhAiManualReports');mb.replaceChildren();
+ if(!data.manual?.available)mb.append(node('p','會員回報資料無法讀取，請勿視為零筆。','dh-ai-status'));
+ else if(!memberCount)mb.append(node('p','目前沒有未清除的會員紅燈；不代表過去完全沒有回報。','dh-ai-status'));
+ else {
+   for(const m of member){const box=node('article','','dh-ai-reported');box.append(node('strong',labels[m.tool]+'｜目前 '+m.count+' 人回報異常'));box.append(node('span','最近回報：'+fmt(m.lastAt)+'。此處僅收錄原有會員紅燈，沒有錯誤類型或逐次歷史；請在會員異常管理區查看回報會員並發問。'));mb.append(box)}
+ }
+ $('dhAiStatus').textContent='資料更新：'+fmt(data.asOf)+'｜無寄信、無推播。系統錯誤與會員紅燈不互相相加；目前尚不能自動收集瀏覽器的 Failed to fetch，須在各工具前端接入通報。';
+}
+async function load(force=false){
+ if(busy||!readToken()||document.hidden||$('dashboard').hidden)return;
+ if(!force&&Date.now()-lastFetch<15000)return;
+ busy=true;try{render(await api('/admin/ai-monitor'));lastFetch=Date.now()}
+ catch(e){$('dhAiMonitorBadge').textContent='監控查詢失敗';$('dhAiMonitorBadge').classList.add('alert');$('dhAiStatus').textContent='查詢失敗：'+(e.message||'未知問題')}
+ finally{busy=false}
+}
+for(const btn of document.querySelectorAll('[data-dh-period]'))btn.addEventListener('click',()=>{
+ period=Number(btn.dataset.dhPeriod);document.querySelectorAll('[data-dh-period]').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));if(last)render(last);
+});
+$('dhAiToolFilter').addEventListener('change',e=>{tool=e.target.value;if(last)render(last)});
+$('dhAiReload').addEventListener('click',()=>load(true));
+window.addEventListener('dh-admin-ready',()=>load(true));
+setInterval(()=>{if(!document.hidden)load()},60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
 })();
 </script>
 
