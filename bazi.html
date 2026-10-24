@@ -7004,9 +7004,16 @@ ${intent}
     }else if(id==='report-luck'){
       if(originalData.daYun?.cycles?.length!==8)throw Error('八步大運資料不完整');
       renderLuck(originalData);
+      // Check the actual original-core DOM, not merely an eight-item API array.
+      if(r.querySelectorAll('#luckGrid .luck-card').length!==8 ||
+         r.querySelectorAll('#luckSummary .luck-top-card').length!==3 ||
+         !r.querySelector('#luckDetail > div .fortune-badge'))
+        throw Error('八步大運卡片尚未完整產生，請重新載入（不重扣點）');
     }else if(id==='report-years'){
       if(originalData.threeYearStrategicOutlook?.yearsData?.length!==3)throw Error('三年流年資料不完整');
       renderYearFlows(originalData);
+      if(r.querySelectorAll('#threeYearCompare .three-year-card').length!==3)
+        throw Error('三年流年卡片尚未完整產生，請重新載入（不重扣點）');
     }else throw Error('不支援的章節');
     baziNativePaidData.set(id,originalData);
     // No third-party/local imitation templates; all cards and interactions
@@ -7549,7 +7556,11 @@ ${intent}
     renderShensha(data);
     // All personalised deep-report containers are cleared when returning from public demos.
     // The following chapters show only the existing locked panels in personal mode.
-    for(const id of ['readingBody','luckSummary','threeYearCompare','monthSummary'])put(id,'');
+    for(const id of ['readingBody','luckSummary','luckGrid','luckDetail','threeYearCompare','monthSummary'])put(id,'');
+    for(const id of ['report-luck','report-years']){
+      const panel=$(id);
+      if(panel){panel.dataset.baziPaidReady='0';panel.dataset.baziRenderSource='personal-pending';delete panel.dataset.baziPaidOwner;}
+    }
     initSectionDecodeUI();resetExploration();
   }
 
@@ -7739,6 +7750,11 @@ ${intent}
     document.body.classList.add('bazi-personal-full-mode');
     const banner=$('baziExampleSnapshotBanner');if(banner)banner.hidden=true;
     window.baziPremiumReset?.({preservePersonalOwnership:!!window.__baziReturningFromExample});
+    // Previously rendered demo cards may not count as an owned personal view.
+    for(const id of ['report-luck','report-years']){
+      const panel=document.getElementById(id);
+      if(panel){panel.dataset.baziPaidReady='0';delete panel.dataset.baziPaidOwner;}
+    }
     if(!window.__baziReturningFromExample)window.baziExamplePersonalUnlocked=null;
     lastData=data;selectedPeriods={};baziGeminiLastReading='';
     const gemOut=$('baziGeminiOutput');if(gemOut)gemOut.hidden=true;
@@ -7778,6 +7794,12 @@ ${intent}
     renderYinYang(data);renderAux(data);renderTenGods(data);renderDeepTenGods(data);
     renderRelations(data);renderShensha(data);renderReading(data);renderLuck(data);
     renderYearFlows(data);initSectionDecodeUI();resetExploration();
+    // Label archived 07/08 card content explicitly. Entitlements remain associated
+    // with the visitor's own chart and must never reuse these archived cards.
+    for(const id of ['report-luck','report-years']){
+      const panel=document.getElementById(id);
+      if(panel){panel.dataset.baziPaidReady='0';panel.dataset.baziRenderSource='archived-example';delete panel.dataset.baziPaidOwner;}
+    }
     emptyState.style.display='none';
     results.classList.add('show');
     document.body.classList.remove('show-bazi-intro');
@@ -10116,6 +10138,11 @@ async function change(id,options={}){
  buttons.forEach(btn=>{btn.disabled=true;btn.querySelector('.bazi-inline-sample-title').textContent='正在載入完整範例…'});
  if(reroll){reroll.disabled=true;reroll.textContent='正在換一筆…'}
  try{
+  if(isPersonal()&&!window.baziPersonalOwnershipKnown?.()){
+    await window.baziSectionReady?.();
+    if(myEpoch!==sampleRequestEpoch||startedViewRevision!==(Number(window.baziVisualRevision)||0)||
+       window.baziIsPersonalChapterOwned?.(id))return;
+  }
   await getEntries();
   const prev=window.__baziPreviousSampleKey||'';
   if(!deck.length)deck=shuffleDeck(prev);
@@ -10642,6 +10669,17 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
  let verifiedOwnerKey='',verifiedOwnerSession='',ownershipKnown=false;
  let verifiedOwned=new Set();
  const ownerKey=payload=>payload?JSON.stringify([payload.datetime,payload.gender,payload.sect]):'';
+ const ADVANCED_VISUAL=new Set(['report-luck','report-years']);
+ function advancedRenderedForOwner(id){
+   if(!ADVANCED_VISUAL.has(id))return true;
+   const p=chart(),section=document.getElementById(id);
+   if(!p||!section||!document.body.classList.contains('bazi-personal-full-mode'))return false;
+   if(section.dataset.baziPaidReady!=='1'||section.dataset.baziPaidOwner!==ownerKey(p))return false;
+   if(id==='report-luck')return section.querySelectorAll('#luckGrid .luck-card').length===8 &&
+      section.querySelectorAll('#luckSummary .luck-top-card').length===3 &&
+      !!section.querySelector('#luckDetail > div .fortune-badge');
+   return section.querySelectorAll('#threeYearCompare .three-year-card').length===3;
+ }
  const ownershipContextValid=()=>{
   if(!ownershipKnown||verifiedOwnerSession!==token())return false;
   if(document.body.classList.contains('bazi-example-snapshot-mode'))return !!window.baziHasPersonalCore?.();
@@ -10807,6 +10845,10 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   window.baziClearNativePaidData?.();
   document.querySelectorAll('.dh-bazi-premium-visible').forEach(x=>x.classList.remove('dh-bazi-premium-visible'));
   document.querySelectorAll('.bazi-chapter-owned').forEach(x=>x.classList.remove('bazi-chapter-owned'));
+  for(const id of ADVANCED_VISUAL){
+    const section=document.getElementById(id);
+    if(section){section.dataset.baziPaidReady='0';delete section.dataset.baziPaidOwner;}
+  }
   // Scrub earlier purchased private DOM when changing charts or opening an example.
   for(const id of ['luckSummary','luckGrid','luckDetail','threeYearCompare','monthSummary','monthFlowGrid','monthDetail']){
     const e=document.getElementById(id);if(e)e.replaceChildren();
@@ -10838,7 +10880,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
      const btn=box.querySelector('button');box.hidden=x.id==='report-shensha'||x.mode==='pending'&&!x.unlocked;
      if(box.hidden)continue;
      if(x.unlocked){
-       if(document.getElementById(x.id)?.classList.contains('dh-bazi-premium-visible')){box.hidden=true;btn.hidden=true}
+       if(document.getElementById(x.id)?.classList.contains('dh-bazi-premium-visible')&&advancedRenderedForOwner(x.id)){box.hidden=true;btn.hidden=true}
        else if(failedAutomaticReads.has(x.id)){box.style.removeProperty('display');box.classList.add('bazi-read-error');btn.hidden=false;btn.disabled=false;btn.textContent='重新載入完整內容（不扣點）';status(box,'完整內容尚未成功載入，請點此重新讀取（不重扣點）')}
        else {box.classList.remove('bazi-read-error');btn.hidden=true;btn.disabled=false;status(box,'正在載入已解鎖的完整內容…')}
      }
@@ -10876,9 +10918,13 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }
   if(section.mode==='free' || section.unlocked){
    notice('');
+   if(section.unlocked&&ADVANCED_VISUAL.has(id)&&restored.has(id)&&!advancedRenderedForOwner(id)){
+     restored.delete(id);
+     document.getElementById(id)?.classList.remove('dh-bazi-premium-visible');
+   }
    // A confirmed entitlement is not a rendered document. Opening BEFORE
    // /v2/section/read finishes exposed stale archived 08-year cards (V8).
-   if(id==='report-shensha' || restored.has(id)){
+   if(id==='report-shensha' || (restored.has(id)&&advancedRenderedForOwner(id))){
     if(typeof onOpen==='function')onOpen();
    }else if(failedAutomaticReads.has(id)){
     // Reveal only the explicit retry/error control, never archived content.
@@ -10925,7 +10971,20 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    const chapter=box.closest('.report-section');
    // Do not falsely claim a complete read before the original 06-09 renderer has succeeded.
    // On failure the entitlement stays owned, but the loading guard remains unset.
-   try{display(box,j.document)}catch(err){chapter?.classList.remove('dh-bazi-premium-visible');throw err}
+   try{display(box,j.document)}catch(err){
+     chapter?.classList.remove('dh-bazi-premium-visible');
+     if(chapter&&ADVANCED_VISUAL.has(id)){
+       chapter.dataset.baziPaidReady='0';delete chapter.dataset.baziPaidOwner;
+       for(const selector of (id==='report-luck'?['#luckSummary','#luckGrid','#luckDetail']:['#threeYearCompare']))
+         chapter.querySelector(selector)?.replaceChildren();
+     }
+     throw err;
+   }
+   if(chapter&&ADVANCED_VISUAL.has(id)){
+     chapter.dataset.baziPaidOwner=requestKey;
+     chapter.dataset.baziPaidReady='1';
+     chapter.dataset.baziRenderSource='authorized-personal';
+   }
    chapter?.classList.add('dh-bazi-premium-visible');
    if(id==='report-years')chapter?.querySelectorAll('.bazi-core-random-controls').forEach(x=>x.remove());
    restored.add(id);failedAutomaticReads.delete(id);box.classList.remove('bazi-read-error');
@@ -10945,7 +11004,11 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    if(!current())return;
    if(s.unlocked){failedAutomaticReads.add(id);box.classList.add('bazi-read-error');}
    restored.delete(id);
-   box.closest('.report-section')?.classList.remove('dh-bazi-premium-visible');
+   const failedChapter=box.closest('.report-section');
+   failedChapter?.classList.remove('dh-bazi-premium-visible');
+   if(failedChapter&&ADVANCED_VISUAL.has(id)){
+     failedChapter.dataset.baziPaidReady='0';delete failedChapter.dataset.baziPaidOwner;
+   }
    box.hidden=false;box.style.removeProperty('display');btn.hidden=false;
    btn.textContent=s.unlocked?'重新載入完整內容（不扣點）':(s.mode==='priced'?'使用 '+s.points+' 點解鎖整區':'免費閱讀完整分析');
    status(box,(e?.message||'讀取失敗')+'；若已成功解鎖，重新載入不會重複扣點');
@@ -11039,6 +11102,12 @@ body.bazi-personal-full-mode #results :is(#report-reading,#report-luck,#report-y
   display:none!important;
 }
 /* Original monthly and yearly rich cards are NOT recreated inside a generic wrapper. */
+</style>
+<style id="bazi-v13-advanced-source-gate">
+/* Personal purchased 07/08 never exposes the last archived sample while its
+   server-authorized chapter payload is pending or being retried. */
+body.bazi-personal-full-mode #results :is(#report-luck,#report-years).bazi-chapter-owned:not([data-bazi-paid-ready="1"]) :is(#luckSummary,#luckGrid,#luckDetail,#threeYearCompare,.bazi-core-random-controls,.bazi-example-snapshot-banner){display:none!important}
+body.bazi-personal-full-mode #results :is(#report-luck,#report-years).bazi-chapter-owned :is(.bazi-core-random-controls,.bazi-core-example-birthdate){display:none!important}
 </style>
 <style id="bazi-premium-preview-badges-20261021">
 /* The status pill is its own preview action, distinct from the paid card. */
