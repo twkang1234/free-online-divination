@@ -3425,16 +3425,28 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
                 <button type="button" role="tab" aria-selected="true" data-bazi-gallery-tab="luck">八步大運</button>
                 <button type="button" role="tab" aria-selected="false" data-bazi-gallery-tab="years">三年流年</button>
               </div>
-              <button type="button" class="bazi-showcase-reroll" id="baziGalleryShuffle">🎲 換一張公開範例</button>
+              <button type="button" class="bazi-showcase-reroll" id="baziGalleryShuffle" aria-label="隨機更換另一張公開命盤範例">🎲 隨機換一張公開範例</button>
+            </div>
+            <div class="bazi-showcase-samplebar" aria-label="目前公開範例出生資料">
+              <div class="bazi-showcase-sampleid">
+                <span class="bazi-showcase-notmine">✦ 他人命盤範例 · 非本人資料</span>
+                <span class="bazi-showcase-date-label">範例出生日期</span>
+                <strong class="bazi-showcase-birth" id="baziGalleryBirthTop">正在讀取範例…</strong>
+              </div>
+              <span class="bazi-showcase-samplehint">可按右側隨機換一筆，觀看不同命盤的完整展示</span>
             </div>
             <div class="bazi-showcase-info" aria-live="polite" id="baziGalleryStatus">展開範例館後載入公開資料，不會切換你的命盤。</div>
             <div class="bazi-showcase-preview" id="baziGalleryView" aria-live="polite"></div>
-            <div class="bazi-showcase-cta">
-              <p><strong>想看自己的大運或流年？</strong>第 07、08 區解鎖後，上下兩部分都能完整閱讀，且同一命盤同一區永久解鎖；這裡僅負責免費示範。</p>
-              <div class="bazi-showcase-actions">
-                <button type="button" data-bazi-gallery-go="report-luck">前往 07 八步大運</button>
-                <button type="button" data-bazi-gallery-go="report-years">前往 08 三年流年</button>
+            <div class="bazi-showcase-samplebar bazi-showcase-samplebar--bottom" aria-label="範例結尾操作">
+              <div class="bazi-showcase-sampleid">
+                <span class="bazi-showcase-notmine">✦ 這是公開範例 · 不是你的命盤</span>
+                <span class="bazi-showcase-date-label">範例出生日期</span>
+                <strong class="bazi-showcase-birth" id="baziGalleryBirthBottom">正在讀取範例…</strong>
               </div>
+              <button type="button" class="bazi-showcase-reroll bazi-showcase-reroll-bottom" id="baziGalleryShuffleBottom">🎲 再隨機換一張範例</button>
+            </div>
+            <div class="bazi-showcase-cta">
+              <p><strong>想查看自己的八步大運或三年流年？</strong>此處只展示他人命盤。請使用下方「看完範例｜返回專業分析選單」，回到第 07 或第 08 區選擇解鎖；不會從範例直接購買。</p>
             </div>
           </div>
           <div class="bazi-ux-chapter-finish"><button type="button" data-bazi-chapter-action="hub">✓ 看完範例｜返回專業分析選單</button></div>
@@ -11940,6 +11952,33 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
 </style>
 
 
+<style id="bazi-showcase-ux-v17">
+/* Explicit sample identity at both ends, isolated entirely within free gallery 09. */
+#report-examples .bazi-showcase-samplebar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 18px;margin:13px 0 9px;padding:14px 17px;border:1px solid rgba(162,132,225,.65);border-left:4px solid #c5a0ff;border-radius:12px;background:linear-gradient(110deg,rgba(113,76,171,.20),rgba(33,122,138,.12));color:#f0e8ff}
+#report-examples .bazi-showcase-samplebar--bottom{margin:24px 0 12px;border-left-color:#74cad0;background:linear-gradient(110deg,rgba(33,122,138,.17),rgba(113,76,171,.11))}
+#report-examples .bazi-showcase-sampleid{display:flex;align-items:center;flex-wrap:wrap;gap:7px 12px;min-width:0}
+#report-examples .bazi-showcase-notmine{display:inline-flex;align-items:center;color:#eed3ff;font-size:.75rem;font-weight:860;border-radius:999px;border:1px solid rgba(200,160,255,.55);background:rgba(130,85,175,.24);padding:4px 10px}
+#report-examples .bazi-showcase-date-label{color:#b6c8e3;font-size:.76rem;font-weight:760}
+#report-examples .bazi-showcase-birth{display:inline-block;font-weight:900;font-size:clamp(.99rem,1.4vw,1.18rem);line-height:1.55;color:#ffe2a4;letter-spacing:.015em;overflow-wrap:anywhere}
+#report-examples .bazi-showcase-samplehint{color:#cbd0e8;font-size:.73rem;line-height:1.6}
+#report-examples .bazi-showcase-toolbar .bazi-showcase-reroll,
+#report-examples .bazi-showcase-reroll-bottom{border:1px solid #aa91e4;background:linear-gradient(110deg,#403060,#1e5364);color:#fff;font-weight:900;border-radius:10px;min-height:43px;padding:9px 15px;cursor:pointer}
+#report-examples :is(.bazi-showcase-toolbar .bazi-showcase-reroll,.bazi-showcase-reroll-bottom):hover{border-color:#f8d57a;background:linear-gradient(110deg,#63448d,#22697d)}
+#report-examples :is(.bazi-showcase-toolbar .bazi-showcase-reroll,.bazi-showcase-reroll-bottom):focus-visible{outline:3px solid #e6bcff;outline-offset:3px}
+#report-examples :is(.bazi-showcase-toolbar .bazi-showcase-reroll,.bazi-showcase-reroll-bottom):disabled{opacity:.62;cursor:wait}
+@keyframes bazi-sample-pulse-10{0%,100%{filter:brightness(1);box-shadow:0 0 0 0 rgba(227,180,105,0)}50%{filter:brightness(1.34);box-shadow:0 0 0 5px rgba(227,180,105,.36),0 0 24px rgba(191,143,255,.5)}}
+#report-examples .bazi-showcase-reroll.bazi-gallery-blink-10{animation:bazi-sample-pulse-10 .7s ease-in-out 10}
+@media(prefers-reduced-motion:reduce){#report-examples .bazi-showcase-reroll.bazi-gallery-blink-10{animation:none}}
+html[data-theme="light"] #report-examples .bazi-showcase-samplebar{background:linear-gradient(110deg,#f0e6ff,#e9f5f7);border-color:#a58bcb;border-left-color:#7853b3;color:#233246}
+html[data-theme="light"] #report-examples .bazi-showcase-samplebar--bottom{border-left-color:#238897}
+html[data-theme="light"] #report-examples .bazi-showcase-notmine{color:#59388a;background:#e8dafa;border-color:#a78cc8}
+html[data-theme="light"] #report-examples .bazi-showcase-date-label{color:#506075}
+html[data-theme="light"] #report-examples .bazi-showcase-birth{color:#83500f}
+html[data-theme="light"] #report-examples .bazi-showcase-samplehint{color:#485975}
+html[data-theme="light"] #report-examples :is(.bazi-showcase-toolbar .bazi-showcase-reroll,.bazi-showcase-reroll-bottom){color:#fff;background:linear-gradient(110deg,#654494,#287285);border-color:#7053a6}
+@media(max-width:670px){#report-examples .bazi-showcase-samplebar{padding:12px;align-items:stretch}#report-examples .bazi-showcase-sampleid{gap:6px 9px}#report-examples .bazi-showcase-samplehint{flex-basis:100%}#report-examples .bazi-showcase-reroll-bottom{width:100%}}
+</style>
+
 <style id="bazi-gallery-native-legacy-v15">
 /* Gallery 09 is isolated in state, not in visual language. Original native
    07/08 card classes, colors, spacing and type scale are preserved. */
@@ -11963,9 +12002,20 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
   const view=document.getElementById('baziGalleryView');
   const status=document.getElementById('baziGalleryStatus');
   const shuffle=document.getElementById('baziGalleryShuffle');
-  if(!root||!view||!status||!shuffle)return;
+  const shuffleBottom=document.getElementById('baziGalleryShuffleBottom');
+  const dateTop=document.getElementById('baziGalleryBirthTop');
+  const dateBottom=document.getElementById('baziGalleryBirthBottom');
+  if(!root||!view||!status||!shuffle||!shuffleBottom||!dateTop||!dateBottom)return;
   let tab='luck',archive=null,catalog=null,serial=0,loading=false,selectedIndex=0;
-  let lastKey='',controller=null;
+  let lastKey='',controller=null,blinkShown=false;
+  const setBirthText=value=>{dateTop.textContent=value;dateBottom.textContent=value;};
+  const setShuffleBusy=busy=>{shuffle.disabled=busy;shuffleBottom.disabled=busy;};
+  function blinkShuffleOnce(){
+    if(blinkShown||!root.open||!archive)return;
+    blinkShown=true;
+    shuffle.classList.add('bazi-gallery-blink-10');
+    shuffle.addEventListener('animationend',()=>shuffle.classList.remove('bazi-gallery-blink-10'),{once:true});
+  }
   const esc=x=>String(x??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   // Original 07/08 HTML generators run with gallery-only DOM slots and public
   // archived input. Nothing in this closure opens paid areas or modifies the
@@ -12221,8 +12271,9 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
   };
   const card=(cls,title,heading,pill,lines=[],feature=false)=>`<article class="bazi-showcase-card ${cls}${feature?' featured':''}"><small>${esc(title)}</small><b>${esc(heading)}</b>${pill?`<span class="bazi-sx-pill">${esc(pill)}</span>`:''}${lines.filter(Boolean).map(x=>`<p class="bazi-sx-detail">${esc(x)}</p>`).join('')}</article>`;
   function render(){
-    if(!archive){view.innerHTML='<div class="bazi-showcase-empty">免費展示資料準備中…</div>';return}
+    if(!archive){setBirthText('正在讀取公開範例…');view.innerHTML='<div class="bazi-showcase-empty">免費展示資料準備中…</div>';return}
     const d=archive.data||{};
+    setBirthText(intro(d));
     let html='';
     if(tab==='luck'){
       if((d.daYun?.cycles||[]).length!==8){
@@ -12248,7 +12299,7 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
           el.innerHTML='<div class="bazi-time-lower-heading"><span>下半部 · DEEP ANALYSIS</span><strong>公開範例｜下半部完整深度推演</strong></div>'+lower;
           view.querySelector('.bazi-gallery-native-luck').appendChild(el);
         }catch(err){console.warn('Public original luck renderer:',err);view.innerHTML='<div class="bazi-showcase-empty">範例大運詳細畫面暫時無法呈現，請再換一筆範例。</div>'}
-        status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。與本人命盤、解鎖狀態和點數完全獨立。`;
+        status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜只供預覽，與本人命盤、解鎖狀態及點數完全獨立。`;
         return;
       }
     } else if(tab==='years'){
@@ -12270,17 +12321,17 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
           el.innerHTML='<div class="bazi-time-lower-heading"><span>下半部 · DEEP ANALYSIS</span><strong>公開範例｜下半部完整深度推演</strong></div>'+lower;
           view.querySelector('.bazi-gallery-native-years').appendChild(el);
         }catch(err){console.warn('Public original annual renderer:',err);view.innerHTML='<div class="bazi-showcase-empty">範例三年流年畫面暫時無法呈現，請再換一筆範例。</div>'}
-        status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。與本人命盤、解鎖狀態和點數完全獨立。`;
+        status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜只供預覽，與本人命盤、解鎖狀態及點數完全獨立。`;
         return;
       }
     }
     view.innerHTML=html;
-    status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。不是你的命盤；僅作為內容展示，不涉及解鎖或扣點。`;
+    status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜只供預覽，與本人命盤、解鎖狀態及點數完全獨立。`;
   }
   function chooseTab(t){if(t!=='luck'&&t!=='years')return;tab=t;selectedIndex=0;root.querySelectorAll('[data-bazi-gallery-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.baziGalleryTab===t)));render()}
   async function loadArchive(another=false){
     if(loading&&controller)controller.abort();
-    loading=true;shuffle.disabled=true;
+    loading=true;setShuffleBusy(true);setBirthText('正在讀取公開範例…');
     const id=++serial;
     controller=new AbortController();
     const signal=controller.signal;
@@ -12305,16 +12356,16 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
     }catch(e){
       if(id!==serial||signal.aborted)return;
       status.textContent=String(e?.message||'資料載入失敗');
+      setBirthText('目前無法取得範例生日');
       view.innerHTML='<div class="bazi-showcase-empty">公開範例暫時無法取得。你可以按「換一張公開範例」重新載入；這不影響你的命盤、解鎖或點數。</div>';
-    }finally{if(id===serial){loading=false;shuffle.disabled=false}}
+    }finally{if(id===serial){loading=false;setShuffleBusy(false);blinkShuffleOnce()}}
   }
   root.addEventListener('toggle',()=>{if(root.open&&!archive&&!loading)void loadArchive()});
   root.addEventListener('click',e=>{
     const tabButton=e.target.closest('[data-bazi-gallery-tab]');if(tabButton){chooseTab(tabButton.dataset.baziGalleryTab);return}
     const luckJump=e.target.closest('[data-bazi-gallery-luck-jump]');if(luckJump){const i=Number(luckJump.dataset.baziGalleryLuckJump);view.querySelectorAll('.luck-card')[i]?.click();return}
-    const go=e.target.closest('[data-bazi-gallery-go]');if(go){document.querySelector(`#baziSectionHub [data-bazi-open-section="${go.dataset.baziGalleryGo}"]`)?.click();return}
   });
-  shuffle.addEventListener('click',()=>void loadArchive(true));
+  [shuffle,shuffleBottom].forEach(btn=>btn.addEventListener('click',()=>void loadArchive(true)));
   // Never call baziShowArchivedExample, renderLuck, renderYearFlows, or write to
   // personal chart/ownership globals. This gallery is a standalone read-only view.
 })();
