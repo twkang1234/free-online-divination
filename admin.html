@@ -435,6 +435,10 @@ td.muted{color:var(--muted)}
 @media(max-width:620px){.dh-promo-inner{padding:11px}.dh-promo-grid{grid-template-columns:1fr}.dh-promo-product-option{grid-template-columns:1fr;gap:7px}}
 
 
+
+/* Tarot browser diagnostics: show original Chinese user report without affecting other dashboard blocks. */
+.dh-ai-monitor .dh-ai-error-desc{font-size:.79rem;color:#bfccd9;line-height:1.75;margin:8px 0;overflow-wrap:anywhere}
+.dh-ai-monitor .dh-ai-line code{display:block;margin-top:8px;color:#bac8d6;white-space:normal;word-break:break-word}
 </style>
 </head>
 <body>
@@ -721,7 +725,7 @@ td.muted{color:var(--muted)}
         </section>
         <section class="dh-ai-monitor-section">
           <h3>使用者手動回報 <span class="dh-ai-section-count" id="dhAiManualCount">—</span></h3>
-          <p class="dh-ai-muted">接入現有的「會員異常紅燈」。目前只知道哪一個工具被會員回報、回報時間；原始紅燈沒有附錯誤碼或問題描述，不能從這裡直接推定原因。詳細原因可使用原本的站長詢問功能。</p>
+          <p class="dh-ai-muted">顯示會員既有紅燈與新版直接通報。新版通報保留中文錯誤原因、時間及使用者自填說明；僅代表使用者遇到問題，尚待站長確認。</p>
           <div id="dhAiManualReports"></div>
         </section>
         <section class="dh-ai-monitor-section">
@@ -1899,6 +1903,9 @@ const errorInfo={
  NETWORK_ERROR:['網站連線發生問題','瀏覽器或網路未取得有效回應，請檢查連線與 Worker。'],
  CORS_ERROR:['網站連線權限可能有誤','瀏覽器跨來源檢查未通過，需比對 OPTIONS 回應標頭。'],
  TIMEOUT:['伺服器等待逾時','請求超過等待期限，可能是服務忙碌或上游回應延遲。'],
+ TAROT_QUOTA_UNAVAILABLE:['塔羅 AI 額度服務暫不可用','請確認塔羅 Worker 的額度查詢與資料庫狀態。'],
+ SHARED_AI_CONFIRM_REQUIRED:['需要確認共用 AI 額度','正常的扣額度保護提示，不代表 AI 故障。'],
+ HTTP_503:['上游服務暫不可用','請檢查對應 Worker 回應及請求紀錄。'],
  HTTP_500:['伺服器內部錯誤','服務程式執行異常，請檢查 Worker 錯誤日誌。'],
  UNKNOWN_ERROR:['尚未分類的系統異常','需查看追蹤碼、原始錯誤碼和 Worker 日誌來判斷。']
 };
@@ -1930,24 +1937,32 @@ function render(data){
  const unresolved=events.filter(g=>!g.recoveryObserved);
  const historical=events.filter(g=>g.recoveryObserved);
  const member=(data.manual?.byTool||[]).filter(m=>tool==='all'||m.tool===tool);
+ const clientEvents=(data.clientGroups||[]).filter(g=>(tool==='all'||tool===g.tool)&&g.lastAt>=since);
+ const clientManual=clientEvents.filter(g=>g.source==='manual');
+ const clientAutomatic=clientEvents.filter(g=>g.source==='client_auto');
+ const clientManualPending=clientManual.filter(g=>g.pending);
+ const clientAutoPending=clientAutomatic.filter(g=>g.pending);
  const memberCount=member.reduce((n,x)=>n+x.count,0);
  $('dhAiUnresolved').textContent=String(unresolved.length);
  $('dhAiToday').textContent=data.dailyAvailable?String(stats.summary.failure):'—';
  $('dhAiSuccess').textContent=data.dailyAvailable?String(stats.summary.success):'—';
  $('dhAiFailureRate').textContent='失敗率 '+(data.dailyAvailable&&stats.summary.success+stats.summary.failure?(100-Number(pct(stats.summary.success,stats.summary.failure).slice(0,-1))).toFixed(1)+'%':'無資料');
  $('dhAiRate').textContent='成功率 '+(data.dailyAvailable?pct(stats.summary.success,stats.summary.failure):'無資料');
- $('dhAiManualTotal').textContent=data.manual?.available?String(memberCount):'—';
- $('dhAiManualCount').textContent=data.manual?.available?String(memberCount)+' 人':'查詢失敗';
- $('dhAiUnresolvedCount').textContent=String(unresolved.length)+' 類';
+ $('dhAiManualTotal').textContent=data.manual?.available&&data.clientAvailable?String(memberCount+clientManualPending.reduce((n,g)=>n+g.count,0)):'—';
+ $('dhAiManualCount').textContent=data.manual?.available&&data.clientAvailable?(String(memberCount)+' 人紅燈／'+clientManualPending.reduce((n,g)=>n+g.count,0)+' 筆手動通報'):'查詢失敗';
+ $('dhAiUnresolvedCount').textContent=String(unresolved.length+clientAutoPending.length)+' 類（含前端自動回報）';
  $('dhAiHistoryCount').textContent=String(historical.length);
  // 頂部標示永遠是「全站」待處理狀態，不因下方日期／工具篩選而隱藏警示。
  const manualBadge=$('dhAiManualBadge'),systemBadge=$('dhAiSystemBadge');
- const manualAvailable=data.manual?.available===true;
+ const manualAvailable=data.manual?.available===true&&data.clientAvailable===true;
  const allManualCount=Math.max(0,Number(data.manual?.total||0));
- manualBadge.textContent=!manualAvailable?'手動：資料無法讀取':allManualCount?'手動：'+allManualCount+' 人回報':'手動：0 人回報';
- manualBadge.classList.toggle('alert',!manualAvailable||allManualCount>0);
- const allUnresolved=(data.groups||[]).filter(g=>!g.recoveryObserved).length;
- const systemAvailable=data.centerAvailable===true&&data.dailyAvailable===true;
+ const allClientManual=(data.clientGroups||[]).filter(g=>g.source==='manual'&&g.pending).reduce((n,g)=>n+g.count,0);
+ manualBadge.textContent=!manualAvailable?'手動：資料無法讀取':
+   (allManualCount||allClientManual)?'手動：'+allManualCount+' 人紅燈＋'+allClientManual+' 筆通報':'手動：0 件待處理';
+ manualBadge.classList.toggle('alert',!manualAvailable||allManualCount>0||allClientManual>0);
+ const allUnresolved=(data.groups||[]).filter(g=>!g.recoveryObserved).length+
+   (data.clientGroups||[]).filter(g=>g.source==='client_auto'&&g.pending&&!g.recoveryObserved).length;
+ const systemAvailable=data.centerAvailable===true&&data.dailyAvailable===true&&data.clientAvailable===true;
  systemBadge.textContent=!systemAvailable?(allUnresolved?'系統：至少 '+allUnresolved+' 類待查（資料不全）':'系統：資料未齊'):
    allUnresolved?(data.truncated?'系統：至少 '+allUnresolved+' 類待確認':'系統：'+allUnresolved+' 類待確認'):
    data.truncated?'系統：紀錄不完整':'系統：0 類待確認';
@@ -1956,6 +1971,7 @@ function render(data){
  if(!data.centerAvailable)notice.push('AI 總控歷史資料無法讀取（不能把沒有數據當成正常）');
  if(!data.dailyAvailable)notice.push('每日成功／失敗統計暫時無法讀取');
  if(!data.manual?.available)notice.push('會員回報資料暫時無法讀取');
+ if(!data.clientAvailable)notice.push('瀏覽器通報資料暫時無法讀取');
  if(data.truncated)notice.push('異常明細有截斷，詳細次數可能偏少');
  if(!notice.length)notice.push('已載入 '+rangeLabel+'、'+(tool==='all'?'全部工具':labels[tool])+' 的已記錄資料；以下失敗率不包含未回到伺服器的瀏覽器連線問題。');
  $('dhAiDataNotice').textContent=notice.join('；');
@@ -2000,15 +2016,39 @@ function render(data){
    }
    return box;
  }
- const items=$('dhAiItems');items.replaceChildren();if(!unresolved.length)items.append(node('p','此期間沒有「失敗後尚無成功」的已記錄錯誤。','dh-ai-status'));else for(const g of unresolved)items.append(incident(g));
- const hist=$('dhAiHistoryItems');hist.replaceChildren();if(!historical.length)hist.append(node('p','此期間尚無後續成功的錯誤類型。','dh-ai-status'));else for(const g of historical)hist.append(incident(g));
+ function clientIncident(g){
+   const recovered=g.recoveryObserved,card=node('article','','dh-ai-line '+(recovered?'done':'pending'));
+   const [name,why]=formatError(g.code);
+   const isManual=g.source==='manual';
+   card.append(node('b',(isManual?'使用者手動通報':'瀏覽器自動偵測')+'｜'+labels[g.tool]+'｜'+name));
+   card.append(node('div',why,'dh-ai-error-desc'));
+   if(g.note&&isManual)card.append(node('div','使用者說明：'+g.note,'dh-ai-error-desc'));
+   const n=period===1?g.todayCount:period===7?g.weekCount:g.count;
+   card.append(node('small',rangeLabel+' '+n+' 次｜近30日 '+g.count+' 次｜首次 '+fmt(g.firstAt)+'｜最近 '+fmt(g.lastAt)));
+   card.append(node('small','階段：'+(g.stage==='six'?'六張牌 AI 解讀':g.stage==='three'?'三張牌 AI 解讀':g.stage)+'｜'+
+     (recovered?'後續同工具成功於 '+fmt(g.lastSuccessAt)+'（不代表同類故障已修好）':'尚未確認恢復，不代表連續停機')));
+   card.append(node('code','錯誤代碼：'+g.code+(g.traceId?'｜追蹤碼 '+g.traceId:'')));
+   if(g.pending){
+     const buttons=node('div','','dh-ai-buttons'),b=node('button','標記已查看');b.type='button';b.className='btn secondary';
+     b.addEventListener('click',async()=>{b.disabled=true;try{await api('/admin/ai-monitor/ack','POST',{key:g.key});await load(true)}catch(e){$('dhAiStatus').textContent='標記失敗：'+e.message;b.disabled=false}});
+     buttons.append(b);card.append(buttons);
+   }else card.append(node('small','管理員已查看：'+fmt(g.acknowledgedAt)));
+   return card;
+ }
+ const items=$('dhAiItems');items.replaceChildren();
+ if(!unresolved.length&&!clientAutoPending.length)items.append(node('p','此期間沒有尚待確認的已記錄系統錯誤或瀏覽器連線回報。','dh-ai-status'));
+ else {for(const g of unresolved)items.append(incident(g));for(const g of clientAutoPending)items.append(clientIncident(g));}
+ const hist=$('dhAiHistoryItems');hist.replaceChildren();
+ if(!historical.length&&!clientAutomatic.some(g=>!g.pending||g.recoveryObserved))hist.append(node('p','此期間沒有已恢復或已查看的技術通報。','dh-ai-status'));
+ else {for(const g of historical)hist.append(incident(g));for(const g of clientAutomatic.filter(g=>!g.pending||g.recoveryObserved))hist.append(clientIncident(g));}
  const mb=$('dhAiManualReports');mb.replaceChildren();
- if(!data.manual?.available)mb.append(node('p','會員回報資料無法讀取，請勿視為零筆。','dh-ai-status'));
- else if(!memberCount)mb.append(node('p','目前沒有未清除的會員紅燈；不代表過去完全沒有回報。','dh-ai-status'));
- else {
+ if(!data.manual?.available||!data.clientAvailable)mb.append(node('p','回報資料可能未齊全，請勿將空白視為零。','dh-ai-status'));
+ for(const g of clientManual)mb.append(clientIncident(g));
+ if(!memberCount&&!clientManual.length)mb.append(node('p','目前沒有已收錄的使用者通報或會員紅燈。','dh-ai-status'));
+ if(memberCount){
    for(const m of member){const box=node('article','','dh-ai-reported');box.append(node('strong',labels[m.tool]+'｜目前 '+m.count+' 人回報異常'));box.append(node('span','最近回報：'+fmt(m.lastAt)+'。此處僅收錄原有會員紅燈，沒有錯誤類型或逐次歷史；請在會員異常管理區查看回報會員並發問。'));mb.append(box)}
  }
- $('dhAiStatus').textContent='資料更新：'+fmt(data.asOf)+'｜無寄信、無推播。系統錯誤與會員紅燈不互相相加；目前尚不能自動收集瀏覽器的 Failed to fetch，須在各工具前端接入通報。';
+ $('dhAiStatus').textContent='資料更新：'+fmt(data.asOf)+'｜無寄信、無推播。塔羅前端將 Failed to fetch 寫入獨立通報接口；其餘工具仍須各自接入，且前端錯誤不計入伺服器實測失敗率。';
 }
 async function load(force=false){
  if(busy||!readToken()||document.hidden||$('dashboard').hidden)return;

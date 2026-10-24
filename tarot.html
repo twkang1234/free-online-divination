@@ -4707,6 +4707,49 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
   const TAROT_LOCAL_MEMBER_KEY='divinationhub-tarot-local-member-preview';
   const MEMBER_API_BASE='https://member-api.ezgocpu.workers.dev';
   const ADMIN_API_BASE='https://admin-api.ezgocpu.workers.dev';
+  // Browser-level failure reporting uses independent admin-api so it still works if tarot-api is unreachable.
+  // Only diagnostic codes and optional user-written notes are sent; NEVER transmit questions, cards or AI answers.
+  let lastTarotIssueCode='UNKNOWN_ERROR';
+  const tarotIncidentSentAt=new Map();
+  function tarotTechnicalCode(error){
+    const raw=String(error?.message||error||'').trim();
+    if(error?.name==='AbortError'||/timeout|逾時/i.test(raw))return 'TIMEOUT';
+    if(/Failed to fetch|NetworkError|Load failed|Network request failed/i.test(raw))return 'FETCH_FAILED';
+    if(/^HTTP_5\d\d$/.test(raw))return raw;
+    if(/^[A-Z][A-Z0-9_]{0,70}$/.test(raw))return raw;
+    return 'UNKNOWN_ERROR';
+  }
+  function tarotTechnicalZh(code){
+    const names={FETCH_FAILED:'網站暫時無法連接 AI 伺服器，可能與網路、瀏覽器連線限制或伺服器設定有關。',
+      TIMEOUT:'等待 AI 伺服器回應超過時間，請稍後重新確認。',
+      AI_SERVICE_TEMPORARILY_UNAVAILABLE:'AI 服務目前無法完成解讀，請稍後再試。',
+      SHARED_AI_CONFIRM_REQUIRED:'免費額度已用完，須先同意才會使用共用 AI 額度。',
+      AI_QUOTA_EMPTY:'可用的 AI 解讀次數已用完。',
+      SHARED_AI_EMPTY:'會員共用 AI 解讀次數不足。',
+      TAROT_QUOTA_UNAVAILABLE:'暫時無法核對 AI 額度。',
+      WALLET_COMMIT_FAILED:'AI 額度交易確認異常，請先查看餘額並回報。',
+      UNKNOWN_ERROR:'系統未能完成操作，管理員可利用錯誤代碼查詢原因。'};
+    if(names[code])return names[code];
+    if(/^HTTP_5\d\d$/.test(code))return 'AI 伺服器暫時發生內部錯誤。';
+    return '操作未能完成；可將錯誤碼回報管理員查明原因。';
+  }
+  async function sendTarotIncident({source='client_auto',code='UNKNOWN_ERROR',phase='three',note='',traceId=''}){
+    if(!['manual','client_auto'].includes(source))return false;
+    if(source==='client_auto'){
+      // Rate-limit identical reports in this tab; server also deduplicates and rate-limits.
+      const key=phase+'|'+code,now=Date.now();
+      if(now-(tarotIncidentSentAt.get(key)||0)<90000)return true;
+      tarotIncidentSentAt.set(key,now);
+    }
+    try{
+      const response=await fetch(ADMIN_API_BASE+'/public/client-incident',{method:'POST',mode:'cors',cache:'no-store',
+        headers:{'Content-Type':'text/plain;charset=UTF-8'},credentials:'omit',
+        body:JSON.stringify({eventId:crypto.randomUUID(),tool:'tarot',source,stage:phase,errorCode:code,traceId,
+          note:source==='manual'?String(note).slice(0,300):''})});
+      const data=await response.json().catch(()=>null);
+      return response.ok&&data?.success===true;
+    }catch(_){return false;}
+  }
   const TAROT_ADMIN_TOKEN_KEY='divinationhub-admin-session';
   // 與 admin.html 的「記住這台裝置」採用相同的儲存名稱與到期規則。
   const TAROT_ADMIN_REMEMBER_KEY='divinationhub-admin-remember-v1';
@@ -6831,6 +6874,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     const status=root.querySelector('[data-site-ai-status]');status.textContent='正在確認最新 AI 額度，確保不會未經同意使用會員共用次數。';
     const pending=root.querySelector('[data-site-ai-pending]');
     const report=root.querySelector('[data-site-ai-error-report]');if(report)report.hidden=true;
+    lastTarotIssueCode='UNKNOWN_ERROR';
     // Fresh server quota is mandatory. Never trust only the earlier displayed balance.
     try{
       const latest=await tarotAPI('/ai/center/quota');
@@ -6895,9 +6939,14 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       renderFinish();updateAccessMini();updateQuotaUI();renderAdminTestBanner();
     }catch(e){
       if(serial!==onsiteAiRequestSerial||!root.isConnected)return;
-      lastTarotErrorTrace=String(e?.traceId||'');root.dataset.siteAiResult='failed';
-      status.textContent=`${aiPhaseName(phase)}未完成：${String(e.message||e)}。本次不扣額度。${lastTarotErrorTrace?'｜故障追蹤碼：'+lastTarotErrorTrace:''}`;
-      if(report&&lastTarotErrorTrace){report.hidden=false;report.querySelector('textarea').value='';report.querySelector('[data-site-ai-report-status]').textContent='';}
+      lastTarotErrorTrace=String(e?.traceId||'');lastTarotIssueCode=tarotTechnicalCode(e);root.dataset.siteAiResult='failed';
+      const uncertain=['FETCH_FAILED','TIMEOUT','NETWORK_ERROR'].includes(lastTarotIssueCode);
+      status.textContent=`${aiPhaseName(phase)}未完成：${tarotTechnicalZh(lastTarotIssueCode)}${uncertain?' 目前無法確認伺服器是否已處理，請先查看額度餘額。':' 本次未取得成功解讀。'}｜錯誤代碼 ${lastTarotIssueCode}${lastTarotErrorTrace?'｜追蹤碼 '+lastTarotErrorTrace:''}`;
+      if(report){report.hidden=false;report.querySelector('textarea').value='';report.querySelector('[data-site-ai-report-status]').textContent='可簡述遇到的問題，並送給管理員（不需提供占卜內容）。';}
+      // AI terminal HTTP errors with traceId are already recorded by Workers; avoid double-counting.
+      if(['FETCH_FAILED','TIMEOUT','NETWORK_ERROR'].includes(lastTarotIssueCode)||(!lastTarotErrorTrace&&/^HTTP_5/.test(lastTarotIssueCode))){
+        void sendTarotIncident({source:'client_auto',code:lastTarotIssueCode,phase,traceId:lastTarotErrorTrace});
+      }
     }finally{
       if(serial===onsiteAiRequestSerial){
         onsiteAiBusy=false;
@@ -6960,8 +7009,8 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite">正在確認額度…</p>
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
         <div class="tarot-ai-report-box" data-site-ai-error-report hidden>
-          <details><summary>回報站內 AI 異常</summary><label>簡短說明異常情況 <textarea maxlength="400" rows="2" placeholder="例如：AI 無法完成解讀，重試仍失敗"></textarea></label>
-          <button type="button" data-site-ai-report-send>送出異常回報</button><small data-site-ai-report-status></small></details>
+          <details><summary>回報這次使用問題給管理員</summary><label>簡短描述（至少 5 字，請勿填入占卜內容或個人資料） <textarea maxlength="300" rows="2" placeholder="例如：按下 AI 解讀後出現無法連線，重試仍失敗"></textarea></label>
+          <button type="button" data-site-ai-report-send>送出使用者手動通報</button><small data-site-ai-report-status></small></details>
         </div>
         <div data-site-ai-output hidden></div>
       </section></section>`;
@@ -7120,11 +7169,10 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     const runAI=e.target.closest('[data-site-ai-run]');if(runAI){void runOnsiteAi(runAI);return;}
     const reportAI=e.target.closest('[data-site-ai-report-send]');if(reportAI){
       const root=reportAI.closest('[data-site-ai-error-report]');const txt=root?.querySelector('textarea')?.value.trim()||'';
-      if(!lastTarotErrorTrace||txt.length<5){root.querySelector('[data-site-ai-report-status]').textContent='請至少輸入 5 字說明。';return;}
+      if(txt.length<5){root.querySelector('[data-site-ai-report-status]').textContent='請至少輸入 5 字說明。';return;}
       reportAI.disabled=true;
-      void tarotAPI('/ai/center/feedback',{traceId:lastTarotErrorTrace,phase:state.stage3x3==='complete'?'six':'three',comment:txt})
-        .then(()=>{root.querySelector('[data-site-ai-report-status]').textContent='回報已送出。';root.querySelector('details').open=false;})
-        .catch(e=>{root.querySelector('[data-site-ai-report-status]').textContent='回報未送出：'+e.message})
+      void sendTarotIncident({source:'manual',code:lastTarotIssueCode,phase:state.stage3x3==='complete'?'six':'three',traceId:lastTarotErrorTrace,note:txt})
+        .then(ok=>{root.querySelector('[data-site-ai-report-status]').textContent=ok?'已送達管理員後台，謝謝回報。':'回報尚未送達，請稍後再按一次。';if(ok)root.querySelector('details').open=false;})
         .finally(()=>{reportAI.disabled=false});return;
     }
     const aiCopy=e.target.closest('[data-site-ai-copy]');if(aiCopy){const [m,p]=aiCopy.dataset.siteAiCopy.split(':');const result=onsiteAiPhaseResults[m]?.[p];if(result)void navigator.clipboard.writeText(result.answer);return;}
