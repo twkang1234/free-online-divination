@@ -346,6 +346,37 @@ td.muted{color:var(--muted)}
 .dh-shop-help{margin-bottom:9px}.dh-shop-preview-foot{font-size:.7rem;color:#9ba9be;margin:8px 0 0;line-height:1.55}
 .dh-shop-table td:last-child{white-space:nowrap}
 @media(max-width:890px){.dh-shop-editor-layout{grid-template-columns:1fr}.dh-shop-preview{position:static}}
+/* 限時優惠活動：以台灣時間設定，過期自動回到一般售價 */
+.dh-promo-panel{margin:22px 0 3px;border:1px solid #454267;border-radius:13px;background:#0c101b;overflow:hidden}
+.dh-promo-panel>summary{padding:15px 16px;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;color:#e3d6ff;font-size:.94rem;font-weight:820}
+.dh-promo-panel>summary small{color:#a6a8bd;font-size:.73rem;font-weight:450}
+.dh-promo-inner{padding:16px;border-top:1px solid #34334c}
+.dh-promo-info{font-size:.79rem;color:#bbbecf;line-height:1.75;margin:0 0 15px}
+.dh-promo-list-wrap{overflow:auto;border:1px solid #30394a;border-radius:11px;margin:12px 0}
+.dh-promo-list{min-width:790px;margin:0}.dh-promo-list td,.dh-promo-list th{padding:10px 12px;font-size:.76rem}
+.dh-promo-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.dh-promo-editor{margin-top:14px;border:1px solid #3a4354;border-radius:12px;overflow:hidden;background:#0b131f}
+.dh-promo-editor>summary{padding:12px 15px;cursor:pointer;color:#f0e7d2;font-weight:800;font-size:.85rem}
+.dh-promo-form{padding:15px;border-top:1px solid #303b4c}
+.dh-promo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dh-promo-grid label{display:grid;gap:5px;color:#b7c4d6;font-size:.76rem}
+.dh-promo-grid input,.dh-promo-grid textarea{width:100%;min-width:0;padding:10px;border-radius:9px;background:#080c14;border:1px solid #465366;color:#eff2fa;font-size:.86rem;font-family:inherit;min-height:42px;color-scheme:dark}
+.dh-promo-grid textarea{min-height:67px;resize:vertical}
+.dh-promo-product-options{display:grid;gap:9px;margin:12px 0}
+.dh-promo-product-option{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,160px);gap:12px;align-items:center;border:1px solid #394457;border-radius:10px;padding:11px 12px;background:#101724}
+.dh-promo-product-option>label{display:flex;align-items:center;gap:9px;cursor:pointer;color:#e4e9f2;font-size:.78rem}
+.dh-promo-product-option>label>span{display:grid;gap:2px;min-width:0}.dh-promo-product-option small{color:#a9b8c7;font-size:.69rem}
+.dh-promo-product-option input[type=checkbox]{accent-color:#b9a0ed;width:17px;height:17px;flex:0 0 17px}
+.dh-promo-product-option input[type=number]{background:#080d16;border:1px solid #48526a;border-radius:8px;color:#f4e6c8;min-width:0;width:100%;padding:9px;font-size:.86rem}
+.dh-promo-product-option.disabled{opacity:.62}
+.dh-promo-products-head{margin:20px 0 7px;font-size:.85rem;color:#e5deea}
+.dh-promo-state{display:inline-block;border:1px solid #645783;border-radius:99px;padding:3px 9px;font-size:.7rem;color:#d7c6fb;white-space:nowrap}
+.dh-promo-state.on{color:#9ce8bb;border-color:#568e72}
+.dh-promo-state.off{color:#a5b0c2;border-color:#536071}
+.dh-promo-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:17px}
+.dh-promo-status{font-size:.79rem;line-height:1.7;color:#aee4c9;min-height:22px;margin:10px 0 0}.dh-promo-status.error{color:#ffa6ac}
+@media(max-width:620px){.dh-promo-inner{padding:11px}.dh-promo-grid{grid-template-columns:1fr}.dh-promo-product-option{grid-template-columns:1fr;gap:7px}}
+
 
 </style>
 </head>
@@ -491,6 +522,30 @@ td.muted{color:var(--muted)}
               <p class="dh-shop-preview-state" id="dhShopPreviewState">未展示 · 草稿</p>
               <p class="dh-shop-preview-foot">輸入時即時更新，不會自動儲存或建立訂單。</p>
             </aside>
+          </div>
+        </details>
+        <details class="dh-promo-panel" id="dhPromoPanel">
+          <summary><span>✦ 限時優惠活動管理</span><small>指定商品 · 排程自動開始／結束 · 台灣時間</small></summary>
+          <div class="dh-promo-inner">
+            <p class="dh-promo-info">活動售價與一般售價分開儲存；啟用後於指定期間自動顯示在加購頁「限時優惠專區」，到期自動回復一般售價。所有設定目前僅供展示，<strong>不啟用付款或扣點</strong>。若需組合額度包，未來可再擴充獨立商品類型。</p>
+            <div class="dh-promo-toolbar"><strong>優惠活動清單</strong><div class="dh-shop-actions"><label class="dh-shop-toggle"><input id="dhPromoShowArchived" type="checkbox"> 顯示已封存</label><button type="button" class="btn secondary" id="dhPromoReload">重新讀取</button><button type="button" class="btn secondary" id="dhPromoNew">＋ 新增活動</button></div></div>
+            <div class="dh-promo-list-wrap"><table class="dh-promo-list"><thead><tr><th>活動</th><th>期間（台灣時間）</th><th>參加方案</th><th>狀態</th><th>操作</th></tr></thead><tbody id="dhPromoRows"><tr><td colspan="5">展開此區後讀取。</td></tr></tbody></table></div>
+            <details class="dh-promo-editor" id="dhPromoEditor">
+              <summary id="dhPromoEditorTitle">新增限時優惠活動</summary>
+              <form class="dh-promo-form" id="dhPromoForm">
+                <input type="hidden" id="dhPromoId">
+                <div class="dh-promo-grid">
+                  <label>活動名稱<input id="dhPromoTitle" maxlength="75" required placeholder="例如：十月底限時優惠"></label>
+                  <label>活動簡介（選填）<input id="dhPromoDescription" maxlength="180" placeholder="活動期間指定方案享優惠價格"></label>
+                  <label>開始時間（台灣時間）<input id="dhPromoStart" type="datetime-local" step="60" required></label>
+                  <label>結束時間（台灣時間，含此分鐘）<input id="dhPromoEnd" type="datetime-local" step="60" required></label>
+                </div>
+                <h4 class="dh-promo-products-head">選擇參加商品與優惠價格（須低於一般售價）</h4>
+                <div class="dh-promo-product-options" id="dhPromoOptions">請先載入上方商品清單。</div>
+                <div class="dh-promo-actions"><label class="dh-shop-toggle"><input id="dhPromoEnabled" type="checkbox"> 啟用自動排程展示（非付款）</label><button type="submit" class="btn" id="dhPromoSave">儲存優惠活動</button><button type="button" class="btn secondary" id="dhPromoCancel">取消編輯</button></div>
+              </form>
+            </details>
+            <p class="dh-promo-status" id="dhPromoStatus" role="status" aria-live="polite">未啟用的活動只會保存在後台。優惠截止後自動恢復一般售價，不更動原商品金額。</p>
           </div>
         </details>
         <p class="dh-shop-status" id="dhShopStatus" role="status" aria-live="polite">只管理商品內容；不改動既有會員餘額及專業解鎖扣點規則。</p>
@@ -1874,6 +1929,62 @@ el('dhShopForm').addEventListener('submit',async e=>{e.preventDefault();if(busy)
 });
 updatePreview();
 window.addEventListener('dh-admin-ready',()=>{if(el('dhShopAdminPanel').open)load().catch(e=>status(e.message,true))});
+})();
+</script>
+
+
+<script id="dh-promotion-admin-script">
+(()=>{'use strict';
+const API='https://admin-api.ezgocpu.workers.dev',KEY='divinationhub-admin-session',REM='divinationhub-admin-remember-v1',el=id=>document.getElementById(id);
+let products=[],promotions=[],loaded=false,busy=false,offset=0;
+function token(){try{const s=sessionStorage.getItem(KEY);if(s)return s;const j=JSON.parse(localStorage.getItem(REM)||'null');return j?.expiresAt>Date.now()?j.token||'':''}catch(_){return ''}}
+async function api(path,data){const t=token();if(!t)throw Error('請先登入站長後台');const r=await fetch(API+path,{method:data===undefined?'GET':'POST',headers:{Authorization:'Bearer '+t,Accept:'application/json',...(data===undefined?{}:{'Content-Type':'application/json'})},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store'});const j=await r.json().catch(()=>null);if(!r.ok||!j?.success)throw Error(j?.error||'讀取失敗 HTTP '+r.status);return j}
+function node(tag,value,cls=''){const e=document.createElement(tag);e.textContent=String(value);if(cls)e.className=cls;return e}
+function button(label,cb){const b=node('button',label,'btn secondary dh-shop-smallbtn');b.type='button';b.onclick=cb;return b}
+function status(v,bad=false){el('dhPromoStatus').textContent=v;el('dhPromoStatus').classList.toggle('error',bad)}
+function dateInputToUtc(v,end=false){if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v))throw Error('請輸入完整的台灣開始與結束日期時間');const d=new Date(v+':00+08:00');if(!Number.isFinite(d.getTime()))throw Error('時間格式不正確');return new Date(d.getTime()+(end?60000:0)).toISOString()}
+function utcToDateInput(v,end=false){if(!v)return '';const t=Date.parse(v);if(!Number.isFinite(t))return '';return new Date(t+8*3600000-(end?60000:0)).toISOString().slice(0,16)}
+function twDate(v,end=false){const input=utcToDateInput(v,end);return input?input.replace('T',' ').replaceAll('-','/'):'—'}
+function reset(close=false){el('dhPromoForm').reset();el('dhPromoId').value='';el('dhPromoEditorTitle').textContent='新增限時優惠活動';renderProductOptions([]);if(close)el('dhPromoEditor').open=false}
+function openEditor(){el('dhPromoEditor').open=true;el('dhPromoEditor').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function renderProductOptions(saved){const root=el('dhPromoOptions');root.replaceChildren();const savedMap=new Map(saved.map(i=>[i.productId,i.salePriceTwd]));
+  const visible=products.filter(p=>!p.archived&&p.priceTwd!=null&&p.quantity!=null);
+  if(!visible.length){root.append(node('p','尚無已定價商品，請先在上方新增並設定一般售價。'));return}
+  for(const p of visible){const row=node('div','','dh-promo-product-option');if(!p.active)row.classList.add('disabled');row.dataset.id=p.id;
+    const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.className='dh-promo-check';check.checked=savedMap.has(p.id);const span=node('span','');span.append(node('strong',p.name),node('small','一般售價 NT$ '+Number(p.priceTwd).toLocaleString('zh-TW')+' · '+p.quantity+(p.type==='professional'?' 點':' 次')+(p.active?'':' · 商品未上架')));label.append(check,span);
+    const input=document.createElement('input');input.type='number';input.className='dh-promo-price';input.placeholder='優惠價 NT$';input.min='1';input.max=String(Math.max(1,Number(p.priceTwd)-1));input.step='1';input.value=savedMap.has(p.id)?savedMap.get(p.id):'';input.disabled=!check.checked;input.setAttribute('aria-label',p.name+' 的優惠售價');check.onchange=()=>{input.disabled=!check.checked;if(check.checked)input.focus()};row.append(label,input);root.append(row)
+  }
+}
+function fill(c){el('dhPromoId').value=c.id;el('dhPromoTitle').value=c.title;el('dhPromoDescription').value=c.description||'';el('dhPromoStart').value=utcToDateInput(c.startsAt);el('dhPromoEnd').value=utcToDateInput(c.endsAt,true);el('dhPromoEnabled').checked=c.enabled;el('dhPromoEditorTitle').textContent='編輯限時活動：'+c.title;renderProductOptions(c.items||[]);openEditor()}
+function state(c){if(c.archived)return {text:'已封存',cls:'off'};if(!c.enabled)return {text:'未啟用',cls:'off'};const now=Date.now()+offset,begin=Date.parse(c.startsAt),end=Date.parse(c.endsAt);if(now<begin)return{text:'已排程',cls:''};if(now>=end)return{text:'已結束',cls:'off'};return{text:'進行中',cls:'on'}}
+function render(){const body=el('dhPromoRows');body.replaceChildren();let shown=0;
+  for(const c of promotions){if(c.archived&&!el('dhPromoShowArchived').checked)continue;shown++;
+    const tr=document.createElement('tr'),name=node('td','');name.append(node('strong',c.title));if(c.description)name.append(node('small',c.description,'dh-shop-product-detail'));
+    const period=node('td',twDate(c.startsAt)+' ～ '+twDate(c.endsAt,true));const count=node('td',(c.items||[]).length+' 項');const st=document.createElement('td');const flag=state(c);st.append(node('span',flag.text,'dh-promo-state '+flag.cls));const act=document.createElement('td');
+    if(c.archived){act.append(button('恢復',async()=>{if(busy)return;busy=true;try{await api('/admin/catalog/promotions/archive',{id:c.id,archived:false});await load();status('活動已恢復，但保持未啟用。')}catch(e){status(e.message,true)}finally{busy=false}}))}
+    else{act.append(button('編輯',()=>fill(c)));
+      act.append(button(c.enabled?'停用':'啟用',async()=>{if(busy)return;busy=true;try{await api('/admin/catalog/promotions/save',{id:c.id,title:c.title,description:c.description,startsAt:c.startsAt,endsAt:c.endsAt,enabled:!c.enabled,items:c.items});await load();status(c.enabled?'優惠已停用。':'已啟用優惠排程；活動期間自動顯示，截止自動回復一般售價。')}catch(e){status(e.message,true)}finally{busy=false}}));
+      act.append(button('封存',async()=>{if(!confirm('確定封存「'+c.title+'」？封存後不再展示，仍可恢復。')||busy)return;busy=true;try{await api('/admin/catalog/promotions/archive',{id:c.id,archived:true});await load();status('活動已封存。')}catch(e){status(e.message,true)}finally{busy=false}}));}
+    tr.append(name,period,count,st,act);body.append(tr)
+  }
+  if(!shown){const tr=document.createElement('tr'),td=node('td','目前沒有活動；可點「＋ 新增活動」設定第一個優惠。');td.colSpan=5;tr.append(td);body.append(tr)}
+}
+async function load(){const [p,c]=await Promise.all([api('/admin/catalog'),api('/admin/catalog/promotions')]);products=p.products||[];promotions=c.promotions||[];offset=Date.parse(c.serverNow)-Date.now();loaded=true;render();if(el('dhPromoEditor').open)renderProductOptions([...el('dhPromoOptions').querySelectorAll('.dh-promo-product-option')].filter(x=>x.querySelector('.dh-promo-check').checked).map(x=>({productId:x.dataset.id,salePriceTwd:x.querySelector('.dh-promo-price').value})));}
+el('dhPromoPanel').addEventListener('toggle',async()=>{if(el('dhPromoPanel').open&&!loaded){try{await load()}catch(e){status(e.message,true)}}});
+el('dhPromoNew').onclick=()=>{reset();openEditor()};el('dhPromoCancel').onclick=()=>{reset(true);status('已取消編輯，沒有變更活動。')};
+el('dhPromoReload').onclick=async()=>{try{await load();status('已更新優惠清單。')}catch(e){status(e.message,true)}};
+el('dhPromoShowArchived').onchange=render;
+el('dhPromoForm').addEventListener('submit',async e=>{e.preventDefault();if(busy)return;
+  try{
+    const startsAt=dateInputToUtc(el('dhPromoStart').value),endsAt=dateInputToUtc(el('dhPromoEnd').value,true);
+    if(Date.parse(endsAt)<=Date.parse(startsAt))throw Error('結束時間必須晚於開始時間');
+    const items=[];for(const row of el('dhPromoOptions').querySelectorAll('.dh-promo-product-option')){if(!row.querySelector('.dh-promo-check').checked)continue;const value=row.querySelector('.dh-promo-price').value;const amount=Number(value);if(!value||!Number.isSafeInteger(amount)||amount<=0)throw Error('請輸入每項商品的有效優惠價');items.push({productId:row.dataset.id,salePriceTwd:amount})}
+    if(!items.length)throw Error('請至少選擇一項參加商品');
+    const payload={id:el('dhPromoId').value,title:el('dhPromoTitle').value.trim(),description:el('dhPromoDescription').value.trim(),startsAt,endsAt,enabled:el('dhPromoEnabled').checked,items};
+    busy=true;el('dhPromoSave').disabled=true;await api('/admin/catalog/promotions/save',payload);reset(true);await load();status('活動已儲存。'+(payload.enabled?'將由伺服器依台灣時間自動顯示／結束。':'目前保持未啟用，前台不顯示。'));
+  }catch(err){status('儲存失敗：'+err.message,true)}finally{busy=false;el('dhPromoSave').disabled=false}
+});
+window.addEventListener('dh-admin-ready',()=>{if(el('dhPromoPanel').open)load().catch(e=>status(e.message,true))});
 })();
 </script>
 
