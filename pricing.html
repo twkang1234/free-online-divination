@@ -76,6 +76,32 @@
     @media(max-width:820px){.products{grid-template-columns:repeat(2,minmax(0,1fr))}.explain{grid-template-columns:1fr;gap:0}.sale-spotlight{grid-template-columns:minmax(0,1fr) minmax(220px,.90fr);gap:12px;padding:19px}.spot-pricebox{padding:18px}}
     @media(max-width:640px){.sale-banner{padding:18px 14px;border-radius:16px}.sale-head{align-items:flex-start}.sale-live{font-size:.65rem;padding:5px 8px}.sale-kicker{font-size:.57rem}.sale-head h2{font-size:1.17rem}.sale-head p{font-size:.7rem}.sale-spotlight{grid-template-columns:1fr;gap:16px;padding:19px 17px}.spot-main{padding:0}.spot-main h3{font-size:1.49rem;margin:9px 0 4px}.spot-quantity{margin:14px 0 12px}.spot-quantity strong{font-size:4.55rem}.spot-pricebox{gap:10px;padding:18px 20px}.spot-special strong{font-size:3.3rem}.spot-deadline b{font-size:.8rem}}
     @media(max-width:560px){.layout{width:min(100% - 24px,1080px)}.sitebar{min-height:65px}.hero{padding:35px 0 24px}.hero p{font-size:.84rem}.category-nav{gap:5px}.category{padding:10px 4px;font-size:.70rem;gap:4px;flex-direction:column;line-height:1.35;min-height:64px}.category .count{font-size:.65rem}.area{padding:18px 14px;border-radius:16px;min-height:230px}.area-head{gap:10px}.area-head .unit{display:none}.area-head h2{font-size:1.08rem}.products{grid-template-columns:1fr}.product{min-height:165px}.product-quantity{font-size:1.83rem}}
+
+    /* 完整購買入口：所有方案均顯示，點擊後開啟結帳摘要；金流未串時仍能預覽。 */
+    .buy,.spot-buy{transition:transform .15s,filter .15s;box-shadow:0 8px 22px rgba(126,87,199,.13)}
+    .buy:hover,.spot-buy:hover{transform:translateY(-1px)}
+    .checkout-modal{width:min(520px,calc(100% - 28px));max-height:min(88vh,800px);overflow:auto;inset:0;margin:auto;background:var(--panel);color:var(--text);border:1px solid var(--violet);border-radius:20px;padding:0;box-shadow:0 26px 100px rgba(0,0,0,.55)}
+    .checkout-modal::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(4px)}
+    .checkout-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;border-bottom:1px solid var(--stroke);padding:21px 23px 15px}
+    .checkout-eyebrow{color:var(--violet);font-size:.68rem;letter-spacing:.12em;font-weight:850}
+    .checkout-header h2{font-size:1.3rem;margin:3px 0 0}
+    .checkout-close{width:35px;height:35px;border:1px solid var(--stroke);border-radius:50%;background:var(--panel2);color:var(--text);font-size:1.24rem;cursor:pointer}
+    .checkout-inner{padding:21px 23px 23px}
+    .checkout-product{padding:18px;border:1px solid var(--stroke);border-radius:13px;background:var(--panel2)}
+    .checkout-type{font-size:.74rem;color:var(--violet);font-weight:750}
+    .checkout-name{font-size:1.14rem;font-weight:820;margin:4px 0 9px}
+    .checkout-qty{font-size:.9rem;color:var(--muted)}
+    .checkout-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:15px;border-top:1px solid var(--stroke);padding-top:12px}
+    .checkout-row span{font-size:.83rem;color:var(--muted)}
+    .checkout-row strong{font-size:1.55rem;color:var(--gold);font-variant-numeric:tabular-nums}
+    .checkout-sale{margin:8px 0 0;font-size:.77rem;color:var(--violet)}
+    .checkout-notice{margin:16px 0;font-size:.81rem;line-height:1.75;padding:12px 14px;border:1px solid var(--stroke);border-radius:10px;color:var(--muted)}
+    .checkout-controls{display:grid;gap:9px}
+    .checkout-pay{border:1px solid var(--violet);border-radius:11px;padding:12px;background:var(--violet);color:#fff;font-weight:850;font-size:.9rem;cursor:pointer}
+    .checkout-pay:disabled{opacity:.48;cursor:not-allowed;box-shadow:none}
+    .checkout-back{border:1px solid var(--stroke);border-radius:10px;padding:10px;background:var(--panel2);color:var(--text);cursor:pointer}
+    .checkout-state{font-size:.74rem;color:var(--muted);line-height:1.7;margin-top:10px}
+    [hidden]{display:none!important}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
   </style>
 </head>
@@ -110,10 +136,32 @@
     </div>
   </main>
   <footer>© 一念知機 · DivinationHub</footer>
+  <dialog class="checkout-modal" id="dhCheckoutDialog" aria-labelledby="dhCheckoutTitle">
+    <div class="checkout-header">
+      <div><div class="checkout-eyebrow">DIVINATION HUB · CHECKOUT</div><h2 id="dhCheckoutTitle">確認購買方案</h2></div>
+      <button type="button" id="dhCheckoutClose" class="checkout-close" aria-label="關閉結帳摘要">×</button>
+    </div>
+    <div class="checkout-inner">
+      <div class="checkout-product">
+        <div id="dhCheckoutType" class="checkout-type">正在查詢</div>
+        <div id="dhCheckoutName" class="checkout-name">正在取得方案內容…</div>
+        <div id="dhCheckoutQuantity" class="checkout-qty">—</div>
+        <div class="checkout-row"><span>本次金額（新台幣）</span><strong id="dhCheckoutAmount">—</strong></div>
+        <div id="dhCheckoutSale" class="checkout-sale" hidden></div>
+      </div>
+      <div id="dhCheckoutNotice" class="checkout-notice" role="status" aria-live="polite">正在從伺服器確認商品及售價…</div>
+      <div class="checkout-controls">
+        <button id="dhCheckoutPay" class="checkout-pay" type="button" disabled>前往安全付款</button>
+        <button id="dhCheckoutBack" class="checkout-back" type="button">返回方案列表</button>
+      </div>
+      <div class="checkout-state">結帳金額以伺服器確認為準。正式付款時須完成會員身分驗證；目前尚未串接金流，不會建立訂單或扣款。</div>
+    </div>
+  </dialog>
+
   <script>
     (()=>{
       'use strict';
-      const API='https://admin-api.ezgocpu.workers.dev/catalog';
+      const ROOT='https://admin-api.ezgocpu.workers.dev',API=ROOT+'/catalog';
       const cats={all:{tab:'tabAll',panel:'panelAll',count:'countAll',root:'shopAll'},tool:{tab:'tabTool',panel:'panelTool',count:'countTool',root:'shopTool'},ai:{tab:'tabAi',panel:'panelAi',count:'countAi',root:'shopAi'},professional:{tab:'tabProfessional',panel:'panelProfessional',count:'countProfessional',root:'shopProfessional'}};
       const typeLabels={tool:'工具額度',ai:'AI 解讀',professional:'專業解鎖點數'};
       const node=(tag,text,cls='')=>{const e=document.createElement(tag);e.textContent=String(text);if(cls)e.className=cls;return e};
@@ -123,6 +171,47 @@
       document.querySelector('.category-nav').addEventListener('keydown',e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;const i=types.findIndex(k=>document.getElementById(cats[k].tab).getAttribute('aria-selected')==='true');const next=e.key==='Home'?0:e.key==='End'?types.length-1:(i+(e.key==='ArrowRight'?1:-1)+types.length)%types.length;e.preventDefault();select(types[next],true)});
       function empty(root,headline,detail){root.replaceChildren();const e=node('div','','empty');e.append(node('strong',headline));if(detail)e.append(node('span',detail));root.append(e)}
       function twDate(iso){try{return new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(Date.parse(iso)-60000))}catch(_){return ''}}
+      let currentQuote=null,checkoutRequestId=0;
+      const checkoutDlg=document.getElementById('dhCheckoutDialog');
+      const checkoutField=id=>document.getElementById(id);
+      const formatTwd=n=>'NT$ '+Number(n).toLocaleString('zh-TW');
+      async function openCheckout(productId){
+        const requestId=++checkoutRequestId;
+        currentQuote=null;checkoutField('dhCheckoutType').textContent='確認商品';checkoutField('dhCheckoutName').textContent='正在讀取商品資料…';
+        checkoutField('dhCheckoutQuantity').textContent='—';checkoutField('dhCheckoutAmount').textContent='—';
+        checkoutField('dhCheckoutSale').hidden=true;checkoutField('dhCheckoutPay').disabled=true;
+        checkoutField('dhCheckoutNotice').textContent='正在從伺服器確認最新商品與金額…';
+        if(!checkoutDlg.open)checkoutDlg.showModal();
+        try{
+          const response=await fetch(ROOT+'/checkout/quote',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({productId})});
+          const data=await response.json().catch(()=>null);
+          if(!checkoutDlg.open||requestId!==checkoutRequestId)return;
+          if(!response.ok||!data?.success||!data.quote)throw Error(data?.message||'目前無法確認此方案，請重新選擇。');
+          const q=data.quote;currentQuote=q;
+          checkoutField('dhCheckoutType').textContent=typeLabels[q.type]||'商品方案';
+          checkoutField('dhCheckoutName').textContent=q.name;
+          checkoutField('dhCheckoutQuantity').textContent=Number(q.quantity).toLocaleString('zh-TW')+' '+q.unit;
+          checkoutField('dhCheckoutAmount').textContent=formatTwd(q.priceTwd);
+          if(q.isPromotion){checkoutField('dhCheckoutSale').hidden=false;checkoutField('dhCheckoutSale').textContent='限時優惠 · 一般售價 '+formatTwd(q.listPriceTwd)+' · 此次現省 '+formatTwd(q.listPriceTwd-q.priceTwd)}
+          const reason=q.purchasable===false?'此方案目前暫不提供購買。':'付款功能尚未開放；商品與結帳摘要已備妥。';
+          checkoutField('dhCheckoutNotice').textContent=q.paymentAvailable===true?'已確認價格，可以前往付款。':reason;
+          checkoutField('dhCheckoutPay').disabled=q.paymentAvailable!==true;
+        }catch(error){if(!checkoutDlg.open||requestId!==checkoutRequestId)return;checkoutField('dhCheckoutNotice').textContent=error?.message||'無法取得結帳資訊';checkoutField('dhCheckoutPay').disabled=true}
+      }
+      checkoutField('dhCheckoutClose').onclick=()=>checkoutDlg.close();
+      checkoutField('dhCheckoutBack').onclick=()=>checkoutDlg.close();
+      checkoutDlg.addEventListener('click',e=>{if(e.target===checkoutDlg)checkoutDlg.close()});
+      checkoutDlg.addEventListener('close',()=>{currentQuote=null;checkoutRequestId++});
+      checkoutField('dhCheckoutPay').addEventListener('click',async()=>{
+        if(!currentQuote?.paymentAvailable)return;
+        const b=checkoutField('dhCheckoutPay');b.disabled=true;
+        try{const r=await fetch(ROOT+'/checkout/start',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({productId:currentQuote.productId})});
+          const data=await r.json();
+          if(!r.ok||!data?.success)throw Error(data?.message||'目前無法建立付款，沒有扣款。');
+          const u=new URL(data.checkoutUrl);if(u.protocol!=='https:'||!['divinationhub.tw','www.divinationhub.tw','payment-api.ezgocpu.workers.dev','core.newebpay.com'].includes(u.hostname))throw Error('付款目的地無法驗證');
+          location.assign(u.href);
+        }catch(e){checkoutField('dhCheckoutNotice').textContent=e.message||'付款無法啟動';b.disabled=false}
+      });
       function card(p,salesEnabled,showCategory=false,feature=false){
         const onSale=Number.isSafeInteger(Number(p.salePriceTwd))&&Number(p.salePriceTwd)>0&&Number(p.salePriceTwd)<Number(p.priceTwd);
         const c=node('article','','product'+(p.highlight?' highlighted':'')+((onSale||feature)?' sale-product':''));
@@ -137,10 +226,7 @@
         if(onSale)costs.append(node('del','一般售價 NT$ '+Number(p.priceTwd).toLocaleString('zh-TW')));
         costs.append(node('strong','NT$ '+Number(onSale?p.salePriceTwd:p.priceTwd).toLocaleString('zh-TW')));price.append(costs);c.append(price);
         if(onSale&&p.promotionEndsAt){c.append(node('div','優惠至 '+twDate(p.promotionEndsAt)+'（台灣時間）','sale-time'))}
-        // 只展示，不加付款連結；保留既有未來安全購買的啟用條件。
-        let checkout=null;
-        if(salesEnabled&&typeof p.checkoutUrl==='string'){try{const u=new URL(p.checkoutUrl);if(u.protocol==='https:'&&['divinationhub.tw','www.divinationhub.tw','payment-api.ezgocpu.workers.dev'].includes(u.hostname))checkout=u.href}catch(_){}}
-        if(checkout){const buy=node('button','選擇此方案','buy');buy.type='button';buy.addEventListener('click',()=>location.assign(checkout));c.append(buy)}
+        const buy=node('button','立即購買','buy');buy.type='button';buy.addEventListener('click',()=>openCheckout(p.id));c.append(buy);
         return c;
       }
       // 單一主打優惠：採全寬資訊＋價格側欄，而非沿用普通 1/3 寬商品卡。
@@ -169,12 +255,7 @@
           const segment=node('span','','spot-tick');const n=node('strong','00');n.dataset.timeUnit=unit;segment.append(n,node('small',label));counter.append(segment);slots.push(n);
         }
         aside.append(counter);
-        // 未開啟付款時完全不顯示購買按鈕；未來只接受既有白名單的安全付款網址。
-        let checkout=null;
-        if(salesEnabled&&typeof p.checkoutUrl==='string'){
-          try{const u=new URL(p.checkoutUrl);if(u.protocol==='https:'&&['divinationhub.tw','www.divinationhub.tw','payment-api.ezgocpu.workers.dev'].includes(u.hostname))checkout=u.href}catch(_){}
-        }
-        if(checkout){const buy=node('button','選擇此優惠方案','spot-buy');buy.type='button';buy.addEventListener('click',()=>location.assign(checkout));aside.append(buy)}
+        const buy=node('button','立即購買 · 限時優惠','spot-buy');buy.type='button';buy.addEventListener('click',()=>openCheckout(p.id));aside.append(buy);
         panel.append(main,aside);
         return panel;
       }
