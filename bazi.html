@@ -10087,8 +10087,10 @@ function randomBar(id){
  if(birthLabel){birthLabel.textContent=birth?'範例出生日期：'+birth:'';birthLabel.hidden=!birth;}
  bar.querySelector('[data-core-random="again"]')?.toggleAttribute('disabled',loading);
 }
+let sampleRequestEpoch=0;
 async function change(id,options={}){
  if(loading||window.baziIsPersonalChapterOwned?.(id))return;
+ const myEpoch=++sampleRequestEpoch;
  const footerButton=options.footerButton;
  const keepFooter=footerButton?.isConnected&&isExample();
  const startingTop=keepFooter?footerButton.getBoundingClientRect().top:null;
@@ -10102,8 +10104,8 @@ async function change(id,options={}){
   const prev=window.__baziPreviousSampleKey||'';
   if(!deck.length)deck=shuffleDeck(prev);
   const key=deck.shift();const snapshot=await loadKey(key);
-  // A purchase/status update may arrive while the sample is downloading.
-  if(window.baziIsPersonalChapterOwned?.(id))return;
+  // A late archived response is never allowed to replace a chart restored by navigation.
+  if(myEpoch!==sampleRequestEpoch||window.baziIsPersonalChapterOwned?.(id))return;
   // Keep the bottom-action button stationary when changing examples from the footer.
   // Suppress the normal automatic jump to the top of the newly opened chapter.
   if(keepFooter)window.__baziKeepExampleFooterPosition=true;
@@ -10157,14 +10159,16 @@ function resetUnclickedReminder(){
 }
 window.baziInlineSampleReturnToHub=function(){
  if(!isExample()||!inlineMode)return false;
- if(loading)return false;
+ // Invalidate any remaining asynchronous archived load before restoring the owner.
+ sampleRequestEpoch++;
  resetUnclickedReminder();inlineMode=false;activeSample=null;
  window.__baziInlineSampleRestore=true;
  try{return !!window.baziReturnToPersonalCore?.()}
  finally{window.__baziInlineSampleRestore=false}
 };
 function goBack(){
- if(loading)return;resetUnclickedReminder();inlineMode=false;activeSample=null;
+ sampleRequestEpoch++;
+ resetUnclickedReminder();inlineMode=false;activeSample=null;
  window.__baziInlineSampleRestore=true;
  try{
   if(window.baziReturnToPersonalCore?.()){
@@ -10609,7 +10613,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
  const LABEL={gan:'天干',zhi:'地支',ganZhi:'干支',year:'年份',month:'月份',startYear:'起始年',endYear:'結束年',startSolar:'開始日期',endSolar:'結束日期',tenGodGan:'天干十神',tenGodZhi:'地支十神',ganElement:'天干五行',zhiElement:'地支五行',interactions:'干支互動',relations:'交互關係',percentages:'各項比例',groupPercentages:'十神群組比例',summary:'整體總結',desc:'解讀說明',title:'分析重點',text:'詳解',basis:'判讀依據',good:'有利特質',watch:'注意事項',stuck:'較易卡住',label:'判斷',score:'結構評估',startJie:'起始節氣',endJie:'結束節氣',coreMotto:'核心原則',coreDetail:'深入判讀',yearsData:'流年詳細分析',rows:'各面向解讀',rules:'行動原則',actions:'實際行動',note:'補充說明',monthFlows:'逐月資訊',forward:'順排',hideGan:'藏干',yinYang:'陰陽'};
  // Confirm dialogs temporarily blur and refocus the page. A focus-triggered
  // status refresh must never invalidate an in-flight paid unlock.
- const states=new Map(),els=new Map(),restored=new Set(),pendingPurchases=new Set(),failedAutomaticReads=new Set();
+ const states=new Map(),els=new Map(),restored=new Set(),pendingPurchases=new Set(),failedAutomaticReads=new Set(),pendingReadOpens=new Map();
  let generation=0,loading=false,statusRequest=0;
  // Entitlements are verified only by /v2/section/status or a successful purchase.
  // Keep them through a SAMPLE view, but never reuse them for another birth chart or session.
@@ -10740,6 +10744,10 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
      throw Error('後端原版核心資料未就緒，請先更新 bazi-api Worker。未取得原版資料不會使用替代分析。');
    if(window.baziRenderOriginalPaidChapter?.(section.id,doc.originalData,box)!==true)
      throw Error('原版九大分析函式不可用');
+   // A successful callback is not sufficient: the original renderer must create
+   // all required cards before marking the chapter as fully restored.
+   if(section.id==='report-years' && section.querySelectorAll('#threeYearCompare .three-year-card').length!==3)
+     throw Error('三年流年三張完整卡片尚未繪製成功，請重新載入（不重扣點）');
    if(target){target.hidden=true;target.replaceChildren()}
    return;
   }
@@ -10757,7 +10765,7 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   }box.hidden=true;box.style.setProperty('display','none','important');els.set(id,box);
   }
  }
- function reset(options={}){generation++;statusRequest++;states.clear();restored.clear();failedAutomaticReads.clear();window.baziPurchasedDocs=Object.create(null);
+ function reset(options={}){generation++;statusRequest++;states.clear();restored.clear();failedAutomaticReads.clear();pendingReadOpens.clear();window.baziPurchasedDocs=Object.create(null);
   if(!options.preservePersonalOwnership){verifiedOwnerKey='';verifiedOwnerSession='';ownershipKnown=false;verifiedOwned.clear();}
   exposeOwnership();
   const pillarCta=document.getElementById('baziPillarPaidCta');if(pillarCta)pillarCta.hidden=true;
@@ -10815,24 +10823,37 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
  // The first-level card is now the single checkout entrance. No second pay button.
  window.baziPremiumHubChoose=(id,onOpen)=>{
   if(!document.body.classList.contains('bazi-personal-full-mode'))return false;
-  if(pendingPurchases.has(id))return true;
+  if(pendingPurchases.has(id)){
+   if(typeof onOpen==='function')pendingReadOpens.set(id,onOpen);
+   return true;
+  }
   const section=states.get(id);
   if(!section){
    if(!token()){window.baziOpenAuth?.();notice('請先登入會員，才能使用專業解鎖點數。')}
-   else {notice('正在讀取本區解鎖狀態，請稍後重試。');void window.baziSectionReady?.()}
+   else {notice('正在確認本區解鎖狀態，請稍後再點一次。');void window.baziSectionReady?.()}
    return true;
   }
-  if(section.mode==='free'||section.unlocked){
-   notice('');onOpen();
-   // 05 常用神煞是原生免費內容，不需要要求後端產生付費報告。
-   if(id!=='report-shensha'&&!restored.has(id)&&!failedAutomaticReads.has(id))void purchase(id);
+  if(section.mode==='free' || section.unlocked){
+   notice('');
+   // A confirmed entitlement is not a rendered document. Opening BEFORE
+   // /v2/section/read finishes exposed stale archived 08-year cards (V8).
+   if(id==='report-shensha' || restored.has(id)){
+    if(typeof onOpen==='function')onOpen();
+   }else if(failedAutomaticReads.has(id)){
+    // Reveal only the explicit retry/error control, never archived content.
+    if(typeof onOpen==='function')onOpen();
+   }else{
+    if(typeof onOpen==='function')pendingReadOpens.set(id,onOpen);
+    void purchase(id);
+   }
    return true;
   }
   if(section.mode==='priced'){
-   void purchase(id,onOpen);
+   if(typeof onOpen==='function')pendingReadOpens.set(id,onOpen);
+   void purchase(id);
    return true;
   }
-  return false; // Pending/free-sample configuration: keep the existing preview path.
+  return false;
  };
  async function purchase(id,onOpen){
   if(pendingPurchases.has(id))return; // One request at a time per section.
@@ -10861,13 +10882,16 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    // On failure the entitlement stays owned, but the loading guard remains unset.
    try{display(box,j.document)}catch(err){chapter?.classList.remove('dh-bazi-premium-visible');throw err}
    chapter?.classList.add('dh-bazi-premium-visible');
+   if(id==='report-years')chapter?.querySelectorAll('.bazi-core-random-controls').forEach(x=>x.remove());
    restored.add(id);failedAutomaticReads.delete(id);box.classList.remove('bazi-read-error');
    // Paid content is already on screen; no second "re-read" or sales action.
    status(box,'');box.hidden=true;box.style.setProperty('display','none','important');btn.hidden=true;
    // Server-approved entitlement has already removed this section's preview controls.
    const badge=document.getElementById('dh-sp-balance');if(badge)badge.textContent='專業解鎖點數 '+j.balance+' 點';
    window.dispatchEvent(new Event('dh-professional-points-changed'));
-   if(typeof onOpen==='function'){onOpen();return;}
+   const reveal=pendingReadOpens.get(id)||onOpen;
+   pendingReadOpens.delete(id);
+   if(typeof reveal==='function'){reveal();return;}
    if(['report-pillars','report-elements','report-tengods','report-relations'].includes(id)){
      const view=chapter?.querySelector('.ten-god-layout,.analysis-grid,.relation-grid,#pillars');
      (view||chapter)?.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -10880,7 +10904,14 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
    btn.textContent=s.unlocked?'重新載入完整內容（不扣點）':(s.mode==='priced'?'使用 '+s.points+' 點解鎖整區':'免費閱讀完整分析');
    status(box,(e?.message||'讀取失敗')+'；若已成功解鎖，重新載入不會重複扣點');
    notice((e?.message||'讀取失敗')+'；若已解鎖，重新開啟此區不會重複扣點。');
-  }finally{pendingPurchases.delete(id);btn.disabled=false}
+   const reveal=pendingReadOpens.get(id)||onOpen;
+   pendingReadOpens.delete(id);
+   if(epoch===generation&&document.body.classList.contains('bazi-personal-full-mode')&&typeof reveal==='function')reveal();
+  }finally{
+   // Failed/aborted reads can never leave a stale queued chapter opener.
+   pendingReadOpens.delete(id);
+   pendingPurchases.delete(id);btn.disabled=false;
+  }
  }
  const init=()=>{addBoxes();document.getElementById('baziPillarPaidAction')?.addEventListener('click',()=>document.querySelector('#baziSectionHub [data-bazi-open-section="report-pillars"]')?.click());PAID_ADVANCED.forEach(id=>document.getElementById(id)?.addEventListener('toggle',()=>{if(document.getElementById(id)?.open&&states.get(id)?.unlocked&&!restored.has(id)&&!failedAutomaticReads.has(id))void purchase(id)}));window.addEventListener('bazi-google-login',()=>void window.baziSectionReady?.());window.addEventListener('focus',()=>{if(chart())void window.baziSectionReady?.()})};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
