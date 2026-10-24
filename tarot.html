@@ -2167,6 +2167,10 @@ html[data-theme="light"] .v287-await-ai .ai-provider-grid a{animation-name:v287-
 
 .tarot-site-ai-run{border:0;border-radius:10px;background:#9062e7;color:white;padding:12px 20px;font-weight:700;cursor:pointer;margin:12px 0}
 .tarot-site-ai-run:disabled{opacity:.45;cursor:not-allowed}.tarot-site-ai-status{font-size:.86rem;min-height:1.4em}
+.tarot-ai-charge-note{display:block;margin:10px 0 12px;padding:10px 13px;border:1px solid rgba(154,114,255,.32);border-radius:11px;background:rgba(154,114,255,.085);color:var(--text);font-size:.79rem;line-height:1.7;font-weight:650}
+.tarot-ai-charge-note[data-charge-type=shared]{border-color:rgba(231,94,215,.45);background:rgba(231,94,215,.10)}
+html[data-theme=light] .tarot-ai-charge-note{color:#47315f;background:#f3ebff;border-color:#cbb4e9}
+html[data-theme=light] .tarot-ai-charge-note[data-charge-type=shared]{color:#71356e;background:#fceafa;border-color:#e5b4df}
 .tarot-site-ai-result{overflow-wrap:anywhere;line-height:1.95;font-family:inherit;font-size:clamp(.95rem,1.4vw,1.04rem);padding:clamp(14px,2.8vw,26px);border-radius:12px;background:rgba(95,75,135,.12);max-height:none;overflow:visible;color:inherit}
 .tarot-site-ai-result h3{font-size:1.22rem;line-height:1.55;margin:2em 0 .85em;color:var(--text,#eee)}
 .tarot-site-ai-result h4{font-size:1.08rem;line-height:1.6;margin:1.6em 0 .7em;color:var(--text,#eee)}
@@ -3038,6 +3042,7 @@ body.tarot-focus .tarot-stage-header{align-items:center}
 .reading-analysis .tarot-site-ai{margin-top:12px;padding:16px 0 4px;border:0;border-top:1px solid var(--tl-line);background:transparent;border-radius:0;box-shadow:none}
 .reading-analysis .tarot-site-ai h4{font-size:1rem;margin:5px 0}
 .reading-analysis .tarot-site-ai>p:not(.tarot-site-ai-status):not(.tarot-ai-shared-note){font-size:.74rem;line-height:1.65;margin:6px 0}
+.reading-analysis .tarot-site-ai>.tarot-ai-charge-note{font-size:.80rem;line-height:1.75;margin:10px 0 13px;padding:10px 13px}
 .reading-analysis .tarot-site-ai .tarot-ai-shared-note{font-size:.70rem;line-height:1.6}
 .reading-analysis .tarot-site-ai .tarot-site-ai-run{width:100%;min-height:48px;font-size:.87rem;border-radius:12px}
 .reading-analysis .tarot-site-ai[data-site-ai-result="success"] [data-site-ai-run]{width:auto;min-height:39px;align-self:flex-start;font-size:.76rem;opacity:.85;border:1px solid var(--tl-line);box-shadow:none;background:transparent!important;color:var(--text)!important;padding:8px 12px}
@@ -3638,17 +3643,14 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       <div class="dh-clean-shared-notes">
         <p>八字、塔羅、易經等工具共用</p>
         <p>定期免費額度用完才扣；用完可加購</p>
+        <button class="dh-clean-buy dh-clean-shared-buy" type="button" disabled aria-label="加購工具額度與AI解讀次數（即將開放）">
+          <span><span class="cart" aria-hidden="true">🛒</span> 加購工具額度與AI解讀次數</span>
+          <small>即將開放</small>
+        </button>
       </div>
     </div>
   </section>
-  <section class="dh-clean-card dh-clean-card-points dh-professional-points-card" aria-label="專業解鎖點數">
-    <b class="dh-clean-title">專業解鎖點數</b>
-    <b class="dh-clean-value" id="dhProfessionalPointsNumber">— 點</b>
-    <p class="dh-clean-point-copy">八字、塔羅、易經共用</p>
-    <p class="dh-clean-point-copy">依各專業區塊扣點</p>
-    <span id="dhProfessionalPointsNote" hidden></span>
-    <button class="dh-clean-buy" type="button" disabled><span><span class="cart">🛒</span> 加購額度與點數</span><small>即將開放</small></button>
-  </section>
+
 </div>
 <section class="dh-clean-legacy-hide" hidden aria-hidden="true"><b id="tarotPaidQuotaTitle">付費解鎖額度</b><strong id="tarotPaidQuotaCount">0 次</strong><small id="tarotPaidQuotaNote">付費功能尚未開放。</small><button type="button" id="tarotPaidQuotaMore">了解進階</button><button type="button" id="tarotPaidCompact" hidden>了解進階</button></section>
 
@@ -4531,8 +4533,8 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       const id=crypto.randomUUID();localStorage.setItem(k,id);return id;
     }catch(_){return crypto.randomUUID()}
   }
-  async function tarotAPI(path,body=null){
-    const res=await fetch(TAROT_API_BASE+path,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(authToken()?{Authorization:'Bearer '+authToken()}:{}),...(isAdminTestActive()?{'X-Tarot-Admin':adminToken(),'X-Tarot-Test-Mode':adminTestMode}: {}),'X-Tarot-Visitor-Id':tarotVisitorId()},body:body?JSON.stringify(body):undefined,cache:'no-store'});
+  async function tarotAPI(path,body=null,options=null){
+    const res=await fetch(TAROT_API_BASE+path,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(authToken()?{Authorization:'Bearer '+authToken()}:{}),...(isAdminTestActive()?{'X-Tarot-Admin':adminToken(),'X-Tarot-Test-Mode':adminTestMode}: {}),'X-Tarot-Visitor-Id':tarotVisitorId(),...(options?.headers||{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});
     let data=null;try{data=await res.json()}catch(_){data=null}
     if(!res.ok||!data?.ok){const err=new Error(data?.error||`HTTP_${res.status}`);err.traceId=data?.traceId||'';throw err;}
     if(typeof data.openTesting==='boolean')applyAccessMode(data.openTesting);
@@ -6666,6 +6668,29 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
   let onsiteAiBusy=false,onsiteAiAnswer='',onsiteAiSelectedModel='auto',onsiteAiLockedModel=null,onsiteAiRequestSerial=0;
   let onsiteAiPhaseResults={auto:{three:null,six:null}};
   let lastTarotErrorTrace='';
+  function showTarotAiChargeNotice(root,quota){
+    const note=root?.querySelector('[data-site-ai-charge-note]');if(!note)return;
+    const free=Math.max(0,Number(quota?.daily?.remaining)||0);
+    const shared=Math.max(0,Number(quota?.wallet?.ai)||0);
+    if(quota?.adminTest){
+      note.dataset.chargeType='test';note.textContent='管理員測試：成功完成 AI 解讀扣 1 次測試額度，不扣正式會員額度。';return;
+    }
+    if(free>0){
+      note.dataset.chargeType='free';
+      note.textContent='本次成功 AI 解讀使用 1 次本期免費 AI 額度（剩餘 '+free+' 次）；不必額外確認。';return;
+    }
+    if(shared>0&&quota?.role==='member'){
+      note.dataset.chargeType='shared';
+      note.textContent='本期免費 AI 已用完。本次若使用共用 AI 額度 1 次（剩餘 '+shared+' 次），開始前會先詢問你的同意。';return;
+    }
+    note.dataset.chargeType='empty';
+    note.textContent='AI 解讀額度已用完，目前無法開始新的 AI 解讀。';
+  }
+  function confirmTarotSharedAi(quota){
+    const remaining=Math.max(0,Number(quota?.wallet?.ai)||0);
+    if(quota?.role!=='member'||remaining<1)throw Error('會員共用 AI 額度已用完，本次沒有扣次。');
+    return window.confirm('本期免費 AI 解讀額度已用完。\n\n是否使用會員共用 AI 解讀額度 1 次？\n目前剩餘 '+remaining+' 次，成功解讀後剩餘 '+(remaining-1)+' 次。\n\n取消則不扣額度，也不會開始 AI 解讀。');
+  }
   async function refreshOnsiteAiQuota(){
     const root=els.analysis.querySelector('[data-site-ai]');
     const display=root?.querySelector('[data-site-ai-quota]'),btn=root?.querySelector('[data-site-ai-run]');
@@ -6682,6 +6707,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     try{
       const d=await tarotAPI('/ai/center/quota');
       tarotRealAiQuota=d.quota;tarotRealAiQuotaRole=d.quota?.role||'';
+      showTarotAiChargeNotice(root,d.quota);
       if(display)display.textContent=isAdminTestActive()?`測試 AI 額度剩餘 ${d.quota.remaining}／${d.quota.limit} 次`:`本期免費 AI ${d.quota.daily?.remaining??0}/${d.quota.daily?.limit??0} 次${d.quota.wallet?'｜共用 AI '+d.quota.wallet.ai+' 次':''}｜合計可用 ${d.quota.remaining} 次`;
       if(btn){
         const phase=state.stage3x3==='complete'?'six':'three';
@@ -6692,6 +6718,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       updateAccessMini();updateQuotaUI();renderAdminTestBanner();
     }catch(e){
       if(display)display.textContent='目前無法確認 AI 額度，請稍後重試。';
+      const note=root?.querySelector('[data-site-ai-charge-note]');if(note){note.dataset.chargeType='empty';note.textContent='額度查詢失敗，為避免扣錯次數暫停 AI 解讀。';}
       if(root?.querySelector('[data-site-ai-status]')&&!root.dataset.siteAiResult)root.querySelector('[data-site-ai-status]').textContent='額度查詢失敗：'+String(e.message||e);
       if(btn)btn.disabled=true; // fail closed
     }
@@ -6800,13 +6827,51 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     const key=promptRequestKey(),payload=v1PromptPayload();if(!payload)return;
     payload.requestId=crypto.randomUUID();
     const serial=++onsiteAiRequestSerial;onsiteAiBusy=true;lastTarotErrorTrace='';root.dataset.siteAiResult='';btn.disabled=true;btn.classList.add('v6-busy');
-    btn.textContent=phase==='six'?'AI 正在整合六張牌…':'AI 正在解讀三張牌…';
-    const status=root.querySelector('[data-site-ai-status]');status.textContent='AI 正在解讀中。如主要通道暫時無法使用，系統將自動嘗試備援。';
-    const pending=root.querySelector('[data-site-ai-pending]');if(pending){pending.hidden=false;pending.textContent='AI 解讀進行中，請勿重複點擊。';}
+    btn.textContent='正在確認 AI 額度…';
+    const status=root.querySelector('[data-site-ai-status]');status.textContent='正在確認最新 AI 額度，確保不會未經同意使用會員共用次數。';
+    const pending=root.querySelector('[data-site-ai-pending]');
     const report=root.querySelector('[data-site-ai-error-report]');if(report)report.hidden=true;
-    // Do not erase a previous successful answer while a user retries the same stage.
+    // Fresh server quota is mandatory. Never trust only the earlier displayed balance.
     try{
-      const data=await tarotAPI('/ai/center/interpret',payload);
+      const latest=await tarotAPI('/ai/center/quota');
+      if(serial!==onsiteAiRequestSerial||key!==promptRequestKey()||!root.isConnected)return;
+      const quota=latest.quota;
+      if(!quota||Number(quota.remaining)<=0)throw Error('AI 額度已用完，本次沒有扣次。');
+      tarotRealAiQuota=quota;tarotRealAiQuotaRole=quota.role||'';
+      showTarotAiChargeNotice(root,quota);
+      let sharedConfirmed=false;
+      if(!quota.adminTest&&!(Number(quota.daily?.remaining)>0)){
+        if(!confirmTarotSharedAi(quota)){
+          root.dataset.siteAiResult='cancelled';
+          status.textContent='已取消 AI 解讀，沒有扣除共用 AI 額度。';
+          return;
+        }
+        sharedConfirmed=true;
+      }
+      btn.textContent=phase==='six'?'AI 正在整合六張牌…':'AI 正在解讀三張牌…';
+      status.textContent='AI 正在解讀中。如主要通道暫時無法使用，系統將自動嘗試備援。';
+      if(pending){pending.hidden=false;pending.textContent='AI 解讀進行中，請勿重複點擊。';}
+      // If the last free slot vanished between quota check and booking (another tab),
+      // the Worker refuses to fall back to shared AI without a new confirmation.
+      let data;
+      try{
+        data=await tarotAPI('/ai/center/interpret',payload,sharedConfirmed?{headers:{'X-DH-Shared-AI-Confirm':'1'}}:null);
+      }catch(e){
+        if(e.message!=='SHARED_AI_CONFIRM_REQUIRED'||sharedConfirmed)throw e;
+        const fresh=await tarotAPI('/ai/center/quota');
+        if(serial!==onsiteAiRequestSerial||key!==promptRequestKey()||!root.isConnected)return;
+        tarotRealAiQuota=fresh.quota;tarotRealAiQuotaRole=fresh.quota?.role||'';
+        showTarotAiChargeNotice(root,fresh.quota);
+        if(!confirmTarotSharedAi(fresh.quota)){
+          root.dataset.siteAiResult='cancelled';
+          status.textContent='已取消 AI 解讀，沒有扣除共用 AI 額度。';
+          return;
+        }
+        // Retry only with the same requestId; server rejected the unconfirmed
+        // attempt before reserving/charging any shared allowance.
+        data=await tarotAPI('/ai/center/interpret',payload,{headers:{'X-DH-Shared-AI-Confirm':'1'}});
+      }
+
       const answer=String(data.answer||'').trim();if(answer.length<20)throw Error('AI 解讀內容不足');
       if(serial!==onsiteAiRequestSerial||key!==promptRequestKey()||!root.isConnected)return;
       onsiteAiAnswer=answer;
@@ -6822,7 +6887,8 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
           if(phase==='six')setTimeout(()=>currentPhase.scrollIntoView({behavior:'smooth',block:'start'}),80);
         }
       }
-      status.textContent=`${aiPhaseName(phase)}完成｜通道 ${data.channel||'—'}｜追蹤碼：${data.traceId||'—'}`;
+      const deducted=data.quotaCharge==='shared'?'會員共用 AI 額度':data.quotaCharge==='free'?'本期免費 AI 額度':data.quotaCharge==='admin'?'測試 AI 額度':'AI 額度';
+      status.textContent=`${aiPhaseName(phase)}完成｜已扣 ${deducted} 1 次｜通道 ${data.channel||'—'}｜追蹤碼：${data.traceId||'—'}`;
       tarotTrackUsage('ai_success',tarotUsageCategory());
       dhAutoArchiveTarot();
       if(phase==='three'){state.firstAiInterpretationCompleted=true;persist3x3();setAIGuidanceStage('return');}
@@ -6889,6 +6955,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
         <p>${aiLead}</p>
         <div class="tarot-site-ai-stats" data-site-ai-quota>正在確認會員共用 AI 解讀次數…</div>
         <p class="tarot-ai-shared-note">訪客與免費會員的定期免費額度分開計算；已登入過的裝置需要重新登入才能使用會員額度。</p>
+        <p class="tarot-ai-charge-note" data-site-ai-charge-note role="note">正在確認本次 AI 解讀的扣次方式…</p>
         <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>${six?'✦ 開始六張牌 AI 整合解讀':'✦ 開始站內 AI 解讀'}</button>
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite">正在確認額度…</p>
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
@@ -7795,6 +7862,72 @@ html[data-theme="dark"] #tarotQuotaPanel .dh-clean-card-points .dh-clean-point-c
 html[data-theme="dark"] #tarotQuotaPanel .dh-clean-buy{background:#252436!important;border-color:rgba(180,165,204,.34)!important;color:#e0d9ed!important}
 html[data-theme="dark"] #tarotQuotaPanel .dh-clean-buy small{color:#b9adca!important}
 @media(max-width:980px){html[data-theme="dark"] #tarotQuotaPanel .dh-clean-shared-notes{border-top-color:rgba(181,167,206,.25)!important}}
+</style>
+
+<style id="tarot-two-column-wallet-20261024">
+/* Tarot wallet presentation only. Keep all balance IDs and billing operations unchanged. */
+#tarotQuotaPanel.dh-clean-panel>.dh-clean-entitlement-grid{
+  grid-template-columns:minmax(0,1fr) minmax(0,1.66fr)!important;
+  gap:12px!important;
+}
+#tarotQuotaPanel .dh-clean-shared-wrap{
+  grid-template-columns:minmax(0,1.12fr) minmax(250px,.98fr)!important;
+  align-items:stretch!important;
+  column-gap:18px!important;
+}
+#tarotQuotaPanel .dh-clean-shared-notes{
+  align-self:stretch!important;
+  justify-content:flex-start!important;
+  padding-top:8px!important;
+  padding-bottom:3px!important;
+  gap:5px!important;
+}
+#tarotQuotaPanel .dh-clean-shared-buy{
+  display:flex!important;
+  align-items:center!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  gap:3px!important;
+  margin:12px 0 0!important;
+  padding:10px 12px!important;
+  min-height:64px!important;
+  width:100%!important;
+  border-radius:12px!important;
+  text-align:center!important;
+  line-height:1.45!important;
+  font-size:.82rem!important;
+  font-weight:800!important;
+  white-space:normal!important;
+  opacity:1!important;
+}
+#tarotQuotaPanel .dh-clean-shared-buy span{overflow-wrap:anywhere}
+#tarotQuotaPanel .dh-clean-shared-buy small{
+  display:block!important;
+  font-size:.72rem!important;
+  line-height:1.3!important;
+}
+@media (max-width:980px){
+  #tarotQuotaPanel.dh-clean-panel>.dh-clean-entitlement-grid{grid-template-columns:minmax(0,1fr)!important}
+  #tarotQuotaPanel .dh-clean-shared-wrap{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+  #tarotQuotaPanel .dh-clean-shared-notes{
+    padding:12px 0 0!important;
+    border-left:0!important;
+    border-top:1px solid rgba(156,175,192,.55)!important;
+  }
+  #tarotQuotaPanel .dh-clean-shared-buy{min-height:52px!important;margin-top:9px!important}
+}
+html[data-theme="dark"] #tarotQuotaPanel .dh-clean-shared-buy{
+  background:#252436!important;
+  border-color:rgba(180,165,204,.34)!important;
+  color:#e0d9ed!important;
+}
+html[data-theme="dark"] #tarotQuotaPanel .dh-clean-shared-buy small{color:#b9adca!important}
+html[data-theme="light"] #tarotQuotaPanel .dh-clean-shared-buy{
+  background:rgba(255,255,255,.55)!important;
+  border-color:rgba(156,175,192,.65)!important;
+  color:#654779!important;
+}
+html[data-theme="light"] #tarotQuotaPanel .dh-clean-shared-buy small{color:#847d90!important}
 </style>
 </body>
 </html>
