@@ -8571,6 +8571,16 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
       requestAnimationFrame(()=>requestAnimationFrame(()=>hub?.scrollIntoView({behavior:'instant',block:'start'})));
     }else if(!window.__baziKeepExampleFooterPosition)scrollToChapter(section);
   }
+  // Archived samples are opened by the renderer itself, not by a synthetic click
+  // on the visitor's purchase/navigation grid.  A grid click in sample mode is
+  // deliberately interpreted as "return to my chart"; using it internally made
+  // every sample disappear as soon as it finished loading (V7 regression).
+  window.baziOpenArchivedPreviewChapter=function(id){
+    if(!document.body.classList.contains('bazi-example-snapshot-mode'))return false;
+    if(!chapterIds.includes(id))return false;
+    openChapter(id,'archived-sample');
+    return true;
+  };
   // Only the premium hub owner can authorize entry to a paid chapter.
   // This hook also handles chapter next/previous and the in-chapter continue button.
   function enterChapter(id,source='grid'){
@@ -10002,10 +10012,15 @@ function refreshOriginalDecode(id){
 }
 function revealChapter(id){
  const section=$(id);if(!section)return;
- if(id!=='report-pillars'){
-  const open=document.querySelector(`[data-bazi-open-section="${id}"]`);
-  // Core renderers collapse chapter navigation; one click opens the original chapter.
-  if(!section.classList.contains('bazi-section-visible'))open?.click();
+ if(id!=='report-pillars'&&!section.classList.contains('bazi-section-visible')){
+  if(isExample()){
+   // Do not call hubButton.click(): the real hub click listener exits preview mode.
+   // Invoke the original chapter renderer directly, preserving the archived data.
+   if(window.baziOpenArchivedPreviewChapter?.(id)!==true)
+    throw Error('範例章節暫時無法展開，請重新整理頁面');
+  }else{
+   document.querySelector(`[data-bazi-open-section="${id}"]`)?.click();
+  }
  }
  refreshOriginalDecode(id);
 }
