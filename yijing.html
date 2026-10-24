@@ -2613,6 +2613,20 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   const YJ_PRO_API='https://yijing-api.ezgocpu.workers.dev';
   const YJ_PRICE_API='https://admin-api.ezgocpu.workers.dev/pricing/public?tool=yijing';
   // 易經不再提供專業解鎖點數功能；其他工具的點數紀錄保持原樣。
+    const YIJING_PUBLIC_OPEN_TEST = false;
+  const YIJING_ADMIN_UNLIMITED_TEST = false;
+  let paidPreviewActive=false; // 僅供本機預覽；正式付費額度日後由 payment-api / D1 驗證。
+  let adminTestAuthorized=false, adminTestMode='normal', adminTestUsage=0, adminTestReturnMode='member', adminTestCreditSpent=false;
+  const ADMIN_TEST_MODES={
+    normal:{label:'正常模式',logged:null,bound:null,startUsage:0,credits:0,full:false},
+    guest:{label:'全新訪客',logged:false,bound:false,startUsage:0,credits:0,full:false},
+    member:{label:'免費會員',logged:true,bound:true,startUsage:0,credits:0,full:false},
+    'quota-empty':{label:'免費額度用完',logged:true,bound:true,startUsage:3,credits:0,full:false},
+    'paid-credit':{label:'付費額度 1 次',logged:true,bound:true,startUsage:0,credits:1,full:false},
+    'paid-full':{label:'完整付費解鎖',logged:true,bound:true,startUsage:0,credits:0,full:true},
+    'paid-empty':{label:'付費額度 0 次',logged:true,bound:true,startUsage:0,credits:0,full:false}
+  };
+
   function safeRead(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(_){return fallback}}
   function safeWrite(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}}
   function sessionRead(key,fallback){try{const v=sessionStorage.getItem(key);return v?JSON.parse(v):fallback}catch(_){return fallback}}
