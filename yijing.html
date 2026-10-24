@@ -1928,21 +1928,17 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       <div class="dh-clean-shared-notes">
         <p>八字、塔羅、易經等工具共用</p>
         <p>固定題免費用完再扣；自訂題只扣共用額度</p>
+        <button class="dh-clean-buy dh-clean-shared-buy" type="button" disabled aria-label="加購工具額度與AI解讀次數（即將開放）">
+          <span><span class="cart" aria-hidden="true">🛒</span> 加購工具額度與AI解讀次數</span>
+          <small>即將開放</small>
+        </button>
       </div>
     </div>
     <span id="yijingQuotaCastFuture" hidden></span>
     <span id="yijingQuotaAiNote" hidden></span>
   </section>
-  <section class="dh-clean-card dh-clean-card-points dh-professional-points-card" aria-label="專業解鎖點數">
-    <b class="dh-clean-title">專業解鎖點數</b>
-    <b class="dh-clean-value" id="dhProfessionalPointsNumber" aria-live="polite">— 點</b>
-    <p class="dh-clean-point-copy">八字、塔羅等工具共用</p>
-    <p class="dh-clean-point-copy">易經完整解卦免費開放，不扣專業點數</p>
-    <span id="dhProfessionalPointsNote" hidden></span>
-    <button class="dh-clean-buy" type="button" disabled><span><span class="cart">🛒</span> 加購額度與點數</span><small>即將開放</small></button>
-  </section>
 </div>
-<div class="dh-clean-legacy-hide"><div class="yijing-access-bar" id="yijingAccessBar"><div class="yijing-access-copy"><div class="yijing-access-heading"><b id="yijingAccessTitle">未登入訪客</b><button class="yijing-access-cta" id="yijingAccessLogin" type="button">免費登入解除大部分限制</button></div><span id="yijingAccessText">每日部分內容輪替開放；免費登入後可解除大部分限制。</span></div></div><div class="yijing-quota-foot"><span id="yijingQuotaFootnote">各工具每日免費次數獨立；共用工具、共用 AI 與專業解鎖點數在會員系統分別管理。</span><span class="status" id="yijingQuotaStatus">請登入領取共用 AI 額度</span></div><b id="yijingQuotaPaidCount">0 次</b><span id="yijingQuotaPaidNote">付費額度與 AI 解讀額度分開；正式方案尚未開放。</span></div>
+<div class="dh-clean-legacy-hide"><div class="yijing-access-bar" id="yijingAccessBar"><div class="yijing-access-copy"><div class="yijing-access-heading"><b id="yijingAccessTitle">未登入訪客</b><button class="yijing-access-cta" id="yijingAccessLogin" type="button">免費登入解除大部分限制</button></div><span id="yijingAccessText">每日部分內容輪替開放；免費登入後可解除大部分限制。</span></div></div><div class="yijing-quota-foot"><span id="yijingQuotaFootnote">各工具每日免費次數獨立；共用工具與共用 AI 額度在會員系統分別管理。</span><span class="status" id="yijingQuotaStatus">請登入領取共用 AI 額度</span></div><b id="yijingQuotaPaidCount">0 次</b><span id="yijingQuotaPaidNote">付費額度與 AI 解讀額度分開；正式方案尚未開放。</span></div>
 
   </div>
   <div class="guide-progress" id="guideProgress" aria-label="易經占問步驟">
@@ -4512,60 +4508,6 @@ html[data-theme="light"] .yijing-reading-picker .yi-mode-option:has(input:checke
 }
 </style>
 
-<style id="dh-professional-points-ui-v2">
-#yijingQuotaPanel .yijing-quota-grid>.dh-legacy-paid-card{display:none!important}
-#yijingQuotaPanel .dh-professional-points-card .quota-value{font-size:2rem;line-height:1.45}
-#yijingQuotaPanel .dh-professional-points-card p{line-height:1.6}
-</style>
-<script id="dh-professional-points-status-v2">
-(()=>{'use strict';
- const API='https://member-api.ezgocpu.workers.dev/section-points/status';
- const STORAGE='divinationhub-auth-session-v1';
- const number=document.getElementById('dhProfessionalPointsNumber');
- const note=document.getElementById('dhProfessionalPointsNote');
- if(!number||!note)return;
- let lastRequest=0, requestSeq=0;
- function token(){try{return localStorage.getItem(STORAGE)||''}catch(_){return ''}}
- function update(value,message){number.textContent=value;note.textContent=message}
- async function refresh(force=false){
-   if(location.protocol==='file:')return update('— 點','請在正式網站登入後查看');
-   const t=token();
-   if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(t)){
-     requestSeq++;
-     update('— 點','登入後查看｜專業點數全平台共用');
-     return;
-   }
-   const now=Date.now();
-   if(!force && now-lastRequest<1500)return;
-   lastRequest=now;
-   const seq=++requestSeq;
-   try{
-     const response=await fetch(API,{cache:'no-store',headers:{Accept:'application/json',Authorization:'Bearer '+t}});
-     const data=await response.json().catch(()=>null);
-     // Avoid painting an old member's result after a logout / account switch.
-     if(token()!==t||seq!==requestSeq)return;
-     if(!response.ok||data?.success!==true||!Number.isSafeInteger(data?.points?.balance)||data.points.balance<0){
-       update('— 點',response.status===401?'登入已失效，請重新登入':'暫時無法查詢餘額，請稍後重試');
-       return;
-     }
-     update(data.points.balance+' 點','八字・塔羅等工具共用｜易經不扣點');
-     // A legacy small badge may already exist in BaZi's chapter navigation.
-     const chapterBadge=document.getElementById('dh-sp-balance');
-     if(chapterBadge)chapterBadge.textContent='專業解鎖點數 '+data.points.balance+' 點';
-   }catch(_){if(token()===t)update('— 點','暫時無法查詢餘額，請稍後重試')}
- }
- window.dhRefreshProfessionalPoints=()=>refresh(true);
- const start=()=>{void refresh(true);setTimeout(()=>void refresh(true),1700)};
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
- window.addEventListener('pageshow',()=>void refresh(true));
- window.addEventListener('focus',()=>void refresh(true));
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh(true)});
- window.addEventListener('storage',e=>{if(e.key===STORAGE||e.key==='divinationhub-auth-event')void refresh(true)});
- window.addEventListener('bazi-google-login',()=>void refresh(true));
- window.addEventListener('divinationhub-auth-event',()=>void refresh(true));
- window.addEventListener('dh-professional-points-changed',()=>void refresh(true));
-})();
-</script>
 <style id="dh-yijing-pro-display-fix">
 #yijingQuotaPanel .dh-legacy-paid-card{display:none!important}
 #yijingQuotaPanel .yijing-quota-grid{display:grid!important;grid-template-columns:minmax(0,1.25fr) minmax(0,2fr) minmax(0,.9fr)!important;align-items:stretch}
@@ -4640,6 +4582,72 @@ html[data-theme="dark"] #yijingQuotaPanel .dh-clean-card-points .dh-clean-point-
 html[data-theme="dark"] #yijingQuotaPanel .dh-clean-buy{background:#252436!important;border-color:rgba(180,165,204,.34)!important;color:#e0d9ed!important}
 html[data-theme="dark"] #yijingQuotaPanel .dh-clean-buy small{color:#b9adca!important}
 @media(max-width:980px){html[data-theme="dark"] #yijingQuotaPanel .dh-clean-shared-notes{border-top-color:rgba(181,167,206,.25)!important}}
+</style>
+
+<style id="yijing-two-column-wallet-20261024">
+/* Layout-only parity with Tarot. No modifications to actual quota calculations. */
+#yijingQuotaPanel.dh-clean-panel>.dh-clean-entitlement-grid{
+  grid-template-columns:minmax(0,1fr) minmax(0,1.66fr)!important;
+  gap:12px!important;
+}
+#yijingQuotaPanel .dh-clean-shared-wrap{
+  grid-template-columns:minmax(0,1.12fr) minmax(250px,.98fr)!important;
+  align-items:stretch!important;
+  column-gap:18px!important;
+}
+#yijingQuotaPanel .dh-clean-shared-notes{
+  align-self:stretch!important;
+  justify-content:flex-start!important;
+  padding-top:8px!important;
+  padding-bottom:3px!important;
+  gap:5px!important;
+}
+#yijingQuotaPanel .dh-clean-shared-buy{
+  display:flex!important;
+  align-items:center!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  gap:3px!important;
+  margin:12px 0 0!important;
+  padding:10px 12px!important;
+  min-height:64px!important;
+  width:100%!important;
+  border-radius:12px!important;
+  text-align:center!important;
+  line-height:1.45!important;
+  font-size:.82rem!important;
+  font-weight:800!important;
+  white-space:normal!important;
+  opacity:1!important;
+}
+#yijingQuotaPanel .dh-clean-shared-buy span{overflow-wrap:anywhere}
+#yijingQuotaPanel .dh-clean-shared-buy small{
+  display:block!important;
+  font-size:.72rem!important;
+  line-height:1.3!important;
+}
+@media(max-width:980px){
+  #yijingQuotaPanel.dh-clean-panel>.dh-clean-entitlement-grid{grid-template-columns:minmax(0,1fr)!important}
+  #yijingQuotaPanel .dh-clean-shared-wrap{grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+  #yijingQuotaPanel .dh-clean-shared-notes{
+    padding:12px 0 0!important;
+    border-left:0!important;
+    border-top:1px solid rgba(156,175,192,.55)!important;
+  }
+  #yijingQuotaPanel .dh-clean-shared-buy{min-height:52px!important;margin-top:9px!important}
+}
+html[data-theme="dark"] #yijingQuotaPanel .dh-clean-shared-buy{
+  background:#252436!important;
+  border-color:rgba(180,165,204,.34)!important;
+  color:#e0d9ed!important;
+}
+html[data-theme="dark"] #yijingQuotaPanel .dh-clean-shared-buy small{color:#b9adca!important}
+html[data-theme="light"] #yijingQuotaPanel .dh-clean-shared-buy{
+  background:rgba(255,255,255,.55)!important;
+  border-color:rgba(156,175,192,.65)!important;
+  color:#654779!important;
+}
+html[data-theme="light"] #yijingQuotaPanel .dh-clean-shared-buy small{color:#847d90!important}
 </style>
 </body>
 </html>
