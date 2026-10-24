@@ -3292,7 +3292,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
             <button type="button" data-bazi-open-section="report-reading" aria-controls="report-reading" aria-expanded="false"><small>06</small><span class="bazi-hub-main"><span class="bazi-hub-name">命盤結構</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-luck" aria-controls="report-luck" aria-expanded="false"><small>07</small><span class="bazi-hub-main"><span class="bazi-hub-name">八步大運</span><em class="bazi-hub-status bazi-hub-status--personal">本人專屬解鎖</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-years" aria-controls="report-years" aria-expanded="false"><small>08</small><span class="bazi-hub-main"><span class="bazi-hub-name">三年流年</span><em class="bazi-hub-status bazi-hub-status--personal">本人專屬解鎖</em></span><b aria-hidden="true">＋</b></button>
-            <button type="button" class="bazi-gallery-hub-entry" data-bazi-open-section="report-examples" aria-controls="report-examples" aria-expanded="false"><small>09</small><span class="bazi-hub-main"><span class="bazi-hub-name">大運・流年・流月範例館</span><em class="bazi-hub-status bazi-gallery-badge">免費展示 · 免扣點</em></span><b aria-hidden="true">＋</b></button>
+            <button type="button" class="bazi-gallery-hub-entry" data-bazi-open-section="report-examples" aria-controls="report-examples" aria-expanded="false"><small>09</small><span class="bazi-hub-main"><span class="bazi-hub-name">大運・流年範例館</span><em class="bazi-hub-status bazi-gallery-badge">免費展示 · 免扣點</em></span><b aria-hidden="true">＋</b></button>
 
           </div>
           <p class="bazi-month-ai-note">想了解每個月的運勢？十二流月改由 <a href="#baziCustomQuestion" data-bazi-month-ai-link>八字 AI 專屬解讀・自訂問題</a> 依個人命盤分析，不再另外解鎖月曆章節。自訂題及 AI 解讀依現有額度與點數規則使用。</p>
@@ -3413,25 +3413,24 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
 
 
         <details class="report-section bazi-showcase-section" id="report-examples">
-          <summary><span><b>09</b> 大運・流年・流月範例館｜免費看完整示範</span><small>FREE EXAMPLE GALLERY · NO POINTS</small></summary>
+          <summary><span><b>09</b> 大運・流年範例館｜上下篇免費完整示範</span><small>FREE EXAMPLE GALLERY · NO POINTS</small></summary>
           <div class="report-body bazi-showcase-body">
             <div class="bazi-showcase-intro">
               <span class="bazi-showcase-eyebrow">✦ 免費公開範例 · 絕不扣點</span>
               <h3>先看專業分析會長什麼樣子，再決定是否解鎖</h3>
-              <p>這裡獨立展示公開的他人命盤範例；不會改動你的出生資料、會員解鎖紀錄，也不會扣除專業點數、工具額度或 AI 次數。</p>
+              <p>這裡展示公開命盤的八步大運與三年流年，包含原版上半部卡片與下半部深度推演；不會改動你的出生資料、會員解鎖紀錄，也不會扣除專業點數、工具額度或 AI 次數。十二流月改由下方站內 AI 自訂問題解讀。</p>
             </div>
             <div class="bazi-showcase-toolbar">
               <div class="bazi-showcase-tabs" role="tablist" aria-label="挑選免費示範內容">
                 <button type="button" role="tab" aria-selected="true" data-bazi-gallery-tab="luck">八步大運</button>
                 <button type="button" role="tab" aria-selected="false" data-bazi-gallery-tab="years">三年流年</button>
-                <button type="button" role="tab" aria-selected="false" data-bazi-gallery-tab="months">十二流月</button>
               </div>
               <button type="button" class="bazi-showcase-reroll" id="baziGalleryShuffle">🎲 換一張公開範例</button>
             </div>
             <div class="bazi-showcase-info" aria-live="polite" id="baziGalleryStatus">展開範例館後載入公開資料，不會切換你的命盤。</div>
             <div class="bazi-showcase-preview" id="baziGalleryView" aria-live="polite"></div>
             <div class="bazi-showcase-cta">
-              <p><strong>想看自己的大運或流年？</strong>第 07、08 區只處理自己的命盤與永久解鎖；這裡僅負責免費示範。</p>
+              <p><strong>想看自己的大運或流年？</strong>第 07、08 區解鎖後，上下兩部分都能完整閱讀，且同一命盤同一區永久解鎖；這裡僅負責免費示範。</p>
               <div class="bazi-showcase-actions">
                 <button type="button" data-bazi-gallery-go="report-luck">前往 07 八步大運</button>
                 <button type="button" data-bazi-gallery-go="report-years">前往 08 三年流年</button>
@@ -6805,6 +6804,7 @@ ${intent}
     currentLuck:(data)=>BaziCore.currentLuck(data),
     threeYear:(data)=>BaziCore.generateThreeYearStrategicOutlook(data),
     luckDetail:(data,item,rank)=>renderLuckPeriodDetail(data,item,rank),
+    lowerHtml:(id,data)=>baziOriginalTimeLowerHtml(id,data),
     monthDetail:(data,item)=>periodDetail(data,item)
   });
   function renderLuck(data){
@@ -7028,8 +7028,34 @@ ${intent}
     if ($('yearDetail')) $('yearDetail').innerHTML = '';
   }
 
+  // V16: 07/08 原版下半部共用單一純函式。僅使用傳入的已授權本人章節
+  // 或隔離的公開存檔；不讀取 lastData，不切換命盤，也不觸發解鎖。
+  function baziOriginalTimeLowerHtml(id,data){
+    if(!data||typeof data!=='object')return '';
+    try{
+      if(id==='report-luck'){
+        const guide=data.luckMasterGuide||BaziCore.generateLuckMasterGuide(data);
+        if(!guide?.corePrinciple||!guide?.curStep||!guide?.nextStep)return '';
+        return renderLuckMasterGuideHtml(guide,data);
+      }
+      if(id==='report-years'){
+        const outlook=data.threeYearStrategicOutlook;
+        if(!outlook?.survivalBlueprint?.rules?.length)return '';
+        return renderThreeYearMasterGuideHtml(outlook,data);
+      }
+    }catch(error){console.warn('原版下半部資料尚未就緒',id,error)}
+    return '';
+  }
+  function baziOriginalLowerShell(html,isPublic){
+    const name=isPublic?'公開範例｜下半部完整深度推演':'本人完整命盤｜下半部深度推演';
+    return '<div class="bazi-time-lower-heading"><span>下半部 · DEEP ANALYSIS</span><strong>'+name+'</strong></div>'+html;
+  }
+  window.baziGalleryOriginalTimeLowerHtml=(id,data)=>baziOriginalTimeLowerHtml(id,data);
   const baziNativePaidData=new Map();
-  window.baziClearNativePaidData=()=>baziNativePaidData.clear();
+  window.baziClearNativePaidData=()=>{
+    baziNativePaidData.clear();
+    document.querySelectorAll('#results :is(#report-luck,#report-years) .bazi-original-time-lower').forEach(x=>x.remove());
+  };
   // Paid chapters 06–08: use the SAME original on-page renderer as archived
   // complete snapshots. The input is original hydrateCalendarData output,
   // projected to this *one* authorized chapter by the Worker.
@@ -7038,6 +7064,7 @@ ${intent}
        !originalData || typeof originalData!=='object')throw Error('完整命盤狀態未就緒');
     const r=document.getElementById(id);
     if(!r || !paidBox || !r.contains(paidBox))throw Error('找不到此區付費內容');
+    if(id==='report-luck'||id==='report-years')r.querySelector('.report-body > .bazi-original-time-lower')?.remove();
     if(id==='report-reading'){
       if(!originalData.overallMasterSummary?.headerTitle)throw Error('命盤核心資料不完整');
       // The original renderReading replaces readingBody.innerHTML. Preserve
@@ -7059,6 +7086,13 @@ ${intent}
       if(r.querySelectorAll('#threeYearCompare .three-year-card').length!==3)
         throw Error('三年流年卡片尚未完整產生，請重新載入（不重扣點）');
     }else throw Error('不支援的章節');
+    if(id==='report-luck'||id==='report-years'){
+      const html=baziOriginalTimeLowerHtml(id,originalData);
+      if(!html)throw Error('本區下半部核心資料尚未完整，請重新載入（不重扣點）');
+      let lower=r.querySelector('.report-body > .bazi-original-time-lower');
+      if(!lower){lower=document.createElement('section');lower.className='bazi-original-time-lower';lower.setAttribute('aria-label','已解鎖的下半部深度分析');const body=r.querySelector('.report-body');const footer=body.querySelector('.bazi-decode-end-actions');if(footer)body.insertBefore(lower,footer);else body.appendChild(lower)}
+      lower.innerHTML=baziOriginalLowerShell(html,false);
+    }
     baziNativePaidData.set(id,originalData);
     // No third-party/local imitation templates; all cards and interactions
     // are created by the same four functions as archived complete examples.
@@ -11945,6 +11979,7 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
   const timeAssessment=(d,item)=>nativeTools()?.assessment(d,item)||{cls:'fortune-steady',label:'平穩',score:0};
   const rankEntries=(d,items)=>nativeTools()?.ranks(d,items)||[];
   const renderLuckPeriodDetail=(d,item,rank)=>nativeTools()?.luckDetail(d,item,rank)||'';
+  const originalLowerHtml=(id,data)=>nativeTools()?.lowerHtml?.(id,data)||'';
   const selectedPeriods={};
   const refreshSelectedDecode=()=>{};
   const trackAction=()=>{};
@@ -12175,21 +12210,6 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
   const shortDate=v=>v?String(v).slice(5,10).replace('-','/'):'—';
   const nowValue=()=>new Date().toISOString().slice(0,16);
   const periodDetail=(d,item)=>nativeTools()?.monthDetail(d,item)||'';
-  function renderMonthFlows(data){
-    const flows=data.monthFlows||[],list=rankEntries(data,flows),watch=[...list].reverse().slice(0,2);
-    $('monthFlowIntro').textContent=`${data.monthFlowYear||data.monthFlows?.[0]?.year||new Date().getFullYear()} 年的十二個節氣月：實際以卡片上的節氣起訖為準。`;
-    const best=list.filter(x=>['較順','偏順'].includes(x.a.label)).slice(0,3);
-    $('monthSummary').innerHTML=`<article class="fortune-summary-card fortune-steady"><small>較有利的節氣段</small><b>${best.length?best.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、'):'本組無特別偏吉月份'}</b><p>點卡片看各領域差異。</p></article><article class="fortune-summary-card fortune-steady"><small>相對調整負擔較多</small><b>${watch.map(x=>`${x.item.month}月（${esc(x.a.label)}）`).join('、')}</b><p>較需要協調的時間。</p></article>`;
-    $('monthFlowGrid').innerHTML=flows.map((f,i)=>{const a=timeAssessment(data,f);return `<button type="button" class="month-card ${a.cls}" data-i="${i}" aria-pressed="false"><small>${f.month} 月節氣段</small><b>${esc(f.ganZhi)}</b>${timeBadge(a)}<span>${esc(f.tenGodGan)} · ${esc(f.tenGodZhi)}</span><span class="period-mini">${esc(f.startJie)} ${shortDate(f.startSolar)}<br>至 ${esc(f.endJie)} ${shortDate(f.endSolar)}</span></button>`;}).join('');
-    $('monthFlowGrid').querySelectorAll('.month-card').forEach(btn=>btn.addEventListener('click',()=>selectMonth(data,Number(btn.dataset.i))));
-    const now=nowValue().replace('T',' ')+':00',index=flows.findIndex(f=>now>=f.startSolar&&now<f.endSolar);
-    if(index>=0)selectMonth(data,index);else if(flows.length)selectMonth(data,0);
-  }
-  function selectMonthItem(data,item,index){
-    selectedPeriods.months=item;setActive('monthFlowGrid','.month-card',index);
-    $('monthDetail').innerHTML=periodDetail(data,item);refreshSelectedDecode('months',data);trackAction(`month-${item.year}-${item.month}`);
-  }
-  function selectMonth(data,i){const item=data.monthFlows[i];if(item)selectMonthItem(data,item,i);}
 
 
   const listText=a=>Array.isArray(a)?a.map(x=>typeof x==='string'?x:x?.label||x?.name||'').filter(Boolean).join('、'):'';
@@ -12222,6 +12242,11 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
           if(view.querySelectorAll('.luck-card').length!==8||view.querySelectorAll('.luck-top-card').length!==3){
             throw Error('大運卡片未完整呈現');
           }
+          const lower=originalLowerHtml('report-luck',d);
+          if(!lower)throw Error('本筆大運下半部資料不完整');
+          const el=document.createElement('section');el.className='bazi-original-time-lower';
+          el.innerHTML='<div class="bazi-time-lower-heading"><span>下半部 · DEEP ANALYSIS</span><strong>公開範例｜下半部完整深度推演</strong></div>'+lower;
+          view.querySelector('.bazi-gallery-native-luck').appendChild(el);
         }catch(err){console.warn('Public original luck renderer:',err);view.innerHTML='<div class="bazi-showcase-empty">範例大運詳細畫面暫時無法呈現，請再換一筆範例。</div>'}
         status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。與本人命盤、解鎖狀態和點數完全獨立。`;
         return;
@@ -12239,38 +12264,20 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
         try {
           renderYearFlows(d); // byte-for-byte HTML templates reused from original 08
           if(view.querySelectorAll('.three-year-card').length!==3)throw Error('三年流年卡片未完整呈現');
+          const lower=originalLowerHtml('report-years',d);
+          if(!lower)throw Error('本筆流年下半部資料不完整');
+          const el=document.createElement('section');el.className='bazi-original-time-lower';
+          el.innerHTML='<div class="bazi-time-lower-heading"><span>下半部 · DEEP ANALYSIS</span><strong>公開範例｜下半部完整深度推演</strong></div>'+lower;
+          view.querySelector('.bazi-gallery-native-years').appendChild(el);
         }catch(err){console.warn('Public original annual renderer:',err);view.innerHTML='<div class="bazi-showcase-empty">範例三年流年畫面暫時無法呈現，請再換一筆範例。</div>'}
         status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。與本人命盤、解鎖狀態和點數完全獨立。`;
         return;
-      }
-    } else {
-      const months=d.monthFlows||[];
-      if(months.length===12 && nativeTools()){
-        view.innerHTML=`<div class="bazi-gallery-native bazi-gallery-native-months">
-          <div class="time-explain"><strong>十二節氣流月｜依月份觀察運勢起伏</strong><span>沿用原版流月月份卡片、相對評估和點選後的詳細內容，僅供公開示範。</span></div>
-          <div class="flow-intro" data-bazi-gallery-slot="monthFlowIntro"></div>
-          <div class="fortune-summary-grid" data-bazi-gallery-slot="monthSummary"></div>
-          <div class="month-flow-grid" data-bazi-gallery-slot="monthFlowGrid"></div>
-          <div class="detail-console fortune-detail" data-bazi-gallery-slot="monthDetail"></div>
-        </div>`;
-        try {
-          renderMonthFlows(d);
-          if(view.querySelectorAll('.month-card').length!==12)throw Error('十二流月卡片尚未全部生成');
-        }catch(err){console.warn('Public original month renderer:',err);view.innerHTML='<div class="bazi-showcase-empty">公開流月範例暫時無法完整展示，請再換一筆。</div>'}
-        status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。與本人命盤、解鎖狀態和點數完全獨立。`;
-        return;
-      }
-      if(months.length!==12)html='<div class="bazi-showcase-empty">這筆範例未儲存完整十二節氣月資料。十二流月的正式逐月解讀，請改用下方站內 AI 自訂問題。</div>';
-      else{
-        const selected=months[Math.max(0,Math.min(selectedIndex,11))];
-        html='<div class="bazi-showcase-grid">'+months.slice(0,12).map((x,i)=>`<article class="bazi-showcase-card month${i===selectedIndex?' featured':''}"><small>第 ${i+1} 個節氣月 · ${esc(x.month||i+1)} 月</small><b>${esc(x.ganZhi||[x.gan,x.zhi].join(''))}</b><span class="bazi-sx-pill">${esc(x.tenGodGan||'天干十神')} · ${esc(x.tenGodZhi||'地支十神')}</span><p class="bazi-sx-detail">${esc(x.startJie?`節氣：${x.startJie}`:'十二節氣月')}</p><button type="button" data-bazi-gallery-select="${i}">查看月份資料 ↗</button></article>`).join('')+'</div>';
-        html+=detailBlock(`第 ${selectedIndex+1} 節氣月｜${selected.ganZhi||''}`,`節氣起點：${selected.startSolar||'請依當年節氣時間核對'}`,[],`天干十神：${selected.tenGodGan||'—'}；地支十神：${selected.tenGodZhi||'—'}。若想深入詢問自己的逐月運勢，可使用下方站內 AI。`);
       }
     }
     view.innerHTML=html;
     status.textContent=`目前展示：公開存檔「${archive.title||'示範命盤'}」｜範例出生日期：${intro(d)}。不是你的命盤；僅作為內容展示，不涉及解鎖或扣點。`;
   }
-  function chooseTab(t){tab=t;selectedIndex=0;root.querySelectorAll('[data-bazi-gallery-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.baziGalleryTab===t)));render()}
+  function chooseTab(t){if(t!=='luck'&&t!=='years')return;tab=t;selectedIndex=0;root.querySelectorAll('[data-bazi-gallery-tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.baziGalleryTab===t)));render()}
   async function loadArchive(another=false){
     if(loading&&controller)controller.abort();
     loading=true;shuffle.disabled=true;
@@ -12305,7 +12312,6 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
   root.addEventListener('click',e=>{
     const tabButton=e.target.closest('[data-bazi-gallery-tab]');if(tabButton){chooseTab(tabButton.dataset.baziGalleryTab);return}
     const luckJump=e.target.closest('[data-bazi-gallery-luck-jump]');if(luckJump){const i=Number(luckJump.dataset.baziGalleryLuckJump);view.querySelectorAll('.luck-card')[i]?.click();return}
-    const pick=e.target.closest('[data-bazi-gallery-select]');if(pick){selectedIndex=Number(pick.dataset.baziGallerySelect)||0;render();return}
     const go=e.target.closest('[data-bazi-gallery-go]');if(go){document.querySelector(`#baziSectionHub [data-bazi-open-section="${go.dataset.baziGalleryGo}"]`)?.click();return}
   });
   shuffle.addEventListener('click',()=>void loadArchive(true));
@@ -12314,5 +12320,26 @@ html[data-theme="light"] .bazi-showcase-body{--sx-line:#cfcae2;--sx-paper:#fff;-
 })();
 </script>
 
+
+<style id="bazi-v16-time-lower-and-gallery">
+/* Original lower-half report uses the same historical core HTML in both contexts.
+   Paid chapters are gated behind server-verified ownership AND rendered source. */
+#results .bazi-original-time-lower{min-width:0;clear:both;margin-top:23px;padding-top:18px;border-top:1px solid var(--bazi-line-115,rgba(233,189,88,.30));color:var(--text)}
+#results .bazi-time-lower-heading{display:flex;align-items:center;flex-wrap:wrap;gap:8px 17px;margin-bottom:17px;border-radius:10px;padding:11px 15px;border:1px solid var(--bazi-line-71,rgba(233,189,88,.22));background:var(--bazi-bg-47,rgba(233,189,88,.05))}
+#results .bazi-time-lower-heading span{font-size:.69rem;letter-spacing:.12em;color:var(--gold);font-weight:850}
+#results .bazi-time-lower-heading strong{font-size:.89rem;color:var(--text)}
+body.bazi-personal-full-mode #results #report-luck.dh-bazi-premium-visible[data-bazi-paid-ready="1"] > .report-body > .bazi-original-time-lower,
+body.bazi-personal-full-mode #results #report-years.dh-bazi-premium-visible[data-bazi-paid-ready="1"] > .report-body > .bazi-original-time-lower{display:block!important;width:100%;}
+/* No paid/preview lower-half content may leak during loading or failed authorization. */
+body.bazi-personal-full-mode #results :is(#report-luck,#report-years):not([data-bazi-paid-ready="1"]) .bazi-original-time-lower,
+body.bazi-example-snapshot-mode #results :is(#report-luck,#report-years) .bazi-original-time-lower{display:none!important}
+#report-examples .bazi-original-time-lower{display:block!important;width:100%}
+#report-examples .bazi-original-time-lower .full-width-guide{width:100%;max-width:100%}
+#report-examples .bazi-showcase-tabs button[aria-selected="true"]{color:#fff}
+html[data-theme="light"] #results .bazi-time-lower-heading{background:#fff9ef;border-color:#d8c398}
+html[data-theme="light"] #results .bazi-time-lower-heading span{color:#93691e}
+html[data-theme="light"] #results .bazi-time-lower-heading strong{color:#213e48}
+@media(max-width:720px){#results .bazi-original-time-lower{margin-top:16px;padding-top:14px}#results .bazi-time-lower-heading{padding:11px}}
+</style>
 </body>
 </html>

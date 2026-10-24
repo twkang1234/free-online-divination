@@ -288,17 +288,17 @@ td.muted{color:var(--muted)}
 
 /* 商品方案管理 v1：與原「專業區塊扣點計價」獨立 */
 .dh-shop-panel{margin:0 0 24px}
-.dh-shop-panel summary{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;cursor:pointer;font-size:1rem;font-weight:800;color:var(--text)}
-.dh-shop-panel summary small{color:#91a4b8;font-size:.75rem;font-weight:500}
+.dh-shop-panel > summary{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;cursor:pointer;font-size:1rem;font-weight:800;color:var(--text)}
+.dh-shop-panel > summary small{color:#91a4b8;font-size:.75rem;font-weight:500}
 .dh-shop-wrap{padding:18px;border-top:1px solid var(--line)}
 .dh-shop-help{margin:0 0 15px;color:#a8b7c7;font-size:.81rem;line-height:1.75}
 .dh-shop-help strong{color:#f0d797}
 .dh-shop-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:14px 0}
 .dh-shop-head h3{margin:0;font-size:.93rem}
 .dh-shop-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
-.dh-shop-actions a{color:#dfc884;font-size:.78rem}
+.dh-shop-actions a{color:#78dcff;font-size:.78rem;text-decoration:underline;text-underline-offset:3px}
 .dh-shop-editor{padding:16px;border:1px solid #303a45;border-radius:14px;background:#0b121b}
-.dh-shop-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.dh-shop-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .dh-shop-fields label,.dh-shop-description label{display:grid;gap:6px;color:#afbeca;font-size:.77rem}
 .dh-shop-fields input,.dh-shop-fields select,.dh-shop-description textarea{width:100%;min-width:0;background:#080d13;color:#edf0f5;border:1px solid #394653;border-radius:9px;min-height:41px;padding:9px 10px;font:inherit;font-size:.86rem}
 .dh-shop-description{margin-top:12px}
@@ -319,7 +319,33 @@ td.muted{color:var(--muted)}
 .dh-shop-status.error{color:#ff9ba2}
 .dh-shop-empty{padding:20px;color:#aab8c3;text-align:center}
 @media(max-width:900px){.dh-shop-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:560px){.dh-shop-fields{grid-template-columns:1fr}.dh-shop-panel summary{align-items:flex-start;flex-direction:column}}
+@media(max-width:560px){.dh-shop-fields{grid-template-columns:1fr}.dh-shop-panel > summary{align-items:flex-start;flex-direction:column}}
+
+/* 加購商品管理 v2：簡短說明、收合編輯、即時預覽；不改動原有後端計價邏輯 */
+.dh-shop-help a,.dh-shop-instructions a{color:#76dcff!important;text-decoration:underline;text-underline-offset:3px;font-weight:750}
+.dh-shop-help a:hover,.dh-shop-instructions a:hover{color:#b1ecff!important}
+.dh-shop-instructions{border:1px solid #2d3947;border-radius:10px;background:#0a111b;margin:5px 0 16px;padding:0 12px}
+.dh-shop-instructions > summary{cursor:pointer;display:list-item!important;padding:9px 3px!important;color:#b7c9d7!important;font-size:.78rem!important;font-weight:650!important}
+.dh-shop-instructions p{margin:0 0 12px;color:#aebccd;font-size:.77rem;line-height:1.75}
+.dh-shop-editor-fold{margin-top:17px;border:1px solid #374454;border-radius:13px;overflow:hidden;background:#090f17}
+.dh-shop-editor-fold > summary{display:flex!important;align-items:center;justify-content:space-between;gap:9px;padding:13px 16px!important;cursor:pointer!important;font-size:.91rem!important;font-weight:800!important;color:#efe5cb!important}
+.dh-shop-editor-fold > summary::after{content:'展開 / 收合';color:#8cb4ca;font-size:.72rem;font-weight:500}
+.dh-shop-editor-fold[open] > summary{border-bottom:1px solid #344050}
+.dh-shop-editor-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(210px,.75fr);gap:15px;padding:15px;align-items:start}
+.dh-shop-form-area{min-width:0}.dh-shop-editor-fold .dh-shop-editor{padding:0;border:0;background:none}
+.dh-shop-preview{border:1px solid #39465b;border-radius:13px;padding:16px;background:#111827;position:sticky;top:15px;min-width:0}
+.dh-shop-preview-title{font-size:.74rem;color:#a5c4de;font-weight:750;margin-bottom:12px}
+.dh-shop-preview-box{border:1px solid #44516a;border-radius:12px;background:#191d2d;padding:16px;display:grid;gap:10px;min-height:190px}
+.dh-shop-preview-name{color:#f3edfc;font-size:.95rem;font-weight:820;overflow-wrap:anywhere}
+.dh-shop-preview-label[hidden]{display:none!important}.dh-shop-preview-label{display:inline-block;color:#c6abff;border:1px solid #785da8;border-radius:99px;padding:2px 7px;font-size:.7rem;overflow-wrap:anywhere}
+.dh-shop-preview-qty{font-size:2rem;line-height:1.2;font-weight:850;color:#c19ef5}.dh-shop-preview-qty small{font-size:.78rem;color:#b4adc7;margin-left:5px}
+.dh-shop-preview-desc{font-size:.75rem;color:#b5bed0;overflow-wrap:anywhere;line-height:1.55}
+.dh-shop-preview-price{border-top:1px solid #3b4355;padding-top:8px;display:flex;justify-content:space-between;gap:8px;color:#a5aebf;font-size:.74rem;align-items:baseline}
+.dh-shop-preview-price strong{font-size:1.18rem;color:#e8cf93;overflow-wrap:anywhere}
+.dh-shop-preview-state{font-size:.74rem;color:#b9dbcd;margin:10px 0 0}
+.dh-shop-help{margin-bottom:9px}.dh-shop-preview-foot{font-size:.7rem;color:#9ba9be;margin:8px 0 0;line-height:1.55}
+.dh-shop-table td:last-child{white-space:nowrap}
+@media(max-width:890px){.dh-shop-editor-layout{grid-template-columns:1fr}.dh-shop-preview{position:static}}
 
 </style>
 </head>
@@ -432,23 +458,41 @@ td.muted{color:var(--muted)}
     <details class="section dh-shop-panel" id="dhShopAdminPanel">
       <summary>🛒 加購商品方案管理 <small>新增・修改・上架・停用・封存｜與專業區塊扣點設定分開</small></summary>
       <div class="dh-shop-wrap">
-        <p class="dh-shop-help"><strong>目前只有方案展示，沒有付款、扣款或自動增加會員額度。</strong> 商品資料儲存在獨立 Cloudflare D1 表格中。價格及額度都可以先空白儲存草稿；正式展示前再填寫。此區「上架」只表示可在 <a href="/pricing.html" target="_blank" rel="noopener">pricing.html</a> 看到方案，不會啟用金流。原有加購按鈕不會更動。</p>
-        <div class="dh-shop-head"><h3>商品方案清單</h3><div class="dh-shop-actions"><label class="dh-shop-toggle"><input type="checkbox" id="dhShopShowArchived"> 顯示已封存</label><button type="button" class="btn secondary" id="dhShopReload">重新讀取</button><button type="button" class="btn secondary" id="dhShopNew">新增方案</button></div></div>
-        <div class="dh-shop-table-scroll"><table class="dh-shop-table"><thead><tr><th>商品</th><th>類型</th><th>數量</th><th>售價（NT$）</th><th>狀態</th><th>操作</th></tr></thead><tbody id="dhShopRows"><tr><td colspan="6" class="dh-shop-empty">展開後讀取商品清單。</td></tr></tbody></table></div>
-        <div class="dh-shop-head"><h3 id="dhShopEditorTitle">新增商品方案</h3><span style="color:#91a4b8;font-size:.76rem">可先只填商品名稱；未定價時保持「草稿」</span></div>
-        <form id="dhShopForm" class="dh-shop-editor">
-          <input type="hidden" id="dhShopId">
-          <div class="dh-shop-fields">
-            <label>商品種類<select id="dhShopType" required><option value="tool">工具額度包</option><option value="ai">AI 解讀次數包</option><option value="professional">專業解鎖點數包</option></select></label>
-            <label>商品名稱<input id="dhShopName" type="text" maxlength="80" placeholder="例如：工具額度方案 A" required></label>
-            <label>額度數量（次／點）<input id="dhShopQuantity" type="number" min="1" max="1000000" step="1" placeholder="可以暫不填"></label>
-            <label>售價（新台幣）<input id="dhShopPrice" type="number" min="1" max="10000000" step="1" placeholder="可以暫不填"></label>
-            <label>排序（越小越前）<input id="dhShopSort" type="number" min="0" max="9999" step="1" value="100"></label>
-            <label>優惠標籤（選填）<input id="dhShopHighlight" type="text" maxlength="30" placeholder="例如：最多人選"></label>
+        <p class="dh-shop-help"><strong>可新增、調價、上架展示或停用商品。</strong> <a href="/pricing.html" target="_blank" rel="noopener noreferrer">預覽加購頁 pricing.html ↗</a>。目前付款功能未啟用，不會扣款或增加會員額度。</p>
+        <details class="dh-shop-instructions"><summary>操作說明與安全提醒</summary><p>價格、數量可暫時留白，以未展示的草稿儲存；上架展示前須填妥。商品存於獨立 Cloudflare D1 資料表。「上架」只代表在加購頁展示，不代表可付款。複製方案會建立新的商品編號，不影響原商品；封存可恢復。原本各工具的加購按鈕及會員扣點不會更動。</p></details>
+        <div class="dh-shop-head"><h3>商品方案清單</h3><div class="dh-shop-actions"><label class="dh-shop-toggle"><input type="checkbox" id="dhShopShowArchived"> 顯示已封存</label><button type="button" class="btn secondary" id="dhShopReload">重新讀取</button><button type="button" class="btn secondary" id="dhShopNew">＋ 新增方案</button></div></div>
+        <div class="dh-shop-table-scroll"><table class="dh-shop-table"><thead><tr><th>商品</th><th>類型</th><th>數量</th><th>售價（NT$）</th><th>展示狀態</th><th>操作</th></tr></thead><tbody id="dhShopRows"><tr><td colspan="6" class="dh-shop-empty">展開後讀取商品清單。</td></tr></tbody></table></div>
+        <details class="dh-shop-editor-fold" id="dhShopEditorFold">
+          <summary><span id="dhShopEditorTitle">新增商品方案</span></summary>
+          <div class="dh-shop-editor-layout">
+            <div class="dh-shop-form-area">
+              <form id="dhShopForm" class="dh-shop-editor">
+                <input type="hidden" id="dhShopId">
+                <div class="dh-shop-fields">
+                  <label>商品種類<select id="dhShopType" required><option value="tool">工具額度包</option><option value="ai">AI 解讀次數包</option><option value="professional">專業解鎖點數包</option></select></label>
+                  <label>商品名稱<input id="dhShopName" type="text" maxlength="80" placeholder="例如：工具額度方案 A" required></label>
+                  <label>額度數量（次／點）<input id="dhShopQuantity" type="number" min="1" max="1000000" step="1" placeholder="草稿可留白"></label>
+                  <label>售價（新台幣）<input id="dhShopPrice" type="number" min="1" max="10000000" step="1" placeholder="草稿可留白"></label>
+                  <label>排序（越小越前）<input id="dhShopSort" type="number" min="0" max="9999" step="1" value="100"></label>
+                  <label>優惠標籤（選填）<input id="dhShopHighlight" type="text" maxlength="30" placeholder="例如：最多人選"></label>
+                </div>
+                <div class="dh-shop-description"><label>方案說明（選填）<textarea id="dhShopDescription" maxlength="260" rows="2" placeholder="簡短說明該商品適用範圍與特色"></textarea></label></div>
+                <div class="dh-shop-editor-actions"><label class="dh-shop-toggle"><input type="checkbox" id="dhShopActive"> 上架展示（不啟用付款）</label><button type="submit" class="btn" id="dhShopSave">儲存方案</button><button type="button" class="btn secondary" id="dhShopCancel">取消編輯</button></div>
+              </form>
+            </div>
+            <aside class="dh-shop-preview" aria-label="商品卡片即時預覽">
+              <div class="dh-shop-preview-title">前台商品卡片 · 即時預覽</div>
+              <div class="dh-shop-preview-box">
+                <div><div class="dh-shop-preview-name" id="dhShopPreviewName">商品名稱</div><span id="dhShopPreviewHighlight" class="dh-shop-preview-label" hidden></span></div>
+                <div class="dh-shop-preview-qty"><span id="dhShopPreviewQuantity">—</span><small id="dhShopPreviewUnit">次</small></div>
+                <div class="dh-shop-preview-desc" id="dhShopPreviewDescription">全平台共用方案</div>
+                <div class="dh-shop-preview-price"><span>方案售價</span><strong id="dhShopPreviewPrice">未定價</strong></div>
+              </div>
+              <p class="dh-shop-preview-state" id="dhShopPreviewState">未展示 · 草稿</p>
+              <p class="dh-shop-preview-foot">輸入時即時更新，不會自動儲存或建立訂單。</p>
+            </aside>
           </div>
-          <div class="dh-shop-description"><label>方案說明（選填）<textarea id="dhShopDescription" maxlength="260" rows="2" placeholder="簡短說明該商品適用範圍與特色"></textarea></label></div>
-          <div class="dh-shop-editor-actions"><label class="dh-shop-toggle"><input type="checkbox" id="dhShopActive"> 上架展示（不啟用付款）</label><button type="submit" class="btn" id="dhShopSave">儲存方案</button><button type="button" class="btn secondary" id="dhShopCancel">取消編輯</button></div>
-        </form>
+        </details>
         <p class="dh-shop-status" id="dhShopStatus" role="status" aria-live="polite">只管理商品內容；不改動既有會員餘額及專業解鎖扣點規則。</p>
       </div>
     </details>
@@ -1774,32 +1818,61 @@ async function call(path,payload){const t=token();if(!t)throw Error('管理員�
 function textNode(tag,value,cls=''){const n=document.createElement(tag);n.textContent=String(value);if(cls)n.className=cls;return n}
 function btn(label,cb){const b=document.createElement('button');b.type='button';b.className='btn secondary dh-shop-smallbtn';b.textContent=label;b.onclick=cb;return b}
 function money(v){return v==null?'未定價':'NT$ '+Number(v).toLocaleString('zh-TW')}
-function reset(){el('dhShopForm').reset();el('dhShopId').value='';el('dhShopSort').value='100';el('dhShopActive').checked=false;el('dhShopEditorTitle').textContent='新增商品方案'}
-function edit(p){el('dhShopId').value=p.id;el('dhShopType').value=p.type;el('dhShopName').value=p.name;el('dhShopQuantity').value=p.quantity??'';el('dhShopPrice').value=p.priceTwd??'';el('dhShopSort').value=p.sortOrder??100;el('dhShopHighlight').value=p.highlight||'';el('dhShopDescription').value=p.description||'';el('dhShopActive').checked=!!p.active;el('dhShopEditorTitle').textContent='編輯商品方案：'+p.name;el('dhShopForm').scrollIntoView({behavior:'smooth',block:'nearest'})}
+function updatePreview(){
+  const type=el('dhShopType').value,rawName=el('dhShopName').value.trim(),q=el('dhShopQuantity').value.trim(),price=el('dhShopPrice').value.trim(),highlight=el('dhShopHighlight').value.trim(),desc=el('dhShopDescription').value.trim(),active=el('dhShopActive').checked;
+  el('dhShopPreviewName').textContent=rawName||'尚未輸入商品名稱';
+  el('dhShopPreviewQuantity').textContent=q&&Number(q)>0?Number(q).toLocaleString('zh-TW'):'—';
+  el('dhShopPreviewUnit').textContent=type==='professional'?'點':'次';
+  el('dhShopPreviewPrice').textContent=price&&Number(price)>0?money(Number(price)):'未定價';
+  el('dhShopPreviewDescription').textContent=desc||'全平台共用方案';
+  el('dhShopPreviewHighlight').hidden=!highlight;el('dhShopPreviewHighlight').textContent=highlight;
+  el('dhShopPreviewState').textContent=active?'預計展示中 · 付款未啟用':'未展示 · 草稿／停用';
+}
+function openEditor(){const fold=el('dhShopEditorFold');fold.open=true;updatePreview();fold.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function reset(close=false){el('dhShopForm').reset();el('dhShopId').value='';el('dhShopSort').value='100';el('dhShopActive').checked=false;el('dhShopEditorTitle').textContent='新增商品方案';el('dhShopSave').textContent='儲存方案';updatePreview();if(close)el('dhShopEditorFold').open=false}
+function fill(p,copy=false){
+  el('dhShopId').value=copy?'':p.id;el('dhShopType').value=p.type;
+  el('dhShopName').value=copy?(p.name.length<=74?p.name+'（複製）':p.name.slice(0,74)+'（複製）'):p.name;
+  el('dhShopQuantity').value=p.quantity??'';el('dhShopPrice').value=p.priceTwd??'';
+  el('dhShopSort').value=copy?Math.min(9999,Number(p.sortOrder??100)+1):p.sortOrder??100;
+  el('dhShopHighlight').value=p.highlight||'';el('dhShopDescription').value=p.description||'';
+  // 複製永遠產生新的「未上架」商品；避免使用者不小心公開新方案。
+  el('dhShopActive').checked=copy?false:!!p.active;
+  el('dhShopEditorTitle').textContent=copy?'複製為新商品（原商品不變）':'編輯商品方案：'+p.name;
+  el('dhShopSave').textContent=copy?'儲存複製商品':'儲存修改';openEditor();
+}
 function render(){const body=el('dhShopRows');body.replaceChildren();let count=0;
   for(const p of items){if(p.archived&&!el('dhShopShowArchived').checked)continue;count++;
     const tr=document.createElement('tr');const name=textNode('td','');name.append(textNode('span',p.name,'dh-shop-product-name'));
     if(p.description)name.append(textNode('small',p.description,'dh-shop-product-detail'));
     if(p.highlight)name.append(textNode('small','標籤：'+p.highlight,'dh-shop-product-detail'));
     const kind=textNode('td',TYPES[p.type]||p.type);const q=textNode('td',p.quantity==null?'未設定':p.quantity+' '+(p.type==='professional'?'點':'次'));
-    const price=textNode('td',money(p.priceTwd));const state=document.createElement('td');state.append(textNode('span',p.archived?'已封存':p.active?'上架展示':'草稿／停用','dh-shop-pill '+(p.archived?'archived':p.active?'active':'')));
+    const price=textNode('td',money(p.priceTwd));const state=document.createElement('td');state.append(textNode('span',p.archived?'已封存':p.active?'展示中':'未展示','dh-shop-pill '+(p.archived?'archived':p.active?'active':'')));
     const tools=document.createElement('td');
-    if(p.archived){tools.append(btn('恢復',async()=>{if(!confirm('恢復這個封存商品為草稿嗎？'))return;try{await call('/admin/catalog/archive',{id:p.id,archive:false});await load();status('商品已恢復為草稿。')}catch(e){status(e.message,true)}}))}
-    else {tools.append(btn('編輯',()=>edit(p)));tools.append(btn(p.active?'停用':'上架',async()=>{if(!p.active&&(p.quantity==null||p.priceTwd==null)){status('上架前必須先填入正確的數量與價格。',true);edit(p);return}if(busy)return;busy=true;try{await call('/admin/catalog/save',{id:p.id,type:p.type,name:p.name,description:p.description,quantity:p.quantity,priceTwd:p.priceTwd,highlight:p.highlight,sortOrder:p.sortOrder,active:!p.active});await load();status(p.active?'商品已停用，前台將不再展示。':'商品已上架展示，但付款功能仍保持關閉。')}catch(e){status(e.message,true)}finally{busy=false}}));tools.append(btn('刪除',async()=>{if(!confirm('確定封存「'+p.name+'」？封存後不再展示，可透過「顯示已封存」恢復。'))return;try{await call('/admin/catalog/archive',{id:p.id,archive:true});if(el('dhShopId').value===p.id)reset();await load();status('商品已封存；歷史識別資料保留。')}catch(e){status(e.message,true)}}))}
+    if(p.archived){tools.append(btn('恢復',async()=>{if(!confirm('恢復這個封存商品為草稿嗎？'))return;if(busy)return;busy=true;try{await call('/admin/catalog/archive',{id:p.id,archive:false});await load();status('商品已恢復為草稿。')}catch(e){status(e.message,true)}finally{busy=false}}))}
+    else {
+      tools.append(btn('編輯',()=>fill(p)));tools.append(btn('複製',()=>{fill(p,true);status('已複製內容至新增表單，請確認後按「儲存複製商品」；原商品不會更改。')}));
+      tools.append(btn(p.active?'停用':'上架',async()=>{if(!p.active&&(p.quantity==null||p.priceTwd==null)){status('上架前必須先填入正確的數量與價格。',true);fill(p);return}if(busy)return;busy=true;try{await call('/admin/catalog/save',{id:p.id,type:p.type,name:p.name,description:p.description,quantity:p.quantity,priceTwd:p.priceTwd,highlight:p.highlight,sortOrder:p.sortOrder,active:!p.active});await load();status(p.active?'商品已停用，前台不再展示。':'商品已上架展示；付款功能仍然關閉。')}catch(e){status(e.message,true)}finally{busy=false}}));
+      tools.append(btn('封存',async()=>{if(!confirm('確定封存「'+p.name+'」？封存後不再展示，可透過「顯示已封存」恢復。'))return;if(busy)return;busy=true;try{await call('/admin/catalog/archive',{id:p.id,archive:true});if(el('dhShopId').value===p.id)reset(true);await load();status('商品已封存，識別資料保留。')}catch(e){status(e.message,true)}finally{busy=false}}));
+    }
     tr.append(name,kind,q,price,state,tools);body.append(tr);
   }
-  if(!count){const tr=document.createElement('tr');const td=textNode('td',items.length?'此篩選下沒有商品，或全部商品已封存。':'目前沒有商品。可從下方新增第一個草稿方案。','dh-shop-empty');td.colSpan=6;tr.append(td);body.append(tr)}
+  if(!count){const tr=document.createElement('tr');const td=textNode('td',items.length?'此篩選下沒有商品，或全部商品已封存。':'目前沒有商品。請點「＋ 新增方案」建立第一個草稿。','dh-shop-empty');td.colSpan=6;tr.append(td);body.append(tr)}
 }
 async function load(){if(!token())return;const d=await call('/admin/catalog');items=d.products||[];loaded=true;render();}
-el('dhShopAdminPanel').addEventListener('toggle',async()=>{if(el('dhShopAdminPanel').open&&!loaded){try{status('正在讀取商品方案……');await load();status('已讀取商品；目前只顯示方案，不會建立訂單或進行付款。')}catch(e){status(e.message,true)}}});
+el('dhShopAdminPanel').addEventListener('toggle',async()=>{if(el('dhShopAdminPanel').open&&!loaded){try{status('正在讀取商品方案……');await load();status('已讀取商品；只提供展示，不會建立訂單或付款。')}catch(e){status(e.message,true)}}});
 el('dhShopReload').onclick=async()=>{try{await load();status('已取得最新商品方案。')}catch(e){status(e.message,true)}};
-el('dhShopShowArchived').onchange=render;el('dhShopNew').onclick=reset;el('dhShopCancel').onclick=reset;
+el('dhShopShowArchived').onchange=render;
+el('dhShopNew').onclick=()=>{reset();openEditor()};
+el('dhShopCancel').onclick=()=>{reset(true);status('已取消編輯；沒有儲存任何變更。')};
+for(const id of ['dhShopType','dhShopName','dhShopQuantity','dhShopPrice','dhShopHighlight','dhShopDescription','dhShopActive']){el(id).addEventListener('input',updatePreview);el(id).addEventListener('change',updatePreview)}
 el('dhShopForm').addEventListener('submit',async e=>{e.preventDefault();if(busy)return;
   const price=el('dhShopPrice').value.trim(),qty=el('dhShopQuantity').value.trim(),active=el('dhShopActive').checked;
-  if(active&&(!price||!qty)){status('商品上架前，必須填寫額度數量與售價。未定價請先儲存草稿。',true);return}
+  if(active&&(!price||!qty)){status('商品上架前必須填寫額度數量與售價；未定價可先儲存草稿。',true);return}
   const payload={id:el('dhShopId').value,type:el('dhShopType').value,name:el('dhShopName').value.trim(),quantity:qty?Number(qty):null,priceTwd:price?Number(price):null,sortOrder:Number(el('dhShopSort').value),highlight:el('dhShopHighlight').value.trim(),description:el('dhShopDescription').value.trim(),active};
-  busy=true;el('dhShopSave').disabled=true;status('正在儲存商品方案……');try{await call('/admin/catalog/save',payload);reset();await load();status('儲存成功。'+(active?'目前僅展示方案，尚未接通金流。':'商品維持草稿／停用，不會公開展示。'))}catch(err){status('儲存失敗：'+err.message,true)}finally{busy=false;el('dhShopSave').disabled=false}
+  busy=true;el('dhShopSave').disabled=true;status('正在儲存商品方案……');try{await call('/admin/catalog/save',payload);reset(true);await load();status('儲存成功。'+(active?'目前只提供商品展示，不啟用付款。':'商品未展示，未啟用付款。'))}catch(err){status('儲存失敗：'+err.message,true)}finally{busy=false;el('dhShopSave').disabled=false}
 });
+updatePreview();
 window.addEventListener('dh-admin-ready',()=>{if(el('dhShopAdminPanel').open)load().catch(e=>status(e.message,true))});
 })();
 </script>
