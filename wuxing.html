@@ -63,6 +63,24 @@
 @media(max-width:600px){.report{padding:18px 17px}.editor-opening{padding:17px 16px}.editor-opening p,.editor-paragraph{font-size:15px!important}.editorial-section{padding:28px 0 24px}.editorial-section h3{font-size:19px;padding-left:42px}.editor-section-number{top:31px}.editor-list li{padding:12px 12px;gap:10px}.editor-list p{font-size:14px!important}.editor-quote{padding:16px 14px}}
 @media print{.report{background:#fff!important;color:#111!important;border:0!important;box-shadow:none!important}.report-header{border-color:#ddd!important}.report-header h2{color:#111!important}.report-header p{color:#444!important}.editor-opening,.editor-list li,.editor-quote,.editor-ending{background:white!important;border-color:#ddd!important}.editor-opening p,.editor-paragraph,.editor-list p,.editor-quote p{color:#222!important}.editorial-section h3,.editor-list strong,.editor-opening-label,.editor-ending span,.editor-quote-icon{color:#333!important}.editor-section-number{color:#333!important}.report{max-width:none!important}.editorial-section{break-inside:avoid}.editor-opening{break-inside:avoid}}
 
+
+/* v7 temporary editorial exports and evidence panel */
+.wx-temp-tools,.wx-temp-debug{margin:24px 0;padding:22px 25px;border:1px dashed rgba(218,185,103,.35);border-radius:16px;background:#111b18}
+.wx-temp-tools{display:flex;justify-content:space-between;align-items:center;gap:18px}
+.wx-temp-tools h3,.wx-temp-debug h3{margin:5px 0;font-size:19px;color:var(--text)}
+.wx-temp-tools p,.wx-temp-debug p{margin:5px 0 0;color:var(--dim);font-size:12px;line-height:1.75}
+.wx-export-btn{flex-shrink:0;border-color:rgba(130,218,177,.45)}
+.wx-temp-debug-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.wx-debug-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.wx-debug-box{background:#091713;border:1px solid rgba(135,196,168,.19);border-radius:10px;padding:12px 14px;min-width:0}
+.wx-debug-box small{display:block;color:var(--jade);font-size:11px;letter-spacing:.04em;margin-bottom:4px}
+.wx-debug-box b{display:block;white-space:pre-wrap;overflow-wrap:anywhere;color:#e3eee8;font-size:13px;line-height:1.7;font-weight:600}
+.wx-debug-raw{background:#07130f;border:1px solid var(--border);border-radius:11px;padding:11px 13px}
+.wx-debug-raw summary{cursor:pointer;color:var(--gold);font-size:12px}
+.wx-debug-raw pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:450px;overflow:auto;color:#b7cec3;font-size:12px;line-height:1.6}
+@media(max-width:750px){.wx-temp-tools,.wx-temp-debug-head{flex-direction:column;align-items:stretch}.wx-debug-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:460px){.wx-debug-grid{grid-template-columns:1fr}}
+@media print{.wx-temp-tools,.wx-temp-debug{display:none!important}}
 </style>
 </head>
 <body>
@@ -75,8 +93,10 @@
 <div class="actions"><button class="primary" type="button" id="calculate">✦ 產生我的五行分析</button><button class="secondary" id="demo" type="button">試看範例命盤</button><span class="fine">站內解讀計次規則尚未設定，目前本頁不扣除任何額度。</span></div><div id="error" class="error" role="alert" hidden></div>
 </section>
 <section id="result" class="result" hidden aria-live="polite"><div class="section-head"><div><div class="small-head">02 / YOUR FIVE ELEMENTS</div><h2>你的五行總覽</h2><p id="birthCaption"></p></div><span class="chip" id="sourceTag"></span></div><div class="summary-banner"><div class="panel"><span class="small-head">DAY MASTER · 日主</span><div class="summ-title">你的核心五行是 <span id="master" class="focus-word"></span></div><p class="intro" id="masterIntro"></p><div class="big4"><div class="metric"><span>最突出</span><b id="strongest"></b></div><div class="metric"><span>相對最少</span><b id="weakest"></b></div><div class="metric"><span>藏干亦未見</span><b id="missing"></b></div><div class="metric"><span>出生季節</span><b id="season"></b></div></div><details class="source-details"><summary>查看四柱計算依據</summary><div id="pillars" class="pillars"></div></details></div><div class="panel radar-panel"><div class="radar-head"><div><span class="small-head">FIVE ELEMENTS · 五行能量輪廓</span><div class="radar-subhead">從五個角度，一眼看懂五行的相對分布</div></div><span class="radar-indicator">RELATIVE VIEW</span></div><div id="radar" class="radar-figure" aria-live="polite"></div><div class="radar-tags" id="radarTags" aria-label="五行相對強弱"></div><p class="radar-summary" id="radarSummary"></p><p class="explain radar-caution">五角形僅比較本頁計算的相對多寡，外框不是理想平衡線。不同工具的加權方式可能略有差異；「比較少」不等於「需要補」，喜用神仍需完整判斷。</p></div></div><p class="explain" id="methodNote"></p></section>
+<section id="wxTemporaryTools" class="wx-temp-tools" hidden aria-label="暫時匯出功能"><div><span class="small-head">站長測試 · 暫時功能</span><h3>六篇站內解讀字數與資料匯出</h3><p>可一次下載六題純文字，逐題比較範本內容。此區在正式上線前可整段移除。</p></div><button type="button" class="secondary wx-export-btn" id="exportAllReports">⬇ 下載六題 TXT（附字數）</button></section>
+<section id="wxTempDebug" class="wx-temp-debug" hidden><div class="wx-temp-debug-head"><div><span class="small-head">TEMP · 內部背景資料檢查</span><h3>背景命盤資訊（暫時公開測試）</h3><p>核對解讀實際可使用哪些數據。這不是管理員保護頁，任何開啟本頁的人都看得到；正式上線前應隱藏或移除。</p></div><button type="button" class="secondary" id="exportBackground">⬇ 下載背景 TXT</button></div><div id="wxDebugGrid" class="wx-debug-grid"></div><details class="wx-debug-raw"><summary>展開完整背景資料 JSON（供測試核對）</summary><pre id="wxDebugRaw"></pre></details></section>
 <section id="topics" class="topics" hidden><div class="small-head">03 / SELECT A QUESTION</div><h2>你最想知道什麼？</h2><p>每次選一個主題，閱讀專為此命盤組合的站內解讀文章；切換題目不會重新排盤。</p><div id="topicGrid" class="topic-grid"></div></section>
-<article class="report" id="report" hidden><div class="report-header"><span class="small-head">PERSONAL FIVE ELEMENTS REPORT</span><h2 id="reportTitle"></h2><p id="reportMeta"></p></div><div id="reportBody"></div><div class="report-actions"><button type="button" class="secondary" id="copyReport">複製完整解讀</button><button type="button" class="secondary" id="printReport">列印／另存 PDF</button><button type="button" class="secondary" id="goTopics">返回其他問題 ↑</button><span class="fine" id="lengthInfo"></span></div><div class="ai-zone"><h3>✦ AI 深度解讀｜自訂問題</h3><p>可延伸目前的站內解讀，或自行提出想知道的事。依規劃，正式接通後每次成功解讀扣 1 次共用 AI 額度。</p><textarea id="customQuestion" class="input" placeholder="例如：我適合轉職嗎？五行對我的感情相處有什麼提醒？" maxlength="360"></textarea><div class="actions"><button id="aiBtn" type="button" class="secondary">AI 解讀｜待後端接通</button><button id="copyPrompt" type="button" class="secondary">複製 AI 解讀提問資料</button></div><div class="soft-note">目前未提供五行專用的 AI 計費 API；此按鈕不會扣點、也不會假裝已產生 AI 解讀。正式版須另接你現有的後端共用額度驗證。</div></div><p class="soft-note">本站內容屬傳統命理文化中的自我探索方式，並非對健康、財務或感情結果的科學預測或保證。</p></article>
+<article class="report" id="report" hidden><div class="report-header"><span class="small-head">PERSONAL FIVE ELEMENTS REPORT</span><h2 id="reportTitle"></h2><p id="reportMeta"></p></div><div id="reportBody"></div><div class="report-actions"><button type="button" class="secondary" id="copyReport">複製完整解讀</button><button type="button" class="secondary" id="exportAllReportsWithin">⬇ 下載六題 TXT</button><button type="button" class="secondary" id="printReport">列印／另存 PDF</button><button type="button" class="secondary" id="goTopics">返回其他問題 ↑</button><span class="fine" id="lengthInfo"></span></div><div class="ai-zone"><h3>✦ AI 深度解讀｜自訂問題</h3><p>可延伸目前的站內解讀，或自行提出想知道的事。依規劃，正式接通後每次成功解讀扣 1 次共用 AI 額度。</p><textarea id="customQuestion" class="input" placeholder="例如：我適合轉職嗎？五行對我的感情相處有什麼提醒？" maxlength="360"></textarea><div class="actions"><button id="aiBtn" type="button" class="secondary">AI 解讀｜待後端接通</button><button id="copyPrompt" type="button" class="secondary">複製 AI 解讀提問資料</button></div><div class="soft-note">目前未提供五行專用的 AI 計費 API；此按鈕不會扣點、也不會假裝已產生 AI 解讀。正式版須另接你現有的後端共用額度驗證。</div></div><p class="soft-note">本站內容屬傳統命理文化中的自我探索方式，並非對健康、財務或感情結果的科學預測或保證。</p></article>
 <section id="history" class="history"><div class="history-top"><div><span class="small-head">RECENT REPORTS</span><h2 style="margin:4px 0">最近 3 組紀錄</h2></div><button class="secondary" id="refreshHistory" type="button">重新整理</button></div><p class="fine" id="historyNotice">登入會員後，本頁會在目前瀏覽器暫存最近三組。跨裝置同步仍需要會員 API 支援。</p><div class="history-list" id="historyList"></div></section>
 <section class="seo"><h2>五行是什麼？缺什麼就要補什麼嗎？</h2><p>金、木、水、火、土是傳統五行學說用來描述性質及相互關係的五個概念。「相生」是木生火、火生土、土生金、金生水、水生木；「相剋」是木剋土、土剋水、水剋火、火剋金、金剋木。八字中的日主、月令、天干地支與藏干共同構成分析線索，因此單純某五行少或未出現，不代表一定適合增補該五行。</p><p>本站先用可說明的規則提供免費個人化整理，對需要更深的格局、調候、從格及喜用神論斷，仍應保留流派差異與不確定性。生日時辰不明時，結果僅為三柱的初步觀察，不能視為完整命盤。</p></section>
 </main><footer class="footer"><div class="container">一念知機 · 五行查詢　｜　<a href="/bazi.html">進一步了解完整八字排盤</a>　｜　<a href="/">返回免費線上占卜</a><div>© 一念知機　本站提供傳統文化與自我探索內容。</div><div style="margin-top:8px">曆法：lunar-javascript 1.7.7（MIT License，授權與作者資訊見該專案授權聲明）。</div></div></footer><div id="toast" class="toast" role="status" hidden></div>
@@ -415,6 +435,108 @@ function wxOpening(x,id){
  wealth:`談財運時，很多人最想知道「我什麼時候發財？」但更值得先問的是：我習慣用什麼方式賺錢、花錢、保管資源？${x.dm}與目前的五行組合，可以提供一套傳統文化的自我檢視角度；真正的財務決定，仍需要回到實際收入、支出與風險。`
  };return m[id];
 }
+
+/* v7 editorial expansions: each subject has distinct subsections drawn from the same verified background fields. */
+function wxEditorialExpansion(x,id){
+ const c=x.c,dm=x.dm,s=c.strongest,w=c.weakest;
+ const pillarNames=(x.b.pillars||[]).map(p=>`${p.name}${p.gan}${p.zhi}`).join('、');
+ const hiddenCount=x.b.elementStructure?.hiddenStems?.counts||{};
+ const yy=x.b.yinYang||{};
+ const root=x.rootCount?`在地支藏干可見${x.rootCount}處與日主同類五行的線索，說明不能只看表層字數。`:'從目前列出的藏干尚未找到日主同類根氣，但這仍不足以宣稱身弱。';
+ const topGod=x.strongestGod||'尚未形成可辨識的主要十神群組';
+ const tenGodTip=x.strongestGod?`十神群組中「${topGod}」的出現次數相對較多；這只是位置統計，可拿來找解讀角度，不能直接說它最旺或必然帶來某種結果。`:'本頁沒有足夠的十神統計，先以日主、五行分布及季節做基本閱讀。';
+ const yearly=x.flow?.ganZhi?`${x.flow.year}年的節氣流年是${x.flow.ganZhi}，天干對應「${x.flow.tenGod?.name||'未取得'}」；`:'目前流年資料尚待核對；';
+ const currentLuck=x.luck?.ganZhi?`此刻標示的大運為${x.luck.ganZhi}（${x.luck.startYear||'起迄待核'}～${x.luck.endYear||'待核'}），`:'目前大運尚不能可靠判定，';
+ const elementReminder=`${s}較突出而${w}較少，只代表本頁相對分布；藏干和節令會讓背後的故事比圖形更豐富。`;
+ if(id==='identity')return [
+   wxS('把日主放回整張命盤：你的「外表」與「內在」',[
+     wxP(`這份四柱的來源依次是${pillarNames}。日柱中的${dm}可以理解為主角，但年、月、時柱像是主角所處的環境。${x.season}，你所處的季節不是旁枝末節：同樣是${dm}，生在不同節令，五行的生扶、耗洩和制約都可能不同。${root}`),
+     wxP(`因此，解讀不能只把你歸到「${c.dm}型人」。當${s}相對突出，它與日主是「${x.relationToSelf}」的互動關係。你可能會在做事時重視${x.main.gift}，也可能因為過度倚靠這項熟悉的能力，忽略某些情境需要不同步調。這正是「同一個五行，不同的人有不同表現」的關鍵。`)]),
+   wxS('三個生活場景，試著看見真實的自己',[
+     wxList([
+       wxItem('做決定的時候',`下次要選擇新工作、購買大件物品或答應一項承諾時，看看自己是否先依靠「${x.self.gift}」；若答案太快出現，再多蒐集兩個不同意見。`),
+       wxItem('和熟人相處的時候',`你是否把「${x.main.gift}」當成照顧別人的方式？對方需要的也許是協助，也許只是被聽見。先問清楚，會比自行判定對方需求更有效。`),
+       wxItem('面對挫折的時候',`若察覺自己落入「${x.main.shadow}」，不妨用「${x.minor.habit}」嘗試另一種應對。這不是強迫變成另一個人，而是增加選擇。`) ]),
+     wxP(`你可以把這三個場景各記下一次真實經驗。當生活證據和命理象徵一致時，它可以成為自我理解的素材；若不一致，就讓真實經驗優先。這比用命盤一句話為自己定型，更接近你希望的「認識自己」。`)]),
+ ];
+ if(id==='personality')return [
+   wxS('進一步拆解：哪些優點可能變成缺點？',[
+     wxP(`從${dm}的${x.self.gift}出發，再加上${s}所帶來的${x.main.gift}，你最值得檢查的不是「我好不好」，而是「我在什麼情況下會過度使用自己的長處」。例如講求效率的人，遇到期限逼近往往很可靠；但如果連親密關係也用效率來衡量，別人可能覺得被催促。`),
+     wxList([
+       wxItem('在團隊裡',`善於${x.self.gift}的人，適合把事情推進；若過度堅持自己的標準，則容易讓討論變成單向命令。可以事先問清楚團隊最在意的成果。`),
+       wxItem('在親密關係裡',`「${x.main.gift}」能提供安全感，但「${x.main.shadow}」也可能讓伴侶感到壓力。把自己的需求說清楚，比期待對方讀懂更實在。`),
+       wxItem('在高壓時期',`當事情接二連三，留意自己是否越來越不容許失誤。如果是，應先調整休息與責任分工，而不是責怪自己「命盤不好」。`)]),
+     wxP(`${x.yyt}；這可以作為看待「先行動還是先觀察」的補充角度，卻不足以替你貼上外向、內向、強勢或溫柔的標籤。實際上，你在家人、同事和陌生人面前可能展現完全不同的面貌。`)]),
+   wxS('優缺點改進清單：不是要求完美，而是練習調整',[
+     wxList([
+       wxItem('這個星期',`挑一個最常讓你後悔的反應，寫下事件、當時的想法及對方的回應。下一次先試「${x.main.habit}」，觀察有沒有不同。`),
+       wxItem('接下來一個月',`邀請一位信任的人描述你最有幫助的一件事，以及最容易讓他難以接近的時候。只蒐集資訊，先不辯護。`),
+       wxItem('長期練習',`把${w}象徵的${x.minor.gift}視為可以後天學習的能力，不用把「比較少」變成羞恥感。${x.minor.habit}，就是實際可做的一小步。`)]),
+     wxP(`${tenGodTip}就算某項性格提示在目前看似準確，仍應尊重人生階段、教育與經驗帶來的改變。命盤可以提供一面鏡子，但它不應變成困住自己的標籤。`)]),
+ ];
+ if(id==='balance')return [
+   wxS('從藏干與季節看「表面沒有」的五行',[
+     wxP(`許多人在網路上看到「缺${w}」便緊張，立刻想換顏色、買飾品或改名字。其實「表層沒看到」和「四柱完全沒有」並不相同。這張盤的表層是${x.b.elementStructure?.notVisible?.join('、')||'各行可見'}較不明顯；而藏干裡的${w}出現${hiddenCount[w]||0}處線索。即使藏干也少，是否需要補${w}仍要另作完整判斷。`),
+     wxP(`${x.season}。月令讓相同的五行數量在不同季節可能呈現不同力量；另外，${root}。所以一張五角形圖只負責幫你快速理解輪廓，不能單獨用來開出「補運處方」。${elementReminder}`)]),
+   wxS('常見的三種誤會，一次說清楚',[
+     wxList([
+       wxItem('誤會一：缺水一定要穿藍色',`顏色對應屬於傳統文化象徵；它可以作為提醒，不能保證改變運勢。若只是喜歡藍色，可以穿；不必因為不穿就擔心。`),
+       wxItem('誤會二：哪個最多，哪個就一定不好',`${s}目前相對突出，可能象徵${x.main.gift}；但若缺乏完整的生剋、調候與格局判斷，仍不能直接宣布它是忌神。`),
+       wxItem('誤會三：補五行可以取代實際改變',`如果想改善${w}所象徵的${x.minor.gift}，練習「${x.minor.habit}」遠比只換配件更可檢驗，也更能累積真正能力。`)]),
+     wxP(`在傳統命理裡，喜用神不是憑空猜測的答案。現階段系統能提供相對結構、藏干與互動線索，但還未取得能可靠判定所有特殊格局的結果，所以本篇不會裝作已經替你算出確定的喜忌。`)]),
+   wxS('把五行概念化為可持續的日常計畫',[
+     wxP(`不妨用一個月試驗：第一週觀察自己的${x.main.shadow}是否經常發生；第二週做「${x.main.habit}」；第三週加入「${x.minor.habit}」；第四週回頭比較心情、效率及人際關係。能有具體改善，就留下；若沒有，調整方法即可。`),
+     wxCall(`所謂調和，不是把五條線畫得一模一樣，而是讓你在需要${x.self.gift}時用得上，在需要${x.minor.gift}時也有選擇。看清「數量」、「力量」與「喜忌」三個層次，才真正看懂五行。`)]),
+ ];
+ if(id==='career')return [
+   wxS('做事的優勢與工作盲區，如何在現實中表現？',[
+     wxP(`你以${dm}為日主，擅長的${x.self.gift}可作為職涯自我盤點的起點；${s}突出則提醒你留意${x.main.gift}。具體來看，如果你的工作需要長期交付成果，能否穩定完成、與夥伴協作以及對變動保持彈性，比命盤裡哪一行最多還更重要。`),
+     wxList([
+       wxItem('工作節奏',`你可以比較兩種情境：有明確規範的長期任務，和需要快速反應的新專案。哪種情境最能發揮「${x.self.gift}」？`),
+       wxItem('領導與協作',`如果你常被推到負責位置，練習把權責寫清楚；若容易落入「${x.main.shadow}」，不要把所有人的工作都攬過來。`),
+       wxItem('技能與產業',`可探索${x.self.work}、${x.main.work}等工作類型，但請結合薪資、訓練成本、興趣與地方就業機會，而不是把五行當成唯一分流標準。`) ]),
+     wxP(`${tenGodTip}它幫你提出職場問題，例如要更多制度支持、表達機會或資源管理能力；不能據此推導你一定當主管或永遠不適合創業。`)]),
+   wxS('上班、轉職或創業：三種情境的準備方式',[
+     wxList([
+       wxItem('如果你目前是上班族',`先盤點自己可量化的成果，包括獨立完成的專案、降低的錯誤率或幫團隊節省的時間。與其猜「今年升官嗎」，不如把升遷條件具體化。`),
+       wxItem('如果你正在考慮轉職',`先列出想離開的三個原因，再找出新職缺能否真的改善它們；同時預留求職期間的現金流，避免因焦急而接受不適合的條件。`),
+       wxItem('如果你想創業',`請先驗證客戶是否願意付費、資金能撐多久，以及誰負責對外溝通。假如你偏重${x.self.gift}，可以尋找能補充市場開拓或規劃能力的團隊，而非只看夥伴五行。`) ]),
+     wxP(`${currentLuck}${yearly}歲運適合作為回顧職涯的時間索引：看看今年哪些能力應該累積、哪些責任需要重新安排。大運與流年是傳統時間坐標，不能直接替你保證何時錄取、升遷或發財。`)]),
+ ];
+ if(id==='love')return [
+   wxS('當關係進入磨合期，你最需要注意的事',[
+     wxP(`感情裡最常見的落差，不一定是誰不愛誰，而是雙方使用不同方式表達愛。${dm}的「${x.self.gift}」可能讓你偏好用實際行動表達；但如果對方此刻只想被聆聽，再完整的解決方案也可能顯得冷淡。這是值得檢視的情境，而不是命盤已替你定下性格。`),
+     wxList([
+       wxItem('吵架時先處理情緒',`當你發現自己想立刻分對錯，可以先說「我想了解你為什麼難過」，等彼此不再激動再討論事情本身。`),
+       wxItem('把承諾變成彼此懂的語言',`如果你平常擅長${x.main.gift}，可以試著明確問對方：「你希望我多陪你，還是幫你處理一件事？」讓付出不會落空。`),
+       wxItem('不要把沉默當成默契',`不論${w}在五行圖裡顯得多麼少，都可以學會表達需求。說「我需要一點時間整理」通常比消失或冷戰更能保護關係。`) ]),
+     wxP(`${x.yyt}，可以作為理解回應節奏的文化比喻，但真實的衝突反應也取決於成長經驗與關係是否安全。你不必因為命盤偏陽或偏陰，就認為自己永遠只能使用一種相處方式。`)]),
+   wxS('適合你的伴侶，不只是五行互補',[
+     wxP(`在傳統命理裡，有人會透過配偶宮、財星或官殺了解感情象徵；這張盤的${c.sex==='male'?`男命財星五行是${c.wealth}`:c.sex==='female'?`女命官殺五行是${c.pressure}`:'性別尚未指定，先不套用傳統男女配偶星的分類'}。但是「我的配偶星是什麼」與「某個人是否值得交往」是兩回事。你需要兩個人的生辰才能做傳統合盤，即使完成合盤，也不能取代現實中的尊重、信任與互相照顧。`),
+     wxList([
+       wxItem('能夠好好溝通',`當你說出擔心與期待時，對方是否願意理解？這比對方天干屬哪一行更可靠。`),
+       wxItem('願意共同安排生活',`金錢、家務、家庭關係與未來規劃，能否在分歧中找到可實踐的共識？`),
+       wxItem('爭執後有能力修復',`感情不必從不吵架；更重要的是能否承認傷害、道歉並做出調整。你也可以練習「${x.minor.habit}」，增加修復的可能。`) ]),
+     wxP(`${currentLuck}${yearly}本頁會保留這些時間背景，但不把特定運年說成必然結婚、離婚或遇上某一個人。對關係最有幫助的預備，是把平日的相處技巧練好。`)]),
+ ];
+ if(id==='wealth')return [
+   wxS('你如何累積財富？先分清楚財星與現金流',[
+     wxP(`對${dm}來說，所剋的${c.wealth}是傳統命理所稱的財星五行，但財星不能直接換算存款，也不能等同「天生有錢」。你是否有收入、財務是否穩定，要看技能、工作年資、家庭責任與風險管理。${s}較突出的象徵，可提醒你檢查自己對${x.main.gift}的偏好，是否形成長期有利的習慣。`),
+     wxList([
+       wxItem('正財式的穩定累積',`盤點本業的市場價值，把職涯升級、穩定儲蓄及紀錄支出當成可以持續的基礎工作。`),
+       wxItem('額外收入的可行性',`若想發展副業，先用小規模測試需求、計算工時與成本，避免只因為「現在走財運」便投入過多資金。`),
+       wxItem('真正的財務安全感',`確認每月固定支出、緊急預備金、保障需求以及可承受損失，而不是只看帳面報酬或他人賺得多快。`) ]),
+     wxP(`${tenGodTip}這類十神線索有助於設定自我檢視題目，例如資源是否管理得當、是否有適合變現的才能；但不會提供可靠的投資報酬率。`)]),
+   wxS('三種容易忽略的破財風險與具體防範',[
+     wxList([
+       wxItem('衝動型決定',`當你想買一樣很貴的東西、投入熱門標的或擴張生意時，先隔一天重新計算最壞情境。${x.main.shadow}如果讓你急著拍板，提醒自己不必立刻行動。`),
+       wxItem('關係型支出',`借錢給朋友、幫人作保、合夥投資，都要有正式紀錄和清楚的退出條件。善良與講義氣，不等於需要承擔超過能力的風險。`),
+       wxItem('過度守成',`如果只想保護存款而從不檢查通膨、保險或職涯競爭力，也可能慢慢削弱生活選擇。每半年檢查一次資產負債表，比依賴運勢口訣務實。`) ]),
+     wxP(`${currentLuck}${yearly}某個流年出現財星或食傷，不代表當年一定獲利；如果你希望用歲運提醒自己做調整，可以每年固定檢查儲蓄率、負債成本與收入來源，讓「看運」變成「做準備」。`)]),
+ ];
+ return [];
+}
+
 function assembleEditorial(c,id){
  const x=wxCtx(c),m=x.c.dm,s=x.c.strongest,w=x.c.weakest,dm=x.dm,sy=x.im,main=x.main,minor=x.minor,self=x.self;
  let A=[];
@@ -517,6 +639,8 @@ function assembleEditorial(c,id){
     wxCall(`真正值得累積的財富，是你能理解、能承擔、能長期維護的資源。保留${dm}的「${self.gift}」，善用${s}的「${main.gift}」，也讓自己有餘裕學習${minor.gift}。`)]),
   ];
  }
+ const expansion=wxEditorialExpansion(x,id);
+ if(A.length){const tail=A[A.length-1]; A=[...A.slice(0,-1),...expansion,tail];}
  const lead=wxOpening(x,id);
  const ending=c.missingTime?'出生時辰未知，本篇僅依三柱提供較有限的傳統五行觀察；取得時辰後可重新比對。':'本文以四柱、季節、藏干、陰陽及相關線索提供傳統文化的個人化閱讀；尚未對格局或喜用神作確定論斷。';
  const result={title:WX_TITLE[id],lead,sections:A,ending};
@@ -532,12 +656,57 @@ function wxRenderBlocks(blocks){return blocks.map(block=>{
  return ''}).join('')}
 function wxArticlePlain(a){return (`${a.title}\n\n${a.lead.replace(/\*\*/g,'')}\n\n`+a.sections.map(s=>s.title+'\n'+s.blocks.map(b=>b.kind==='list'?b.items.map(i=>`• ${i.label}：${i.text}`).join('\n'):b.text||'').join('\n\n')).join('\n\n')+'\n\n'+a.ending).replace(/\*\*/g,'');}
 function wxArticleCount(a){return wxArticlePlain(a).replace(/\s/g,'').length}
+
+const WX_TEMP_DEBUG_ENABLED=true; // 上線前改為 false，可隱藏暫時背景資訊與測試匯出功能。
+const WX_EXPORT_SUBJECTS=['identity','personality','balance','career','love','wealth'];
+function wxGenerateSixTxt(c){
+ const lines=['一念知機｜五行站內解讀六篇測試合輯',`出生：${c.datetime}　日主：${c.dayMaster}${c.dm}`,`輸出時間：${wxTaipeiDate().year}-${pad(wxTaipeiDate().month)}-${pad(wxTaipeiDate().day)}`,'字數計法：移除換行與空白後計算字元（包含標題及標點符號）；不包含下載檔額外說明。',''];
+ let total=0;
+ WX_EXPORT_SUBJECTS.forEach((id,index)=>{
+  const a=assembleEditorial(c,id),count=wxArticleCount(a);total+=count;
+  lines.push('═'.repeat(43),`第 ${index+1} 題｜${a.title}`,`【實際字數：${count} 字】`,'═'.repeat(43),'',wxArticlePlain(a),'','');
+ });
+ lines.splice(5,0,`六篇合計：${total} 字`, '');
+ return '\ufeff'+lines.join('\r\n');
+}
+function wxDownloadTxt(name,contents){
+ const data=contents.startsWith('\ufeff')?contents:'\ufeff'+contents;
+ const blob=new Blob([data],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2500);
+}
+function wxExportAll(){if(!chart){notice('請先完成五行查詢');return}wxDownloadTxt(`wuxing-six-reports-${wxTaipeiDate().year}${pad(wxTaipeiDate().month)}${pad(wxTaipeiDate().day)}.txt`,wxGenerateSixTxt(chart));}
+function wxDebugData(c){const b=c.background||buildWuxingBackground(c);const el=b.elementStructure||{},tim=b.timeContext||{},yy=b.yinYang||{},ng=b.dayMaster?.tenGodGroups||{};
+ const item=(label,value)=>`<div class="wx-debug-box"><small>${esc(label)}</small><b>${esc(value??'未取得')}</b></div>`;
+ const pills=b.pillars?.map(p=>`${p.name} ${p.gan}${p.zhi}`).join('　')||'未取得';
+ const hidden=b.pillars?.map(p=>`${p.name} ${p.zhi}：${p.hiddenStems.map(h=>`${h.stem}(${h.tenGod?.name||'—'})`).join('、')}`).join('\n')||'未取得';
+ const rawWeights=el.weightedRelative?.weights||{};const sumWeights=Object.values(rawWeights).reduce((a,v)=>a+Math.max(0,Number(v)||0),0);const weights=Object.entries(rawWeights).map(([k,v])=>`${k} ${sumWeights?(Math.max(0,Number(v)||0)*100/sumWeights).toFixed(1):'—'}%`).join('、')||'未取得';
+ const groups=Object.entries(ng).map(([k,v])=>`${k} ${v}`).join('、')||'未取得';
+ const luck=tim.luck?.current,annual=tim.annual?.current;
+ $('wxDebugGrid').innerHTML=[
+ item('出生時間／性別',`${c.datetime} / ${c.sex==='male'?'男':c.sex==='female'?'女':'未指定'}`),
+ item('四柱干支',pills),item('日主與月令',`${c.dayMaster}${c.dm} / ${b.season?.monthBranch||'—'}月（${b.season?.label||'—'}）`),
+ item('五行相對比重（五行自用算法，非八字正式數據）',weights),
+ item('表層五行',Object.entries(el.visibleCharacters?.counts||{}).map(([k,v])=>`${k}${v}`).join('、')),
+ item('陰陽（表層干支）',`陽 ${yy.yang??'—'}　陰 ${yy.yin??'—'}`),
+ item('各支藏干／十神',hidden),item('五大十神群組',groups),
+ item('通根線索',(b.dayMaster?.rootClues||[]).map(z=>`${z.pillar}${z.branch}藏${z.stem}`).join('、')||'未見可用線索'),
+ item('目前大運',luck?`${luck.ganZhi}（${luck.startYear}–${luck.endYear}）${tim.luck?.precision?'\n核對精度：'+tim.luck.precision:''}`:tim.luck?.status||'未取得'),
+ item('目前流年',annual?`${annual.year}年 ${annual.ganZhi||'資料未取得'}／${annual.tenGod?.name||'十神未取得'}`:'未取得'),
+ item('合沖等互動',(b.interactions?.list||[]).map(z=>`${z.between.join('、')}：${z.type}`).join('\n')||'本頁規則未列出明顯組合'),
+ item('喜用神／日主強弱','目前未判定（尚未與八字正式後端同步）'),
+ item('曆法校驗',b.quality?.calendarVerified?'已通過本頁四柱比對':'未完成／僅部分比對'),
+ item('資料限制',(b.quality?.notes||[]).join('；')||'無額外備註')
+ ].join('');
+ $('wxDebugRaw').textContent=JSON.stringify(b,null,2);
+}
+function wxExportBackground(){if(!chart){notice('請先完成五行查詢');return}wxDownloadTxt(`wuxing-background-${wxTaipeiDate().year}${pad(wxTaipeiDate().month)}${pad(wxTaipeiDate().day)}.txt`,`一念知機｜五行計算背景測試\n出生：${chart.datetime}\n資料僅供測試；本頁五行相對權重不代表八字正式加權結果。\n\n${JSON.stringify(chart.background,null,2)}`);}
+
 function wxRenderArticle(c,id){
  const a=assembleEditorial(c,id);articleText=`${a.title}｜一念知機五行查詢\n出生：${c.datetime}\n日主：${c.dayMaster}${c.dm}\n\n`+wxArticlePlain(a);
  $('reportTitle').textContent=SUBJECTS.find(s=>s[0]===id)?.[1]||a.title;
  $('reportMeta').textContent=`出生：${c.datetime}　｜　${c.dayMaster}${c.dm}日主　｜　${c.demo?'展示範例':'站內個人化解讀'}`;
  $('reportBody').innerHTML=`<div class="editor-opening"><span class="editor-opening-label">✦ 先讀這段 · 解讀重點</span><p>${wxInline(a.lead)}</p></div>`+a.sections.map((s,i)=>`<section class="report-section editorial-section"><div class="editor-section-number">${String(i+1).padStart(2,'0')}</div><h3>${wxInline(s.title)}</h3><div class="editor-section-content">${wxRenderBlocks(s.blocks)}</div></section>`).join('')+`<div class="editor-ending"><span>閱讀提醒</span><p>${wxInline(a.ending)}</p></div>`;
- $('lengthInfo').textContent=`約 ${wxArticleCount(a)} 字（含標題及標點）`;
+ $('lengthInfo').textContent=`本文 ${wxArticleCount(a)} 字（含標題、標點，不計空白）`;
  $('report').hidden=false;document.querySelectorAll('.topic').forEach(b=>b.classList.toggle('selected',b.dataset.id===id));
  $('report').scrollIntoView({behavior:'smooth',block:'start'});recordHistory(c,id);
 }
@@ -552,7 +721,7 @@ function renderMember(){const b=$('memberLink');b.textContent=member?'會員中�
 function readHistory(){try{return JSON.parse(localStorage.getItem(storageKey())||'[]')||[]}catch(e){return []}}
 function recordHistory(c,id){if(!member||c.demo)return;try{const old=readHistory(),key=c.datetime;const {background,...saved}=c;let found=old.find(x=>x.key===key);if(found){found.ids=[...new Set([...(found.ids||[]),id])];found.updated=Date.now();found.data=saved;}else{old.unshift({key,ids:[id],updated:Date.now(),data:saved})}old.sort((a,b)=>b.updated-a.updated);localStorage.setItem(storageKey(),JSON.stringify(old.slice(0,3)));renderHistory()}catch(e){notice('本機無法保存紀錄，請檢查瀏覽器儲存設定。')}}
 function renderHistory(){const rows=member?readHistory():[];$('historyList').innerHTML=rows.length?rows.map((r,i)=>`<div class="history-card"><b>${esc(r.key)}</b><small>日主 ${esc(r.data.dayMaster+r.data.dm)} · 已看 ${r.ids.length} 題</small><div><button type="button" class="secondary" data-history="${i}">重新閱讀</button></div></div>`).join(''):`<div class="history-card" style="grid-column:1/-1"><b>尚無已儲存的五行紀錄</b><small>${member?'完成個人查詢並選擇題目後，自動暫存最近 3 組。':'請先登入會員，才能啟用本機個人紀錄。'}</small></div>`}
-function showChart(c){chart={...c};chart.background=buildWuxingBackground(chart);$('report').hidden=true;renderChart(chart);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+function showChart(c){chart={...c};chart.background=buildWuxingBackground(chart);$('report').hidden=true;renderChart(chart);$('wxTemporaryTools').hidden=!WX_TEMP_DEBUG_ENABLED;$('wxTempDebug').hidden=!WX_TEMP_DEBUG_ENABLED;if(WX_TEMP_DEBUG_ENABLED)wxDebugData(chart);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
 function buildAiPrompt(){if(!chart)return '';const q=$('customQuestion').value.trim()||SUBJECTS.find(s=>s[0]===active)[1];return '請依照以下五行背景資料回答使用者問題。\n注意「未判定」不能自行補成確定結果；請用繁體中文，區分計算事實與傳統詮釋。\n\n'+JSON.stringify(wxAIPayload(chart,q),null,2)}
 async function copyText(s){if(!s)return;try{await navigator.clipboard.writeText(s);notice('已複製到剪貼簿')}catch(e){const t=document.createElement('textarea');t.value=s;document.body.append(t);t.select();document.execCommand('copy');t.remove();notice('已複製到剪貼簿')}}
 $('calculate').addEventListener('click',()=>{clearFail();try{const c=makeChart();showChart(c)}catch(e){fail(e?.message||'無法完成五行計算')}});
@@ -560,7 +729,7 @@ $('demo').addEventListener('click',()=>{clearFail();showChart(makeChart({demo:tr
 $('solarBtn').addEventListener('click',()=>toggleCalendar('solar'));$('lunarBtn').addEventListener('click',()=>toggleCalendar('lunar'));
 ['year','month','day','leap'].forEach(id=>$(id).addEventListener('change',()=>id==='year'||id==='month'?syncDays():updateCalendarHint()));
 $('exactToggle').addEventListener('change',()=>{$('exactTime').hidden=!$('exactToggle').checked;$('slot').disabled=$('exactToggle').checked});
-$('copyReport').addEventListener('click',()=>copyText(articleText));$('copyPrompt').addEventListener('click',()=>copyText(buildAiPrompt()));$('printReport').addEventListener('click',()=>window.print());$('goTopics').addEventListener('click',()=>document.getElementById('topics').scrollIntoView({behavior:'smooth'}));
+$('exportAllReports').addEventListener('click',wxExportAll);$('exportAllReportsWithin').addEventListener('click',wxExportAll);$('exportBackground').addEventListener('click',wxExportBackground);$('copyReport').addEventListener('click',()=>copyText(articleText));$('copyPrompt').addEventListener('click',()=>copyText(buildAiPrompt()));$('printReport').addEventListener('click',()=>window.print());$('goTopics').addEventListener('click',()=>document.getElementById('topics').scrollIntoView({behavior:'smooth'}));
 $('aiBtn').addEventListener('click',()=>notice('五行 AI API 尚未接通，不會扣除額度。可先複製提問資料。'));
 $('refreshHistory').addEventListener('click',()=>{void restoreMember();notice('已重新檢查會員登入狀態')});
 $('historyList').addEventListener('click',e=>{const b=e.target.closest('[data-history]');if(!b||!member)return;const x=readHistory()[+b.dataset.history];if(!x?.data)return;showChart(x.data);renderReport(x.ids[0]||'identity')});
