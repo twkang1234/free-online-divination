@@ -3809,15 +3809,30 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     })();
     return c.pending;
   }
-  function baziAiUsageCategory(topic){
-    const s=String(topic||'');
-    if(s.includes('感情')||s.includes('婚姻'))return '感情';
-    if(s.includes('工作'))return '工作';
-    if(s.includes('事業'))return '事業';
-    if(s.includes('財')||s.includes('理財'))return '財運';
-    if(s.includes('學'))return '學業';
-    return '其他';
+  // AI 成功才統計固定主題；絕不將自由輸入的問題文字上報。
+  function baziAiUsageCategory(topic,key='',custom=false){
+    const sections={tengods:'十神結構',relations:'干支合沖',luck:'八步大運',years:'三年流年',shenshaGlobal:'常用神煞'};
+    if(sections[key])return (custom?'AI自訂｜':'AI｜')+sections[key];
+    const categories={'整體命盤':'整體命盤','工作事業':'工作事業','感情婚姻':'感情婚姻',
+      '財運理財':'財運理財','性格天賦':'性格天賦','十年大運與流年':'大運流年'};
+    return 'AI｜'+(categories[String(topic||'')]||'整體命盤');
   }
+  // 真正打開章節才記錄；同一頁重複開關同章節不重算。
+  const baziViewedSections=new Set();
+  const baziChapterUsageCategories={
+    'report-daily':'章節｜每日流日','report-elements':'章節｜五行陰陽',
+    'report-tengods':'章節｜十神結構','report-relations':'章節｜干支合沖',
+    'report-shensha':'章節｜常用神煞','report-reading':'章節｜命盤結構',
+    'report-luck':'章節｜八步大運','report-years':'章節｜三年流年'};
+  function baziTrackSectionOpen(id){
+    const category=baziChapterUsageCategories[id];
+    if(!category||baziViewedSections.has(id)||!document.body.classList.contains('bazi-personal-full-mode')||
+      document.body.classList.contains('bazi-example-snapshot-mode'))return;
+    // 同一頁同一章節最多記一次，避免開合洗高使用次數。
+    baziViewedSections.add(id);
+    baziTrackUsage('view',category);
+  }
+  window.baziTrackSectionOpen=baziTrackSectionOpen;
   function baziTrackUsage(event,category=''){
     if(location.protocol==='file:'||(new URLSearchParams(location.search).has('admin')||new URLSearchParams(location.search).has('admin-test'))||!baziSessionMember?.sub)return;
     const memberSub=baziSessionMember.sub,token=baziStoredSession();
@@ -6236,7 +6251,7 @@ ${tasks}
         document.getElementById('baziGeminiCopy').hidden=false;
         document.getElementById('baziGeminiDownload').hidden=false;
         baziAiShowSuccess(msg,j,'full','AI 完整解讀已產生。');
-        if(String(j.reading||'').trim())baziTrackUsage('ai_success',baziAiUsageCategory(topic));
+        if(String(j.reading||'').trim())baziTrackUsage('ai_success',baziAiUsageCategory(topic,key,!!question));
         baziGeminiRefreshQuota();
         document.getElementById('baziGeminiOutput').scrollIntoView({behavior:'smooth',block:'nearest'});
       }catch(err){baziAiShowError(msg,aiDiagnostic,err?.message||'AI 解讀失敗','full');baziGeminiRefreshQuota()}
@@ -7463,7 +7478,7 @@ ${intent}
         const options=birthOptions(),input=captureBirthInput();
         const ok=await window.baziMainCast({options,scroll,countUsage,reveal});
         if(ok){dailyFlowDemo=false;if(!document.body.classList.contains('bazi-personal-full-mode'))lastData=null;}
-        if(ok){lastSuccessfulBirthInput=input;if(reveal)rememberMemberBirth(input);if(countUsage&&reveal)baziTrackUsage('cast','');}
+        if(ok){lastSuccessfulBirthInput=input;if(reveal)rememberMemberBirth(input);if(countUsage&&reveal)baziTrackUsage('cast','基本排盤');}
         return ok;
       }catch(err){
         console.error('[Bazi basic]',err);
@@ -7496,7 +7511,7 @@ ${intent}
       emptyState.style.display='none';if(reveal){results.classList.add('show');document.body.classList.remove('show-bazi-intro');document.body.classList.add('has-bazi-chart');window.baziReadingUiSuccess?.(data);}
       if (scroll) setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
       // 只在使用者主動按「排八字」且成功完成排盤時紀錄。
-      if(countUsage&&reveal)baziTrackUsage('cast','');
+      if(countUsage&&reveal)baziTrackUsage('cast','基本排盤');
     }catch(err){
       console.error('[Bazi API]',err);
       if (scroll) alert(err&&err.message?err.message:String(err));
@@ -8676,6 +8691,7 @@ html[data-bazi-layout="mobile"] body.has-bazi-chart #report-pillars .row{grid-te
     if(reopen){
       activeChapterId=id;
       section.classList.add('bazi-section-visible');section.open=true;
+      window.baziTrackSectionOpen?.(id);
       if(id==='report-daily')document.getElementById('report-daily-flow')?.classList.add('bazi-daily-expanded');
       updateChapterNavigation();
       if(id!=='report-daily')window.baziDecodeOpenFirstVisit?.(id);

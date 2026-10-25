@@ -648,11 +648,11 @@ td.muted{color:var(--muted)}
             <select id="memberUsageMode" aria-label="選擇會員統計模式">
               <option value="off">完全關閉（不再寫入會員統計）</option>
               <option value="simple">精簡模式（工具＋次數＋AI）</option>
-              <option value="full">完整模式（另記固定題目分類）</option>
+              <option value="full">完整模式（含固定題型、八字專業章節與 AI 主題）</option>
             </select>
             <button class="btn" type="button" id="memberUsageSave">儲存統計設定</button>
           </div>
-          <div class="member-usage-warn">關閉後保留過去統計；不會自動補記關閉期間的使用次數。此開關控制額外寫入，不是僅隱藏畫面。</div>
+          <div class="member-usage-warn">關閉後保留過去統計；不會補記關閉期間的使用次數。完整模式才記錄會員打開的八字章節，每個章節同一頁最多記 1 次；不會收集生日、完整問題或 AI 解讀文字。</div>
         </div>
         <div class="member-usage-controls">
           <div class="member-usage-periods" aria-label="排行期間" id="memberUsagePeriods">
@@ -1387,11 +1387,17 @@ async function loadMemberUsageLeaderboard(preserveStatus=false){
     const r=await usageAdminRequest('/admin/member-usage/leaderboard?period='+encodeURIComponent(memberUsagePeriod)+'&limit='+encodeURIComponent(limit));
     if(seq!==memberUsageRequestSeq||!$('memberUsagePanel').open)return;
     if(!r.rows?.length){$('memberUsageResults').textContent='這段期間尚無可顯示的會員成功使用紀錄。請確認已啟用「精簡」或「完整」模式，再以一般登入會員成功使用工具。';return}
-    $('memberUsageResults').innerHTML=`<table aria-label="會員起盤排行榜"><thead><tr><th>排名</th><th>會員</th><th>使用地區</th><th class="mobile-hide">最近使用</th><th>起盤</th><th class="mobile-hide">AI 成功</th><th>詳細</th></tr></thead><tbody>${r.rows.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(m.name||'—')}<small style="display:block;color:#91a2b5;overflow-wrap:anywhere">${esc(m.email||'')}</small></td><td class="member-usage-country${usageCountryLabel(m.countryCode)?'':' unknown'}" title="最近成功使用時的連線地區（非國籍）">${esc(usageCountryLabel(m.countryCode)||'尚未記錄')}</td><td class="mobile-hide muted">${fmt(m.lastUsedAt)}</td><td><strong>${Number(m.castCount||0)}</strong></td><td class="mobile-hide">${Number(m.aiCount||0)}</td><td><button class="btn secondary" type="button" data-usage-member="${esc(m.googleSub)}">查看</button></td></tr>`).join('')}</tbody></table>`;
+    $('memberUsageResults').innerHTML=`<table aria-label="會員起盤排行榜"><thead><tr><th>排名</th><th>會員</th><th>使用地區</th><th class="mobile-hide">最近使用</th><th>起盤</th><th class="mobile-hide">章節瀏覽</th><th class="mobile-hide">AI 成功</th><th>詳細</th></tr></thead><tbody>${r.rows.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(m.name||'—')}<small style="display:block;color:#91a2b5;overflow-wrap:anywhere">${esc(m.email||'')}</small></td><td class="member-usage-country${usageCountryLabel(m.countryCode)?'':' unknown'}" title="最近成功使用時的連線地區（非國籍）">${esc(usageCountryLabel(m.countryCode)||'尚未記錄')}</td><td class="mobile-hide muted">${fmt(m.lastUsedAt)}</td><td><strong>${Number(m.castCount||0)}</strong></td><td class="mobile-hide">${Number(m.viewCount||0)}</td><td class="mobile-hide">${Number(m.aiCount||0)}</td><td><button class="btn secondary" type="button" data-usage-member="${esc(m.googleSub)}">查看</button></td></tr>`).join('')}</tbody></table>`;
     for(const btn of $('memberUsageResults').querySelectorAll('[data-usage-member]'))btn.addEventListener('click',()=>loadMemberUsageDetails(btn.dataset.usageMember));
   }catch(e){if(seq===memberUsageRequestSeq){$('memberUsageResults').textContent='讀取排行榜失敗';usageStatus(e.message,true)}}
 }
 const usageToolNames={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字',qimen:'奇門',ziwei:'紫微',liuyao:'六爻',meihua:'梅花易數'};
+// 空分類為既有舊紀錄或精簡模式，無法回推真實興趣，不能誤標「基本排盤」。
+function usageCategoryLabel(item){
+  if(item.category)return item.category;
+  if(item.tool==='bazi')return '未分類（舊資料／精簡模式）';
+  return '未細分';
+}
 async function loadMemberUsageDetails(sub){
   if(!sub)return;
   const seq=memberUsageRequestSeq;
@@ -1401,7 +1407,7 @@ async function loadMemberUsageDetails(sub){
     if(seq!==memberUsageRequestSeq||!$('memberUsagePanel').open)return;
     el.innerHTML=`<div class="detail-title"><h3>${esc(r.member?.name||'會員')}｜${esc(r.member?.email||'')}</h3><button type="button" class="btn secondary" id="memberUsageCloseDetail">收合明細</button></div>
       <div class="member-usage-note">${r.activeDays==null?'歷史至今僅顯示累計次數（日統計採 90 天循環保留），不提供無法確定的活躍天數。':'此期間成功起盤的活躍使用天數：'+Number(r.activeDays)+' 天'}</div>
-      <table><thead><tr><th>工具</th><th>題型</th><th>起盤</th><th>AI 成功</th></tr></thead><tbody>${r.details?.length?r.details.map(x=>`<tr><td>${esc(usageToolNames[x.tool]||x.tool)}</td><td>${esc(x.category||'未細分')}</td><td>${Number(x.castCount||0)}</td><td>${Number(x.aiCount||0)}</td></tr>`).join(''):'<tr><td colspan="4">目前沒有使用紀錄</td></tr>'}</tbody></table>`;
+      <table><thead><tr><th>工具</th><th>操作分類</th><th>起盤</th><th>章節瀏覽</th><th>AI 成功</th></tr></thead><tbody>${r.details?.length?r.details.map(x=>`<tr><td>${esc(usageToolNames[x.tool]||x.tool)}</td><td>${esc(usageCategoryLabel(x))}</td><td>${Number(x.castCount||0)}</td><td>${Number(x.viewCount||0)}</td><td>${Number(x.aiCount||0)}</td></tr>`).join(''):'<tr><td colspan="5">目前沒有使用紀錄</td></tr>'}</tbody></table>`;
     $('memberUsageCloseDetail').addEventListener('click',()=>{el.hidden=true});
   }catch(e){el.textContent='讀取明細失敗：'+e.message}
 }
