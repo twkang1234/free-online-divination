@@ -186,6 +186,20 @@ html[data-wx-layout="mobile"] .summary-banner{grid-template-columns:1fr}html[dat
 @media(max-width:600px){.wx-ai-header{padding:18px 15px 14px}.wx-ai-header h3{font-size:20px}.wx-ai-composer{padding:17px 15px 18px}.wx-ai-category,.wx-ai-suggestion{min-height:36px;padding:7px 11px;font-size:12px}.wx-ai-step{font-size:12px}.wx-ai-send{width:100%}.wx-ai-footnote{padding:12px 15px}}
 @media print{.wx-ai-zone{display:none!important}}
 
+
+/* V17 AI live transcript */
+.wx-ai-inline-status{font-size:12px;color:#99bcac;line-height:1.5;max-width:420px}
+.wx-ai-sendrow{flex-wrap:wrap}
+.wx-ai-messages{display:grid;gap:12px;margin-bottom:14px}
+.wx-ai-message{border:1px solid rgba(155,213,180,.18);border-radius:12px;background:#071811;padding:16px 18px;scroll-margin-top:90px}
+.wx-ai-message-user{background:rgba(87,166,124,.09);border-left:3px solid #82dfb6}
+.wx-ai-message-head{font-size:13px;font-weight:800;color:#aadbbf;margin-bottom:9px}
+.wx-ai-message-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.95;color:#e8f2e7;font-size:15px}
+.wx-ai-trace{display:block;margin-top:12px;font-size:11px;color:#88ad9c}
+.wx-ai-conversation textarea{background:#051510;border:1px solid rgba(159,213,182,.25);color:#f5fcf3;min-height:95px;border-radius:10px;padding:12px}
+.wx-ai-conversation button{background:#8fdbb2;color:#08271a;border:0;border-radius:10px;font-weight:800}
+.wx-ai-conversation button:disabled{opacity:.5}
+@media(max-width:700px){.wx-ai-sendrow{align-items:stretch}.wx-ai-sendrow>button{width:100%}.wx-ai-message{padding:13px}.wx-ai-message-text{font-size:14px}}
 </style>
 </head>
 <body>
@@ -265,15 +279,15 @@ html[data-wx-layout="mobile"] .summary-banner{grid-template-columns:1fr}html[dat
       <div class="wx-ai-input-head"><label for="customQuestion">你的專屬問題</label></div>
       <textarea id="customQuestion" class="input wx-ai-question" rows="4" placeholder="請輸入你想深入了解的五行問題……" maxlength="400" spellcheck="true"></textarea>
       <div class="wx-ai-input-foot"><span id="wxAiCount">0 / 400 字</span><button id="wxAiClear" class="wx-ai-mini-action" type="button">清除問題</button></div>
-      <div class="wx-ai-sendrow"><button id="aiBtn" class="wx-ai-send" type="button" disabled aria-disabled="true">✦ 開始五行 AI 深度解讀 <span>（尚未開放）</span></button></div>
+      <div class="wx-ai-sendrow"><button id="aiBtn" class="wx-ai-send" type="button" disabled>✦ 開始五行 AI 深度解讀</button><span id="wxAiSendStatus" class="wx-ai-inline-status" role="status">正在檢查 AI 額度…</span></div>
     </div>
   </div>
   <div id="wxAiConversation" class="wx-ai-conversation" hidden aria-live="polite">
-    <h4>五行對話與延伸追問</h4><div id="wxAiMessages"></div>
-    <label for="wxAiFollowInput">針對上面的解讀繼續提問</label><textarea id="wxAiFollowInput" class="input" rows="3" maxlength="400" disabled placeholder="正式串接 AI 後開放同一主題的延伸追問"></textarea>
-    <button id="wxAiFollowSend" type="button" disabled>送出追問（尚未開放）</button>
+    <h4>五行 AI 解讀與追問</h4><div id="wxAiMessages" class="wx-ai-messages"></div>
+    <label for="wxAiFollowInput">針對上面的解讀繼續提問</label><textarea id="wxAiFollowInput" class="input" rows="3" maxlength="400" placeholder="針對這次的回答繼續追問（5～400 字）"></textarea>
+    <button id="wxAiFollowSend" type="button">送出追問（每次扣 AI 1 次）</button>
   </div>
-  <p class="wx-ai-footnote">AI 尚未串接，目前僅供選題及編輯；不會傳送、儲存問題或扣次。正式開放後使用全平台 AI 額度，不使用專業解鎖點數。</p>
+  <p class="wx-ai-footnote">AI 解讀由後端驗證會員及免費／共用 AI 額度。首次提問與每次追問各計 1 次，失敗不扣次；不使用專業解鎖點數。同一題可繼續追問最多 8 輪，對話僅於後端暫存 7 天。</p>
 </section><p class="soft-note">本站內容屬傳統命理文化中的自我探索方式，並非對健康、財務或感情結果的科學預測或保證。</p></article>
 <section id="history" class="history"><div class="history-top"><div><span class="small-head">RECENT REPORTS</span><h2 style="margin:4px 0">最近 3 組紀錄</h2></div><button class="secondary" id="refreshHistory" type="button">重新整理</button></div><p class="fine" id="historyNotice">登入會員後，本頁會在目前瀏覽器暫存最近三組。跨裝置同步仍需要會員 API 支援。</p><div class="history-list" id="historyList"></div></section>
 <section class="seo"><h2>五行是什麼？缺什麼就要補什麼嗎？</h2><p>木、火、土、金、水是傳統五行文化的五種象徵，用來理解生長、熱情、承載、界線與流動等不同特質。五行相生相剋，談的是力量的配合與制衡，不是簡單的吉凶評分。</p><p>輸入出生資料後，本站先以傳統曆法資料建立五行輪廓，再用自然易懂的文字討論個性、優缺點、工作、感情與財務習慣。某個五行比較少，不代表它就是你的缺點，也不代表一定要補；沒有出生時辰時，解讀的參考範圍也較有限。</p></section>
@@ -420,11 +434,11 @@ function storageKey(){return 'dh-wuxing-local-history-v1-'+String(member?.sub||'
 const SKEY='divinationhub-auth-session-v1';
 function readToken(){try{const raw=localStorage.getItem(SKEY)||'';let v=JSON.parse(raw);if(typeof v==='string')return v;if(v&&typeof v==='object')return v.token||v.accessToken||v.sessionToken||v.credential||'';return raw.startsWith('eyJ')?raw:''}catch(_){try{return localStorage.getItem(SKEY)||''}catch(e){return ''}}}
 async function restoreMember(){let t=readToken();if(!t){member=null;renderMember();return}try{const r=await fetch('https://member-api.ezgocpu.workers.dev/auth/session',{headers:{Authorization:'Bearer '+t,Accept:'application/json'},cache:'no-store'});let j=await r.json();member=r.ok&&j.success&&j.authenticated&&j.member?.sub?j.member:null}catch(e){member=null}renderMember()}
-function renderMember(){const b=$('memberLink');$('wxMemberMenuToggle').hidden=!member;$('wxMemberPopover').hidden=true;$('wxMemberMenuToggle').setAttribute('aria-expanded','false');b.textContent=member?'會員中心':'免費登入';$('wxMemberMenuName').textContent=member?.name||'會員';b.href='/member.html';$('historyNotice').textContent=member?'已辨識登入會員：目前先儲存在此瀏覽器，跨裝置同步需另接會員後端。':'登入會員後可在此瀏覽器暫存最近 3 組；尚未接通跨裝置會員紀錄 API。';renderHistory();void wxRefreshSharedQuota();void wxRefreshPeriodicQuota()}
+function renderMember(){const b=$('memberLink');$('wxMemberMenuToggle').hidden=!member;$('wxMemberPopover').hidden=true;$('wxMemberMenuToggle').setAttribute('aria-expanded','false');b.textContent=member?'會員中心':'免費登入';$('wxMemberMenuName').textContent=member?.name||'會員';b.href='/member.html';$('historyNotice').textContent=member?'已辨識登入會員：目前先儲存在此瀏覽器，跨裝置同步需另接會員後端。':'登入會員後可在此瀏覽器暫存最近 3 組；尚未接通跨裝置會員紀錄 API。';renderHistory();void wxRefreshSharedQuota();void wxRefreshPeriodicQuota();void wxAiRefreshStatus()}
 function readHistory(){try{return JSON.parse(localStorage.getItem(storageKey())||'[]')||[]}catch(e){return []}}
 function recordHistory(c,id){if(!member||c.demo||!birthRequest)return;try{const old=readHistory(),key=c.datetime;let found=old.find(x=>x.key===key);let saved={datetime:c.datetime,dayMaster:c.dayMaster,dm:c.dm,birth:{...birthRequest}};if(found){found.ids=[...new Set([...(found.ids||[]),id])];found.updated=Date.now();found.data=saved;}else{old.unshift({key,ids:[id],updated:Date.now(),data:saved})}old.sort((a,b)=>b.updated-a.updated);localStorage.setItem(storageKey(),JSON.stringify(old.slice(0,3)));renderHistory()}catch(e){notice('本機無法保存紀錄，請檢查瀏覽器儲存設定。')}}
 function renderHistory(){const rows=member?readHistory():[];$('historyList').innerHTML=rows.length?rows.map((r,i)=>`<div class="history-card"><b>${esc(r.key)}</b><small>核心五行 ${esc((r.data?.dayMaster||'')+(r.data?.dm||''))} · 已看 ${r.ids.length} 題</small><div><button type="button" class="secondary" data-history="${i}">重新閱讀</button></div></div>`).join(''):`<div class="history-card" style="grid-column:1/-1"><b>尚無已儲存的五行紀錄</b><small>${member?'完成個人查詢並選擇題目後，自動暫存最近 3 組。':'請先登入會員，才能啟用本機個人紀錄。'}</small></div>`}
-function showChart(c){chart=c;$('report').hidden=true;wxAiUserInteracted=false;wxAiSetCategory('balance',false);renderChart(chart);$('wxTemporaryTools').hidden=false;$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+function showChart(c){chart=c;wxAiSessionId='';wxAiTurn=0;$('wxAiMessages').replaceChildren();$('wxAiConversation').hidden=true;wxAiUpdateUI();$('report').hidden=true;wxAiUserInteracted=false;wxAiSetCategory('balance',false);renderChart(chart);$('wxTemporaryTools').hidden=false;$('result').scrollIntoView({behavior:'smooth',block:'start'})}
 let running=false;
 async function requestAndRender(birth,topic=null){
  if(running)return;
@@ -519,11 +533,85 @@ $('solarBtn').addEventListener('click',()=>toggleCalendar('solar'));$('lunarBtn'
 $('exactToggle').addEventListener('change',()=>{$('exactTime').hidden=!$('exactToggle').checked;$('slot').disabled=$('exactToggle').checked});
 $('exportAllReports').addEventListener('click',wxExportAll);$('exportAllReportsWithin').addEventListener('click',wxExportAll);
 $('copyReport').addEventListener('click',()=>copyText(articleText));$('printReport').addEventListener('click',()=>window.print());$('goTopics').addEventListener('click',()=>document.getElementById('topics').scrollIntoView({behavior:'smooth'}));
-// AI send and follow-up remain disabled until a verified backend and quota flow exist.
+/* V17 – 五行 AI 正式入口：只有 Worker 核驗額度後才進行解讀。 */
+const WX_AI_ENDPOINT='https://wuxing-api.ezgocpu.workers.dev/api/wuxing/ai';
+let wxAiBusy=false,wxAiReady=false,wxAiSessionId='',wxAiSessionBirth='',wxAiTurn=0,wxAiQuota=null;
+function wxAiApiMessage(code,defaultMessage){return ({
+ AI_CENTER_NOT_CONFIGURED:'AI 服務尚未完成部署。',D1_NOT_CONFIGURED:'會員資料庫尚未設定。',
+ LOGIN_REQUIRED:'請先登入會員使用五行 AI。',LOGIN_EXPIRED:'會員登入已失效，請重新登入。',
+ FREE_AI_EMPTY:'免費 AI 額度已用完，請登入會員。',SHARED_AI_EMPTY:'會員共用 AI 額度不足。',
+ FOLLOWUP_LIMIT:'本題已達 8 輪上限，請重新提問。',FOLLOWUP_EXPIRED:'這段對話已過期，請開啟新問題。',
+ AI_OPERATION_DUPLICATE:'上一筆問題正在處理，請勿重複送出。',FOLLOWUP_BUSY:'上一筆追問仍在處理。',
+ INVALID_BIRTH:'請重新查詢命盤再提問。',AI_UNAVAILABLE:'AI 通道暫時無法解讀，本次不扣次。'
+ }[code]||defaultMessage||'暫時無法完成解讀');}
+function wxAiUpdateUI(){
+ const ready=wxAiReady&&!!chart&&!!birthRequest,canSend=ready&&!wxAiBusy;
+ $('aiBtn').disabled=!canSend;$('wxAiFollowSend').disabled=!canSend||!wxAiSessionId||wxAiTurn>=8;
+ const btn=$('aiBtn');btn.textContent=wxAiBusy?'⏳ AI 解讀中…':'✦ 開始五行 AI 深度解讀';
+ $('wxAiFollowSend').textContent=wxAiBusy?'AI 解讀中…':wxAiTurn>=8?'本題已達追問上限':'送出追問（每次扣 AI 1 次）';
+}
+function wxAiStatusLabel(){
+ if(!wxAiReady)return '五行 AI 尚未可用（後端設定或登入尚待確認）';
+ const q=wxAiQuota;if(!q)return 'AI 已連線，額度待確認';
+ return `本期 AI 剩餘 ${q.free.remaining} 次 · 共用 AI ${q.sharedAiRemaining} 次`;
+}
+async function wxAiRefreshStatus(){
+ const token=readToken();let data=null;
+ try{const res=await fetch(WX_AI_ENDPOINT+'/status',{method:'GET',headers:{Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{})},cache:'no-store'});data=await res.json().catch(()=>({}));
+   if(!res.ok||!data?.ok)throw new Error(wxAiApiMessage(data?.error,data?.message));
+   wxAiReady=true;wxAiQuota=data.quota;
+ }catch(e){wxAiReady=false;wxAiQuota=null;$('wxAiSendStatus').textContent=e.message||'AI 服務暫時無法使用';wxAiUpdateUI();return;}
+ $('wxAiSendStatus').textContent=wxAiStatusLabel();wxAiUpdateUI();
+ if(wxAiQuota?.free){$('wxFreeAi').textContent=wxAiQuota.free.remaining+' / '+wxAiQuota.free.limit+' 次';$('wxFreeAiCycle').textContent=`每 ${wxAiQuota.free.days} 天補充 · ${wxAiQuota.free.resetAt}`;}
+ if(wxAiQuota?.role==='member')$('wxSharedAi').textContent=wxAiQuota.sharedAiRemaining+' 次';
+}
+function wxAiAppendMessage(role,msg,trace='',channel=''){
+ const el=document.createElement('article');el.className='wx-ai-message '+(role==='question'?'wx-ai-message-user':'wx-ai-message-ai');
+ const head=document.createElement('div');head.className='wx-ai-message-head';head.textContent=role==='question'?'你的問題':`✦ 五行命理師解讀${channel?' · 通道 '+channel:''}`;
+ const txt=document.createElement('div');txt.className='wx-ai-message-text';txt.textContent=msg;el.append(head,txt);
+ if(trace){const info=document.createElement('small');info.className='wx-ai-trace';info.textContent='追蹤碼：'+trace;el.append(info)}
+ $('wxAiMessages').append(el);$('wxAiConversation').hidden=false;
+ if(role==='ai')el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function wxAiSend(follow=false){
+ if(wxAiBusy||!wxAiReady)return;
+ if(!birthRequest||!chart){notice('請先完成出生資料查詢');return}
+ const q=follow?$('wxAiFollowInput').value.trim():$('customQuestion').value.trim();
+ if(Array.from(q).length<5||Array.from(q).length>400){notice('請輸入 5～400 字的問題');return}
+ if(follow&&(!wxAiSessionId||wxAiTurn>=8)){notice('這段對話暫時無法繼續追問');return}
+ const token=readToken(),category=wxAiActiveCategory,operationId=crypto.randomUUID();
+ // No text of birth details in the UI beyond the existing public result; the backend builds the private context.
+ const payload={operationId,question:q,category,birth:birthRequest,...(follow?{sessionId:wxAiSessionId}:{})};
+ wxAiBusy=true;wxAiUpdateUI();$('wxAiSendStatus').textContent='解讀中…請勿重複按下按鈕';
+ try{
+  let confirmed=false,data=null,res;
+  for(let attempt=0;attempt<2;attempt++){
+   res=await fetch(WX_AI_ENDPOINT+'/interpret',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Accept:'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(confirmed?{'X-DH-Shared-Confirm':'1'}:{})},body:JSON.stringify(payload)});
+   data=await res.json().catch(()=>({}));
+   if(data?.error==='SHARED_AI_CONFIRM_REQUIRED'&&!confirmed){
+    if(!window.confirm('本期免費 AI 額度已用完。要扣除會員共用 AI 額度 1 次進行解讀嗎？')){notice('已取消，沒有扣除 AI 額度');return}
+    confirmed=true;continue;
+   }
+   break;
+  }
+  if(!res.ok||!data?.ok)throw Error(wxAiApiMessage(data?.error,data?.message));
+  if(!follow){$('wxAiMessages').replaceChildren();wxAiSessionId=data.sessionId;wxAiSessionBirth=JSON.stringify(birthRequest);}
+  wxAiTurn=data.turn||wxAiTurn+1;
+  wxAiAppendMessage('question',q);wxAiAppendMessage('ai',data.reading,data.traceId||'',data.channel||'');
+  if(follow)$('wxAiFollowInput').value='';
+  $('wxAiSendStatus').textContent=`AI 解讀完成 · 本次使用${data.charged==='free'?'免費':'會員共用'} AI 1 次`;notice('五行 AI 解讀完成');
+  wxAiQuota=data.quota||wxAiQuota;
+  void wxAiRefreshStatus();
+ }catch(e){$('wxAiSendStatus').textContent=e.message||'AI 暫時無法使用';notice(e.message||'AI 無法完成');}
+ finally{wxAiBusy=false;wxAiUpdateUI();}
+}
+$('aiBtn').addEventListener('click',()=>void wxAiSend(false));
+$('wxAiFollowSend').addEventListener('click',()=>void wxAiSend(true));
+
 $('refreshHistory').addEventListener('click',()=>{void restoreMember();notice('已重新檢查會員登入狀態')});
 $('historyList').addEventListener('click',e=>{const b=e.target.closest('[data-history]');if(!b||!member)return;const x=readHistory()[+b.dataset.history];if(!x?.data?.birth){notice('舊紀錄沒有重算資料，請重新輸入出生資訊');return}void requestAndRender(x.data.birth,x.ids[0]||'identity')});
 
-/* V14: quota is read-only until five-element usage accounting is formally enabled. */
+/* V17: site quotas remain read-only for 五行站內查詢; AI quota is enforced by Wuxing Worker. */
 const WX_MEMBER_API='https://member-api.ezgocpu.workers.dev';
 const WX_PUBLIC_QUOTA_API='https://admin-api.ezgocpu.workers.dev/quota/wuxing';
 let wxQuotaRequestSerial=0;
@@ -551,7 +639,7 @@ async function wxRefreshPeriodicQuota(){
    const rule=d.rules?.[kind]?.[role];
    if(!rule||!Number.isFinite(rule.limit)||!Number.isFinite(rule.days))throw Error('QUOTA_MISSING_RULE');
    wxQuotaText(id,rule.limit+' 次／期');
-   wxQuotaText(cycle,kind==='ai'?`每 ${rule.days} 天補充 · AI 功能尚未接通`:`每 ${rule.days} 天補充 · 查詢測試不扣次`);
+   wxQuotaText(cycle,kind==='ai'?`每 ${rule.days} 天補充 · 實際剩餘以 AI 後端為準`:`每 ${rule.days} 天補充 · 查詢測試不扣次`);
   }
  }catch(_){
   wxQuotaText('wxFreeTool','設定暫時無法讀取');wxQuotaText('wxFreeAi','設定暫時無法讀取');
@@ -579,7 +667,7 @@ window.addEventListener('pageshow',()=>{void restoreMember();});
 window.addEventListener('focus',()=>{void restoreMember();});
 window.addEventListener('storage',e=>{if(e.key===SKEY||e.key==='divinationhub-auth-event')void restoreMember();});
 
-function init(){const y=new Date().getFullYear();options($('year'),1900,Math.min(2100,y),'年');options($('month'),1,12,'月');$('year').value='1990';$('month').value='5';options($('day'),1,31,'日');$('day').value='15';updateCalendarHint();createTopics();try{wxApplyLayout(localStorage.getItem("divinationhub-wuxing-layout-mode-v1")||"auto")}catch(_){wxApplyLayout("auto")};void wxRefreshPeriodicQuota();void restoreMember();}init();
+function init(){const y=new Date().getFullYear();options($('year'),1900,Math.min(2100,y),'年');options($('month'),1,12,'月');$('year').value='1990';$('month').value='5';options($('day'),1,31,'日');$('day').value='15';updateCalendarHint();createTopics();try{wxApplyLayout(localStorage.getItem("divinationhub-wuxing-layout-mode-v1")||"auto")}catch(_){wxApplyLayout("auto")};void wxRefreshPeriodicQuota();void restoreMember();void wxAiRefreshStatus();}init();
 
 </script>
 </body>
