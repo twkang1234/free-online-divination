@@ -643,7 +643,7 @@ td.muted{color:var(--muted)}
         <p class="dh-qc-intro">測字的「定期免費」額度已正式與此處連動；八字、塔羅、易經暫時仍由各自原有 Worker 管理，儲存不會改變它們的現行額度。每項可分別設定補充次數、週期天數；<strong>同一規則的所有人在固定台灣時間 00:00 同步重置</strong>，未用完的免費次數不累積。變更安排在該規則下一個舊週期邊界才生效。</p>
         <div class="dh-qc-toolbar"><button type="button" class="btn secondary" id="dhQcReload">讀取目前設定</button><span id="dhQcUpdated" class="dh-qc-muted">尚未讀取</span></div>
         <div class="dh-qc-scroll"><table class="dh-qc-table"><thead><tr><th>工具／類型</th><th>訪客補充次數</th><th>訪客每幾天</th><th>會員補充次數</th><th>會員每幾天</th></tr></thead><tbody id="dhQcRows"><tr><td colspan="5">展開後載入設定…</td></tr></tbody></table></div>
-        <p class="dh-qc-help">次數可填 0～1000（0＝不提供定期免費額度）；週期可填 1～365 天。工具額度與 AI 額度獨立，定期免費使用完後，登入會員才使用共用贈送額度。</p>
+        <p class="dh-qc-help">次數可填 0～1000（0＝不提供定期免費額度）；週期可填 1～365 天。五行工具及五行 AI 已加入控制台，預設均為 0；目前僅儲存設定，五行查詢與 AI 扣次尚未啟用。既有工具額度不變。</p>
         <div class="dh-qc-gifts"><h3>新會員一次性共用贈送</h3><div class="dh-qc-gift-fields"><label>共用工具贈送次數<input id="dhQcGiftTool" type="number" min="0" max="1000" step="1" value="10"></label><label>共用 AI 贈送次數<input id="dhQcGiftAi" type="number" min="0" max="1000" step="1" value="10"></label></div><p class="dh-qc-help">只影響尚未獲得初始贈送的新會員；既有會員餘額、付費餘額、人工贈送不受影響。</p></div>
         <div class="dh-qc-actions"><button type="button" class="btn" id="dhQcSave" disabled>確認並儲存額度設定</button><span id="dhQcStatus" role="status" aria-live="polite">請先讀取設定。</span></div>
         <details class="dh-qc-history"><summary>最近修改紀錄</summary><div id="dhQcHistory">尚未讀取</div></details>
@@ -928,7 +928,7 @@ function fmtPaymentTime(t){
 
 
 // === Central quota configuration admin editor ===
-const DH_QC_SERVICES=[['bazi','tool','八字｜排盤'],['bazi','ai','八字｜AI 解讀'],['tarot','tool','塔羅｜抽牌'],['tarot','ai','塔羅｜AI 解讀'],['yijing','tool','易經｜起卦'],['yijing','ai','易經｜AI 解卦'],['cezi','tool','測字｜深度測字'],['cezi','ai','測字｜AI 解讀']];
+const DH_QC_SERVICES=[['bazi','tool','八字｜排盤'],['bazi','ai','八字｜AI 解讀'],['tarot','tool','塔羅｜抽牌'],['tarot','ai','塔羅｜AI 解讀'],['yijing','tool','易經｜起卦'],['yijing','ai','易經｜AI 解卦'],['cezi','tool','測字｜深度測字'],['cezi','ai','測字｜AI 解讀'],['wuxing','tool','五行｜站內查詢'],['wuxing','ai','五行｜AI 解讀']];
 let dhQcRevision=null,dhQcBusy=false;
 function dhQcSetStatus(s){const e=document.getElementById('dhQcStatus');if(e)e.textContent=s}
 async function dhQcRequest(method='GET',body){
@@ -948,7 +948,7 @@ function dhQcRender(d){
  document.getElementById('dhQcSave').disabled=false;
  document.getElementById('dhQcUpdated').textContent='版本 '+d.revision+'｜更新 '+(d.updatedAt||'—')+'｜時區 Asia/Taipei';
  document.getElementById('dhQcHistory').textContent=(d.history||[]).map(x=>{let info='';try{info=JSON.parse(x.detail).join('；')}catch(_){info=x.detail}return `${x.at}｜版本 ${x.revision}｜${info}`}).join('\n')||'尚無設定變更。';
- dhQcSetStatus('設定已讀取。修改後按「確認並儲存」；測字已正式連動；八字、塔羅、易經現行免費次數不受影響。');
+ dhQcSetStatus('設定已讀取。五行已新增設定欄位（預設 0 次），目前尚未接通五行扣次；其他工具額度不受影響。');
 }
 async function dhQcLoadUI(){if(dhQcBusy||!token())return;dhQcBusy=true;dhQcSetStatus('正在讀取 Cloudflare D1 設定…');try{dhQcRender(await dhQcRequest())}catch(e){dhQcSetStatus('讀取失敗：'+e.message)}finally{dhQcBusy=false}}
 document.getElementById('dhQuotaPanel')?.addEventListener('toggle',e=>{if(e.target.open)dhQcLoadUI()});
@@ -963,10 +963,10 @@ document.getElementById('dhQcSave')?.addEventListener('click',async()=>{
   rows.push({key:k,limit,days:n});
  }
  const tool=Number(document.getElementById('dhQcGiftTool').value),ai=Number(document.getElementById('dhQcGiftAi').value);
- if(rows.length!==16||![tool,ai].every(x=>Number.isSafeInteger(x)&&x>=0&&x<=1000)){dhQcSetStatus('表單不完整或贈送額度超出範圍。');return}
+ if(rows.length!==DH_QC_SERVICES.length*2||![tool,ai].every(x=>Number.isSafeInteger(x)&&x>=0&&x<=1000)){dhQcSetStatus('表單不完整或贈送額度超出範圍。');return}
  if(!confirm('確認修改全站額度政策？定期免費額度會排在舊週期的下個固定補充時間生效；新會員首次贈送設定不會改動舊會員餘額。'))return;
  dhQcBusy=true;document.getElementById('dhQcSave').disabled=true;dhQcSetStatus('正在安全儲存設定…');
- try{const result=await dhQcRequest('POST',{revision:dhQcRevision,rows,gifts:{tool,ai}});await dhQcLoadAfterSave();dhQcSetStatus(result.unchanged?'設定未改變。':`已儲存 ${result.changed?.length||0} 項調整。測字會在舊週期下一個台灣時間 00:00 生效；其餘三工具仍待接入。`)}
+ try{const result=await dhQcRequest('POST',{revision:dhQcRevision,rows,gifts:{tool,ai}});await dhQcLoadAfterSave();dhQcSetStatus(result.unchanged?'設定未改變。':`已儲存 ${result.changed?.length||0} 項調整。五行目前只記錄設定，暫不執行扣次；其餘工具依既有規則。`)}
  catch(e){dhQcSetStatus('儲存失敗：'+e.message+'。請重新讀取後再確認。')}
  finally{dhQcBusy=false;document.getElementById('dhQcSave').disabled=false}
 });

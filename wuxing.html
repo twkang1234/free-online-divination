@@ -29,9 +29,6 @@
 .radar-dot{display:inline-block;width:5px;height:5px;border-radius:100px;margin-right:5px;vertical-align:3px}
 .radar-summary{margin:14px 0 0;color:#d4dfd4;font-size:13px;line-height:1.9}
 .radar-caution{margin-top:8px;line-height:1.8;font-size:11px}
-.source-details{margin-top:14px;padding:8px 11px;border:1px solid var(--border);border-radius:10px;background:var(--bg2)}
-.source-details summary{cursor:pointer;color:#9ab6a8;font-size:12px;user-select:none;list-style-position:inside}
-.source-details[open]{padding-bottom:14px}.source-details .pillars{margin-top:12px}
 @media(max-width:1050px){.radar-indicator{display:none}.radar-panel{padding:20px 16px}}
 @media(max-width:650px){.radar-panel{padding:20px 13px}.radar-figure{min-height:210px}.radar-svg{width:min(100%,355px)}.radar-tags{gap:4px}.radar-tag{padding:7px 0}.radar-tag small{font-size:10px}.radar-dot{display:block;margin:0 auto 3px}.radar-subhead{font-size:11px}}
 
@@ -93,7 +90,6 @@
 .wx-insight-more{flex-shrink:0;align-self:center;padding:5px 0 5px 8px;border:0;background:transparent;color:#a6e5c3;font-weight:850;font-size:11px;white-space:nowrap}
 .wx-insight-more:hover,.wx-insight-more:focus-visible{text-decoration:underline;text-underline-offset:4px}
 .wx-insight-caution{font-size:10px;color:#819f91;margin:6px 0 0;line-height:1.6}
-.source-details{margin-top:11px}
 /* 出生表單：固定標籤與欄位頂端，避免日期提示將另外兩欄推低 */
 .formgrid{grid-template-columns:minmax(0,1.25fr) minmax(0,1.07fr) minmax(0,.77fr);align-items:start;gap:13px}
 .formgrid>div{min-width:0}
@@ -109,22 +105,37 @@
 @media(max-width:390px){.wx-reading-insights{padding:14px 12px}.wx-insight-cards{grid-template-columns:1fr}.wx-insight-bottom{align-items:flex-start}.wx-insight-more{width:100%;text-align:left;padding-left:0}}
 @media print{.wx-insight-more,.wx-reading-insights{display:none!important}}
 
+
+/* V13: public birth profile, user-readable and independent of secret pillars */
+.wx-birth-profile{margin-top:20px;padding:16px;border:1px solid rgba(140,214,175,.27);border-radius:15px;background:linear-gradient(140deg,rgba(13,46,35,.85),rgba(6,25,20,.95));}
+.wx-birth-profile-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:13px;padding-bottom:10px;border-bottom:1px solid rgba(168,215,185,.15)}
+.wx-birth-profile-head span{color:#e5d194;font-weight:850;font-size:15px}.wx-birth-profile-head small{font-size:11px;color:#8daea0}
+.wx-birth-row{display:grid;grid-template-columns:80px 1fr;gap:12px;align-items:center;margin-top:9px;padding:10px 12px;background:rgba(4,19,15,.55);border:1px solid rgba(142,199,165,.12);border-radius:10px}
+.wx-birth-row>span,.wx-birth-mini-grid span{color:#a2c5b2;font-size:12px}.wx-birth-row strong{font-size:19px;font-weight:850;color:#edf8ee;line-height:1.45}
+.wx-birth-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}.wx-birth-mini-grid>div{display:grid;gap:6px;padding:11px 13px;border-radius:10px;background:rgba(4,19,15,.55);border:1px solid rgba(142,199,165,.12)}
+.wx-birth-mini-grid strong{font-size:20px;color:#edf8ee;line-height:1.35}.birth-summary-caption{font-size:13px!important;color:#95bdad!important}
+.wx-member-tools{position:relative;display:flex;align-items:center;gap:5px}.wx-member-popover{position:absolute;right:0;top:calc(100% + 10px);z-index:99;padding:9px;min-width:190px;background:#0a1b16;border:1px solid rgba(135,211,167,.29);border-radius:13px;box-shadow:0 15px 38px rgba(0,0,0,.35)}
+.wx-member-popover a{display:block;text-decoration:none;color:#cee7d9;font-size:13px;padding:9px 10px;border-radius:8px}.wx-member-popover a:hover{background:rgba(114,199,149,.13)}
+.wx-member-toggle{border-radius:999px;border:1px solid rgba(136,206,165,.25);color:var(--gold);background:#0b2018;min-width:34px;height:34px;cursor:pointer}
+@media(max-width:600px){.wx-birth-row{grid-template-columns:1fr;gap:3px}.wx-birth-row strong{font-size:18px}.wx-birth-mini-grid strong{font-size:18px}.wx-birth-profile-head{flex-wrap:wrap}}
+@media print{.wx-birth-profile{background:white!important;border:1px solid #ddd!important}.wx-birth-profile *{color:#222!important}}
 </style>
 </head>
 <body>
-<header class="top"><div class="top-inner"><a class="back" href="/">← 免費線上占卜</a><nav class="nav" aria-label="占卜工具導覽"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經64卦</a><a href="/cezi.html">測字</a><a class="active" href="/wuxing.html" aria-current="page">五行</a></nav><a class="member" id="memberLink" href="/member.html">免費登入</a></div></header>
+<header class="top"><div class="top-inner"><a class="back" href="/">← 免費線上占卜</a><nav class="nav" aria-label="占卜工具導覽"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經64卦</a><a href="/cezi.html">測字</a><a class="active" href="/wuxing.html" aria-current="page">五行</a></nav><div class="wx-member-tools"><a class="member" id="memberLink" href="/member.html">免費登入</a><button type="button" id="wxMemberMenuToggle" class="wx-member-toggle" aria-label="會員選單" aria-expanded="false" hidden>⌄</button><div id="wxMemberPopover" class="wx-member-popover" hidden><a href="/member.html">會員中心與共用額度</a><a href="/pricing.html">加購工具／AI 額度</a></div></div></div></header>
 <main class="container">
 <section class="hero"><div><div class="eyebrow">FIVE ELEMENTS · PERSONAL READING</div><h1>五行查詢</h1><div style="font-size:23px;font-weight:850;color:var(--gold)">看懂你的五行，認識自己的優勢與方向。</div><p class="lead">只要輸入出生年月日時，從五行屬性、強弱與相生相剋，延伸探索個性優缺點、缺什麼補什麼、事業、感情與財運。先看免費站內分析，再決定要不要使用 AI 深度解讀。</p><div class="chips"><span class="chip">✦ 六大生活主題</span><span class="chip">✦ 站內個人化解讀</span><span class="chip">✦ 無須 AI 即可閱讀</span></div><a class="cta" href="#calculator">開始五行查詢 ↓</a></div><div class="hero-art" aria-hidden="true"><div class="hero-ring"><div class="hero-center">五行<small>生 · 剋 · 平 · 衡</small></div><div class="element-bubble wood">木</div><div class="element-bubble fire">火</div><div class="element-bubble earth">土</div><div class="element-bubble metal">金</div><div class="element-bubble water">水</div></div></div></section>
 <section id="calculator" class="shell main-work"><div class="section-head"><div><div class="small-head">01 / YOUR BIRTH DATA</div><h2>先輸入你的出生資料</h2><p>與八字頁面相近的操作方式；可選國曆、農曆與精確出生時間。</p></div><div class="cal-toggle" role="group" aria-label="出生曆法"><button type="button" id="solarBtn" class="active" aria-pressed="true">國曆</button><button type="button" id="lunarBtn" aria-pressed="false">農曆</button></div></div>
 <div class="formgrid"><div><label class="f-lab" for="year">出生日期</label><div class="dateboxes"><select id="year" class="input" aria-label="出生年份"></select><select id="month" class="input" aria-label="出生月份"></select><select id="day" class="input" aria-label="出生日期"></select></div><div class="hint" id="calendarHint">立春定年，節氣定月。</div></div><div><label class="f-lab" for="slot">出生時辰</label><select class="input" id="slot"><option value="unknown">不知道出生時辰</option><option value="0">子時 23:00～00:59</option><option value="1">丑時 01:00～02:59</option><option value="2">寅時 03:00～04:59</option><option value="3">卯時 05:00～06:59</option><option value="4">辰時 07:00～08:59</option><option value="5">巳時 09:00～10:59</option><option value="6">午時 11:00～12:59</option><option value="7">未時 13:00～14:59</option><option value="8">申時 15:00～16:59</option><option value="9">酉時 17:00～18:59</option><option value="10">戌時 19:00～20:59</option><option value="11">亥時 21:00～22:59</option></select><div class="hint form-field-hint">不確定可選「不知道出生時辰」</div></div><div><label class="f-lab" for="gender">性別（選填）</label><select class="input" id="gender"><option value="none">不指定</option><option value="male">男</option><option value="female">女</option></select><div class="hint form-field-hint">選填，不影響基本五行分布</div></div></div>
 <div class="subcontrols"><label id="leapLabel" hidden><input id="leap" type="checkbox"> 農曆閏月</label><label><input id="exactToggle" type="checkbox"> 我知道精確出生時間</label><input class="input" id="exactTime" type="time" value="10:30" hidden style="max-width:165px"><label>晚子時換日 <select id="sect" class="input" style="width:auto;min-height:36px;padding:3px 10px"><option value="2">23 時仍算當日</option><option value="1">23 時起算次日</option></select></label></div>
-<div class="actions"><button class="primary" type="button" id="calculate">✦ 產生我的五行分析</button><button class="secondary" id="demo" type="button">試看範例命盤</button><span class="fine">站內解讀計次規則尚未設定，目前本頁不扣除任何額度。</span></div><div id="error" class="error" role="alert" hidden></div>
+<div class="actions"><button class="primary" type="button" id="calculate">✦ 產生我的五行分析</button><button class="secondary" id="demo" type="button">試看範例命盤</button><span class="fine">五行額度由管理員後台設定；正式扣次尚未啟用，測試查詢不扣額度。</span></div><div id="error" class="error" role="alert" hidden></div>
 </section>
-<section id="result" class="result" hidden aria-live="polite"><div class="section-head"><div><div class="small-head">02 / YOUR FIVE ELEMENTS</div><h2>你的五行總覽</h2><p id="birthCaption"></p></div><span class="chip" id="sourceTag"></span></div><div class="summary-banner"><div class="panel"><span class="small-head">FIVE ELEMENTS · 本命五行</span><div class="summ-title">你的核心五行是 <span id="master" class="focus-word"></span></div><p class="intro" id="masterIntro"></p><div class="big4"><div class="metric"><span>最突出</span><b id="strongest"></b></div><div class="metric"><span>相對最少</span><b id="weakest"></b></div><div class="metric"><span>藏干亦未見</span><b id="missing"></b></div><div class="metric"><span>出生季節</span><b id="season"></b></div></div><div class="wx-reading-insights" id="wxReadingInsights" hidden aria-label="本命五行關鍵判讀"><div class="wx-insight-top"><span class="wx-insight-kicker"><span class="wx-insight-sparkle" aria-hidden="true">✦</span> 五行關鍵判讀</span><span class="wx-insight-live">依命盤計算</span></div><p class="wx-insight-summary" id="wxInsightSummary"></p><div class="wx-insight-cards" id="wxInsightCards"></div><div class="wx-insight-bottom"><span id="wxInsightBottom"></span><button id="wxInsightMore" type="button" class="wx-insight-more">看完整調和解讀 <span aria-hidden="true">↗</span></button></div><p class="wx-insight-caution" id="wxInsightScope"></p></div><details class="source-details"><summary>查看五行計算的原始資料</summary><div id="pillars" class="pillars"></div></details></div><div class="panel radar-panel"><div class="radar-head"><div><span class="small-head">FIVE ELEMENTS · 五行能量輪廓</span><div class="radar-subhead">從五個角度，一眼看懂五行的相對分布</div></div><span class="radar-indicator">RELATIVE VIEW</span></div><div id="radar" class="radar-figure" aria-live="polite"></div><div class="radar-tags" id="radarTags" aria-label="五行相對強弱"></div><p class="radar-summary" id="radarSummary"></p><p class="explain radar-caution">五角形用來比較五行的相對分布，外框不是「理想標準」。較少的元素不等於一定需要補強，生活分析會綜合不同的五行特質。</p></div></div><p class="explain" id="methodNote"></p></section>
+<section id="result" class="result" hidden aria-live="polite"><div class="section-head"><div><div class="small-head">02 / YOUR FIVE ELEMENTS</div><h2>你的五行總覽</h2><p id="birthCaption" class="birth-summary-caption"></p></div><span class="chip" id="sourceTag"></span></div><div class="summary-banner"><div class="panel"><span class="small-head">FIVE ELEMENTS · 本命五行</span><div class="summ-title">你的核心五行是 <span id="master" class="focus-word"></span></div><p class="intro" id="masterIntro"></p><div class="big4"><div class="metric"><span>最突出</span><b id="strongest"></b></div><div class="metric"><span>相對最少</span><b id="weakest"></b></div><div class="metric"><span>藏干亦未見</span><b id="missing"></b></div><div class="metric"><span>出生季節</span><b id="season"></b></div></div><div class="wx-reading-insights" id="wxReadingInsights" hidden aria-label="本命五行關鍵判讀"><div class="wx-insight-top"><span class="wx-insight-kicker"><span class="wx-insight-sparkle" aria-hidden="true">✦</span> 五行關鍵判讀</span><span class="wx-insight-live">依命盤計算</span></div><p class="wx-insight-summary" id="wxInsightSummary"></p><div class="wx-insight-cards" id="wxInsightCards"></div><div class="wx-insight-bottom"><span id="wxInsightBottom"></span><button id="wxInsightMore" type="button" class="wx-insight-more">看完整調和解讀 <span aria-hidden="true">↗</span></button></div><p class="wx-insight-caution" id="wxInsightScope"></p></div></div><div class="panel radar-panel"><div class="radar-head"><div><span class="small-head">FIVE ELEMENTS · 五行能量輪廓</span><div class="radar-subhead">從五個角度，一眼看懂五行的相對分布</div></div><span class="radar-indicator">RELATIVE VIEW</span></div><div id="radar" class="radar-figure" aria-live="polite"></div><div class="radar-tags" id="radarTags" aria-label="五行相對強弱"></div><p class="radar-summary" id="radarSummary"></p><p class="explain radar-caution">五角形用來比較五行的相對分布，外框不是「理想標準」。較少的元素不等於一定需要補強，生活分析會綜合不同的五行特質。</p>
+<div class="wx-birth-profile" aria-label="本命出生資料"><div class="wx-birth-profile-head"><span>✦ 本命出生資料</span><small>以查詢時輸入為準</small></div><div class="wx-birth-row"><span>國曆生日</span><strong id="wxBirthSolar">—</strong></div><div class="wx-birth-row"><span>農曆生日</span><strong id="wxBirthLunar">—</strong></div><div class="wx-birth-mini-grid"><div><span>出生時辰</span><strong id="wxBirthHour">—</strong></div><div><span>性別</span><strong id="wxBirthGender">—</strong></div></div></div></div></div><p class="explain" id="methodNote"></p></section>
 <section id="wxTemporaryTools" class="wx-temp-tools" hidden aria-label="暫時匯出功能"><div><span class="small-head">六篇解讀 · 測試匯出</span><h3>六篇站內解讀字數與資料匯出</h3><p>可一次下載六題純文字，逐題比較範本內容。此區供站長比對文章，正式上線前可移除。</p></div><button type="button" class="secondary wx-export-btn" id="exportAllReports">⬇ 下載六題 TXT（附實際字數）</button></section>
 
 <section id="topics" class="topics" hidden><div class="small-head">03 / SELECT A QUESTION</div><h2>你最想知道什麼？</h2><p>每次選一個主題，閱讀專為此命盤組合的站內解讀文章；切換題目不會重新排盤。</p><div id="topicGrid" class="topic-grid"></div></section>
-<article class="report" id="report" hidden><div class="report-header"><span class="small-head">PERSONAL FIVE ELEMENTS REPORT</span><h2 id="reportTitle"></h2><p id="reportMeta"></p></div><div id="reportBody"></div><div class="report-actions"><button type="button" class="secondary" id="copyReport">複製完整解讀</button><button type="button" class="secondary" id="exportAllReportsWithin">⬇ 下載六題 TXT</button><button type="button" class="secondary" id="printReport">列印／另存 PDF</button><button type="button" class="secondary" id="goTopics">返回其他問題 ↑</button><span class="fine" id="lengthInfo"></span></div><div class="ai-zone"><h3>✦ AI 深度解讀｜自訂問題</h3><p>可延伸目前的站內解讀，或自行提出想知道的事。依規劃，正式接通後每次成功解讀扣 1 次共用 AI 額度。</p><textarea id="customQuestion" class="input" placeholder="例如：我適合轉職嗎？五行對我的感情相處有什麼提醒？" maxlength="360"></textarea><div class="actions"><button id="aiBtn" type="button" class="secondary">AI 解讀｜尚未開放</button></div><div class="soft-note">目前未提供五行專用的 AI 計費 API；此按鈕不會扣點、也不會假裝已產生 AI 解讀。正式版須另接你現有的後端共用額度驗證。</div></div><p class="soft-note">本站內容屬傳統命理文化中的自我探索方式，並非對健康、財務或感情結果的科學預測或保證。</p></article>
+<article class="report" id="report" hidden><div class="report-header"><span class="small-head">PERSONAL FIVE ELEMENTS REPORT</span><h2 id="reportTitle"></h2><p id="reportMeta"></p></div><div id="reportBody"></div><div class="report-actions"><button type="button" class="secondary" id="copyReport">複製完整解讀</button><button type="button" class="secondary" id="exportAllReportsWithin">⬇ 下載六題 TXT</button><button type="button" class="secondary" id="printReport">列印／另存 PDF</button><button type="button" class="secondary" id="goTopics">返回其他問題 ↑</button><span class="fine" id="lengthInfo"></span></div><div class="ai-zone"><h3>✦ AI 深度解讀｜自訂問題</h3><p>可延伸目前的站內解讀，或自行提出想知道的事。AI 額度與扣次方式將由管理員後台設定，正式接通後才會啟用。</p><textarea id="customQuestion" class="input" placeholder="例如：我適合轉職嗎？五行對我的感情相處有什麼提醒？" maxlength="360"></textarea><div class="actions"><button id="aiBtn" type="button" class="secondary">AI 解讀｜尚未開放</button></div><div class="soft-note">目前未提供五行專用的 AI 計費 API；此按鈕不會扣點、也不會假裝已產生 AI 解讀。正式版須另接你現有的後端共用額度驗證。</div></div><p class="soft-note">本站內容屬傳統命理文化中的自我探索方式，並非對健康、財務或感情結果的科學預測或保證。</p></article>
 <section id="history" class="history"><div class="history-top"><div><span class="small-head">RECENT REPORTS</span><h2 style="margin:4px 0">最近 3 組紀錄</h2></div><button class="secondary" id="refreshHistory" type="button">重新整理</button></div><p class="fine" id="historyNotice">登入會員後，本頁會在目前瀏覽器暫存最近三組。跨裝置同步仍需要會員 API 支援。</p><div class="history-list" id="historyList"></div></section>
 <section class="seo"><h2>五行是什麼？缺什麼就要補什麼嗎？</h2><p>木、火、土、金、水是傳統五行文化的五種象徵，用來理解生長、熱情、承載、界線與流動等不同特質。五行相生相剋，談的是力量的配合與制衡，不是簡單的吉凶評分。</p><p>輸入出生資料後，本站先以傳統曆法資料建立五行輪廓，再用自然易懂的文字討論個性、優缺點、工作、感情與財務習慣。某個五行比較少，不代表它就是你的缺點，也不代表一定要補；沒有出生時辰時，解讀的參考範圍也較有限。</p></section>
 </main><footer class="footer"><div class="container">一念知機 · 五行查詢　｜　<a href="/bazi.html">進一步了解完整八字排盤</a>　｜　<a href="/">返回免費線上占卜</a><div>© 一念知機　本站提供傳統文化與自我探索內容。</div><div style="margin-top:8px">曆法換算：lunar-javascript 1.7.7（MIT License）；五行分析與文章生成由獨立後端執行。</div></div></footer><div id="toast" class="toast" role="status" hidden></div>
@@ -133,7 +144,8 @@
 <script>
 
 'use strict';
-// 公開的曆法換算與畫面繪製保留在瀏覽器。命盤權重及文章生成僅在 Cloudflare Worker。
+// 曆法換算暫由公開的 lunar-javascript 處理；五行權重和解讀規則位於 Worker。
+// 注意：前端產生四柱作為運算輸入，正式後端導入自有曆法引擎後，才能完全移除。
 // 部署名稱為 wuxing-api（使用者既有子網域 ezgocpu）。若名稱不同，修改這個網址。
 const WX_API_URL='https://wuxing-api.ezgocpu.workers.dev/api/wuxing';
 const $=id=>document.getElementById(id),E=['木','火','土','金','水'];
@@ -201,14 +213,28 @@ function wxRenderInsights(c){
  zone.hidden=false;
 }
 
+function wxPublicBirthProfile(c){
+ const date=String(c.datetime||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+ const y=date?Number(date[1]):null,m=date?Number(date[2]):null,d=date?Number(date[3]):null;
+ $('wxBirthSolar').textContent=date?`${y} 年 ${m} 月 ${d} 日`:'資料未提供';
+ try{
+  if(!date||typeof Solar==='undefined')throw Error('calendar unavailable');
+  const l=Solar.fromYmd(y,m,d).getLunar();const leap=Number(l.getMonth())<0;
+  const month=(typeof l.getMonthInChinese==='function'?l.getMonthInChinese():Math.abs(l.getMonth())+'月');
+  const day=(typeof l.getDayInChinese==='function'?l.getDayInChinese():l.getDay()+'日');
+  $('wxBirthLunar').textContent=`${l.getYear()} 年 ${leap?'閏':''}${month}${/月$/.test(month)?'':'月'} ${day}`;
+ }catch(e){$('wxBirthLunar').textContent='農曆換算暫不可用';}
+ const hour=String(c.birthHour||'');$('wxBirthHour').textContent=/^[子丑寅卯辰巳午未申酉戌亥]時$/.test(hour)?hour:'未知時辰';
+ $('wxBirthGender').textContent=({male:'男',female:'女',unspecified:'未指定',none:'未指定'})[c.sex]||'未指定';
+}
 function renderChart(c){
  $('result').hidden=false;$('topics').hidden=false;
- $('birthCaption').textContent=c.datetime+(c.missingTime?'（三柱初步分析）':'（四柱分析）');
+  wxPublicBirthProfile(c);
+ $('birthCaption').textContent='國曆與農曆生日、時辰及性別請見雷達圖下方的本命資料';
  $('sourceTag').textContent=c.demo?'展示範例・非個人資料':'個人命盤・雲端專屬解析';
  $('master').textContent=c.dayMaster+c.dm;$('masterIntro').textContent=c.intro;
  $('strongest').textContent=c.strongest;$('weakest').textContent=c.weakest;
  $('missing').textContent=c.notSeen.join('、')||'沒有';$('season').textContent=c.season[0];
- $('pillars').innerHTML=c.ps.map((p,i)=>`<div class="pillar-mini"><span>${['年柱','月柱','日柱','時柱'][i]}</span><b>${esc(p.join(''))}</b></div>`).join('');
  renderRadar(c);wxRenderInsights(c);$('methodNote').textContent='五行分布與判讀重點由專用後端計算；五行較少不代表必須補該元素。';
 }
 function wxInline(s){return esc(s).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')}
@@ -255,7 +281,7 @@ function storageKey(){return 'dh-wuxing-local-history-v1-'+String(member?.sub||'
 const SKEY='divinationhub-auth-session-v1';
 function readToken(){try{const raw=localStorage.getItem(SKEY)||'';let v=JSON.parse(raw);if(typeof v==='string')return v;if(v&&typeof v==='object')return v.token||v.accessToken||v.sessionToken||v.credential||'';return raw.startsWith('eyJ')?raw:''}catch(_){try{return localStorage.getItem(SKEY)||''}catch(e){return ''}}}
 async function restoreMember(){let t=readToken();if(!t){member=null;renderMember();return}try{const r=await fetch('https://member-api.ezgocpu.workers.dev/auth/session',{headers:{Authorization:'Bearer '+t,Accept:'application/json'},cache:'no-store'});let j=await r.json();member=r.ok&&j.success&&j.authenticated&&j.member?.sub?j.member:null}catch(e){member=null}renderMember()}
-function renderMember(){const b=$('memberLink');b.textContent=member?'會員中心':'免費登入';const ret=encodeURIComponent(location.pathname+location.search+location.hash);b.href=member?'/member.html':'/member.html?return='+ret;$('historyNotice').textContent=member?'已辨識登入會員：目前先儲存在此瀏覽器，跨裝置同步需另接會員後端。':'登入會員後可在此瀏覽器暫存最近 3 組；尚未接通跨裝置會員紀錄 API。';renderHistory()}
+function renderMember(){const b=$('memberLink');$('wxMemberMenuToggle').hidden=!member;$('wxMemberPopover').hidden=true;$('wxMemberMenuToggle').setAttribute('aria-expanded','false');b.textContent=member?'會員中心':'免費登入';const ret=encodeURIComponent(location.pathname+location.search+location.hash);b.href=member?'/member.html':'/member.html?return='+ret;$('historyNotice').textContent=member?'已辨識登入會員：目前先儲存在此瀏覽器，跨裝置同步需另接會員後端。':'登入會員後可在此瀏覽器暫存最近 3 組；尚未接通跨裝置會員紀錄 API。';renderHistory()}
 function readHistory(){try{return JSON.parse(localStorage.getItem(storageKey())||'[]')||[]}catch(e){return []}}
 function recordHistory(c,id){if(!member||c.demo||!birthRequest)return;try{const old=readHistory(),key=c.datetime;let found=old.find(x=>x.key===key);let saved={datetime:c.datetime,dayMaster:c.dayMaster,dm:c.dm,birth:{...birthRequest}};if(found){found.ids=[...new Set([...(found.ids||[]),id])];found.updated=Date.now();found.data=saved;}else{old.unshift({key,ids:[id],updated:Date.now(),data:saved})}old.sort((a,b)=>b.updated-a.updated);localStorage.setItem(storageKey(),JSON.stringify(old.slice(0,3)));renderHistory()}catch(e){notice('本機無法保存紀錄，請檢查瀏覽器儲存設定。')}}
 function renderHistory(){const rows=member?readHistory():[];$('historyList').innerHTML=rows.length?rows.map((r,i)=>`<div class="history-card"><b>${esc(r.key)}</b><small>核心五行 ${esc((r.data?.dayMaster||'')+(r.data?.dm||''))} · 已看 ${r.ids.length} 題</small><div><button type="button" class="secondary" data-history="${i}">重新閱讀</button></div></div>`).join(''):`<div class="history-card" style="grid-column:1/-1"><b>尚無已儲存的五行紀錄</b><small>${member?'完成個人查詢並選擇題目後，自動暫存最近 3 組。':'請先登入會員，才能啟用本機個人紀錄。'}</small></div>`}
@@ -277,6 +303,8 @@ async function requestAndRender(birth,topic=null){
 }
 async function copyText(s){if(!s)return;try{await navigator.clipboard.writeText(s);notice('已複製到剪貼簿')}catch(e){const t=document.createElement('textarea');t.value=s;document.body.append(t);t.select();document.execCommand('copy');t.remove();notice('已複製到剪貼簿')}}
 $('wxInsightMore').addEventListener('click',()=>renderReport('balance'));
+$('wxMemberMenuToggle').addEventListener('click',()=>{const p=$('wxMemberPopover');p.hidden=!p.hidden;$('wxMemberMenuToggle').setAttribute('aria-expanded',String(!p.hidden))});
+document.addEventListener('click',e=>{if(!e.target.closest('.wx-member-tools')){$('wxMemberPopover').hidden=true;$('wxMemberMenuToggle').setAttribute('aria-expanded','false')}});
 $('calculate').addEventListener('click',()=>{clearFail();try{void requestAndRender(makeBirthRequest())}catch(e){fail(e?.message||'無法取得出生資料')}});
 $('demo').addEventListener('click',()=>{clearFail();try{void requestAndRender(makeBirthRequest({demo:true}))}catch(e){fail(e?.message||'範例資料無法建立')}});
 $('solarBtn').addEventListener('click',()=>toggleCalendar('solar'));$('lunarBtn').addEventListener('click',()=>toggleCalendar('lunar'));
