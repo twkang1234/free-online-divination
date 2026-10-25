@@ -2953,6 +2953,10 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
 .bazi-month-ai-note{margin:13px 1px 1px;padding:12px 14px;border:1px solid var(--bazi-line-71,rgba(233,189,88,.22));border-radius:11px;color:var(--dim,#aeb9bf);background:var(--bazi-bg-54,rgba(255,255,255,.025));font-size:.78rem;line-height:1.8}
 .bazi-month-ai-note a{color:var(--gold,#e9bd58);text-decoration:underline;text-underline-offset:3px;font-weight:750}
 </style>
+
+<style id="bazi-ai-question-privacy-style">
+.bazi-personal-stage .bazi-ai-privacy-note{display:block;margin:5px 0 11px;color:var(--dim);font-size:.7rem;line-height:1.7}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -3220,6 +3224,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
               <div id="baziCustomSuggestions" class="bazi-custom-suggestions" aria-label="熱門自訂問題範例"></div>
               <label for="baziCustomQuestion">你的問題 <small>點選範例自動帶入，也能自由修改</small></label>
               <textarea id="baziCustomQuestion" rows="3" maxlength="400" placeholder="選擇上方題目，或直接輸入你想問的事（5～400 字）" aria-describedby="baziCustomQuestionHelp"></textarea>
+              <small class="bazi-ai-privacy-note">AI 成功解讀的題目與正式提交的自訂問題，可能供站長在管理後台查看以改善服務；不儲存完整 AI 解讀於這項統計，自訂問題原文最多保留 180 天。請勿輸入他人的敏感個資。</small>
               <div class="bazi-reading-custom-actions"><small id="baziCustomQuestionHelp">讀取點數價格中…</small><button type="button" id="baziCustomQuestionRun">解鎖本次自訂問題並 AI 解讀</button></div>
             </div>
           </details>
@@ -9844,7 +9849,8 @@ html[data-bazi-layout="mobile"] .bazi-hub-grid button .bazi-hub-status{font-size
       if(!ticket){status.textContent='已取消，本次沒有扣專業點數。';return;}
       pendingCustom.ticket=ticket;
       status.textContent='AI 正在深入解讀你的專屬問題，請保持頁面開啟…';scrollToAiProgress();
-      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_question',question,customTicket:ticket,aiOpId:crypto.randomUUID()});
+      const questionMeta={category:field?.dataset.aiQuestionCategory||'',presetLabel:field?.dataset.aiQuestionPreset||'',template:field?.dataset.aiQuestionTemplate||''};
+      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_question',question,questionMeta,customTicket:ticket,aiOpId:crypto.randomUUID()});
       if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 尚未回傳完整解讀。');
       let saved={...reports};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){ }
       const history=Array.isArray(saved.custom_questions)?saved.custom_questions.slice(-11):[];
@@ -11696,6 +11702,9 @@ const init=()=>{
      const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.template=value;
      b.addEventListener('click',()=>{
        field.value=value;
+       field.dataset.aiQuestionCategory=category;
+       field.dataset.aiQuestionPreset=label;
+       field.dataset.aiQuestionTemplate=value;
        field.dispatchEvent(new Event('input',{bubbles:true}));
        host.querySelectorAll('button').forEach(x=>x.classList.toggle('is-active',x===b));
        field.focus({preventScroll:true});
@@ -11705,10 +11714,12 @@ const init=()=>{
  };
  cats.forEach(b=>b.addEventListener('click',()=>{
    cats.forEach(x=>{x.classList.toggle('is-active',x===b);x.setAttribute('aria-pressed',String(x===b));});
+   // 分類切換不改使用者正在輸入的問題；只有實際點題目才標記預設來源。
    render(b.dataset.customCategory);
  }));
  const fitQuestion=()=>{field.style.height='auto';field.style.height=Math.min(Math.max(field.scrollHeight,76),180)+'px';};
  field.addEventListener('input',()=>{
+   if(!field.value.trim()){delete field.dataset.aiQuestionCategory;delete field.dataset.aiQuestionPreset;delete field.dataset.aiQuestionTemplate;}
    host.querySelectorAll('button').forEach(b=>b.classList.toggle('is-active',b.dataset.template===field.value));
    fitQuestion();
  });

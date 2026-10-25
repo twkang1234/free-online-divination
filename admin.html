@@ -439,6 +439,19 @@ td.muted{color:var(--muted)}
 /* Tarot browser diagnostics: show original Chinese user report without affecting other dashboard blocks. */
 .dh-ai-monitor .dh-ai-error-desc{font-size:.79rem;color:#bfccd9;line-height:1.75;margin:8px 0;overflow-wrap:anywhere}
 .dh-ai-monitor .dh-ai-line code{display:block;margin-top:8px;color:#bac8d6;white-space:normal;word-break:break-word}
+
+/* AI 提問統計：單獨收合，不影響既有會員使用排行榜 */
+.aiq-panel{margin-bottom:24px}.aiq-panel>summary{list-style:none;padding:17px 18px;cursor:pointer;font-weight:800;font-size:1rem}
+.aiq-panel>summary::-webkit-details-marker{display:none}.aiq-panel>summary::after{content:'▾';color:#d9b65d;float:right}.aiq-panel[open]>summary::after{content:'▴'}
+.aiq-inner{padding:15px 18px 20px;display:grid;gap:15px}.aiq-muted{color:#a7b5c4;font-size:.76rem;line-height:1.75}
+.aiq-panel input,.aiq-panel select{padding:9px 11px;border-radius:9px;border:1px solid #465668;background:#0b121b;color:#eef1f5;font:inherit;font-size:.8rem}
+.aiq-toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.aiq-exclude{border:1px solid #354354;background:#0b1420;border-radius:11px;padding:14px}
+.aiq-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.aiq-tag{display:flex;gap:7px;align-items:center;border:1px solid #527468;border-radius:99px;padding:5px 9px;color:#bce4d4;background:#0d241d;font-size:.75rem;overflow-wrap:anywhere}
+.aiq-tag button{border:0;background:transparent;color:#ffc3c8;cursor:pointer;font-weight:800}.aiq-status{color:#b0c8d3;font-size:.76rem;min-height:18px}.aiq-status.error{color:#f4a8ad}
+.aiq-table-wrap{overflow-x:auto}.aiq-table-wrap table{min-width:720px}.aiq-summary{color:#e5d5b1;font-size:.81rem;font-weight:800}
+.aiq-member-history{margin-top:14px;border:1px solid #334c5f;padding:12px;border-radius:10px;background:#0b1823}.aiq-member-history>summary{cursor:pointer;font-weight:800;color:#b2dce8;font-size:.85rem}
+.aiq-member-history .aiq-line{padding:10px;border-bottom:1px solid #223442;line-height:1.6}.aiq-line:last-child{border-bottom:none}.aiq-line small{display:block;color:#a4b3c3}.aiq-line .question{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:600px){.aiq-inner{padding:12px}.aiq-toolbar>*{max-width:100%}}
 </style>
 </head>
 <body>
@@ -652,7 +665,7 @@ td.muted{color:var(--muted)}
             </select>
             <button class="btn" type="button" id="memberUsageSave">儲存統計設定</button>
           </div>
-          <div class="member-usage-warn">關閉後保留過去統計；不會補記關閉期間的使用次數。完整模式才記錄會員打開的八字章節，每個章節同一頁最多記 1 次；不會收集生日、完整問題或 AI 解讀文字。</div>
+          <div class="member-usage-warn">關閉後保留過去統計；不會補記關閉期間的使用次數。完整模式才記錄會員打開的八字章節，每個章節同一頁最多記 1 次；原本起盤排行榜不收集問題；另設 AI 題目紀錄有使用者送出的自訂問題原文（180 天），管理員可於會員明細查看。</div>
         </div>
         <div class="member-usage-controls">
           <div class="member-usage-periods" aria-label="排行期間" id="memberUsagePeriods">
@@ -668,6 +681,34 @@ td.muted{color:var(--muted)}
         <div class="member-usage-detail" id="memberUsageDetail" hidden></div>
         <div class="member-usage-status" id="memberUsageStatus" role="status" aria-live="polite"></div>
         <div style="border-top:1px solid #26313d;padding-top:12px;display:flex;gap:9px;flex-wrap:wrap;align-items:center"><button class="btn secondary" type="button" id="memberUsageClear">清除所有會員統計資料</button><span class="member-usage-warn">僅清除這項功能的日統計與歷史累計；不刪除會員、原有占卜紀錄、AI 或金流資料。需先關閉統計。</span></div>
+      </div>
+    </details>
+
+
+    <details class="section aiq-panel" id="aiQuestionPanel">
+      <summary>全站熱門 AI 提問分析 <small style="font-weight:500;color:#9eaec0">｜各工具分開統計・排除測試帳號</small></summary>
+      <div class="aiq-inner">
+        <div class="aiq-muted">獨立記錄成功完成的 AI 題目；選題、取消、失敗不列入。只顯示匿名的熱門題型數量，不展示自訂問題全文。<strong>目前八字已接入逐題紀錄；其他工具若原本有 AI 成功的會員分類統計，可先顯示大類趨勢，但無法還原題目原文。若需精準逐題紀錄，仍須更新各自 Worker。</strong>不回填缺少的歷史分類。</div>
+        <div class="aiq-exclude">
+          <strong>排除測試會員 Email（可自由新增多筆）</strong>
+          <div class="aiq-muted">這些 Email 的既有與未來 AI 問題不列入熱門排行；個別會員明細仍保留。管理員可以隨時移除排除設定。</div>
+          <form id="aiqExcludeForm" class="aiq-toolbar" style="margin-top:10px">
+            <input id="aiqEmail" type="email" autocomplete="off" placeholder="輸入要排除的 Email" required style="flex:1 1 270px">
+            <button class="btn" type="submit">＋ 新增排除信箱</button>
+          </form>
+          <div class="aiq-tags" id="aiqExcludedList">展開後查詢…</div>
+        </div>
+        <div class="aiq-toolbar">
+          <label for="aiqTool">工具</label>
+          <select id="aiqTool"><option value="all">全部工具</option><option value="bazi">八字</option><option value="tarot">塔羅</option><option value="yijing">易經</option><option value="cezi">測字</option><option value="qimen">奇門</option><option value="ziwei">紫微</option><option value="liuyao">六爻</option><option value="meihua">梅花易數</option></select>
+          <label for="aiqPeriod">期間</label>
+          <select id="aiqPeriod"><option value="7d">最近 7 天</option><option value="30d" selected>最近 30 天</option><option value="all">歷史累計</option></select>
+          <button class="btn secondary" type="button" id="aiqReload">重新查詢</button>
+        </div>
+        <div class="aiq-summary" id="aiqSummary">尚未查詢</div>
+        <div class="aiq-table-wrap" id="aiqResults"></div>
+        <div class="aiq-status" id="aiqStatus" role="status" aria-live="polite"></div>
+        <div class="aiq-muted">隱私：管理員才可查看個別會員實際問題，原文最長保留 180 天；不保存命盤生日與 AI 全文到本統計。熱門分類可持續累積，Email 排除名單可回溯重新計算。</div>
       </div>
     </details>
 
@@ -1347,6 +1388,64 @@ async function loadStats(){
   }
 }
 
+
+// 全站 AI 提問榜：獨立於會員起盤／點數／AI 服務管理。
+const aiqCategoryLabels={career:'事業',wealth:'財運',love:'感情',life:'人生',decade:'十年大運',year:'今年流年',month:'節氣流月',followup:'延伸追問',fixed:'固定主題',custom:'自由提問'};
+function aiqCategoryName(v){return aiqCategoryLabels[v]||String(v||'');}
+function aiqSourceName(v){return {fixed:'固定題型',preset:'預設題目',edited:'修改預設題',custom:'自行輸入',followup:'追問','legacy-custom':'舊版自訂題'}[v]||v;}
+function aiqLabel(row){
+  const cat=aiqCategoryName(row.category),preset=row.presetLabel||'';
+  return row.source==='custom'?(cat&&cat!=='自由提問'?cat+' → 自由提問':'自行輸入'):
+    row.source==='edited'?(cat?cat+' → ':'')+(preset||'修改預設題')+'（已修改）':
+    row.source==='legacy'?(cat?cat:'未細分')+'（既有 AI 分類統計）':
+    row.source==='followup'?'延伸追問':(cat&&cat!=='固定主題'?cat+' → ':'')+(preset||'其他主題');
+}
+let aiqLoadSeq=0;
+async function loadAiqExcluded(){
+ const host=$('aiqExcludedList');if(!host)return;
+ const data=await usageAdminRequest('/admin/ai-questions/exclusions');
+ host.replaceChildren();
+ if(!data.emails?.length){host.textContent='尚未設定排除信箱。';return;}
+ for(const row of data.emails){
+  const chip=document.createElement('span');chip.className='aiq-tag';
+  const label=document.createElement('span');label.textContent=row.email;
+  const btn=document.createElement('button');btn.type='button';btn.textContent='×';btn.title='移除 '+row.email;
+  btn.addEventListener('click',async()=>{
+   if(!confirm('確定不再排除 '+row.email+' ？\n歷史紀錄將重新計入熱門統計。'))return;
+   btn.disabled=true;
+   try{await usageAdminRequest('/admin/ai-questions/exclusions','POST',{action:'remove',email:row.email});await loadAiqExcluded();await loadAiqTrending();}
+   catch(e){$('aiqStatus').textContent=e.message;$('aiqStatus').classList.add('error');btn.disabled=false;}
+  });
+  chip.append(label,btn);host.append(chip);
+ }
+}
+async function loadAiqTrending(){
+ if(!$('aiQuestionPanel')?.open||!token())return;
+ const seq=++aiqLoadSeq,results=$('aiqResults');results.textContent='正在統計成功的 AI 提問…';
+ try{
+  const r=await usageAdminRequest('/admin/ai-questions/trending?period='+encodeURIComponent($('aiqPeriod').value)+'&tool='+encodeURIComponent($('aiqTool').value));
+  if(seq!==aiqLoadSeq||!$('aiQuestionPanel').open)return;
+  $('aiqSummary').textContent=`成功 AI 題目／分類 ${Number(r.total||0)} 次｜詳細題目會員 ${Number(r.members||0)} 人${Number(r.approximateLegacyCount||0)?'｜其中 '+Number(r.approximateLegacyCount)+' 次為既有工具分類統計（非逐題紀錄）':''}｜已排除指定測試信箱`;
+  results.innerHTML=(r.rows?.length)?`<table><thead><tr><th>排行</th><th>工具</th><th>常見分類／題型</th><th>次數</th><th>會員數</th></tr></thead><tbody>${r.rows.map((v,i)=>`<tr><td>${i+1}</td><td>${esc(usageToolNames[v.tool]||v.tool)}</td><td>${esc(aiqLabel(v))}</td><td><strong>${Number(v.total||0)}</strong></td><td>${Number(v.members||0)}</td></tr>`).join('')}</tbody></table>`:'目前尚無符合條件的成功提問紀錄；未接入的工具不會有資料。';
+ }catch(e){if(seq===aiqLoadSeq){results.textContent='讀取統計失敗';$('aiqStatus').textContent=e.message;$('aiqStatus').classList.add('error');}}
+}
+$('aiQuestionPanel')?.addEventListener('toggle',async()=>{
+ if(!$('aiQuestionPanel').open){aiqLoadSeq++;return;}
+ if(!token())return;
+ try{await loadAiqExcluded();await loadAiqTrending()}
+ catch(e){$('aiqStatus').textContent=e.message;$('aiqStatus').classList.add('error');}
+});
+$('aiqTool')?.addEventListener('change',loadAiqTrending);
+$('aiqPeriod')?.addEventListener('change',loadAiqTrending);
+$('aiqReload')?.addEventListener('click',loadAiqTrending);
+$('aiqExcludeForm')?.addEventListener('submit',async e=>{
+ e.preventDefault();const email=$('aiqEmail').value.trim().toLowerCase();if(!email)return;
+ const btn=e.currentTarget.querySelector('button');btn.disabled=true;
+ try{await usageAdminRequest('/admin/ai-questions/exclusions','POST',{action:'add',email});$('aiqEmail').value='';$('aiqStatus').textContent='已新增排除信箱，含既有紀錄都不會計入熱門統計。';$('aiqStatus').classList.remove('error');await loadAiqExcluded();await loadAiqTrending()}
+ catch(err){$('aiqStatus').textContent=err.message;$('aiqStatus').classList.add('error');}
+ finally{btn.disabled=false;}
+});
+
 // 會員工具排行榜獨立模組：只有展開才向後端發出查詢。
 let memberUsagePeriod='today',memberUsageRequestSeq=0;
 function usageStatus(message='',error=false){const e=$('memberUsageStatus');e.textContent=message;e.classList.toggle('error',error)}
@@ -1407,7 +1506,20 @@ async function loadMemberUsageDetails(sub){
     if(seq!==memberUsageRequestSeq||!$('memberUsagePanel').open)return;
     el.innerHTML=`<div class="detail-title"><h3>${esc(r.member?.name||'會員')}｜${esc(r.member?.email||'')}</h3><button type="button" class="btn secondary" id="memberUsageCloseDetail">收合明細</button></div>
       <div class="member-usage-note">${r.activeDays==null?'歷史至今僅顯示累計次數（日統計採 90 天循環保留），不提供無法確定的活躍天數。':'此期間成功起盤的活躍使用天數：'+Number(r.activeDays)+' 天'}</div>
-      <table><thead><tr><th>工具</th><th>操作分類</th><th>起盤</th><th>章節瀏覽</th><th>AI 成功</th></tr></thead><tbody>${r.details?.length?r.details.map(x=>`<tr><td>${esc(usageToolNames[x.tool]||x.tool)}</td><td>${esc(usageCategoryLabel(x))}</td><td>${Number(x.castCount||0)}</td><td>${Number(x.viewCount||0)}</td><td>${Number(x.aiCount||0)}</td></tr>`).join(''):'<tr><td colspan="5">目前沒有使用紀錄</td></tr>'}</tbody></table>`;
+      <table><thead><tr><th>工具</th><th>操作分類</th><th>起盤</th><th>章節瀏覽</th><th>AI 成功</th></tr></thead><tbody>${r.details?.length?r.details.map(x=>`<tr><td>${esc(usageToolNames[x.tool]||x.tool)}</td><td>${esc(usageCategoryLabel(x))}</td><td>${Number(x.castCount||0)}</td><td>${Number(x.viewCount||0)}</td><td>${Number(x.aiCount||0)}</td></tr>`).join(''):'<tr><td colspan="5">目前沒有使用紀錄</td></tr>'}</tbody></table>
+      <details class="aiq-member-history" id="aiqMemberHistory"><summary>AI 解讀題目明細（點擊展開）</summary><div id="aiqMemberHistoryRows" class="aiq-muted">展開後才查詢成功提問紀錄。</div></details>`;
+    const qpanel=$('aiqMemberHistory');
+    qpanel?.addEventListener('toggle',async()=>{
+      if(!qpanel.open)return;
+      const target=$('aiqMemberHistoryRows');target.textContent='正在查詢 AI 問題…';
+      try{
+        // 會員個別問題不受熱門排除名單影響，只有已登入站長可以查閱。
+        const p=memberUsagePeriod;
+        const res=await usageAdminRequest('/admin/ai-questions/member?sub='+encodeURIComponent(sub)+'&period='+p);
+        const rows=res.rows||[];
+        target.innerHTML=rows.length?rows.map(x=>`<div class="aiq-line"><small>${esc(usageToolNames[x.tool]||x.tool)}｜${esc(aiqSourceName(x.source))}｜${fmt(x.createdAt)}</small><strong>${esc(x.presetLabel||aiqCategoryName(x.category)||'自行輸入')}</strong>${x.questionText?`<div class="question">${esc(x.questionText)}</div>`:''}${x.traceId?`<small>追蹤碼：${esc(x.traceId)}</small>`:''}</div>`).join(''):'尚無可查詢的 AI 題目（其他工具尚未接入或選定期間無紀錄）。';
+      }catch(e){target.textContent='查詢 AI 題目失敗：'+e.message;}
+    });
     $('memberUsageCloseDetail').addEventListener('click',()=>{el.hidden=true});
   }catch(e){el.textContent='讀取明細失敗：'+e.message}
 }
