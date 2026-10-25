@@ -54,6 +54,7 @@
 <script>document.documentElement.dataset.theme="dark";</script>
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
 <script>
+
 'use strict';
 /* 五行站內分析：可解釋的相對評分，不直接推算喜用神、格局或應期。 */
 const $=id=>document.getElementById(id), E=['木','火','土','金','水'];
@@ -76,7 +77,13 @@ function syncDays(){const o=currentInput(),max=calendar==='solar'?new Date(o.y,o
 function updateCalendarHint(){try{let s=solarParts();$('calendarHint').textContent=calendar==='lunar'?`換算國曆：${s.y}/${s.m}/${s.d}（閏月需確認）`:'立春定年 · 節氣定月 · 傳統命理參考';}catch(_){$('calendarHint').textContent=calendar==='lunar'?'請確認該年有這個農曆月及閏月':'請選擇出生日期';}}
 function toggleCalendar(next){if(calendar===next)return;try{verifyCalendar();const old=currentInput();if(next==='lunar'){const l=Solar.fromYmd(old.y,old.m,old.d).getLunar();$('year').value=String(l.getYear());$('month').value=String(Math.abs(l.getMonth()));$('leap').checked=l.getMonth()<0;}else{const p=solarParts();$('year').value=String(p.y);$('month').value=String(p.m);$('leap').checked=false;}}catch(e){fail('曆法轉換未完成：'+e.message);return}calendar=next;$('solarBtn').classList.toggle('active',calendar==='solar');$('lunarBtn').classList.toggle('active',calendar==='lunar');$('solarBtn').setAttribute('aria-pressed',String(calendar==='solar'));$('lunarBtn').setAttribute('aria-pressed',String(calendar==='lunar'));$('leapLabel').hidden=calendar!=='lunar';syncDays();clearFail()}
 function makeChart({demo=false}={}){let ps=[],dayMaster='',datetime='',missingTime=false,seasonBranch='',input=null,sex=$('gender').value;
- if(demo){ps=[['庚','午'],['辛','巳'],['戊','寅'],['丁','巳']];dayMaster='戊';datetime='1990-05-15 10:30';seasonBranch='巳';input={y:1990,m:5,d:15,h:10,minute:30};}
+ if(demo){sex='male';ps=[['庚','午'],['辛','巳'],['戊','寅'],['丁','巳']];dayMaster='戊';datetime='1990-05-15 10:30';seasonBranch='巳';input={y:1990,m:5,d:15,h:10,minute:30};
+  if(typeof Solar!=='undefined'){
+   try{const eight=Solar.fromYmdHms(1990,5,15,10,30,0).getLunar().getEightChar();if(eight.setSect)eight.setSect(2);
+    ps=['Year','Month','Day','Time'].map(k=>[eight['get'+k+'Gan'](),eight['get'+k+'Zhi']()]);dayMaster=ps[2][0];seasonBranch=ps[1][1];}
+   catch(_){/* Demo can still run from the bundled sample even when CDN fails */}
+  }
+ }
  else{let s=solarParts();const slot=$('slot').value,exact=$('exactToggle').checked,hm=exact?$('exactTime').value:'';missingTime=!exact&&slot==='unknown';let hour=12,minute=0;
  if(exact){if(!/^\d\d:\d\d$/.test(hm))throw Error('請輸入有效的出生時間');[hour,minute]=hm.split(':').map(Number)}else if(!missingTime){const j=+slot;hour=j===0?0:2*j;minute=30;}
  const sol=Solar.fromYmdHms(s.y,s.m,s.d,hour,minute,0),lunar=sol.getLunar(),eight=lunar.getEightChar();if(typeof eight.setSect==='function')eight.setSect(+$('sect').value);
@@ -87,7 +94,208 @@ function makeChart({demo=false}={}){let ps=[],dayMaster='',datetime='',missingTi
  const presence=Object.fromEntries(E.map(x=>[x,0]));const scores=Object.fromEntries(E.map(x=>[x,0]));for(const [gan,zhi] of ps){if(!STEMS[gan]||!BRANCH[zhi])throw Error('曆法回傳資料無效');presence[STEMS[gan]]++;scores[STEMS[gan]]+=1.15;for(const [h,w] of BRANCH[zhi]){scores[STEMS[h]]+=w;presence[STEMS[h]]+=w;}}
  const season=SEASON[seasonBranch]||['',''];let total=0;for(const e of E){if(e===season[1])scores[e]*=1.28;else if(GROW[e]===season[1])scores[e]*=1.12;else if(CONTROL[season[1]]===e)scores[e]*=.88;total+=scores[e];}
  const perc=Object.fromEntries(E.map(e=>[e,total>0?Math.round(scores[e]/total*100):0]));const ordered=[...E].sort((a,b)=>scores[b]-scores[a]);const strongest=ordered[0],weakest=ordered[4],notSeen=E.filter(e=>presence[e]<.0001);const dm=STEMS[dayMaster];const supporting=E.find(e=>GROW[e]===dm),output=GROW[dm],wealth=CONTROL[dm],pressure=E.find(e=>CONTROL[e]===dm);
- return {ps,dayMaster,dm,sex,season,seasonBranch,ordered,perc,presence,scores,strongest,weakest,notSeen,supporting,output,wealth,pressure,missingTime,datetime,input,demo,calendar,at:Date.now()};}
+ return {ps,dayMaster,dm,sex,season,seasonBranch,ordered,perc,presence,scores,strongest,weakest,notSeen,supporting,output,wealth,pressure,missingTime,datetime,input,demo,calendar,sect:demo?2:+$('sect').value,at:Date.now()};}
+/* 五行內部資料層 v5：僅供站內規則與日後 AI 提示詞使用，不直接公開於畫面。
+ * 注意：前端程式仍可在瀏覽器檢視；如需真正不公開原始規則，必須移至 Worker。
+ * 重要：本層的「相對權重」延用五行 v3 示意演算法，不宣稱與八字 Worker 百分比一致。
+ */
+const WX_GAN='甲乙丙丁戊己庚辛壬癸';
+const WX_ZHI='子丑寅卯辰巳午未申酉戌亥';
+const WX_ZHI_MAIN={子:'癸',丑:'己',寅:'甲',卯:'乙',辰:'戊',巳:'丙',午:'丁',未:'己',申:'庚',酉:'辛',戌:'戊',亥:'壬'};
+const WX_STEM_COMBINE=[['甲','己'],['乙','庚'],['丙','辛'],['丁','壬'],['戊','癸']];
+const WX_BRANCH_COMBINE=[['子','丑'],['寅','亥'],['卯','戌'],['辰','酉'],['巳','申'],['午','未']];
+const WX_BRANCH_CLASH=[['子','午'],['丑','未'],['寅','申'],['卯','酉'],['辰','戌'],['巳','亥']];
+const WX_BRANCH_HARM=[['子','未'],['丑','午'],['寅','巳'],['卯','辰'],['申','亥'],['酉','戌']];
+const WX_GODS={
+  peer:{same:'比肩',other:'劫財'},resource:{same:'偏印',other:'正印'},output:{same:'食神',other:'傷官'},
+  wealth:{same:'偏財',other:'正財'},authority:{same:'七殺',other:'正官'}
+};
+function wxStemYY(s){const i=WX_GAN.indexOf(s);return i<0?null:(i%2===0?'陽':'陰')}
+function wxBranchYY(z){const i=WX_ZHI.indexOf(z);return i<0?null:(i%2===0?'陽':'陰')}
+function wxTenGod(day,stem){
+ if(!STEMS[day]||!STEMS[stem])return null;
+ const d=STEMS[day],x=STEMS[stem],same=wxStemYY(day)===wxStemYY(stem)?'same':'other';
+ const type=x===d?'peer':x===E.find(e=>GROW[e]===d)?'resource':x===GROW[d]?'output':x===CONTROL[d]?'wealth':'authority';
+ return {name:WX_GODS[type][same],group:{peer:'比劫',resource:'印星',output:'食傷',wealth:'財星',authority:'官殺'}[type],element:x};
+}
+function wxPillarRelations(pillars){
+ const out=[];const relations=[['天干五合',WX_STEM_COMBINE,'gan'],['地支六合',WX_BRANCH_COMBINE,'zhi'],['地支六沖',WX_BRANCH_CLASH,'zhi'],['地支六害',WX_BRANCH_HARM,'zhi'],['地支刑（部分對照）',WX_PUNISH_PAIRS,'zhi'],['地支六破',WX_BREAK_PAIRS,'zhi']];
+ for(let i=0;i<pillars.length;i++)for(let j=i+1;j<pillars.length;j++)for(const [label,pairs,key] of relations){
+  const a=pillars[i][key],b=pillars[j][key];if(pairs.some(([x,y])=>(a===x&&b===y)||(a===y&&b===x)))out.push({type:label,between:[pillars[i].name,pillars[j].name],characters:[a,b],note:label.includes('合')?'有相合關係，但不直接代表合化成功或吉利':'有傳統互動關係，不直接代表特定事件或吉凶'});
+ }
+ for(let i=0;i<pillars.length;i++)for(let j=i+1;j<pillars.length;j++)if(pillars[i].zhi===pillars[j].zhi&&WX_SELF_PUNISH.has(pillars[i].zhi))out.push({type:'地支自刑',between:[pillars[i].name,pillars[j].name],characters:[pillars[i].zhi,pillars[j].zhi],note:'同支自刑僅代表傳統結構提示，不表示必然不吉'});
+ return out;
+}
+function wxSafeMethod(obj,method,...args){try{return typeof obj?.[method]==='function'?obj[method](...args):null}catch(_){return null}}
+function wxSolarLabel(s){try{return s?.toYmdHms?.()||null}catch(_){return null}}
+function buildWuxingBackground(c){
+ const names=['年柱','月柱','日柱','時柱'];
+ const pillars=c.ps.map(([gan,zhi],i)=>({name:names[i],gan,zhi,ganElement:STEMS[gan],zhiElement:STEMS[WX_ZHI_MAIN[zhi]],ganYinYang:wxStemYY(gan),zhiYinYang:wxBranchYY(zhi),
+  visibleTenGod:i===2?{name:'日主',group:'日主',element:c.dm}:wxTenGod(c.dayMaster,gan),
+  hiddenStems:(BRANCH[zhi]||[]).map(([stem,fraction],order)=>({stem,element:STEMS[stem],yinYang:wxStemYY(stem),relativeShare:fraction,kind:order===0?'本氣':order===1?'餘／中氣':'餘氣',tenGod:wxTenGod(c.dayMaster,stem)}))}));
+ const visible=Object.fromEntries(E.map(e=>[e,0]));let yang=0,yin=0;
+ pillars.forEach(p=>{visible[p.ganElement]++;visible[p.zhiElement]++;yang+=(p.ganYinYang==='陽')+(p.zhiYinYang==='陽');yin+=(p.ganYinYang==='陰')+(p.zhiYinYang==='陰')});
+ const hidden=Object.fromEntries(E.map(e=>[e,0]));pillars.forEach(p=>p.hiddenStems.forEach(h=>{hidden[h.element]++}));
+ const fullMissing=E.filter(e=>visible[e]===0&&hidden[e]===0);
+ const roots=pillars.flatMap(p=>p.hiddenStems.filter(h=>h.element===c.dm).map(h=>({pillar:p.name,branch:p.zhi,stem:h.stem,kind:h.kind,share:h.relativeShare})));
+ const tenGodGroups={比劫:0,印星:0,食傷:0,財星:0,官殺:0};pillars.forEach(p=>{if(p.visibleTenGod?.group in tenGodGroups)tenGodGroups[p.visibleTenGod.group]++;p.hiddenStems.forEach(h=>{if(h.tenGod?.group in tenGodGroups)tenGodGroups[h.tenGod.group]++})});
+ const derived={taiYuan:null,mingGong:null,shenGong:null,lunarDate:null,previousJie:null,nextJie:null,naYin:[],diShi:[],xunKong:[]};
+ const notes=[];let calendarVerified=false;
+ try{
+  // 使用與此頁相同的 lunar-javascript 曆法庫。只在干支與目前結果吻合時接受衍生資料。
+  if(typeof Solar!=='undefined'&&c.input?.y&&Number.isFinite(c.input?.h)){
+   const so=Solar.fromYmdHms(c.input.y,c.input.m,c.input.d,c.input.h,c.input.minute||0,0);
+   const lunar=so.getLunar(),eight=lunar.getEightChar();
+   wxSafeMethod(eight,'setSect',Number(c.sect)||2);
+   const check=['Year','Month','Day'].map(k=>[wxSafeMethod(eight,'get'+k+'Gan'),wxSafeMethod(eight,'get'+k+'Zhi')]);
+   calendarVerified=check.every((p,i)=>p[0]===c.ps[i]?.[0]&&p[1]===c.ps[i]?.[1]);
+   if(calendarVerified&&!c.missingTime&&c.input.h!==23){calendarVerified=wxSafeMethod(eight,'getTimeGan')===c.ps[3]?.[0]&&wxSafeMethod(eight,'getTimeZhi')===c.ps[3]?.[1]}
+   if(calendarVerified){
+    derived.lunarDate=([wxSafeMethod(lunar,'getYearInChinese'),wxSafeMethod(lunar,'getMonthInChinese'),wxSafeMethod(lunar,'getDayInChinese')].every(Boolean))?`${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`:null;
+    derived.taiYuan=wxSafeMethod(eight,'getTaiYuan');
+    if(!c.missingTime){derived.mingGong=wxSafeMethod(eight,'getMingGong');derived.shenGong=wxSafeMethod(eight,'getShenGong')}
+    const prev=wxSafeMethod(lunar,'getPrevJie'),next=wxSafeMethod(lunar,'getNextJie');
+    derived.previousJie=prev?{name:wxSafeMethod(prev,'getName'),date:wxSolarLabel(wxSafeMethod(prev,'getSolar'))}:null;
+    derived.nextJie=next?{name:wxSafeMethod(next,'getName'),date:wxSolarLabel(wxSafeMethod(next,'getSolar'))}:null;
+    for(const [i,key] of ['Year','Month','Day','Time'].entries()){
+      if(i===3&&c.missingTime)break;
+      // 晚子時時柱若採 23 時特殊校正，後端與前端方法可能不同，此欄不直接當權威來源。
+      if(i===3&&c.input.h===23&&Number(c.sect)===2)continue;
+      derived.naYin.push({pillar:names[i],value:wxSafeMethod(eight,'get'+key+'NaYin')});
+      derived.diShi.push({pillar:names[i],value:wxSafeMethod(eight,'get'+key+'DiShi')});
+      derived.xunKong.push({pillar:names[i],value:wxSafeMethod(eight,'get'+key+'XunKong')});
+    }
+   }else notes.push('曆法衍生資料未通過干支一致性比對，衍生欄位與大運暫不提供');
+  }else notes.push('曆法函式未載入或日期資料不完整，衍生欄位暫不提供');
+ }catch(_){notes.push('部分曆法衍生欄位未取得，不影響五行基本結構')}
+ const isFull=!c.missingTime;
+ const timeContext=wxTimeContext(c,calendarVerified);
+ const backingElements=[c.supporting,c.dm].filter(Boolean);
+ const helped=pillars.flatMap(p=>[...p.hiddenStems.map(h=>({stem:h.stem,pillar:p.name,source:'藏干',element:h.element})),{stem:p.gan,pillar:p.name,source:'明干',element:p.ganElement}]).filter(x=>backingElements.includes(x.element));
+ const draining=pillars.flatMap(p=>p.hiddenStems.map(h=>({stem:h.stem,pillar:p.name,element:h.element}))).filter(x=>[c.output,c.wealth,c.pressure].includes(x.element));
+ const dayStrengthEvidence={dayElement:c.dm,monthElement:c.season[1],monthSupportsDay:c.season[1]===c.dm||GROW[c.season[1]]===c.dm,monthRelation:c.season[1]===c.dm?'得令同氣':GROW[c.season[1]]===c.dm?'月令生扶':GROW[c.dm]===c.season[1]?'日主生月令（洩）':CONTROL[c.season[1]]===c.dm?'月令剋日主':CONTROL[c.dm]===c.season[1]?'日主剋月令':'需綜合',rootCount:roots.length,roots:roots,resourceAndPeerClues:helped,drainAndControlClues:draining,determination:null,note:'僅列月令、生扶與通根證據；未經格局／調候／從格驗證，不輸出身強弱或喜用神定論'};
+ return {
+  version:'wuxing-private-context-v2',builtAt:new Date().toISOString(),basis:{source:'lunar-javascript + 本頁可解釋的規則層',solarInput:c.input,solarText:c.datetime,lunarText:derived.lunarDate,calendarMode:c.calendar,sect:Number(c.sect)||2,gender:c.sex,calculatedPillars:isFull?4:3,calendarVerified},
+  pillars,elementStructure:{visibleCharacters:{total:pillars.length*2,counts:visible},hiddenStems:{counts: hidden,perBranch:pillars.map(p=>({pillar:p.name,stems:p.hiddenStems}))},weightedRelative:{weights:{...c.scores},rank:[...c.ordered],strongest:c.strongest,weakest:c.weakest,method:'五行工具自身的季節加權示意，非八字 Worker 正式權重'},notVisible:E.filter(e=>visible[e]===0),notFoundInPresentPillars:fullMissing},
+  yinYang:{yang,yin,total:yang+yin,scope:`${pillars.length*2} 個表層干支`},
+  season:{monthBranch:c.seasonBranch,label:c.season[0],dominantElement:c.season[1],jie: {previous:derived.previousJie,next:derived.nextJie}},
+  dayMaster:{stem:c.dayMaster,element:c.dm,yinYang:wxStemYY(c.dayMaster),resourceElement:c.supporting,peerElement:c.dm,outputElement:c.output,wealthElement:c.wealth,authorityElement:c.pressure,rootClues:roots,tenGodGroups,dayStrengthEvidence},
+  interactions:{list:wxPillarRelations(pillars),method:'列天干五合、地支六合、六沖、六害、部分刑與六破；不推斷合化成立、事件吉凶與應期'},
+  auxiliary:{taiYuan:derived.taiYuan,mingGong:derived.mingGong,shenGong:derived.shenGong,naYin:derived.naYin,diShi:derived.diShi,xunKong:derived.xunKong},
+  timeContext,
+  assessments:{bodyStrength:null,favorableElements:null,unfavorableElements:null,structurePattern:null,adjustClimate:null,luckCycles:timeContext.luck.available?'僅取大運干支及起迄，不作吉凶評分':null,annualPredictions:null,why:'尚未接通八字 Worker 判斷資料；不能只靠表層數量、五行排序或季節比例推論'},
+  quality:{completeFourPillars:isFull,calendarVerified,level:isFull?'四柱結構資料':'三柱初步資料',notes:[...notes,...(!isFull?['時辰未知：時柱、命宮、身宮及相關判斷不提供']:[]),'分布示意分數不可與八字 Worker 正式百分比直接互換']}
+ };
+}
+/* Five-elements supplementary calculation for text reports. Uses exactly the lunar-javascript
+ * calendar API already used by the original BaZi page; no second calendar dependency.
+ * Traditional cycles are descriptive context, not fate/financial predictions. */
+const WX_PUNISH_PAIRS=[['寅','巳'],['巳','申'],['寅','申'],['丑','戌'],['戌','未'],['丑','未'],['子','卯']];
+const WX_SELF_PUNISH=new Set(['辰','午','酉','亥']);
+const WX_BREAK_PAIRS=[['子','酉'],['丑','辰'],['寅','亥'],['卯','午'],['巳','申'],['未','戌']];
+function wxTaipeiDate(){
+ try{
+  const ps=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+  const v=Object.fromEntries(ps.map(p=>[p.type,p.value]));
+  return {year:+v.year,month:+v.month,day:+v.day,hour:+v.hour,minute:+v.minute};
+ }catch(_){const d=new Date();return {year:d.getFullYear(),month:d.getMonth()+1,day:d.getDate(),hour:d.getHours(),minute:d.getMinutes()}}
+}
+function wxLocalISO(t){return `${t.year}-${pad(t.month)}-${pad(t.day)} ${pad(t.hour||0)}:${pad(t.minute||0)}:00`}
+function wxFlowYear(year){
+ try{
+  // Mid-year avoids 立春 boundary ambiguity when labeling a 60-cycle year.
+  const e=Solar.fromYmdHms(year,7,1,12,0,0).getLunar().getEightChar();
+  const gan=wxSafeMethod(e,'getYearGan'),zhi=wxSafeMethod(e,'getYearZhi');
+  const py=Solar.fromYmdHms(year,2,15,12,0,0).getLunar().getPrevJie();
+  const ny=Solar.fromYmdHms(year+1,2,15,12,0,0).getLunar().getPrevJie();
+  return {year,gan,zhi,ganZhi:gan&&zhi?gan+zhi:null,tenGod:null,startSolar:wxSolarLabel(wxSafeMethod(py,'getSolar')),endSolar:wxSolarLabel(wxSafeMethod(ny,'getSolar')),boundary:'以立春節氣換年'};
+ }catch(_){return {year,gan:null,zhi:null,ganZhi:null,startSolar:null,endSolar:null,boundary:'節氣年資料未取得'}}
+}
+function wxTimeContext(c,calendarVerified){
+ const now=wxTaipeiDate(),localNow=wxLocalISO(now);
+ const time={calendarVerified,timeZone:'Asia/Taipei',referenceTime:localNow,annual:{current:null,previous:null,next:null,calendarYear:now.year,method:'立春節氣年'},luck:{available:false,status:'未計算',gender:c.sex,cycles:[],current:null,next:null,startSolar:null,forward:null,uncertainties:[]}};
+ if(!calendarVerified){time.luck.status='曆法四柱尚未通過一致性驗證';return time}
+ try{
+  const today=Solar.fromYmdHms(now.year,now.month,now.day,now.hour,now.minute,0),ec=today.getLunar().getEightChar();
+  const currentStem=wxSafeMethod(ec,'getYearGan'),currentBranch=wxSafeMethod(ec,'getYearZhi');
+  const all=Array.from({length:5},(_,i)=>wxFlowYear(now.year-2+i));
+  const active=all.find(x=>x.gan===currentStem&&x.zhi===currentBranch);
+  const effectiveYear=active?.year??now.year;
+  time.annual.current=wxFlowYear(effectiveYear);
+  time.annual.previous=wxFlowYear(effectiveYear-1);
+  time.annual.next=wxFlowYear(effectiveYear+1);
+  time.annual.calendarYear=effectiveYear;
+  for(const field of ['current','previous','next']){
+   const row=time.annual[field];if(row&&row.gan){
+    row.tenGod=wxTenGod(c.dayMaster,row.gan);
+    row.branchMainTenGod=wxTenGod(c.dayMaster,WX_ZHI_MAIN[row.zhi]);
+    const flowName=field==='current'?'今年流年':field==='previous'?'去年流年':'明年流年';
+    row.interactions=wxPillarRelations([...c.ps.map(([g,z],k)=>({name:['年柱','月柱','日柱','時柱'][k],gan:g,zhi:z})),{name:flowName,gan:row.gan,zhi:row.zhi}]).filter(r=>r.between.includes(flowName));
+   }
+  }
+ }catch(_){time.annual.note='當前流年資料未取得，請確認曆法函式'}
+ if(c.sex!=='male'&&c.sex!=='female'){
+  time.luck.status='未指定性別，無法依原八字頁之順逆排運設定確定大運';
+  time.luck.uncertainties.push('大運需先選男／女（沿用八字傳統排法）');return time;
+ }
+ try{
+  const s=c.input,e=Solar.fromYmdHms(s.y,s.m,s.d,s.h,s.minute||0,0).getLunar().getEightChar();
+  wxSafeMethod(e,'setSect',Number(c.sect)||2);
+  const yun=wxSafeMethod(e,'getYun',c.sex==='male'?1:0,2);
+  if(!yun)throw new Error('曆法程式未提供大運接口');
+  const start=wxSafeMethod(yun,'getStartSolar');
+  const raw=wxSafeMethod(yun,'getDaYun',13);
+  if(!Array.isArray(raw))throw new Error('大運清單讀取失敗');
+  const cycles=raw.filter(x=>Number(wxSafeMethod(x,'getIndex'))>0).slice(0,12).map((x,i)=>{
+   const ganZhi=wxSafeMethod(x,'getGanZhi')||'';
+   let startSolar=null,endSolar=null;
+   if(start){startSolar=wxSolarLabel(wxSafeMethod(start,'nextYear',i*10));endSolar=wxSolarLabel(wxSafeMethod(start,'nextYear',(i+1)*10))}
+   const gan=ganZhi.charAt(0)||null,zhi=ganZhi.charAt(1)||null;
+   return {index:i+1,gan,zhi,ganZhi,startAge:wxSafeMethod(x,'getStartAge'),endAge:wxSafeMethod(x,'getEndAge'),startYear:wxSafeMethod(x,'getStartYear'),endYear:wxSafeMethod(x,'getEndYear'),startSolar,endSolar,tenGod:wxTenGod(c.dayMaster,gan),branchMainTenGod:wxTenGod(c.dayMaster,WX_ZHI_MAIN[zhi]),interactions:wxPillarRelations([...c.ps.map(([g,z],k)=>({name:['年柱','月柱','日柱','時柱'][k],gan:g,zhi:z})),{name:`第${i+1}步大運`,gan,zhi}]).filter(x=>x.between.includes(`第${i+1}步大運`))};
+  });
+  if(!cycles.length)throw new Error('大運清單為空');
+  // Prefer actual handover dates; year-only fallback is explicitly flagged below.
+  let current=cycles.find(x=>x.startSolar&&x.endSolar&&x.startSolar<=localNow&&localNow<x.endSolar)||null;
+  let precision='交運日期';
+  if(!current){current=cycles.find(x=>Number(x.startYear)<=now.year&&now.year<=Number(x.endYear))||null;precision='年份範圍（可能有跨年誤差）'}
+  const next=current?cycles.find(x=>x.index===current.index+1)||null:null;
+  const uncertainties=[];
+  if(c.missingTime)uncertainties.push('出生時辰未知：大運起運時間為中午假定值，交運前後須重新核對');
+  if(c.input.h===23)uncertainties.push('晚子時交界：四柱採選定的換日流派，需人工核對起運時間');
+  if(precision!=='交運日期')uncertainties.push('未能依交運日期確認，目前大運依年份概算');
+  if(c.missingTime&&current&&Math.abs(now.year-current.startYear)<=1){
+   uncertainties.push('目前接近估算交運年份，出生時間不明，不能確定哪一步運');current=null;
+  }
+  time.luck={available:true,status:current?'已取得當前大運干支（未評吉凶）':'已取得大運清單，但當前運期仍需確認',gender:c.sex,forward:wxSafeMethod(yun,'isForward'),startSolar:wxSolarLabel(start),startOffset:{years:wxSafeMethod(yun,'getStartYear'),months:wxSafeMethod(yun,'getStartMonth'),days:wxSafeMethod(yun,'getStartDay'),hours:wxSafeMethod(yun,'getStartHour')},current,next,cycles,precision,uncertainties};
+ }catch(e){time.luck.status='大運資料無法計算：'+(e?.message||'未知錯誤')}
+ return time;
+}
+function wxReportTimeLine(c,id){
+ const b=c.background;if(!b)return '';
+ const luck=b.timeContext?.luck,annual=b.timeContext?.annual;
+ const period=luck?.current,flow=annual?.current;
+ const groups=[period?.tenGod?.group,flow?.tenGod?.group].filter(Boolean);
+ const unique=[...new Set(groups)];
+ const theme={比劫:'自主、同儕與協作',印星:'學習、支持與資源',食傷:'表達、創作與成果',財星:'資源配置與收支',官殺:'責任、制度與界線'};
+ const text=unique.map(x=>theme[x]).filter(Boolean).join('，');
+ if(!text){return '大運或當前流年資料還未齊備，本篇不會自行補造個別年份的吉凶應期。'}
+ const focus=id==='career'?'職場分工、能力累積和實際工作條件':id==='wealth'?'現金流、風險承受能力和財務紀律':id==='love'?'真實溝通、界線與雙方互動':'生活節奏與自我反思';
+ return `把當前歲運的十神關係作為時間背景，傳統上可留意「${text}」的議題；你可以用它檢視${focus}。這是命理象徵的觀察方向，不代表任何特定事件必然發生。`;
+}
+function wxInternalInsight(c){
+ const b=c.background;if(!b)return '';
+ const bvis=b.elementStructure.visibleCharacters.counts;
+ const yy=b.yinYang;
+ const yinYangDescription=Math.abs(yy.yang-yy.yin)<=1?'陰陽表層分布較接近':yy.yang>yy.yin?'陽性干支較多':'陰性干支較多';
+ const hidden=b.elementStructure.notVisible.length?`表面較不明顯的五行，還須連同地支藏干一起觀察，不能直接判為完全缺少。`:'各種五行都能在表層找到對應線索。';
+ const roots=b.dayMaster.rootClues.length?'日主同類五行在地支中仍可見根氣線索。':'目前從所列地支未見明顯同類根氣，但仍不能單憑此判斷身強弱。';
+ return `進一步綜合表層、藏干與陰陽資料，這張盤${yinYangDescription}；${hidden}${roots}這些僅是分析背景，需與月令、生剋和完整格局一同閱讀。`;
+}
+function wxAIPayload(c,question){
+ const b=c.background||buildWuxingBackground(c);
+ return {tool:'wuxing',schemaVersion:b.version,question,knownFacts:{birth:b.basis.solarText,lunar:b.basis.lunarText,solarInput:b.basis.solarInput,sect:b.basis.sect,gender:b.basis.gender,pillars:b.pillars,elementStructure:b.elementStructure,yinYang:b.yinYang,season:b.season,dayMaster:b.dayMaster,interactions:b.interactions,auxiliary:b.auxiliary,timeContext:b.timeContext},uncertainty:{...b.assessments,quality:b.quality},rules:['繁體中文白話解讀','明確區分干支事實、規則層推論、未驗證判斷','不把未出現五行等同應補喜用神','不捏造身強弱、格局、調候、大運流年','時辰未知時不可補造時柱或由其推論','健康不做疾病診斷，財務不提供必然賺賠結論']};
+}
+
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
 // 五邊形能量輪廓只表達相對量，不顯示數字。內部演算仍採用原版五行權重。
@@ -125,7 +333,7 @@ function assemble(c,id){const k=common(c),a=k.a,s=k.s,w=k.w;let sections=[];
  const I={identity:'五行屬性',personality:'性格優缺點',balance:'缺什麼與調和',career:'工作事業',love:'感情人際',wealth:'財運理財'}[id];
  sections.push(section('一、你的命盤重點',`你的問題是「${SUBJECTS.find(v=>v[0]===id)[1]}」。${k.sdesc}從傳統五行看，日主${k.dm}是描述「自己」的出發點，而不是看到全盤哪個元素最多，就把那個元素誤認成你的日主。${k.n}第一步應把日主、五行分布及季節關係拆開閱讀，避免用單一標籤替自己下結論。`));
  sections.push(section('二、從日主看基本傾向',`${k.dm}的常見意象是「${k.sname}」。這個意象可以用於自我觀察：${a.good}。不過，同一種特質也有另一面：${a.risk}。當你發現自己在工作、生活或相處中有類似情況，可以將它視為提醒而非命定結果。日主只能提供解讀起點，真正的行為仍受到個人經驗、環境與選擇影響。`));
- sections.push(section('三、五行強弱與季節',`${k.season}本頁的相對分布顯示${c.strongest}較突出、${c.weakest}較弱；${c.strongest}相關的象徵是「${s.good}」，若運用得宜，是可被看見的長處。反過來說，也要留意「${s.risk}」的傾向。${k.n}比起只問五行數量是否平均，更值得問的是：這些特質在目前人生情境是否協調。`));
+ sections.push(section('三、五行強弱與季節',`${k.season}本頁的相對分布顯示${c.strongest}較突出、${c.weakest}較弱；${c.strongest}相關的象徵是「${s.good}」。${wxInternalInsight(c)}${wxReportTimeLine(c,id)}這些數據需要合併月令與生剋閱讀，不能只依數量評吉凶。`));
  if(id==='identity'){
  sections.push(section('四、你的五行組合會怎麼表現',`以${k.dm}作為核心，配上相對突出的${c.strongest}，可以把「${a.good}」與「${s.good}」視為兩條值得檢查的線索。當事情順利時，這兩種特質可能形成互補；遇到壓力時，則可能讓「${a.risk}」顯得明顯。若你發現自己有反例，也不代表命盤錯誤，而是提醒這只是一種象徵性的整理方法。`));
  sections.push(section('五、你的潛在優勢',`如果把五行當成一份自我檢視表，可以從三個方向試著觀察自己：第一，做決定時是否充分運用${c.dm}的核心特質；第二，${c.strongest}帶來的長處是否經常得到實際發揮；第三，${c.weakest}所象徵的能力有沒有透過學習、合作得到補充。${w.good}不因分布偏低就自動消失，它仍可能是你在不同情境下使用的資源。`));
@@ -173,10 +381,10 @@ function readToken(){try{const raw=localStorage.getItem(SKEY)||'';let v=JSON.par
 async function restoreMember(){let t=readToken();if(!t){member=null;renderMember();return}try{const r=await fetch('https://member-api.ezgocpu.workers.dev/auth/session',{headers:{Authorization:'Bearer '+t,Accept:'application/json'},cache:'no-store'});let j=await r.json();member=r.ok&&j.success&&j.authenticated&&j.member?.sub?j.member:null}catch(e){member=null}renderMember()}
 function renderMember(){const b=$('memberLink');b.textContent=member?'會員中心':'免費登入';const ret=encodeURIComponent(location.pathname+location.search+location.hash);b.href=member?'/member.html':'/member.html?return='+ret;$('historyNotice').textContent=member?'已辨識登入會員：目前先儲存在此瀏覽器，跨裝置同步需另接會員後端。':'登入會員後可在此瀏覽器暫存最近 3 組；尚未接通跨裝置會員紀錄 API。';renderHistory()}
 function readHistory(){try{return JSON.parse(localStorage.getItem(storageKey())||'[]')||[]}catch(e){return []}}
-function recordHistory(c,id){if(!member||c.demo)return;try{const old=readHistory(),key=c.datetime;let found=old.find(x=>x.key===key);if(found){found.ids=[...new Set([...(found.ids||[]),id])];found.updated=Date.now();found.data=c;}else{old.unshift({key,ids:[id],updated:Date.now(),data:c})}old.sort((a,b)=>b.updated-a.updated);localStorage.setItem(storageKey(),JSON.stringify(old.slice(0,3)));renderHistory()}catch(e){notice('本機無法保存紀錄，請檢查瀏覽器儲存設定。')}}
+function recordHistory(c,id){if(!member||c.demo)return;try{const old=readHistory(),key=c.datetime;const {background,...saved}=c;let found=old.find(x=>x.key===key);if(found){found.ids=[...new Set([...(found.ids||[]),id])];found.updated=Date.now();found.data=saved;}else{old.unshift({key,ids:[id],updated:Date.now(),data:saved})}old.sort((a,b)=>b.updated-a.updated);localStorage.setItem(storageKey(),JSON.stringify(old.slice(0,3)));renderHistory()}catch(e){notice('本機無法保存紀錄，請檢查瀏覽器儲存設定。')}}
 function renderHistory(){const rows=member?readHistory():[];$('historyList').innerHTML=rows.length?rows.map((r,i)=>`<div class="history-card"><b>${esc(r.key)}</b><small>日主 ${esc(r.data.dayMaster+r.data.dm)} · 已看 ${r.ids.length} 題</small><div><button type="button" class="secondary" data-history="${i}">重新閱讀</button></div></div>`).join(''):`<div class="history-card" style="grid-column:1/-1"><b>尚無已儲存的五行紀錄</b><small>${member?'完成個人查詢並選擇題目後，自動暫存最近 3 組。':'請先登入會員，才能啟用本機個人紀錄。'}</small></div>`}
-function showChart(c){chart=c;$('report').hidden=true;renderChart(c);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
-function buildAiPrompt(){if(!chart)return '';const q=$('customQuestion').value.trim()||SUBJECTS.find(s=>s[0]===active)[1];return `請以繁體中文，根據以下五行命盤的可見結構、並清楚區分事實與推測，回答問題：${q}\n出生：${chart.datetime}\n四柱：${chart.ps.map(p=>p.join('')).join('、')}\n日主：${chart.dayMaster}${chart.dm}\n月令：${chart.seasonBranch}\n五行相對排序：${chart.ordered.join(' ＞ ')}\n提醒：權重只是示意；不得只靠五行缺項就斷定喜用神，不得當作醫療或投資決策依據。`}
+function showChart(c){chart={...c};chart.background=buildWuxingBackground(chart);$('report').hidden=true;renderChart(chart);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+function buildAiPrompt(){if(!chart)return '';const q=$('customQuestion').value.trim()||SUBJECTS.find(s=>s[0]===active)[1];return '請依照以下五行背景資料回答使用者問題。\n注意「未判定」不能自行補成確定結果；請用繁體中文，區分計算事實與傳統詮釋。\n\n'+JSON.stringify(wxAIPayload(chart,q),null,2)}
 async function copyText(s){if(!s)return;try{await navigator.clipboard.writeText(s);notice('已複製到剪貼簿')}catch(e){const t=document.createElement('textarea');t.value=s;document.body.append(t);t.select();document.execCommand('copy');t.remove();notice('已複製到剪貼簿')}}
 $('calculate').addEventListener('click',()=>{clearFail();try{const c=makeChart();showChart(c)}catch(e){fail(e?.message||'無法完成五行計算')}});
 $('demo').addEventListener('click',()=>{clearFail();showChart(makeChart({demo:true}));notice('目前顯示的是範例命盤，不是你的個人資料')});
@@ -188,6 +396,7 @@ $('aiBtn').addEventListener('click',()=>notice('五行 AI API 尚未接通，不
 $('refreshHistory').addEventListener('click',()=>{void restoreMember();notice('已重新檢查會員登入狀態')});
 $('historyList').addEventListener('click',e=>{const b=e.target.closest('[data-history]');if(!b||!member)return;const x=readHistory()[+b.dataset.history];if(!x?.data)return;showChart(x.data);renderReport(x.ids[0]||'identity')});
 function init(){const y=new Date().getFullYear();options($('year'),1900,Math.min(2100,y),'年');options($('month'),1,12,'月');$('year').value='1990';$('month').value='5';options($('day'),1,31,'日');$('day').value='15';updateCalendarHint();createTopics();void restoreMember();}init();
+
 </script>
 </body>
 </html>
