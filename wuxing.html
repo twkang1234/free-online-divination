@@ -180,7 +180,7 @@ html[data-wx-layout="mobile"] .summary-banner{grid-template-columns:1fr}html[dat
 .wx-ai-send{border:1px solid #699c7e;background:linear-gradient(120deg,#b5e6c9,#75cda4);color:#092c1e;min-height:45px;border-radius:10px;padding:10px 17px;font-weight:850;font-size:13px}
 .wx-ai-send:disabled{opacity:.58;cursor:not-allowed}.wx-ai-send span{font-size:11px;font-weight:600}
 .wx-ai-footnote{padding:11px 25px 14px;border-top:1px solid rgba(157,218,184,.12);margin:0!important;color:#91ad9d!important;font-size:11px!important;line-height:1.75}
-.wx-ai-conversation{padding:20px 25px;border-top:1px solid rgba(157,218,184,.18)}
+.wx-ai-conversation{padding:20px 25px;border-top:1px solid rgba(157,218,184,.18);min-width:0}
 .wx-ai-conversation h4{margin:0 0 12px}.wx-ai-conversation label{display:block;margin:12px 0;color:#badbc8}
 .wx-ai-conversation textarea{display:block;width:100%}.wx-ai-conversation button{margin-top:12px;padding:10px 16px}
 @media(max-width:600px){.wx-ai-header{padding:18px 15px 14px}.wx-ai-header h3{font-size:20px}.wx-ai-composer{padding:17px 15px 18px}.wx-ai-category,.wx-ai-suggestion{min-height:36px;padding:7px 11px;font-size:12px}.wx-ai-step{font-size:12px}.wx-ai-send{width:100%}.wx-ai-footnote{padding:12px 15px}}
@@ -190,12 +190,41 @@ html[data-wx-layout="mobile"] .summary-banner{grid-template-columns:1fr}html[dat
 /* V17 AI live transcript */
 .wx-ai-inline-status{font-size:12px;color:#99bcac;line-height:1.5;max-width:420px}
 .wx-ai-sendrow{flex-wrap:wrap}
-.wx-ai-messages{display:grid;gap:12px;margin-bottom:14px}
-.wx-ai-message{border:1px solid rgba(155,213,180,.18);border-radius:12px;background:#071811;padding:16px 18px;scroll-margin-top:90px}
+.wx-ai-messages{display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:12px;margin-bottom:14px}
+.wx-ai-message{border:1px solid rgba(155,213,180,.18);border-radius:12px;background:#071811;padding:16px 18px;min-width:0;max-width:100%;scroll-margin-top:90px}
 .wx-ai-message-user{background:rgba(87,166,124,.09);border-left:3px solid #82dfb6}
-.wx-ai-message-head{font-size:13px;font-weight:800;color:#aadbbf;margin-bottom:9px}
+/* V18 AI article reading system: actual provider code + trace on one line; styled safe Markdown */
+.wx-ai-message-ai{background:linear-gradient(145deg,rgba(7,26,18,.98),rgba(5,19,15,.98));border-color:rgba(142,220,177,.30);padding:clamp(17px,3vw,29px)}
+.wx-ai-message-user{padding:15px 20px}
+.wx-ai-message-head{font-size:14px;font-weight:850;color:#d0e8d8;margin-bottom:10px;line-height:1.5}
+.wx-ai-message-ai .wx-ai-message-head{font-size:17px;color:#f3f8e9;margin-bottom:6px}
+.wx-ai-message-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 0 15px;margin:0 0 20px;border-bottom:1px solid rgba(155,213,180,.19);font-size:12px;font-weight:650;color:#a8d4bc;line-height:1.7;overflow-wrap:anywhere}
+.wx-ai-message-meta>span{min-width:0;overflow-wrap:anywhere}.wx-ai-message-meta .wx-ai-channel{color:#b5eccd}
+.wx-ai-message-meta .wx-ai-separator{color:#6e997f}
 .wx-ai-message-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.95;color:#e8f2e7;font-size:15px}
-.wx-ai-trace{display:block;margin-top:12px;font-size:11px;color:#88ad9c}
+.wx-ai-message-ai .wx-ai-message-text{white-space:normal;line-height:1.96;font-size:16px;color:#e3eee4;letter-spacing:.015em}
+.wx-ai-prose{max-width:900px;margin:0 auto}
+.wx-ai-prose p{margin:0 0 1.25em;line-height:2.02}
+.wx-ai-prose>p:first-child{font-size:1.03em;color:#f2f9ee}
+.wx-ai-prose h2{font-size:clamp(18px,2vw,22px);font-weight:850;line-height:1.55;color:#f3d49a;margin:30px 0 15px;padding:0 0 10px;border-bottom:1px solid rgba(229,194,123,.23);letter-spacing:.025em}
+.wx-ai-prose h2:first-child{margin-top:0}
+.wx-ai-prose h3{font-size:17px;line-height:1.55;color:#a5e9c1;font-weight:820;margin:24px 0 12px}
+.wx-ai-prose strong{color:#fff0bd;font-weight:850}
+.wx-ai-prose em{color:#c0e8d0;font-style:normal}
+.wx-ai-prose ul,.wx-ai-prose ol{margin:9px 0 24px;padding-left:1.65em;line-height:1.92}
+.wx-ai-prose li{padding-left:.25em;margin:9px 0}
+.wx-ai-prose li::marker{color:#91dbb4;font-weight:800}
+.wx-ai-prose li>strong:first-child{color:#f5ddab}
+.wx-ai-prose blockquote{margin:20px 0;padding:13px 16px;border-left:3px solid #94dbb3;background:rgba(144,220,177,.075);border-radius:0 9px 9px 0;color:#d7e9dd}
+.wx-ai-prose blockquote p{margin:0 0 .75em}.wx-ai-prose blockquote p:last-child{margin-bottom:0}
+.wx-ai-prose hr{border:0;border-top:1px solid rgba(155,213,180,.22);margin:27px 0}
+.wx-ai-prose code{padding:1px 5px;background:#193429;border-radius:4px;color:#b5eacb;font-size:.85em;overflow-wrap:anywhere}
+.wx-ai-table-scroll{width:100%;max-width:100%;overflow-x:auto;margin:18px 0 27px;border:1px solid rgba(155,213,180,.25);border-radius:10px}
+.wx-ai-prose table{border-collapse:collapse;min-width:460px;width:100%;font-size:.92em}
+.wx-ai-prose th,.wx-ai-prose td{padding:11px 13px;border-bottom:1px solid rgba(155,213,180,.13);text-align:left;vertical-align:top}
+.wx-ai-prose th{background:rgba(147,220,176,.10);color:#f5dbab}.wx-ai-prose tr:last-child td{border-bottom:0}
+.wx-ai-prose>*:last-child{margin-bottom:0}
+@media(max-width:700px){.wx-ai-conversation{padding:17px 10px}.wx-ai-message{scroll-margin-top:170px}.wx-ai-message-ai{padding:17px 12px}.wx-ai-message-ai .wx-ai-message-text{font-size:15px;line-height:1.9}.wx-ai-prose h2{margin-top:25px;font-size:18px}.wx-ai-prose h3{font-size:16px}.wx-ai-prose ul,.wx-ai-prose ol{padding-left:1.35em}.wx-ai-message-meta{font-size:11px}}
 .wx-ai-conversation textarea{background:#051510;border:1px solid rgba(159,213,182,.25);color:#f5fcf3;min-height:95px;border-radius:10px;padding:12px}
 .wx-ai-conversation button{background:#8fdbb2;color:#08271a;border:0;border-radius:10px;font-weight:800}
 .wx-ai-conversation button:disabled{opacity:.5}
@@ -565,13 +594,90 @@ async function wxAiRefreshStatus(){
  if(wxAiQuota?.free){$('wxFreeAi').textContent=wxAiQuota.free.remaining+' / '+wxAiQuota.free.limit+' 次';$('wxFreeAiCycle').textContent=`每 ${wxAiQuota.free.days} 天補充 · ${wxAiQuota.free.resetAt}`;}
  if(wxAiQuota?.role==='member')$('wxSharedAi').textContent=wxAiQuota.sharedAiRemaining+' 次';
 }
+/* AI Markdown is interpreted locally without raw HTML injection or external render libraries. */
+function wxAiAddInline(parent,value){
+ const str=String(value||'');
+ const marks=/(\*\*([^*\n]+)\*\*|__([^_\n]+)__|`([^`\n]+)`|(?<!\*)\*([^*\n]+)\*(?!\*))/g;
+ let last=0,match;
+ while((match=marks.exec(str))){
+  if(match.index>last)parent.append(document.createTextNode(str.slice(last,match.index)));
+  const tag=match[2]!==undefined||match[3]!==undefined?'strong':match[4]!==undefined?'code':'em';
+  const item=document.createElement(tag);item.textContent=match[2]??match[3]??match[4]??match[5];parent.append(item);
+  last=marks.lastIndex;
+ }
+ if(last<str.length)parent.append(document.createTextNode(str.slice(last)));
+}
+function wxAiRenderArticle(node,source){
+ const root=document.createElement('div');root.className='wx-ai-prose';
+ const lines=String(source||'').replace(/\r\n?/g,'\n').split('\n');
+ const isBullet=s=>/^\s{0,6}[-*+]\s+\S/.test(s);
+ const numberOf=s=>/^\s{0,6}(\d{1,2})[.)、]\s+(.+)$/.exec(s);
+ const isHeading=s=>/^\s{0,3}(#{1,6})\s+(.+)/.test(s);
+ let pending=[],list=null,listType='';
+ const appendPara=()=>{
+  if(!pending.length)return;
+  const paragraph=document.createElement('p');
+  pending.forEach((str,i)=>{if(i)paragraph.append(document.createElement('br'));wxAiAddInline(paragraph,str)});
+  root.append(paragraph);pending=[];
+ };
+ const clearList=()=>{list=null;listType=''};
+ const addListItem=(type,body,start)=>{
+  if(!list||listType!==type){list=document.createElement(type);listType=type;if(type==='ol'&&start>1)list.start=start;root.append(list)}
+  const li=document.createElement('li');wxAiAddInline(li,body);list.append(li);
+ };
+ const parseCells=s=>s.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(x=>x.trim());
+ const tableDivider=s=>/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(s);
+ for(let i=0;i<lines.length;i++){
+  const line=lines[i].trim();
+  if(!line){
+   if(list){const next=(lines.slice(i+1).find(s=>s.trim())||'').trim();if((listType==='ul'&&isBullet(next))||(listType==='ol'&&numberOf(next)))continue;}
+   appendPara();clearList();continue;
+  }
+  if(line.includes('|')&&i+1<lines.length&&tableDivider(lines[i+1])){
+   appendPara();clearList();const headers=parseCells(line);
+   const wrap=document.createElement('div');wrap.className='wx-ai-table-scroll';const table=document.createElement('table');
+   const thead=document.createElement('thead'),tr=document.createElement('tr');
+   headers.forEach(h=>{const th=document.createElement('th');wxAiAddInline(th,h);tr.append(th)});thead.append(tr);table.append(thead);
+   const tbody=document.createElement('tbody');i++;
+   for(;i+1<lines.length;i++){
+    const next=lines[i+1].trim();if(!next||!next.includes('|'))break;
+    const cols=parseCells(next);const row=document.createElement('tr');
+    headers.forEach((_,j)=>{const td=document.createElement('td');wxAiAddInline(td,cols[j]||'');row.append(td)});tbody.append(row);
+   }
+   table.append(tbody);wrap.append(table);root.append(wrap);continue;
+  }
+  const h=/^#{1,6}\s+(.+)$/.exec(line);
+  if(h){appendPara();clearList();const level=(line.match(/^#+/)||['###'])[0].length;const heading=document.createElement(level<=3?'h2':'h3');wxAiAddInline(heading,h[1].replace(/\s*#+\s*$/,''));root.append(heading);continue;}
+  if(/^(?:-{3,}|_{3,}|\*{3,})$/.test(line)){appendPara();clearList();root.append(document.createElement('hr'));continue;}
+  const ordered=numberOf(line);
+  if(ordered){appendPara();addListItem('ol',ordered[2],Number(ordered[1]));continue;}
+  if(isBullet(line)){appendPara();addListItem('ul',line.replace(/^\s{0,6}[-*+]\s+/,''));continue;}
+  if(/^>\s?/.test(line)){
+   appendPara();clearList();const q=document.createElement('blockquote'),p=document.createElement('p');wxAiAddInline(p,line.replace(/^>\s?/,''));q.append(p);root.append(q);continue;
+  }
+  clearList();pending.push(line);
+ }
+ appendPara();node.replaceChildren(root);
+}
 function wxAiAppendMessage(role,msg,trace='',channel=''){
- const el=document.createElement('article');el.className='wx-ai-message '+(role==='question'?'wx-ai-message-user':'wx-ai-message-ai');
- const head=document.createElement('div');head.className='wx-ai-message-head';head.textContent=role==='question'?'你的問題':`✦ 五行命理師解讀${channel?' · 通道 '+channel:''}`;
- const txt=document.createElement('div');txt.className='wx-ai-message-text';txt.textContent=msg;el.append(head,txt);
- if(trace){const info=document.createElement('small');info.className='wx-ai-trace';info.textContent='追蹤碼：'+trace;el.append(info)}
- $('wxAiMessages').append(el);$('wxAiConversation').hidden=false;
- if(role==='ai')el.scrollIntoView({behavior:'smooth',block:'start'});
+ const isQuestion=role==='question';
+ const el=document.createElement('article');el.className='wx-ai-message '+(isQuestion?'wx-ai-message-user':'wx-ai-message-ai');
+ const head=document.createElement('div');head.className='wx-ai-message-head';head.textContent=isQuestion?'你的問題':'✦ 五行命理師解讀';el.append(head);
+ if(!isQuestion){
+  // Channel is returned by the AI center (A/B/C/D/E), not a fixed display label.
+  const code=String(channel||'').trim().toUpperCase(),id=String(trace||'').trim();
+  if(/^[A-E]$/.test(code)||id){
+   const meta=document.createElement('div');meta.className='wx-ai-message-meta';
+   if(/^[A-E]$/.test(code)){const x=document.createElement('span');x.className='wx-ai-channel';x.textContent='通道 '+code;meta.append(x)}
+   if(id){if(meta.childNodes.length){const x=document.createElement('span');x.className='wx-ai-separator';x.textContent='｜';meta.append(x)}
+    const x=document.createElement('span');x.textContent='追蹤碼：'+id;meta.append(x)}
+   el.append(meta);
+  }
+ }
+ const txt=document.createElement('div');txt.className='wx-ai-message-text';
+ if(isQuestion)txt.textContent=msg;else wxAiRenderArticle(txt,msg);
+ el.append(txt);$('wxAiMessages').append(el);$('wxAiConversation').hidden=false;
+ if(!isQuestion)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function wxAiSend(follow=false){
  if(wxAiBusy||!wxAiReady)return;
