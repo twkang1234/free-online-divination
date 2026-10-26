@@ -439,6 +439,125 @@ html[data-wx-layout="mobile"] #result .summary-banner>.panel:first-child{border-
 .wx-quota-row>strong.wx-quota-number{font-size:clamp(21px,1.9vw,26px);color:#f0c76d;line-height:1.3}
 .wx-quota-points .wx-points-balance{font-size:19px;color:#b8ddc4;margin:17px 0 8px}
 .wx-quota-points .wx-points-balance.wx-quota-number{font-size:clamp(26px,2.6vw,33px);color:#f0ca83;margin:12px 0 5px}
+
+/* V22 · 五行閱讀體驗重構：寬版、雙模式、六題導覽、AI 折疊歷史。 */
+:root{--wx-surface:#10251e;--wx-surface-2:#0c211a;--wx-outline:rgba(163,216,182,.22);--wx-body:#d9e9dc;--wx-soft:#b4cdbb}
+.container{max-width:1420px;padding-left:clamp(15px,2.7vw,36px);padding-right:clamp(15px,2.7vw,36px)}
+.top-inner{max-width:1500px}
+.wx-experience{margin:39px 0 48px;scroll-margin-top:110px}
+.wx-view-bar{position:sticky;top:56px;z-index:34;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:22px;border:1px solid rgba(151,204,166,.29);border-radius:16px;background:rgba(10,29,23,.97);box-shadow:0 13px 32px rgba(0,0,0,.3);backdrop-filter:blur(16px)}
+.wx-view-label{display:flex;flex-direction:column;min-width:0;line-height:1.55}.wx-view-label strong{font-size:17px;color:#f2f5ec}.wx-view-kicker{color:#b1d9b7;font-size:10px;letter-spacing:.15em;font-weight:850}.wx-view-label small{font-size:12px;color:#b9cebf}
+.wx-view-switch{display:flex;align-items:stretch;gap:6px;padding:5px;flex:0 0 auto;border:1px solid rgba(143,200,165,.19);border-radius:13px;background:rgba(1,15,10,.49)}
+.wx-view-button{border:1px solid transparent;color:#bcd5c4;background:transparent;border-radius:10px;padding:12px 19px;min-height:51px;font-size:15px;font-weight:900;line-height:1.25;white-space:nowrap}
+.wx-view-button small{display:block;margin-top:4px;font-size:11px;color:inherit;opacity:.78;font-weight:500}
+.wx-view-button.is-active{color:#092c21;background:linear-gradient(125deg,#c9ecd2,#86d4aa);border-color:#c2ebce;box-shadow:0 5px 16px rgba(98,202,146,.16)}
+.wx-view-button:focus-visible,.wx-reading-link:focus-visible,.wx-reading-all:focus-visible,.wx-reading-ai:focus-visible,.wx-ai-new-question:focus-visible,.wx-ai-back:focus-visible,.wx-report-toplink button:focus-visible{outline:3px solid #e8cf8d;outline-offset:3px}
+.wx-reading-view{margin-top:21px}
+.wx-reading-view #topics{margin:0;padding:clamp(19px,3vw,29px);border:1px solid var(--wx-outline);border-radius:19px;background:linear-gradient(145deg,#0e281e,#0c1d19)}
+.wx-reading-view #topics h2{font-size:clamp(25px,3vw,32px);color:#f1f4ea;margin-top:5px}
+.wx-reading-view #topics>p{font-size:14px;color:#c3d9ca;line-height:1.8;margin-bottom:20px}
+.wx-reading-view #topics .topic-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.wx-reading-view #topics .topic{min-width:0;background:#102b22;border:1px solid rgba(149,209,174,.22);min-height:128px;padding:19px;border-radius:13px}
+.wx-reading-view #topics .topic:hover,.wx-reading-view #topics .topic:focus-visible{border-color:#95dab5;background:#173a2d}
+.wx-reading-view #topics .topic b{font-size:19px;color:#f4f7ed;margin:8px 0}
+.wx-reading-view #topics .topic i{font-size:11px;color:#91e0ae}.wx-reading-view #topics .topic span{font-size:13px;color:#afc6b7;line-height:1.65}
+.wx-reading-layout{display:grid;grid-template-columns:minmax(205px,245px) minmax(0,1fr);gap:22px;align-items:start}
+.wx-reading-side{position:sticky;top:160px;max-height:calc(100dvh - 176px);overflow:auto;padding:21px 13px 15px;border-radius:17px;background:linear-gradient(150deg,#102d23,#0a1d17);border:1px solid var(--wx-outline);scrollbar-width:thin;scrollbar-color:#527f66 transparent}
+.wx-reading-side-title{display:flex;flex-direction:column;padding:0 10px 16px;border-bottom:1px solid rgba(148,202,166,.21);gap:2px}.wx-reading-side-title span{font-size:10px;color:#9ed6b1;letter-spacing:.15em;font-weight:800}.wx-reading-side-title strong{font-size:18px;color:#f1f4e8}.wx-reading-side-title small{font-size:12px;color:#b2cab9}
+.wx-reading-nav{display:grid;gap:7px;padding:13px 0}
+.wx-reading-link{display:flex;align-items:center;gap:10px;text-align:left;width:100%;padding:12px 10px;min-height:49px;border:1px solid transparent;border-radius:10px;background:transparent;color:#c4dcca;font-size:13px;font-weight:750;line-height:1.5}
+.wx-reading-link .wx-nav-index{display:inline-grid;place-items:center;flex:0 0 auto;width:28px;height:28px;border:1px solid rgba(182,215,179,.27);border-radius:8px;color:#b8d6bd;font-size:11px}
+.wx-reading-link[aria-current="true"]{background:rgba(124,216,165,.14);border-color:rgba(130,215,166,.54);color:#edfaf0}.wx-reading-link[aria-current="true"] .wx-nav-index{color:#102b20;background:#a9e3be;border-color:#a9e3be}
+.wx-reading-link:hover{background:rgba(147,211,171,.10)}
+.wx-reading-all,.wx-reading-ai{width:100%;min-height:43px;font-size:12px;font-weight:800;line-height:1.5;padding:9px;border:1px solid rgba(173,218,179,.25);border-radius:10px;background:#13291e;color:#d8e7d8;text-align:center}.wx-reading-all:hover,.wx-reading-ai:hover{background:#1a4230}
+.wx-reading-ai{margin-top:8px;background:linear-gradient(110deg,rgba(221,183,99,.16),rgba(118,203,155,.12));border-color:rgba(218,183,113,.35);color:#f2d59d}
+.wx-reading-layout #report{width:100%;max-width:none;min-width:0;margin:0;padding:clamp(22px,3.2vw,43px);scroll-margin-top:156px;border-radius:19px;background:#10251e;border-color:rgba(157,205,172,.26);box-shadow:0 18px 42px rgba(0,0,0,.12)}
+.wx-reading-layout #report .report-header h2{font-size:clamp(26px,3vw,39px);line-height:1.36}
+.wx-reading-layout #report .report-header p{color:#b7d0bd;font-size:13px;line-height:1.75}
+.wx-reading-layout #report .editor-section-content{max-width:900px}
+.wx-reading-layout #report .editor-paragraph,.wx-reading-layout #report .editor-opening p{font-size:16.5px!important;line-height:2.02!important;color:#d9e8dd!important}
+.wx-reading-layout #report .editorial-section{padding:31px 0 26px}
+.wx-reading-layout #report .editor-list p{font-size:15.5px!important;color:#d3e3d6!important}
+.wx-reading-layout #report .editor-quote p{font-size:16px!important}
+.wx-reading-layout #report .editor-ending p{color:#b4cbb8}
+.wx-report-toplink{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:17px;padding-top:14px;border-top:1px solid rgba(145,203,159,.15)}
+.wx-report-toplink span{font-size:12px;color:#a8c6b3}.wx-report-toplink button{border:1px solid rgba(226,190,119,.42);background:rgba(219,190,126,.09);color:#edce90;font-size:12px;font-weight:900;border-radius:10px;min-height:40px;padding:8px 13px}
+.wx-reading-layout #report .report-header{padding-bottom:18px}.wx-reading-layout #report .editor-opening{margin-top:24px}
+.wx-reading-layout #report .report-actions{gap:8px}.wx-reading-layout #report .report-actions button{font-size:12px}
+.wx-ai-view{margin-top:21px;scroll-margin-top:150px}
+.wx-ai-view-intro{display:flex;gap:18px;align-items:center;justify-content:space-between;padding:20px 26px;margin-bottom:15px;background:#12291f;border:1px solid var(--wx-outline);border-radius:16px}
+.wx-ai-view-intro h2{margin:4px 0 3px;color:#f2f4e9;font-size:clamp(23px,3vw,30px);line-height:1.45}.wx-ai-view-intro p{margin:0;color:#b7cdba;font-size:13px;line-height:1.85}
+.wx-ai-back{flex:0 0 auto;border:1px solid rgba(144,200,160,.37);background:#0b1d17;color:#d2e7d4;border-radius:10px;padding:11px 16px;min-height:46px;font-size:13px;font-weight:800}
+.wx-ai-workspace{max-width:1190px;margin:0 auto}.wx-ai-workspace-top{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 20px;border-radius:14px 14px 0 0;border:1px solid rgba(157,211,171,.25);border-bottom:0;background:#143228}
+.wx-ai-workspace-top strong{display:block;font-size:15px;color:#f1f7ed}.wx-ai-workspace-top small{display:block;font-size:12px;color:#b9d7c1}
+.wx-ai-new-question{flex:0 0 auto;border-radius:10px;border:1px solid rgba(196,226,191,.32);background:#0e231a;color:#e1f1df;min-height:42px;padding:9px 14px;font-weight:800;font-size:12px}
+.wx-ai-new-question:hover{background:#1c3c2e}
+.wx-ai-view .wx-ai-zone{margin:0;border-radius:0 0 16px 16px;background:#0c221a;border-color:rgba(157,211,171,.25);padding:0;overflow:hidden}
+.wx-ai-view .wx-ai-header{padding:22px 25px 16px}.wx-ai-view .wx-ai-header p{font-size:13px;color:#b9cdbd}
+.wx-ai-view .wx-ai-conversation{border-top:1px solid rgba(161,207,177,.22);padding:22px 25px 27px}
+.wx-ai-view .wx-ai-messages{max-width:1000px;margin:0 auto 21px;gap:12px}
+.wx-ai-turn{border:1px solid rgba(157,212,176,.23);border-radius:14px;background:#0b1c16;overflow:hidden;scroll-margin-top:160px}
+.wx-ai-turn[open]{border-color:rgba(140,220,172,.45);background:#0d241b;box-shadow:0 12px 33px rgba(0,0,0,.12)}
+.wx-ai-turn>summary{list-style:none;cursor:pointer;display:flex;gap:13px;align-items:center;padding:16px 19px;min-height:58px;color:#e1f2e3}
+.wx-ai-turn>summary::-webkit-details-marker{display:none}.wx-ai-turn>summary:hover{background:rgba(141,203,158,.07)}
+.wx-ai-turn>summary:focus-visible{outline:2px solid #e6ce8e;outline-offset:-4px}
+.wx-ai-turn-no{flex:0 0 auto;display:inline-grid;place-items:center;min-width:48px;height:27px;border-radius:7px;background:rgba(136,222,170,.11);color:#a6e2b5;font-size:11px;font-weight:850}
+.wx-ai-turn-q{display:block;min-width:0;flex:1;font-size:14px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wx-ai-turn-hint{font-size:12px;color:#a4c3ad;flex:0 0 auto}
+.wx-ai-turn[open] .wx-ai-turn-hint{font-size:0}.wx-ai-turn[open] .wx-ai-turn-hint::after{content:'收合';font-size:12px}
+.wx-ai-turn-content{padding:0 16px 18px;border-top:1px solid rgba(143,195,163,.15)}
+.wx-ai-turn-content .wx-ai-message{max-width:100%;margin-top:15px}
+.wx-ai-turn-content .wx-ai-message-user{padding:12px 17px;border-color:rgba(142,213,170,.21);background:rgba(140,207,164,.06)}
+.wx-ai-turn-content .wx-ai-message-user .wx-ai-message-head{font-size:12px;margin-bottom:4px}.wx-ai-turn-content .wx-ai-message-user .wx-ai-message-text{font-size:14px;line-height:1.75}
+.wx-ai-turn-content .wx-ai-message-ai{padding:clamp(18px,2.8vw,32px)}
+.wx-ai-view .wx-ai-message-ai .wx-ai-message-text{font-size:16.5px;line-height:1.98}
+.wx-ai-view .wx-ai-prose{max-width:920px}
+.wx-ai-view .wx-ai-conversation>label,.wx-ai-view .wx-ai-conversation>textarea,.wx-ai-view .wx-ai-conversation>button{max-width:1000px;margin-left:auto;margin-right:auto}
+.wx-ai-view .wx-ai-conversation>label{font-size:14px;font-weight:850}.wx-ai-view .wx-ai-conversation>button{display:block;padding:12px 22px;min-height:46px}
+.wx-ai-view .wx-ai-conversation>h4{max-width:1000px;margin:0 auto 17px;font-size:18px;color:#f2e6c5}
+.wx-ai-view .wx-ai-footnote{font-size:12px!important;line-height:1.8;color:#abc7b5!important}
+@media(max-width:1050px){.wx-reading-layout{grid-template-columns:minmax(190px,215px) minmax(0,1fr);gap:13px}.wx-reading-layout #report{padding:26px}.wx-reading-side{padding:16px 10px}}
+@media(max-width:900px), (max-width:1200px) and (pointer:coarse){
+ .wx-view-bar{top:0;position:relative}
+ .wx-reading-layout{grid-template-columns:minmax(0,1fr);gap:12px}
+ .wx-reading-side{top:0;position:sticky;z-index:26;max-height:none;overflow:visible;padding:9px;border-radius:12px;background:rgba(9,29,22,.97);box-shadow:0 10px 25px rgba(0,0,0,.25);backdrop-filter:blur(14px)}
+ .wx-reading-side-title,.wx-reading-all,.wx-reading-ai{display:none}
+ .wx-reading-nav{display:flex;gap:6px;overflow-x:auto;padding:1px;scrollbar-width:thin;scrollbar-color:#739a7e transparent}
+ .wx-reading-link{flex:0 0 auto;width:auto;min-height:43px;padding:7px 12px;font-size:12px;white-space:nowrap}
+ .wx-reading-link .wx-nav-index{width:23px;height:23px}
+ .wx-reading-layout #report{scroll-margin-top:100px}
+}
+@media(max-width:680px){
+ .wx-experience{margin:22px 0 32px}
+ .wx-view-bar{display:block;padding:13px;border-radius:13px}
+ .wx-view-label{margin-bottom:10px}.wx-view-label strong{font-size:15px}.wx-view-label small{font-size:11px}
+ .wx-view-switch{width:100%;gap:5px}.wx-view-button{flex:1 1 50%;min-width:0;min-height:50px;padding:9px 4px;font-size:13px}.wx-view-button small{font-size:10px}
+ .wx-reading-view #topics{padding:17px 13px}.wx-reading-view #topics h2{font-size:23px}
+ .wx-reading-view #topics .topic-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .wx-reading-view #topics .topic{min-height:116px;padding:13px 11px}.wx-reading-view #topics .topic b{font-size:15px;line-height:1.4;margin:6px 0}.wx-reading-view #topics .topic i{font-size:10px}.wx-reading-view #topics .topic span{font-size:11.5px;line-height:1.55}
+ .wx-reading-side{top:0}
+ .wx-reading-layout #report{padding:20px 16px 23px;border-radius:14px}
+ .wx-reading-layout #report .editorial-section{padding:27px 0 22px}.wx-reading-layout #report .editor-paragraph,.wx-reading-layout #report .editor-opening p{font-size:16px!important;line-height:2!important}
+ .wx-reading-layout #report .editor-list p{font-size:14.5px!important}.wx-report-toplink{align-items:flex-start}.wx-report-toplink span{width:100%}
+ .wx-ai-view-intro{padding:16px;display:block}.wx-ai-view-intro h2{font-size:22px}.wx-ai-back{margin-top:13px;width:100%;min-height:40px}
+ .wx-ai-workspace-top{padding:13px 12px;gap:8px}.wx-ai-workspace-top small{font-size:10.5px}.wx-ai-new-question{font-size:11px;padding:8px 10px}
+ .wx-ai-view .wx-ai-header{padding:18px 14px}.wx-ai-view .wx-ai-conversation{padding:17px 11px 24px}
+ .wx-ai-turn>summary{padding:12px 11px;gap:7px}.wx-ai-turn-no{min-width:42px;font-size:10px}.wx-ai-turn-q{font-size:12px}.wx-ai-turn-hint{font-size:11px}
+ .wx-ai-turn-content{padding:0 9px 11px}.wx-ai-turn-content .wx-ai-message{margin-top:9px}
+ .wx-ai-turn-content .wx-ai-message-ai{padding:17px 12px}.wx-ai-view .wx-ai-message-ai .wx-ai-message-text{font-size:15.5px;line-height:1.9}
+ .wx-ai-view .wx-ai-footnote{font-size:11px!important}
+}
+html[data-wx-layout="mobile"] .wx-reading-layout{grid-template-columns:minmax(0,1fr)}
+html[data-wx-layout="mobile"] .wx-reading-side{position:sticky;top:0;max-height:none;overflow:visible;padding:9px}
+html[data-wx-layout="mobile"] .wx-reading-side-title,html[data-wx-layout="mobile"] .wx-reading-all,html[data-wx-layout="mobile"] .wx-reading-ai{display:none}
+html[data-wx-layout="mobile"] .wx-reading-nav{display:flex;overflow-x:auto;gap:6px}
+html[data-wx-layout="mobile"] .wx-reading-link{flex:0 0 auto;white-space:nowrap;width:auto}
+/* The mobile global header spans two rows: keep topic navigation visible beneath it. */
+@media(max-width:900px){.wx-reading-side{top:102px}.wx-reading-layout #report{scroll-margin-top:168px}}
+html[data-wx-layout="mobile"] .wx-reading-side{top:102px}
+html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px}
+@media(max-width:370px){.wx-reading-side,html[data-wx-layout="mobile"] .wx-reading-side{top:148px}.wx-reading-layout #report,html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:213px}}
+@media print{.wx-view-bar,.wx-reading-side,.wx-ai-view,.wx-report-toplink{display:none!important}.wx-reading-layout{display:block!important}.wx-reading-layout #report{padding:0!important;border:0!important;margin:0!important}.wx-reading-layout #report .editor-paragraph{color:#222!important}}
+
 </style>
 <meta property="og:site_name" content="一念知機">
 <meta property="og:locale" content="zh_TW">
@@ -546,15 +665,39 @@ html[data-wx-layout="mobile"] #result .summary-banner>.panel:first-child{border-
 </div></div><p class="explain" id="methodNote"></p></div></section>
 <section id="wxTemporaryTools" class="wx-temp-tools" hidden aria-label="暫時匯出功能"><div><span class="small-head">六篇解讀 · 測試匯出</span><h3>六篇站內解讀字數與資料匯出</h3><p>可一次下載六題純文字，逐題比較範本內容。此區供站長比對文章，正式上線前可移除。</p></div><button type="button" class="secondary wx-export-btn" id="exportAllReports">⬇ 下載六題 TXT（附實際字數）</button></section>
 
+<section class="wx-experience" id="wxExperience" hidden aria-label="五行個人化解讀工作區">
+  <div class="wx-view-bar" id="wxViewBar">
+    <div class="wx-view-label"><span class="wx-view-kicker">YOUR PERSONAL READING</span><strong>選擇閱讀方式</strong><small>六篇站內解讀與 AI 深度追問，分開閱讀不混雜</small></div>
+    <div class="wx-view-switch" role="group" aria-label="閱讀方式">
+      <button type="button" class="wx-view-button is-active" id="wxTabReading" aria-pressed="true" aria-controls="wxReadingView"><span aria-hidden="true">▤</span> 站內解讀 <small>六大主題</small></button>
+      <button type="button" class="wx-view-button" id="wxTabAi" aria-pressed="false" aria-controls="wxAiView"><span aria-hidden="true">✦</span> AI 深度解讀 <small>個人提問與追問</small></button>
+    </div>
+  </div>
+  <div id="wxReadingView" class="wx-reading-view">
 <section id="topics" class="topics" hidden><div class="small-head">03 / SELECT A QUESTION</div><h2>你最想知道什麼？</h2><p>每次選一個主題，閱讀專為此命盤組合的站內解讀文章；切換題目不會重新排盤。</p><div id="topicGrid" class="topic-grid"></div></section>
-<article class="report" id="report" hidden><div class="report-header"><span class="small-head">PERSONAL FIVE ELEMENTS REPORT</span><h2 id="reportTitle"></h2><p id="reportMeta"></p></div><div id="reportBody"></div><div class="report-actions"><button type="button" class="secondary" id="copyReport">複製完整解讀</button><button type="button" class="secondary" id="exportAllReportsWithin">⬇ 下載六題 TXT</button><button type="button" class="secondary" id="printReport">列印／另存 PDF</button><button type="button" class="secondary" id="goTopics">返回其他問題 ↑</button><span class="fine" id="lengthInfo"></span></div><section class="ai-zone wx-ai-zone" id="wxAiZone" aria-labelledby="wxAiTitle">
+
+    <div id="wxReadingLayout" class="wx-reading-layout" hidden>
+      <aside class="wx-reading-side" aria-label="六篇解讀快速導覽">
+        <div class="wx-reading-side-title"><span>READING INDEX</span><strong>六大解讀主題</strong><small>選擇文章，隨時切換</small></div>
+        <nav id="wxReadingNav" class="wx-reading-nav" aria-label="六篇解讀文章"></nav>
+        <button type="button" class="wx-reading-all" id="wxReadingAll">查看六篇主題總覽</button>
+        <button type="button" class="wx-reading-ai" id="wxReadingAi">✦ 延伸詢問 AI <span aria-hidden="true">↗</span></button>
+      </aside>
+<article class="report" id="report" hidden><div class="report-header"><span class="small-head">PERSONAL FIVE ELEMENTS REPORT</span><h2 id="reportTitle"></h2><p id="reportMeta"></p><div class="wx-report-toplink"><span>站內解讀 · 選擇你想閱讀的主題</span><button type="button" id="wxReportAiJump">✦ 想問更多？前往 AI 深度解讀 →</button></div></div><div id="reportBody"></div><div class="report-actions"><button type="button" class="secondary" id="copyReport">複製完整解讀</button><button type="button" class="secondary" id="exportAllReportsWithin">⬇ 下載六題 TXT</button><button type="button" class="secondary" id="printReport">列印／另存 PDF</button><button type="button" class="secondary" id="goTopics">六大主題總覽</button><span class="fine" id="lengthInfo"></span></div><p class="soft-note">本站內容屬傳統命理文化中的自我探索方式，並非對健康、財務或感情結果的科學預測或保證。</p></article>
+    </div>
+  </div>
+  <div id="wxAiView" class="wx-ai-view" hidden>
+    <div class="wx-ai-view-intro"><div><span class="small-head">PERSONAL AI READING</span><h2>五行 AI 深度問答</h2><p>不必重新輸入生日。從站內解讀延伸，或直接詢問你最在意的問題；已有回答會保留在這個畫面。</p></div><button type="button" class="wx-ai-back" id="wxAiBackReading">← 返回站內解讀</button></div>
+    <div class="wx-ai-workspace">
+      <div class="wx-ai-workspace-top"><div><strong>你的 AI 專屬問答</strong><small>最新回答展開閱讀，較早的問答可隨時查看</small></div><button type="button" class="wx-ai-new-question" id="wxAiNewQuestion" aria-expanded="true" aria-controls="wxAiComposer">＋ 開啟新問題</button></div>
+<section class="ai-zone wx-ai-zone" id="wxAiZone" aria-labelledby="wxAiTitle">
   <header class="wx-ai-header">
     <span class="wx-ai-kicker">✦ FIVE ELEMENTS · AI QUESTIONS</span>
     <h3 id="wxAiTitle">五行 AI 深度解讀</h3>
     <p>選擇想了解的五行方向與子題目，也可以直接輸入自己的問題。</p>
   </header>
   <div class="wx-ai-main">
-    <div class="wx-ai-composer">
+    <div class="wx-ai-composer" id="wxAiComposer">
       <div class="wx-ai-step"><span>01</span><strong>選擇問題分類</strong></div>
       <div id="wxAiCategories" class="wx-ai-categories" role="group" aria-label="五行 AI 問題分類"></div>
       <div class="wx-ai-step wx-ai-step-second"><span>02</span><strong>選擇參考題目</strong><small>點一下即可帶入，可再自行修改</small></div>
@@ -571,7 +714,10 @@ html[data-wx-layout="mobile"] #result .summary-banner>.panel:first-child{border-
     <button id="wxAiFollowSend" type="button">送出追問（每次扣 AI 1 次）</button>
   </div>
   <p class="wx-ai-footnote">AI 解讀由後端驗證會員及免費／共用 AI 額度。首次提問與每次追問各計 1 次，失敗不扣次；不使用專業解鎖點數。同一題可繼續追問最多 8 輪，對話僅於後端暫存 7 天。</p>
-</section><p class="soft-note">本站內容屬傳統命理文化中的自我探索方式，並非對健康、財務或感情結果的科學預測或保證。</p></article>
+</section>
+    </div>
+  </div>
+</section>
 <!-- 五行紀錄已移到查詢區的「儲存五行／載入五行」小視窗，避免大卡片長期佔版面。 -->
 
 <section class="wx-live-related" id="wxLiveRelated" aria-labelledby="wxLiveRelatedTitle">
@@ -779,10 +925,13 @@ function wxRenderArticle(c,id){
  $('reportBody').innerHTML=`<div class="editor-opening"><span class="editor-opening-label">✦ 先讀這段 · 解讀重點</span><p>${wxInline(a.lead)}</p></div>`+a.sections.map((s,i)=>`<section class="report-section editorial-section"><div class="editor-section-number">${String(i+1).padStart(2,'0')}</div><h3>${wxInline(s.title)}</h3><div class="editor-section-content">${wxRenderBlocks(s.blocks)}</div></section>`).join('')+`<div class="editor-ending"><span>閱讀提醒</span><p>${wxInline(a.ending)}</p></div>`;
  $('lengthInfo').textContent=`本文 ${wxArticleCount(a)} 字（含標題、標點，不計空白）`;
  $('report').hidden=false;document.querySelectorAll('.topic').forEach(b=>b.classList.toggle('selected',b.dataset.id===id));
- wxAiSyncReport(id);$('report').scrollIntoView({behavior:'smooth',block:'start'});recordHistory(c,id);
+ wxReadingActivate(id);wxAiSyncReport(id);$('report').scrollIntoView({behavior:'smooth',block:'start'});recordHistory(c,id);
 }
 function renderReport(id){if(!chart)return;active=id;wxRenderArticle(chart,id)}
-function createTopics(){const grid=$('topicGrid');grid.innerHTML=SUBJECTS.map((s,i)=>`<button class="topic" type="button" data-id="${s[0]}"><i>${pad(i+1)} / ${s[3]}</i><b>${s[1]}</b><span>${s[2]}</span></button>`).join('');grid.addEventListener('click',e=>{let b=e.target.closest('.topic');if(b&&chart)renderReport(b.dataset.id)})}
+function createTopics(){const grid=$('topicGrid');grid.innerHTML=SUBJECTS.map((s,i)=>`<button class="topic" type="button" data-id="${s[0]}"><i>${pad(i+1)} / ${s[3]}</i><b>${s[1]}</b><span>${s[2]}</span></button>`).join('');grid.addEventListener('click',e=>{let b=e.target.closest('.topic');if(b&&chart)renderReport(b.dataset.id)});
+ $('wxReadingNav').innerHTML=SUBJECTS.map((s,i)=>`<button type="button" class="wx-reading-link" data-wx-read="${s[0]}" aria-current="false"><span class="wx-nav-index">${pad(i+1)}</span><span>${esc(s[1])}</span></button>`).join('');
+ $('wxReadingNav').addEventListener('click',e=>{const b=e.target.closest('[data-wx-read]');if(b&&chart)renderReport(b.dataset.wxRead)});
+}
 function storageKey(){return 'dh-wuxing-local-history-v1-'+String(member?.sub||'guest')}
 const SKEY='divinationhub-auth-session-v1';
 function readToken(){try{const raw=localStorage.getItem(SKEY)||'';let v=JSON.parse(raw);if(typeof v==='string')return v;if(v&&typeof v==='object')return v.token||v.accessToken||v.sessionToken||v.credential||'';return raw.startsWith('eyJ')?raw:''}catch(_){try{return localStorage.getItem(SKEY)||''}catch(e){return ''}}}
@@ -868,7 +1017,43 @@ function wxRestoreFormFromBirth(birth){
  if(!unknown&&!standard&&Number.isFinite(h)&&Number.isFinite(min))$('exactTime').value=String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');
  updateCalendarHint();
 }
-function showChart(c){chart=c;wxAiSessionId='';wxAiTurn=0;$('wxAiMessages').replaceChildren();$('wxAiConversation').hidden=true;wxAiUpdateUI();$('report').hidden=true;wxAiUserInteracted=false;wxAiSetCategory('balance',false);renderChart(chart);$('wxTemporaryTools').hidden=false;$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+
+/* Presentation-only reading mode: backend state and reports are shared between the views. */
+let wxViewMode='reading';
+function wxSetView(mode,{scroll=true}={}){
+ const isAi=mode==='ai';wxViewMode=isAi?'ai':'reading';
+ $('wxReadingView').hidden=isAi;$('wxAiView').hidden=!isAi;
+ for(const [id,on] of [['wxTabReading',!isAi],['wxTabAi',isAi]]){
+  const el=$(id);el.classList.toggle('is-active',on);el.setAttribute('aria-pressed',String(on));
+ }
+ if(scroll){requestAnimationFrame(()=>{$('wxExperience').scrollIntoView({behavior:'smooth',block:'start'})})}
+}
+function wxReadingActivate(id){
+ $('topics').hidden=true;$('wxReadingLayout').hidden=false;
+ document.querySelectorAll('#wxReadingNav [data-wx-read]').forEach(btn=>btn.setAttribute('aria-current',String(btn.dataset.wxRead===id)));
+ const nav=$('wxReadingNav'),current=nav.querySelector('[aria-current="true"]');
+ if(current&&nav.scrollWidth>nav.clientWidth){nav.scrollTo({left:current.offsetLeft-nav.offsetLeft-(nav.clientWidth-current.offsetWidth)/2,behavior:'smooth'})}
+ wxSetView('reading',{scroll:false});
+}
+function wxShowTopicChooser(){
+ if(!chart)return;
+ $('wxReadingLayout').hidden=true;$('report').hidden=true;$('topics').hidden=false;
+ wxSetView('reading');
+}
+function wxShowAiComposer(open){
+ $('wxAiComposer').hidden=!open;
+ $('wxAiNewQuestion').setAttribute('aria-expanded',String(open));
+ $('wxAiNewQuestion').textContent=open?'− 收合新問題':'＋ 開啟新問題';
+}
+$('wxTabReading').addEventListener('click',()=>wxSetView('reading'));
+$('wxTabAi').addEventListener('click',()=>wxSetView('ai'));
+$('wxReadingAll').addEventListener('click',wxShowTopicChooser);
+$('wxReadingAi').addEventListener('click',()=>wxSetView('ai'));
+$('wxReportAiJump').addEventListener('click',()=>wxSetView('ai'));
+$('wxAiBackReading').addEventListener('click',()=>wxSetView('reading'));
+$('wxAiNewQuestion').addEventListener('click',()=>{const open=$('wxAiComposer').hidden;wxShowAiComposer(open);if(open)requestAnimationFrame(()=>{$('wxAiComposer').scrollIntoView({behavior:'smooth',block:'start'})})});
+
+function showChart(c){chart=c;wxAiSessionId='';wxAiTurn=0;$('wxAiMessages').replaceChildren();$('wxAiConversation').hidden=true;wxShowAiComposer(true);wxAiUpdateUI();$('report').hidden=true;$('wxReadingLayout').hidden=true;$('wxExperience').hidden=false;wxSetView('reading',{scroll:false});wxAiUserInteracted=false;wxAiSetCategory('balance',false);renderChart(chart);$('wxTemporaryTools').hidden=false;$('result').scrollIntoView({behavior:'smooth',block:'start'})}
 let running=false;
 async function requestAndRender(birth,topic=null){
  if(running)return;
@@ -974,7 +1159,7 @@ $('solarBtn').addEventListener('click',()=>toggleCalendar('solar'));$('lunarBtn'
 ['year','month','day','leap'].forEach(id=>$(id).addEventListener('change',()=>id==='year'||id==='month'?syncDays():updateCalendarHint()));
 $('exactToggle').addEventListener('change',()=>{$('exactTime').hidden=!$('exactToggle').checked;$('slot').disabled=$('exactToggle').checked});
 $('exportAllReports').addEventListener('click',wxExportAll);$('exportAllReportsWithin').addEventListener('click',wxExportAll);
-$('copyReport').addEventListener('click',()=>copyText(articleText));$('printReport').addEventListener('click',()=>window.print());$('goTopics').addEventListener('click',()=>document.getElementById('topics').scrollIntoView({behavior:'smooth'}));
+$('copyReport').addEventListener('click',()=>copyText(articleText));$('printReport').addEventListener('click',()=>window.print());$('goTopics').addEventListener('click',wxShowTopicChooser);
 /* V17 – 五行 AI 正式入口：只有 Worker 核驗額度後才進行解讀。 */
 const WX_AI_ENDPOINT='https://wuxing-api.ezgocpu.workers.dev/api/wuxing/ai';
 let wxAiBusy=false,wxAiReady=false,wxAiSessionId='',wxAiSessionBirth='',wxAiTurn=0,wxAiQuota=null;
@@ -1074,10 +1259,23 @@ function wxAiRenderArticle(node,source){
 }
 function wxAiAppendMessage(role,msg,trace='',channel=''){
  const isQuestion=role==='question';
+ let turn=$('wxAiMessages').lastElementChild;
+ if(isQuestion){
+  // New latest turn expands; previous answers stay intact and can be reopened.
+  $('wxAiMessages').querySelectorAll('.wx-ai-turn[open]').forEach(d=>d.open=false);
+  turn=document.createElement('details');turn.className='wx-ai-turn';turn.open=true;
+  const summary=document.createElement('summary');
+  const index=document.createElement('span');index.className='wx-ai-turn-no';index.textContent='第 '+String($('wxAiMessages').children.length+1)+' 輪';
+  const question=document.createElement('span');question.className='wx-ai-turn-q';question.textContent=msg;
+  const hint=document.createElement('span');hint.className='wx-ai-turn-hint';hint.textContent='展開';
+  summary.append(index,question,hint);
+  const body=document.createElement('div');body.className='wx-ai-turn-content';
+  turn.append(summary,body);$('wxAiMessages').append(turn);
+ }
  const el=document.createElement('article');el.className='wx-ai-message '+(isQuestion?'wx-ai-message-user':'wx-ai-message-ai');
  const head=document.createElement('div');head.className='wx-ai-message-head';head.textContent=isQuestion?'你的問題':'✦ 五行命理師解讀';el.append(head);
  if(!isQuestion){
-  // Channel is returned by the AI center (A/B/C/D/E), not a fixed display label.
+  // Channel and trace values come from original verified AI response.
   const code=String(channel||'').trim().toUpperCase(),id=String(trace||'').trim();
   if(/^[A-E]$/.test(code)||id){
    const meta=document.createElement('div');meta.className='wx-ai-message-meta';
@@ -1089,9 +1287,11 @@ function wxAiAppendMessage(role,msg,trace='',channel=''){
  }
  const txt=document.createElement('div');txt.className='wx-ai-message-text';
  if(isQuestion)txt.textContent=msg;else wxAiRenderArticle(txt,msg);
- el.append(txt);$('wxAiMessages').append(el);$('wxAiConversation').hidden=false;
- if(!isQuestion)el.scrollIntoView({behavior:'smooth',block:'start'});
-}
+ el.append(txt);
+ const bucket=turn?.querySelector('.wx-ai-turn-content')||$('wxAiMessages');bucket.append(el);
+ $('wxAiConversation').hidden=false;
+ if(!isQuestion)requestAnimationFrame(()=>{if(wxViewMode==='ai')turn?.scrollIntoView({behavior:'smooth',block:'start'})});
+} 
 async function wxAiSend(follow=false){
  if(wxAiBusy||!wxAiReady)return;
  if(!birthRequest||!chart){notice('請先完成出生資料查詢');return}
@@ -1117,6 +1317,7 @@ async function wxAiSend(follow=false){
   if(!follow){$('wxAiMessages').replaceChildren();wxAiSessionId=data.sessionId;wxAiSessionBirth=JSON.stringify(birthRequest);}
   wxAiTurn=data.turn||wxAiTurn+1;
   wxAiAppendMessage('question',q);wxAiAppendMessage('ai',data.reading,data.traceId||'',data.channel||'');
+  if(!follow)wxShowAiComposer(false);
   if(follow)$('wxAiFollowInput').value='';
   $('wxAiSendStatus').textContent=`AI 解讀完成 · 本次使用${data.charged==='free'?'免費':'會員共用'} AI 1 次`;notice('五行 AI 解讀完成');
   wxAiQuota=data.quota||wxAiQuota;
