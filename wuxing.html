@@ -406,6 +406,39 @@ html[data-wx-layout="mobile"] #result .summary-banner>.panel:first-child{border-
 @media(max-width:650px){.wx-record-action-row{gap:9px}.wx-record-action-row>.primary{flex:1 1 100%;width:100%}.wx-record-controls{flex:1 1 auto;min-width:0}.wx-record-btn{flex:1 1 auto;padding:10px 11px}.wx-demo-btn{flex:1 1 auto}.wx-record-popover{position:fixed;left:12px;right:12px;top:14vh;width:auto;max-height:72vh;padding:13px}.wx-record-item{flex-wrap:wrap;gap:8px}.wx-record-item-actions{margin-left:auto}}
 @media print{.wx-record-popover,.wx-record-controls{display:none!important}}
 
+
+/* V21｜五行專屬額度視覺：沿用八字文案層級，回歸五行墨綠／金色。 */
+.wx-entitlements{background:linear-gradient(118deg,#09251d,#103126 65%,#10291f);border-color:rgba(135,213,168,.31);box-shadow:0 16px 42px rgba(2,23,13,.22)}
+.wx-quota-card{background:linear-gradient(145deg,#102b22,#0c201a);border-color:rgba(140,206,170,.24);box-shadow:inset 0 1px rgba(214,245,220,.025)}
+.wx-quota-card h2{color:#eaf5e9;border-bottom-color:rgba(165,216,182,.17)}
+.wx-quota-row{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:'heading heading' 'number description';column-gap:10px;row-gap:2px;align-items:center;padding:8px 0 12px}
+.wx-quota-row+.wx-quota-row{border-top-color:rgba(160,217,184,.15)}
+.wx-quota-row>span{grid-area:heading;color:#e3eee2;font-size:13px;line-height:1.5}
+.wx-quota-row>strong{grid-area:number;color:#f0c76d;white-space:nowrap;font-size:clamp(21px,1.9vw,26px);line-height:1.3}
+.wx-quota-row>small{grid-area:description;color:#adcbb9;font-size:11px;line-height:1.55}
+.wx-shared-layout{grid-template-columns:minmax(0,1.08fr) minmax(0,.75fr);gap:11px}
+.wx-quota-annotation{border-left-color:rgba(161,212,180,.16)}
+.wx-quota-annotation p{color:#b5d2be;font-size:11px;line-height:1.65}
+.wx-quota-points .wx-points-balance{color:#f0ca83;font-size:clamp(26px,2.6vw,33px);margin:12px 0 5px}
+.wx-quota-points p{color:#a7c7b2;line-height:1.65}
+.wx-quota-buy{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;color:#dbf0da;border-color:rgba(150,211,169,.28);background:rgba(6,30,20,.45);min-height:53px;line-height:1.4}
+.wx-quota-buy small{font-size:11px;color:#a0bca6}.wx-quota-buy:hover{border-color:#a4dbb5;background:rgba(72,148,105,.14)}
+@media(max-width:1120px){.wx-shared-layout{grid-template-columns:1fr}.wx-quota-annotation{border-left:0;border-top:1px solid rgba(161,212,180,.16);padding:9px 0 0}}
+@media(max-width:680px){.wx-shared-layout{grid-template-columns:1fr}.wx-quota-row>small{font-size:11px}.wx-quota-points .wx-points-balance{font-size:28px}}
+/* V21｜載入紀錄改用原生模態對話框：瀏覽器 top layer 不受 .shell overflow 裁切。 */
+.wx-record-popover{position:fixed;inset:0;top:0;left:0;right:0;bottom:0;margin:auto;width:min(480px,calc(100vw - 30px));max-width:calc(100vw - 30px);max-height:min(75dvh,540px);padding:20px;border:1px solid rgba(202,226,185,.42);border-radius:18px;background:#0d221a;color:#edf4e7;box-shadow:0 25px 90px rgba(0,0,0,.64);overflow:auto;z-index:1000}
+.wx-record-popover::backdrop{background:rgba(0,11,8,.73);backdrop-filter:blur(4px)}
+.wx-record-popover[hidden],.wx-record-popover:not([open]){display:none!important}
+.wx-record-popover-head strong{font-size:19px;color:#f3e5b9}
+@media(max-width:650px){.wx-record-popover{position:fixed;inset:0;top:0;left:0;right:0;bottom:0;margin:auto;width:calc(100vw - 28px);max-height:78dvh;padding:15px;border-radius:15px}}
+@media print{.wx-record-popover{display:none!important}}
+
+
+/* 尚未登入／讀取中的文字維持提示字級，真實數字才放大，避免畫面擁擠。 */
+.wx-quota-row>strong{font-size:16px;color:#cfe2cf;line-height:1.5}
+.wx-quota-row>strong.wx-quota-number{font-size:clamp(21px,1.9vw,26px);color:#f0c76d;line-height:1.3}
+.wx-quota-points .wx-points-balance{font-size:19px;color:#b8ddc4;margin:17px 0 8px}
+.wx-quota-points .wx-points-balance.wx-quota-number{font-size:clamp(26px,2.6vw,33px);color:#f0ca83;margin:12px 0 5px}
 </style>
 <meta property="og:site_name" content="一念知機">
 <meta property="og:locale" content="zh_TW">
@@ -454,21 +487,29 @@ html[data-wx-layout="mobile"] #result .summary-banner>.panel:first-child{border-
   <div class="wx-quota-grid">
     <article class="wx-quota-card wx-quota-free">
       <h2>定期免費額度</h2>
-      <div class="wx-quota-row"><span>五行查詢</span><strong id="wxFreeTool">讀取中…</strong><small id="wxFreeToolCycle">依後台設定，尚未啟用扣次</small></div>
-      <div class="wx-quota-row"><span>AI 解讀</span><strong id="wxFreeAi">讀取中…</strong><small id="wxFreeAiCycle">AI 功能尚未接通</small></div>
+      <div class="wx-quota-row"><span>五行查詢</span><strong id="wxFreeTool">讀取中…</strong><small id="wxFreeToolCycle">依後台週期補充，不累積</small></div>
+      <div class="wx-quota-row"><span>AI 解讀</span><strong id="wxFreeAi">讀取中…</strong><small id="wxFreeAiCycle">免費 AI 額度由後台設定</small></div>
     </article>
     <article class="wx-quota-card wx-quota-shared">
       <h2>會員共用額度</h2>
-      <div class="wx-shared-layout"><div class="wx-shared-amounts">
-        <div class="wx-quota-row"><span>工具額度（全平台共用）</span><strong id="wxSharedTool">登入後查看</strong><small>八字、塔羅、易經、測字、五行等工具共用</small></div>
-        <div class="wx-quota-row"><span>AI 解讀（全平台共用）</span><strong id="wxSharedAi">登入後查看</strong><small>各工具 AI 解讀可共用</small></div>
-      </div><div class="wx-quota-annotation"><p>會員實際剩餘額度</p><p>定期免費額度先依後台設定展示</p><p>五行扣次尚未啟用，查詢不扣點</p></div></div>
+      <div class="wx-shared-layout">
+        <div class="wx-shared-amounts">
+          <div class="wx-quota-row"><span>工具額度（全平台共用）</span><strong id="wxSharedTool">登入後查看</strong><small>八字、塔羅、易經等工具皆可使用</small></div>
+          <div class="wx-quota-row"><span>AI 解讀（全平台共用）</span><strong id="wxSharedAi">登入後查看</strong><small>各工具 AI 解讀皆可使用</small></div>
+        </div>
+        <div class="wx-quota-annotation">
+          <p>八字、塔羅、易經等工具共用</p>
+          <p>定期免費額度用完才扣；用完可加購</p>
+          <p>五行查詢目前不扣工具額度</p>
+        </div>
+      </div>
     </article>
     <article class="wx-quota-card wx-quota-points">
       <h2>專業解鎖點數</h2>
       <strong id="wxProfessionalPoints" class="wx-points-balance">登入後查看</strong>
-      <p>平台會員共用點數</p><p>五行查詢不使用專業點數</p>
-      <a class="wx-quota-buy" href="/pricing.html">加購額度與點數</a>
+      <p>八字、塔羅、易經共用</p>
+      <p>依各專業區塊扣點；五行查詢不扣點</p>
+      <a class="wx-quota-buy" href="/pricing.html" aria-label="查看加購額度與點數方案"><span>🛒 加購額度與點數</span><small>即將開放</small></a>
     </article>
   </div>
 </section>
@@ -486,11 +527,11 @@ html[data-wx-layout="mobile"] #result .summary-banner>.panel:first-child{border-
  <div class="wx-record-controls" id="wxRecordControls">
   <button class="secondary wx-record-btn" type="button" id="wxSaveRecord" title="儲存目前出生資料，最多保留 3 組">儲存五行</button>
   <button class="secondary wx-record-btn wx-load-btn" type="button" id="wxLoadRecord" aria-expanded="false" aria-controls="wxRecordPopover">載入五行 <span id="wxSavedCount" class="wx-record-count" hidden></span></button>
-  <div class="wx-record-popover" id="wxRecordPopover" role="dialog" aria-modal="false" aria-label="我的五行紀錄" hidden>
+  <dialog class="wx-record-popover" id="wxRecordPopover" aria-label="我的五行紀錄" aria-modal="true" hidden>
    <div class="wx-record-popover-head"><div><strong>我的五行紀錄</strong><small>最多 3 組 · 保存在目前瀏覽器</small></div><button type="button" class="wx-record-close" id="wxRecordClose" aria-label="關閉五行紀錄">×</button></div>
    <div id="historyList" class="wx-record-list"></div>
    <p class="wx-record-storage-note" id="historyNotice">會員登入後可使用此瀏覽器的紀錄，尚未同步至其他裝置。</p>
-  </div>
+  </dialog>
  </div>
  <button class="secondary wx-demo-btn" id="demo" type="button">先看五行範例</button>
  <span class="fine wx-action-fine">五行額度由管理員後台設定；正式扣次尚未啟用，測試查詢不扣額度。</span>
@@ -793,10 +834,19 @@ function renderHistory(){
  }).join(''):`<div class="wx-record-empty"><strong>${member?'尚未儲存五行紀錄':'請先登入會員'}</strong><small>${member?'輸入出生資料後，按「儲存五行」即可保留最多 3 組。':'登入後可以在目前瀏覽器保存五行出生資料。'}</small></div>`;
 }
 function wxSetRecordPopover(open){
- const pop=$('wxRecordPopover');pop.hidden=!open;
- $('wxLoadRecord').setAttribute('aria-expanded',String(open));
- if(open){renderHistory();$('wxRecordClose').focus()}
- else $('wxLoadRecord').focus();
+ const pop=$('wxRecordPopover');
+ if(open){
+  renderHistory();
+  pop.hidden=false;
+  if(!pop.open)pop.showModal(); // 對話框位於瀏覽器頂層，不受出生資料區 overflow 裁切
+  $('wxLoadRecord').setAttribute('aria-expanded','true');
+  $('wxRecordClose').focus();
+ }else{
+  if(pop.open)pop.close();
+  pop.hidden=true;
+  $('wxLoadRecord').setAttribute('aria-expanded','false');
+  $('wxLoadRecord').focus();
+ }
 }
 function wxRestoreFormFromBirth(birth){
  // 舊版紀錄保存的是換算過的國曆，還原成國曆輸入確保一致。
@@ -954,8 +1004,8 @@ async function wxAiRefreshStatus(){
    wxAiReady=true;wxAiQuota=data.quota;
  }catch(e){wxAiReady=false;wxAiQuota=null;$('wxAiSendStatus').textContent=e.message||'AI 服務暫時無法使用';wxAiUpdateUI();return;}
  $('wxAiSendStatus').textContent=wxAiStatusLabel();wxAiUpdateUI();
- if(wxAiQuota?.free){$('wxFreeAi').textContent=wxAiQuota.free.remaining+' / '+wxAiQuota.free.limit+' 次';$('wxFreeAiCycle').textContent=`每 ${wxAiQuota.free.days} 天補充 · ${wxAiQuota.free.resetAt}`;}
- if(wxAiQuota?.role==='member')$('wxSharedAi').textContent=wxAiQuota.sharedAiRemaining+' 次';
+ if(wxAiQuota?.free){wxQuotaText('wxFreeAi',wxAiQuota.free.remaining+' / '+wxAiQuota.free.limit+' 次');$('wxFreeAiCycle').textContent=wxAiQuota.free.limit>0?`每 ${wxAiQuota.free.days} 天補充，不累積 · ${wxAiQuota.free.resetAt}`:'目前尚未提供免費額度';}
+ if(wxAiQuota?.role==='member')wxQuotaText('wxSharedAi',wxAiQuota.sharedAiRemaining+' 次');
 }
 /* AI Markdown is interpreted locally without raw HTML injection or external render libraries. */
 function wxAiAddInline(parent,value){
@@ -1082,7 +1132,7 @@ $('wxSaveRecord').addEventListener('click',()=>{
  try{const b=makeBirthRequest();wxRecordSavedBirth(b,chart&&birthRequest?.datetime===b.datetime?chart:null)}
  catch(e){notice('儲存未完成：'+(e?.message||'出生資料無效'))}
 });
-$('wxLoadRecord').addEventListener('click',()=>wxSetRecordPopover($('wxRecordPopover').hidden));
+$('wxLoadRecord').addEventListener('click',()=>wxSetRecordPopover(!$('wxRecordPopover').open));
 $('wxRecordClose').addEventListener('click',()=>wxSetRecordPopover(false));
 $('historyList').addEventListener('click',e=>{
  const del=e.target.closest('[data-history-delete]');
@@ -1096,18 +1146,22 @@ $('historyList').addEventListener('click',e=>{
  wxSetRecordPopover(false);wxBeginTool({scroll:false});wxRestoreFormFromBirth(r.data.birth);
  void requestAndRender(r.data.birth,(r.ids||[])[0]||null);
 });
-document.addEventListener('pointerdown',e=>{
- if(!$('wxRecordPopover').hidden&&!e.target.closest('#wxRecordControls'))wxSetRecordPopover(false);
-});
-document.addEventListener('keydown',e=>{
- if(e.key==='Escape'&&!$('wxRecordPopover').hidden){wxSetRecordPopover(false);e.preventDefault()}
+$('wxRecordPopover').addEventListener('cancel',e=>{e.preventDefault();wxSetRecordPopover(false)});
+$('wxRecordPopover').addEventListener('click',e=>{
+ const pop=$('wxRecordPopover');if(e.target!==pop)return;
+ const r=pop.getBoundingClientRect();
+ if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)wxSetRecordPopover(false);
 });
 
 /* V17: site quotas remain read-only for 五行站內查詢; AI quota is enforced by Wuxing Worker. */
 const WX_MEMBER_API='https://member-api.ezgocpu.workers.dev';
 const WX_PUBLIC_QUOTA_API='https://admin-api.ezgocpu.workers.dev/quota/wuxing';
 let wxQuotaRequestSerial=0;
-function wxQuotaText(id,text){$(id).textContent=text;}
+function wxQuotaText(id,text){
+ const el=$(id);if(!el)return;
+ el.textContent=text;
+ el.classList.toggle('wx-quota-number',/^\s*\d/.test(String(text)));
+}
 async function wxGetMemberJson(path,token){const r=await fetch(WX_MEMBER_API+path,{headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'});const data=await r.json().catch(()=>({}));if(!r.ok||data?.success!==true)throw Error(data?.error||'UNAVAILABLE');return data;}
 async function wxRefreshSharedQuota(){
  const serial=++wxQuotaRequestSerial,token=readToken();
@@ -1130,8 +1184,9 @@ async function wxRefreshPeriodicQuota(){
   for(const [kind,id,cycle] of [['tool','wxFreeTool','wxFreeToolCycle'],['ai','wxFreeAi','wxFreeAiCycle']]){
    const rule=d.rules?.[kind]?.[role];
    if(!rule||!Number.isFinite(rule.limit)||!Number.isFinite(rule.days))throw Error('QUOTA_MISSING_RULE');
-   wxQuotaText(id,rule.limit+' 次／期');
-   wxQuotaText(cycle,kind==='ai'?`每 ${rule.days} 天補充 · 實際剩餘以 AI 後端為準`:`每 ${rule.days} 天補充 · 查詢測試不扣次`);
+   // 五行查詢尚未啟用扣次：只能呈現後台規則，不假稱「實際剩餘」。
+   wxQuotaText(id,rule.limit===0?'0 / 0 次':rule.limit+' 次／期');
+   wxQuotaText(cycle,rule.limit>0?`每 ${rule.days} 天補充，不累積`:'目前尚未提供免費額度');
   }
  }catch(_){
   wxQuotaText('wxFreeTool','設定暫時無法讀取');wxQuotaText('wxFreeAi','設定暫時無法讀取');
