@@ -558,6 +558,70 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
 @media(max-width:370px){.wx-reading-side,html[data-wx-layout="mobile"] .wx-reading-side{top:148px}.wx-reading-layout #report,html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:213px}}
 @media print{.wx-view-bar,.wx-reading-side,.wx-ai-view,.wx-report-toplink{display:none!important}.wx-reading-layout{display:block!important}.wx-reading-layout #report{padding:0!important;border:0!important;margin:0!important}.wx-reading-layout #report .editor-paragraph{color:#222!important}}
 
+
+/* V23 · 真正的寬螢幕版心修正。原 V22 仍把整頁鎖在 1420px、AI 鎖在 1190px。
+   桌機依視窗流動延展；只限制長文行寬，而非整張頁面的寬度。 */
+@media (min-width:1101px){
+  .container{
+    width:100%;
+    max-width:none;
+    padding-left:clamp(24px,3vw,96px);
+    padding-right:clamp(24px,3vw,96px);
+  }
+  .top-inner{
+    width:100%;
+    max-width:none;
+    padding-left:clamp(24px,3vw,96px);
+    padding-right:clamp(24px,3vw,96px);
+  }
+  .wx-reading-layout{
+    grid-template-columns:clamp(230px,14.5vw,310px) minmax(0,1fr);
+    gap:clamp(16px,1.65vw,32px);
+  }
+  .wx-reading-layout #report{
+    padding-left:clamp(30px,3vw,70px);
+    padding-right:clamp(30px,3vw,70px);
+  }
+  .wx-reading-layout #report .editor-section-content{
+    max-width:1000px;
+  }
+  .wx-ai-workspace{
+    width:100%;
+    max-width:none;
+  }
+  .wx-ai-view .wx-ai-messages{
+    width:100%;
+    max-width:none;
+  }
+  .wx-ai-view .wx-ai-conversation>label,
+  .wx-ai-view .wx-ai-conversation>textarea,
+  .wx-ai-view .wx-ai-conversation>button,
+  .wx-ai-view .wx-ai-conversation>h4{
+    max-width:1100px;
+  }
+}
+/* 平板與手機沿用 V22 單欄／雙欄的既有響應式流程。 */
+
+/* 超寬螢幕保留外框寬度，同時讓文章正文集中，避免文字全擠在面板左邊。 */
+@media (min-width:1800px){
+  .wx-reading-layout #report .report-header,
+  .wx-reading-layout #report #reportBody,
+  .wx-reading-layout #report .report-actions,
+  .wx-reading-layout #report > .soft-note{
+    width:100%;
+    max-width:1120px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .wx-ai-view .wx-ai-zone .wx-ai-header > *,
+  .wx-ai-view .wx-ai-main .wx-ai-composer,
+  .wx-ai-view .wx-ai-footnote{
+    max-width:1200px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+}
+
 </style>
 <meta property="og:site_name" content="一念知機">
 <meta property="og:locale" content="zh_TW">
