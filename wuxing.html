@@ -759,6 +759,57 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
 @media(max-width:900px){.wx-ai-sidebar-save{grid-column:1 / -1;grid-row:3;margin:0}.wx-ai-sidebar-save .wx-ai-save-actions{display:flex}.wx-ai-sidebar-save .wx-ai-save-actions button{flex:1 1 130px;width:auto}.wx-ai-preserve{padding:13px 14px;margin-bottom:13px}.wx-ai-preserve p{font-size:12px}}
 @media(max-width:420px){.wx-ai-discard-dialog{padding:18px}.wx-ai-discard-dialog h2{font-size:19px}.wx-ai-discard-dialog .wx-discard-actions{flex-direction:column}.wx-ai-discard-dialog .wx-discard-actions button{width:100%}}
 @media print{.wx-ai-preserve,.wx-ai-sidebar-save,.wx-ai-discard-dialog{display:none!important}}
+
+/* V27 · Read-first flow: new AI questions are primary; export is a secondary end-of-reading task. */
+.wx-ai-sidebar .wx-ai-new-question{
+  min-height:54px;
+  border:1px solid #bde9cd;
+  background:#afe8c5;
+  color:#072c1d;
+  box-shadow:0 3px 10px rgba(3,14,10,.18);
+  font-weight:900;
+}
+.wx-ai-sidebar .wx-ai-new-question:hover{background:#caf3da;filter:none}
+.wx-ai-export-shortcut{
+  display:block;width:100%;background:transparent;color:#a9cbb6;
+  border:0;border-top:1px solid rgba(155,205,173,.17);
+  border-radius:0;padding:12px 6px 4px;text-align:center;
+  font-size:12px;text-decoration:underline;text-decoration-color:rgba(168,212,183,.45);
+  text-underline-offset:4px;font-weight:650;
+}
+.wx-ai-export-shortcut[hidden]{display:none!important}
+.wx-ai-export-shortcut:hover{color:#e0f0de;background:transparent}
+.wx-ai-export-shortcut:focus-visible{outline:2px solid #e8d08f;outline-offset:2px}
+.wx-ai-view .wx-ai-preserve{
+  max-width:1050px;margin:42px auto 5px;
+  padding:18px 21px;border:1px solid rgba(216,180,112,.25);
+  border-left:3px solid rgba(227,194,126,.8);
+  border-radius:12px;background:#142b21;
+}
+.wx-ai-preserve h3{font-size:15px;color:#e8c98a;margin:0 0 5px}
+.wx-ai-preserve p{font-size:12.5px;color:#bccfbe;line-height:1.85;margin:0}
+.wx-ai-preserve .wx-ai-save-actions{display:flex;justify-content:flex-start;gap:9px;margin:13px 0 0}
+.wx-ai-preserve .wx-ai-save-actions button{
+  flex:0 1 auto;width:auto;min-height:40px;
+  background:#1c3b2d;border:1px solid rgba(155,203,166,.34);
+  color:#e7f3e7;font-weight:750;font-size:12px;padding:8px 14px;
+}
+.wx-ai-preserve .wx-ai-save-actions button:first-child{
+  background:#244534;border-color:rgba(170,213,184,.42);color:#e5f1e6;
+}
+.wx-ai-preserve .wx-ai-save-actions button:last-child{background:transparent;color:#bfd6c5}
+.wx-ai-preserve .wx-ai-save-actions button:hover{filter:brightness(1.16)}
+@media(max-width:900px){
+ .wx-ai-sidebar .wx-ai-export-shortcut{grid-column:1 / -1;grid-row:3;padding:9px 6px;border-top:1px solid rgba(155,205,173,.17);font-size:11px;text-align:left}
+ .wx-ai-sidebar .wx-ai-new-question{min-height:45px;font-size:12px}
+ .wx-ai-view .wx-ai-preserve{margin-top:25px;padding:14px 13px}
+}
+@media(max-width:600px){
+ .wx-ai-preserve .wx-ai-save-actions{display:grid;grid-template-columns:1fr 1fr}
+ .wx-ai-preserve .wx-ai-save-actions button{width:100%;padding:9px 7px;font-size:11px}
+}
+@media(max-width:340px){.wx-ai-preserve .wx-ai-save-actions{grid-template-columns:1fr}}
+@media print{.wx-ai-export-shortcut{display:none!important}}
 </style>
 <meta property="og:site_name" content="一念知機">
 <meta property="og:locale" content="zh_TW">
@@ -897,11 +948,7 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
         <div class="wx-ai-sidebar-head"><span>AI CONVERSATION</span><strong>本次問答</strong><small id="wxAiNavCount">尚未開始問答</small></div>
         <nav id="wxAiTurnNav" class="wx-ai-turn-nav" aria-label="切換 AI 問答輪次"><p class="wx-ai-nav-empty">先在右側提出問題，完成後會在這裡建立問答目錄。</p></nav>
         <button type="button" class="wx-ai-new-question" id="wxAiNewQuestion" aria-expanded="true" aria-controls="wxAiComposer">− 收合新問題</button>
-        <div class="wx-ai-sidebar-save" id="wxAiSaveTools" hidden>
-          <b>⚠ AI 問答不會自動儲存</b>
-          <p>離開或刷新可能失去本次紀錄。請先自行留存完整問答。</p>
-          <div class="wx-ai-save-actions"><button id="wxAiDownload" type="button">⬇ 下載完整問答</button><button id="wxAiCopyAll" type="button">複製完整問答</button></div>
-        </div>
+        <button type="button" class="wx-ai-export-shortcut" id="wxAiSaveTools" aria-controls="wxAiPreserveBanner" hidden>↓ 下載或複製本次問答</button>
         <p class="wx-ai-sidebar-note">新的回答完整展開；舊回答可以隨時選擇查看。</p>
       </aside>
       <div class="wx-ai-workspace">
@@ -924,16 +971,22 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
     </div>
           </div>
   <div id="wxAiConversation" class="wx-ai-conversation" hidden aria-live="polite">
-    <div class="wx-ai-preserve" id="wxAiPreserveBanner" hidden>
-      <h3>⚠ 重要提醒｜請自行保存本次 AI 解讀</h3>
-      <p>目前只提供<strong>出生資料最多 3 組</strong>的本機儲存，<strong>不會保存 AI 問答</strong>。重新整理、關閉瀏覽器、離開網頁或重新排盤後，本次完整問答將無法從頁面恢復。即使已扣除 AI 額度，也不代表答案已保存。</p>
-    </div>
     <div id="wxAiMessages" class="wx-ai-messages" aria-label="本次 AI 問答內容"></div>
     <div class="wx-ai-follow-area" id="wxAiFollowArea">
       <div class="wx-ai-follow-head"><strong>繼續追問</strong><span>延續上述對話，直接詢問新的細節</span></div>
       <label for="wxAiFollowInput">你還想了解什麼？</label>
       <textarea id="wxAiFollowInput" class="input" rows="3" maxlength="400" placeholder="輸入下一個問題（5～400 字）"></textarea>
       <button id="wxAiFollowSend" type="button">送出追問（每次扣 AI 1 次）</button>
+    </div>
+    <div class="wx-ai-preserve" id="wxAiPreserveBanner" hidden>
+      <div class="wx-ai-preserve-copy">
+        <h3>閱讀完畢？記得自行保留這次 AI 解讀</h3>
+        <p>目前網站只提供最多 3 組出生資料的本機儲存，<strong>不會儲存 AI 問答</strong>。重新整理、關閉或離開頁面後，這次完整問答將無法從頁面恢復；即使已扣 AI 額度，也不代表答案已保存。</p>
+      </div>
+      <div class="wx-ai-save-actions" aria-label="自行保留 AI 問答">
+        <button id="wxAiDownload" type="button">↓ 下載完整問答（TXT）</button>
+        <button id="wxAiCopyAll" type="button">複製完整問答</button>
+      </div>
     </div>
   </div>
   <p class="wx-ai-footnote">AI 解讀由後端驗證會員及免費／共用 AI 額度。首次提問與每次追問各計 1 次，失敗不扣次；不使用專業解鎖點數。同一題可繼續追問最多 8 輪，對話僅於後端暫存 7 天。</p>
@@ -1425,6 +1478,7 @@ function wxAiDownloadAll(){
  wxDownloadTxt(`wuxing-ai-${part('year')}${part('month')}${part('day')}-${part('hour')}${part('minute')}.txt`,content);
  notice('已開始下載 AI 完整問答，請確認檔案已成功保存');
 }
+$('wxAiSaveTools').addEventListener('click',()=>{$('wxAiPreserveBanner').scrollIntoView({behavior:'smooth',block:'start'})});
 $('wxAiDownload').addEventListener('click',wxAiDownloadAll);
 $('wxAiCopyAll').addEventListener('click',()=>{const content=wxAiAllText();if(content)void copyText(content);else notice('目前沒有可複製的 AI 解讀')});
 window.addEventListener('beforeunload',event=>{
@@ -1446,7 +1500,7 @@ async function wxConfirmDiscardForRecalc(){
    const choice=await new Promise(resolve=>dlg.addEventListener('close',()=>resolve(dlg.returnValue),{once:true}));
    if(choice!=='continue'){
      wxSetView('ai',{scroll:false});
-     requestAnimationFrame(()=>{$('wxAiSaveTools').scrollIntoView({behavior:'smooth',block:'nearest'})});
+     requestAnimationFrame(()=>{$('wxAiPreserveBanner').scrollIntoView({behavior:'smooth',block:'start'})});
      return false;
    }
    return true;
