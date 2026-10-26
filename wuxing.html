@@ -1528,7 +1528,11 @@ async function wxAiSend(follow=false){
    break;
   }
   if(!res.ok||!data?.ok)throw Error(wxAiApiMessage(data?.error,data?.message));
-  if(!follow){$('wxAiMessages').replaceChildren();wxAiUpdateTurnNav();wxAiSessionId=data.sessionId;wxAiSessionBirth=JSON.stringify(birthRequest);}
+  if(!follow){
+   // 新主題建立新的後端對話，但保留本頁已完成的問答紀錄供左側目錄回看。
+   // 僅重新查詢出生資料時（showChart）才清空舊命盤的回答。
+   wxAiSessionId=data.sessionId;wxAiSessionBirth=JSON.stringify(birthRequest);
+  }
   wxAiTurn=data.turn||wxAiTurn+1;
   wxAiAppendMessage('question',q);wxAiAppendMessage('ai',data.reading,data.traceId||'',data.channel||'');
   if(!follow)wxShowAiComposer(false);
