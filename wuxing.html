@@ -731,6 +731,34 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
 }
 @media print{.wx-ai-sidebar{display:none!important}}
 
+
+/* V26 · AI 問答當次保存提醒與個人下載（不新增雲端儲存） */
+.wx-ai-preserve{margin:0 0 20px;padding:17px 19px;border:1px solid rgba(235,195,115,.35);border-left:3px solid #e7c27e;border-radius:12px;background:linear-gradient(120deg,rgba(205,157,74,.10),rgba(13,39,29,.8));color:#e9f2e8}
+.wx-ai-preserve h3{font-size:16px;margin:0 0 5px;color:#f6d897;line-height:1.55}
+.wx-ai-preserve p{margin:0;font-size:13px;line-height:1.85;color:#cbded0}
+.wx-ai-preserve strong{color:#f4dfa9}
+.wx-ai-save-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}
+.wx-ai-save-actions button{flex:1 1 135px;min-height:43px;border-radius:10px;border:1px solid rgba(163,221,185,.35);background:#193c2c;color:#e9f7e9;font-size:13px;font-weight:800;padding:9px 10px}
+.wx-ai-save-actions button:first-child{background:#afe6c4;color:#073422;border-color:#afe6c4}
+.wx-ai-save-actions button:hover{filter:brightness(1.09)}
+.wx-ai-sidebar-save{margin:0 0 13px;padding:13px 10px;border:1px solid rgba(236,196,113,.25);border-radius:11px;background:rgba(185,144,75,.075)}
+.wx-ai-sidebar-save b{display:block;color:#f2d498;font-size:12px;line-height:1.6}
+.wx-ai-sidebar-save p{font-size:11.5px;color:#bcd1bf;line-height:1.75;margin:5px 0 0}
+.wx-ai-sidebar-save .wx-ai-save-actions{display:grid;grid-template-columns:1fr;gap:7px;margin-top:10px}
+.wx-ai-sidebar-save .wx-ai-save-actions button{width:100%;font-size:12px;min-height:39px;flex:none}
+.wx-ai-discard-dialog{color:#f1f6ec;border:1px solid rgba(206,219,179,.4);background:linear-gradient(145deg,#14372a,#091c16);width:min(94vw,510px);max-height:90dvh;overflow:auto;border-radius:18px;padding:24px 24px 22px;box-shadow:0 18px 70px rgba(0,0,0,.62)}
+.wx-ai-discard-dialog::backdrop{background:rgba(1,12,8,.78);backdrop-filter:blur(3px)}
+.wx-ai-discard-dialog .wx-discard-mark{display:inline-flex;padding:8px 12px;border-radius:30px;background:rgba(235,190,95,.1);border:1px solid rgba(235,190,95,.3);color:#e9c984;font-weight:850;font-size:12px}
+.wx-ai-discard-dialog h2{font-size:23px;line-height:1.45;margin:12px 0}
+.wx-ai-discard-dialog p{font-size:14px;line-height:1.95;color:#d8e7db;margin:9px 0}
+.wx-ai-discard-dialog .wx-discard-em{color:#f2da9e;font-weight:850}
+.wx-ai-discard-dialog .wx-discard-actions{display:flex;flex-wrap:wrap;justify-content:end;gap:10px;margin-top:20px}
+.wx-ai-discard-dialog button{min-height:45px;border-radius:10px;padding:10px 17px;font-weight:850;border:1px solid rgba(177,220,185,.35);background:#17372b;color:#edf7ed}
+.wx-ai-discard-dialog button[value="continue"]{border-color:#bb9870;color:#f3d0ae;background:#32261a}
+.wx-ai-discard-dialog button[value="cancel"]{background:#b4e7c7;color:#08331f;border-color:#b4e7c7}
+@media(max-width:900px){.wx-ai-sidebar-save{grid-column:1 / -1;grid-row:3;margin:0}.wx-ai-sidebar-save .wx-ai-save-actions{display:flex}.wx-ai-sidebar-save .wx-ai-save-actions button{flex:1 1 130px;width:auto}.wx-ai-preserve{padding:13px 14px;margin-bottom:13px}.wx-ai-preserve p{font-size:12px}}
+@media(max-width:420px){.wx-ai-discard-dialog{padding:18px}.wx-ai-discard-dialog h2{font-size:19px}.wx-ai-discard-dialog .wx-discard-actions{flex-direction:column}.wx-ai-discard-dialog .wx-discard-actions button{width:100%}}
+@media print{.wx-ai-preserve,.wx-ai-sidebar-save,.wx-ai-discard-dialog{display:none!important}}
 </style>
 <meta property="og:site_name" content="一念知機">
 <meta property="og:locale" content="zh_TW">
@@ -869,6 +897,11 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
         <div class="wx-ai-sidebar-head"><span>AI CONVERSATION</span><strong>本次問答</strong><small id="wxAiNavCount">尚未開始問答</small></div>
         <nav id="wxAiTurnNav" class="wx-ai-turn-nav" aria-label="切換 AI 問答輪次"><p class="wx-ai-nav-empty">先在右側提出問題，完成後會在這裡建立問答目錄。</p></nav>
         <button type="button" class="wx-ai-new-question" id="wxAiNewQuestion" aria-expanded="true" aria-controls="wxAiComposer">− 收合新問題</button>
+        <div class="wx-ai-sidebar-save" id="wxAiSaveTools" hidden>
+          <b>⚠ AI 問答不會自動儲存</b>
+          <p>離開或刷新可能失去本次紀錄。請先自行留存完整問答。</p>
+          <div class="wx-ai-save-actions"><button id="wxAiDownload" type="button">⬇ 下載完整問答</button><button id="wxAiCopyAll" type="button">複製完整問答</button></div>
+        </div>
         <p class="wx-ai-sidebar-note">新的回答完整展開；舊回答可以隨時選擇查看。</p>
       </aside>
       <div class="wx-ai-workspace">
@@ -891,6 +924,10 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
     </div>
           </div>
   <div id="wxAiConversation" class="wx-ai-conversation" hidden aria-live="polite">
+    <div class="wx-ai-preserve" id="wxAiPreserveBanner" hidden>
+      <h3>⚠ 重要提醒｜請自行保存本次 AI 解讀</h3>
+      <p>目前只提供<strong>出生資料最多 3 組</strong>的本機儲存，<strong>不會保存 AI 問答</strong>。重新整理、關閉瀏覽器、離開網頁或重新排盤後，本次完整問答將無法從頁面恢復。即使已扣除 AI 額度，也不代表答案已保存。</p>
+    </div>
     <div id="wxAiMessages" class="wx-ai-messages" aria-label="本次 AI 問答內容"></div>
     <div class="wx-ai-follow-area" id="wxAiFollowArea">
       <div class="wx-ai-follow-head"><strong>繼續追問</strong><span>延續上述對話，直接詢問新的細節</span></div>
@@ -977,7 +1014,18 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
  </section>
  <div class="wx-seo-ending"><div><span class="wx-seo-kicker">READY TO EXPLORE?</span><h2>用出生年月日時，開始了解自己的五行屬性</h2><p>先查自己的五行，再依需要閱讀六大主題或五行專題文章。</p></div><a href="#calculator" data-wx-start class="wx-seo-go">開始五行查詢 ↗</a></div>
 </section>
-</main><footer class="footer"><div class="container">一念知機 · 五行查詢　｜　<a href="/bazi.html">進一步了解完整八字排盤</a>　｜　<a href="/">返回免費線上占卜</a><div>© 一念知機　本站提供傳統文化與自我探索內容。</div><div style="margin-top:8px">曆法換算：lunar-javascript 1.7.7（MIT License）；五行分析與文章生成由獨立後端執行。</div></div></footer><div id="toast" class="toast" role="status" hidden></div>
+</main>
+<dialog class="wx-ai-discard-dialog" id="wxAiDiscardDialog" aria-labelledby="wxAiDiscardTitle" aria-describedby="wxAiDiscardMessage">
+  <span class="wx-discard-mark">⚠ 尚未保存 AI 問答</span>
+  <h2 id="wxAiDiscardTitle">繼續操作會清除目前的 AI 解讀</h2>
+  <p id="wxAiDiscardMessage">目前的 AI 問答只顯示在本次頁面中，繼續重新查詢或載入其他命盤後，原有回答就無法從頁面恢復。</p>
+  <p class="wx-discard-em">建議先返回 AI 解讀，下載完整問答或複製全文，再繼續操作。</p>
+  <form method="dialog" class="wx-discard-actions">
+    <button type="submit" value="cancel">返回 AI 下載</button>
+    <button type="submit" value="continue">仍要繼續（清除問答）</button>
+  </form>
+</dialog>
+<footer class="footer"><div class="container">一念知機 · 五行查詢　｜　<a href="/bazi.html">進一步了解完整八字排盤</a>　｜　<a href="/">返回免費線上占卜</a><div>© 一念知機　本站提供傳統文化與自我探索內容。</div><div style="margin-top:8px">曆法換算：lunar-javascript 1.7.7（MIT License）；五行分析與文章生成由獨立後端執行。</div></div></footer><div id="toast" class="toast" role="status" hidden></div>
 <script>document.documentElement.dataset.theme="dark";</script>
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
 <script>
@@ -1240,10 +1288,13 @@ $('wxReportAiJump').addEventListener('click',()=>wxSetView('ai'));
 $('wxAiBackReading').addEventListener('click',()=>wxSetView('reading'));
 $('wxAiNewQuestion').addEventListener('click',()=>{const open=$('wxAiComposer').hidden;wxShowAiComposer(open);if(open)requestAnimationFrame(()=>{$('wxAiComposer').scrollIntoView({behavior:'smooth',block:'start'})})});
 
-function showChart(c){chart=c;wxAiSessionId='';wxAiTurn=0;$('wxAiMessages').replaceChildren();wxAiUpdateTurnNav();$('wxAiConversation').hidden=true;wxShowAiComposer(true);wxAiUpdateUI();$('report').hidden=true;$('wxReadingLayout').hidden=true;$('wxExperience').hidden=false;wxSetView('reading',{scroll:false});wxAiUserInteracted=false;wxAiSetCategory('balance',false);renderChart(chart);$('wxTemporaryTools').hidden=!(new URLSearchParams(location.search).get('wxdebug')==='1');$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+function showChart(c){chart=c;wxAiSessionId='';wxAiTurn=0;$('wxAiMessages').replaceChildren();wxAiUpdateTurnNav();wxAiSyncPreserveUI();$('wxAiConversation').hidden=true;wxShowAiComposer(true);wxAiUpdateUI();$('report').hidden=true;$('wxReadingLayout').hidden=true;$('wxExperience').hidden=false;wxSetView('reading',{scroll:false});wxAiUserInteracted=false;wxAiSetCategory('balance',false);renderChart(chart);$('wxTemporaryTools').hidden=!(new URLSearchParams(location.search).get('wxdebug')==='1');$('result').scrollIntoView({behavior:'smooth',block:'start'})}
 let running=false;
-async function requestAndRender(birth,topic=null){
- if(running)return;
+async function requestAndRender(birth,topic=null,onAccepted=null){
+ if(running||wxAiDiscardPending)return;
+ if(wxAiBusy){notice('AI 解讀進行中，完成後再重新排盤');return;}
+ if(!(await wxConfirmDiscardForRecalc()))return;
+ if(typeof onAccepted==='function')onAccepted();
  running=true;clearFail();$('calculate').disabled=true;$('demo').disabled=true;
  const c=$('calculate');c.textContent='五行解析中…';
  try{
@@ -1347,6 +1398,60 @@ $('solarBtn').addEventListener('click',()=>toggleCalendar('solar'));$('lunarBtn'
 $('exactToggle').addEventListener('change',()=>{$('exactTime').hidden=!$('exactToggle').checked;$('slot').disabled=$('exactToggle').checked});
 $('exportAllReports').addEventListener('click',wxExportAll);$('exportAllReportsWithin').addEventListener('click',wxExportAll);
 $('copyReport').addEventListener('click',()=>copyText(articleText));$('printReport').addEventListener('click',()=>window.print());$('goTopics').addEventListener('click',wxShowTopicChooser);
+/* V26 · 僅記憶體中的 AI 問答供本次閱讀／自行匯出，完全不寫入 localStorage 或雲端。 */
+function wxHasAiAnswers(){return !!$('wxAiMessages').querySelector('.wx-ai-message-ai')}
+function wxAiSyncPreserveUI(){
+ const exists=wxHasAiAnswers();
+ $('wxAiSaveTools').hidden=!exists;$('wxAiPreserveBanner').hidden=!exists;
+}
+function wxAiAllText(){
+ const turns=[...$('wxAiMessages').querySelectorAll(':scope > .wx-ai-turn')];
+ if(!turns.length)return '';
+ const today=new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date());
+ const header=['一念知機｜五行 AI 完整問答','',`匯出時間：${today}`,`出生資料：${birthRequest?.datetime||chart?.datetime||'未提供'}`,'',`共 ${turns.length} 輪問答`,'此檔由使用者自行下載；網站未提供 AI 解讀永久儲存。',''];
+ const lines=turns.flatMap((turn,i)=>{
+   const q=turn.querySelector('.wx-ai-turn-q')?.textContent?.trim()||'（問題資料未提供）';
+   const item=turn.querySelector('.wx-ai-message-ai');
+   const text=item?String(item._wxAiRawAnswer||item.querySelector('.wx-ai-message-text')?.innerText||'').trim():'（此輪尚無回答）';
+   const code=item?.dataset.wxAiChannel?.trim()||'',trace=item?.dataset.wxAiTrace?.trim()||'';
+   return ['═'.repeat(28),`第 ${i+1} 輪問題`,q,'',`【AI 解讀${code?'｜通道 '+code:''}${trace?'｜追蹤碼 '+trace:''}】`,text,''];
+ });
+ return [...header,...lines].join('\r\n');
+}
+function wxAiDownloadAll(){
+ const content=wxAiAllText();if(!content){notice('目前沒有可下載的 AI 解讀');return}
+ const now=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
+ const part=k=>now.find(p=>p.type===k)?.value||'00';
+ wxDownloadTxt(`wuxing-ai-${part('year')}${part('month')}${part('day')}-${part('hour')}${part('minute')}.txt`,content);
+ notice('已開始下載 AI 完整問答，請確認檔案已成功保存');
+}
+$('wxAiDownload').addEventListener('click',wxAiDownloadAll);
+$('wxAiCopyAll').addEventListener('click',()=>{const content=wxAiAllText();if(content)void copyText(content);else notice('目前沒有可複製的 AI 解讀')});
+window.addEventListener('beforeunload',event=>{
+ if(!wxHasAiAnswers())return;
+ event.preventDefault();
+ event.returnValue=''; // 瀏覽器只顯示其預設訊息；不允許自訂離開視窗文字。
+});
+let wxAiDiscardPending=false;
+async function wxConfirmDiscardForRecalc(){
+ if(!wxHasAiAnswers())return true;
+ if(wxAiDiscardPending)return false;
+ wxAiDiscardPending=true;
+ const dlg=$('wxAiDiscardDialog');
+ try{
+   // 實際刪除只在後端成功取得新命盤並呼叫 showChart() 時發生。
+   if(typeof dlg.showModal!=='function')return window.confirm('目前的 AI 問答尚未儲存。重新排盤或載入其他資料後，原有完整解讀將無法恢復。建議先下載或複製問答。確定要繼續嗎？');
+   dlg.returnValue='';
+   dlg.showModal();
+   const choice=await new Promise(resolve=>dlg.addEventListener('close',()=>resolve(dlg.returnValue),{once:true}));
+   if(choice!=='continue'){
+     wxSetView('ai',{scroll:false});
+     requestAnimationFrame(()=>{$('wxAiSaveTools').scrollIntoView({behavior:'smooth',block:'nearest'})});
+     return false;
+   }
+   return true;
+ }finally{wxAiDiscardPending=false;}
+}
 /* V17 – 五行 AI 正式入口：只有 Worker 核驗額度後才進行解讀。 */
 const WX_AI_ENDPOINT='https://wuxing-api.ezgocpu.workers.dev/api/wuxing/ai';
 let wxAiBusy=false,wxAiReady=false,wxAiSessionId='',wxAiSessionBirth='',wxAiTurn=0,wxAiQuota=null;
@@ -1499,11 +1604,12 @@ function wxAiAppendMessage(role,msg,trace='',channel=''){
   }
  }
  const txt=document.createElement('div');txt.className='wx-ai-message-text';
- if(isQuestion)txt.textContent=msg;else wxAiRenderArticle(txt,msg);
+ if(isQuestion)txt.textContent=msg;else {el._wxAiRawAnswer=String(msg);el.dataset.wxAiTrace=String(trace||'');el.dataset.wxAiChannel=String(channel||'');wxAiRenderArticle(txt,msg);}
  el.append(txt);
  const bucket=turn?.querySelector('.wx-ai-turn-content')||$('wxAiMessages');bucket.append(el);
   $('wxAiConversation').hidden=false;
  wxAiUpdateTurnNav();
+ if(!isQuestion)wxAiSyncPreserveUI();
  if(!isQuestion)requestAnimationFrame(()=>{if(wxViewMode==='ai')turn?.scrollIntoView({behavior:'smooth',block:'start'})});
 } 
 async function wxAiSend(follow=false){
@@ -1562,8 +1668,8 @@ $('historyList').addEventListener('click',e=>{
  const btn=e.target.closest('[data-history-load]');if(!btn||!member)return;
  const r=readHistory()[Number(btn.dataset.historyLoad)];
  if(!r?.data?.birth){notice('這組舊紀錄沒有足夠資料，請重新輸入');return}
- wxSetRecordPopover(false);wxBeginTool({scroll:false});wxRestoreFormFromBirth(r.data.birth);
- void requestAndRender(r.data.birth,(r.ids||[])[0]||null);
+ wxSetRecordPopover(false);
+ void requestAndRender(r.data.birth,(r.ids||[])[0]||null,()=>{wxBeginTool({scroll:false});wxRestoreFormFromBirth(r.data.birth)});
 });
 $('wxRecordPopover').addEventListener('cancel',e=>{e.preventDefault();wxSetRecordPopover(false)});
 $('wxRecordPopover').addEventListener('click',e=>{
