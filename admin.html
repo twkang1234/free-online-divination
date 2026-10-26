@@ -653,7 +653,7 @@ td.muted{color:var(--muted)}
     <details class="section member-usage-box" id="memberUsagePanel">
       <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設展開｜依成功使用排行）</small></span></summary>
       <div class="member-usage-body">
-        <p class="member-usage-note">僅統計已登入會員成功完成的排盤、抽牌、起卦或第二階段深度測字；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>八字、塔羅、易經、測字已接入成功事件；啟用統計後才開始累計，不回填過去紀錄。</strong> 使用地區顯示會員最近一次成功使用時的 Cloudflare 連線國家／地區；舊資料不回推，VPN 可能影響判定。</p>
+        <p class="member-usage-note">僅統計已登入會員成功完成的排盤、抽牌、起卦或第二階段深度測字；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>八字、塔羅、易經、測字、五行皆支援會員成功使用事件；新增功能偏好僅完整模式記錄，不回填歷史。</strong> 使用地區顯示會員最近一次成功使用時的 Cloudflare 連線國家／地區；舊資料不回推，VPN 可能影響判定。</p>
         <div class="member-usage-settings">
           <div class="member-usage-settings-head"><strong style="font-size:.86rem">統計模式</strong><span class="member-usage-status" id="memberUsageModeTime">尚未讀取設定</span></div>
           <div class="member-usage-fields">
@@ -661,11 +661,11 @@ td.muted{color:var(--muted)}
             <select id="memberUsageMode" aria-label="選擇會員統計模式">
               <option value="off">完全關閉（不再寫入會員統計）</option>
               <option value="simple">精簡模式（工具＋次數＋AI）</option>
-              <option value="full">完整模式（含固定題型、八字專業章節與 AI 主題）</option>
+              <option value="full">完整模式（含各工具功能偏好、章節與 AI 類別）</option>
             </select>
             <button class="btn" type="button" id="memberUsageSave">儲存統計設定</button>
           </div>
-          <div class="member-usage-warn">關閉後保留過去統計；不會補記關閉期間的使用次數。完整模式才記錄會員打開的八字章節，每個章節同一頁最多記 1 次；原本起盤排行榜不收集問題；另設 AI 題目紀錄有使用者送出的自訂問題原文（180 天），管理員可於會員明細查看。</div>
+          <div class="member-usage-warn">關閉後保留過去統計；不會補記關閉期間的使用次數。完整模式才記錄會員開啟的八字與五行章節及選擇的功能類別，章節同一頁最多記 1 次；原本起盤排行榜不收集問題；另設 AI 題目紀錄有使用者送出的自訂問題原文（180 天），管理員可於會員明細查看。</div>
         </div>
         <div class="member-usage-controls">
           <div class="member-usage-periods" aria-label="排行期間" id="memberUsagePeriods">
@@ -685,6 +685,22 @@ td.muted{color:var(--muted)}
     </details>
 
 
+    <details class="section member-usage-box" id="memberFeaturePanel" style="margin-bottom:14px">
+      <summary>📊 會員功能偏好分析 <small style="font-weight:500;color:#93a4b8">｜點擊／閱讀／完成／解鎖分開統計</small></summary>
+      <div class="member-usage-body">
+        <p class="member-usage-note">僅在完整模式統計已登入會員的固定功能代碼，不蒐集出生資料、占卜內容或自訂題目。全站熱門排行排除「AI 提問分析」設定的測試信箱；點擊數不等於成功閱讀或實際扣點。新增紀錄從新版部署後開始累計。</p>
+        <div class="member-usage-fields" style="margin:12px 0;flex-wrap:wrap">
+          <label for="dhFeatureTool">工具</label><select id="dhFeatureTool"><option value="all">全部</option><option value="wuxing">五行</option><option value="bazi">八字</option><option value="tarot">塔羅</option><option value="yijing">易經</option><option value="cezi">測字</option></select>
+          <label for="dhFeatureAction">事件</label><select id="dhFeatureAction"><option value="all">全部</option><option value="click">點擊／選擇</option><option value="view">成功開啟</option><option value="complete">完成操作</option><option value="unlock">成功新解鎖</option></select>
+          <label for="dhFeaturePeriod">期間</label><select id="dhFeaturePeriod"><option value="today">今天</option><option value="3days">近三天</option><option value="week">本週</option><option value="month">本月</option><option value="all">歷史至今</option></select>
+          <button type="button" class="btn secondary" id="dhFeatureReload">重新查詢</button>
+        </div>
+        <div class="member-usage-status" id="dhFeatureSummary">展開後查詢功能資料。</div>
+        <div class="table-wrap" id="dhFeatureRows"></div>
+        <div class="member-usage-status" id="dhFeatureError"></div>
+      </div>
+    </details>
+
     <details class="section aiq-panel" id="aiQuestionPanel">
       <summary>全站熱門 AI 提問分析 <small style="font-weight:500;color:#9eaec0">｜各工具分開統計・排除測試帳號</small></summary>
       <div class="aiq-inner">
@@ -700,7 +716,7 @@ td.muted{color:var(--muted)}
         </div>
         <div class="aiq-toolbar">
           <label for="aiqTool">工具</label>
-          <select id="aiqTool"><option value="all">全部工具</option><option value="bazi">八字</option><option value="tarot">塔羅</option><option value="yijing">易經</option><option value="cezi">測字</option><option value="qimen">奇門</option><option value="ziwei">紫微</option><option value="liuyao">六爻</option><option value="meihua">梅花易數</option></select>
+          <select id="aiqTool"><option value="all">全部工具</option><option value="bazi">八字</option><option value="tarot">塔羅</option><option value="yijing">易經</option><option value="cezi">測字</option><option value="wuxing">五行</option><option value="qimen">奇門</option><option value="ziwei">紫微</option><option value="liuyao">六爻</option><option value="meihua">梅花易數</option></select>
           <label for="aiqPeriod">期間</label>
           <select id="aiqPeriod"><option value="7d">最近 7 天</option><option value="30d" selected>最近 30 天</option><option value="all">歷史累計</option></select>
           <button class="btn secondary" type="button" id="aiqReload">重新查詢</button>
@@ -1447,6 +1463,45 @@ $('aiqExcludeForm')?.addEventListener('submit',async e=>{
 });
 
 // 會員工具排行榜獨立模組：只有展開才向後端發出查詢。
+const dhFeatureSectionNames={identity:'我的五行屬性',personality:'我的優點與缺點',balance:'我缺什麼／補什麼',career:'事業與工作',love:'感情與姻緣',wealth:'財運',daily:'每日流日',elements:'五行陰陽',tengods:'十神結構',relations:'干支合沖',shensha:'常用神煞',reading:'命盤結構',luck:'八步大運',years:'三年流年',lookup:'查詢',reveal:'抽牌完成',followup:'延續追問',interpret:'第二階段解讀',cast:'起卦',ai:'AI 解讀', 'ai-followup':'AI 追問','ai-custom':'AI 自訂問題','save-record':'儲存出生資料','load-record':'載入出生資料'};
+const dhFeatureAiNames={career:'工作事業',love:'感情姻緣',wealth:'財運資源',nature:'人際壓力',balance:'合作互補',lifestyle:'環境與生活',timing:'人生抉擇'};
+const dhFeatureAiPresets={
+ career:['適合行業','轉職方向','創業發展','職場瓶頸','升遷談判'],
+ love:['感情弱點','伴侶特質','相處衝突','改善關係','冷戰修復'],
+ wealth:['賺錢方式','守財能力','破財盲點','財富開拓','人情借貸'],
+ nature:['人際關係','壓力反應','界線表達','家庭溝通','自我內耗'],
+ balance:['五行互補','團隊分工','個性相反','合夥評估','互補界線'],
+ lifestyle:['適合環境','環境轉換','生活節奏','社交充電','兩週實驗'],
+ timing:['今年變化','未來一年','人生階段','重要抉擇','行動順序']
+};
+const dhFeatureTopicNames={social:'人際關係',growth:'個人成長',study:'學業進修',choices:'選擇決策',fortune:'近期發展',fate:'命運探索',self:'自我探索',choice:'選擇決策',people:'人際關係',finance:'財運金錢',other:'其他／自由提問',money:'金錢',work:'工作',love:'感情',business:'事業',family:'家庭',relations:'人際關係',general:'一般問事'};
+
+function dhFeatureLabel(tool,feature){
+ const f=String(feature||'');
+ if(tool==='wuxing'&&f.startsWith('ai-')){
+  const m=/^ai-([a-z]+)-(\d)$/.exec(f);
+  if(m)return 'AI｜'+(dhFeatureAiNames[m[1]]||m[1])+'｜'+(dhFeatureAiPresets[m[1]]?.[Number(m[2])]||'預設第 '+(Number(m[2])+1)+' 題');
+  if(dhFeatureAiNames[f.slice(3)])return 'AI｜'+dhFeatureAiNames[f.slice(3)];
+ }
+ return dhFeatureSectionNames[f]||dhFeatureTopicNames[f]||f;
+}
+function dhFeatureActionLabel(v){return ({click:'選擇／點擊',view:'成功閱讀',complete:'完成使用',unlock:'首次解鎖'})[v]||v;}
+let dhFeatureSeq=0;
+async function loadDhFeatureAnalytics(){
+ const panel=$('memberFeaturePanel');if(!panel?.open||!token())return;
+ const seq=++dhFeatureSeq,host=$('dhFeatureRows');host.textContent='正在查詢會員功能偏好…';
+ const qs=new URLSearchParams({period:$('dhFeaturePeriod').value,tool:$('dhFeatureTool').value,action:$('dhFeatureAction').value});
+ try{const r=await usageAdminRequest('/admin/member-features/trending?'+qs);
+  if(seq!==dhFeatureSeq)return;
+  $('dhFeatureSummary').textContent='合計 '+(r.rows||[]).reduce((n,x)=>n+Number(x.total||0),0)+' 次｜依功能分開計算，不視為起盤成功次數';
+  host.innerHTML=r.rows?.length?`<table><thead><tr><th>排行</th><th>工具</th><th>功能</th><th>事件</th><th>次數</th><th>會員數</th></tr></thead><tbody>${r.rows.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(usageToolNames[x.tool]||x.tool)}</td><td>${esc(dhFeatureLabel(x.tool,x.feature))}</td><td>${esc(dhFeatureActionLabel(x.action))}</td><td>${Number(x.total||0)}</td><td>${Number(x.members||0)}</td></tr>`).join('')}</tbody></table>`:'目前沒有符合篩選的功能統計。';
+  $('dhFeatureError').textContent='';
+ }catch(e){if(seq===dhFeatureSeq){host.textContent='查詢失敗';$('dhFeatureError').textContent=e.message}}
+}
+$('memberFeaturePanel')?.addEventListener('toggle',()=>{if($('memberFeaturePanel').open)void loadDhFeatureAnalytics();else dhFeatureSeq++});
+for(const id of ['dhFeaturePeriod','dhFeatureTool','dhFeatureAction'])$(id)?.addEventListener('change',loadDhFeatureAnalytics);
+$('dhFeatureReload')?.addEventListener('click',loadDhFeatureAnalytics);
+
 let memberUsagePeriod='today',memberUsageRequestSeq=0;
 function usageStatus(message='',error=false){const e=$('memberUsageStatus');e.textContent=message;e.classList.toggle('error',error)}
 async function usageAdminRequest(path,method='GET',data){
@@ -1490,7 +1545,7 @@ async function loadMemberUsageLeaderboard(preserveStatus=false){
     for(const btn of $('memberUsageResults').querySelectorAll('[data-usage-member]'))btn.addEventListener('click',()=>loadMemberUsageDetails(btn.dataset.usageMember));
   }catch(e){if(seq===memberUsageRequestSeq){$('memberUsageResults').textContent='讀取排行榜失敗';usageStatus(e.message,true)}}
 }
-const usageToolNames={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字',qimen:'奇門',ziwei:'紫微',liuyao:'六爻',meihua:'梅花易數'};
+const usageToolNames={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字',qimen:'奇門',ziwei:'紫微',liuyao:'六爻',meihua:'梅花易數',wuxing:'五行'};
 // 空分類為既有舊紀錄或精簡模式，無法回推真實興趣，不能誤標「基本排盤」。
 function usageCategoryLabel(item){
   if(item.category)return item.category;
@@ -1507,7 +1562,15 @@ async function loadMemberUsageDetails(sub){
     el.innerHTML=`<div class="detail-title"><h3>${esc(r.member?.name||'會員')}｜${esc(r.member?.email||'')}</h3><button type="button" class="btn secondary" id="memberUsageCloseDetail">收合明細</button></div>
       <div class="member-usage-note">${r.activeDays==null?'歷史至今僅顯示累計次數（日統計採 90 天循環保留），不提供無法確定的活躍天數。':'此期間成功起盤的活躍使用天數：'+Number(r.activeDays)+' 天'}</div>
       <table><thead><tr><th>工具</th><th>操作分類</th><th>起盤</th><th>章節瀏覽</th><th>AI 成功</th></tr></thead><tbody>${r.details?.length?r.details.map(x=>`<tr><td>${esc(usageToolNames[x.tool]||x.tool)}</td><td>${esc(usageCategoryLabel(x))}</td><td>${Number(x.castCount||0)}</td><td>${Number(x.viewCount||0)}</td><td>${Number(x.aiCount||0)}</td></tr>`).join(''):'<tr><td colspan="5">目前沒有使用紀錄</td></tr>'}</tbody></table>
-      <details class="aiq-member-history" id="aiqMemberHistory"><summary>AI 解讀題目明細（點擊展開）</summary><div id="aiqMemberHistoryRows" class="aiq-muted">展開後才查詢成功提問紀錄。</div></details>`;
+      <details class="aiq-member-history" id="dhMemberFeatureHistory"><summary>各功能點擊／閱讀／完成／解鎖明細</summary><div id="dhMemberFeatureRows">展開後查詢。</div></details><details class="aiq-member-history" id="aiqMemberHistory"><summary>AI 解讀題目明細（點擊展開）</summary><div id="aiqMemberHistoryRows" class="aiq-muted">展開後才查詢成功提問紀錄。</div></details>`;
+    const fpanel=$('dhMemberFeatureHistory');
+    fpanel?.addEventListener('toggle',async()=>{
+      if(!fpanel.open)return;
+      const host=$('dhMemberFeatureRows');host.textContent='正在查詢功能偏好…';
+      try{const d=await usageAdminRequest('/admin/member-features/member?sub='+encodeURIComponent(sub)+'&period='+encodeURIComponent(memberUsagePeriod));
+       host.innerHTML=d.rows?.length?`<table><thead><tr><th>工具</th><th>功能</th><th>事件</th><th>次數</th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${esc(usageToolNames[r.tool]||r.tool)}</td><td>${esc(dhFeatureLabel(r.tool,r.feature))}</td><td>${esc(dhFeatureActionLabel(r.action))}</td><td>${Number(r.total||0)}</td></tr>`).join('')}</tbody></table>`:'這段期間無功能紀錄（需啟用完整模式）。';
+      }catch(e){host.textContent='查詢失敗：'+e.message}
+    });
     const qpanel=$('aiqMemberHistory');
     qpanel?.addEventListener('toggle',async()=>{
       if(!qpanel.open)return;

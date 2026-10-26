@@ -1473,6 +1473,7 @@ function wxRenderArticle(c,id){
  $('lengthInfo').textContent=`本文 ${wxArticleCount(a)} 字（含標題、標點，不計空白）`;
  $('report').hidden=false;document.querySelectorAll('.topic').forEach(b=>b.classList.toggle('selected',b.dataset.id===id));
  wxReadingActivate(id);wxAiSyncReport(id);$('report').scrollIntoView({behavior:'smooth',block:'start'});recordHistory(c,id);
+ if(!c.demo&&!wxFeatureViewed.has(id+':view')){wxTrackUsage('view',({identity:'五行｜屬性',personality:'五行｜性格',balance:'五行｜平衡',career:'五行｜事業',love:'五行｜感情',wealth:'五行｜財運'})[id]||'');wxTrackFeature(id,'view',true);}
 }
 const WX_PAID_SECTIONS=new Set(['career','love','wealth']);
 const WX_VISITOR_KEY='divinationhub-wuxing-visitor-v1',WX_EVER_MEMBER_KEY='divinationhub-wuxing-was-member-v1';
@@ -1548,6 +1549,7 @@ async function wxUnlockSection(id){
   reports[id]=d.document;wxSectionMap.set(id,{...current,unlocked:true});
   $('copyReport').disabled=false;$('printReport').disabled=false;wxUpdateTopicLocks();wxRenderArticle(chart,id);
   notice(d.charged?`已扣除專業點數 ${d.charged} 點，永久解鎖成功`:'此區先前已解鎖，沒有重複扣點');
+  if(d.charged>0)wxTrackFeature(id,'unlock');
   void wxRefreshSharedQuota();
  }catch(e){if(serial===wxReadSerial){
   let msg=e.message;if(e.code==='INSUFFICIENT_POINTS')msg='專業解鎖點數不足，請至會員中心查看或加購。';
@@ -1556,7 +1558,8 @@ async function wxUnlockSection(id){
  }}finally{wxSectionBusy=false}
 }
 function renderReport(id){
- if(!chart)return;active=id;const serial=++wxReadSerial;
+ if(!chart)return;
+ if(!chart.demo)wxTrackFeature(id,'click',true);active=id;const serial=++wxReadSerial;
  if(!WX_PAID_SECTIONS.has(id)){ $('copyReport').disabled=false;$('printReport').disabled=false;wxRenderArticle(chart,id);return }
  if(reports[id]){$('copyReport').disabled=false;$('printReport').disabled=false;wxRenderArticle(chart,id);return}
  wxLockedView(id);
@@ -1595,6 +1598,7 @@ function wxRecordSavedBirth(birth,fromChart=null){
   old.sort((a,b)=>(b.updated||0)-(a.updated||0));
   wxWriteHistory(old);
   notice(found?'已更新這組五行紀錄（僅本機）':'已儲存五行出生資料（最多 3 組，僅本機）');
+  wxTrackFeature('save-record','complete');
   return true;
  }catch(_){notice('本機儲存失敗，請檢查瀏覽器是否允許儲存資料');return false}
 }
@@ -1719,7 +1723,7 @@ $('wxAiSaveBirthBottom').addEventListener('click',()=>{
 $('wxAiBackReading').addEventListener('click',()=>wxSetView('reading'));
 $('wxAiNewQuestion').addEventListener('click',()=>{const open=$('wxAiComposer').hidden;wxShowAiComposer(open);if(open)requestAnimationFrame(()=>{$('wxAiComposer').scrollIntoView({behavior:'smooth',block:'start'})})});
 
-function showChart(c){wxReadSerial++;wxSectionMap.clear();chart=c;wxAiSessionId='';wxAiTurn=0;$('wxAiMessages').replaceChildren();wxAiUpdateTurnNav();wxAiSyncPreserveUI();$('wxAiConversation').hidden=true;wxShowAiComposer(true);wxAiUpdateUI();$('report').hidden=true;$('wxReadingLayout').hidden=true;$('wxExperience').hidden=false;wxSetView('reading',{scroll:false});wxAiUserInteracted=false;wxAiSetCategory('career',false);renderChart(chart);wxUpdateTopicLocks();if(member)void wxRefreshSectionStatus();$('wxTemporaryTools').hidden=!(new URLSearchParams(location.search).get('wxdebug')==='1');$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+function showChart(c){wxFeatureViewed.clear();wxReadSerial++;wxSectionMap.clear();chart=c;wxAiSessionId='';wxAiTurn=0;$('wxAiMessages').replaceChildren();wxAiUpdateTurnNav();wxAiSyncPreserveUI();$('wxAiConversation').hidden=true;wxShowAiComposer(true);wxAiUpdateUI();$('report').hidden=true;$('wxReadingLayout').hidden=true;$('wxExperience').hidden=false;wxSetView('reading',{scroll:false});wxAiUserInteracted=false;wxAiSetCategory('career',false);renderChart(chart);wxUpdateTopicLocks();if(member)void wxRefreshSectionStatus();$('wxTemporaryTools').hidden=!(new URLSearchParams(location.search).get('wxdebug')==='1');$('result').scrollIntoView({behavior:'smooth',block:'start'})}
 let running=false;
 async function requestAndRender(birth,topic=null,onAccepted=null){
  if(running||wxAiDiscardPending)return;
@@ -1745,6 +1749,7 @@ async function requestAndRender(birth,topic=null,onAccepted=null){
    SHARED_TOOL_EMPTY:'會員共用工具額度不足。',LOGIN_EXPIRED:'會員登入已失效，請重新登入。'
   })[data?.error]||data?.message||data?.error||'五行 Worker 暫時無法提供報告');
   birthRequest=birth;reports=data.reports;showChart(data.chart);
+  if(!data.replayed){wxTrackUsage('cast');wxTrackFeature('lookup','complete');}
   if(data.quota)wxApplyToolQuota(data.quota);void wxRefreshSharedQuota();
   if(topic)renderReport(topic);else notice('五行解讀已完成，請選擇想閱讀的問題');
  }catch(e){fail('五行解析未完成：'+(e?.message||'無法連線至後端')+'。請確認已部署 Worker 及允許目前網站網域。')}
@@ -1814,6 +1819,7 @@ function wxAiSetQuestion(value,engaged=true){
 }
 function wxAiSetCategory(id,manual=true){
  if(!WX_AI_CATEGORIES.some(c=>c.id===id))return;
+ if(manual)wxTrackFeature('ai-'+id,'click');
  wxAiActiveCategory=id;
  wxAiSetQuestion(wxAiCategory().topics[0][1],manual);
 }
@@ -1822,7 +1828,7 @@ function wxAiSyncReport(topicId){
  else wxAiRenderSelected();
 }
 $('wxAiCategories').addEventListener('click',e=>{const b=e.target.closest('[data-wx-ai-cat]');if(b)wxAiSetCategory(b.dataset.wxAiCat)});
-$('wxAiSuggestions').addEventListener('click',e=>{const b=e.target.closest('[data-wx-ai-q]');if(b)wxAiSetQuestion(wxAiCategory().topics[Number(b.dataset.wxAiQ)]?.[1]||'')});
+$('wxAiSuggestions').addEventListener('click',e=>{const b=e.target.closest('[data-wx-ai-q]');if(b){wxTrackFeature('ai-'+wxAiActiveCategory+'-'+String(b.dataset.wxAiQ),'click');wxAiSetQuestion(wxAiCategory().topics[Number(b.dataset.wxAiQ)]?.[1]||'')}});
 $('customQuestion').addEventListener('input',()=>{wxAiUserInteracted=true;wxAiRenderSelected()});
 $('wxAiClear').addEventListener('click',()=>{wxAiSetQuestion('');$('customQuestion').focus()});
 wxAiSetCategory('career',false);
@@ -2148,6 +2154,8 @@ async function wxAiSend(follow=false){
   if(follow)$('wxAiFollowInput').value='';
   $('wxAiSendStatus').textContent=`AI 解讀完成 · 本次使用${data.charged==='free'?'免費':'會員共用'} AI 1 次`;notice('五行 AI 解讀完成');
   wxAiQuota=data.quota||wxAiQuota;
+  wxTrackUsage('ai_success',wxAiCategoryLabel(category));
+  wxTrackFeature(follow?'ai-followup':(wxAiCategory().topics.some(x=>x[1]===q)?'ai-'+category+'-'+wxAiCategory().topics.findIndex(x=>x[1]===q):'ai-custom'),'complete');
   void wxAiRefreshStatus();
  }catch(e){
   if(['SHARED_AI_EMPTY','FREE_AI_EMPTY','SHARED_AI_CONFIRM_REQUIRED'].includes(e.code))await wxAiRefreshStatus();
@@ -2167,6 +2175,7 @@ $('wxSaveRecord').addEventListener('click',()=>{
 $('wxLoadRecord').addEventListener('click',()=>wxSetRecordPopover(!$('wxRecordPopover').open));
 $('wxRecordClose').addEventListener('click',()=>wxSetRecordPopover(false));
 $('historyList').addEventListener('click',e=>{
+ if(e.target.closest('[data-history-load]'))wxTrackFeature('load-record','click');
  const del=e.target.closest('[data-history-delete]');
  if(del&&member){const rows=readHistory(),index=Number(del.dataset.historyDelete),item=rows[index];if(!item)return;
   if(!confirm('確定刪除這組五行出生紀錄？此操作無法復原。'))return;
@@ -2188,6 +2197,35 @@ $('wxRecordPopover').addEventListener('click',e=>{
 /* V18: 五行工具/AI 額度均由 Wuxing Worker 實際使用紀錄核算；admin 僅設定週期。 */
 const WX_MEMBER_API='https://member-api.ezgocpu.workers.dev';
 const WX_PUBLIC_QUOTA_API='https://admin-api.ezgocpu.workers.dev/quota/wuxing';
+// 會員使用／功能偏好統計均為附加功能，絕不影響本頁查詢、扣點或 AI。
+let wxUsageModeCache={mode:'off',until:0,promise:null};
+const wxFeatureViewed=new Set();
+async function wxUsageMode(){
+ if(Date.now()<wxUsageModeCache.until)return wxUsageModeCache.mode;
+ if(wxUsageModeCache.promise)return wxUsageModeCache.promise;
+ wxUsageModeCache.promise=(async()=>{
+  try{const r=await fetch(WX_MEMBER_API+'/member-usage/mode',{cache:'no-store'}),j=await r.json();
+   wxUsageModeCache.mode=r.ok&&j.success?j.mode:'off';}catch(_){wxUsageModeCache.mode='off'}
+  wxUsageModeCache.until=Date.now()+60000;wxUsageModeCache.promise=null;return wxUsageModeCache.mode;
+ })();return wxUsageModeCache.promise;
+}
+function wxUsageSend(path,data,fullOnly=false){
+ const token=readToken(),sub=member?.sub;
+ if(!sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(token)||location.protocol==='file:'||new URLSearchParams(location.search).has('wxdebug'))return;
+ void(async()=>{const mode=await wxUsageMode();if(mode==='off'||fullOnly&&mode!=='full'||member?.sub!==sub||readToken()!==token)return;
+  try{await fetch(WX_MEMBER_API+path,{method:'POST',cache:'no-store',keepalive:true,
+   headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(data)})}catch(_){}})();
+}
+function wxTrackUsage(event,category=''){wxUsageSend('/member-usage/record',{tool:'wuxing',event,category,count:1});}
+function wxTrackFeature(feature,action='click',once=false){
+ if(!member?.sub)return;
+ const key=feature+':'+action;
+ if(once&&wxFeatureViewed.has(key))return;
+ if(once)wxFeatureViewed.add(key);
+ wxUsageSend('/member-feature/record',{tool:'wuxing',feature,action,count:1},true);
+}
+function wxAiCategoryLabel(id){return ({career:'五行AI｜工作',love:'五行AI｜感情',wealth:'五行AI｜財運',nature:'五行AI｜人際',balance:'五行AI｜合作',lifestyle:'五行AI｜生活',timing:'五行AI｜抉擇'})[id]||''}
+
 let wxQuotaRequestSerial=0;
 function wxQuotaText(id,text){
  const el=$(id);if(!el)return;

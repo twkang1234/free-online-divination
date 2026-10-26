@@ -2591,7 +2591,22 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     if(topic==='people')return '人際';
     return '其他';
   }
+  const yijingTrackFeatureSeen=new Set();
+  function yijingTrackFeature(feature,action='click',once=false){
+    if(location.protocol==='file:'||(adminEntryRequested()||isAdminTestActive())||!(yijingSessionMember?.sub))return;
+    const token=yijingSavedSession();if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;
+    const key=feature+':'+action;if(once&&yijingTrackFeatureSeen.has(key))return;
+    if(once)yijingTrackFeatureSeen.add(key);
+    void (async()=>{
+      if(await yijingUsageMode()!=='full')return;
+      try{await fetch(MEMBER_API_BASE+'/member-feature/record',{method:'POST',cache:'no-store',keepalive:true,
+        headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+        body:JSON.stringify({tool:'yijing',feature,action,count:1})})}catch(_e){}
+    })();
+  }
   function yijingTrackUsage(event,category=''){
+    if(event==='cast')yijingTrackFeature(({感情:'love',工作:'work',事業:'business',財運:'finance',人際:'people',分手:'breakup',復合:'reconcile'})[category]||'other','complete');
+    if(event==='ai_success')yijingTrackFeature('ai','complete');
     if(location.protocol==='file:'||(adminEntryRequested()||isAdminTestActive())||!yijingSessionMember?.sub)return;
     const memberSub=yijingSessionMember.sub,token=yijingSavedSession();
     if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;
@@ -3722,6 +3737,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       try{
         const data=await requestYijingAI(r,'followup',{question:q,kind,answer:kind==='ai'?firstAnswer:'',operationId:followupOp},ctrl.signal);
         renderSafeYijingMarkdown(content,data.answer.trim());content.hidden=false;
+        yijingTrackUsage('ai_success',yijingUsageCategory());yijingTrackFeature('followup','complete');
         if(!state.custom)yjAiBeforeCast={ticket:'',charge:'',question:''};
         spent=true;yijingFollowupUsedCasts.add(r);input.readOnly=true;send.textContent='已使用本次追問';
         status.textContent='✓ AI 追問已完成'+(data.channel?'｜通道 '+data.channel:'')+(data.traceId?'｜追蹤碼 '+data.traceId:'');
@@ -3781,6 +3797,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         const data=await requestYijingAI(r,'initial',{},ctrl.signal);
         // 安全渲染基本 Markdown：以 textContent 產生 DOM，不執行 AI 回傳的 HTML/JS。
         renderSafeYijingMarkdown(content,data.answer.trim());content.hidden=false;
+        yijingTrackUsage('ai_success',yijingUsageCategory());
         void yjArchiveSave(r,data.answer.trim());
         status.textContent='✓ 已完成 AI 解卦'+(data.channel?'｜通道 '+data.channel:'')+(data.traceId?'｜追蹤碼 '+data.traceId:'');
         const download=document.getElementById('downloadYijingAiTxt');
@@ -3937,6 +3954,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   document.getElementById('yijingTopicGrid').addEventListener('click',async e=>{const b=e.target.closest('[data-topic]');if(!b||yjCustomEntryBusy||yjToolBeforeCastBusy)return;
     if(b.dataset.topic==='custom-all'){
       if(!await yjCustomEntry('all'))return;
+      yijingTrackFeature('other','click');
       void yjCancelToolBeforeCast();void yjCancelAiBeforeCast();
       state={topic:{id:'general',name:'完全自訂',focus:'依使用者具體問題與卦象判讀局勢、動爻、轉折及行動'},scenario:{id:'free',name:'自由提問',desc:'無預設情境'},question:'自訂問題',custom:true,customSource:'all'};
       customGateConfirmed=true;renderReady();showStep('ready');return;
@@ -3946,10 +3964,11 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     // 第一層選主題便先確認並預留（免費或共用）工具額度。
     // 取消付款時停留在第一層；第三層不再另問。
     if(!await yjChooseToolBeforeCast(chosenTopic))return;
+    yijingTrackFeature(({love:'love',work:'work',business:'business',finance:'finance',people:'people',choice:'choice',self:'self',fortune:'fortune'})[chosenTopic?.id]||'other','click');
     void yjCancelAiBeforeCast();
     void yjCancelCustomBeforeCast();state.topic=chosenTopic;state.scenario=null;state.question=null;state.custom=false;state.customSource=null;renderScenarios();showStep('scenario');
   });
-  document.getElementById('yijingScenarioGrid').addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;void yjCancelCustomBeforeCast();void yjCancelAiBeforeCast();state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;renderQuestions();showStep('question');});
+  document.getElementById('yijingScenarioGrid').addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;void yjCancelCustomBeforeCast();void yjCancelAiBeforeCast();state.scenario=scenarioBy(state.topic,b.dataset.scenario);if(['breakup','reconcile'].includes(state.scenario?.id))yijingTrackFeature(state.scenario.id,'click');state.question=null;renderQuestions();showStep('question');});
   document.getElementById('yijingQuestionGrid').addEventListener('click',async e=>{if(yjCustomEntryBusy||yjToolBeforeCastBusy)return;const qbtn=e.target.closest('[data-question-index]');const custom=e.target.closest('[data-custom-question]');
     if(qbtn){
       if(qbtn.dataset.accessLocked==='1'){openMemberModal('這個固定問題今天未對未登入訪客開放；免費登入後此情境的所有固定問題全部開放。');return;}

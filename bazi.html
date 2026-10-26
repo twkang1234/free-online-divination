@@ -3839,8 +3839,22 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     // 同一頁同一章節最多記一次，避免開合洗高使用次數。
     baziViewedSections.add(id);
     baziTrackUsage('view',category);
+    baziTrackFeature(id.replace(/^report-/,''),'view',true);
   }
   window.baziTrackSectionOpen=baziTrackSectionOpen;
+  const baziTrackFeatureSeen=new Set();
+  function baziTrackFeature(feature,action='click',once=false){
+    if(location.protocol==='file:'||(new URLSearchParams(location.search).has('admin')||new URLSearchParams(location.search).has('admin-test'))||!(baziSessionMember?.sub))return;
+    const token=baziStoredSession();if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;
+    const key=feature+':'+action;if(once&&baziTrackFeatureSeen.has(key))return;
+    if(once)baziTrackFeatureSeen.add(key);
+    void (async()=>{
+      if(await baziUsageMode()!=='full')return;
+      try{await fetch(MEMBER_API_BASE+'/member-feature/record',{method:'POST',cache:'no-store',keepalive:true,
+        headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+        body:JSON.stringify({tool:'bazi',feature,action,count:1})})}catch(_e){}
+    })();
+  }
   function baziTrackUsage(event,category=''){
     if(location.protocol==='file:'||(new URLSearchParams(location.search).has('admin')||new URLSearchParams(location.search).has('admin-test'))||!baziSessionMember?.sub)return;
     const memberSub=baziSessionMember.sub,token=baziStoredSession();
@@ -7486,7 +7500,7 @@ ${intent}
         const options=birthOptions(),input=captureBirthInput();
         const ok=await window.baziMainCast({options,scroll,countUsage,reveal});
         if(ok){dailyFlowDemo=false;if(!document.body.classList.contains('bazi-personal-full-mode'))lastData=null;}
-        if(ok){lastSuccessfulBirthInput=input;if(reveal)rememberMemberBirth(input);if(countUsage&&reveal)baziTrackUsage('cast','基本排盤');}
+        if(ok){lastSuccessfulBirthInput=input;if(reveal)rememberMemberBirth(input);if(countUsage&&reveal){baziTrackUsage('cast','基本排盤');baziTrackFeature('lookup','complete');}}
         return ok;
       }catch(err){
         console.error('[Bazi basic]',err);
@@ -7519,7 +7533,7 @@ ${intent}
       emptyState.style.display='none';if(reveal){results.classList.add('show');document.body.classList.remove('show-bazi-intro');document.body.classList.add('has-bazi-chart');window.baziReadingUiSuccess?.(data);}
       if (scroll) setTimeout(()=>$('report-overview')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
       // 只在使用者主動按「排八字」且成功完成排盤時紀錄。
-      if(countUsage&&reveal)baziTrackUsage('cast','基本排盤');
+      if(countUsage&&reveal){baziTrackUsage('cast','基本排盤');baziTrackFeature('lookup','complete');}
     }catch(err){
       console.error('[Bazi API]',err);
       if (scroll) alert(err&&err.message?err.message:String(err));

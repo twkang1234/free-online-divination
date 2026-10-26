@@ -4693,7 +4693,22 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     if(topic==='money')return '財運';
     return '其他';
   }
+  const tarotTrackFeatureSeen=new Set();
+  function tarotTrackFeature(feature,action='click',once=false){
+    if(location.protocol==='file:'||(isAdminTestActive()||!!state.batchTest||!!state.fixedCaseId)||!(tarotSessionMember?.sub))return;
+    const token=tarotStoredSession();if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;
+    const key=feature+':'+action;if(once&&tarotTrackFeatureSeen.has(key))return;
+    if(once)tarotTrackFeatureSeen.add(key);
+    void (async()=>{
+      if(await tarotUsageMode()!=='full')return;
+      try{await fetch(MEMBER_API_BASE+'/member-feature/record',{method:'POST',cache:'no-store',keepalive:true,
+        headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+        body:JSON.stringify({tool:'tarot',feature,action,count:1})})}catch(_e){}
+    })();
+  }
   function tarotTrackUsage(event,category=''){
+    if(event==='cast')tarotTrackFeature(({感情:'love',工作:'work',財運:'money',分手:'breakup',婚姻:'marriage',學業:'study',事業:'business'})[category]||'other','complete');
+    if(event==='ai_success')tarotTrackFeature('ai','complete');
     if(location.protocol==='file:'||(isAdminTestActive()||!!state.batchTest||!!state.fixedCaseId)||!tarotSessionMember?.sub)return;
     const memberSub=tarotSessionMember.sub,token=tarotStoredSession();
     if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;
@@ -7065,6 +7080,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     const sc=scenarioBy(t,aliases[scenarioId]||scenarioId);
     if(!sc)return false;
     if(!await tarotPrepayFirstStage(t.id)){showStep('topic');return false;}
+    tarotTrackFeature(t.id==='free'?'other':t.id,'click');
     state.topic=t;state.scenario=sc;state.question=null;state.tarotFurthestStep=0;
     renderScenarios();
     // 直接進入該情境的正式選題流程；第一階段已先扣 1 次，第二階段稍後另確認。
@@ -7080,12 +7096,13 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
     if(!isTopicAllowed(topicId)){if(topicId==='free')openMemberModal();else openMemberModal();return;}
     // 第一層：固定題型使用每日免費優先；完全自訂直接確認扣共用工具額度 2 次。
     if(!await tarotPrepayFirstStage(topicId))return;
+    tarotTrackFeature(topicId==='free'?'other':topicId,'click');
     if(topicId!=='free')tarotCustomInvalidate();
     cancelFixedCase20();state.fixedCaseId='';state.topic=topicBy(topicId);state.scenario=state.question=null;state.spreadChoice=null;state.tarotFurthestStep=0;
     if(state.topic.id==='free'){state.scenario={id:'free',name:'自由提問'};renderQuestions();showStep('question');}
     else{renderScenarios();showStep('scenario');}
   });
-  els.scenario.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;tarotCustomInvalidate();state.scenario=scenarioBy(state.topic,b.dataset.scenario);state.question=null;state.spreadChoice=null;enterQuestionStage();});
+  els.scenario.addEventListener('click',e=>{const b=e.target.closest('[data-scenario]');if(!b)return;tarotCustomInvalidate();state.scenario=scenarioBy(state.topic,b.dataset.scenario);if(['breakup','marriage','study','business'].includes(state.scenario?.id))tarotTrackFeature(state.scenario.id,'click');state.question=null;state.spreadChoice=null;enterQuestionStage();});
   els.question.addEventListener('click',async e=>{
     const summary=e.target.closest('.question-custom-drawer summary');
     if(summary){
