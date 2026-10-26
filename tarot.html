@@ -3562,6 +3562,15 @@ html[data-theme="light"] #tarotAiDiscardDialog strong,html[data-theme="light"] #
 html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#775b7e;border-color:#c7abc8;background:#fff}
 @media(max-width:600px){.tarot-ai-preserve{padding:14px 13px}.tarot-ai-preserve-actions{display:grid;grid-template-columns:1fr}.tarot-ai-quota-empty{align-items:stretch}.tarot-ai-quota-empty button{width:100%}#tarotAiDiscardDialog{padding:18px}#tarotAiDiscardDialog .tarot-ai-discard-actions{display:grid;grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.tarot-ai-preserve-actions button{transition:none}}
+
+/* Compact AI notices: do not repeat the same reminder beneath each report. */
+.tarot-site-ai-status:empty{display:none!important}
+.tarot-ai-charge-note[hidden],.tarot-ai-preserve[hidden]{display:none!important}
+#tarotAiDiscardDialog .tarot-ai-discard-export{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:12px 0 3px}
+#tarotAiDiscardDialog .tarot-ai-discard-export button{padding:8px 12px;min-height:40px;border-radius:10px;background:rgba(231,94,215,.14);border:1px solid rgba(231,94,215,.36);color:#f4d8f0;font-size:.75rem;font-weight:800}
+#tarotAiDiscardDialog .tarot-ai-discard-export span{color:#e8c689;font-size:.72rem}
+html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export button{color:#744273;background:#f5e4f3;border-color:#d3afd1}
+html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{color:#8a5d2c}
 </style>
 </head>
 <body>
@@ -4180,9 +4189,10 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
   <div class="tarot-ai-discard-kicker">⚠ AI 解讀尚未永久保存</div>
   <h3 id="tarotAiDiscardTitle">開始新問題會清除目前 AI 解讀</h3>
   <p id="tarotAiDiscardDesc">塔羅目前只保留部分牌面與占卜紀錄，<strong>不會永久保存完整 AI 解讀</strong>。開始新的問題後，本頁的 AI 報告可能無法恢復。</p>
-  <p>建議先返回報告，下載或複製完整 AI 解讀，再繼續操作。</p>
+  <p>如尚未保存，可先下載目前已完成的 AI 解讀，再決定是否開始新問題。</p>
+  <div class="tarot-ai-discard-export"><button type="button" data-tarot-ai-save="download">↓ 先下載目前 AI 解讀（TXT）</button><span data-tarot-ai-dialog-feedback role="status" aria-live="polite"></span></div>
   <form method="dialog" class="tarot-ai-discard-actions">
-    <button type="submit" value="cancel">返回 AI 報告保存</button>
+    <button type="submit" value="cancel">返回繼續閱讀</button>
     <button type="submit" value="continue">仍要繼續（清除問答）</button>
   </form>
 </dialog>
@@ -6341,7 +6351,7 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
       // Once six cards are drawn, never insert a second large instruction panel.
       // The six-card settings and AI button above are the only primary CTA.
       els.finish.innerHTML=onsiteAiPhaseResults.auto?.six
-        ?'<div class="tarot-six-end-actions"><button type="button" class="v285-new" data-new-reading>開始另一個全新問題 →</button><p class="tarot-restart-warning">提醒：請先複製或下載本次 AI 解讀。開始新問題後，本頁目前的牌面與解讀內容將清空，無法從這個頁面還原。</p></div>'
+        ?'<div class="tarot-six-end-actions"><button type="button" class="v285-new" data-new-reading>開始另一個全新問題 →</button></div>'
         :'';
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
@@ -6356,6 +6366,7 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
       : !state.followFormOpen&&!firstStageReadyForFollowup();
     syncMemberSaveInvites();
     syncV5StepCues();
+    tarotAiSyncProtection();
   }
   async function completeSixPromptDraw(){
     if(state.bDraft?.current?.length!==3)return;
@@ -6806,7 +6817,16 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
   function tarotAiSyncProtection(){
     const root=els.analysis.querySelector('[data-site-ai]');
     const banner=root?.querySelector('[data-tarot-ai-preserve]');
-    if(banner)banner.hidden=!tarotAiHasAnswer();
+    if(!banner)return;
+    const currentPhase=state.stage3x3==='complete'?'six':'three';
+    // 第二階段設定/抽第二輪牌時不要顯示三張牌的大型保存區塊。
+    const inSecondStage=!!state.followFormOpen||els.workspace.classList.contains('tarot-followup-drawing');
+    const hasCurrentAnswer=!!onsiteAiPhaseResults.auto?.[currentPhase]?.answer;
+    banner.hidden=!hasCurrentAnswer||inSecondStage;
+    if(!banner.hidden){
+      const title=banner.querySelector('[data-tarot-ai-save-title]');
+      if(title)title.textContent=currentPhase==='six'?'閱讀完畢？記得保存兩階段完整 AI 解讀':'閱讀完畢？記得保存三張牌 AI 解讀';
+    }
   }
   function tarotAiAllText(){
     if(!tarotAiHasAnswer())return '';
@@ -6833,6 +6853,7 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
   }
   function tarotAiSaveFeedback(message){
     const el=els.analysis.querySelector('[data-tarot-ai-save-feedback]');if(el)el.textContent=message;
+    const modal=document.querySelector('[data-tarot-ai-dialog-feedback]');if(modal)modal.textContent=message;
   }
   window.addEventListener('beforeunload',event=>{
     if(!tarotAiHasAnswer()&&!onsiteAiBusy)return;
@@ -6854,7 +6875,7 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
       dlg.showModal();
       const value=await new Promise(resolve=>dlg.addEventListener('close',()=>resolve(dlg.returnValue),{once:true}));
       if(value!=='continue'){
-        const target=els.analysis.querySelector('[data-tarot-ai-preserve]:not([hidden])')||els.analysis.querySelector('[data-site-ai]');
+        const target=els.analysis.querySelector('[data-tarot-ai-preserve]:not([hidden])')||els.analysis.querySelector('[data-site-ai]')||els.finish;
         target?.scrollIntoView({behavior:'smooth',block:'center'});
         return false;
       }
@@ -6866,19 +6887,20 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
     const note=root?.querySelector('[data-site-ai-charge-note]');if(!note)return;
     const free=Math.max(0,Number(quota?.daily?.remaining)||0);
     const shared=Math.max(0,Number(quota?.wallet?.ai)||0);
+    note.hidden=false;
     if(quota?.adminTest){
-      note.dataset.chargeType='test';note.textContent='管理員測試：成功完成 AI 解讀扣 1 次測試額度，不扣正式會員額度。';return;
+      note.dataset.chargeType='test';note.textContent='管理員測試：本次成功解讀扣測試額度 1 次。';return;
     }
     if(free>0){
       note.dataset.chargeType='free';
-      note.textContent='本次成功 AI 解讀使用 1 次本期免費 AI 額度（剩餘 '+free+' 次）；不必額外確認。';return;
+      note.textContent='本次使用免費 AI 1 次。';return;
     }
     if(shared>0&&quota?.role==='member'){
       note.dataset.chargeType='shared';
-      note.textContent='本期免費 AI 已用完。本次若使用共用 AI 額度 1 次（剩餘 '+shared+' 次），開始前會先詢問你的同意。';return;
+      note.textContent='本次將使用會員共用 AI 1 次，開始前會先確認。';return;
     }
-    note.dataset.chargeType='empty';
-    note.textContent='AI 解讀額度已用完，目前無法開始新的 AI 解讀。';
+    // 額度已用完交由下方歸零提示負責，不要兩處重複說明。
+    note.dataset.chargeType='empty';note.hidden=true;note.textContent='';
   }
   function confirmTarotSharedAi(quota){
     const remaining=Math.max(0,Number(quota?.wallet?.ai)||0);
@@ -6923,7 +6945,8 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
           :'免費 AI 額度已用完，請登入會員查看共用額度；已完成的解讀仍可保存。';
         const buy=emptyBar.querySelector('[data-tarot-ai-buy]');if(buy)buy.hidden=!(empty&&d.quota?.role==='member');
       }
-      if(root?.querySelector('[data-site-ai-status]')&&!root.dataset.siteAiResult)root.querySelector('[data-site-ai-status]').textContent=!empty?'每次成功解讀扣 1 次；優先使用本期免費 AI，三張與六張分開計算。':'AI 額度已用完；抽牌額度另外計算，舊報告不受影響。';
+      const status=root?.querySelector('[data-site-ai-status]');
+      if(status&&!onsiteAiBusy&&!['failed','cancelled'].includes(root.dataset.siteAiResult))status.textContent='';
       updateAccessMini();updateQuotaUI();renderAdminTestBanner();
     }catch(e){
       if(display)display.textContent='目前無法確認 AI 額度，請稍後重試。';
@@ -6985,7 +7008,7 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
       <button type="button" class="tarot-site-ai-toggle" data-site-ai-toggle="top" aria-expanded="false">↓ 展開閱讀${phase==='six'?'六張牌':'三張牌'}完整解讀</button>
       <div class="tarot-site-ai-article-body" data-site-ai-article-body hidden><article class="tarot-site-ai-result" data-site-ai-answer></article>
       <button type="button" class="tarot-site-ai-toggle tarot-site-ai-toggle-bottom" data-site-ai-toggle="bottom">↑ 收合${phase==='six'?'六張牌':'三張牌'}完整解讀</button></div>
-      <div class="tarot-site-ai-actions"><button type="button" data-site-ai-copy="auto:${phase}">複製解讀</button><button type="button" data-site-ai-txt="auto:${phase}">下載解讀 TXT</button></div>`;
+      `;
     section.querySelector('[data-site-ai-metrics]').textContent=`通道 ${result.channel||'—'}｜追蹤碼：${result.traceId||'—'}`;
     renderOnsiteAiArticle(section.querySelector('[data-site-ai-answer]'),result.answer);
     return section;
@@ -7164,20 +7187,15 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
     const focusNote='';
     // Six-card formats/style are essential: NEVER put them behind a disclosure.
     const settingsHtml=settingsBlock;
-    const aiLead=six
-      ?'確認設定後，AI 將整合六張牌產生新的完整報告。'
-      :'三張牌與 3＋3 六張牌，每次成功完成 AI 解讀才扣 1 次；若服務故障，系統自動切換其他 AI，全部失敗不扣次。';
     els.analysis.innerHTML=`<section class="tarot-ai-entry"><div class="analysis-kicker">${six?'SIX CARDS · AI READING':'THREE CARDS · AI READING'}</div><h3 class="v2810-prompt-title">${six?'第二階段｜六張牌整合解讀':'第一階段｜三張牌 AI 解讀'}</h3>${intro}
       ${focusNote}
       ${settingsHtml}
       <section class="tarot-site-ai" aria-label="站內 AI 塔羅解讀" data-site-ai>
         <h4>${six?'準備開始整合解讀':'✦ 站內 AI 專業解讀'} <small>系統自動選擇可用通道</small></h4>
-        <p>${aiLead}</p>
         <div class="tarot-site-ai-stats" data-site-ai-quota>正在確認會員共用 AI 解讀次數…</div>
-        <p class="tarot-ai-shared-note">訪客與免費會員的定期免費額度分開計算；已登入過的裝置需要重新登入才能使用會員額度。</p>
         <p class="tarot-ai-charge-note" data-site-ai-charge-note role="note">正在確認本次 AI 解讀的扣次方式…</p>
         <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>${six?'✦ 開始六張牌 AI 整合解讀':'✦ 開始站內 AI 解讀'}</button>
-        <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite">正在確認額度…</p>
+        <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite"></p>
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
         <div class="tarot-ai-report-box" data-site-ai-error-report hidden>
           <details><summary>回報這次使用問題給管理員</summary><label>簡短描述（至少 5 字，請勿填入占卜內容或個人資料） <textarea maxlength="300" rows="2" placeholder="例如：按下 AI 解讀後出現無法連線，重試仍失敗"></textarea></label>
@@ -7191,8 +7209,8 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
         <div data-site-ai-output hidden></div>
         <aside class="tarot-ai-preserve" data-tarot-ai-preserve hidden aria-label="保存 AI 解讀提醒">
           <div class="tarot-ai-preserve-head"><span class="tarot-ai-preserve-mark" aria-hidden="true">✧</span>
-            <div><h4>閱讀完畢？請先保留這次 AI 解讀</h4>
-              <p>目前網站可能保留部分塔羅牌面紀錄，<strong>不會永久保存完整 AI 解讀</strong>。重新整理、關閉或離開後，已產生的 AI 報告可能無法恢復；<strong>即使已扣 AI 額度，也不代表答案已儲存。</strong></p></div></div>
+            <div><h4 data-tarot-ai-save-title>閱讀完畢？記得保存 AI 解讀</h4>
+              <p>網站只保留部分牌面紀錄，<strong>不會永久保存完整 AI 解讀</strong>。離開或重新整理後可能無法恢復，請自行下載或複製。</p></div></div>
           <div class="tarot-ai-preserve-actions">
             <button type="button" data-tarot-ai-save="download">↓ 下載完整 AI 解讀（TXT）</button>
             <button type="button" data-tarot-ai-save="copy">複製完整 AI 解讀</button>
