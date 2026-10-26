@@ -931,6 +931,17 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
 .topic .wx-access-hint{display:inline-block;margin-top:8px;font-size:12px;color:#e4c37c;font-weight:800}
 .wx-reading-link .wx-access-hint{font-size:10px;white-space:nowrap;color:#e5c681}
 .wx-section-locked .wx-section-alert{color:#f4b2a1}
+/* V26｜AI 剩餘次數與暫未開放的加購入口：僅在兩種 AI 額度均為零時顯示。 */
+.wx-ai-sendrow .wx-ai-inline-status{max-width:none;line-height:1.75;color:#c8dfce}
+.wx-ai-inline-status.wx-ai-quota-empty{color:#f4c48b;font-weight:700}
+.wx-ai-send.wx-ai-quota-locked{opacity:1!important;color:#dce5dc!important;background:#364a42!important;border-color:#5d756b!important;box-shadow:none!important;cursor:not-allowed}
+.wx-ai-follow-area #wxAiFollowSend.wx-ai-quota-locked{opacity:1!important;color:#dce5dc!important;background:#364a42!important;border-color:#5d756b!important;cursor:not-allowed}
+.wx-ai-purchase{margin-top:9px;max-width:420px}
+.wx-ai-purchase-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:min(100%,330px);min-height:53px;padding:9px 14px;border:1px solid rgba(167,210,178,.3);border-radius:10px;background:rgba(8,37,25,.47);color:#d8eedb;font-size:12px}
+.wx-ai-purchase-placeholder strong{font-weight:750}.wx-ai-purchase-placeholder small{color:#aac2ae;font-size:11px}
+.wx-ai-purchase-placeholder:disabled{opacity:1;cursor:not-allowed}
+.wx-ai-purchase-follow{margin-top:10px}
+@media(max-width:600px){.wx-ai-purchase,.wx-ai-purchase-placeholder{max-width:none;width:100%}}
 </style>
 <meta property="og:site_name" content="一念知機">
 <meta property="og:locale" content="zh_TW">
@@ -1086,7 +1097,8 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
       <div class="wx-ai-input-head"><label for="customQuestion">你的專屬問題</label></div>
       <textarea id="customQuestion" class="input wx-ai-question" rows="4" placeholder="請輸入你想深入了解的五行問題……" maxlength="400" spellcheck="true"></textarea>
       <div class="wx-ai-input-foot"><span id="wxAiCount">0 / 400 字</span><button id="wxAiClear" class="wx-ai-mini-action" type="button">清除問題</button></div>
-      <div class="wx-ai-sendrow"><button id="aiBtn" class="wx-ai-send" type="button" disabled>✦ 開始五行 AI 深度解讀</button><span id="wxAiSendStatus" class="wx-ai-inline-status" role="status">正在檢查 AI 額度…</span></div>
+      <div class="wx-ai-sendrow"><button id="aiBtn" class="wx-ai-send" type="button" disabled>✦ 開始五行 AI 深度解讀</button><span id="wxAiSendStatus" class="wx-ai-inline-status" role="status" aria-live="polite">正在檢查 AI 額度…</span></div>
+      <div class="wx-ai-purchase" id="wxAiPurchase" hidden><button class="wx-ai-purchase-placeholder" type="button" disabled aria-label="加購 AI 解讀額度，即將開放"><strong>🛒 加購 AI 解讀額度</strong><small>即將開放</small></button></div>
       <div class="wx-ai-loading-notice" id="wxAiLoadingNotice" role="status" aria-live="polite" hidden>
         <span class="wx-ai-loading-spinner" aria-hidden="true"></span>
         <span><strong>AI 正在解讀你的五行資料</strong><small>正在整理個人化分析，請勿重複送出或關閉頁面。完成後會自動顯示完整解讀。</small></span>
@@ -1100,6 +1112,7 @@ html[data-wx-layout="mobile"] .wx-reading-layout #report{scroll-margin-top:168px
       <label for="wxAiFollowInput">你還想了解什麼？</label>
       <textarea id="wxAiFollowInput" class="input" rows="3" maxlength="400" placeholder="輸入下一個問題（5～400 字）"></textarea>
       <button id="wxAiFollowSend" type="button">送出追問（每次扣 AI 1 次）</button>
+      <div class="wx-ai-purchase wx-ai-purchase-follow" id="wxAiFollowPurchase" hidden><button class="wx-ai-purchase-placeholder" type="button" disabled aria-label="加購 AI 解讀額度，即將開放"><strong>🛒 加購 AI 解讀額度</strong><small>即將開放</small></button></div>
       <div class="wx-ai-loading-notice" id="wxAiFollowLoadingNotice" role="status" aria-live="polite" hidden>
         <span class="wx-ai-loading-spinner" aria-hidden="true"></span>
         <span><strong>AI 正在回答這次追問</strong><small>正在延續前面的對話整理回覆，請勿重複送出。完成後會自動展開最新回答。</small></span>
@@ -1788,36 +1801,73 @@ let wxAiBusy=false,wxAiPendingFollow=false,wxAiReady=false,wxAiSessionId='',wxAi
 function wxAiApiMessage(code,defaultMessage){return ({
  AI_CENTER_NOT_CONFIGURED:'AI 服務尚未完成部署。',D1_NOT_CONFIGURED:'會員資料庫尚未設定。',
  LOGIN_REQUIRED:'請先登入會員使用五行 AI。',MEMBER_LOGIN_REQUIRED:'曾經登入會員，請重新登入才可繼續使用 AI。',LOGIN_EXPIRED:'會員登入已失效，請重新登入。',
- FREE_AI_EMPTY:'免費 AI 額度已用完，請登入會員。',SHARED_AI_EMPTY:'會員共用 AI 額度不足。',
+ FREE_AI_EMPTY:'今日免費 AI 額度已用完，請登入會員繼續使用。',SHARED_AI_EMPTY:'每日免費 AI 與會員共用 AI 額度都已用完，請加購 AI 解讀額度。',
  FOLLOWUP_LIMIT:'本題已達 8 輪上限，請重新提問。',FOLLOWUP_EXPIRED:'這段對話已過期，請開啟新問題。',
+ SHARED_AI_CONFIRM_REQUIRED:'每日免費 AI 已用完，本次需使用會員 AI 額度 1 次。',
  AI_OPERATION_DUPLICATE:'上一筆問題正在處理，請勿重複送出。',FOLLOWUP_BUSY:'上一筆追問仍在處理。',
  INVALID_BIRTH:'請重新查詢命盤再提問。',AI_UNAVAILABLE:'AI 通道暫時無法解讀，本次不扣次。'
  }[code]||defaultMessage||'暫時無法完成解讀');}
+/* 數字只採用五行後端核算值；後台仍可設定每日 2 次或其他週期。 */
+let wxAiStatusSerial=0,wxAiPreflight=false;
+function wxAiRemaining(){
+ const q=wxAiQuota;
+ if(!q||!q.free||!Number.isFinite(Number(q.free.remaining)))return null;
+ const free=Math.max(0,Number(q.free.remaining));
+ const shared=q.role==='member'?Math.max(0,Number(q.sharedAiRemaining)||0):0;
+ return {free,shared,empty:free===0&&shared===0,isMember:q.role==='member'};
+}
 function wxAiUpdateUI(){
- const ready=wxAiReady&&!!chart&&!!birthRequest,canSend=ready&&!wxAiBusy;
- $('aiBtn').disabled=!canSend;$('wxAiFollowSend').disabled=!canSend||!wxAiSessionId||wxAiTurn>=8;
- const btn=$('aiBtn');btn.textContent=wxAiBusy&&!wxAiPendingFollow?'AI 解讀進行中…':'✦ 開始五行 AI 深度解讀';
- $('wxAiFollowSend').textContent=wxAiBusy&&wxAiPendingFollow?'AI 正在回答追問…':wxAiTurn>=8?'本題已達追問上限':'送出追問（每次扣 AI 1 次）';
+ const left=wxAiRemaining(),out=!!left?.empty;
+ const ready=wxAiReady&&!!chart&&!!birthRequest;
+ const canSend=ready&&!wxAiBusy&&!wxAiPreflight&&!out;
+ const btn=$('aiBtn'),followBtn=$('wxAiFollowSend');
+ btn.disabled=!canSend;
+ followBtn.disabled=!canSend||!wxAiSessionId||wxAiTurn>=8;
+ btn.textContent=wxAiBusy&&!wxAiPendingFollow?'AI 解讀進行中…':out?'AI 額度已用完':'✦ 開始五行 AI 深度解讀';
+ followBtn.textContent=wxAiBusy&&wxAiPendingFollow?'AI 正在回答追問…':wxAiTurn>=8?'本題已達追問上限':out?'AI 額度已用完':'送出追問（每次扣 AI 1 次）';
+ btn.classList.toggle('wx-ai-quota-locked',out&&!wxAiBusy);
+ followBtn.classList.toggle('wx-ai-quota-locked',out&&!wxAiBusy);
+ $('wxAiPurchase').hidden=!(out&&left.isMember);
+ $('wxAiFollowPurchase').hidden=!(out&&left.isMember&&!!wxAiSessionId);
  btn.classList.toggle('wx-is-busy',wxAiBusy&&!wxAiPendingFollow);
- $('wxAiFollowSend').classList.toggle('wx-is-busy',wxAiBusy&&wxAiPendingFollow);
+ followBtn.classList.toggle('wx-is-busy',wxAiBusy&&wxAiPendingFollow);
  $('wxAiLoadingNotice').hidden=!(wxAiBusy&&!wxAiPendingFollow);
  $('wxAiFollowLoadingNotice').hidden=!(wxAiBusy&&wxAiPendingFollow);
  $('wxAiWorkingBanner').hidden=!wxAiBusy;
  $('wxAiZone').setAttribute('aria-busy',String(wxAiBusy));
+ $('wxAiSendStatus').classList.toggle('wx-ai-quota-empty',out);
 }
 function wxAiStatusLabel(){
- if(!wxAiReady)return '五行 AI 尚未可用（後端設定或登入尚待確認）';
- const q=wxAiQuota;if(!q)return 'AI 已連線，額度待確認';
- return `本期 AI 剩餘 ${q.free.remaining} 次 · 共用 AI ${q.sharedAiRemaining} 次`;
+ if(!wxAiReady)return 'AI 服務或登入狀態待確認，暫不會扣額度。';
+ const q=wxAiQuota,left=wxAiRemaining();if(!q?.free||!left)return 'AI 額度正在確認，暫不扣次。';
+ const term=q.free.days===1?'今日免費 AI':'本期免費 AI';
+ const base=`${term}：${left.free}/${q.free.limit} 次 · 會員 AI 額度：${left.isMember?left.shared+' 次':'登入後查看'}`;
+ if(left.empty)return left.isMember?base+'｜AI 額度已用完，請加購（即將開放）':base+'｜免費次數已用完，請登入會員';
+ if(left.free===0&&left.isMember)return base+'｜下次解讀使用會員 AI 1 次';
+ if(left.isMember&&left.shared===0)return base+'｜會員額度為 0，免費額度仍可使用；加購即將開放';
+ return base;
 }
 async function wxAiRefreshStatus(){
- const token=readToken();let data=null;
- try{const res=await fetch(WX_AI_ENDPOINT+'/status',{method:'GET',headers:wxAuthHeaders(false),cache:'no-store'});data=await res.json().catch(()=>({}));
-   if(!res.ok||!data?.ok)throw new Error(wxAiApiMessage(data?.error,data?.message));
-   wxAiReady=true;wxAiQuota=data.quota;
- }catch(e){wxAiReady=false;wxAiQuota=null;$('wxAiSendStatus').textContent=e.message||'AI 服務暫時無法使用';wxAiUpdateUI();return;}
+ const serial=++wxAiStatusSerial;
+ let data=null;
+ try{
+  const res=await fetch(WX_AI_ENDPOINT+'/status',{method:'GET',headers:wxAuthHeaders(false),cache:'no-store'});
+  data=await res.json().catch(()=>({}));
+  if(serial!==wxAiStatusSerial)return;
+  if(!res.ok||!data?.ok)throw new Error(wxAiApiMessage(data?.error,data?.message));
+  if(!data.quota?.free||!Number.isFinite(Number(data.quota.free.remaining)))throw Error('AI 額度資料暫時無法確認');
+  wxAiReady=true;wxAiQuota=data.quota;
+ }catch(e){
+  if(serial!==wxAiStatusSerial)return;
+  wxAiReady=false;wxAiQuota=null;
+  $('wxAiSendStatus').textContent=e.message||'AI 額度暫時無法查詢，請稍後重試';
+  wxAiUpdateUI();return;
+ }
  $('wxAiSendStatus').textContent=wxAiStatusLabel();wxAiUpdateUI();
- if(wxAiQuota?.free){wxQuotaText('wxFreeAi',wxAiQuota.free.remaining+' / '+wxAiQuota.free.limit+' 次');$('wxFreeAiCycle').textContent=wxAiQuota.free.limit>0?`每 ${wxAiQuota.free.days} 天補充，不累積 · ${wxAiQuota.free.resetAt}`:'目前尚未提供免費額度';}
+ if(wxAiQuota?.free){
+  wxQuotaText('wxFreeAi',wxAiQuota.free.remaining+' / '+wxAiQuota.free.limit+' 次');
+  $('wxFreeAiCycle').textContent=wxAiQuota.free.limit>0?`每 ${wxAiQuota.free.days} 天補充，不累積 · ${wxAiQuota.free.resetAt}`:'目前尚未提供免費額度';
+ }
  if(wxAiQuota?.role==='member')wxQuotaText('wxSharedAi',wxAiQuota.sharedAiRemaining+' 次');
 }
 /* AI Markdown is interpreted locally without raw HTML injection or external render libraries. */
@@ -1949,7 +1999,13 @@ function wxAiAppendMessage(role,msg,trace='',channel=''){
  if(!isQuestion)requestAnimationFrame(()=>{if(wxViewMode==='ai')turn?.scrollIntoView({behavior:'smooth',block:'start'})});
 } 
 async function wxAiSend(follow=false){
- if(wxAiBusy||!wxAiReady)return;
+ if(wxAiBusy||wxAiPreflight)return;
+ // 每次送出前重新讀取真實額度；避免跨分頁扣用完後仍以舊數字判斷。
+ wxAiPreflight=true;wxAiUpdateUI();
+ try{await wxAiRefreshStatus()}finally{wxAiPreflight=false;wxAiUpdateUI()}
+ if(!wxAiReady)return;
+ const left=wxAiRemaining();
+ if(left?.empty){$('wxAiSendStatus').textContent=wxAiStatusLabel();wxAiUpdateUI();notice(left.isMember?'AI 額度已用完，請加購（即將開放）':'免費 AI 已用完，請先登入會員');return}
  if(!birthRequest||!chart){notice('請先完成出生資料查詢');return}
  const q=follow?$('wxAiFollowInput').value.trim():$('customQuestion').value.trim();
  if(Array.from(q).length<5||Array.from(q).length>400){notice('請輸入 5～400 字的問題');return}
@@ -1964,12 +2020,14 @@ async function wxAiSend(follow=false){
    res=await fetch(WX_AI_ENDPOINT+'/interpret',{method:'POST',cache:'no-store',headers:{...wxAuthHeaders(),...(confirmed?{'X-DH-Shared-Confirm':'1'}:{})},body:JSON.stringify(payload)});
    data=await res.json().catch(()=>({}));
    if(data?.error==='SHARED_AI_CONFIRM_REQUIRED'&&!confirmed){
-    if(!window.confirm('本期免費 AI 額度已用完。要扣除會員共用 AI 額度 1 次進行解讀嗎？')){notice('已取消，沒有扣除 AI 額度');return}
+    // 前後端皆須確認共用額度足夠，否則不得出現錯誤的扣點詢問。
+    if(wxAiRemaining()?.shared<=0){await wxAiRefreshStatus();notice('會員 AI 額度已用完，請加購（即將開放）');return}
+    if(!window.confirm('今日免費 AI 已用完，會員 AI 尚有 '+wxAiRemaining().shared+' 次。確定使用會員 AI 額度 1 次進行解讀嗎？')){notice('已取消，沒有扣除 AI 額度');return}
     confirmed=true;continue;
    }
    break;
   }
-  if(!res.ok||!data?.ok)throw Error(wxAiApiMessage(data?.error,data?.message));
+  if(!res.ok||!data?.ok){const error=Error(wxAiApiMessage(data?.error,data?.message));error.code=data?.error||'';throw error;}
   if(!follow){
    // 新主題建立新的後端對話，但保留本頁已完成的問答紀錄供左側目錄回看。
    // 僅重新查詢出生資料時（showChart）才清空舊命盤的回答。
@@ -1982,7 +2040,11 @@ async function wxAiSend(follow=false){
   $('wxAiSendStatus').textContent=`AI 解讀完成 · 本次使用${data.charged==='free'?'免費':'會員共用'} AI 1 次`;notice('五行 AI 解讀完成');
   wxAiQuota=data.quota||wxAiQuota;
   void wxAiRefreshStatus();
- }catch(e){$('wxAiSendStatus').textContent=e.message||'AI 暫時無法使用';notice(e.message||'AI 無法完成');}
+ }catch(e){
+  if(['SHARED_AI_EMPTY','FREE_AI_EMPTY','SHARED_AI_CONFIRM_REQUIRED'].includes(e.code))await wxAiRefreshStatus();
+  $('wxAiSendStatus').textContent=e.code==='SHARED_AI_EMPTY'?wxAiStatusLabel():e.message||'AI 暫時無法使用';
+  notice(e.message||'AI 無法完成');
+ }
  finally{wxAiBusy=false;wxAiPendingFollow=false;wxAiUpdateUI();}
 }
 $('aiBtn').addEventListener('click',()=>void wxAiSend(false));
