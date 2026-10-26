@@ -210,6 +210,34 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 @media(max-width:850px){.member-record-tabs{gap:5px}.member-record-tab{flex:1 1 28%;padding:7px 10px}.member-preview-text{grid-template-columns:minmax(0,130px) 1fr}#baziList .record-row{align-items:flex-start;flex-direction:column}#baziList .row-actions{width:100%}}
 @media(max-width:600px){.member-record-panel{padding:13px}.member-record-panel-head{align-items:flex-start;flex-wrap:wrap}.member-record-panel-head .btn{width:100%}.member-record-tab{flex:1 1 28%;font-size:.82rem}.member-preview-text{grid-template-columns:1fr;gap:1px}.member-preview-text small{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.compact-archive-row .record-head>.caption{font-size:.69rem}#baziList .record-head{flex-wrap:wrap}#baziList .row-actions .btn{flex:1 1 auto}#memberWalletCards{grid-template-columns:1fr}}
 
+
+/* 2026-10-26 · 網站異常回報：五工具精簡卡片，不改既有回報資料與流程 */
+#issueSection .section-top{margin-bottom:13px}
+#issueSection .section-top .section-lead{margin-top:5px;font-size:.82rem;line-height:1.55}
+#signalGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,325px),1fr));gap:9px;align-items:stretch}
+#signalGrid .signal-card{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'top top' 'status buttons' 'meta meta';align-content:start;align-items:center;gap:5px 8px;min-width:0;padding:12px 13px;border-radius:12px;box-shadow:none}
+#signalGrid .signal-top{grid-area:top;min-width:0;margin-bottom:2px;gap:8px}
+#signalGrid .signal-name{font-size:.89rem;line-height:1.4}
+#signalGrid .signal-sub{font-size:.67rem;white-space:nowrap}
+#signalGrid .signal-status{grid-area:status;min-height:32px;min-width:0;padding:3px 1px;border:0;border-radius:0;background:transparent;gap:8px}
+#signalGrid .signal-status strong{font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#signalGrid .signal-status .light{height:9px;width:9px;box-shadow:0 0 0 3px rgba(118,205,167,.09)}
+#signalGrid .signal-status .light.on{box-shadow:0 0 0 3px rgba(240,136,148,.1)}
+#signalGrid .signal-switch{grid-area:buttons;display:flex;align-items:center;justify-content:flex-end;gap:5px;margin:0;min-width:0}
+#signalGrid .signal-choice{min-height:33px;min-width:0;padding:5px 9px;font-size:.69rem;font-weight:800;line-height:1.3;border-radius:8px;white-space:nowrap;gap:5px}
+#signalGrid .signal-choice .choice-dot{width:6px;height:6px}
+#signalGrid .signal-meta{grid-area:meta;min-height:0;font-size:.69rem;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);margin-top:1px}
+#signalGrid .signal-footnote{display:none}
+#signalGrid .signal-card.is-planned{border-color:var(--line);background:color-mix(in srgb,var(--surface) 75%,var(--base))}
+#signalGrid .signal-card.is-planned .signal-status strong{color:var(--muted)}
+#signalGrid .signal-card.is-planned .signal-switch{opacity:.48}
+#signalGrid .signal-card.is-planned .signal-choice{cursor:not-allowed}
+#signalGrid .signal-card.is-planned .signal-meta{white-space:normal}
+#issueSection .signal-note{margin:12px 0 15px;font-size:.75rem;line-height:1.65}
+#issueSection #chatPanel{margin-top:11px}
+@media(max-width:540px){#signalGrid{grid-template-columns:1fr;gap:8px}#signalGrid .signal-card{padding:11px 12px}#signalGrid .signal-sub{font-size:.64rem}}
+@media(max-width:360px){#signalGrid .signal-card{grid-template-columns:1fr;grid-template-areas:'top' 'status' 'buttons' 'meta';gap:4px}#signalGrid .signal-switch{justify-content:stretch}#signalGrid .signal-choice{flex:1}}
+
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -266,7 +294,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       <div class="member-record-preview" id="memberRecordPreview"><p class="caption">登入後可以查看自己的近期紀錄。</p></div>
     </div>
   </section>
-  <section class="section" id="issueSection"><div class="section-top"><div><div class="eyebrow">SITE HEALTH</div><h2>網站異常回報</h2><p class="section-lead">工具異常時切換紅燈，恢復後再切回綠燈；站長維修時會顯示維修狀態。</p></div><span class="pill">會員回報 · 不公開</span></div>
+  <section class="section" id="issueSection"><div class="section-top"><div><div class="eyebrow">SITE HEALTH</div><h2>網站異常回報</h2><p class="section-lead">遇到異常時可回報紅燈，恢復後切回綠燈。五行回報暫待開放。</p></div><span class="pill">會員回報 · 不公開</span></div>
     <div id="issueNotice" class="notice warn" role="status" aria-live="polite">正在檢查異常回報功能……</div>
     <div id="maintenanceBanner" class="signal-maintenance" role="status" aria-live="polite" hidden><strong>站長維修中</strong><span id="maintenanceText"></span></div>
     <div class="signal-grid" id="signalGrid">
@@ -305,6 +333,15 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
           <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常中</button>
           <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>提報異常</button>
         </div><div class="signal-footnote">回報服務尚未啟用</div>
+      </div>
+      <div class="signal-card is-planned" data-tool="wuxing" aria-label="五行查詢：會員異常回報待開放">
+        <div class="signal-top"><span class="signal-name">五行查詢</span><span class="signal-sub">回報功能待開放</span></div>
+        <div class="signal-status"><span class="light off" aria-hidden="true"></span><strong class="signal-status-text status-unknown">尚未開放回報</strong></div>
+        <div class="signal-meta">已加入工具列表；管理員端尚未接入。</div>
+        <div class="signal-switch" role="group" aria-label="五行查詢回報設定尚未開放">
+          <button type="button" class="signal-choice normal" disabled title="管理員端尚未啟用五行回報"><span class="choice-dot" aria-hidden="true"></span>正常中</button>
+          <button type="button" class="signal-choice issue" disabled title="管理員端尚未啟用五行回報"><span class="choice-dot" aria-hidden="true"></span>提報異常</button>
+        </div>
       </div>
     </div>
     <p class="signal-note">◎ 只有確實遇到異常才提報紅燈；會員個人回報與站長維修公告互相獨立。</p>
