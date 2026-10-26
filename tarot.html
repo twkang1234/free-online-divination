@@ -3571,6 +3571,39 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
 #tarotAiDiscardDialog .tarot-ai-discard-export span{color:#e8c689;font-size:.72rem}
 html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export button{color:#744273;background:#f5e4f3;border-color:#d3afd1}
 html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{color:#8a5d2c}
+
+/* 2026-10-27: export buttons inside the report collapse strip, without a large reminder card. */
+.reading-analysis .tarot-ai-phase .tarot-site-ai-bottom-bar{
+  display:flex;align-items:center;gap:8px;min-width:0;margin:16px 0 2px;padding:5px 8px;
+  border:1px solid rgba(203,164,242,.58);border-radius:11px;background:rgba(147,95,205,.18);
+}
+.reading-analysis .tarot-ai-phase .tarot-site-ai-bottom-bar .tarot-site-ai-toggle-bottom{
+  flex:1 1 auto;min-width:0;width:auto;margin:0!important;padding:8px 6px;border:0;
+  border-radius:7px;background:transparent;box-shadow:none;text-align:center;
+}
+.reading-analysis .tarot-ai-phase .tarot-site-ai-bottom-bar .tarot-site-ai-toggle-bottom:hover{background:rgba(162,108,217,.18)}
+.tarot-site-ai-inline-actions{display:flex;flex:0 0 auto;gap:8px;align-items:center}
+.tarot-site-ai-inline-actions button{
+  border:1px solid rgba(209,157,222,.52);border-radius:8px;
+  padding:8px 11px;min-height:36px;white-space:nowrap;
+  font-size:.76rem;font-weight:760;color:#f6e5fb;background:rgba(159,97,190,.25);
+  transition:background .18s;
+}
+.tarot-site-ai-inline-actions button:hover{background:rgba(191,116,211,.34)}
+.tarot-site-ai-inline-actions button:focus-visible{outline:2px solid #eb9fe9;outline-offset:2px}
+/* Show export completion accessibly without adding extra vertical space to the report. */
+.tarot-ai-inline-feedback{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+html[data-theme="light"] .reading-analysis .tarot-ai-phase .tarot-site-ai-bottom-bar{
+  background:#f3e7f6;border-color:#bd9fcf;
+}
+html[data-theme="light"] .tarot-site-ai-inline-actions button{background:#e7d4ee;border-color:#bf9bc8;color:#5d3468}
+html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#dcbce7}
+@media(max-width:650px){
+  .reading-analysis .tarot-ai-phase .tarot-site-ai-bottom-bar{flex-wrap:wrap;gap:5px 8px}
+  .reading-analysis .tarot-ai-phase .tarot-site-ai-bottom-bar .tarot-site-ai-toggle-bottom{flex:1 1 100%}
+  .tarot-site-ai-inline-actions{flex:1 1 100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .tarot-site-ai-inline-actions button{min-width:0;padding:8px 5px;font-size:.72rem}
+}
 </style>
 </head>
 <body>
@@ -6814,47 +6847,39 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
   let lastTarotErrorTrace='';
   /* 2026-10-27 | 五行一致的 AI 防遺失機制：AI 全文只保留在本次頁面，絕不寫入 LocalStorage。 */
   function tarotAiHasAnswer(){return !!(onsiteAiPhaseResults.auto?.three?.answer||onsiteAiPhaseResults.auto?.six?.answer)}
-  function tarotAiSyncProtection(){
-    const root=els.analysis.querySelector('[data-site-ai]');
-    const banner=root?.querySelector('[data-tarot-ai-preserve]');
-    if(!banner)return;
-    const currentPhase=state.stage3x3==='complete'?'six':'three';
-    // 第二階段設定/抽第二輪牌時不要顯示三張牌的大型保存區塊。
-    const inSecondStage=!!state.followFormOpen||els.workspace.classList.contains('tarot-followup-drawing');
-    const hasCurrentAnswer=!!onsiteAiPhaseResults.auto?.[currentPhase]?.answer;
-    banner.hidden=!hasCurrentAnswer||inSecondStage;
-    if(!banner.hidden){
-      const title=banner.querySelector('[data-tarot-ai-save-title]');
-      if(title)title.textContent=currentPhase==='six'?'閱讀完畢？記得保存兩階段完整 AI 解讀':'閱讀完畢？記得保存三張牌 AI 解讀';
-    }
-  }
-  function tarotAiAllText(){
+  function tarotAiSyncProtection(){/* 保存操作已整合到各報告的收合列；離開保護由 beforeunload 維持。 */}
+  function tarotAiAllText(onlyPhase=''){
     if(!tarotAiHasAnswer())return '';
     const lines=['一念知機｜塔羅 AI 完整解讀','',`匯出時間：${new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})}`,
       `占卜問題：${state.question?.text||'未提供'}`,`主題：${state.topic?.name||'—'}｜情境：${state.scenario?.name||'—'}`,'',
       '本站不永久保存完整 AI 解讀；此檔由使用者自行下載。',''];
     for(const [phase,label] of [['three','第一階段｜三張牌 AI 解讀'],['six','第二階段｜六張牌 AI 整合解讀']]){
+      if(onlyPhase&&phase!==onlyPhase)continue;
       const result=onsiteAiPhaseResults.auto?.[phase];if(!result?.answer)continue;
       lines.push('═'.repeat(26),label,`通道：${result.channel||'—'}｜追蹤碼：${result.traceId||'—'}`,'',result.answer,'');
     }
     return lines.join('\r\n');
   }
-  function tarotAiDownloadAll(){
-    const contents=tarotAiAllText();if(!contents)return;
+  function tarotAiDownloadAll(onlyPhase=''){
+    const contents=tarotAiAllText(onlyPhase);if(!contents)return;
     const blob=new Blob(['\ufeff'+contents],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=`tarot-ai-complete-${safeFileStamp()}.txt`;
+    const a=document.createElement('a');a.href=url;a.download=`tarot-ai-${onlyPhase==='three'?'three-cards':'complete'}-${safeFileStamp()}.txt`;
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2200);
     tarotAiSaveFeedback('已開始下載；請確認檔案有成功儲存在裝置中。');
   }
-  async function tarotAiCopyAll(){
-    const contents=tarotAiAllText();if(!contents)return;
+  async function tarotAiCopyAll(onlyPhase=''){
+    const contents=tarotAiAllText(onlyPhase);if(!contents)return;
     try{await navigator.clipboard.writeText(contents);tarotAiSaveFeedback('已複製完整 AI 解讀。');}
     catch(_){tarotAiSaveFeedback('複製失敗，請改用「下載完整 AI 解讀」。');}
   }
   function tarotAiSaveFeedback(message){
-    const el=els.analysis.querySelector('[data-tarot-ai-save-feedback]');if(el)el.textContent=message;
+    els.analysis.querySelectorAll('[data-tarot-ai-save-feedback]').forEach(el=>{el.textContent=message;});
     const modal=document.querySelector('[data-tarot-ai-dialog-feedback]');if(modal)modal.textContent=message;
   }
+  document.getElementById('tarotAiDiscardDialog')?.addEventListener('click',event=>{
+    const btn=event.target.closest('[data-tarot-ai-save="download"]');
+    if(btn){event.preventDefault();tarotAiDownloadAll();}
+  });
   window.addEventListener('beforeunload',event=>{
     if(!tarotAiHasAnswer()&&!onsiteAiBusy)return;
     event.preventDefault();event.returnValue='';
@@ -6875,7 +6900,7 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
       dlg.showModal();
       const value=await new Promise(resolve=>dlg.addEventListener('close',()=>resolve(dlg.returnValue),{once:true}));
       if(value!=='continue'){
-        const target=els.analysis.querySelector('[data-tarot-ai-preserve]:not([hidden])')||els.analysis.querySelector('[data-site-ai]')||els.finish;
+        const target=els.analysis.querySelector('[data-site-ai-phase="six"] .tarot-site-ai-bottom-bar')||els.analysis.querySelector('[data-site-ai-phase="three"] .tarot-site-ai-bottom-bar')||els.analysis.querySelector('[data-site-ai]')||els.finish;
         target?.scrollIntoView({behavior:'smooth',block:'center'});
         return false;
       }
@@ -6893,11 +6918,11 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
     }
     if(free>0){
       note.dataset.chargeType='free';
-      note.textContent='本次使用免費 AI 1 次。';return;
+      note.textContent='本次將使用 AI 解讀（本期免費額度）1 次。';return;
     }
     if(shared>0&&quota?.role==='member'){
       note.dataset.chargeType='shared';
-      note.textContent='本次將使用會員共用 AI 1 次，開始前會先確認。';return;
+      note.textContent='本次將使用 AI 解讀（會員共用額度）1 次，開始前會先確認。';return;
     }
     // 額度已用完交由下方歸零提示負責，不要兩處重複說明。
     note.dataset.chargeType='empty';note.hidden=true;note.textContent='';
@@ -6925,7 +6950,7 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
       const d=await tarotAPI('/ai/center/quota');
       tarotRealAiQuota=d.quota;tarotRealAiQuotaRole=d.quota?.role||'';
       showTarotAiChargeNotice(root,d.quota);
-      if(display)display.textContent=isAdminTestActive()?`測試 AI 額度剩餘 ${d.quota.remaining}／${d.quota.limit} 次`:`本期免費 AI ${d.quota.daily?.remaining??0}/${d.quota.daily?.limit??0} 次${d.quota.wallet?'｜共用 AI '+d.quota.wallet.ai+' 次':''}｜合計可用 ${d.quota.remaining} 次`;
+      if(display)display.textContent=isAdminTestActive()?`測試 AI 解讀額度剩餘 ${d.quota.remaining}／${d.quota.limit} 次`:`本期免費 AI 解讀額度 ${d.quota.daily?.remaining??0}/${d.quota.daily?.limit??0} 次｜會員共用 AI 解讀額度 ${d.quota.role==='member'?(Math.max(0,Number(d.quota.wallet?.ai)||0)+' 次'):'登入後查看'}｜合計可用 ${d.quota.remaining} 次`;
       const available=Number(d.quota?.remaining);
       if(!Number.isFinite(available))throw Error('AI 額度資料無法確認');
       const empty=available<=0;
@@ -6934,7 +6959,7 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
         const alreadyDone=!!onsiteAiPhaseResults.auto?.[phase];
         btn.hidden=alreadyDone;btn.disabled=alreadyDone||onsiteAiBusy||empty;
         btn.classList.toggle('tarot-ai-no-quota',empty&&!alreadyDone);
-        if(!alreadyDone&&!onsiteAiBusy)btn.textContent=empty?'AI 額度已用完':phase==='six'?'✦ 開始六張牌 AI 整合解讀':'✦ 開始站內 AI 解讀';
+        if(!alreadyDone&&!onsiteAiBusy)btn.textContent=empty?'AI 額度已用完':phase==='six'?'✦ 開始六張牌 AI 整合解讀 -1 次':'✦ 開始站內 AI 解讀 -1 次';
       }
       const emptyBar=root?.querySelector('[data-tarot-ai-quota-empty]');
       if(emptyBar){
@@ -7007,7 +7032,13 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
     section.innerHTML=`<h4>${aiPhaseName(phase)}｜解讀完成</h4><div class="tarot-site-ai-stats" data-site-ai-metrics></div>
       <button type="button" class="tarot-site-ai-toggle" data-site-ai-toggle="top" aria-expanded="false">↓ 展開閱讀${phase==='six'?'六張牌':'三張牌'}完整解讀</button>
       <div class="tarot-site-ai-article-body" data-site-ai-article-body hidden><article class="tarot-site-ai-result" data-site-ai-answer></article>
-      <button type="button" class="tarot-site-ai-toggle tarot-site-ai-toggle-bottom" data-site-ai-toggle="bottom">↑ 收合${phase==='six'?'六張牌':'三張牌'}完整解讀</button></div>
+      <div class="tarot-site-ai-bottom-bar">
+        <button type="button" class="tarot-site-ai-toggle tarot-site-ai-toggle-bottom" data-site-ai-toggle="bottom">↑ 收合${phase==='six'?'六張牌':'三張牌'}完整解讀</button>
+        <div class="tarot-site-ai-inline-actions" aria-label="保存${phase==='six'?'六張牌整合':'三張牌'} AI 解讀">
+          <button type="button" data-tarot-ai-save="download" data-tarot-ai-phase="${phase}">↓ 下載完整解讀</button>
+          <button type="button" data-tarot-ai-save="copy" data-tarot-ai-phase="${phase}">複製完整解讀</button>
+        </div>
+      </div><span class="tarot-ai-inline-feedback" data-tarot-ai-save-feedback role="status" aria-live="polite"></span></div>
       `;
     section.querySelector('[data-site-ai-metrics]').textContent=`通道 ${result.channel||'—'}｜追蹤碼：${result.traceId||'—'}`;
     renderOnsiteAiArticle(section.querySelector('[data-site-ai-answer]'),result.answer);
@@ -7086,8 +7117,8 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
         sharedConfirmed=true;
       }
       btn.textContent=phase==='six'?'AI 正在整合六張牌…':'AI 正在解讀三張牌…';
-      status.textContent='AI 正在解讀中。如主要通道暫時無法使用，系統將自動嘗試備援。';
-      if(pending){pending.hidden=false;pending.textContent='AI 解讀進行中，請勿重複點擊。';}
+      status.textContent='AI 正在解讀中。';
+      if(pending){pending.hidden=true;pending.textContent='';}
       // If the last free slot vanished between quota check and booking (another tab),
       // the Worker refuses to fall back to shared AI without a new confirmation.
       let data;
@@ -7151,7 +7182,7 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
           const phase=inSix?'six':'three';
           const done=!!onsiteAiPhaseResults.auto?.[phase];
           currentBtn.hidden=done;currentBtn.disabled=done;
-          if(!done)currentBtn.textContent=inSix?'✦ 開始六張牌 AI 整合解讀':'✦ 開始站內 AI 解讀';
+          if(!done)currentBtn.textContent=inSix?'✦ 開始六張牌 AI 整合解讀 -1 次':'✦ 開始站內 AI 解讀 -1 次';
         }
         const waiting=current?.querySelector('[data-site-ai-pending]');if(waiting)waiting.hidden=true;
         void refreshOnsiteAiQuota();
@@ -7194,7 +7225,7 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
         <h4>${six?'準備開始整合解讀':'✦ 站內 AI 專業解讀'} <small>系統自動選擇可用通道</small></h4>
         <div class="tarot-site-ai-stats" data-site-ai-quota>正在確認會員共用 AI 解讀次數…</div>
         <p class="tarot-ai-charge-note" data-site-ai-charge-note role="note">正在確認本次 AI 解讀的扣次方式…</p>
-        <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>${six?'✦ 開始六張牌 AI 整合解讀':'✦ 開始站內 AI 解讀'}</button>
+        <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>${six?'✦ 開始六張牌 AI 整合解讀 -1 次':'✦ 開始站內 AI 解讀 -1 次'}</button>
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite"></p>
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
         <div class="tarot-ai-report-box" data-site-ai-error-report hidden>
@@ -7207,16 +7238,6 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
           <button type="button" data-tarot-ai-buy disabled hidden>🛒 加購 AI 解讀額度｜即將開放</button>
         </div>
         <div data-site-ai-output hidden></div>
-        <aside class="tarot-ai-preserve" data-tarot-ai-preserve hidden aria-label="保存 AI 解讀提醒">
-          <div class="tarot-ai-preserve-head"><span class="tarot-ai-preserve-mark" aria-hidden="true">✧</span>
-            <div><h4 data-tarot-ai-save-title>閱讀完畢？記得保存 AI 解讀</h4>
-              <p>網站只保留部分牌面紀錄，<strong>不會永久保存完整 AI 解讀</strong>。離開或重新整理後可能無法恢復，請自行下載或複製。</p></div></div>
-          <div class="tarot-ai-preserve-actions">
-            <button type="button" data-tarot-ai-save="download">↓ 下載完整 AI 解讀（TXT）</button>
-            <button type="button" data-tarot-ai-save="copy">複製完整 AI 解讀</button>
-          </div>
-          <p class="tarot-ai-preserve-feedback" data-tarot-ai-save-feedback role="status" aria-live="polite"></p>
-        </aside>
       </section></section>`;
     renderOnsiteAiPhaseCards(els.analysis.querySelector('[data-site-ai]'));
     const aiRoot=els.analysis.querySelector('[data-site-ai]');
@@ -7380,7 +7401,7 @@ html[data-theme="light"] #tarotAiDiscardDialog .tarot-ai-discard-export span{col
         .finally(()=>{reportAI.disabled=false});return;
     }
     const aiSave=e.target.closest('[data-tarot-ai-save]');
-    if(aiSave){if(aiSave.dataset.tarotAiSave==='download')tarotAiDownloadAll();else void tarotAiCopyAll();return;}
+    if(aiSave){const chosenPhase=aiSave.dataset.tarotAiPhase==='three'?'three':'';if(aiSave.dataset.tarotAiSave==='download')tarotAiDownloadAll(chosenPhase);else void tarotAiCopyAll(chosenPhase);return;}
     const aiCopy=e.target.closest('[data-site-ai-copy]');if(aiCopy){const [m,p]=aiCopy.dataset.siteAiCopy.split(':');const result=onsiteAiPhaseResults[m]?.[p];if(result)void navigator.clipboard.writeText(result.answer);return;}
     const aiTxt=e.target.closest('[data-site-ai-txt]');if(aiTxt){downloadOnsiteAi(aiTxt.dataset.siteAiTxt);return;}
     const promptCopy=e.target.closest('[data-ai-prompt-copy]');if(promptCopy){copyAIPrompt(promptCopy);return;}
