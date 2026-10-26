@@ -383,6 +383,29 @@ html[data-wx-layout="mobile"] #result .wx-birth-field:nth-child(n+3){border-top:
 html[data-wx-layout="mobile"] #result .summary-banner>.panel:first-child{border-right:0;border-bottom:1px solid rgba(157,207,174,.18)}
 @media print{#result .wx-result-unified{background:#fff!important;border-color:#aaa!important}#result .summary-banner>.panel{background:#fff!important}#result .wx-birth-strip{background:#fff!important}}
 
+
+/* V20 | 五行紀錄：與八字一致的「儲存／載入」精簡入口。保留原本同一份本機儲存資料。 */
+.wx-record-action-row{position:relative;gap:9px 10px;align-items:center}
+.wx-record-controls{position:relative;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.wx-record-btn{min-height:46px;border-color:rgba(226,195,116,.38);color:var(--gold);background:rgba(42,32,17,.33);font-weight:800;white-space:nowrap}
+.wx-record-btn:hover,.wx-record-btn:focus-visible{border-color:#e2c781;background:rgba(226,195,116,.12)}
+.wx-record-count{display:inline-grid;place-items:center;min-width:19px;height:19px;margin-left:3px;border:1px solid rgba(227,198,129,.3);border-radius:999px;font-size:11px;line-height:1;padding:0 4px}
+.wx-demo-btn{min-height:46px}.wx-action-fine{flex-basis:100%;margin-top:0;font-size:11px}
+.wx-record-popover{position:absolute;z-index:210;top:calc(100% + 12px);left:0;width:min(455px,calc(100vw - 56px));max-height:min(490px,calc(100vh - 120px));overflow:auto;padding:15px;border-radius:15px;border:1px solid rgba(220,190,128,.42);background:#0d1b17;box-shadow:0 18px 58px rgba(0,0,0,.58)}
+.wx-record-popover-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;border-bottom:1px solid rgba(186,222,201,.12);padding-bottom:11px;margin-bottom:10px}
+.wx-record-popover-head strong{display:block;color:#f7ead1;font-size:17px;line-height:1.4}.wx-record-popover-head small{display:block;margin-top:4px;font-size:11px;color:#a9c2b2}
+.wx-record-close{width:31px;height:31px;display:grid;place-items:center;border:1px solid rgba(214,232,216,.19);border-radius:8px;background:rgba(255,255,255,.025);color:#d3e1d6;font-size:21px;line-height:1}
+.wx-record-list{display:grid;gap:7px}
+.wx-record-item{display:flex;align-items:center;justify-content:space-between;gap:11px;min-width:0;padding:11px 12px;background:#101f1b;border:1px solid rgba(157,205,173,.16);border-radius:11px}
+.wx-record-item-info{min-width:0;flex:1}.wx-record-item-info b{display:block;font-size:13px;line-height:1.55;color:#f0f4e9;overflow-wrap:anywhere}.wx-record-item-info small{display:block;font-size:11px;line-height:1.55;color:#9fbbaa}
+.wx-record-item-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.wx-record-item-actions button{border:1px solid rgba(203,189,142,.28);background:#1b2720;border-radius:8px;color:#e8ce8d;font-size:12px;font-weight:800;padding:6px 9px;min-height:34px;white-space:nowrap}
+.wx-record-item-actions button:hover{border-color:#e6cc8d}.wx-record-item-actions .wx-record-delete{color:#f0a8a5;border-color:rgba(221,135,137,.25);background:transparent}
+.wx-record-empty{padding:14px 10px;color:#c7d4c8;font-size:13px}.wx-record-empty strong{display:block;color:#e9dfc7;margin-bottom:4px}.wx-record-empty small{color:#9db7a6}
+.wx-record-storage-note{margin:12px 1px 0;color:#91b5a2;font-size:11px;line-height:1.65}
+@media(max-width:650px){.wx-record-action-row{gap:9px}.wx-record-action-row>.primary{flex:1 1 100%;width:100%}.wx-record-controls{flex:1 1 auto;min-width:0}.wx-record-btn{flex:1 1 auto;padding:10px 11px}.wx-demo-btn{flex:1 1 auto}.wx-record-popover{position:fixed;left:12px;right:12px;top:14vh;width:auto;max-height:72vh;padding:13px}.wx-record-item{flex-wrap:wrap;gap:8px}.wx-record-item-actions{margin-left:auto}}
+@media print{.wx-record-popover,.wx-record-controls{display:none!important}}
+
 </style>
 <meta property="og:site_name" content="一念知機">
 <meta property="og:locale" content="zh_TW">
@@ -458,7 +481,20 @@ html[data-wx-layout="mobile"] #result .summary-banner>.panel:first-child{border-
     <div class="subcontrols"><div class="wx-advanced-field"><label><input id="exactToggle" type="checkbox"> 使用精確出生時間（幾點幾分）</label><input class="input" id="exactTime" type="time" value="10:30" hidden aria-label="精確出生時間"><small>未勾選時，使用上方選擇的時辰。</small></div><div class="wx-advanced-field"><label for="sect">晚上 23:00 出生的換日規則</label><select id="sect" class="input"><option value="2">23:00 起仍算當日（預設）</option><option value="1">23:00 起算次日（另一種算法）</option></select><small>只有接近 23:00 出生，通常才需要考慮切換；預設規則保持與本站排盤一致。</small></div></div>
   </div>
 </details>
-<div class="actions"><button class="primary" type="button" id="calculate">✦ 產生我的五行分析</button><button class="secondary" id="demo" type="button">先看五行範例</button><span class="fine">五行額度由管理員後台設定；正式扣次尚未啟用，測試查詢不扣額度。</span></div><div id="error" class="error" role="alert" hidden></div>
+<div class="actions wx-record-action-row">
+ <button class="primary" type="button" id="calculate">✦ 產生我的五行分析</button>
+ <div class="wx-record-controls" id="wxRecordControls">
+  <button class="secondary wx-record-btn" type="button" id="wxSaveRecord" title="儲存目前出生資料，最多保留 3 組">儲存五行</button>
+  <button class="secondary wx-record-btn wx-load-btn" type="button" id="wxLoadRecord" aria-expanded="false" aria-controls="wxRecordPopover">載入五行 <span id="wxSavedCount" class="wx-record-count" hidden></span></button>
+  <div class="wx-record-popover" id="wxRecordPopover" role="dialog" aria-modal="false" aria-label="我的五行紀錄" hidden>
+   <div class="wx-record-popover-head"><div><strong>我的五行紀錄</strong><small>最多 3 組 · 保存在目前瀏覽器</small></div><button type="button" class="wx-record-close" id="wxRecordClose" aria-label="關閉五行紀錄">×</button></div>
+   <div id="historyList" class="wx-record-list"></div>
+   <p class="wx-record-storage-note" id="historyNotice">會員登入後可使用此瀏覽器的紀錄，尚未同步至其他裝置。</p>
+  </div>
+ </div>
+ <button class="secondary wx-demo-btn" id="demo" type="button">先看五行範例</button>
+ <span class="fine wx-action-fine">五行額度由管理員後台設定；正式扣次尚未啟用，測試查詢不扣額度。</span>
+</div><div id="error" class="error" role="alert" hidden></div>
 </section>
 <section id="result" class="result" hidden aria-live="polite"><div class="section-head"><div><div class="small-head">02 / YOUR FIVE ELEMENTS</div><h2>你的五行總覽</h2><p id="birthCaption" class="birth-summary-caption"></p></div><span class="chip" id="sourceTag"></span></div><div class="wx-result-unified" aria-label="個人五行整合結果"><div class="wx-birth-strip" aria-label="本命出生資料">
   <div class="wx-birth-field"><span>國曆生日</span><strong id="wxBirthSolar">—</strong></div>
@@ -495,7 +531,7 @@ html[data-wx-layout="mobile"] #result .summary-banner>.panel:first-child{border-
   </div>
   <p class="wx-ai-footnote">AI 解讀由後端驗證會員及免費／共用 AI 額度。首次提問與每次追問各計 1 次，失敗不扣次；不使用專業解鎖點數。同一題可繼續追問最多 8 輪，對話僅於後端暫存 7 天。</p>
 </section><p class="soft-note">本站內容屬傳統命理文化中的自我探索方式，並非對健康、財務或感情結果的科學預測或保證。</p></article>
-<section id="history" class="history"><div class="history-top"><div><span class="small-head">RECENT REPORTS</span><h2 style="margin:4px 0">最近 3 組紀錄</h2></div><button class="secondary" id="refreshHistory" type="button">重新整理</button></div><p class="fine" id="historyNotice">登入會員後，本頁會在目前瀏覽器暫存最近三組。跨裝置同步仍需要會員 API 支援。</p><div class="history-list" id="historyList"></div></section>
+<!-- 五行紀錄已移到查詢區的「儲存五行／載入五行」小視窗，避免大卡片長期佔版面。 -->
 
 <section class="wx-live-related" id="wxLiveRelated" aria-labelledby="wxLiveRelatedTitle">
  <div class="wx-live-related-head"><span>FIVE ELEMENTS · 進階閱讀</span><h2 id="wxLiveRelatedTitle">查完五行，還可以探索這五個主題</h2><p>五行工具與五篇知識專題互相獨立，可以隨時閱讀，不必重新查詢。</p></div>
@@ -710,10 +746,78 @@ function storageKey(){return 'dh-wuxing-local-history-v1-'+String(member?.sub||'
 const SKEY='divinationhub-auth-session-v1';
 function readToken(){try{const raw=localStorage.getItem(SKEY)||'';let v=JSON.parse(raw);if(typeof v==='string')return v;if(v&&typeof v==='object')return v.token||v.accessToken||v.sessionToken||v.credential||'';return raw.startsWith('eyJ')?raw:''}catch(_){try{return localStorage.getItem(SKEY)||''}catch(e){return ''}}}
 async function restoreMember(){let t=readToken();if(!t){member=null;renderMember();return}try{const r=await fetch('https://member-api.ezgocpu.workers.dev/auth/session',{headers:{Authorization:'Bearer '+t,Accept:'application/json'},cache:'no-store'});let j=await r.json();member=r.ok&&j.success&&j.authenticated&&j.member?.sub?j.member:null}catch(e){member=null}renderMember()}
-function renderMember(){const b=$('memberLink');$('wxMemberMenuToggle').hidden=!member;$('wxMemberPopover').hidden=true;$('wxMemberMenuToggle').setAttribute('aria-expanded','false');b.textContent=member?'會員中心':'免費登入';$('wxMemberMenuName').textContent=member?.name||'會員';b.href='/member.html';$('historyNotice').textContent=member?'已辨識登入會員：目前先儲存在此瀏覽器，跨裝置同步需另接會員後端。':'登入會員後可在此瀏覽器暫存最近 3 組；尚未接通跨裝置會員紀錄 API。';renderHistory();void wxRefreshSharedQuota();void wxRefreshPeriodicQuota();void wxAiRefreshStatus()}
-function readHistory(){try{return JSON.parse(localStorage.getItem(storageKey())||'[]')||[]}catch(e){return []}}
-function recordHistory(c,id){if(!member||c.demo||!birthRequest)return;try{const old=readHistory(),key=c.datetime;let found=old.find(x=>x.key===key);let saved={datetime:c.datetime,dayMaster:c.dayMaster,dm:c.dm,birth:{...birthRequest}};if(found){found.ids=[...new Set([...(found.ids||[]),id])];found.updated=Date.now();found.data=saved;}else{old.unshift({key,ids:[id],updated:Date.now(),data:saved})}old.sort((a,b)=>b.updated-a.updated);localStorage.setItem(storageKey(),JSON.stringify(old.slice(0,3)));renderHistory()}catch(e){notice('本機無法保存紀錄，請檢查瀏覽器儲存設定。')}}
-function renderHistory(){const rows=member?readHistory():[];$('historyList').innerHTML=rows.length?rows.map((r,i)=>`<div class="history-card"><b>${esc(r.key)}</b><small>核心五行 ${esc((r.data?.dayMaster||'')+(r.data?.dm||''))} · 已看 ${r.ids.length} 題</small><div><button type="button" class="secondary" data-history="${i}">重新閱讀</button></div></div>`).join(''):`<div class="history-card" style="grid-column:1/-1"><b>尚無已儲存的五行紀錄</b><small>${member?'完成個人查詢並選擇題目後，自動暫存最近 3 組。':'請先登入會員，才能啟用本機個人紀錄。'}</small></div>`}
+function renderMember(){const b=$('memberLink');$('wxMemberMenuToggle').hidden=!member;$('wxMemberPopover').hidden=true;$('wxMemberMenuToggle').setAttribute('aria-expanded','false');b.textContent=member?'會員中心':'免費登入';$('wxMemberMenuName').textContent=member?.name||'會員';b.href='/member.html';$('historyNotice').textContent=member?'僅保存在此瀏覽器（最多 3 組），跨裝置不會同步。':'請先登入會員才能儲存；本機紀錄不會同步到其他裝置。';renderHistory();void wxRefreshSharedQuota();void wxRefreshPeriodicQuota();void wxAiRefreshStatus()}
+function readHistory(){
+ try{const rows=JSON.parse(localStorage.getItem(storageKey())||'[]');return Array.isArray(rows)?rows.filter(x=>x&&typeof x==='object'&&x.data).slice(0,3):[]}catch(_){return []}
+}
+function wxWriteHistory(rows){
+ localStorage.setItem(storageKey(),JSON.stringify(rows.slice(0,3)));
+ renderHistory();
+}
+function wxRecordSavedBirth(birth,fromChart=null){
+ if(!member){notice('請先登入會員，才能儲存五行資料');return false}
+ if(!birth||birth.demo||!birth.datetime){notice('請先輸入有效的出生資料');return false}
+ try{
+  const old=readHistory(),key=birth.datetime,found=old.find(x=>x.key===key);
+  const sameChart=fromChart&&!fromChart.demo&&fromChart.datetime===key;
+  const saved={datetime:key,dayMaster:sameChart?fromChart.dayMaster:(birth.dayMaster||''),dm:sameChart?fromChart.dm:'',birth:{...birth}};
+  if(found){found.data=saved;found.updated=Date.now();found.ids=Array.isArray(found.ids)?found.ids:[]}
+  else old.unshift({key,ids:[],updated:Date.now(),data:saved});
+  old.sort((a,b)=>(b.updated||0)-(a.updated||0));
+  wxWriteHistory(old);
+  notice(found?'已更新這組五行紀錄（僅本機）':'已儲存五行出生資料（最多 3 組，僅本機）');
+  return true;
+ }catch(_){notice('本機儲存失敗，請檢查瀏覽器是否允許儲存資料');return false}
+}
+function recordHistory(c,id){
+ // 只更新「使用者已主動儲存」的紀錄。閱讀本身不建立新紀錄，避免覆蓋最後三組。
+ if(!member||c.demo||!birthRequest||!id)return;
+ try{
+  const old=readHistory(),found=old.find(x=>x.key===c.datetime);
+  if(!found)return;
+  found.ids=[...new Set([...(Array.isArray(found.ids)?found.ids:[]),id])];
+  found.updated=Date.now();
+  found.data={datetime:c.datetime,dayMaster:c.dayMaster,dm:c.dm,birth:{...birthRequest}};
+  old.sort((a,b)=>(b.updated||0)-(a.updated||0));
+  wxWriteHistory(old);
+ }catch(_){/* 若本機儲存不可用，不影響查詢與報告閱讀 */}
+}
+function renderHistory(){
+ const rows=member?readHistory():[];
+ $('wxSavedCount').textContent=String(rows.length);
+ $('wxSavedCount').hidden=!rows.length;
+ $('historyList').innerHTML=rows.length?rows.map((r,i)=>{
+  const readCount=Array.isArray(r.ids)?r.ids.length:0;
+  const master=[r.data?.dayMaster||'',r.data?.dm||''].join('');
+  return `<div class="wx-record-item"><div class="wx-record-item-info"><b>${esc(r.key||r.data?.datetime||'五行命盤')}</b><small>${master?'核心五行 '+esc(master)+' · ':''}${readCount?'已看 '+readCount+' 題':'尚未閱讀'}</small></div><div class="wx-record-item-actions"><button type="button" data-history-load="${i}">載入</button><button type="button" class="wx-record-delete" data-history-delete="${i}" aria-label="刪除此五行紀錄">刪除</button></div></div>`;
+ }).join(''):`<div class="wx-record-empty"><strong>${member?'尚未儲存五行紀錄':'請先登入會員'}</strong><small>${member?'輸入出生資料後，按「儲存五行」即可保留最多 3 組。':'登入後可以在目前瀏覽器保存五行出生資料。'}</small></div>`;
+}
+function wxSetRecordPopover(open){
+ const pop=$('wxRecordPopover');pop.hidden=!open;
+ $('wxLoadRecord').setAttribute('aria-expanded',String(open));
+ if(open){renderHistory();$('wxRecordClose').focus()}
+ else $('wxLoadRecord').focus();
+}
+function wxRestoreFormFromBirth(birth){
+ // 舊版紀錄保存的是換算過的國曆，還原成國曆輸入確保一致。
+ const input=birth?.input;
+ if(!input||!Number.isInteger(Number(input.y)))return;
+ calendar='solar';
+ $('solarBtn').classList.add('active');$('lunarBtn').classList.remove('active');
+ $('solarBtn').setAttribute('aria-pressed','true');$('lunarBtn').setAttribute('aria-pressed','false');
+ $('leapLabel').hidden=true;$('leap').checked=false;
+ $('year').value=String(input.y);$('month').value=String(input.m);syncDays();$('day').value=String(input.d);
+ $('gender').value=birth.sex||'none';$('sect').value=String(birth.sect??2);
+ const h=Number(input.h),min=Number(input.minute);
+ const unknown=!!birth.missingTime;
+ const standard=!unknown&&min===30&&Number.isInteger(h)&&h>=0&&h<=22&&h%2===0;
+ $('exactToggle').checked=!unknown&&!standard;
+ $('exactTime').hidden=!$('exactToggle').checked;
+ $('slot').disabled=$('exactToggle').checked;
+ $('slot').value=unknown?'unknown':standard?String(h/2):'unknown';
+ if(!unknown&&!standard&&Number.isFinite(h)&&Number.isFinite(min))$('exactTime').value=String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');
+ updateCalendarHint();
+}
 function showChart(c){chart=c;wxAiSessionId='';wxAiTurn=0;$('wxAiMessages').replaceChildren();$('wxAiConversation').hidden=true;wxAiUpdateUI();$('report').hidden=true;wxAiUserInteracted=false;wxAiSetCategory('balance',false);renderChart(chart);$('wxTemporaryTools').hidden=false;$('result').scrollIntoView({behavior:'smooth',block:'start'})}
 let running=false;
 async function requestAndRender(birth,topic=null){
@@ -973,8 +1077,31 @@ async function wxAiSend(follow=false){
 $('aiBtn').addEventListener('click',()=>void wxAiSend(false));
 $('wxAiFollowSend').addEventListener('click',()=>void wxAiSend(true));
 
-$('refreshHistory').addEventListener('click',()=>{void restoreMember();notice('已重新檢查會員登入狀態')});
-$('historyList').addEventListener('click',e=>{const b=e.target.closest('[data-history]');if(!b||!member)return;const x=readHistory()[+b.dataset.history];if(!x?.data?.birth){notice('舊紀錄沒有重算資料，請重新輸入出生資訊');return}void requestAndRender(x.data.birth,x.ids[0]||'identity')});
+$('wxSaveRecord').addEventListener('click',()=>{
+ if(!member){notice('請先登入會員，才能儲存五行資料');return}
+ try{const b=makeBirthRequest();wxRecordSavedBirth(b,chart&&birthRequest?.datetime===b.datetime?chart:null)}
+ catch(e){notice('儲存未完成：'+(e?.message||'出生資料無效'))}
+});
+$('wxLoadRecord').addEventListener('click',()=>wxSetRecordPopover($('wxRecordPopover').hidden));
+$('wxRecordClose').addEventListener('click',()=>wxSetRecordPopover(false));
+$('historyList').addEventListener('click',e=>{
+ const del=e.target.closest('[data-history-delete]');
+ if(del&&member){const rows=readHistory(),index=Number(del.dataset.historyDelete),item=rows[index];if(!item)return;
+  if(!confirm('確定刪除這組五行出生紀錄？此操作無法復原。'))return;
+  rows.splice(index,1);try{wxWriteHistory(rows);notice('已刪除本機五行紀錄')}catch(_){notice('刪除失敗，請檢查瀏覽器設定')}return;
+ }
+ const btn=e.target.closest('[data-history-load]');if(!btn||!member)return;
+ const r=readHistory()[Number(btn.dataset.historyLoad)];
+ if(!r?.data?.birth){notice('這組舊紀錄沒有足夠資料，請重新輸入');return}
+ wxSetRecordPopover(false);wxBeginTool({scroll:false});wxRestoreFormFromBirth(r.data.birth);
+ void requestAndRender(r.data.birth,(r.ids||[])[0]||null);
+});
+document.addEventListener('pointerdown',e=>{
+ if(!$('wxRecordPopover').hidden&&!e.target.closest('#wxRecordControls'))wxSetRecordPopover(false);
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!$('wxRecordPopover').hidden){wxSetRecordPopover(false);e.preventDefault()}
+});
 
 /* V17: site quotas remain read-only for 五行站內查詢; AI quota is enforced by Wuxing Worker. */
 const WX_MEMBER_API='https://member-api.ezgocpu.workers.dev';
