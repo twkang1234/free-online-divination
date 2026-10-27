@@ -94,6 +94,14 @@
 
     .tarot-ai-report-box[hidden]{display:none!important}.tarot-ai-report-box details{margin:9px 0;padding:10px 13px;border:1px solid rgba(231,94,215,.2);border-radius:10px}.tarot-ai-report-box summary{cursor:pointer;color:var(--rose);font-size:.82rem}.tarot-ai-report-box label{display:block;margin:10px 0;font-size:.78rem}.tarot-ai-report-box textarea{display:block;width:100%;margin-top:6px;background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:8px;border-radius:8px}.tarot-ai-report-box small{display:block;margin-top:7px;color:var(--dim)}
 
+
+    /* Failure report: one ordinary report action and one one-time goodwill compensation action. */
+    .tarot-ai-report-actions{display:flex;flex-wrap:wrap;gap:9px;margin:9px 0}
+    .tarot-ai-report-actions button{min-height:38px;padding:8px 13px;border:1px solid rgba(231,94,215,.3);border-radius:9px;background:rgba(231,94,215,.11);color:var(--text);font-size:.79rem;font-weight:720}
+    .tarot-ai-report-actions button[data-site-ai-compensation]{background:linear-gradient(135deg,#d57bd4,#a763c4);color:#1b0d22;border-color:#d57bd4}
+    .tarot-ai-report-actions button:disabled{opacity:.55;cursor:default}
+    .tarot-ai-report-tip{font-size:.70rem;color:var(--dim);line-height:1.6}
+
     /* topbar */
     .page-topbar{
       position:sticky;top:0;z-index:80;
@@ -4879,6 +4887,63 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     if(/^HTTP_5\d\d$/.test(code))return 'AI 伺服器暫時發生內部錯誤。';
     return '操作未能完成；可將錯誤碼回報管理員查明原因。';
   }
+
+  function tarotCompensationDrawOperation(){
+    // Use the current session's actual server-issued draw operation ID;
+    // the backend validates that this operation belongs to the claimant.
+    const custom=tarotCustomCache.get('topic:free');
+    if(state.dhEntrySection==='custom'&&custom?.charged)return custom.operationId;
+    const phase=state.stage3x3==='complete'?'b':'a';
+    return state.dhDrawOperations?.[phase]||state.dhDrawOperations?.a||'';
+  }
+  async function reportAndClaimTarotCompensation(btn){
+    const root=btn.closest('[data-site-ai-error-report]');
+    const status=root?.querySelector('[data-site-ai-report-status]');
+    if(!root||!status)return;
+    if(isAdminTestActive()){
+      status.textContent='管理員測試模式不提供補償，仍可使用一般回報。';return;
+    }
+    if(!authToken()){
+      status.textContent='補償需登入正式會員，避免重複領取；未登入也可以使用一般錯誤回報。';return;
+    }
+    const drawOperationId=tarotCompensationDrawOperation();
+    if(!drawOperationId){
+      status.textContent='找不到本次抽牌扣次紀錄，請先使用一般錯誤回報，管理員可協助確認。';return;
+    }
+    const text=root.querySelector('textarea')?.value.trim()||'';
+    const note=text?'使用者回報：'+text:'使用者回報站內 AI 解讀失敗並申請一次性補償。';
+    const reportBtn=root.querySelector('[data-site-ai-report-send]');
+    btn.disabled=true;if(reportBtn)reportBtn.disabled=true;
+    try{
+      status.textContent='正在提交錯誤回報…';
+      const sent=await sendTarotIncident({source:'manual',code:lastTarotIssueCode,
+        phase:state.stage3x3==='complete'?'six':'three',traceId:lastTarotErrorTrace,note});
+      if(!sent){status.textContent='錯誤通報尚未送達，暫不補償額度，請稍後再試。';return;}
+      status.textContent='通報已送達，正在查核補償資格…';
+      const credit=await tarotAPI('/wallet/tarot/issue-compensation',{
+        drawOperationId,errorCode:lastTarotIssueCode});
+      if(credit.granted){
+        status.textContent='回報成功，已補償會員共用工具額度 1 次（每個會員帳號僅一次）。';
+        btn.textContent='已領取補償 1 次';btn.disabled=true;
+      }else if(credit.alreadyGranted){
+        status.textContent='已收到回報。此會員曾領取過一次補償，不會重複增加額度。';
+        btn.textContent='已領取過補償';btn.disabled=true;
+      }else{
+        status.textContent='錯誤已回報，但額度補償尚未確認。';
+      }
+      void refreshTarotToolStatus(true);
+    }catch(e){
+      const code=String(e?.message||'');
+      status.textContent=code==='VALID_DRAW_RECEIPT_REQUIRED'?'通報已送達，但找不到最近 72 小時內屬於此會員的抽牌紀錄，無法自動補償。':
+        code==='NON_COMPENSABLE_ERROR'?'通報已送達，但這次屬於額度或權限限制，不在自動補償範圍。':
+        code==='LOGIN_REQUIRED'?'會員登入已失效，請重新登入再申請。':
+        '通報已送達，但補償確認失敗（'+code.slice(0,55)+'），請稍後再試；不會因重複操作而多領。';
+    }finally{
+      if(reportBtn)reportBtn.disabled=false;
+      if(btn.textContent?.includes('回報並領取'))btn.disabled=false;
+    }
+  }
+
   async function sendTarotIncident({source='client_auto',code='UNKNOWN_ERROR',phase='three',note='',traceId=''}){
     if(!['manual','client_auto'].includes(source))return false;
     if(source==='client_auto'){
@@ -6963,7 +7028,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
         const buy=emptyBar.querySelector('[data-tarot-ai-buy]');if(buy)buy.hidden=!(empty&&d.quota?.role==='member');
       }
       const status=root?.querySelector('[data-site-ai-status]');
-      if(status&&!onsiteAiBusy&&!['failed','cancelled','success'].includes(root.dataset.siteAiResult))status.textContent='';
+      if(status&&!onsiteAiBusy&&!['failed','cancelled'].includes(root.dataset.siteAiResult))status.textContent='';
       updateAccessMini();updateQuotaUI();renderAdminTestBanner();
     }catch(e){
       if(display)display.textContent='目前無法確認 AI 額度，請稍後重試。';
@@ -7182,7 +7247,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
         ?'｜技術訊息 '+String(e?.name||'Error')+': '+String(e?.message||'未提供').replace(/https?:\/\/\S+/g,'[網址]').slice(0,120)
         :'';
       status.textContent=`${aiPhaseName(phase)}未完成：${tarotTechnicalZh(lastTarotIssueCode)}${uncertain?' 目前無法確認伺服器是否已處理，請先查看額度餘額。':' 本次未取得成功解讀。'}｜發生階段 ${aiStep}｜錯誤代碼 ${lastTarotIssueCode}${diagnostic}${lastTarotErrorTrace?'｜追蹤碼 '+lastTarotErrorTrace:''}`;
-      if(report){report.hidden=false;report.querySelector('textarea').value='';report.querySelector('[data-site-ai-report-status]').textContent='可簡述遇到的問題，並送給管理員（不需提供占卜內容）。';}
+      if(report){report.hidden=false;report.querySelector('textarea').value='';report.querySelector('[data-site-ai-report-status]').textContent='可直接回報錯誤；正式會員也能申請限一次的抽牌補償（不需提供占卜內容）。';}
       // AI terminal HTTP errors with traceId are already recorded by Workers; avoid double-counting.
       if(['FETCH_FAILED','TIMEOUT','NETWORK_ERROR','CLIENT_RUNTIME_ERROR','UNKNOWN_ERROR'].includes(lastTarotIssueCode)||(!lastTarotErrorTrace&&/^HTTP_5/.test(lastTarotIssueCode))){
         void sendTarotIncident({source:'client_auto',code:lastTarotIssueCode,phase,traceId:lastTarotErrorTrace});
@@ -7245,7 +7310,9 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
         <div class="tarot-ai-report-box" data-site-ai-error-report hidden>
           <details><summary>回報這次使用問題給管理員</summary><label>簡短描述（可不填，請勿填入占卜內容或個人資料） <textarea maxlength="300" rows="2" placeholder="例如：AI 無法解讀；也可以直接按下方回報"></textarea></label>
-          <button type="button" data-site-ai-report-send>送出使用者手動通報</button><small data-site-ai-report-status></small></details>
+          <div class="tarot-ai-report-actions"><button type="button" data-site-ai-report-send>送出錯誤回報</button>
+          <button type="button" data-site-ai-compensation>回報並領取抽牌補償 1 次</button></div>
+          <small data-site-ai-report-status></small><small class="tarot-ai-report-tip">補償限正式會員每帳號 1 次；必須有最近 72 小時內的抽牌紀錄，且只補共用工具額度 1 次。一般回報不受限制。</small></details>
         </div>
 
         <div class="tarot-ai-quota-empty" data-tarot-ai-quota-empty hidden role="status">
@@ -7407,6 +7474,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       return;
     }
     const runAI=e.target.closest('[data-site-ai-run]');if(runAI){void runOnsiteAi(runAI);return;}
+    const claimAI=e.target.closest('[data-site-ai-compensation]');if(claimAI){void reportAndClaimTarotCompensation(claimAI);return;}
     const reportAI=e.target.closest('[data-site-ai-report-send]');if(reportAI){
       const root=reportAI.closest('[data-site-ai-error-report]');const txt=root?.querySelector('textarea')?.value.trim()||'';
       const reportNote=txt.length>=5?txt:txt?'使用者回報：'+txt:'使用者直接回報：站內 AI 解讀未完成。';
