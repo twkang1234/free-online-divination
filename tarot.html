@@ -7096,7 +7096,6 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       if(!quota||!Number.isFinite(Number(quota.remaining)))throw Error('無法確認 AI 額度，本次沒有扣次。');
       if(Number(quota.remaining)<=0)throw Error('AI 額度已用完，本次沒有扣次。');
       tarotRealAiQuota=quota;tarotRealAiQuotaRole=quota.role||'';
-      showTarotAiChargeNotice(root,quota);
       let sharedConfirmed=false;
       if(!quota.adminTest&&!(Number(quota.daily?.remaining)>0)){
         if(!confirmTarotSharedAi(quota)){
@@ -7119,7 +7118,6 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
         const fresh=await tarotAPI('/ai/center/quota');
         if(serial!==onsiteAiRequestSerial||key!==promptRequestKey()||!root.isConnected)return;
         tarotRealAiQuota=fresh.quota;tarotRealAiQuotaRole=fresh.quota?.role||'';
-        showTarotAiChargeNotice(root,fresh.quota);
         if(!confirmTarotSharedAi(fresh.quota)){
           root.dataset.siteAiResult='cancelled';
           status.textContent='已取消 AI 解讀，沒有扣除共用 AI 額度。';
