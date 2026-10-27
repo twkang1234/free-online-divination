@@ -3182,11 +3182,16 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
               <div id="baziCustomSuggestions" class="bazi-custom-suggestions" aria-label="熱門自訂問題範例"></div>
               <label for="baziCustomQuestion">你的問題 <small>點選範例自動帶入，也能自由修改</small></label>
               <textarea id="baziCustomQuestion" rows="3" maxlength="400" placeholder="選擇上方題目，或直接輸入你想問的事（5～400 字）"></textarea>
-              <div class="bazi-reading-custom-actions"><button type="button" id="baziCustomQuestionRun">開始 AI 解讀（AI -1）</button></div>
+              <div class="bazi-reading-custom-actions bazi-custom-action-line">
+                <span id="baziAiQuotaEmptyHint" class="bazi-ai-quota-empty-hint" hidden>AI 額度已用完，可等待下次免費補充或<a href="/pricing.html">參考加購方案</a>。</span>
+                <div class="bazi-custom-action-buttons">
+                  <button type="button" id="baziCustomSaveBtn" class="bazi-custom-save-btn" aria-label="儲存八字出生資料，不包含 AI 解讀">儲存八字</button>
+                  <button type="button" id="baziCustomQuestionRun">開始 AI 解讀（AI -1）</button>
+                </div>
+              </div>
             </div>
           </details>
           <p id="baziPersonalAiStatus" class="bazi-access-status" role="status"></p>
-          <p id="baziAiQuotaEmptyHint" class="bazi-ai-quota-empty-hint" hidden>本期免費 AI 與會員共用 AI 額度都已用完，可等待下次免費補充，或<a href="/pricing.html">參考加購方案</a>。</p>
           <div id="baziPersonalAiReports"></div>
         </div>
       </section>
@@ -9341,6 +9346,34 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-re
 html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-reading-download{background:#edf7f9;color:#285465;border-color:#a2cbd0}
 @media(max-width:600px){.bazi-personal-stage .bazi-reading-actions-row{justify-content:stretch}.bazi-personal-stage .bazi-reading-actions-row .bazi-reading-toggle-bottom{flex:1 0 100%;text-align:center;margin-right:0!important}.bazi-personal-stage .bazi-reading-actions-row .bazi-reading-download,.bazi-personal-stage .bazi-reading-actions-row .bazi-reading-copy{flex:1 1 40%;text-align:center}}
 </style>
+<style id="bazi-ai-compact-controls-20261027">
+/* Compact action line: quota link, birth-data save, and AI request share one row. */
+.bazi-personal-stage .bazi-custom-action-line{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:9px!important;flex-wrap:wrap!important;margin-top:8px!important;}
+.bazi-personal-stage .bazi-custom-action-line .bazi-ai-quota-empty-hint{display:block;flex:1 1 220px;min-width:0;margin:0!important;padding:0!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;color:var(--gold)!important;font-size:.70rem!important;line-height:1.6!important;}
+.bazi-personal-stage .bazi-custom-action-line .bazi-ai-quota-empty-hint[hidden]{display:none!important;}
+.bazi-personal-stage .bazi-custom-action-line .bazi-ai-quota-empty-hint a{color:var(--gold);font-weight:800;text-decoration:underline;text-underline-offset:3px;}
+.bazi-personal-stage .bazi-custom-action-line .bazi-custom-action-buttons{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap;}
+.bazi-personal-stage .bazi-custom-action-line .bazi-custom-save-btn{background:rgba(233,189,88,.06)!important;border:1px solid rgba(233,189,88,.43)!important;color:var(--gold)!important;opacity:1!important;cursor:pointer!important;min-width:96px;}
+.bazi-personal-stage .bazi-custom-action-line .bazi-custom-save-btn:hover{background:rgba(233,189,88,.15)!important;}
+/* Preserve download/copy even when the report text is collapsed. */
+.bazi-personal-stage .bazi-ai-history-list .bazi-reading-entry-head h5{flex:1 1 200px;min-width:0;}
+.bazi-personal-stage .bazi-ai-history-list .bazi-reading-head-actions{display:flex;flex:0 0 auto;gap:6px;align-items:center;}
+.bazi-personal-stage .bazi-ai-history-list .bazi-reading-head-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:30px!important;padding:5px 9px!important;border-radius:7px;font-size:.67rem!important;white-space:nowrap;cursor:pointer;}
+.bazi-personal-stage .bazi-ai-history-list .bazi-reading-head-actions .bazi-reading-download{border:1px solid rgba(117,220,228,.3);background:rgba(117,220,228,.06);color:var(--text);}
+.bazi-personal-stage .bazi-ai-history-list .bazi-reading-head-actions .bazi-reading-copy{border:1px solid rgba(233,189,88,.34);background:rgba(233,189,88,.07);color:var(--gold);}
+.bazi-personal-stage .bazi-ai-history-list .bazi-reading-entry.is-selected .bazi-reading-head-actions{display:none;}
+html[data-theme="light"] .bazi-personal-stage .bazi-custom-action-line .bazi-custom-save-btn{color:#72521b!important;background:#fff8e7!important;border-color:#ae8a4c!important;}
+html[data-theme="light"] .bazi-personal-stage .bazi-ai-history-list .bazi-reading-head-actions .bazi-reading-download{color:#285465;background:#edf7f9;border-color:#a2cbd0;}
+html[data-theme="light"] .bazi-personal-stage .bazi-ai-history-list .bazi-reading-head-actions .bazi-reading-copy{color:#76551e;background:#fff7e6;border-color:#cba35f;}
+html[data-theme="light"] .bazi-personal-stage .bazi-custom-action-line .bazi-ai-quota-empty-hint,html[data-theme="light"] .bazi-personal-stage .bazi-custom-action-line .bazi-ai-quota-empty-hint a{color:#855e23!important;}
+@media(max-width:600px){
+  .bazi-personal-stage .bazi-custom-action-line .bazi-custom-action-buttons{width:100%;justify-content:flex-end;}
+  .bazi-personal-stage .bazi-custom-action-line .bazi-custom-action-buttons button{width:auto!important;flex:0 1 auto;min-height:36px!important;}
+  .bazi-personal-stage .bazi-ai-history-list .bazi-reading-entry-head{flex-wrap:wrap!important;}
+  .bazi-personal-stage .bazi-ai-history-list .bazi-reading-entry-head h5{flex:1 1 100%;}
+  .bazi-personal-stage .bazi-ai-history-list .bazi-reading-head-actions{flex-wrap:wrap;margin-left:auto;}
+}
+</style>
 <script id="baziIntegratedController">
 (()=>{
   'use strict';
@@ -9716,6 +9749,11 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-re
       if(topic.startsWith('custom_question_')&&customHistory()[Number(topic.slice(16))]?.followupReading){const tag=document.createElement('small');tag.textContent='含追問';head.append(tag);}
       const top=document.createElement('button');top.type='button';top.className='bazi-reading-toggle';
       top.dataset.reportToggleTop='1';top.setAttribute('aria-controls','bazi-report-'+topic);top.textContent='›';
+      const headerActions=document.createElement('div');headerActions.className='bazi-reading-head-actions';
+      const collapsedDownload=document.createElement('button');collapsedDownload.type='button';collapsedDownload.className='bazi-reading-download';collapsedDownload.textContent='↓ 下載 TXT';collapsedDownload.setAttribute('aria-label','下載'+title+'完整 AI 解讀');
+      collapsedDownload.addEventListener('click',event=>{event.stopPropagation();downloadOnePersonalTxt(topic);});
+      const collapsedCopy=document.createElement('button');collapsedCopy.type='button';collapsedCopy.className='bazi-reading-copy';collapsedCopy.textContent='複製解讀';collapsedCopy.setAttribute('aria-label','複製'+title+'完整 AI 解讀');
+      headerActions.append(collapsedDownload,collapsedCopy);head.append(headerActions);
       const body=document.createElement('div');body.id='bazi-report-'+topic;body.dataset.reportBody='1';
       const article=document.createElement('article');article.className='bazi-reading-article';
       renderPersonalReading(article,data.reading);
@@ -9727,15 +9765,20 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-re
       download.className='bazi-reading-download';download.textContent='↓ 下載完整解讀';
       download.addEventListener('click',()=>downloadOnePersonalTxt(topic));
       const copy=document.createElement('button');copy.type='button';copy.className='bazi-reading-copy';copy.textContent='複製完整解讀';
-      copy.addEventListener('click',async()=>{
+      const copyReport=async target=>{
         const content=personalTxtSection(topic);if(!content)return;
-        try{await navigator.clipboard.writeText(content);copy.textContent='✓ 已複製';setTimeout(()=>{if(copy.isConnected)copy.textContent='複製完整解讀'},1500);}
+        const label=target===collapsedCopy?'複製解讀':'複製完整解讀';
+        let ok=false;
+        try{await navigator.clipboard.writeText(content);ok=true;}
         catch(_){
           const text=document.createElement('textarea');text.value=content;text.style.cssText='position:fixed;left:-9999px';document.body.append(text);text.select();
-          let ok=false;try{ok=document.execCommand('copy')}catch(_){}text.remove();
-          copy.textContent=ok?'✓ 已複製':'複製失敗';setTimeout(()=>{if(copy.isConnected)copy.textContent='複製完整解讀'},1500);
+          try{ok=document.execCommand('copy')}catch(_){}text.remove();
         }
-      });
+        target.textContent=ok?'✓ 已複製':'複製失敗';
+        setTimeout(()=>{if(target.isConnected)target.textContent=label;},1500);
+      };
+      copy.addEventListener('click',()=>copyReport(copy));
+      collapsedCopy.addEventListener('click',event=>{event.stopPropagation();void copyReport(collapsedCopy);});
       // Trace belongs to this exact report; historical records without metadata show no fabricated channel.
       appendPersonalAiTrace(body,data.channel,data.traceId);
       // 正文必須先插入報告內容；追問框再附加於正文後方。
@@ -9913,6 +9956,12 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-re
 
   document.addEventListener('DOMContentLoaded',()=>{
     $('baziCustomQuestionRun')?.addEventListener('click',customTopicClick);
+    $('baziCustomSaveBtn')?.addEventListener('click',()=>{
+      // Reuse the existing member-save dialog and birth-data-only endpoint.
+      const existing=document.getElementById('birthMemberSaveBtn');
+      if(existing)existing.click();
+      else window.baziOpenAuth?.();
+    });
     refreshPersonalQuota();window.addEventListener('bazi-google-login',()=>window.baziAiRefreshAccessUi());
     document.querySelectorAll('[data-bazi-topic]').forEach(b=>b.addEventListener('click',()=>topicClick(b.dataset.baziTopic,b)));
     renderTopicAccess();
