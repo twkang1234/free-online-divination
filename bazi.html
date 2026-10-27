@@ -3181,9 +3181,8 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
               </div>
               <div id="baziCustomSuggestions" class="bazi-custom-suggestions" aria-label="熱門自訂問題範例"></div>
               <label for="baziCustomQuestion">你的問題 <small>點選範例自動帶入，也能自由修改</small></label>
-              <textarea id="baziCustomQuestion" rows="3" maxlength="400" placeholder="選擇上方題目，或直接輸入你想問的事（5～400 字）" aria-describedby="baziCustomQuestionHelp"></textarea>
-              <small class="bazi-ai-privacy-note">AI 成功解讀的題目與正式提交的自訂問題，可能供站長在管理後台查看以改善服務；不儲存完整 AI 解讀於這項統計，自訂問題原文最多保留 180 天。請勿輸入他人的敏感個資。</small>
-              <div class="bazi-reading-custom-actions"><small id="baziCustomQuestionHelp">每次提問使用 AI 解讀額度 1 次；後續追問另計 1 次。</small><button type="button" id="baziCustomQuestionRun">開始 AI 解讀（AI -1）</button></div>
+              <textarea id="baziCustomQuestion" rows="3" maxlength="400" placeholder="選擇上方題目，或直接輸入你想問的事（5～400 字）"></textarea>
+              <div class="bazi-reading-custom-actions"><button type="button" id="baziCustomQuestionRun">開始 AI 解讀（AI -1）</button></div>
             </div>
           </details>
           <p id="baziPersonalAiStatus" class="bazi-access-status" role="status"></p>
@@ -3263,7 +3262,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
             <button type="button" class="bazi-gallery-hub-entry" data-bazi-open-section="report-examples" aria-controls="report-examples" aria-expanded="false"><small>09</small><span class="bazi-hub-main"><span class="bazi-hub-name">大運・流年範例館</span><em class="bazi-hub-status bazi-gallery-badge">免費展示 · 免扣點</em></span><b aria-hidden="true">＋</b></button>
 
           </div>
-          <p class="bazi-month-ai-note">想了解每個月的運勢？十二流月改由 <a href="#baziCustomQuestion" data-bazi-month-ai-link>八字 AI 專屬解讀・自訂問題</a> 依個人命盤分析，不再另外解鎖月曆章節。自訂題及 AI 解讀依現有額度與點數規則使用。</p>
+          <p class="bazi-month-ai-note">想了解每個月的運勢？十二流月改由 <a href="#baziCustomQuestion" data-bazi-month-ai-link>八字 AI 專屬解讀・自訂問題</a> 依個人命盤分析，不再另外解鎖月曆章節。此處的 AI 自訂問題只使用 AI 解讀額度。</p>
         </section>
         <details class="report-section bazi-daily-free-chapter" id="report-daily">
           <summary><span><b>01</b> 今日流日</span><small>DAILY FLOW · FREE</small></summary>
@@ -9246,7 +9245,7 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-batch{background:#ef
 .bazi-personal-stage .bazi-reading-custom label small,.bazi-personal-stage .bazi-reading-custom-actions small{color:var(--dim);font-size:.7rem;line-height:1.6}
 .bazi-personal-stage .bazi-reading-custom textarea{display:block;width:100%;min-height:94px;margin:10px 0;padding:12px;border:1px solid rgba(90,163,172,.4);border-radius:10px;background:var(--panel);color:var(--text);font:inherit;font-size:.84rem;line-height:1.7;resize:vertical}
 .bazi-personal-stage .bazi-reading-custom textarea:focus{outline:2px solid var(--gold,#e9bd58);outline-offset:1px}
-.bazi-personal-stage .bazi-reading-custom-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.bazi-personal-stage .bazi-reading-custom-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
 .bazi-personal-stage .bazi-reading-custom-actions button{border:1px solid rgba(181,144,62,.66);background:rgba(181,144,62,.16);color:var(--text);border-radius:9px;padding:10px 14px;font-size:.78rem;font-weight:800;cursor:pointer}
 .bazi-personal-stage .bazi-reading-custom-actions button:disabled{opacity:.55;cursor:not-allowed}
 .bazi-personal-stage details.bazi-reading-custom{padding:0;overflow:hidden}
@@ -9905,10 +9904,7 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-re
       try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){ }
       if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+(history.length-1));personalAiSucceeded(status,j,'✓ 專屬問題解讀完成，已開啟下方報告。');scrollToAiReport('custom_question_'+(history.length-1));}
     }catch(e){
-      const ticketErrors=new Set(['CUSTOM_TICKET_REQUIRED','CUSTOM_UNLOCK_REQUIRED','CUSTOM_TICKET_INVALID','CUSTOM_TICKET_MISSING','CUSTOM_UNLOCK_UNAVAILABLE','INVALID_CUSTOM_TICKET','CUSTOM_QUESTION_LOCKED']);
-      const serverMessage=String(e?.message||'');
-      const requiresTicket=ticketErrors.has(String(e?.code||''))||/custom.?ticket|專業.{0,8}(解鎖|點數).{0,12}(憑證|必要|需要)/i.test(serverMessage);
-      personalAiFailed(status,e,requiresTicket?'AI 後端尚未啟用「僅扣 AI 額度」的新規則。前端沒有呼叫專業點數扣費，請先同步更新八字 AI 後端；勿重複送出。':(serverMessage||'AI 解讀暫時無法完成。'),'custom_question');
+      personalAiFailed(status,e,String(e?.message||'AI 解讀暫時無法完成。'),'custom_question');
     }
     finally{aiBusy=false;showAiWorking(btn,'custom_question',false);void refreshPersonalQuota();}
   }
