@@ -238,6 +238,12 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 @media(max-width:540px){#signalGrid{grid-template-columns:1fr;gap:8px}#signalGrid .signal-card{padding:11px 12px}#signalGrid .signal-sub{font-size:.64rem}}
 @media(max-width:360px){#signalGrid .signal-card{grid-template-columns:1fr;grid-template-areas:'top' 'status' 'buttons' 'meta';gap:4px}#signalGrid .signal-switch{justify-content:stretch}#signalGrid .signal-choice{flex:1}}
 
+
+.member-payment-recheck{margin-top:9px;font-size:.79rem;color:var(--sub)}
+.member-payment-recheck summary{cursor:pointer;color:var(--primary);font-weight:700;list-style-position:inside}
+.member-payment-recheck-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 4px}
+.member-payment-recheck-controls input{flex:1 1 240px;min-width:0;max-width:460px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit}
+.member-payment-recheck .caption{margin:7px 0;color:var(--sub)}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -277,6 +283,14 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       <div class="simple-panel"><b>專業解鎖點數</b><h3 id="memberWalletPoints">— 點</h3><small>依已開放的專業區塊價格解鎖</small></div>
     </div>
     <p class="caption" id="memberWalletNote" role="status">登入後即可查看實際剩餘額度。</p>
+    <details class="member-payment-recheck" id="memberPaymentRecheck">
+      <summary>已付款但額度未增加？核對交易紀錄</summary>
+      <div class="member-payment-recheck-controls">
+        <input type="text" id="memberPaymentOrderNo" maxlength="26" spellcheck="false" placeholder="輸入付款通知信上的商店訂單編號 DH…" aria-label="商店訂單編號">
+        <button class="btn small ghost" id="memberPaymentRecheckBtn" type="button">向藍新核對</button>
+      </div>
+      <p class="caption" id="memberPaymentRecheckStatus" role="status">僅查詢登入會員自己的訂單；系統只在藍新確認已付款後才會入帳，同一訂單不會重複補點。</p>
+    </details>
   </section>
   <section class="section" style="margin-top:27px;padding-top:28px"><div class="section-top"><div><div class="eyebrow">MY DIVINATION</div><h2>我的占卜與命盤</h2><p class="section-lead">選擇工具查看最近紀錄；需要管理、刪除或詳細閱讀時再展開完整頁面。</p></div></div>
     <nav class="member-record-tabs" id="memberRecordTabs" aria-label="選擇我的紀錄工具">
@@ -476,6 +490,26 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     }catch(e){if(sub===verifiedSessionMember?.sub)note.textContent='目前無法讀取工具／AI 餘額：'+e.message}
   }
   document.getElementById('memberWalletRefresh').addEventListener('click',refreshSharedWallet);
+  document.getElementById('memberPaymentRecheckBtn').addEventListener('click',async()=>{
+    const status=document.getElementById('memberPaymentRecheckStatus');
+    const btn=document.getElementById('memberPaymentRecheckBtn');
+    const orderNo=document.getElementById('memberPaymentOrderNo').value.trim();
+    if(!/^DH[a-f0-9]{24}$/.test(orderNo)){status.textContent='請輸入付款通知信上的完整 DH 訂單編號。';return}
+    if(!verifiedSessionMember?.sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(savedSession())){
+      status.textContent='請先登入當時購買使用的會員帳號。';return;
+    }
+    btn.disabled=true;status.textContent='正在向藍新核對交易，請勿重新刷卡…';
+    try{
+      const r=await fetch('https://payment-api.ezgocpu.workers.dev/shop/recheck',{
+        method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Accept:'application/json',Authorization:'Bearer '+savedSession()},
+        body:JSON.stringify({orderNo})});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok||j.success!==true)throw Error(j.error||'交易核對暫時無法完成');
+      status.textContent=j.message||'核對完成';
+      if(j.paid)void refreshSharedWallet();
+    }catch(e){status.textContent='核對未完成：'+(e.message||'請聯絡站長，保留付款證明')}
+    finally{btn.disabled=false}
+  });
   window.addEventListener('focus',()=>{if(verifiedSessionMember?.sub)void refreshProfessionalPoints()});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&verifiedSessionMember?.sub)void refreshProfessionalPoints()});
   window.addEventListener('pageshow',()=>{if(verifiedSessionMember?.sub)void refreshProfessionalPoints()});

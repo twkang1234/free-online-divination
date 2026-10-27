@@ -579,7 +579,7 @@ td.muted{color:var(--muted)}
         <p>每位新舊會員首次各有工具 10 次、AI 解讀 10 次；會員帳號共用，用完不每日重置。各工具定期免費次數另外計算。</p>
         <div class="bazi-gift-row"><label>會員 Email <input type="email" id="dhWalletEmail" placeholder="已註冊 Google 會員 Email"></label><button class="btn secondary" type="button" id="dhWalletLookup">查詢</button></div>
         <div id="dhWalletCurrent" class="bazi-gift-member" hidden></div>
-        <div class="bazi-gift-row"><label>贈送種類<select id="dhWalletBucket"><option value="tool">共用工具額度</option><option value="ai">共用 AI 解讀額度</option><option value="paid">付費額度（站長人工核發）</option><option value="professional_points">專業解鎖點數（獨立點數錢包）</option></select></label><label><span id="dhWalletAmountLabel">贈送次數</span><input type="number" id="dhWalletAmount" min="1" max="1000" value="10"></label></div>
+        <div class="bazi-gift-row"><label>贈送種類<select id="dhWalletBucket"><option value="tool">共用工具額度</option><option value="ai">共用 AI 解讀額度</option><option value="professional_points">專業解鎖點數（獨立點數錢包）</option></select></label><label><span id="dhWalletAmountLabel">贈送次數</span><input type="number" id="dhWalletAmount" min="1" max="1000" value="10"></label></div>
         <div class="bazi-gift-row"><label class="dh-point-note" id="dhWalletPointsNote" hidden>專業點數贈送備註（選填）<input id="dhWalletPointsNoteInput" type="text" maxlength="100" placeholder="例如：站長測試／活動贈點"></label></div>
         <div class="bazi-gift-row"><button class="btn" id="dhWalletGrant" type="button" disabled>確認額外贈送</button><small id="dhWalletInfo" style="color:#a9bfd0" aria-live="polite">請先查詢會員。</small></div>
         <details class="dh-point-test" id="dhWalletTestPanel">
@@ -1050,7 +1050,7 @@ async function dhWalletPointsRequest(path,body){
 }
 function dhWalletAdminPaint(d){
  const w=d.wallet,display=document.getElementById('dhWalletCurrent');display.hidden=false;
- display.textContent=(d.member.name||'已註冊會員')+'｜'+d.member.email+'｜共用工具 '+w.tool+' 次｜共用 AI '+w.ai+' 次｜原有付費額度 '+w.paid+' 次'+(dhWalletPointReady?'｜專業解鎖 '+dhWalletPointData.points.balance+' 點':'｜專業解鎖點數尚未取得');
+ display.textContent=(d.member.name||'已註冊會員')+'｜'+d.member.email+'｜共用工具 '+w.tool+' 次｜共用 AI '+w.ai+' 次'+(dhWalletPointReady?'｜專業解鎖 '+dhWalletPointData.points.balance+' 點':'｜專業解鎖點數尚未取得');
  document.getElementById('dhWalletGrant').disabled=false;
 }
 function dhWalletTogglePointMode(){
@@ -1104,7 +1104,7 @@ document.getElementById('dhWalletLookup').addEventListener('click',async()=>{
   let pError='';try{await dhWalletRefreshPoints()}catch(e){pError=e.message;dhWalletPointReady=false}
   dhWalletAdminPaint(d);dhWalletTogglePointMode();
   document.getElementById('dhWalletTestSpend').disabled=!dhWalletPointReady;
-  info.textContent=pError?'原有額度已取得，但專業點數查詢失敗：'+pError:'查詢成功，包含專業解鎖點數。';
+  info.textContent=pError?'共用額度已取得，但專業點數查詢失敗：'+pError:'查詢成功，包含專業解鎖點數。';
  }catch(e){info.textContent='查詢失敗：'+e.message;document.getElementById('dhWalletCurrent').hidden=true;dhWalletSelected=''}
 });
 document.getElementById('dhWalletGrant').addEventListener('click',async()=>{
@@ -1112,7 +1112,7 @@ document.getElementById('dhWalletGrant').addEventListener('click',async()=>{
  const isPoint=bucket==='professional_points',limit=isPoint?2000:1000;
  if(!dhWalletSelected||!Number.isSafeInteger(amount)||amount<1||amount>limit){info.textContent='請先查詢會員並輸入正確數量（1～'+limit+'）。';return;}
  if(isPoint&&!dhWalletPointReady){info.textContent='專業點數尚未成功查詢，無法贈點。';return;}
- if(!confirm('確定贈送 '+amount+(isPoint?' 點專業解鎖點數':' 次 '+(bucket==='tool'?'共用工具':bucket==='ai'?'共用 AI':'原有付費')+'額度')+'給 '+dhWalletSelected+'？'))return;
+ if(!confirm('確定贈送 '+amount+(isPoint?' 點專業解鎖點數':' 次 '+(bucket==='tool'?'共用工具':'共用 AI')+'額度')+'給 '+dhWalletSelected+'？'))return;
  const btn=document.getElementById('dhWalletGrant');btn.disabled=true;
  try{
   if(isPoint){
