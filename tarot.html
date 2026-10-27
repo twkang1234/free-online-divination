@@ -4873,7 +4873,8 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       SHARED_AI_EMPTY:'會員共用 AI 解讀次數不足。',
       TAROT_QUOTA_UNAVAILABLE:'暫時無法核對 AI 額度。',
       WALLET_COMMIT_FAILED:'AI 額度交易確認異常，請先查看餘額並回報。',
-      UNKNOWN_ERROR:'系統未能完成操作，管理員可利用錯誤代碼查詢原因。'};
+      CLIENT_RUNTIME_ERROR:'網站畫面執行時發生異常，已記錄技術代碼。',
+      UNKNOWN_ERROR:'系統未能完成操作，可依下方技術訊息查明原因。'};
     if(names[code])return names[code];
     if(/^HTTP_5\d\d$/.test(code))return 'AI 伺服器暫時發生內部錯誤。';
     return '操作未能完成；可將錯誤碼回報管理員查明原因。';
@@ -6379,7 +6380,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       <label><input type="radio" name="tarot-follow-choice" value="related" ${state.followChoice==='related'?'checked':''}>我有與原問題相關的延伸問題 <span class="tarot-custom-cost" data-tarot-custom-price="related">依選題方式扣共用工具額度</span></label>
       <div data-related-question ${state.followChoice==='related'?'':'hidden'}><textarea data-follow-question maxlength="120" placeholder="例如：這段關係最需要注意什麼？">${esc(state.followText||'')}</textarea><small>請輸入與第一次相關的具體問題，不能填入亂碼。</small></div>
       </fieldset><fieldset><legend>第二步｜選擇第一次還沒有使用過的牌陣</legend>
-      <p style="font-size:.72rem;color:#bcaace;display:block">第一輪已使用：${esc(state.question.spread.name)}</p>
+      <p style="font-size:.72rem;color:#bcaace;display:block">第一輪已使用：${esc((SPREAD_OPTIONS[firstSpreadKey()]?.name||state.question?.spread?.name||'第一組三張牌'))}</p>
       ${spread.map(([key,s])=>`<label><input type="radio" name="tarot-follow-spread" value="${key}" ${chosen===key?'checked':''}>${esc(s.name)}<small style="display:block;margin-left:20px;color:#a89ab6">${esc(s.desc)}</small></label>`).join('')}
       </fieldset><p role="status" aria-live="polite" class="v285-error" data-follow-error></p></div>`;
   }
@@ -6400,7 +6401,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }else{
-      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">完成第一階段站內 AI 解讀後，即可繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，由本次選定的 AI 產生六張牌整合解讀。</small></div><p class="v285-journey-desc">${state.dhDrawBCharged?'第二輪抽牌額度已扣，不會重複扣取。':'第二輪抽牌計 1 次，六張牌 AI 解讀計 1 次。'}</p><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second ${firstStageReadyForFollowup()?'':'disabled aria-disabled="true"'}>${firstStageReadyForFollowup()?'繼續第二階段 →':'先完成三張牌 AI 解讀，開啟第二階段'}</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
+      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">完成第一階段站內 AI 解讀後，即可繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc((SPREAD_OPTIONS[firstSpreadKey()]?.name||state.question?.spread?.name||'第一組三張牌'))}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，由本次選定的 AI 產生六張牌整合解讀。</small></div><p class="v285-journey-desc">${state.dhDrawBCharged?'第二輪抽牌額度已扣，不會重複扣取。':'第二輪抽牌計 1 次，六張牌 AI 解讀計 1 次。'}</p><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second ${firstStageReadyForFollowup()?'':'disabled aria-disabled="true"'}>${firstStageReadyForFollowup()?'繼續第二階段 →':'先完成三張牌 AI 解讀，開啟第二階段'}</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }
     tarotRefreshCustomPrices(els.finish);
     // Reserve phase-II CTA until phase-I AI has actually finished.
@@ -6962,7 +6963,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
         const buy=emptyBar.querySelector('[data-tarot-ai-buy]');if(buy)buy.hidden=!(empty&&d.quota?.role==='member');
       }
       const status=root?.querySelector('[data-site-ai-status]');
-      if(status&&!onsiteAiBusy&&!['failed','cancelled'].includes(root.dataset.siteAiResult))status.textContent='';
+      if(status&&!onsiteAiBusy&&!['failed','cancelled','success'].includes(root.dataset.siteAiResult))status.textContent='';
       updateAccessMini();updateQuotaUI();renderAdminTestBanner();
     }catch(e){
       if(display)display.textContent='目前無法確認 AI 額度，請稍後重試。';
@@ -7089,6 +7090,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     const report=root.querySelector('[data-site-ai-error-report]');if(report)report.hidden=true;
     lastTarotIssueCode='UNKNOWN_ERROR';
     // Fresh server quota is mandatory. Never trust only the earlier displayed balance.
+    let aiStep='核對 AI 額度';
     try{
       const latest=await tarotAPI('/ai/center/quota');
       if(serial!==onsiteAiRequestSerial||key!==promptRequestKey()||!root.isConnected)return;
@@ -7096,6 +7098,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       if(!quota||!Number.isFinite(Number(quota.remaining)))throw Error('無法確認 AI 額度，本次沒有扣次。');
       if(Number(quota.remaining)<=0)throw Error('AI 額度已用完，本次沒有扣次。');
       tarotRealAiQuota=quota;tarotRealAiQuotaRole=quota.role||'';
+      aiStep='會員共用額度確認';
       let sharedConfirmed=false;
       if(!quota.adminTest&&!(Number(quota.daily?.remaining)>0)){
         if(!confirmTarotSharedAi(quota)){
@@ -7110,6 +7113,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       if(pending){pending.hidden=true;pending.textContent='';}
       // If the last free slot vanished between quota check and booking (another tab),
       // the Worker refuses to fall back to shared AI without a new confirmation.
+      aiStep='向 AI 伺服器取得解讀';
       let data;
       try{
         data=await tarotAPI('/ai/center/interpret',payload,sharedConfirmed?{headers:{'X-DH-Shared-AI-Confirm':'1'}}:null);
@@ -7128,12 +7132,22 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
         data=await tarotAPI('/ai/center/interpret',payload,{headers:{'X-DH-Shared-AI-Confirm':'1'}});
       }
 
+      aiStep='整理 AI 回答與畫面';
       const answer=String(data.answer||'').trim();if(answer.length<20)throw Error('AI 解讀內容不足');
       if(serial!==onsiteAiRequestSerial||key!==promptRequestKey()||!root.isConnected)return;
       onsiteAiAnswer=answer;
       onsiteAiPhaseResults.auto[phase]={answer,channel:data.channel,traceId:data.traceId,seconds:data.seconds||'—'};
       if(data.quota){tarotRealAiQuota=data.quota;tarotRealAiQuotaRole=data.quota.role;}
-      renderOnsiteAiPhaseCards(root);root.dataset.siteAiResult='success';
+      root.dataset.siteAiResult='success';
+      try{renderOnsiteAiPhaseCards(root);}
+      catch(uiError){
+        console.warn('Tarot AI complete; report layout failed:',uiError?.name||'Error');
+        const fallback=root.querySelector('[data-site-ai-output]');
+        if(fallback){
+          const article=document.createElement('article');article.className='tarot-site-ai-result';
+          article.textContent=answer;fallback.replaceChildren(article);fallback.hidden=false;
+        }
+      }
       tarotAiSyncProtection();
       const answerRegion=root.querySelector('[data-site-ai-output]');
       if(answerRegion){
@@ -7149,15 +7163,28 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       tarotTrackUsage('ai_success',tarotUsageCategory());
       dhAutoArchiveTarot();
       if(phase==='three'){state.firstAiInterpretationCompleted=true;persist3x3();setAIGuidanceStage('return');}
-      renderFinish();updateAccessMini();updateQuotaUI();renderAdminTestBanner();
+      // A successful AI reading must not become an apparent failure if
+      // nonessential navigation/member widgets throw during post-processing.
+      try{renderFinish();updateAccessMini();updateQuotaUI();renderAdminTestBanner();}
+      catch(uiError){console.warn('Tarot AI complete; secondary UI update failed:',uiError?.name||'Error');}
     }catch(e){
       if(serial!==onsiteAiRequestSerial||!root.isConnected)return;
-      lastTarotErrorTrace=String(e?.traceId||'');lastTarotIssueCode=tarotTechnicalCode(e);root.dataset.siteAiResult='failed';
+      if(root.dataset.siteAiResult==='success'){
+        console.warn('Tarot AI completed, subsequent UI operation did not finish:',e?.name||'Error');
+        status.textContent=`${aiPhaseName(phase)}已取得 AI 解讀。部分畫面操作未完成，但請勿再次扣次。`;
+        return;
+      }
+      lastTarotErrorTrace=String(e?.traceId||'');
+      lastTarotIssueCode=(e?.name==='TypeError'||e?.name==='ReferenceError')?'CLIENT_RUNTIME_ERROR':tarotTechnicalCode(e);
+      root.dataset.siteAiResult='failed';
       const uncertain=['FETCH_FAILED','TIMEOUT','NETWORK_ERROR'].includes(lastTarotIssueCode);
-      status.textContent=`${aiPhaseName(phase)}未完成：${tarotTechnicalZh(lastTarotIssueCode)}${uncertain?' 目前無法確認伺服器是否已處理，請先查看額度餘額。':' 本次未取得成功解讀。'}｜錯誤代碼 ${lastTarotIssueCode}${lastTarotErrorTrace?'｜追蹤碼 '+lastTarotErrorTrace:''}`;
+      const diagnostic=['CLIENT_RUNTIME_ERROR','UNKNOWN_ERROR'].includes(lastTarotIssueCode)
+        ?'｜技術訊息 '+String(e?.name||'Error')+': '+String(e?.message||'未提供').replace(/https?:\/\/\S+/g,'[網址]').slice(0,120)
+        :'';
+      status.textContent=`${aiPhaseName(phase)}未完成：${tarotTechnicalZh(lastTarotIssueCode)}${uncertain?' 目前無法確認伺服器是否已處理，請先查看額度餘額。':' 本次未取得成功解讀。'}｜發生階段 ${aiStep}｜錯誤代碼 ${lastTarotIssueCode}${diagnostic}${lastTarotErrorTrace?'｜追蹤碼 '+lastTarotErrorTrace:''}`;
       if(report){report.hidden=false;report.querySelector('textarea').value='';report.querySelector('[data-site-ai-report-status]').textContent='可簡述遇到的問題，並送給管理員（不需提供占卜內容）。';}
       // AI terminal HTTP errors with traceId are already recorded by Workers; avoid double-counting.
-      if(['FETCH_FAILED','TIMEOUT','NETWORK_ERROR'].includes(lastTarotIssueCode)||(!lastTarotErrorTrace&&/^HTTP_5/.test(lastTarotIssueCode))){
+      if(['FETCH_FAILED','TIMEOUT','NETWORK_ERROR','CLIENT_RUNTIME_ERROR','UNKNOWN_ERROR'].includes(lastTarotIssueCode)||(!lastTarotErrorTrace&&/^HTTP_5/.test(lastTarotIssueCode))){
         void sendTarotIncident({source:'client_auto',code:lastTarotIssueCode,phase,traceId:lastTarotErrorTrace});
       }
     }finally{
@@ -7217,7 +7244,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite"></p>
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
         <div class="tarot-ai-report-box" data-site-ai-error-report hidden>
-          <details><summary>回報這次使用問題給管理員</summary><label>簡短描述（至少 5 字，請勿填入占卜內容或個人資料） <textarea maxlength="300" rows="2" placeholder="例如：按下 AI 解讀後出現無法連線，重試仍失敗"></textarea></label>
+          <details><summary>回報這次使用問題給管理員</summary><label>簡短描述（可不填，請勿填入占卜內容或個人資料） <textarea maxlength="300" rows="2" placeholder="例如：AI 無法解讀；也可以直接按下方回報"></textarea></label>
           <button type="button" data-site-ai-report-send>送出使用者手動通報</button><small data-site-ai-report-status></small></details>
         </div>
 
@@ -7382,9 +7409,9 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     const runAI=e.target.closest('[data-site-ai-run]');if(runAI){void runOnsiteAi(runAI);return;}
     const reportAI=e.target.closest('[data-site-ai-report-send]');if(reportAI){
       const root=reportAI.closest('[data-site-ai-error-report]');const txt=root?.querySelector('textarea')?.value.trim()||'';
-      if(txt.length<5){root.querySelector('[data-site-ai-report-status]').textContent='請至少輸入 5 字說明。';return;}
+      const reportNote=txt.length>=5?txt:txt?'使用者回報：'+txt:'使用者直接回報：站內 AI 解讀未完成。';
       reportAI.disabled=true;
-      void sendTarotIncident({source:'manual',code:lastTarotIssueCode,phase:state.stage3x3==='complete'?'six':'three',traceId:lastTarotErrorTrace,note:txt})
+      void sendTarotIncident({source:'manual',code:lastTarotIssueCode,phase:state.stage3x3==='complete'?'six':'three',traceId:lastTarotErrorTrace,note:reportNote})
         .then(ok=>{root.querySelector('[data-site-ai-report-status]').textContent=ok?'已送達管理員後台，謝謝回報。':'回報尚未送達，請稍後再按一次。';if(ok)root.querySelector('details').open=false;})
         .finally(()=>{reportAI.disabled=false});return;
     }
