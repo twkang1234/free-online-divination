@@ -3262,8 +3262,8 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
             <button type="button" data-bazi-open-section="report-relations" aria-controls="report-relations" aria-expanded="false"><small>04</small><span class="bazi-hub-main"><span class="bazi-hub-name">干支合沖</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-shensha" aria-controls="report-shensha" aria-expanded="false"><small>05</small><span class="bazi-hub-main"><span class="bazi-hub-name">常用神煞</span><em class="bazi-hub-status bazi-hub-status--full" id="baziShenshaAccessLabel">登入免費看</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" data-bazi-open-section="report-reading" aria-controls="report-reading" aria-expanded="false"><small>06</small><span class="bazi-hub-main"><span class="bazi-hub-name">命盤結構</span><em class="bazi-hub-status bazi-hub-status--example">範例展示</em></span><b aria-hidden="true">＋</b></button>
-            <button type="button" data-bazi-open-section="report-luck" aria-controls="report-luck" aria-expanded="false"><small>07</small><span class="bazi-hub-main"><span class="bazi-hub-name">八步大運</span></span><b aria-hidden="true">＋</b></button>
-            <button type="button" data-bazi-open-section="report-years" aria-controls="report-years" aria-expanded="false"><small>08</small><span class="bazi-hub-main"><span class="bazi-hub-name">三年流年</span></span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-luck" aria-controls="report-luck" aria-expanded="false"><small>07</small><span class="bazi-hub-main"><span class="bazi-hub-name">八步大運</span><em class="bazi-hub-status bazi-hub-status--full" data-bazi-owned-indicator="1" hidden>已解鎖</em></span><b aria-hidden="true">＋</b></button>
+            <button type="button" data-bazi-open-section="report-years" aria-controls="report-years" aria-expanded="false"><small>08</small><span class="bazi-hub-main"><span class="bazi-hub-name">三年流年</span><em class="bazi-hub-status bazi-hub-status--full" data-bazi-owned-indicator="1" hidden>已解鎖</em></span><b aria-hidden="true">＋</b></button>
             <button type="button" class="bazi-gallery-hub-entry" data-bazi-open-section="report-examples" aria-controls="report-examples" aria-expanded="false"><small>09</small><span class="bazi-hub-main"><span class="bazi-hub-name">大運・流年範例館</span><em class="bazi-hub-status bazi-gallery-badge">免費展示 · 免扣點</em></span><b aria-hidden="true">＋</b></button>
 
           </div>
@@ -10956,9 +10956,16 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   area.dataset.baziPurchaseStatus=x.unlocked?'unlocked':x.mode;
   const badge=area.querySelector('.bazi-hub-status');
   if(badge){
-   if(!badge.dataset.originalLabel)badge.dataset.originalLabel=badge.textContent;
-   badge.textContent=x.unlocked?'已解鎖':x.mode==='free'?'免費開放':badge.dataset.originalLabel;
-   badge.classList.toggle('bazi-hub-status--full',!!x.unlocked||x.mode==='free');
+   // 07/08 have no public demo badge: show only a server-verified "已解鎖" state.
+   if(badge.dataset.baziOwnedIndicator==='1'){
+     badge.hidden=!x.unlocked;
+     badge.textContent='已解鎖';
+     badge.classList.toggle('bazi-hub-status--full',!!x.unlocked);
+   }else{
+     if(!badge.dataset.originalLabel)badge.dataset.originalLabel=badge.textContent;
+     badge.textContent=x.unlocked?'已解鎖':x.mode==='free'?'免費開放':badge.dataset.originalLabel;
+     badge.classList.toggle('bazi-hub-status--full',!!x.unlocked||x.mode==='free');
+   }
    if(badge.hasAttribute('data-bazi-hub-preview')){
      badge.tabIndex=x.unlocked?-1:0;
      badge.setAttribute('aria-label',x.unlocked?'已解鎖，點擊卡片閱讀完整內容':(area.querySelector('.bazi-hub-name')?.textContent?.trim()||'此區')+'：免費預覽（不扣點）');
@@ -11054,7 +11061,9 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
   document.querySelectorAll('[data-bazi-open-section]').forEach(area=>{
    delete area.dataset.baziPurchaseStatus;
    const badge=area.querySelector('.bazi-hub-status');
-   if(badge?.dataset.originalLabel){
+   if(badge?.dataset.baziOwnedIndicator==='1'){
+     badge.hidden=true;badge.textContent='已解鎖';badge.classList.remove('bazi-hub-status--full');
+   }else if(badge?.dataset.originalLabel){
     badge.textContent=badge.dataset.originalLabel;badge.classList.remove('bazi-hub-status--full');
     if(badge.hasAttribute('data-bazi-hub-preview')){
       badge.tabIndex=0;
@@ -11249,6 +11258,9 @@ body.bazi-personal-full-mode #results .report-section.dh-bazi-premium-visible :i
 })();
 </script>
 <style id="dh-professional-points-ui-v2">
+/* The 07/08 paid-chapter status appears only after chart-scoped server verification. */
+#baziSectionHub [data-bazi-owned-indicator][hidden]{display:none!important}
+
 #baziAiQuotaPanel .bazi-entitlement-grid > .dh-legacy-paid-card{display:none!important}
 #baziAiQuotaPanel .dh-professional-points-card>b{color:#bca1eb;font-size:1.8rem}
 html[data-theme="light"] #baziAiQuotaPanel .dh-professional-points-card>b{color:#6c418c}
@@ -11747,13 +11759,13 @@ const templates={
  ],
  love:[
  ['今年桃花運旺嗎？','請依我的八字配偶宮、相關十神、原局合沖與今年流年判斷桃花和姻緣運勢。哪些有根據的月份或時段較值得把握，哪些訊號提醒感情波動？'],
- ['我的婚姻運好不好？','請從八字配偶宮、財官等相關十神及大運流年分析婚姻緣分的助力與阻力、適合經營感情的時期。先說命理依據，不推定我已結婚。'],
- ['感情容易有變動嗎？','請從我的配偶宮、合沖刑害以及當前大運流年，分析近期感情運是偏向穩定、緣分增加還是容易磨合？請指出有根據的時間訊號，不臆測第三者。']
+ ['我的婚姻運好不好？','請從八字配偶宮、財官等相關十神及大運流年分析婚姻緣分的助力與阻力、適合經營感情的時期。先說命理依據，請依命盤及歲運符號論命。'],
+ ['感情容易有變動嗎？','請從我的配偶宮、合沖刑害以及當前大運流年，分析近期感情運是偏向穩定、緣分增加還是容易磨合？請指出有根據的時間訊號，請依命盤及歲運符號論命。']
  ],
  life:[
  ['我何時走好運？','請核對我目前所行的大運及未來幾年的流年，分析整體運勢何時較有助力、何時較有阻礙，分別由哪些十神或干支作用形成，並指出關鍵的轉折條件。'],
  ['我的命格有什麼特點？','請依日主、月令、十神、干支合沖分析我的八字命格主要特徵、強弱與助力方向；未完整判定格局或喜用神時請直說，不要改成心理測驗。'],
- ['今年健康運該注意什麼？','請用傳統八字命理的角度，依原局五行生剋、寒暖燥濕的可核對線索、當前大運和今年流年，分析今年「健康運」有哪些需留意的傳統象徵及何時較受沖動。請以命理說明為主，不要整篇變成情緒、作息或養生建議；不推斷具體疾病或器官。'],
+ ['今年健康運該注意什麼？','請根據我的八字原局、五行旺衰、生剋與寒暖燥濕，配合目前大運和今年流年，推論今年健康運勢的強弱與需要留意的月份。請結合傳統五行對應的臟腑及身體部位象徵，說明哪些五行受到沖剋、耗洩或助扶，以及如何從命理角度趨吉避凶。'],
  ['今年家運有變動嗎？','從我的八字年柱、月柱、日支及今年大運流年的合沖互動，分析今年家運與家庭關係有哪些助力或變動象徵？只依我的命盤解讀，不替家人虛構命盤。'],
  ['今年每月運勢','請依我的八字、目前大運及今年實際提供的十二節氣流月，逐月分析流月的干支、十神和原局生剋作用，分辨較順與需留意的月份；只核對有資料的節氣期間。']
  ]
@@ -11764,28 +11776,28 @@ const timingTemplates={
  decade:{hint:'十年大運｜判斷十年吉凶趨勢與運勢轉折。',items:[
   ['這十年走好運還是壞運？','請依我的原局、目前十年大運干支、十神生剋與合沖，分析這一步大運的助力和阻力，哪些面向走旺、哪些方面要守，並說明命理依據。'],
   ['這十年事業有發展嗎？','請從這一步大運與原局官殺、印星、食傷的作用，分析這十年事業運、轉職與創業機會，以及可能遇到的命理阻礙。'],
-  ['這十年哪幾年財運較旺？','請比較目前十年大運和可核對的各年流年，從財星、食傷、比劫與原局生剋判斷哪幾年財運較有助力、哪幾年宜留意破財象徵，不能虛構缺少的年份資料。'],
+  ['這十年哪幾年財運較旺？','請比較目前十年大運和可核對的各年流年，從財星、食傷、比劫與原局生剋判斷哪幾年財運較有助力、哪幾年宜留意破財象徵，請以實際提供的年份資料比較。'],
   ['這十年有結婚姻緣嗎？','請以我的配偶宮、財官等相關十神、原局合沖與目前大運分析這十年姻緣及婚運的傳統強弱，若有年度資料再比較年份。'],
-  ['這十年健康運要注意什麼？','請從原局五行生剋、可辨的寒暖燥濕、這一步大運及有資料的流年，分析傳統健康運的盛衰與沖動象徵、哪些階段宜多留意。以八字命理為核心，不以器官或疾病做確診／預測。'],
+  ['這十年健康運要注意什麼？','請結合我的八字原局五行旺衰、生剋制化與寒暖燥濕，分析目前這一步大運的健康運勢如何起伏，哪些年份的歲運對原局形成較明顯的沖剋或耗洩。可以解說傳統五行所對應的臟腑部位象徵，並比較需要留意的年份與趨吉避凶方向。'],
   ['下一步大運會更好嗎？','請比較我目前與下一步大運的干支、十神及對原局的作用，先判斷各自的命理助力與壓力，再說明事業、財運、感情可能有何轉折；不要單憑一個合沖定吉凶。']
  ]},
  year:{hint:'今年流年｜論年度運勢、吉凶趨勢與關鍵變化。',items:[
   ['今年整體運勢如何？','請以今年流年干支、十神與我目前大運、原局之間的生剋合沖，判斷今年整體運勢較順還是較受阻，分別說明事業、財運與感情的傳統訊號。'],
   ['今年適合換工作嗎？','請根據原局事業相關十神、目前大運與今年流年，判斷今年求職、轉職或留任的命理助力與阻力；若要比較月份，只用可核對的節氣流月資料。'],
-  ['今年有升遷考試運嗎？','請從官殺、印星、食傷以及今年大運流年的作用，判斷升遷、考試或面試的傳統運勢象徵，說明有利條件與較受阻的訊號，不保證錄取。'],
+  ['今年有升遷考試運嗎？','請從官殺、印星、食傷以及今年大運流年的作用，判斷升遷、考試或面試的傳統運勢象徵，說明有利條件與較受阻的訊號，請比較吉凶條件與有利時間。'],
   ['今年桃花婚姻運如何？','請依配偶宮、感情相關十神、大運與今年流年的合沖互動，判斷今年桃花與婚姻運的主要趨勢及需留意的變動。'],
-  ['今年正財偏財運好嗎？','請從我的正偏財、食傷、比劫及今年歲運生剋，判斷今年財運助力、破財或守財象徵，先說命理依據；勿保證投資獲利。'],
-  ['今年家運有什麼變化？','請從今年流年與我的原局年柱、月柱、日支及大運作用，分析家庭責任、家運變動或相處磨合的命理象徵；不預測家人疾病。'],
-  ['今年適合搬家或買房嗎？','請從今年歲運與原局的沖合、資源及家宅相關象徵，分析搬遷、置產或遠行在傳統命理上較適合準備或審慎的條件，不保證實際成交。'],
-  ['今年健康運如何？','請從八字原局五行生剋、目前大運及今年流年合沖，分析今年傳統健康運是否有明顯沖動或耗洩等象徵；以命盤依據為主，不將五行直接推為疾病風險。']
+  ['今年正財偏財運好嗎？','請從我的正偏財、食傷、比劫及今年歲運生剋，判斷今年財運助力、破財或守財象徵，先說命理依據；請說明財運象徵及有利、不利條件。'],
+  ['今年家運有什麼變化？','請從今年流年與我的原局年柱、月柱、日支及大運作用，分析家庭責任、家運變動或相處磨合的命理象徵；請以我的命盤所反映的家運為範圍。'],
+  ['今年適合搬家或買房嗎？','請從今年歲運與原局的沖合、資源及家宅相關象徵，分析搬遷、置產或遠行在傳統命理上較適合準備或審慎的條件，請說明有利及需留意的命理條件。'],
+  ['今年健康運如何？','請從我的八字原局五行旺衰、生剋與今年流年的刑沖合害，配合目前大運判斷今年健康運勢的強弱、哪些月份的傳統健康象徵較受觸動。請解釋相關五行與其傳統對應的身體部位，並以命理依據說明重點。']
  ]},
  month:{hint:'節氣流月｜按可核對的節氣月份比較運勢。',items:[
-  ['今年每月運勢','請依我的八字、目前大運及今年實際提供的十二節氣流月，逐月分析流月干支、十神與原局作用，指出較旺和較受阻的月份，不補造缺失的節氣日期。'],
-  ['哪個月適合面試或簽約？','請按可核對的節氣流月干支及原局、目前大運，判斷哪些月份在傳統命理上較利求職、面試、簽約或談判，說明十神和合沖依據，不虛構擇日吉時。'],
+  ['今年每月運勢','請依我的八字、目前大運及今年實際提供的十二節氣流月，逐月分析流月干支、十神與原局作用，指出較旺和較受阻的月份，請使用已核對的節氣資料。'],
+  ['哪個月適合面試或簽約？','請按可核對的節氣流月干支及原局、目前大運，判斷哪些月份在傳統命理上較利求職、面試、簽約或談判，說明十神和合沖依據，請以已核對的節氣月份比較。'],
   ['哪個月桃花運比較旺？','請依我的配偶宮、相關十神、今年可核對的節氣流月與大運，分析哪幾個月份桃花姻緣象徵較強，哪些月份需留意感情沖動。'],
   ['哪個月財運比較好？','請根據原局財星、食傷、比劫與今年可核對的節氣流月，判斷哪幾個月求財助力較足、哪幾個月宜守財，並說明命理依據。'],
-  ['這個月健康運要注意什麼？','請從這個節氣流月的干支、五行生剋及它與原局、大運的互動，分析傳統命理上健康運有哪些值得留意的沖動象徵；以命理為主，不推測具體疾病或診療。'],
-  ['這個月適合遠行或搬遷嗎？','請以今年可核對的節氣流月和我的原局、大運合沖判斷出差、旅行或搬遷的傳統動象，說明哪些訊號較有助力、哪些較有阻力，不杜撰吉日。']
+  ['這個月健康運要注意什麼？','請依這個節氣流月的天干地支、五行生剋，以及它與我的原局和大運的刑沖合害，推論本月傳統健康運是較平穩或變動較多。請說明受觸動的五行、傳統對應的臟腑部位象徵，及命理上需要留意的時段。'],
+  ['這個月適合遠行或搬遷嗎？','請以今年可核對的節氣流月和我的原局、大運合沖判斷出差、旅行或搬遷的傳統動象，說明哪些訊號較有助力、哪些較有阻力，請以已核對的節氣月份比較。']
  ]}
 };
 const init=()=>{
