@@ -35,7 +35,7 @@ body{margin:0;background:#07090d;color:var(--text);font-family:system-ui,-apple-
 .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0 24px}
 .tool-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:16px 18px 18px}
 .tool-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}
-.payment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px 12px}.payment-types{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 18px 18px}.payment-type-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}.subline{display:block;margin-top:4px;color:var(--muted);font-size:.68rem}.payment-table{min-width:980px}
+.payment-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 18px 12px}.payment-types{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:0 18px 18px}.payment-type-card small{display:block;margin-top:7px;color:var(--muted);font-size:.68rem}.subline{display:block;margin-top:4px;color:var(--muted);font-size:.68rem}.payment-table{min-width:980px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:17px}
 .card span{display:block;color:var(--muted);font-size:.76rem;margin-bottom:9px}
 .card strong{font-size:1.65rem;color:#f3e6bf}
@@ -614,7 +614,7 @@ td.muted{color:var(--muted)}
                 <div class="dh-shop-preview-price"><span>方案售價</span><strong id="dhShopPreviewPrice">未定價</strong></div>
               </div>
               <p class="dh-shop-preview-state" id="dhShopPreviewState">未展示 · 草稿</p>
-              <p class="dh-shop-preview-foot">正式上架後，每個商品都有「立即購買」按鈕。未串接金流前，點擊僅能檢視結帳摘要，不會收款。</p>
+              <p class="dh-shop-preview-foot">上架商品有「立即購買」入口。付款總開關關閉時僅能檢視結帳摘要；開啟後仍須驗證會員身分與商品金額。</p>
             </aside>
           </div>
         </details>
@@ -810,7 +810,7 @@ td.muted{color:var(--muted)}
     <section class="section" style="margin-bottom:24px">
       <div class="section-head">
         <h2>付款紀錄</h2>
-        <span>僅顯示付款成功｜自由支持・單次解鎖・訂閱｜支援藍新與未來綠界</span>
+        <span>僅顯示付款成功｜會員商品加購・自由支持・單次解鎖・訂閱｜藍新金流</span>
       </div>
 
       <div class="payment-summary">
@@ -834,6 +834,11 @@ td.muted{color:var(--muted)}
           <span>訂閱</span>
           <strong id="subscriptionMonthAmount">—</strong>
           <small>本月｜累計 <span id="subscriptionPaidCount">0</span> 筆</small>
+        </div>
+        <div class="card payment-type-card">
+          <span>會員商品加購</span>
+          <strong id="purchaseMonthAmount">—</strong>
+          <small>本月｜累計 <span id="purchasePaidCount">0</span> 筆</small>
         </div>
       </div>
 
@@ -1170,6 +1175,7 @@ function purposeLabel(v){
   if(key==='support')return'自由支持';
   if(key==='unlock')return'單次解鎖';
   if(key==='subscription')return'訂閱';
+  if(key==='purchase')return'會員商品加購';
   return v||'—';
 }
 
@@ -1355,6 +1361,9 @@ async function loadStats(){
 
     $('subscriptionMonthAmount').textContent=money(s.subscriptionMonthAmount);
     $('subscriptionPaidCount').textContent=Number(s.subscriptionPaidCount||0);
+
+    $('purchaseMonthAmount').textContent=money(s.purchaseMonthAmount);
+    $('purchasePaidCount').textContent=Number(s.purchasePaidCount||0);
 
     $('paymentRows').innerHTML=(s.recentPayments||[]).map(p=>`
       <tr>
