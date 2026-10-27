@@ -385,6 +385,32 @@ td.muted{color:var(--muted)}
 .dh-pay-toggle-label input{width:20px;height:20px;accent-color:#a37aef}.dh-pay-unsaved{color:#ffd37a;font-size:.78rem;font-weight:700}
 .dh-pay-help{margin-top:11px;font-size:.73rem;color:#b7dccd;min-height:20px}
 
+
+/* 標題旁金流狀態燈號；紅燈僅提醒真實交易/入帳故障 */
+.dh-shop-panel>summary{justify-content:flex-start!important;gap:10px!important}
+.dh-shop-panel>summary>small{margin-left:auto}
+.dh-pay-monitor-badge{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;border:1px solid #566579;
+ border-radius:999px;padding:3px 10px;font-size:.72rem;font-weight:800;color:#bfcad8;background:#151b24;line-height:1.45}
+.dh-pay-monitor-badge[hidden]{display:none!important}
+.dh-pay-monitor-badge[data-state="off"]{color:#aab8c9;border-color:#415167;background:#171c27}
+.dh-pay-monitor-badge[data-state="good"]{color:#9fe7b6;border-color:#387b55;background:#11251c}
+.dh-pay-monitor-badge[data-state="warn"]{color:#f5d397;border-color:#80643b;background:#261e12}
+.dh-pay-monitor-badge[data-state="danger"]{color:#ffb6bb;border-color:#a54c59;background:#32141e;animation:dh-pay-alert-pulse 1.7s ease-in-out infinite}
+@keyframes dh-pay-alert-pulse{50%{box-shadow:0 0 0 3px rgba(215,80,101,.20);background:#4b1b2a}}
+@media(prefers-reduced-motion:reduce){.dh-pay-monitor-badge[data-state="danger"]{animation:none}}
+.dh-pay-monitor-detail{margin:12px 0 18px;border:1px solid #364559;border-radius:12px;background:#0c131d;overflow:hidden}
+.dh-pay-monitor-detail>summary{cursor:pointer;padding:11px 15px;color:#c7d8e8;font-weight:780;font-size:.84rem;display:flex;align-items:center;gap:12px}
+.dh-pay-monitor-detail>summary span{font-size:.72rem;color:#aab9ca;font-weight:500}
+.dh-pay-monitor-body{padding:12px 14px 14px;border-top:1px solid #2a3542}
+.dh-pay-monitor-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.74rem;color:#a7b9ca;line-height:1.65}
+.dh-pay-monitor-rows{display:grid;gap:9px;margin-top:11px}
+.dh-pay-monitor-entry{border:1px solid #394759;border-radius:11px;padding:11px 13px;background:#111923;font-size:.77rem;line-height:1.65}
+.dh-pay-monitor-entry[data-state="open"]{border-color:#824151;background:#20151f}
+.dh-pay-monitor-entry strong{color:#ffe1b8}
+.dh-pay-monitor-entry p{margin:5px 0;color:#b6c5d0;overflow-wrap:anywhere}
+.dh-pay-monitor-foot{color:#869bad;font-size:.71rem;margin:10px 0 0}
+@media(max-width:700px){.dh-shop-panel>summary{flex-direction:row!important;align-items:center!important;flex-wrap:wrap}.dh-shop-panel>summary>small{flex-basis:100%;margin-left:0}}
+
 /* 加購商品管理 v2：簡短說明、收合編輯、即時預覽；不改動原有後端計價邏輯 */
 .dh-shop-help a,.dh-shop-instructions a{color:#76dcff!important;text-decoration:underline;text-underline-offset:3px;font-weight:750}
 .dh-shop-help a:hover,.dh-shop-instructions a:hover{color:#b1ecff!important}
@@ -568,7 +594,7 @@ td.muted{color:var(--muted)}
 
 
     <details class="section dh-shop-panel" id="dhShopAdminPanel">
-      <summary>🛒 加購商品方案管理 <small>新增・修改・上架・停用・封存｜與專業區塊扣點設定分開</small></summary>
+      <summary><span>🛒 加購商品方案管理</span><span id="dhPayMonitorBadge" class="dh-pay-monitor-badge" data-state="loading">狀態讀取中</span><span id="dhPayMonitorAlert" class="dh-pay-monitor-badge" data-state="danger" hidden>金流異常 0</span><small>新增・修改・上架・停用・封存｜與專業區塊扣點設定分開</small></summary>
       <div class="dh-shop-wrap">
         <p class="dh-shop-help"><strong>可新增、調價、上架展示、設定可購買或停用商品。</strong> <a href="/pricing.html" target="_blank" rel="noopener noreferrer">預覽加購頁 pricing.html ↗</a>。藍新金流須先部署並完成安全設定；付款總開關關閉時，購買按鈕變暗且後端拒絕建立付款訂單。</p>
         <details class="dh-shop-instructions"><summary>操作說明與安全提醒</summary><p>價格、數量可暫時留白，以未展示的草稿儲存；上架展示前須填妥。商品存於獨立 Cloudflare D1 資料表。「上架」只代表在加購頁展示，不代表可付款。複製方案會建立新的商品編號，不影響原商品；封存可恢復。原本各工具的加購按鈕及會員扣點不會更動。</p></details>
@@ -585,6 +611,14 @@ td.muted{color:var(--muted)}
           </div>
           <div class="dh-pay-help" id="dhPayStatus" role="status" aria-live="polite">展開本區後載入設定。</div>
         </section>
+        <details class="dh-pay-monitor-detail" id="dhPayMonitorDetail">
+          <summary>⚠ 金流異常紀錄 <span id="dhPayMonitorDetailCount">尚未讀取</span></summary>
+          <div class="dh-pay-monitor-body">
+            <div class="dh-pay-monitor-toolbar"><span>只列系統付款／入帳故障；客戶取消、刷卡被拒不算異常。舊版尚未記錄的 Notify 信件不會自動補入。</span><button type="button" class="btn secondary dh-shop-smallbtn" id="dhPayMonitorRefresh">重新查詢</button></div>
+            <div id="dhPayMonitorRows" class="dh-pay-monitor-rows">展開後讀取紀錄。</div>
+            <p class="dh-pay-monitor-foot" id="dhPayMonitorChecked"></p>
+          </div>
+        </details>
         <div class="dh-shop-head"><h3>商品方案清單</h3><div class="dh-shop-actions"><label class="dh-shop-toggle"><input type="checkbox" id="dhShopShowArchived"> 顯示已封存</label><button type="button" class="btn secondary" id="dhShopReload">重新讀取</button><button type="button" class="btn secondary" id="dhShopNew">＋ 新增方案</button></div></div>
         <div class="dh-shop-table-scroll"><table class="dh-shop-table"><thead><tr><th>商品</th><th>類型</th><th>數量</th><th>售價（NT$）</th><th>展示狀態</th><th>可購買</th><th>操作</th></tr></thead><tbody id="dhShopRows"><tr><td colspan="7" class="dh-shop-empty">展開後讀取商品清單。</td></tr></tbody></table></div>
         <details class="dh-shop-editor-fold" id="dhShopEditorFold">
@@ -2324,8 +2358,8 @@ function render(){const body=el('dhShopRows');body.replaceChildren();let count=0
   if(!count){const tr=document.createElement('tr');const td=textNode('td',items.length?'此篩選下沒有商品，或全部商品已封存。':'目前沒有商品。請點「＋ 新增方案」建立第一個草稿。','dh-shop-empty');td.colSpan=7;tr.append(td);body.append(tr)}
 }
 async function load(){if(!token())return;const d=await call('/admin/catalog');items=d.products||[];loaded=true;render();}
-el('dhShopAdminPanel').addEventListener('toggle',async()=>{if(el('dhShopAdminPanel').open&&!loaded){payLoad().catch(e=>el('dhPayStatus').textContent='設定讀取失敗：'+e.message);try{status('正在讀取商品方案……');await load();status('商品已讀取；是否可付款由付款總開關決定。')}catch(e){status(e.message,true)}}});
-el('dhShopReload').onclick=async()=>{try{await Promise.all([load(),payLoad()]);status('已取得最新商品方案。')}catch(e){status(e.message,true)}};
+el('dhShopAdminPanel').addEventListener('toggle',async()=>{if(el('dhShopAdminPanel').open&&!loaded){payLoad().catch(e=>el('dhPayStatus').textContent='設定讀取失敗：'+e.message);dhMonitorRefresh();try{status('正在讀取商品方案……');await load();status('商品已讀取；是否可付款由付款總開關決定。')}catch(e){status(e.message,true)}}});
+el('dhShopReload').onclick=async()=>{try{await Promise.all([load(),payLoad(),dhMonitorRefresh()]);status('已取得最新商品方案。')}catch(e){status(e.message,true)}};
 el('dhShopShowArchived').onchange=render;
 el('dhShopNew').onclick=()=>{reset();openEditor()};
 el('dhShopCancel').onclick=()=>{reset(true);status('已取消編輯；沒有儲存任何變更。')};
@@ -2336,12 +2370,64 @@ el('dhShopForm').addEventListener('submit',async e=>{e.preventDefault();if(busy)
   const payload={id:el('dhShopId').value,type:el('dhShopType').value,name:el('dhShopName').value.trim(),quantity:qty?Number(qty):null,priceTwd:price?Number(price):null,sortOrder:Number(el('dhShopSort').value),highlight:el('dhShopHighlight').value.trim(),description:el('dhShopDescription').value.trim(),active,purchasable:el('dhShopPurchasable').checked};
   busy=true;el('dhShopSave').disabled=true;status('正在儲存商品方案……');try{await call('/admin/catalog/save',payload);reset(true);await load();status('儲存成功。'+(active?'商品已上架；是否開放付款以總開關為準。':'商品未展示，未啟用付款。'))}catch(err){status('儲存失敗：'+err.message,true)}finally{busy=false;el('dhShopSave').disabled=false}
 });
+
+// 金流警示與總開關分開：即使關閉，也要顯示未處理的歷史交易異常。
+let dhMonitorSettings=null,dhMonitorData=null,dhMonitorHealth=null,dhMonitorBusy=false;
+const dhMonitorLabels={notify_error:'藍新 Notify URL 通知處理失敗',return_error:'付款完成頁入帳處理異常',missing_credit:'已付款但會員額度未入帳'};
+function dhMonitorHeadline(){
+ const b=el('dhPayMonitorBadge'),alertBadge=el('dhPayMonitorAlert');
+ const n=Number(dhMonitorData?.openCount||0);
+ alertBadge.hidden=!(dhMonitorData&&n>0);alertBadge.textContent='金流異常 '+n;
+ if(!dhMonitorSettings){b.dataset.state='loading';b.textContent='狀態讀取中';return;}
+ if(!dhMonitorSettings.paymentEnabled){b.dataset.state='off';b.textContent='已關閉中';return;}
+ if(!dhMonitorData||dhMonitorHealth===null){b.dataset.state='warn';b.textContent='狀態待確認';return;}
+ if(n>0){b.dataset.state='danger';b.textContent='金流異常';return;}
+ if(!dhMonitorSettings.checkoutConnected||dhMonitorHealth!==true){b.dataset.state='warn';b.textContent='金流待確認';return;}
+ b.dataset.state='good';b.textContent='金流正常';
+}
+function dhMonitorTime(t){if(!t)return '—';const d=new Date(t);return Number.isNaN(d.getTime())?String(t):d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',hour12:false})}
+function dhMonitorRender(){
+ const box=el('dhPayMonitorRows');box.replaceChildren();
+ if(!dhMonitorData){box.textContent='監控資料尚未取得，不能判定金流正常。';return;}
+ const arr=dhMonitorData.incidents||[];
+ el('dhPayMonitorDetailCount').textContent=dhMonitorData.openCount+' 件待處理';
+ if(!arr.length){box.textContent='目前沒有已記錄的金流系統異常。';}
+ for(const x of arr){
+  const entry=document.createElement('div');entry.className='dh-pay-monitor-entry';entry.dataset.state=x.state;
+  const name=document.createElement('strong');name.textContent=(x.state==='open'?'● ':'✓ ')+(dhMonitorLabels[x.kind]||'付款處理異常');entry.append(name);
+  const details=document.createElement('p');details.textContent='訂單：'+(x.orderNo||'—')+' ｜ 金額：'+(x.amount!=null&&Number.isFinite(Number(x.amount))?'NT$ '+Number(x.amount):'—')+' ｜ 會員：'+(x.memberEmail||'—')+' ｜ 額度：'+(x.credited?'已入帳':'尚未確認入帳');entry.append(details);
+  const sub=document.createElement('p');sub.textContent='時間：'+dhMonitorTime(x.lastAt||x.firstAt)+(x.errorCode?' ｜ 錯誤：'+x.errorCode:'')+(x.occurrences>1?' ｜ 累計 '+x.occurrences+' 次':'')+(x.state==='reviewed'?' ｜ 已查看':x.state==='recovered'?' ｜ 已恢復':'');entry.append(sub);
+  if(x.state==='open'&&x.credited===true&&x.kind!=='missing_credit'){
+   const done=btn('確認已查看',async()=>{if(!confirm('確認這筆訂單已經正常入帳，將此通知異常標記為已查看？'))return;
+    done.disabled=true;try{await call('/admin/payment/monitor/review',{id:x.id});await dhMonitorRefresh();}catch(e){alert('更新失敗：'+e.message);done.disabled=false;}});
+   entry.append(done);
+  }
+  box.append(entry);
+ }
+ el('dhPayMonitorChecked').textContent='資料更新：'+dhMonitorTime(dhMonitorData.checkedAt)+'｜監控只涵蓋新版部署後收到的已驗證通知，並比對資料庫內已付款的商品訂單。';
+}
+async function dhMonitorRefresh(){
+ if(dhMonitorBusy)return;
+ dhMonitorBusy=true;
+ try{
+  const [m,h]=await Promise.all([
+   call('/admin/payment/monitor'),
+   fetch('https://payment-api.ezgocpu.workers.dev/shop/health',{cache:'no-store'}).then(async r=>r.ok&&(await r.json()).ready===true).catch(()=>null)
+  ]);
+  dhMonitorData=m;dhMonitorHealth=h;dhMonitorRender();
+ }catch(e){dhMonitorData=null;dhMonitorHealth=null;el('dhPayMonitorRows').textContent='無法讀取監控紀錄：'+e.message;el('dhPayMonitorDetailCount').textContent='讀取異常';}
+ finally{dhMonitorBusy=false;dhMonitorHeadline();}
+}
+el('dhPayMonitorRefresh').addEventListener('click',dhMonitorRefresh);
+el('dhPayMonitorDetail').addEventListener('toggle',()=>{if(el('dhPayMonitorDetail').open)dhMonitorRefresh()});
+
 // 付款設定儲存 D1；後端同時檢查藍新健康狀態及總開關。
 let payLoaded=false,payBusy=false;
 async function payLoad(){
   // 更新 payment Worker 狀態，若 Worker 或 Secrets 不可用，後端一律拒絕新交易。
-  await fetch('https://payment-api.ezgocpu.workers.dev/shop/health',{cache:'no-store'}).catch(()=>null);
+  // 實際健康檢查由金流異常監控讀取，不會用舊有的 D1 紀錄冒充即時連線。
   const data=await call('/admin/catalog/settings');const p=data.settings||{};
+  dhMonitorSettings=p;dhMonitorHeadline();
   el('dhPayEnabled').checked=!!p.paymentEnabled;
   el('dhPayStateBox').dataset.state=p.paymentEnabled&&p.checkoutConnected?'on':'off';
   el('dhPayStateTitle').textContent=p.paymentEnabled?(p.checkoutConnected?'🟢 付款總開關：已開啟':'🟠 開關已開啟，但金流未就緒'):'🔴 付款總開關：已關閉';
@@ -2356,11 +2442,14 @@ async function payLoad(){
 for(const id of ['dhPayEnabled','dhPayRegular','dhPayPromotion'])el(id).addEventListener('change',()=>{if(payLoaded)el('dhPayUnsaved').hidden=false});
 el('dhPaySave').addEventListener('click',async()=>{
  if(payBusy)return;payBusy=true;el('dhPaySave').disabled=true;
- try{await call('/admin/catalog/settings',{paymentEnabled:el('dhPayEnabled').checked,regularEnabled:el('dhPayRegular').checked,promotionEnabled:el('dhPayPromotion').checked});await payLoad();el('dhPayStatus').textContent='付款控制設定已儲存。'}
+ try{await call('/admin/catalog/settings',{paymentEnabled:el('dhPayEnabled').checked,regularEnabled:el('dhPayRegular').checked,promotionEnabled:el('dhPayPromotion').checked});await payLoad();await dhMonitorRefresh();el('dhPayStatus').textContent='付款控制設定已儲存。'}
  catch(e){el('dhPayStatus').textContent='儲存失敗：'+e.message}finally{payBusy=false;el('dhPaySave').disabled=false}
 });
 updatePreview();
-window.addEventListener('dh-admin-ready',()=>{if(el('dhShopAdminPanel').open)load().catch(e=>status(e.message,true))});
+window.addEventListener('dh-admin-ready',()=>{
+ payLoad().catch(()=>{dhMonitorSettings=null;dhMonitorHeadline()});dhMonitorRefresh();
+ if(el('dhShopAdminPanel').open)load().catch(e=>status(e.message,true));
+});
 })();
 </script>
 
