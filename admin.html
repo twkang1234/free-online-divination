@@ -892,6 +892,14 @@ td.muted{color:var(--muted)}
           <tbody id="paymentRows"></tbody>
         </table>
       </div>
+      <details id="shopUnconfirmedDetails" style="margin:12px 18px 16px;border:1px solid #354554;border-radius:12px;padding:12px 14px" hidden>
+        <summary style="cursor:pointer;color:#e9cc85;font-weight:750">需要核對的付款訂單：<span id="shopUnconfirmedCount">0</span> 筆（尚未確認是否扣款，不計入營收）</summary>
+        <div class="table-wrap" style="margin-top:10px"><table style="min-width:700px">
+          <thead><tr><th>商品／方案</th><th>金額</th><th>會員</th><th>訂單編號</th><th>建立時間</th><th>狀態</th></tr></thead>
+          <tbody id="shopUnconfirmedRows"></tbody>
+        </table></div>
+        <p style="font-size:.74rem;color:#9aaaba;margin:10px 0 0">此處只代表本站尚未確認交易，可能是客戶離開付款頁，也可能是藍新已扣款但網站入帳失敗。請依藍新交易結果核對，勿自行重複加點。</p>
+      </details>
     </section>
 
     <section class="section">
@@ -1416,6 +1424,19 @@ async function loadStats(){
         <td class="muted">${fmtPaymentTime(p.paidAt)}</td>
       </tr>
     `).join('')||'<tr><td colspan="7" class="muted">目前還沒有成功付款紀錄。</td></tr>';
+
+    // 未核對訂單顯示在已付款清單下方，不混入成功營收。
+    const pendingShop=s.unconfirmedShopOrders||[];
+    $('shopUnconfirmedDetails').hidden=pendingShop.length===0;
+    $('shopUnconfirmedCount').textContent=pendingShop.length;
+    $('shopUnconfirmedRows').innerHTML=pendingShop.map(p=>`<tr>
+      <td>${esc(p.productName)} <span class="subline">${esc(p.productType)} × ${Number(p.quantity||0)}</span></td>
+      <td class="amount">${money(p.amount,'TWD')}</td>
+      <td>${esc(p.memberEmail||'—')}</td>
+      <td>${esc(p.orderNo)}</td>
+      <td>${esc(p.startedAt||p.createdAt||'—')}</td>
+      <td style="color:#e8c887">待核對，不代表未扣款</td>
+    </tr>`).join('');
 
     $('updatedAt').textContent='更新：'+new Date().toLocaleString('zh-TW',{hour12:false});
 
