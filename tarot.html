@@ -2167,10 +2167,6 @@ html[data-theme="light"] .v287-await-ai .ai-provider-grid a{animation-name:v287-
 
 .tarot-site-ai-run{border:0;border-radius:10px;background:#9062e7;color:white;padding:12px 20px;font-weight:700;cursor:pointer;margin:12px 0}
 .tarot-site-ai-run:disabled{opacity:.45;cursor:not-allowed}.tarot-site-ai-status{font-size:.86rem;min-height:1.4em}
-.tarot-ai-charge-note{display:block;margin:10px 0 12px;padding:10px 13px;border:1px solid rgba(154,114,255,.32);border-radius:11px;background:rgba(154,114,255,.085);color:var(--text);font-size:.79rem;line-height:1.7;font-weight:650}
-.tarot-ai-charge-note[data-charge-type=shared]{border-color:rgba(231,94,215,.45);background:rgba(231,94,215,.10)}
-html[data-theme=light] .tarot-ai-charge-note{color:#47315f;background:#f3ebff;border-color:#cbb4e9}
-html[data-theme=light] .tarot-ai-charge-note[data-charge-type=shared]{color:#71356e;background:#fceafa;border-color:#e5b4df}
 .tarot-site-ai-result{overflow-wrap:anywhere;line-height:1.95;font-family:inherit;font-size:clamp(.95rem,1.4vw,1.04rem);padding:clamp(14px,2.8vw,26px);border-radius:12px;background:rgba(95,75,135,.12);max-height:none;overflow:visible;color:inherit}
 .tarot-site-ai-result h3{font-size:1.22rem;line-height:1.55;margin:2em 0 .85em;color:var(--text,#eee)}
 .tarot-site-ai-result h4{font-size:1.08rem;line-height:1.6;margin:1.6em 0 .7em;color:var(--text,#eee)}
@@ -3042,7 +3038,6 @@ body.tarot-focus .tarot-stage-header{align-items:center}
 .reading-analysis .tarot-site-ai{margin-top:12px;padding:16px 0 4px;border:0;border-top:1px solid var(--tl-line);background:transparent;border-radius:0;box-shadow:none}
 .reading-analysis .tarot-site-ai h4{font-size:1rem;margin:5px 0}
 .reading-analysis .tarot-site-ai>p:not(.tarot-site-ai-status):not(.tarot-ai-shared-note){font-size:.74rem;line-height:1.65;margin:6px 0}
-.reading-analysis .tarot-site-ai>.tarot-ai-charge-note{font-size:.80rem;line-height:1.75;margin:10px 0 13px;padding:10px 13px}
 .reading-analysis .tarot-site-ai .tarot-ai-shared-note{font-size:.70rem;line-height:1.6}
 .reading-analysis .tarot-site-ai .tarot-site-ai-run{width:100%;min-height:48px;font-size:.87rem;border-radius:12px}
 .reading-analysis .tarot-site-ai[data-site-ai-result="success"] [data-site-ai-run]{width:auto;min-height:39px;align-self:flex-start;font-size:.76rem;opacity:.85;border:1px solid var(--tl-line);box-shadow:none;background:transparent!important;color:var(--text)!important;padding:8px 12px}
@@ -3565,7 +3560,7 @@ html[data-theme="light"] #tarotAiDiscardDialog button[value="continue"]{color:#7
 
 /* Compact AI notices: do not repeat the same reminder beneath each report. */
 .tarot-site-ai-status:empty{display:none!important}
-.tarot-ai-charge-note[hidden],.tarot-ai-preserve[hidden]{display:none!important}
+.tarot-ai-preserve[hidden]{display:none!important}
 #tarotAiDiscardDialog .tarot-ai-discard-export{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:12px 0 3px}
 #tarotAiDiscardDialog .tarot-ai-discard-export button{padding:8px 12px;min-height:40px;border-radius:10px;background:rgba(231,94,215,.14);border:1px solid rgba(231,94,215,.36);color:#f4d8f0;font-size:.75rem;font-weight:800}
 #tarotAiDiscardDialog .tarot-ai-discard-export span{color:#e8c689;font-size:.72rem}
@@ -6405,7 +6400,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     }else if(state.followFormOpen){
       els.finish.innerHTML=`<h4 class="v285-journey-title">第二階段｜保留第一組，再抽三張新牌</h4><p class="v285-journey-desc">你的第一組三張牌不會改變。請先決定要延續原問題或深入相關問題，再從<strong>沒有使用過的另外兩種牌陣</strong>選一種，繼續抽牌。</p>${followupConfigHTML()}<div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-start-follow>確認選擇｜抽取第二組三張牌 →</button><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }else{
-      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">完成第一階段站內 AI 解讀後，即可繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，由本次選定的 AI 產生六張牌整合解讀。</small></div><p class="v285-journey-desc">${state.dhDrawBCharged?'第二輪抽牌額度已扣，不會重複扣取。':'第二輪另使用 1 次抽牌額度（當日免費優先，免費用完才詢問扣共用工具額度）；六張牌 AI 解讀另扣 1 次 AI 額度。'}</p><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second ${firstStageReadyForFollowup()?'':'disabled aria-disabled="true"'}>${firstStageReadyForFollowup()?'繼續第二階段 →':'先完成三張牌 AI 解讀，開啟第二階段'}</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
+      els.finish.innerHTML=`<h4 class="v285-journey-title">未完待續｜開啟第二階段深入探索</h4><p class="v285-journey-desc"><strong class="v285-journey-em">完成第一階段站內 AI 解讀後，即可繼續第二階段。</strong> 建議保留一念知機網頁分頁，不要關閉。</p><div class="v285-journey-progress"><strong>第一輪已選：</strong>${esc(state.question.spread.name)}<br><strong>還可以選：</strong>${remainingSpreads().map(([,s])=>esc(s.name)).join('　或　')}<small>保留原本三張牌，另外抽三張，由本次選定的 AI 產生六張牌整合解讀。</small></div><p class="v285-journey-desc">${state.dhDrawBCharged?'第二輪抽牌額度已扣，不會重複扣取。':'第二輪抽牌計 1 次，六張牌 AI 解讀計 1 次。'}</p><div class="finish-actions v285-actions"><button type="button" class="v285-continue" data-open-second ${firstStageReadyForFollowup()?'':'disabled aria-disabled="true"'}>${firstStageReadyForFollowup()?'繼續第二階段 →':'先完成三張牌 AI 解讀，開啟第二階段'}</button><div class="v285-journey-sub">延續同一個問題深入探索（強烈建議）</div><button type="button" class="v285-new" data-new-reading>重新開始｜換一個全新問題</button></div>`;
     }
     tarotRefreshCustomPrices(els.finish);
     // Reserve phase-II CTA until phase-I AI has actually finished.
@@ -6924,24 +6919,6 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     }finally{tarotAiDiscardPending=false;}
   }
 
-  function showTarotAiChargeNotice(root,quota){
-    const note=root?.querySelector('[data-site-ai-charge-note]');if(!note)return;
-    const free=Math.max(0,Number(quota?.daily?.remaining)||0);
-    const shared=Math.max(0,Number(quota?.wallet?.ai)||0);
-    note.hidden=false;
-    if(quota?.adminTest){
-      note.dataset.chargeType='test';note.textContent='管理員測試：本次成功解讀扣測試額度 1 次。';return;
-    }
-    if(free>0){
-      note.dataset.chargeType='free';note.hidden=true;note.textContent='';return;
-    }
-    if(shared>0&&quota?.role==='member'){
-      note.dataset.chargeType='shared';
-      note.textContent='本次使用會員共用 AI 解讀額度 1 次，開始前會先確認。';return;
-    }
-    // 額度已用完交由下方歸零提示負責，不要兩處重複說明。
-    note.dataset.chargeType='empty';note.hidden=true;note.textContent='';
-  }
   function confirmTarotSharedAi(quota){
     const remaining=Math.max(0,Number(quota?.wallet?.ai)||0);
     if(quota?.role!=='member'||remaining<1)throw Error('會員共用 AI 額度已用完，本次沒有扣次。');
@@ -6964,7 +6941,6 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     try{
       const d=await tarotAPI('/ai/center/quota');
       tarotRealAiQuota=d.quota;tarotRealAiQuotaRole=d.quota?.role||'';
-      showTarotAiChargeNotice(root,d.quota);
       if(display)display.textContent=isAdminTestActive()?`測試 AI 解讀額度剩餘 ${d.quota.remaining}／${d.quota.limit} 次`:`本期免費 AI 解讀額度 ${d.quota.daily?.remaining??0}/${d.quota.daily?.limit??0} 次｜會員共用 AI 解讀額度 ${d.quota.role==='member'?(Math.max(0,Number(d.quota.wallet?.ai)||0)+' 次'):'登入後查看'}｜合計可用 ${d.quota.remaining} 次`;
       const available=Number(d.quota?.remaining);
       if(!Number.isFinite(available))throw Error('AI 額度資料無法確認');
@@ -6992,7 +6968,6 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       if(display)display.textContent='目前無法確認 AI 額度，請稍後重試。';
       const emptyBar=root?.querySelector('[data-tarot-ai-quota-empty]');if(emptyBar)emptyBar.hidden=true;
       if(btn){btn.classList.remove('tarot-ai-no-quota');btn.textContent='AI 額度暫時無法確認';}
-      const note=root?.querySelector('[data-site-ai-charge-note]');if(note){note.dataset.chargeType='empty';note.textContent='額度查詢失敗，為避免扣錯次數暫停 AI 解讀。';}
       if(root?.querySelector('[data-site-ai-status]')&&!root.dataset.siteAiResult)root.querySelector('[data-site-ai-status]').textContent='額度查詢失敗：'+String(e.message||e);
       if(btn)btn.disabled=true; // fail closed
     }
@@ -7239,7 +7214,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       <section class="tarot-site-ai" aria-label="站內 AI 塔羅解讀" data-site-ai>
         <h4>${six?'準備開始整合解讀':'✦ 站內 AI 專業解讀'} <small>系統自動選擇可用通道</small></h4>
         <div class="tarot-site-ai-stats" data-site-ai-quota>正在確認會員共用 AI 解讀次數…</div>
-        <p class="tarot-ai-charge-note" data-site-ai-charge-note role="note">正在確認本次 AI 解讀的扣次方式…</p>
+        
         <button type="button" class="tarot-site-ai-run" data-site-ai-run disabled>${six?'✦ 開始六張牌 AI 整合解讀 -1 次':'✦ 開始站內 AI 解讀 -1 次'}</button>
         <p class="tarot-site-ai-status" data-site-ai-status role="status" aria-live="polite"></p>
         <div class="tarot-ai-phase-wait" data-site-ai-pending role="status" aria-live="polite" hidden></div>
