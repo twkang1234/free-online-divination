@@ -566,7 +566,7 @@ td.muted{color:var(--muted)}
         <p class="dh-shop-help"><strong>可新增、調價、上架展示、設定可購買或停用商品。</strong> <a href="/pricing.html" target="_blank" rel="noopener noreferrer">預覽加購頁 pricing.html ↗</a>。購買按鈕已完整顯示，但實際付款仍由後端安全鎖定，不會扣款或增加會員額度。</p>
         <details class="dh-shop-instructions"><summary>操作說明與安全提醒</summary><p>價格、數量可暫時留白，以未展示的草稿儲存；上架展示前須填妥。商品存於獨立 Cloudflare D1 資料表。「上架」只代表在加購頁展示，不代表可付款。複製方案會建立新的商品編號，不影響原商品；封存可恢復。原本各工具的加購按鈕及會員扣點不會更動。</p></details>
         <section class="dh-pay-settings" aria-labelledby="dhPaySettingsTitle">
-          <div class="dh-pay-settings-head"><h3 id="dhPaySettingsTitle">付款入口總控</h3><span id="dhPayConnectionBadge" class="dh-pay-connection">金流尚未連接 · 安全鎖定</span></div>
+          <div class="dh-pay-settings-head"><h3 id="dhPaySettingsTitle">付款入口總控</h3><span id="dhPayConnectionBadge" class="dh-pay-connection">讀取付款狀態中</span></div>
           <p>這裡可以先儲存付款開放意向與商品購買權限。<strong>現階段即使勾選啟用，仍無法真正收款、建立訂單或增加額度</strong>；金流完成並通過後端驗證後才可能正式啟用。</p>
           <div class="dh-pay-control-row">
             <label class="dh-shop-toggle"><input type="checkbox" id="dhPayEnabled"> 全站付款總開關（預先設定）</label>
@@ -2325,8 +2325,8 @@ async function payLoad(){
   el('dhPayEnabled').checked=!!p.paymentEnabled;
   el('dhPayRegular').checked=p.regularEnabled!==false;
   el('dhPayPromotion').checked=p.promotionEnabled!==false;
-  el('dhPayConnectionBadge').textContent='金流尚未連接 · 安全鎖定';
-  el('dhPayStatus').textContent='已載入付款設定。現階段不會收款，即使開啟總開關亦然。';payLoaded=true;
+  el('dhPayConnectionBadge').textContent=p.checkoutConnected ? (p.paymentEnabled ? '🟢 商品付款已開啟' : '🔴 商品付款已關閉') : (p.paymentEnabled ? '🔴 實際付款未開放｜總開關設定為開啟' : '🔴 商品付款已關閉｜金流尚未連接');
+  el('dhPayStatus').textContent=p.checkoutConnected ? '已載入付款設定。' : '目前尚未接通商品金流；不論總開關設定為何，購買都不能付款。';payLoaded=true;
 }
 el('dhPaySave').addEventListener('click',async()=>{
  if(payBusy)return;payBusy=true;el('dhPaySave').disabled=true;
