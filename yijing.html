@@ -2580,10 +2580,16 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     if(isAdminTestActive()){state.fixedReadingMode='ai';return true;}
     if(!isLogged()||!yijingSavedSession()){openYijingAiQuotaModal();return false;}
     if(yjAiBeforeCast.ticket&&yjAiBeforeCast.question===state.question){state.fixedReadingMode='ai';return true;}
-    const totalFree=Number(dhYijingLive?.ai?.remaining||0),shared=dhYijingLive?.wallet?.ai;
-    const tip=totalFree>0?`本期免費 AI 還有 ${totalFree} 次，優先預扣免費額度。`:
-      `將預扣 1 次會員共用 AI 額度（目前剩餘 ${shared===undefined?'請以系統查詢為準':shared+' 次'}；用完不補）。`;
-    if(!window.confirm(`選擇「AI 專業解析」需要使用 1 次 AI 解讀額度。\n${tip}\n確認後先保留額度，才開始起卦；AI 系統失敗將退回。\n如需起卦，仍按原有免費／共用工具次數規則。\n\n確定選擇 AI 並預扣 1 次額度？`))return false;
+    // 起卦前的 AI 額度預留：只說明實際扣哪一種 AI 額度及 1 次。
+    await refreshYijingLive();
+    if(dhYijingLive?.ai?.remaining==null||dhYijingLive?.wallet?.ai==null){
+      alert('目前無法確認 AI 解讀額度，請稍後再試。');return false;
+    }
+    const free=Math.max(0,Number(dhYijingLive.ai.remaining)||0);
+    const shared=Math.max(0,Number(dhYijingLive.wallet.ai)||0);
+    const source=free>0?'本期免費 AI 解讀額度':'會員共用 AI 解讀額度';
+    const remaining=free>0?free:shared;
+    if(!window.confirm(`本次將使用「${source}」1 次。\n目前剩餘 ${remaining} 次。\n\n確定使用嗎？`))return false;
     yjAiBeforeCastBusy=true;const op=crypto.randomUUID();
     const picker=document.getElementById('yijingReadingChoice');
     picker?.classList.add('yj-ai-prepay-busy');
@@ -3042,7 +3048,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     return true;
   }
   function applyReadingAccessGates(){/* 易經已全面開放：保留原始結果內容。 */}
-  function refreshAccessUI(){renderTopics();if(state.topic)renderScenarios();if(state.topic&&state.scenario)renderQuestions();applyCastAccess();if(currentReading&&!yjAiHasAnswer()&&yjAiActiveRequests===0)render(currentReading);updateMemberUI()}
+  function refreshAccessUI(){renderTopics();if(state.topic)renderScenarios();if(state.topic&&state.scenario)renderQuestions();applyCastAccess();if(currentReading&&!yjAiHasAnswer()&&yjAiActiveRequests===0&&!result.querySelector('.yi-followup'))render(currentReading);updateMemberUI()}
 
   const KING_WEN_NAMES=['乾','坤','屯','蒙','需','訟','師','比','小畜','履','泰','否','同人','大有','謙','豫','隨','蠱','臨','觀','噬嗑','賁','剝','復','無妄','大畜','頤','大過','坎','離','咸','恆','遯','大壯','晉','明夷','家人','睽','蹇','解','損','益','夬','姤','萃','升','困','井','革','鼎','震','艮','漸','歸妹','豐','旅','巽','兌','渙','節','中孚','小過','既濟','未濟'];
 
@@ -3124,7 +3130,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     if(sub)sub.textContent='重新起卦前會提醒保存尚未保留的 AI 問答。';
   }
   function completionHTML(pending=false){
-    return `<section class="reading-completion ${pending?'is-pending':''}" id="yijingReadingCompletion" aria-label="完成本次占卜後的操作"><div class="completion-check" aria-hidden="true">✓</div><h4>${pending?'想再問一件事？':'這次解卦已完成'}</h4><p>${pending?'可繼續完成本次 AI 解卦；若想改問別的事情，也能直接重新開始。':'看完本次解析後，可重新選擇一個問題，開始新的易經起卦。'}</p><button type="button" class="yijing-restart-btn" id="chooseAnotherQuestion">↻ 重新起卦</button><span class="completion-sub">${pending?'重新起卦會清空尚未完成的本次解讀。':'重新起卦前會提醒保存已產生的 AI 問答。'}</span></section>`;
+    return `<section class="reading-completion ${pending?'is-pending':''}" id="yijingReadingCompletion" aria-label="完成本次占卜後的操作"><div class="completion-check" aria-hidden="true">✓</div><h4>${pending?'本次解讀已可閱讀':'這次解卦已完成'}</h4><p>${pending?'可在上方使用本次唯一一次 AI 追問，或直接重新起卦。':'看完本次解析後，可重新選擇一個問題，開始新的易經起卦。'}</p><button type="button" class="yijing-restart-btn" id="chooseAnotherQuestion">↻ 重新起卦</button><span class="completion-sub">${pending?'若已取得 AI 回答，重新起卦前會提醒保存。':'重新起卦前會提醒保存已產生的 AI 問答。'}</span></section>`;
   }
 
   function showStep(s,scroll=true){
@@ -3513,7 +3519,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       state.fixedReadingMode=aiAvailable&&state.fixedReadingMode==='ai'?'ai':'basic';
       document.getElementById('yijingReadyCard').innerHTML=`<div class="crumb">${esc(state.topic.name)} → ${esc(state.scenario.name)}</div><strong>${esc(q)}</strong><p>解讀重點：${esc(state.topic.focus)}</p>${yjToolBeforeCast.ticket?`<p style="margin-top:10px;color:#c9e8b3;font-size:.79rem;">✓ 已預留 1 次${yjToolBeforeCast.charge==='shared'?'會員共用工具額度':'定期免費起卦額度'}；本次起卦不會再次扣除，若取消或更換題目可退回預留額度。</p>`:''}`;
       const picker=document.getElementById('yijingReadingChoice');
-      if(picker){picker.hidden=false;picker.innerHTML=`<div class="reading-picker-head"><div class="reading-picker-head-left"><span class="reading-picker-step">優先步驟 · 先選解析</span><b>請先選擇本次解卦方式</b><p>先確認這次想怎麼看結果，再使用下方的起卦工具。</p></div><span class="reading-picker-switch">AI 選項先預扣 1 次，才可起卦</span></div><div class="yi-mode-row" role="group" aria-label="選擇本次固定題目的解析方式"><label class="yi-mode-option yi-mode-basic"><input type="radio" name="yijingFixedReadingMode" value="basic" ${state.fixedReadingMode==='basic'?'checked':''}><span class="yi-mode-emblem" aria-hidden="true">卦</span><span class="yi-mode-copy"><b>站內基本解析</b><small>${aiAvailable?'現有規則式解讀；看完可使用一次 AI 追問':'現有規則式解讀｜本身可用'}</small></span><span class="yi-mode-indicator" aria-hidden="true"></span></label>${aiAvailable?`<label class="yi-mode-option yi-mode-ai"><input type="radio" name="yijingFixedReadingMode" value="ai" ${state.fixedReadingMode==='ai'?'checked':''}><span class="yi-mode-emblem" aria-hidden="true">✦</span><span class="yi-mode-copy"><b>AI 專業解析</b><small>${yijingAiQuotaSourceText()}</small></span><span class="yi-mode-indicator" aria-hidden="true"></span></label>`:`<button type="button" class="yi-mode-option yi-mode-ai ai-quota-pending" data-ai-quota-info="1" aria-haspopup="dialog"><span class="yi-disabled-radio" aria-hidden="true">○</span><span class="yi-mode-emblem" aria-hidden="true">✦</span><span class="yi-mode-copy"><b>AI 專業解析</b><small>需登入｜依會員 AI 額度使用，非每日固定補充</small></span><span class="yi-mode-indicator" aria-hidden="true"></span></button>`}</div>`;}
+      if(picker){picker.hidden=false;picker.innerHTML=`<div class="reading-picker-head"><div class="reading-picker-head-left"><span class="reading-picker-step">優先步驟 · 先選解析</span><b>請先選擇本次解卦方式</b><p>先確認這次想怎麼看結果，再使用下方的起卦工具。</p></div><span class="reading-picker-switch">AI 選項先預扣 1 次，才可起卦</span></div><div class="yi-mode-row" role="group" aria-label="選擇本次固定題目的解析方式"><label class="yi-mode-option yi-mode-basic"><input type="radio" name="yijingFixedReadingMode" value="basic" ${state.fixedReadingMode==='basic'?'checked':''}><span class="yi-mode-emblem" aria-hidden="true">卦</span><span class="yi-mode-copy"><b>站內基本解析</b><small>${aiAvailable?'站內基本解析＋1 次 AI 追問（追問才扣 AI 1 次）':'站內基本解析｜可直接閱讀'}</small></span><span class="yi-mode-indicator" aria-hidden="true"></span></label>${aiAvailable?`<label class="yi-mode-option yi-mode-ai"><input type="radio" name="yijingFixedReadingMode" value="ai" ${state.fixedReadingMode==='ai'?'checked':''}><span class="yi-mode-emblem" aria-hidden="true">✦</span><span class="yi-mode-copy"><b>AI 專業解析</b><small>AI 解讀 1 次＋AI 追問 1 次（追問另扣 1 次）｜${yijingAiQuotaSourceText()}</small></span><span class="yi-mode-indicator" aria-hidden="true"></span></label>`:`<button type="button" class="yi-mode-option yi-mode-ai ai-quota-pending" data-ai-quota-info="1" aria-haspopup="dialog"><span class="yi-disabled-radio" aria-hidden="true">○</span><span class="yi-mode-emblem" aria-hidden="true">✦</span><span class="yi-mode-copy"><b>AI 專業解析</b><small>需登入｜依會員 AI 額度使用，非每日固定補充</small></span><span class="yi-mode-indicator" aria-hidden="true"></span></button>`}</div>`;}
       if(gate)gate.hidden=true;
       setCustomReadyAccess(true);
     }
@@ -3762,10 +3768,10 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     const q=yjAiBalance(),line=document.getElementById('yjAiQuotaLine'),charge=document.getElementById('yjAiChargeLine'),buy=document.getElementById('yjAiBuyNote'),btn=document.getElementById('runYijingAi');
     const followBtn=document.querySelector('.yi-followup-send');
     if(followBtn && !followBtn.dataset.yjFollowupSpent && yjAiActiveRequests===0){
-      const empty=!q.test&&(q.empty||!q.known);
+      const empty=!canRunYijingAI()||(!q.test&&(q.empty||!q.known));
       followBtn.disabled=empty;
       followBtn.classList.toggle('yj-ai-no-credit',empty);
-      if(empty)followBtn.textContent=q.empty?'AI 解讀額度已用完':'確認 AI 額度中…';
+      if(empty)followBtn.textContent=!canRunYijingAI()?'登入後使用 AI 追問':q.empty?'AI 解讀額度已用完':'確認 AI 額度中…';
       else followBtn.textContent='送出 AI 追問 -1 次';
       const status=followBtn.parentElement?.querySelector('.yi-followup-status');
       if(status&&empty&&!yjAiHasAnswer())status.textContent=q.empty?'免費與會員共用 AI 額度皆已用完':'額度尚未確認';
@@ -3783,7 +3789,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     if(btn&&!btn.dataset.yjAiFinished&&yjAiActiveRequests===0){
       const empty=!q.test&&!ticket&&(q.empty||!q.known);
       btn.disabled=empty;btn.classList.toggle('yj-ai-no-credit',empty);
-      btn.textContent=q.empty&&!ticket?'AI 解讀額度已用完':'✦ 開始站內 AI 解讀 -1 次';
+      btn.textContent=q.empty&&!ticket?'AI 解讀額度已用完':ticket?'✦ 開始站內 AI 解讀（額度已確認）':'✦ 開始站內 AI 解讀 -1 次';
     }
   }
   function yjAiSaveTurn(r,kind,answer,meta={}){
@@ -3872,30 +3878,30 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
   // 確認前絕不送出 /ai/interpret 請求，避免使用者不知情就被扣 AI 額度。
   function yjConfirmAiCreditBeforeRequest(kind){
     if(isAdminTestActive()||isPublicTrialActive())return true; // 免扣額的測試模式不用顯示收費提示。
-    const label=kind==='followup'?'AI 追問':'站內 AI 專業解讀';
-    const freeValue=dhYijingLive?.ai?.remaining;
-    const sharedValue=dhYijingLive?.wallet?.ai;
-    const free=freeValue==null?null:Number(freeValue);
-    const shared=sharedValue==null?null:Number(sharedValue);
-    const available=free!==null&&Number.isFinite(free)&&free>0
-      ?`目前免費 AI 額度尚餘 ${free} 次，將優先使用。`
-      :`會員共用 AI 額度目前剩餘 ${shared!==null&&Number.isFinite(shared)?shared+' 次':'請以最新會員額度為準'}。`;
-    return window.confirm(`即將使用「${label}」。\n\n本次成功取得 AI 回答，會扣除 1 次 AI 解讀額度。\n${available}\n不另扣起卦工具額度或專業解鎖點數。\n若 AI 服務失敗，原有額度處理流程會退還預留次數。\n\n按「確定」才開始 AI 解讀；按「取消」不扣額度。`);
+    const free=Math.max(0,Number(dhYijingLive?.ai?.remaining)||0);
+    const shared=Math.max(0,Number(dhYijingLive?.wallet?.ai)||0);
+    const source=free>0?'本期免費 AI 解讀額度':'會員共用 AI 解讀額度';
+    const remaining=free>0?free:shared;
+    return window.confirm(`本次將使用「${source}」1 次。\n目前剩餘 ${remaining} 次。\n\n確定使用嗎？`);
   }
   function yijingFollowupHTML(kind){
-    const help=kind==='basic'?'根據剛才的基本解析與同一次卦象，向 AI 追問一個最想釐清的問題。':'針對剛完成的 AI 解讀，再深入追問一次。';
-    return `<details class="yi-followup" data-followup-kind="${kind}"><summary>✦ AI 追問一次（選用）｜僅扣 AI 額度</summary><div class="yi-followup-inner"><p class="yi-followup-note">${help}不需重抽卦；<span data-yijing-followup-price>每次 AI 追問使用 1 次 AI 解讀額度</span></p><label class="sr-only" for="yiFollowupText">本次 AI 追問</label><textarea id="yiFollowupText" maxlength="500" placeholder="例如：如果對方一直回避溝通，我具體應該怎麼說？"></textarea><div class="yi-followup-actions"><button type="button" class="yi-followup-send">送出 AI 追問</button><span class="yi-followup-status" aria-live="polite">本次可追問一次</span></div><div class="yi-followup-answer" hidden></div>${kind==='basic'?`<div class="yj-ai-followup-bar" hidden><strong>已完成 AI 追問｜自行保留完整解讀</strong><div class="yj-ai-inline-actions"><button type="button" data-yj-export="download">↓ 下載完整解讀</button><button type="button" data-yj-export="copy">複製完整解讀</button></div></div><p class="yj-ai-export-feedback" data-yj-feedback role="status" aria-live="polite"></p>`:''}</div></details>`;
+    const help=kind==='basic'?'根據上方站內解析，可就本次卦象向 AI 追問一次。':'針對上方 AI 專業解析，可以再追問一次。';
+    return `<details class="yi-followup" data-followup-kind="${kind}" open><summary>✦ 本次 AI 追問（限 1 次）｜使用 AI 解讀額度 1 次</summary><div class="yi-followup-inner"><p class="yi-followup-note">${help}<span data-yijing-followup-price>追問成功使用 AI 解讀額度 1 次。</span></p><label class="sr-only" for="yiFollowupText">本次 AI 追問</label><textarea id="yiFollowupText" maxlength="500" placeholder="例如：如果對方一直回避溝通，我具體應該怎麼說？"></textarea><div class="yi-followup-actions"><button type="button" class="yi-followup-send">送出 AI 追問</button><span class="yi-followup-status" aria-live="polite">本次可追問一次</span></div><div class="yi-followup-answer" hidden></div>${kind==='basic'?`<div class="yj-ai-followup-bar" hidden><strong>已完成 AI 追問｜自行保留完整解讀</strong><div class="yj-ai-inline-actions"><button type="button" data-yj-export="download">↓ 下載完整解讀</button><button type="button" data-yj-export="copy">複製完整解讀</button></div></div><p class="yj-ai-export-feedback" data-yj-feedback role="status" aria-live="polite"></p>`:''}</div></details>`;
   }
   function bindYijingFollowup(r,kind,firstAnswer=''){
     const wrapper=result.querySelector(`.yi-followup[data-followup-kind="${kind}"]`);
     if(!wrapper)return;
     const send=wrapper.querySelector('.yi-followup-send'),input=wrapper.querySelector('textarea'),status=wrapper.querySelector('.yi-followup-status'),content=wrapper.querySelector('.yi-followup-answer');
-    wrapper.hidden=!canRunYijingAI();
+    // 兩種解讀都固定保留一個追問入口；預設展開，避免「不知道在哪裡輸入」。
+    wrapper.hidden=false;
+    wrapper.open=true;
+    if(!canRunYijingAI())status.textContent='登入會員後可使用本次 AI 追問。';
 
     let spent=yijingFollowupUsedCasts.has(r),working=false,followupOp=crypto.randomUUID(),lastFollowupQuestion='';
     if(spent){send.disabled=true;send.textContent='本次追問已使用';input.readOnly=true;status.textContent='同一卦象的追問已使用一次';}
     send.addEventListener('click',async()=>{
       if(spent||working||yijingFollowupUsedCasts.has(r))return;
+      if(!canRunYijingAI()){status.textContent='請先登入會員，再使用 AI 追問。';openYijingAiQuotaModal();return;}
       const q=input.value.trim();
       if(q.length<5){status.textContent='請先輸入至少 5 個字的具體追問。';input.focus();return;}
       // 在送出任何追問請求前先詢問；取消不鎖按鈕、也不改動追問使用狀態。
@@ -3917,7 +3923,9 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         yijingTrackUsage('ai_success',yijingUsageCategory());yijingTrackFeature('followup','complete');
         if(!state.custom)yjAiBeforeCast={ticket:'',charge:'',question:''};
         spent=true;yijingFollowupUsedCasts.add(r);input.readOnly=true;send.dataset.yjFollowupSpent='1';send.textContent='已使用本次追問';
-        status.textContent='✓ AI 追問已完成'+(data.channel?'｜通道 '+data.channel:'')+(data.traceId?'｜追蹤碼 '+data.traceId:'');
+        status.textContent='✓ 本次 AI 追問已完成';
+        finishReadingExperience();
+        wrapper.open=true;
       }catch(err){status.classList.add('is-error');status.textContent=err?.name==='AbortError'?'追問逾時，尚未取得結果，可再試一次。':String(err?.message||'追問失敗');send.disabled=false;}
       finally{working=false;yjAiActiveRequests=Math.max(0,yjAiActiveRequests-1);clearTimeout(timer);}
     });
@@ -3927,7 +3935,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     currentReading=r;
     empty.style.display='none';result.style.display='block';setYijingFocus(true,true);
     if(!canRunYijingAI()){
-      result.innerHTML=`<div class="reading-wrap"><div class="reading-access-lock" data-ai-quota-info="1"><div class="lock-kicker">AI READING · 1 CREDIT</div><h4>站內 AI 專業解卦</h4><p>AI 解讀依可用額度扣除：有定期免費額度才先扣，否則扣會員共用 AI 額度。你仍可使用站內基本解析。</p><button type="button" class="yi-basic-to-ai">了解 AI 解讀額度</button></div>${completionHTML(true)}</div>`;
+      result.innerHTML=`<div class="reading-wrap"><div class="reading-access-lock" data-ai-quota-info="1"><div class="lock-kicker">AI READING · 1 CREDIT</div><h4>站內 AI 專業解卦</h4><p>AI 解讀依可用額度扣除：有定期免費額度才先扣，否則扣會員共用 AI 額度。若要改選站內基本解析，請重新起卦。</p><button type="button" class="yi-basic-to-ai">了解 AI 解讀額度</button></div>${completionHTML(true)}</div>`;
       document.getElementById('chooseAnotherQuestion')?.addEventListener('click',resetGuide);showReadingResult();return;
     }
     const thisClassic=YIJING_PUBLIC_CLASSIC[r.base?.name]||{};
@@ -3956,7 +3964,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
             <div class="yj-ai-buy-note" id="yjAiBuyNote" hidden>🛒 加購 AI 解讀額度｜即將開放</div>
           </div>
           <details class="yj-ai-privacy"><summary>會員紀錄及資料使用說明</summary><p>正式會員的成功 AI 解讀會記錄提問分類與問題文字，供會員使用明細與匿名熱門題型統計；原文依 180 天規則在後台查詢時清理，僅供管理員查閱。</p></details>
-          <div class="yijing-ai-status" id="yijingAiStatus" aria-live="polite">${yjAiBeforeCast.ticket&&!state.custom?'已於起卦前預留 1 次 AI 額度；解讀成功結算，系統失敗退回。':'不需重新起卦；成功解讀依可用的 AI 額度扣除，會員共用額度用完不補。'}</div>
+          <div class="yijing-ai-status" id="yijingAiStatus" aria-live="polite">${yjAiBeforeCast.ticket&&!state.custom?'AI 解讀額度已在起卦前確認。':'準備開始 AI 解讀。'}</div>
           <div class="yj-ai-result" id="yjAiResult" hidden>
             <div class="yijing-ai-content" id="yijingAiContent"></div>
             <div class="yj-ai-report-bar"><button type="button" class="yj-ai-collapse" id="yjAiCollapse" aria-expanded="true">↑ 收合完整 AI 解讀</button><div class="yj-ai-inline-actions"><button type="button" data-yj-export="download">↓ 下載完整解讀</button><button type="button" data-yj-export="copy">複製完整解讀</button></div></div>
@@ -3991,12 +3999,12 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         yjAiSaveTurn(r,'initial',data.answer.trim(),{channel:data.channel,traceId:data.traceId});
         yijingTrackUsage('ai_success',yijingUsageCategory());
         void yjArchiveSave(r,data.answer.trim());
-        status.textContent='✓ 已完成 AI 解卦'+(data.channel?'｜通道 '+data.channel:'')+(data.traceId?'｜追蹤碼 '+data.traceId:'');
+        status.textContent='✓ AI 專業解讀已完成，可在下方繼續追問一次。';
         if(!state.custom)yjAiBeforeCast={ticket:'',charge:'',question:''};
         const followupHost=document.getElementById('yiAiFollowupHolder');
         if(followupHost){followupHost.innerHTML=yijingFollowupHTML('ai');followupHost.hidden=false;bindYijingFollowup(r,'ai',data.answer.trim());}
         yjAiSyncQuota();
-        btn.textContent='解卦已完成';btn.dataset.yjAiFinished='1';finishReadingExperience();content.scrollIntoView({behavior:'smooth',block:'nearest'});
+        btn.textContent='解卦已完成';btn.dataset.yjAiFinished='1';content.scrollIntoView({behavior:'smooth',block:'nearest'});
       }catch(err){
         status.classList.add('error');
         status.textContent=(err?.name==='AbortError'?'等待 AI 回應逾時：':String(err?.message||'AI 解讀失敗')+'。')+
@@ -4081,17 +4089,11 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
         <section class="reading-section" data-reading-section="6"><h4>六、5～7 個具體可執行建議</h4>${adviceHTML(publicReading)}</section>
         ${summaryHTML(publicReading)}
         ${yijingFollowupHTML('basic')}
-        <button type="button" class="yi-basic-to-ai" id="yiUpgradeBasicToAI">改看本次卦象的 AI 完整解析（不重新起卦）</button>
-        ${completionHTML(false)}
+        ${completionHTML(true)}
       </div>`;
 
     applyReadingAccessGates();
     bindYijingFollowup(r,'basic');
-    const upgradeAI=document.getElementById('yiUpgradeBasicToAI');
-    if(upgradeAI){
-      if(!canRunYijingAI())upgradeAI.textContent='站內 AI 完整解析｜需登入使用共用 AI 額度';
-      upgradeAI.addEventListener('click',()=>{if(!canRunYijingAI()){openYijingAiQuotaModal();return;}state.fixedReadingMode='ai';renderCustomAI(r);});
-    }
     document.getElementById('chooseAnotherQuestion')?.addEventListener('click',resetGuide);
     showReadingResult();
   }
