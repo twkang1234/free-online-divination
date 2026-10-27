@@ -376,6 +376,13 @@ td.muted{color:var(--muted)}
 .dh-pay-settings p{margin:9px 0 14px;font-size:.76rem;color:#b7c2d3;line-height:1.75}
 .dh-pay-settings p strong{color:#e9d2a5}
 .dh-pay-control-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px 22px}
+.dh-pay-state-box{margin:14px 0;padding:15px;border:1px solid #62474d;border-radius:12px;background:#24151c}
+.dh-pay-state-box[data-state="on"]{border-color:#39785d;background:#10291f}
+.dh-pay-state-box[data-state="unknown"]{border-color:#555d69;background:#171d27}
+.dh-pay-state-title{font-weight:850;font-size:1.15rem;color:#ffc0c0}.dh-pay-state-box[data-state="on"] .dh-pay-state-title{color:#aaf0c5}.dh-pay-state-box[data-state="unknown"] .dh-pay-state-title{color:#d1d7df}
+.dh-pay-state-sub{margin-top:5px;font-size:.77rem;color:#d7c9ce;line-height:1.6}
+.dh-pay-toggle-label{display:flex;align-items:center;gap:10px;padding:10px 13px;border:1px solid #665f7e;border-radius:10px;background:#111824;font-weight:800;cursor:pointer}
+.dh-pay-toggle-label input{width:20px;height:20px;accent-color:#a37aef}.dh-pay-unsaved{color:#ffd37a;font-size:.78rem;font-weight:700}
 .dh-pay-help{margin-top:11px;font-size:.73rem;color:#b7dccd;min-height:20px}
 
 /* 加購商品管理 v2：簡短說明、收合編輯、即時預覽；不改動原有後端計價邏輯 */
@@ -568,11 +575,13 @@ td.muted{color:var(--muted)}
         <section class="dh-pay-settings" aria-labelledby="dhPaySettingsTitle">
           <div class="dh-pay-settings-head"><h3 id="dhPaySettingsTitle">付款入口總控</h3><span id="dhPayConnectionBadge" class="dh-pay-connection">讀取付款狀態中</span></div>
           <p>這裡可以先儲存付款開放意向與商品購買權限。<strong>現階段即使勾選啟用，仍無法真正收款、建立訂單或增加額度</strong>；金流完成並通過後端驗證後才可能正式啟用。</p>
+          <div id="dhPayStateBox" class="dh-pay-state-box" data-state="unknown" role="status" aria-live="polite"><div id="dhPayStateTitle" class="dh-pay-state-title">付款總開關：讀取中</div><div id="dhPayStateSub" class="dh-pay-state-sub">請稍候，尚未取得已儲存的設定。</div></div>
           <div class="dh-pay-control-row">
-            <label class="dh-shop-toggle"><input type="checkbox" id="dhPayEnabled"> 全站付款總開關（預先設定）</label>
-            <label class="dh-shop-toggle"><input type="checkbox" id="dhPayRegular"> 一般商品允許購買</label>
-            <label class="dh-shop-toggle"><input type="checkbox" id="dhPayPromotion"> 限時優惠允許購買</label>
-            <button type="button" class="btn secondary" id="dhPaySave">儲存付款控制</button>
+            <label class="dh-pay-toggle-label"><input type="checkbox" id="dhPayEnabled" disabled><span>勾選開啟付款總開關</span></label>
+            <label class="dh-shop-toggle"><input type="checkbox" id="dhPayRegular" disabled> 一般商品允許購買</label>
+            <label class="dh-shop-toggle"><input type="checkbox" id="dhPayPromotion" disabled> 限時優惠允許購買</label>
+            <button type="button" class="btn secondary" id="dhPaySave" disabled>儲存付款控制</button>
+            <span id="dhPayUnsaved" class="dh-pay-unsaved" hidden>設定已變更，尚未儲存</span>
           </div>
           <div class="dh-pay-help" id="dhPayStatus" role="status" aria-live="polite">展開本區後載入設定。</div>
         </section>
@@ -2323,14 +2332,20 @@ let payLoaded=false,payBusy=false;
 async function payLoad(){
   const data=await call('/admin/catalog/settings');const p=data.settings||{};
   el('dhPayEnabled').checked=!!p.paymentEnabled;
+  el('dhPayStateBox').dataset.state=p.paymentEnabled?'on':'off';
+  el('dhPayStateTitle').textContent=p.paymentEnabled?'🟢 付款總開關：已開啟':'🔴 付款總開關：已關閉';
+  el('dhPayStateSub').textContent=p.checkoutConnected ? (p.paymentEnabled?'已儲存開啟設定；商品是否可購買仍依個別設定。':'已儲存關閉設定，不接受新的商品付款。') : '以上是已儲存的開關設定；商品金流尚未接通，目前無法付款。';
+  el('dhPayUnsaved').hidden=true;
+  for(const id of ['dhPayEnabled','dhPayRegular','dhPayPromotion','dhPaySave'])el(id).disabled=false;
   el('dhPayRegular').checked=p.regularEnabled!==false;
   el('dhPayPromotion').checked=p.promotionEnabled!==false;
   el('dhPayConnectionBadge').textContent=p.checkoutConnected ? (p.paymentEnabled ? '🟢 商品付款已開啟' : '🔴 商品付款已關閉') : (p.paymentEnabled ? '🔴 實際付款未開放｜總開關設定為開啟' : '🔴 商品付款已關閉｜金流尚未連接');
   el('dhPayStatus').textContent=p.checkoutConnected ? '已載入付款設定。' : '目前尚未接通商品金流；不論總開關設定為何，購買都不能付款。';payLoaded=true;
 }
+for(const id of ['dhPayEnabled','dhPayRegular','dhPayPromotion'])el(id).addEventListener('change',()=>{if(payLoaded)el('dhPayUnsaved').hidden=false});
 el('dhPaySave').addEventListener('click',async()=>{
  if(payBusy)return;payBusy=true;el('dhPaySave').disabled=true;
- try{await call('/admin/catalog/settings',{paymentEnabled:el('dhPayEnabled').checked,regularEnabled:el('dhPayRegular').checked,promotionEnabled:el('dhPayPromotion').checked});await payLoad();el('dhPayStatus').textContent='設定已儲存；目前金流尚未接通，購買請求依然被安全阻擋。'}
+ try{await call('/admin/catalog/settings',{paymentEnabled:el('dhPayEnabled').checked,regularEnabled:el('dhPayRegular').checked,promotionEnabled:el('dhPayPromotion').checked});await payLoad();el('dhPayStatus').textContent='付款控制設定已儲存。'}
  catch(e){el('dhPayStatus').textContent='儲存失敗：'+e.message}finally{payBusy=false;el('dhPaySave').disabled=false}
 });
 updatePreview();
