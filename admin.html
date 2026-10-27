@@ -570,11 +570,11 @@ td.muted{color:var(--muted)}
     <details class="section dh-shop-panel" id="dhShopAdminPanel">
       <summary>🛒 加購商品方案管理 <small>新增・修改・上架・停用・封存｜與專業區塊扣點設定分開</small></summary>
       <div class="dh-shop-wrap">
-        <p class="dh-shop-help"><strong>可新增、調價、上架展示、設定可購買或停用商品。</strong> <a href="/pricing.html" target="_blank" rel="noopener noreferrer">預覽加購頁 pricing.html ↗</a>。購買按鈕已完整顯示，但實際付款仍由後端安全鎖定，不會扣款或增加會員額度。</p>
+        <p class="dh-shop-help"><strong>可新增、調價、上架展示、設定可購買或停用商品。</strong> <a href="/pricing.html" target="_blank" rel="noopener noreferrer">預覽加購頁 pricing.html ↗</a>。藍新金流須先部署並完成安全設定；付款總開關關閉時，購買按鈕變暗且後端拒絕建立付款訂單。</p>
         <details class="dh-shop-instructions"><summary>操作說明與安全提醒</summary><p>價格、數量可暫時留白，以未展示的草稿儲存；上架展示前須填妥。商品存於獨立 Cloudflare D1 資料表。「上架」只代表在加購頁展示，不代表可付款。複製方案會建立新的商品編號，不影響原商品；封存可恢復。原本各工具的加購按鈕及會員扣點不會更動。</p></details>
         <section class="dh-pay-settings" aria-labelledby="dhPaySettingsTitle">
           <div class="dh-pay-settings-head"><h3 id="dhPaySettingsTitle">付款入口總控</h3><span id="dhPayConnectionBadge" class="dh-pay-connection">讀取付款狀態中</span></div>
-          <p>這裡可以先儲存付款開放意向與商品購買權限。<strong>現階段即使勾選啟用，仍無法真正收款、建立訂單或增加額度</strong>；金流完成並通過後端驗證後才可能正式啟用。</p>
+          <p>這裡控制全站新付款交易及商品購買權限。<strong>關閉＝不接受新訂單與新付款。</strong>只有藍新金流設定完成、系統檢查通過後，才允許啟用總開關；關閉前已付款的訂單仍可正常完成入帳。</p>
           <div id="dhPayStateBox" class="dh-pay-state-box" data-state="unknown" role="status" aria-live="polite"><div id="dhPayStateTitle" class="dh-pay-state-title">付款總開關：讀取中</div><div id="dhPayStateSub" class="dh-pay-state-sub">請稍候，尚未取得已儲存的設定。</div></div>
           <div class="dh-pay-control-row">
             <label class="dh-pay-toggle-label"><input type="checkbox" id="dhPayEnabled" disabled><span>勾選開啟付款總開關</span></label>
@@ -602,7 +602,7 @@ td.muted{color:var(--muted)}
                   <label>優惠標籤（選填）<input id="dhShopHighlight" type="text" maxlength="30" placeholder="例如：最多人選"></label>
                 </div>
                 <div class="dh-shop-description"><label>方案說明（選填）<textarea id="dhShopDescription" maxlength="260" rows="2" placeholder="簡短說明該商品適用範圍與特色"></textarea></label></div>
-                <div class="dh-shop-editor-actions"><label class="dh-shop-toggle"><input type="checkbox" id="dhShopActive"> 上架展示</label><label class="dh-shop-toggle"><input type="checkbox" id="dhShopPurchasable" checked> 允許此商品購買（待金流連線）</label><button type="submit" class="btn" id="dhShopSave">儲存方案</button><button type="button" class="btn secondary" id="dhShopCancel">取消編輯</button></div>
+                <div class="dh-shop-editor-actions"><label class="dh-shop-toggle"><input type="checkbox" id="dhShopActive"> 上架展示</label><label class="dh-shop-toggle"><input type="checkbox" id="dhShopPurchasable" checked> 允許此商品購買</label><button type="submit" class="btn" id="dhShopSave">儲存方案</button><button type="button" class="btn secondary" id="dhShopCancel">取消編輯</button></div>
               </form>
             </div>
             <aside class="dh-shop-preview" aria-label="商品卡片即時預覽">
@@ -2307,7 +2307,7 @@ function render(){const body=el('dhShopRows');body.replaceChildren();let count=0
     if(p.archived){tools.append(btn('恢復',async()=>{if(!confirm('恢復這個封存商品為草稿嗎？'))return;if(busy)return;busy=true;try{await call('/admin/catalog/archive',{id:p.id,archive:false});await load();status('商品已恢復為草稿。')}catch(e){status(e.message,true)}finally{busy=false}}))}
     else {
       tools.append(btn('編輯',()=>fill(p)));tools.append(btn('複製',()=>{fill(p,true);status('已複製內容至新增表單，請確認後按「儲存複製商品」；原商品不會更改。')}));
-      tools.append(btn(p.active?'停用':'上架',async()=>{if(!p.active&&(p.quantity==null||p.priceTwd==null)){status('上架前必須先填入正確的數量與價格。',true);fill(p);return}if(busy)return;busy=true;try{await call('/admin/catalog/save',{id:p.id,type:p.type,name:p.name,description:p.description,quantity:p.quantity,priceTwd:p.priceTwd,highlight:p.highlight,sortOrder:p.sortOrder,purchasable:p.purchasable!==false,active:!p.active});await load();status(p.active?'商品已停用，前台不再展示。':'商品已上架展示；付款功能仍然關閉。')}catch(e){status(e.message,true)}finally{busy=false}}));
+      tools.append(btn(p.active?'停用':'上架',async()=>{if(!p.active&&(p.quantity==null||p.priceTwd==null)){status('上架前必須先填入正確的數量與價格。',true);fill(p);return}if(busy)return;busy=true;try{await call('/admin/catalog/save',{id:p.id,type:p.type,name:p.name,description:p.description,quantity:p.quantity,priceTwd:p.priceTwd,highlight:p.highlight,sortOrder:p.sortOrder,purchasable:p.purchasable!==false,active:!p.active});await load();status(p.active?'商品已停用，前台不再展示。':'商品已上架展示；仍依付款總開關決定是否可購買。')}catch(e){status(e.message,true)}finally{busy=false}}));
       tools.append(btn('封存',async()=>{if(!confirm('確定封存「'+p.name+'」？封存後不再展示，可透過「顯示已封存」恢復。'))return;if(busy)return;busy=true;try{await call('/admin/catalog/archive',{id:p.id,archive:true});if(el('dhShopId').value===p.id)reset(true);await load();status('商品已封存，識別資料保留。')}catch(e){status(e.message,true)}finally{busy=false}}));
     }
     tr.append(name,kind,q,price,state,purchase,tools);body.append(tr);
@@ -2315,7 +2315,7 @@ function render(){const body=el('dhShopRows');body.replaceChildren();let count=0
   if(!count){const tr=document.createElement('tr');const td=textNode('td',items.length?'此篩選下沒有商品，或全部商品已封存。':'目前沒有商品。請點「＋ 新增方案」建立第一個草稿。','dh-shop-empty');td.colSpan=7;tr.append(td);body.append(tr)}
 }
 async function load(){if(!token())return;const d=await call('/admin/catalog');items=d.products||[];loaded=true;render();}
-el('dhShopAdminPanel').addEventListener('toggle',async()=>{if(el('dhShopAdminPanel').open&&!loaded){payLoad().catch(e=>el('dhPayStatus').textContent='設定讀取失敗：'+e.message);try{status('正在讀取商品方案……');await load();status('已讀取商品；只提供展示，不會建立訂單或付款。')}catch(e){status(e.message,true)}}});
+el('dhShopAdminPanel').addEventListener('toggle',async()=>{if(el('dhShopAdminPanel').open&&!loaded){payLoad().catch(e=>el('dhPayStatus').textContent='設定讀取失敗：'+e.message);try{status('正在讀取商品方案……');await load();status('商品已讀取；是否可付款由付款總開關決定。')}catch(e){status(e.message,true)}}});
 el('dhShopReload').onclick=async()=>{try{await Promise.all([load(),payLoad()]);status('已取得最新商品方案。')}catch(e){status(e.message,true)}};
 el('dhShopShowArchived').onchange=render;
 el('dhShopNew').onclick=()=>{reset();openEditor()};
@@ -2325,22 +2325,24 @@ el('dhShopForm').addEventListener('submit',async e=>{e.preventDefault();if(busy)
   const price=el('dhShopPrice').value.trim(),qty=el('dhShopQuantity').value.trim(),active=el('dhShopActive').checked;
   if(active&&(!price||!qty)){status('商品上架前必須填寫額度數量與售價；未定價可先儲存草稿。',true);return}
   const payload={id:el('dhShopId').value,type:el('dhShopType').value,name:el('dhShopName').value.trim(),quantity:qty?Number(qty):null,priceTwd:price?Number(price):null,sortOrder:Number(el('dhShopSort').value),highlight:el('dhShopHighlight').value.trim(),description:el('dhShopDescription').value.trim(),active,purchasable:el('dhShopPurchasable').checked};
-  busy=true;el('dhShopSave').disabled=true;status('正在儲存商品方案……');try{await call('/admin/catalog/save',payload);reset(true);await load();status('儲存成功。'+(active?'目前只提供商品展示，不啟用付款。':'商品未展示，未啟用付款。'))}catch(err){status('儲存失敗：'+err.message,true)}finally{busy=false;el('dhShopSave').disabled=false}
+  busy=true;el('dhShopSave').disabled=true;status('正在儲存商品方案……');try{await call('/admin/catalog/save',payload);reset(true);await load();status('儲存成功。'+(active?'商品已上架；是否開放付款以總開關為準。':'商品未展示，未啟用付款。'))}catch(err){status('儲存失敗：'+err.message,true)}finally{busy=false;el('dhShopSave').disabled=false}
 });
-// 付款設定單獨持久化；這些控制不會解除後端「尚未串接金流」的安全鎖。
+// 付款設定儲存 D1；後端同時檢查藍新健康狀態及總開關。
 let payLoaded=false,payBusy=false;
 async function payLoad(){
+  // 更新 payment Worker 狀態，若 Worker 或 Secrets 不可用，後端一律拒絕新交易。
+  await fetch('https://payment-api.ezgocpu.workers.dev/shop/health',{cache:'no-store'}).catch(()=>null);
   const data=await call('/admin/catalog/settings');const p=data.settings||{};
   el('dhPayEnabled').checked=!!p.paymentEnabled;
-  el('dhPayStateBox').dataset.state=p.paymentEnabled?'on':'off';
-  el('dhPayStateTitle').textContent=p.paymentEnabled?'🟢 付款總開關：已開啟':'🔴 付款總開關：已關閉';
-  el('dhPayStateSub').textContent=p.checkoutConnected ? (p.paymentEnabled?'已儲存開啟設定；商品是否可購買仍依個別設定。':'已儲存關閉設定，不接受新的商品付款。') : '以上是已儲存的開關設定；商品金流尚未接通，目前無法付款。';
+  el('dhPayStateBox').dataset.state=p.paymentEnabled&&p.checkoutConnected?'on':'off';
+  el('dhPayStateTitle').textContent=p.paymentEnabled?(p.checkoutConnected?'🟢 付款總開關：已開啟':'🟠 開關已開啟，但金流未就緒'):'🔴 付款總開關：已關閉';
+  el('dhPayStateSub').textContent=p.checkoutConnected ? (p.paymentEnabled?'已儲存開啟設定；商品是否可購買仍依個別設定。':'已儲存關閉設定，不接受新的商品付款。') : '藍新金流尚未完成設定或健康檢查，目前不能建立付款。';
   el('dhPayUnsaved').hidden=true;
   for(const id of ['dhPayEnabled','dhPayRegular','dhPayPromotion','dhPaySave'])el(id).disabled=false;
   el('dhPayRegular').checked=p.regularEnabled!==false;
   el('dhPayPromotion').checked=p.promotionEnabled!==false;
   el('dhPayConnectionBadge').textContent=p.checkoutConnected ? (p.paymentEnabled ? '🟢 商品付款已開啟' : '🔴 商品付款已關閉') : (p.paymentEnabled ? '🔴 實際付款未開放｜總開關設定為開啟' : '🔴 商品付款已關閉｜金流尚未連接');
-  el('dhPayStatus').textContent=p.checkoutConnected ? '已載入付款設定。' : '目前尚未接通商品金流；不論總開關設定為何，購買都不能付款。';payLoaded=true;
+  el('dhPayStatus').textContent=p.checkoutConnected ? '已載入付款設定。' : '請確認 payment-api 已部署、金鑰已設定，且與 admin-api 使用同一個 D1；目前不能付款。';payLoaded=true;
 }
 for(const id of ['dhPayEnabled','dhPayRegular','dhPayPromotion'])el(id).addEventListener('change',()=>{if(payLoaded)el('dhPayUnsaved').hidden=false});
 el('dhPaySave').addEventListener('click',async()=>{

@@ -154,7 +154,7 @@
         <button id="dhCheckoutPay" class="checkout-pay" type="button" disabled>前往安全付款</button>
         <button id="dhCheckoutBack" class="checkout-back" type="button">返回方案列表</button>
       </div>
-      <div class="checkout-state">結帳金額以伺服器確認為準。正式付款時須完成會員身分驗證；目前尚未串接金流，不會建立訂單或扣款。</div>
+      <div class="checkout-state">結帳金額以伺服器確認為準。付款前須登入會員；付款總開關關閉時按鈕維持停用，且後端不會建立交易。</div>
     </div>
   </dialog>
 
@@ -162,6 +162,10 @@
     (()=>{
       'use strict';
       const ROOT='https://admin-api.ezgocpu.workers.dev',API=ROOT+'/catalog';
+      const GATEWAY='https://payment-api.ezgocpu.workers.dev';
+      const SESSION_KEY='divinationhub-auth-session-v1';
+      const sessionToken=()=>{try{const t=localStorage.getItem(SESSION_KEY)||'';return /^dhs_[A-Za-z0-9_-]{43}$/.test(t)?t:''}catch(_){return ''}};
+      const loginUrl='/member.html?return='+encodeURIComponent('/pricing.html');
       const cats={all:{tab:'tabAll',panel:'panelAll',count:'countAll',root:'shopAll'},tool:{tab:'tabTool',panel:'panelTool',count:'countTool',root:'shopTool'},ai:{tab:'tabAi',panel:'panelAi',count:'countAi',root:'shopAi'},professional:{tab:'tabProfessional',panel:'panelProfessional',count:'countProfessional',root:'shopProfessional'}};
       const typeLabels={tool:'工具額度',ai:'AI 解讀',professional:'專業解鎖點數'};
       const node=(tag,text,cls='')=>{const e=document.createElement(tag);e.textContent=String(text);if(cls)e.className=cls;return e};
@@ -177,12 +181,14 @@
       const formatTwd=n=>'NT$ '+Number(n).toLocaleString('zh-TW');
       async function openCheckout(productId){
         const requestId=++checkoutRequestId;
-        currentQuote=null;checkoutField('dhCheckoutType').textContent='確認商品';checkoutField('dhCheckoutName').textContent='正在讀取商品資料…';
+        currentQuote=null;checkoutField('dhCheckoutPay').textContent='前往安全付款';checkoutField('dhCheckoutType').textContent='確認商品';checkoutField('dhCheckoutName').textContent='正在讀取商品資料…';
         checkoutField('dhCheckoutQuantity').textContent='—';checkoutField('dhCheckoutAmount').textContent='—';
         checkoutField('dhCheckoutSale').hidden=true;checkoutField('dhCheckoutPay').disabled=true;
         checkoutField('dhCheckoutNotice').textContent='正在從伺服器確認最新商品與金額…';
         if(!checkoutDlg.open)checkoutDlg.showModal();
         try{
+          // 讀取金流 Worker 真實設定狀態，異常時後端會繼續保持安全關閉。
+          await fetch(GATEWAY+'/shop/health',{cache:'no-store'}).catch(()=>null);
           const response=await fetch(ROOT+'/checkout/quote',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({productId})});
           const data=await response.json().catch(()=>null);
           if(!checkoutDlg.open||requestId!==checkoutRequestId)return;
@@ -193,8 +199,10 @@
           checkoutField('dhCheckoutQuantity').textContent=Number(q.quantity).toLocaleString('zh-TW')+' '+q.unit;
           checkoutField('dhCheckoutAmount').textContent=formatTwd(q.priceTwd);
           if(q.isPromotion){checkoutField('dhCheckoutSale').hidden=false;checkoutField('dhCheckoutSale').textContent='限時優惠 · 一般售價 '+formatTwd(q.listPriceTwd)+' · 此次現省 '+formatTwd(q.listPriceTwd-q.priceTwd)}
-          const reason=q.purchasable===false?'此方案目前暫不提供購買。':'付款功能尚未開放；商品與結帳摘要已備妥。';
-          checkoutField('dhCheckoutNotice').textContent=q.paymentAvailable===true?'已確認價格，可以前往付款。':reason;
+          const reasons={product_unavailable:'此方案目前暫不提供購買。',payment_closed:'目前尚未開放付款；方案與金額可以先查看。',payment_unavailable:'藍新金流尚未完成設定，暫時不能付款。'};
+          const signedIn=!!sessionToken();
+          checkoutField('dhCheckoutNotice').textContent=q.paymentAvailable===true?(signedIn?'已確認商品與金額，可以前往藍新付款。':'已確認價格，請先免費登入會員才能購買。'):(reasons[q.status]||'目前不接受付款。');
+          checkoutField('dhCheckoutPay').textContent=q.paymentAvailable&&!signedIn?'登入會員後付款':'前往安全付款';
           checkoutField('dhCheckoutPay').disabled=q.paymentAvailable!==true;
         }catch(error){if(!checkoutDlg.open||requestId!==checkoutRequestId)return;checkoutField('dhCheckoutNotice').textContent=error?.message||'無法取得結帳資訊';checkoutField('dhCheckoutPay').disabled=true}
       }
@@ -204,13 +212,14 @@
       checkoutDlg.addEventListener('close',()=>{currentQuote=null;checkoutRequestId++});
       checkoutField('dhCheckoutPay').addEventListener('click',async()=>{
         if(!currentQuote?.paymentAvailable)return;
+        if(!sessionToken()){location.assign(loginUrl);return;}
         const b=checkoutField('dhCheckoutPay');b.disabled=true;
-        try{const r=await fetch(ROOT+'/checkout/start',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({productId:currentQuote.productId})});
+        try{const r=await fetch(ROOT+'/checkout/start',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Accept:'application/json',Authorization:'Bearer '+sessionToken()},body:JSON.stringify({productId:currentQuote.productId,expectedPriceTwd:currentQuote.priceTwd,expectedQuantity:Number(currentQuote.quantity),expectedPromotionId:currentQuote.promotionId||''})});
           const data=await r.json();
-          if(!r.ok||!data?.success)throw Error(data?.message||'目前無法建立付款，沒有扣款。');
+          if(!r.ok||!data?.success){if(data?.error==='LOGIN_REQUIRED'){location.assign(loginUrl);return;}throw Error(data?.message||'目前無法建立付款，沒有扣款。');}
           const u=new URL(data.checkoutUrl);if(u.protocol!=='https:'||!['divinationhub.tw','www.divinationhub.tw','payment-api.ezgocpu.workers.dev','core.newebpay.com'].includes(u.hostname))throw Error('付款目的地無法驗證');
           location.assign(u.href);
-        }catch(e){checkoutField('dhCheckoutNotice').textContent=e.message||'付款無法啟動';b.disabled=false}
+        }catch(e){checkoutField('dhCheckoutNotice').textContent=e.message||'付款無法啟動';b.disabled=!currentQuote?.paymentAvailable}
       });
       function card(p,salesEnabled,showCategory=false,feature=false){
         const onSale=Number.isSafeInteger(Number(p.salePriceTwd))&&Number(p.salePriceTwd)>0&&Number(p.salePriceTwd)<Number(p.priceTwd);
