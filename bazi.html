@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <!-- 僅登記專業大區的收費單位；不啟用扣點與付費解鎖。新增大區時在此清單加入固定 id 與標題即可。 -->
-  <script type="application/json" id="dh-billing-sections">{"toolId":"bazi","sections":[{"id":"report-elements","title":"02 五行與陰陽"},{"id":"report-tengods","title":"03 十神結構"},{"id":"report-relations","title":"04 干支合沖"},{"id":"report-shensha","title":"05 常用神煞"},{"id":"report-reading","title":"06 命盤結構"},{"id":"report-luck","title":"07 八步大運"},{"id":"report-years","title":"08 三年流年"},{"id":"custom-question","title":"自訂題目與每次新追問｜每題獨立扣點"}]}</script>
+  <script type="application/json" id="dh-billing-sections">{"toolId":"bazi","sections":[{"id":"report-elements","title":"02 五行與陰陽"},{"id":"report-tengods","title":"03 十神結構"},{"id":"report-relations","title":"04 干支合沖"},{"id":"report-shensha","title":"05 常用神煞"},{"id":"report-reading","title":"06 命盤結構"},{"id":"report-luck","title":"07 八步大運"},{"id":"report-years","title":"08 三年流年"}]}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>專業八字排盤｜八字命盤深度分析、十神五行與大運流年</title>
@@ -2704,48 +2704,6 @@ body.bazi-personal-full-mode #report-shensha.bazi-shensha-login-locked>.bazi-cha
 @media(max-width:750px){#baziAiQuotaPanel .bazi-entitlement-grid{grid-template-columns:1fr!important}#baziAiQuotaPanel .bazi-entitlement-grid>article{min-height:95px;padding:12px 14px}}
 </style>
 
-<script id="dh-custom-points-v1">
-(()=>{'use strict';
- const P='https://admin-api.ezgocpu.workers.dev/pricing/public?tool=';
- const M='https://member-api.ezgocpu.workers.dev/professional/custom/unlock';
- const cache=new Map();
- const descriptions={PRICE_NOT_SET:'站長尚未設定自訂題目價格，暫時不能使用。',PRICE_CHANGED:'價格已更新，請重新確認。',INSUFFICIENT_POINTS:'專業解鎖點數不足。',LOGIN_REQUIRED:'請先登入會員。',CUSTOM_UNLOCK_UNAVAILABLE:'專業點數暫時無法使用，尚未扣點。',OPERATION_MISMATCH:'這張解鎖憑證與題目不相符，請重新開始。',TAROT_API_NOT_READY:'塔羅後端尚未完成付費權限驗證，暫不扣點。'};
- async function quote(tool){
-  const r=await fetch(P+encodeURIComponent(tool),{cache:'no-store'});const j=await r.json();
-  if(!r.ok||!j.success)throw Error('目前無法讀取專業點數價格。');
-  const x=(j.sections||[]).find(x=>x.sectionId==='custom-question');
-  return x?.mode==='priced'&&Number.isSafeInteger(x.points)&&x.points>0?x.points:null;
- }
- async function label(tool,element){
-  const el=typeof element==='string'?document.getElementById(element):element;if(!el)return;
-  el.textContent='正在讀取自訂題目價格…';
-  const entry=tool==='bazi'?document.getElementById('baziCustomQuestionEntryNote'):null;
-  try{
-   const p=await quote(tool);
-   el.textContent=p?`每次新自訂題目／追問扣 ${p} 點，AI 解讀另外扣 1 次`:'自訂題目｜待後台設定點數，暫未開放';
-   if(entry)entry.textContent=p?`本次解鎖需 ${p} 點｜AI 解讀另扣 1 次`:'尚未設定解鎖點數，暫不提供付費解讀';
-  }catch(_){
-   el.textContent='價格暫時無法讀取，請稍後重試。';
-   if(entry)entry.textContent='正在確認扣點價格｜AI 解讀另外扣 1 次';
-  }
- }
- async function buy(tool,question,token,operationId){
-  const q=String(question||'').normalize('NFKC').trim().replace(/\s+/g,' ');
-  if(q.length<5||q.length>500)throw Error('請先輸入 5～500 字的有效自訂問題。');
-  if(!token)throw Error('請先登入會員，才可使用專業點數。');
-  const op=operationId||crypto.randomUUID();const key=tool+':'+op;
-  const old=cache.get(key);if(old&&old.question===q)return old.ticket;
-  const p=await quote(tool);if(!p)throw Error(descriptions.PRICE_NOT_SET);
-  if(!confirm(`自訂題目／本次追問需要 ${p} 點專業解鎖點數。\n每次新問題重新收費，AI 解讀另外扣除 AI 次數。\n\n確定付 ${p} 點解鎖這次問題？`))return null;
-  const r=await fetch(M,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({toolId:tool,question:q,operationId:op,expectedPoints:p})});
-  const j=await r.json().catch(()=>({}));if(!r.ok||!j.success)throw Error(descriptions[j.error]||('解鎖失敗：'+(j.error||r.status)));
-  cache.set(key,{ticket:j.ticket,question:q});
-  window.dispatchEvent(new Event('dh-professional-points-changed'));
-  return j.ticket;
- }
- window.DHCustomPoints={quote,label,buy};
-})();
-</script>
 
 <style id="dh-quota-triple-cell-final">
 /* Fixed 3-row internal grid: LABEL / VALUE / NOTE. No visible sub-box borders. */
@@ -3191,7 +3149,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
               <div><b>時柱</b><span>傳統上與長期志向、後期生活等主題相關。</span></div>
             </div>
           </div>
-          <p class="bazi-plain-reading-footer">想深入了解自己的八字，可在下方選擇 AI 解讀主題；實際可用額度與自訂問題價格依會員狀態顯示。</p>
+          <p class="bazi-plain-reading-footer">想深入了解自己的八字，可在下方選擇 AI 解讀主題；實際可用的 AI 解讀次數依會員狀態顯示。</p>
         </section>
         <div class="bazi-report-group bazi-ai-redesign"><div class="bazi-ai-heading"><h4>✦ 八字 AI 專屬解讀</h4><small id="baziPersonalQuota" class="bazi-access-status">正在讀取額度…</small></div>
           <div class="bazi-ai-section-caption">熱門解讀 <span>優先推薦</span></div>
@@ -3210,7 +3168,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
             </div>
           </details>
           <details class="bazi-reading-custom" aria-label="自訂八字問題">
-            <summary class="bazi-reading-custom-toggle"><span><strong>09 · 我的專屬問題 <em class="bazi-ai-custom-tag">自由提問</em></strong><small id="baziCustomQuestionEntryNote">事業、財運、感情等熱門範例，一鍵帶入；新問題需專業點數</small></span><span class="bazi-reading-custom-arrow" aria-hidden="true">⌄</span></summary>
+            <summary class="bazi-reading-custom-toggle"><span><strong>09 · 我的專屬問題 <em class="bazi-ai-custom-tag">自由提問</em></strong><small id="baziCustomQuestionEntryNote">事業、財運、感情等熱門範例，一鍵帶入</small></span><span class="bazi-reading-custom-arrow" aria-hidden="true">⌄</span></summary>
             <div class="bazi-reading-custom-body">
               <div class="bazi-custom-categories" role="group" aria-label="自訂問題分類">
                 <button type="button" class="is-active" data-custom-category="career" aria-pressed="true">事業</button>
@@ -3225,7 +3183,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
               <label for="baziCustomQuestion">你的問題 <small>點選範例自動帶入，也能自由修改</small></label>
               <textarea id="baziCustomQuestion" rows="3" maxlength="400" placeholder="選擇上方題目，或直接輸入你想問的事（5～400 字）" aria-describedby="baziCustomQuestionHelp"></textarea>
               <small class="bazi-ai-privacy-note">AI 成功解讀的題目與正式提交的自訂問題，可能供站長在管理後台查看以改善服務；不儲存完整 AI 解讀於這項統計，自訂問題原文最多保留 180 天。請勿輸入他人的敏感個資。</small>
-              <div class="bazi-reading-custom-actions"><small id="baziCustomQuestionHelp">讀取點數價格中…</small><button type="button" id="baziCustomQuestionRun">解鎖本次自訂問題並 AI 解讀</button></div>
+              <div class="bazi-reading-custom-actions"><small id="baziCustomQuestionHelp">每次提問使用 AI 解讀額度 1 次；後續追問另計 1 次。</small><button type="button" id="baziCustomQuestionRun">開始 AI 解讀（AI -1）</button></div>
             </div>
           </details>
           <p id="baziPersonalAiStatus" class="bazi-access-status" role="status"></p>
@@ -9553,7 +9511,7 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-re
       b.setAttribute('aria-label',b.textContent);
     });
     const btn=$('baziCustomQuestionRun'),field=$('baziCustomQuestion');
-    if(btn){btn.disabled=!loggedIn()||!gifted('custom_question')||aiBusy;btn.textContent=loggedIn()?'解鎖自訂題目並 AI 解讀（AI -1）':'登入後使用自訂題目';}
+    if(btn){btn.disabled=!loggedIn()||!gifted('custom_question')||aiBusy;btn.textContent=loggedIn()?'開始 AI 解讀（AI -1）':'登入後使用自訂題目';}
     if(field){field.disabled=!loggedIn()||aiBusy;field.placeholder='請輸入想了解的八字問題（5～400 字）';}
     syncQuotaEmptyHint();
   }
@@ -9924,8 +9882,7 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-re
     }
   }
 
-  // 每個新自訂問題獨立扣點，失敗重送同一 operationId 不重複扣。
-  let pendingCustom={question:'',op:'',ticket:''};
+  // 自訂 AI 提問只使用 AI 額度，不呼叫任何專業點數購買/解鎖端點。
   async function customTopicClick(){
     const status=$('baziPersonalAiStatus'),field=$('baziCustomQuestion'),btn=$('baziCustomQuestionRun');
     if(!loggedIn()){window.baziOpenAuth?.();return;}
@@ -9935,15 +9892,11 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-re
     if(question.length<5||question.length>400){status.textContent='請輸入 5～400 字的有效問題。';field?.focus();return;}
     const permission=await askSharedAiPermission('自訂問題');if(!permission)return;
     const chart={...current},reportKey=current.key;
-    if(pendingCustom.question!==question||!pendingCustom.op)pendingCustom={question,op:crypto.randomUUID(),ticket:''};
     clearPersonalAiFailure(status);aiBusy=true;showAiWorking(btn,'custom_question',true);
     try{
-      const ticket=await window.DHCustomPoints.buy('bazi',question,baziAuthToken(),pendingCustom.op);
-      if(!ticket){status.textContent='已取消，本次沒有扣專業點數。';return;}
-      pendingCustom.ticket=ticket;
       status.textContent='AI 正在解讀中…';scrollToAiProgress();
       const questionMeta={category:field?.dataset.aiQuestionCategory||'',presetLabel:field?.dataset.aiQuestionPreset||'',template:field?.dataset.aiQuestionTemplate||''};
-      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_question',question,questionMeta,customTicket:ticket,aiOpId:crypto.randomUUID()},permission.shared);
+      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_question',question,questionMeta,aiOpId:crypto.randomUUID()},permission.shared);
       if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 尚未回傳完整解讀。');
       let saved={...reports};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){ }
       const history=Array.isArray(saved.custom_questions)?saved.custom_questions.slice(-11):[];
@@ -9951,13 +9904,16 @@ html[data-theme="light"] .bazi-personal-stage .bazi-reading-actions-row .bazi-re
       saved.custom_questions=history;
       try{sessionStorage.setItem(storePrefix+reportKey,JSON.stringify(saved))}catch(_){ }
       if(current?.key===reportKey){reports=saved;drawReports('custom_question_'+(history.length-1));personalAiSucceeded(status,j,'✓ 專屬問題解讀完成，已開啟下方報告。');scrollToAiReport('custom_question_'+(history.length-1));}
-      pendingCustom={question:'',op:'',ticket:''};
-    }catch(e){personalAiFailed(status,e,e?.message||'自訂問題暫時無法完成。已解鎖的同一題可重新嘗試，不會重複扣專業點數。','custom_question');}
+    }catch(e){
+      const ticketErrors=new Set(['CUSTOM_TICKET_REQUIRED','CUSTOM_UNLOCK_REQUIRED','CUSTOM_TICKET_INVALID','CUSTOM_TICKET_MISSING','CUSTOM_UNLOCK_UNAVAILABLE','INVALID_CUSTOM_TICKET','CUSTOM_QUESTION_LOCKED']);
+      const serverMessage=String(e?.message||'');
+      const requiresTicket=ticketErrors.has(String(e?.code||''))||/custom.?ticket|專業.{0,8}(解鎖|點數).{0,12}(憑證|必要|需要)/i.test(serverMessage);
+      personalAiFailed(status,e,requiresTicket?'AI 後端尚未啟用「僅扣 AI 額度」的新規則。前端沒有呼叫專業點數扣費，請先同步更新八字 AI 後端；勿重複送出。':(serverMessage||'AI 解讀暫時無法完成。'),'custom_question');
+    }
     finally{aiBusy=false;showAiWorking(btn,'custom_question',false);void refreshPersonalQuota();}
   }
 
   document.addEventListener('DOMContentLoaded',()=>{
-    window.DHCustomPoints.label('bazi','baziCustomQuestionHelp');
     $('baziCustomQuestionRun')?.addEventListener('click',customTopicClick);
     refreshPersonalQuota();window.addEventListener('bazi-google-login',()=>window.baziAiRefreshAccessUi());
     document.querySelectorAll('[data-bazi-topic]').forEach(b=>b.addEventListener('click',()=>topicClick(b.dataset.baziTopic,b)));
