@@ -2915,6 +2915,26 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
 <style id="bazi-ai-question-privacy-style">
 .bazi-personal-stage .bazi-ai-privacy-note{display:block;margin:5px 0 11px;color:var(--dim);font-size:.7rem;line-height:1.7}
 </style>
+
+<style id="baziAiReadable20261027">
+/* Apply only to AI reports. Do not change the original eight professional chapters. */
+.bazi-personal-stage .bazi-reading-article{font-size:clamp(.91rem,.82rem + .12vw,.98rem);line-height:1.92;letter-spacing:.006em}
+.bazi-personal-stage .bazi-reading-article p{margin:0 0 16px;line-height:1.92;white-space:normal}
+.bazi-personal-stage .bazi-reading-article h3{margin:25px 0 12px;padding:0 0 7px;border-bottom:1px solid rgba(126,165,176,.25);font-size:1.13rem;line-height:1.55;font-weight:800;color:var(--gold,#e9bd58)}
+.bazi-personal-stage .bazi-reading-article h4{margin:20px 0 9px;font-size:1.01rem;line-height:1.65;color:var(--text)}
+.bazi-personal-stage .bazi-reading-article li{padding-left:2px;margin:7px 0;line-height:1.83}
+.bazi-personal-stage .bazi-reading-article ul,.bazi-personal-stage .bazi-reading-article ol{margin:9px 0 17px;padding-left:1.55rem}
+.bazi-personal-stage .bazi-reading-article strong{font-weight:800;color:var(--text)}
+.bazi-personal-stage .bazi-reading-article .bazi-ai-table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;border:1px solid rgba(111,154,166,.30);border-radius:10px;margin:12px 0 19px}
+.bazi-personal-stage .bazi-reading-article .bazi-ai-table-scroll:focus-visible{outline:2px solid var(--gold,#e9bd58);outline-offset:2px}
+.bazi-personal-stage .bazi-reading-article .bazi-ai-readable-table{border-collapse:collapse;table-layout:auto;width:100%;min-width:540px;font-size:.86rem;line-height:1.65}
+.bazi-personal-stage .bazi-reading-article .bazi-ai-readable-table :is(th,td){padding:10px 12px;vertical-align:top;text-align:left;border-bottom:1px solid rgba(111,154,166,.19);min-width:85px;overflow-wrap:anywhere;white-space:normal}
+.bazi-personal-stage .bazi-reading-article .bazi-ai-readable-table th{color:var(--gold,#e9bd58);font-weight:800;background:rgba(122,142,154,.12)}
+.bazi-personal-stage .bazi-reading-article .bazi-ai-readable-table tbody tr:nth-child(even){background:rgba(95,143,153,.055)}
+.bazi-personal-stage .bazi-reading-article code{font-size:.9em;overflow-wrap:anywhere}
+@media(max-width:600px){.bazi-personal-stage .bazi-reading-article{font-size:.92rem;line-height:1.85}.bazi-personal-stage .bazi-reading-article h3{font-size:1.03rem;margin:21px 0 9px}.bazi-personal-stage .bazi-reading-article .bazi-ai-readable-table{min-width:480px}}
+html[data-theme="light"] .bazi-personal-stage .bazi-reading-article h3{color:#94691e}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -9609,58 +9629,115 @@ html[data-theme="light"] .bazi-personal-stage .bazi-custom-action-line .bazi-ai-
     if(value&&typeof value==='object')return {reading:safeText(value.reading||''),channel:safeText(value.channel||''),traceId:safeText(value.traceId||''),review:value.review||null,createdAt:Number(value.createdAt)||0};
     return {reading:'',channel:'',traceId:'',review:null};
   }
-  // Display AI Markdown as safe DOM nodes, never interpret the response as HTML.
+  // AI-only reader. Render archived and future AI Markdown as safe DOM nodes.
+  // Deliberately never use innerHTML/unsafe HTML: model output is untrusted text.
   function renderPersonalReading(target,source){
     target.replaceChildren();
     const frag=document.createDocumentFragment();
-    const lines=safeText(source).replace(/\r\n?/g,'\n').split('\n');
-    let paragraph=[],list=null,listType='';
-    function inline(el,text){
-      const normalized=safeText(text).replace(/\\\*/g,'*');
-      const pieces=normalized.split(/(\*\*[^*\n]+\*\*)/g);
-      for(const piece of pieces){
-        if(/^\*\*[^*\n]+\*\*$/.test(piece)){
-          const strong=document.createElement('strong');strong.textContent=piece.slice(2,-2);el.append(strong);
-        }else if(piece){
-          // Unpaired Markdown delimiters must not appear as raw code-like markers.
-          el.append(document.createTextNode(piece.replace(/\*\*/g,'')));
-        }
+    const rawText=safeText(source).replace(/\r\n?/g,'\n')
+      .replace(/<br\s*\/?>/gi,'\n\n')
+      .replace(/<\/?p\s*>/gi,'\n\n');
+    const lines=rawText.split('\n');
+    let paragraph=[],list=null,listType='',quoteBlock=null;
+    const appendInline=(node,text)=>{
+      const raw=safeText(text).replace(/\\\*/g,'*');
+      const parts=raw.split(/(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`)/g);
+      for(const p of parts){
+        if(!p)continue;
+        const strong=p.match(/^(?:\*\*(.+)\*\*|__(.+)__)$/);
+        if(strong){const tag=document.createElement('strong');tag.textContent=strong[1]||strong[2];node.append(tag);}
+        else if(/^`[^`\n]+`$/.test(p)){const tag=document.createElement('code');tag.textContent=p.slice(1,-1);node.append(tag);}
+        else node.append(document.createTextNode(p.replace(/\*\*/g,'')));
       }
-    }
-    function flushParagraph(){
+    };
+    const appendParagraph=text=>{
+      if(!text.trim())return;
+      const p=document.createElement('p');appendInline(p,text.trim());frag.append(p);
+    };
+    const flushParagraph=()=>{
       if(!paragraph.length)return;
-      const p=document.createElement('p');inline(p,paragraph.join('\n'));frag.append(p);paragraph=[];
-    }
-    function resetList(){list=null;listType='';}
-    for(const raw of lines){
-      const line=raw.trim();
-      if(!line){flushParagraph();resetList();continue;}
+      const full=paragraph.join(' ').replace(/\s{2,}/g,' ').trim();
+      // Only split exceptionally long blocks at existing Chinese full stops.
+      if(full.length>250){
+        const sentences=full.match(/[^。！？!?]+[。！？!?]?/g)||[full];
+        let block='';
+        for(const sentence of sentences){
+          if(block.length>=125 && block.length+sentence.length>230){appendParagraph(block);block='';}
+          block+=sentence;
+        }
+        appendParagraph(block);
+      }else appendParagraph(full);
+      paragraph=[];
+    };
+    const resetList=()=>{list=null;listType='';};
+    const tableCells=line=>{
+      const s=line.trim();
+      if(!s.startsWith('|')||!s.includes('|',1))return null;
+      const trimmed=s.replace(/^\|/,'').replace(/\|$/,'');
+      const parts=trimmed.split(/(?<!\\)\|/).map(x=>x.replace(/\\\|/g,'|').trim());
+      return parts.length>=2&&parts.length<=7?parts:null;
+    };
+    const isSeparator=cells=>cells&&cells.every(c=>/^:?-{3,}:?$/.test(c.replace(/\s+/g,'')));
+    const makeTable=rows=>{
+      const width=rows[0].length;
+      const clean=rows.filter(row=>row.length===width&&!isSeparator(row));
+      if(clean.length<2)return false;
+      const wrap=document.createElement('div');wrap.className='bazi-ai-table-scroll';wrap.setAttribute('role','region');
+      wrap.setAttribute('aria-label','AI 解讀比較表');wrap.tabIndex=0;
+      const table=document.createElement('table');table.className='bazi-ai-readable-table';
+      const heading=rows.length>=2&&isSeparator(rows[1]);
+      let section=null;
+      for(let i=0;i<clean.length;i++){
+        if(!section||heading&&i===1){section=document.createElement(heading&&i===0?'thead':'tbody');table.append(section);}
+        const tr=document.createElement('tr');
+        clean[i].forEach(cell=>{const tag=heading&&i===0?'th':'td';const el=document.createElement(tag);
+          if(tag==='th')el.scope='col';appendInline(el,cell);tr.append(el);});section.append(tr);
+      }
+      wrap.append(table);frag.append(wrap);return true;
+    };
+    for(let i=0;i<lines.length;i++){
+      const raw=lines[i],line=raw.trim();
+      if(!line){flushParagraph();resetList();quoteBlock=null;continue;}
+      const cells=tableCells(line),following=tableCells(lines[i+1]||'');
+      if(cells&&following&&cells.length===following.length){
+        flushParagraph();resetList();quoteBlock=null;
+        const rows=[cells];
+        while(i+1<lines.length){const next=tableCells(lines[i+1]);if(!next||next.length!==cells.length)break;rows.push(next);i++;}
+        if(makeTable(rows))continue;
+        for(const r of rows)appendParagraph(r.join('｜'));
+        continue;
+      }
       if(/^(?:-{3,}|\*{3,}|_{3,})$/.test(line)){
-        flushParagraph();resetList();frag.append(document.createElement('hr'));continue;
+        flushParagraph();resetList();quoteBlock=null;frag.append(document.createElement('hr'));continue;
       }
       const heading=line.match(/^#{1,6}\s*(.+)$/);
+      const numberedHeading=line.match(/^[一二三四五六七八九十]+[、.．]\s*(.{2,80})$/);
       const onlyBold=line.match(/^\*\*([^*\n]+)\*\*\s*$/);
-      if(heading||onlyBold){
-        flushParagraph();resetList();
-        const h=document.createElement(heading&&/^#{1,2}(?!#)/.test(line)?'h3':'h4');
-        inline(h,heading?heading[1]:onlyBold[1]);frag.append(h);continue;
+      if(heading||numberedHeading||onlyBold){
+        flushParagraph();resetList();quoteBlock=null;
+        const tag=(heading?heading[0].match(/^#+/)[0].length<=2:!!numberedHeading)?'h3':'h4';
+        const h=document.createElement(tag);appendInline(h,heading?heading[1]:numberedHeading?line:onlyBold[1]);frag.append(h);continue;
       }
-      const quote=line.match(/^>\s?(.+)$/);
-      if(quote){
+      const quoted=line.match(/^>\s?(.+)$/);
+      if(quoted){
         flushParagraph();resetList();
-        const last=frag.lastChild;
-        const block=last?.nodeName==='BLOCKQUOTE'?last:document.createElement('blockquote');
-        if(block!==last)frag.append(block);
-        const p=document.createElement('p');inline(p,quote[1]);block.append(p);continue;
+        if(!quoteBlock){quoteBlock=document.createElement('blockquote');frag.append(quoteBlock);}
+        const p=document.createElement('p');appendInline(p,quoted[1]);quoteBlock.append(p);continue;
       }
+      quoteBlock=null;
       const bullet=line.match(/^(?:[-*•]\s+|[•●]\s*)(.+)$/);
       const ordered=line.match(/^\d+[.．、)]\s*(.+)$/);
       if(bullet||ordered){
         flushParagraph();const kind=ordered?'ol':'ul';
         if(!list||listType!==kind){list=document.createElement(kind);frag.append(list);listType=kind;}
-        const li=document.createElement('li');inline(li,(ordered||bullet)[1]);list.append(li);continue;
+        const li=document.createElement('li');appendInline(li,(ordered||bullet)[1]);list.append(li);continue;
       }
-      resetList();paragraph.push(line);
+      if(list&&/^\s{2,}\S/.test(raw)&&list.lastElementChild){
+        list.lastElementChild.append(document.createTextNode(' '));appendInline(list.lastElementChild,line);continue;
+      }
+      resetList();
+      // A single malformed Markdown pipe row should remain readable, not show | delimiters.
+      paragraph.push(cells?cells.join('｜'):line);
     }
     flushParagraph();target.append(frag);
   }
