@@ -1792,6 +1792,17 @@ html[data-theme="light"] #yjAiDiscardDialog .yj-dialog-kicker,html[data-theme="l
 @media(max-width:740px){.yj-ai-report-bar,.yj-ai-followup-bar{flex-wrap:wrap}.yj-ai-collapse{flex:1 1 100%}.yj-ai-inline-actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.yj-ai-inline-actions button{white-space:normal;min-width:0}.yj-ai-followup-bar strong{width:100%;text-align:center}}
 @media(max-width:390px){#yjAiDiscardDialog{padding:17px 13px}}
 </style>
+
+<style id="yj-tool-quota-zero-20261027">
+/* No quota: small notice only, without promising unavailable checkout. */
+#yijingQuotaPanel .yj-quota-exhausted{margin:12px 2px 0;padding:10px 13px;border:1px solid rgba(225,197,110,.4);border-radius:11px;background:rgba(225,197,110,.085);color:#efd797;font-size:.76rem;line-height:1.6;font-weight:730}
+#yijingQuotaPanel .yj-quota-exhausted[hidden]{display:none!important}
+#yijingQuotaPanel.yj-tool-empty .dh-clean-shared-buy{outline:2px solid rgba(225,197,110,.52)!important;outline-offset:2px;animation:yjQuotaShopNotice 2.2s ease-in-out 3}
+@keyframes yjQuotaShopNotice{0%,100%{transform:translateY(0);outline-offset:2px}50%{transform:translateY(-2px);outline-offset:5px}}
+html[data-theme="light"] #yijingQuotaPanel .yj-quota-exhausted{background:#fff8e5;color:#765215;border-color:#ddc58b}
+html[data-theme="light"] #yijingQuotaPanel.yj-tool-empty .dh-clean-shared-buy{outline-color:#c69746!important}
+@media(prefers-reduced-motion:reduce){#yijingQuotaPanel.yj-tool-empty .dh-clean-shared-buy{animation:none!important}}
+</style>
 </head>
 <body>
   <header class="page-topbar">
@@ -2002,6 +2013,9 @@ html[data-theme="light"] #yjAiDiscardDialog .yj-dialog-kicker,html[data-theme="l
     <span id="yijingQuotaCastFuture" hidden></span>
     <span id="yijingQuotaAiNote" hidden></span>
   </section>
+</div>
+<div id="yjQuotaExhausted" class="yj-quota-exhausted" hidden role="status" aria-live="polite">
+  <span aria-hidden="true">◷</span> <span id="yjQuotaExhaustedText">本期免費與共用工具額度已用完，請等待下次免費補充。加購服務即將開放。</span>
 </div>
 <div class="dh-clean-legacy-hide"><div class="yijing-access-bar" id="yijingAccessBar"><div class="yijing-access-copy"><div class="yijing-access-heading"><b id="yijingAccessTitle">未登入訪客</b><button class="yijing-access-cta" id="yijingAccessLogin" type="button">免費登入解除大部分限制</button></div><span id="yijingAccessText">每日部分內容輪替開放；免費登入後可解除大部分限制。</span></div></div><div class="yijing-quota-foot"><span id="yijingQuotaFootnote">各工具每日免費次數獨立；共用工具與共用 AI 額度在會員系統分別管理。</span><span class="status" id="yijingQuotaStatus">請登入領取共用 AI 額度</span></div><b id="yijingQuotaPaidCount">0 次</b><span id="yijingQuotaPaidNote">付費額度與 AI 解讀額度分開；正式方案尚未開放。</span></div>
 
@@ -2552,8 +2566,9 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
            return true;
          }
          if(Number(daily.remaining||0)<=0){
-           if(!Number.isSafeInteger(Number(left))||Number(left)<1){alert('本期免費起卦與會員共用工具額度都已用完，無法進入主題。');return false;}
-           if(!confirm(`本期免費起卦已用完。\n\n進入「${topic.name}」前，需使用 1 次會員共用工具額度。\n目前剩餘 ${left} 次，八字、塔羅、易經共用（用完不補）。\n\n確定預留 1 次後，繼續選擇情境與題目？`))return false;
+           if(!Number.isSafeInteger(Number(left))){alert('暫時無法確認工具額度，請稍後再試。');return false;}
+           if(Number(left)<1){yjNotifyNoToolQuota();return false;}
+           if(!confirm(`本期免費起卦已用完，本次將使用會員共用工具額度 1 次（剩餘 ${left} 次）。\n\n確定繼續嗎？`))return false;
          }
        }
        const op=retryOp||crypto.randomUUID();
@@ -2997,6 +3012,28 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     goToMemberLogout();
   }
   // 同步前端額度卡片：避免過往測試的「5/5、公開試跑、查詢中」永遠停留在畫面上。
+  function yjSyncNoToolQuota(){
+    const panel=document.getElementById('yijingQuotaPanel');
+    const notice=document.getElementById('yjQuotaExhausted');
+    const desc=document.getElementById('yjQuotaExhaustedText');
+    const daily=dhYijingLive?.daily,tool=dhYijingLive?.wallet?.tool;
+    const empty=!!daily&&Number(daily.remaining)===0&&Number.isFinite(Number(tool))&&Number(tool)===0&&isLogged()&&!isAdminTestActive()&&!hasFullPaidAccess();
+    if(panel)panel.classList.toggle('yj-tool-empty',empty);
+    if(notice)notice.hidden=!empty;
+    if(empty&&desc){
+      const days=Math.max(1,Number(daily.days)||1);
+      const next=Number(daily.limit)>0?(days===1?'明日可再使用免費起卦':'等待每 '+days+' 天補充的免費起卦'):'目前沒有免費起卦額度';
+      desc.textContent='起卦額度已用完，'+next+'；加購服務即將開放。';
+    }
+  }
+  function yjNotifyNoToolQuota(){
+    const daily=dhYijingLive?.daily,days=Math.max(1,Number(daily?.days)||1);
+    const next=Number(daily?.limit)>0?(days===1?'明日可再使用免費起卦':'可等待每 '+days+' 天補充的免費起卦'):'目前沒有免費起卦額度';
+    alert('本期免費起卦與會員共用工具額度都已用完。\n'+next+'；加購服務即將開放。');
+    yjSyncNoToolQuota();
+    // The disabled purchase control remains labeled "即將開放": no fake checkout.
+    document.getElementById('yijingQuotaPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
+  }
   function updateYijingQuotaOverview(){
     const $=id=>document.getElementById(id);
     const full=hasFullPaidAccess(),test=isAdminTestActive(),daily=dhYijingLive?.daily,aiFree=dhYijingLive?.ai,wallet=dhYijingLive?.wallet;
@@ -3018,6 +3055,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     if(paidNote)paidNote.textContent=test?'管理員模擬，不產生付款或扣款。':'付費額度與 AI 解讀額度分開；正式方案尚未開放。';
     if(foot)foot.textContent='';
     if(status)status.textContent='';
+    yjSyncNoToolQuota();
     yjAiSyncQuota();
   }
   function updateMemberUI(){
@@ -3167,8 +3205,9 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
       if(yjPendingCustom.ticket&&yjPendingCustom.sourceKey!==sourceKey)await yjCancelCustomBeforeCast();
       await refreshYijingLive();
       const left=Number(dhYijingLive?.wallet?.tool);
-      if(!Number.isSafeInteger(left)||left<2){alert('自訂題目需要 2 次會員共用工具額度，目前額度不足。\n每日免費 1 次僅供固定題使用。');return false;}
-      if(!confirm(`自訂題目使用 2 次會員共用工具額度（目前剩餘 ${left} 次）。\n每日免費起卦 1 次保留給固定題，不抵扣。\n起卦成功才正式扣除，取消或逾時將返還。\n站內 AI 解讀另外使用 AI 額度。\n\n確定預留 2 次後開始輸入自訂題目？`))return false;
+      if(!Number.isSafeInteger(left)){alert('暫時無法確認共用工具額度，請稍後再試。');return false;}
+      if(left<2){alert(`自訂題目需使用會員共用工具額度 2 次，目前剩餘 ${left} 次，額度不足。\n加購服務即將開放。`);return false;}
+      if(!confirm(`自訂題目將使用會員共用工具額度 2 次（剩餘 ${left} 次）。\n\n確定繼續嗎？`))return false;
       const op=yjPendingCustom.sourceKey===sourceKey&&yjPendingCustom.operationId?yjPendingCustom.operationId:crypto.randomUUID();
       yjPendingCustom={question:'',operationId:op,ticket:'',sourceKey,paidPoints:0};
       const r=await fetch(yjToolPrecastUrl.replace('/tool/precast','/tool/custom/precast'),{
@@ -3186,7 +3225,7 @@ function publicYijingClassicHTML(base,baseLines,compact=false){
     if(isAdminTestActive()||hasFullPaidAccess()||!dhYijingLive?.daily)return '';
     if(remainingUses()>0)return '';
     const left=dhYijingLive?.wallet?.tool;
-    if(isLogged())return left===undefined?'免費次數已用完｜正在讀取共用工具額度':left>0?`使用工具額度 1 次｜剩餘 ${left} 次（用完不補）`:'免費與共用工具額度皆已用完';
+    if(isLogged())return left===undefined?'免費次數已用完｜正在讀取共用工具額度':left>0?`使用工具額度 1 次｜剩餘 ${left} 次（用完不補）`:'工具額度已用完｜等待下次免費補充';
     return '本期免費起卦已用完｜請登入查看共用額度';
   }
   function yjUpdateFixedQuotaBadges(){
