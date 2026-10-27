@@ -6170,22 +6170,22 @@ ${tasks}
     // 失敗時不會有「成功通道」；避免把最後嘗試的 A/B 誤當成成功通道。
     const button=document.createElement('button');button.type='button';button.className='bazi-ai-report-button';button.textContent='回報站內 AI 異常';button.setAttribute('aria-expanded','false');
     row.append(code,button);box.appendChild(row);
-    const form=document.createElement('div');form.className='bazi-ai-report-form';form.hidden=true;
-    const textarea=document.createElement('textarea');textarea.maxLength=400;textarea.rows=2;textarea.setAttribute('aria-label','說明 AI 異常情況');
-    textarea.placeholder='請簡短描述異常（至少 5 字），不需提供生日或命盤。';
-    const submit=document.createElement('button');submit.type='button';submit.className='bazi-ai-report-button';submit.textContent='送出異常回報';
-    const feedback=document.createElement('small');feedback.setAttribute('role','status');
-    form.append(textarea,submit,feedback);box.appendChild(form);
-    button.addEventListener('click',()=>{form.hidden=!form.hidden;button.setAttribute('aria-expanded',String(!form.hidden));button.textContent=form.hidden?'回報站內 AI 異常':'收合回報';});
-    submit.addEventListener('click',async()=>{
-      const comment=textarea.value.trim();if(comment.length<5){feedback.textContent='請至少填寫 5 個字。';return;}
-      submit.disabled=true;feedback.textContent='傳送回報中…';
+    // Fault trace is sufficient: one-click report, without collecting a description.
+    button.textContent='一鍵回報 AI 異常';
+    button.removeAttribute('aria-expanded');
+    const feedback=document.createElement('small');feedback.setAttribute('role','status');box.appendChild(feedback);
+    button.addEventListener('click',async()=>{
+      if(button.disabled)return;
+      button.disabled=true;feedback.textContent='正在傳送回報…';
       try{
-        const r=await fetch(BAZI_API_BASE+'/ai/feedback',{method:'POST',headers:{'Content-Type':'application/json',...baziAiHeaders()},body:JSON.stringify({traceId:j.traceId,section,category:'service',comment})});
-        const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error==='ALREADY_REPORTED'?'這次異常已回報過。':data.error==='FEEDBACK_DAILY_LIMIT'?'今日回報次數已達上限。':'回報失敗，請稍後再試。');
-        // 回報成功後立即收合整張表單，也移除再次回報的入口。
-        form.hidden=true;button.hidden=true;code.textContent='故障追蹤碼：'+j.traceId+'｜已收到異常回報';
-      }catch(e){feedback.textContent=e?.message||'回報失敗';submit.disabled=false;}
+        const r=await fetch(BAZI_API_BASE+'/v2/ai/feedback',{method:'POST',headers:{'Content-Type':'application/json',...baziAiHeaders(),...window.baziCastBrowserHeaders()},cache:'no-store',body:JSON.stringify({traceId:j.traceId,section,category:'service'})});
+        const data=await r.json().catch(()=>({}));
+        if(data.error==='ALREADY_REPORTED'){
+          button.remove();code.textContent='故障追蹤碼：'+j.traceId+'｜這次異常已回報過';feedback.textContent='';return;
+        }
+        if(!r.ok||!data.ok)throw Error('回報未送達（'+String(data.error||'網路錯誤')+'），請保留追蹤碼。');
+        button.remove();code.textContent='故障追蹤碼：'+j.traceId+'｜已收到異常回報';feedback.textContent='';
+      }catch(e){feedback.textContent=e?.message||'回報失敗，請保留追蹤碼。';button.disabled=false;}
     });
     statusEl.insertAdjacentElement('afterend',box);
   }
@@ -9472,23 +9472,22 @@ html[data-theme="light"] .bazi-personal-stage .bazi-custom-action-line .bazi-ai-
     const toggle=document.createElement('button');toggle.type='button';toggle.className='bazi-ai-report-button';
     toggle.textContent='回報站內 AI 異常';toggle.setAttribute('aria-expanded','false');
     bar.append(detail,toggle);wrap.append(bar);
-    const form=document.createElement('div');form.className='bazi-ai-report-form';form.hidden=true;
-    const input=document.createElement('textarea');input.rows=2;input.maxLength=400;
-    input.placeholder='簡述遇到的異常（至少 5 字）；請勿填入出生資料、完整命盤或其他隱私。';
-    input.setAttribute('aria-label','AI 失敗情況');
-    const submit=document.createElement('button');submit.type='button';submit.className='bazi-ai-report-button';submit.textContent='送出異常回報';
-    const state=document.createElement('small');state.setAttribute('role','status');
-    form.append(input,submit,state);wrap.append(form);
-    toggle.addEventListener('click',()=>{form.hidden=!form.hidden;toggle.setAttribute('aria-expanded',String(!form.hidden));toggle.textContent=form.hidden?'回報站內 AI 異常':'收合回報';});
-    submit.addEventListener('click',async()=>{
-      const comment=input.value.trim();if(comment.length<5){state.textContent='請至少填寫 5 個字。';return;}
-      submit.disabled=true;state.textContent='正在傳送回報…';
+    // A successful 503 trace already identifies the incident; require no typed explanation.
+    toggle.textContent='一鍵回報 AI 異常';
+    toggle.removeAttribute('aria-expanded');
+    const state=document.createElement('small');state.setAttribute('role','status');wrap.append(state);
+    toggle.addEventListener('click',async()=>{
+      if(toggle.disabled)return;
+      toggle.disabled=true;state.textContent='正在傳送回報…';
       try{
-        const response=await fetch(API+'/ai/feedback',{method:'POST',headers:headers(),cache:'no-store',body:JSON.stringify({traceId:trace,section,category:'service',comment})});
+        const response=await fetch(API+'/v2/ai/feedback',{method:'POST',headers:headers(),cache:'no-store',body:JSON.stringify({traceId:trace,section,category:'service'})});
         const data=await response.json().catch(()=>({}));
-        if(!response.ok||!data.ok)throw Error(data.error==='ALREADY_REPORTED'?'這次異常已回報過。':data.error==='FEEDBACK_DAILY_LIMIT'?'今日回報次數已達上限。':'系統暫時無法接收回報，請保留上方追蹤碼。');
-        form.hidden=true;toggle.hidden=true;detail.textContent='故障追蹤碼：'+trace+'｜已收到異常回報';
-      }catch(e){state.textContent=e?.message||'回報失敗，請保留追蹤碼。';submit.disabled=false;}
+        if(data.error==='ALREADY_REPORTED'){
+          toggle.remove();detail.textContent='故障追蹤碼：'+trace+'｜這次異常已回報過';state.textContent='';return;
+        }
+        if(!response.ok||!data.ok)throw Error('回報未送達（'+String(data.error||'網路錯誤')+'），請保留追蹤碼。');
+        toggle.remove();detail.textContent='故障追蹤碼：'+trace+'｜已收到異常回報';state.textContent='';
+      }catch(e){state.textContent=e?.message||'回報失敗，請保留追蹤碼。';toggle.disabled=false;}
     });
     status.insertAdjacentElement('afterend',wrap);
   }
