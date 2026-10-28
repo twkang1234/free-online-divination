@@ -98,11 +98,80 @@
     .checkout-state{font-size:.74rem;color:var(--muted);line-height:1.7;margin-top:10px}
     [hidden]{display:none!important}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+    /* 加購頁與八字等工具統一：首頁入口＋九項工具導覽＋既有會員選單。 */
+    .sitebar.pricing-unified-header{
+      width:min(1330px,calc(100% - 36px));min-height:70px;
+      gap:12px;justify-content:space-between;
+    }
+    .pricing-home-link{
+      display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+      padding:7px 12px;min-height:36px;white-space:nowrap;text-decoration:none;
+      border:1px solid color-mix(in srgb,var(--violet) 32%,var(--stroke));
+      border-radius:999px;background:var(--panel);color:var(--text);
+      font-size:.73rem;font-weight:760;transition:background .18s,border-color .18s;
+    }
+    .pricing-home-link:hover{background:var(--pill);border-color:var(--violet)}
+    .pricing-home-short{display:none}
+    .pricing-tools-nav{
+      display:flex;align-items:center;justify-content:center;gap:2px;min-width:0;
+      padding:3px;border:1px solid var(--stroke);border-radius:999px;
+      background:var(--panel);overflow-x:auto;overscroll-behavior-x:contain;
+      scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    }
+    .pricing-tools-nav::-webkit-scrollbar{display:none}
+    .pricing-tools-nav a{
+      display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+      padding:7px 9px;min-height:29px;border-radius:999px;color:var(--muted);
+      font-size:.69rem;font-weight:710;text-decoration:none;white-space:nowrap;
+      transition:background .18s,color .18s;
+    }
+    .pricing-tools-nav a:hover,.pricing-tools-nav a:focus-visible{
+      color:var(--text);background:var(--pill);
+    }
+    .pricing-tools-nav a:focus-visible,.pricing-home-link:focus-visible{
+      outline:2px solid var(--violet);outline-offset:2px;
+    }
+    .pricing-unified-header .pricing-top-actions{flex:0 0 auto;margin-left:0}
+    .pricing-unified-header .pricing-member-menu{z-index:160}
+    @media(max-width:1090px){
+      .sitebar.pricing-unified-header{flex-wrap:wrap;row-gap:7px;padding:10px 0 9px}
+      .pricing-unified-header .pricing-tools-nav{
+        order:3;flex:1 0 100%;justify-content:flex-start;max-width:100%;
+      }
+      .pricing-unified-header .pricing-top-actions{margin-left:auto}
+    }
+    @media(max-width:560px){
+      .sitebar.pricing-unified-header{width:min(100% - 24px,1330px)}
+      .pricing-home-full{display:none}
+      .pricing-home-short{display:inline}
+      .pricing-home-link{padding:7px 10px;font-size:.69rem}
+      .pricing-tools-nav a{padding:7px 11px;font-size:.71rem}
+      .pricing-unified-header .pricing-top-actions{gap:5px}
+    }
+    @media(max-width:360px){
+      .pricing-home-link{padding:7px 8px;font-size:.65rem}
+      .pricing-member-main{padding:7px 9px}
+    }
   </style>
 </head>
 <body>
-  <header class="layout sitebar">
-    <a href="/" class="identity"><i>✧</i><span>一念知機</span></a>
+  <header class="layout sitebar pricing-unified-header">
+    <a href="index.html" class="pricing-home-link" aria-label="返回一念知機免費線上占卜首頁">
+      <span class="pricing-home-full">← 一念知機｜免費線上占卜</span>
+      <span class="pricing-home-short">← 免費線上占卜</span>
+    </a>
+    <nav class="pricing-tools-nav" aria-label="其他免費占卜工具">
+      <a href="qimen.html">奇門</a>
+      <a href="tarot.html">塔羅</a>
+      <a href="bazi.html">八字</a>
+      <a href="ziwei.html">紫微</a>
+      <a href="meihua.html">梅花</a>
+      <a href="liuyao.html">六爻</a>
+      <a href="yijing.html">易經64卦</a>
+      <a href="cezi.html">測字</a>
+      <a href="wuxing.html">五行</a>
+    </nav>
     <div class="pricing-top-actions">
       <div class="pricing-member-entry" id="pricingMemberEntry">
         <button type="button" class="pricing-member-main" id="pricingMemberMain" aria-label="免費登入一念知機會員">免費登入</button>
@@ -114,7 +183,6 @@
           <button type="button" id="pricingMenuLogout">登出會員</button>
         </div>
       </div>
-      <a class="backlink" href="/"><span class="pricing-back-long">← 返回免費線上占卜</span><span class="pricing-back-short">← 回首頁</span></a>
     </div>
   </header>
   <main class="layout">
