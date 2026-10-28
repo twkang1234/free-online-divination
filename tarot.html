@@ -3743,10 +3743,10 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       <div class="dh-clean-shared-notes">
         <p>八字、塔羅、易經等工具共用</p>
         <p>免費次數用完後，才使用會員共用額度</p>
-        <a class="dh-clean-buy dh-clean-shared-buy" href="/pricing.html" aria-label="查看工具額度與 AI 解讀次數加購方案">
+        <button class="dh-clean-buy dh-clean-shared-buy" type="button" style="cursor:pointer!important" onclick="window.location.href='https://divinationhub.tw/pricing.html'" aria-label="查看加購工具額度與AI解讀次數方案">
           <span><span class="cart" aria-hidden="true">🛒</span> 加購工具額度與AI解讀次數</span>
           <small>查看加購方案</small>
-        </a>
+        </button>
       </div>
     </div>
   </section>
@@ -4684,74 +4684,24 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     if(d.error==='TOOL_QUOTA_EMPTY')throw Error(isLogged()?'本期免費塔羅抽牌與會員共用工具額度都已用完。\n可等候下次免費補充，或參考加購方案。':'本期免費塔羅抽牌已用完。\n可等候下次免費補充，或登入會員查看共用額度。');
     throw Error(d.error||'TOOL_QUOTA_UNAVAILABLE');
   }
-  // 額度不足時使用頁面最外層的獨立對話框，絕不插入題目/抽牌的 grid 或改變版面。
-  let tarotQuotaReturnFocus=null;
-  function closeTarotToolQuotaDialog(){
-    const layer=document.getElementById('tarotToolQuotaOverlay');
-    if(!layer||layer.hidden)return;
-    layer.hidden=true;
-    layer.setAttribute('aria-hidden','true');
-    const previous=tarotQuotaReturnFocus;
-    tarotQuotaReturnFocus=null;
-    if(previous?.isConnected&&typeof previous.focus==='function')previous.focus({preventScroll:true});
+  // 額度不足時引導使用者看已有的額度資訊；加購未開放時按鈕仍保持 disabled。
+  function tarotHighlightQuotaOptions(){
+    const panel=document.getElementById('tarotQuotaPanel');
+    const btn=panel?.querySelector('.dh-clean-shared-buy');
+    if(!btn)return;
+    btn.classList.remove('tarot-quota-attention');
+    void btn.offsetWidth;
+    btn.classList.add('tarot-quota-attention');
+    panel?.scrollIntoView({behavior:'smooth',block:'start'});
   }
-  function tarotToolQuotaHelp(source='first',message='',topicId='',auto=false){
-    if(isAdminTestActive()||auto)return; // 更新額度不自動彈出，只有使用者操作不足才出現
-    const layer=document.getElementById('tarotToolQuotaOverlay');
-    if(!layer)return;
-    const logged=isLogged(),custom=source==='custom'||source==='custom2'||source==='related';
-    const needed=source==='custom2'||/需要\s*2\s*次/.test(String(message))?2:1;
-    const title=layer.querySelector('[data-tarot-quota-title]');
-    const body=layer.querySelector('[data-tarot-quota-description]');
-    const login=layer.querySelector('[data-tarot-quota-login]');
-    const buy=layer.querySelector('[data-tarot-quota-buy]');
-    if(title)title.textContent=custom?'會員共用工具額度不足':'塔羅抽牌額度不足';
-    if(body)body.textContent=logged
-      ?custom?`本次操作需要會員共用工具額度 ${needed} 次，目前餘額不足；本次沒有扣次。可參考加購工具額度方案。`
-             :'本期免費抽牌及會員共用工具額度皆不足，本次沒有扣次。可等待免費補充，或參考加購工具額度。'
-      : '本期免費塔羅抽牌額度已用完，請先免費登入查看會員共用工具額度；本次沒有扣次。';
-    if(login)login.hidden=logged;
-    if(buy)buy.hidden=!logged;
-    if(layer.hidden)tarotQuotaReturnFocus=document.activeElement;
-    layer.hidden=false;
-    layer.setAttribute('aria-hidden','false');
-    layer.querySelector('[data-tarot-quota-dismiss]')?.focus({preventScroll:true});
-  }
-  function tarotQuotaIssue(error,fallback,source='first',topicId=''){
+  function tarotQuotaIssue(error,fallback){
     const msg=String(error?.message||'');
-    if(msg==='TOOL_QUOTA_EMPTY'||msg==='SHARED_TOOL_EMPTY'||/額度.{0,24}(已用完|不足)|抽牌已用完/.test(msg)){
-      tarotToolQuotaHelp(source,msg,topicId);
+    if(msg.includes('已用完')||msg.includes('不足')||msg.includes('登入')){
+      alert(msg);tarotHighlightQuotaOptions();
       return;
     }
-    if(msg.includes('登入')||msg==='LOGIN_REQUIRED'||msg==='MEMBER_LOGIN_REQUIRED'){
-      openMemberModal();return;
-    }
-    alert(fallback); // 網路/服務故障不當作額度不足引導加購
+    alert(fallback);
   }
-  // DOM 僅建一次事件處理；不在選題卡片中建立或移動提示。
-  document.addEventListener('click',e=>{
-    const layer=document.getElementById('tarotToolQuotaOverlay');
-    if(!layer||layer.hidden||!layer.contains(e.target))return;
-    if(e.target===layer||e.target.closest('[data-tarot-quota-dismiss]')){
-      closeTarotToolQuotaDialog();return;
-    }
-    if(e.target.closest('[data-tarot-quota-login]')){
-      closeTarotToolQuotaDialog();openMemberModal();return;
-    }
-    if(e.target.closest('[data-tarot-quota-buy]'))closeTarotToolQuotaDialog();
-  });
-  document.addEventListener('keydown',e=>{
-    const layer=document.getElementById('tarotToolQuotaOverlay');
-    if(!layer||layer.hidden)return;
-    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeTarotToolQuotaDialog();return;}
-    if(e.key==='Tab'){
-      const items=Array.from(layer.querySelectorAll('a:not([hidden]),button:not([hidden])')).filter(el=>el.getClientRects().length>0);
-      if(!items.length)return;
-      const first=items[0],last=items[items.length-1];
-      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
-      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
-    }
-  },true);
   // 固定主題每輪抽三張：定期免費優先；用完先確認是否動用共用工具額度。
   // 第一層直接自由提問：只扣共用工具額度 2 次，不另取每日免費額度。
   // 若已先選一般主題並已扣 1 次，再切換自由提問，只加扣共用 1 次，總計 2 次。
@@ -4780,7 +4730,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       tarotUpdateSelectionHints();
       return true;
     }catch(e){
-      if(e.message!=='SHARED_TOOL_CANCELLED')tarotQuotaIssue(e,'抽牌額度暫時無法確認，請稍後重試。','first',topicId);
+      if(e.message!=='SHARED_TOOL_CANCELLED')tarotQuotaIssue(e,'抽牌額度暫時無法確認，請稍後重試。');
       return false;
     }finally{tarotEntryChargeBusy=false;}
   }
@@ -4798,7 +4748,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       state.dhSecondConfirmed=true;
       persist3x3();return true;
     }catch(e){
-      if(e.message!=='SHARED_TOOL_CANCELLED')tarotQuotaIssue(e,'第二輪抽牌額度暫時無法確認，請稍後重試。','second');
+      if(e.message!=='SHARED_TOOL_CANCELLED')tarotQuotaIssue(e,'第二輪抽牌額度暫時無法確認，請稍後重試。');
       return false;
     }
   }
@@ -5562,16 +5512,15 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     if(found?.charged)return true;
     if(tarotCustomPendingBusy)return false;
     tarotCustomPendingBusy=true;
-    // Keep kind in scope for both the debit attempt and its error handler (including free topic's two-credit flow).
-    const kind=overrideKind||(sourceKey==='topic:free'?'topic':'question');
     try{
+      const kind=overrideKind||(sourceKey==='topic:free'?'topic':'question');
       // Retry identical operation IDs after transient network failures; server ledger prevents double charge.
       const operationId=found?.operationId||crypto.randomUUID();
       tarotCustomCache.set(sourceKey,{operationId,charged:false,kind});
       if(!await tarotSpendCustom(kind,operationId))return false;
       tarotCustomCache.set(sourceKey,{operationId,charged:true,kind});
       return true;
-    }catch(e){tarotQuotaIssue(e,'自訂題目額度暫時無法確認，請稍後重試。',kind==='topic'?'custom2':'custom');return false;}
+    }catch(e){tarotQuotaIssue(e,'自訂題目額度暫時無法確認，請稍後重試。');return false;}
     finally{tarotCustomPendingBusy=false;}
   }
   async function requestStartReading(){
@@ -6563,7 +6512,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       if(!await tarotSpendCustom('related',op))return false;
       state.relatedToolCharged=true;
       persist3x3();return true;
-    }catch(e){tarotQuotaIssue(e,'延伸問題額度暫時無法確認，請稍後重試。','related');return false;}
+    }catch(e){alert('延伸問題尚未完成額度確認：'+(e.message||'扣額度失敗'));return false;}
     finally{tarotRelatedPendingBusy=false;}
   }
   async function beginFollowupDraw(){
@@ -7075,15 +7024,12 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       }
       const emptyBar=root?.querySelector('[data-tarot-ai-quota-empty]');
       if(emptyBar){
-        const phase=state.stage3x3==='complete'?'six':'three';
-        const alreadyDone=!!onsiteAiPhaseResults.auto?.[phase];
-        emptyBar.hidden=!empty||alreadyDone;
+        emptyBar.hidden=!empty;
         const emptyMsg=emptyBar.querySelector('[data-tarot-ai-quota-empty-text]');
         if(emptyMsg)emptyMsg.textContent=d.quota?.role==='member'
           ?'AI 解讀額度已用完。可等待下次免費補充，或參考加購方案；已完成的報告仍可下載。'
           :'本期免費 AI 額度已用完，可等待下次補充或登入會員查看共用額度。';
         const buy=emptyBar.querySelector('[data-tarot-ai-buy]');if(buy)buy.hidden=!(empty&&d.quota?.role==='member');
-        const login=emptyBar.querySelector('[data-tarot-ai-login]');if(login)login.hidden=!(empty&&d.quota?.role!=='member');
       }
       const status=root?.querySelector('[data-site-ai-status]');
       if(status&&!onsiteAiBusy&&!['failed','cancelled'].includes(root.dataset.siteAiResult))status.textContent='';
@@ -7375,8 +7321,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
 
         <div class="tarot-ai-quota-empty" data-tarot-ai-quota-empty hidden role="status">
           <span data-tarot-ai-quota-empty-text>AI 額度已用完，無法開始新的 AI 解讀。</span>
-          <a href="/pricing.html" data-tarot-ai-buy hidden>🛒 參考加購 AI 解讀額度</a>
-          <button type="button" data-tarot-ai-login hidden>免費登入查看 AI 額度</button>
+          <button type="button" data-tarot-ai-buy disabled hidden>🛒 加購 AI 解讀額度｜即將開放</button>
         </div>
         <div data-site-ai-output hidden></div>
       </section></section>`;
@@ -7532,7 +7477,6 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       if(body)setOnsiteAiArticleExpanded(root,body.hidden);
       return;
     }
-    const aiLogin=e.target.closest('[data-tarot-ai-login]');if(aiLogin){openMemberModal();return;}
     const runAI=e.target.closest('[data-site-ai-run]');if(runAI){void runOnsiteAi(runAI);return;}
     const claimAI=e.target.closest('[data-site-ai-compensation]');if(claimAI){void reportAndClaimTarotCompensation(claimAI);return;}
     const reportAI=e.target.closest('[data-site-ai-report-send]');if(reportAI){
@@ -7577,12 +7521,6 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
   $('tarotMemberMenuLogout')?.addEventListener('click',logoutMember);
   document.addEventListener('click',e=>{if(!e.target.closest('#tarotMemberEntry'))closeTarotMemberDropdown();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTarotMemberDropdown();});
-  // 從方案頁按上一頁返回時，若瀏覽器恢復舊畫面，立即重新核對兩種餘額。
-  window.addEventListener('pageshow',event=>{
-    if(!event.persisted||isAdminTestActive())return;
-    void refreshTarotToolStatus(true);
-    if(els.analysis?.querySelector('[data-site-ai]'))void refreshOnsiteAiQuota();
-  });
   // 與八字共用登入／登出訊號，所有分頁同步；不得重設原本的塔羅使用額度。
   window.addEventListener('focus',()=>{if(!document.hidden&&!isAdminTestActive())void tarotRestoreSession()});
   window.addEventListener('storage',e=>{
@@ -8458,72 +8396,6 @@ body.has-bazi-chart footer.page-footer.dh-five-tools-footer{display:block!import
 }
 @media(prefers-reduced-motion:reduce){footer.page-footer.dh-five-tools-footer .dh-footer-nav a{transition:none}}
 @media print{footer.page-footer.dh-five-tools-footer .dh-footer-nav{display:none!important}}
-</style>
-
-<style id="tarot-pricing-links-20261028">
-/* Only quota CTA links and contextual low-balance guidance; billing and appearance elsewhere remain unchanged. */
-#tarotQuotaPanel a.dh-clean-shared-buy{cursor:pointer!important;text-decoration:none!important}
-#tarotQuotaPanel a.dh-clean-shared-buy:hover{filter:brightness(1.12);border-color:#c07dd1!important}
-.tarot-ai-quota-empty a[data-tarot-ai-buy],.tarot-ai-quota-empty button[data-tarot-ai-login]{
-  display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:7px 12px;
-  border:1px solid rgba(232,198,122,.45);border-radius:10px;background:rgba(232,198,122,.09);
-  color:var(--gold,#e8c67a);text-decoration:none;font-size:.74rem;font-weight:750;cursor:pointer;opacity:1;
-}
-.tarot-ai-quota-empty [data-tarot-ai-buy][hidden],.tarot-ai-quota-empty [data-tarot-ai-login][hidden]{display:none!important}
-.tarot-ai-quota-empty a[data-tarot-ai-buy]:hover{border-color:rgba(232,198,122,.8);filter:brightness(1.1)}
-html[data-theme="light"] .tarot-ai-quota-empty a[data-tarot-ai-buy],html[data-theme="light"] .tarot-ai-quota-empty button[data-tarot-ai-login]{background:#fcf5e5;color:#76582f;border-color:#d2b783}
-@media(max-width:600px){.tarot-ai-quota-empty a[data-tarot-ai-buy],.tarot-ai-quota-empty button[data-tarot-ai-login]{width:100%}}
-</style>
-
-<!-- 額度不足專用獨立浮層：位於 body 最外層，不影響題目網格與占卜進度。 -->
-<div id="tarotToolQuotaOverlay" class="tarot-quota-dialog-layer" hidden aria-hidden="true"
-     role="dialog" aria-modal="true" aria-labelledby="tarotQuotaDialogTitle" aria-describedby="tarotQuotaDialogDesc">
-  <div class="tarot-quota-dialog-card">
-    <button type="button" class="tarot-quota-dialog-close" data-tarot-quota-dismiss aria-label="關閉額度提醒">×</button>
-    <div class="tarot-quota-dialog-kicker">✦ 一念知機 · 額度提醒</div>
-    <h3 id="tarotQuotaDialogTitle" data-tarot-quota-title>塔羅抽牌額度不足</h3>
-    <p id="tarotQuotaDialogDesc" data-tarot-quota-description>目前額度不足，這次操作沒有扣次。</p>
-    <div class="tarot-quota-dialog-actions">
-      <a href="/pricing.html" target="_blank" rel="noopener noreferrer" data-tarot-quota-buy>🛒 參考加購工具額度</a>
-      <button type="button" data-tarot-quota-login hidden>免費登入查看共用額度</button>
-      <button type="button" data-tarot-quota-dismiss>返回原本畫面</button>
-    </div>
-    <small>僅供查看加購方案；是否能付款仍以網站付款開關為準。開啟加購方案不會清除本頁選題。</small>
-  </div>
-</div>
-<style id="tarot-quota-dialog-safe-v2">
-/* Position fixed + body-root sibling: NEVER participates in .choice-grid or .question-grid. */
-#tarotToolQuotaOverlay[hidden],#tarotToolQuotaOverlay [hidden]{display:none!important}
-#tarotToolQuotaOverlay.tarot-quota-dialog-layer{
-  position:fixed!important;inset:0!important;z-index:2400!important;
-  display:grid;place-items:center;padding:18px;
-  overflow:auto;overscroll-behavior:contain;
-  background:rgba(3,2,9,.78);backdrop-filter:blur(7px);
-}
-#tarotToolQuotaOverlay .tarot-quota-dialog-card{
-  position:relative;width:min(470px,100%);max-height:min(90dvh,700px);overflow:auto;
-  padding:25px 24px 22px;border-radius:20px;border:1px solid rgba(228,170,226,.42);
-  background:linear-gradient(150deg,#221329,#110e1c);color:#f6eaf4;
-  box-shadow:0 24px 80px rgba(0,0,0,.65);
-}
-#tarotToolQuotaOverlay .tarot-quota-dialog-kicker{font-size:.72rem;color:#eab5df;font-weight:800;letter-spacing:.06em}
-#tarotToolQuotaOverlay h3{margin:12px 38px 13px 0;color:#fce9f8;font-size:1.3rem;line-height:1.45}
-#tarotToolQuotaOverlay p{margin:0;color:#e5d6e7;font-size:.9rem;line-height:1.85;overflow-wrap:anywhere}
-#tarotToolQuotaOverlay .tarot-quota-dialog-actions{display:flex;flex-wrap:wrap;gap:9px;margin:21px 0 14px}
-#tarotToolQuotaOverlay .tarot-quota-dialog-actions a,#tarotToolQuotaOverlay .tarot-quota-dialog-actions button{
-  display:inline-flex;align-items:center;justify-content:center;min-height:42px;
-  padding:9px 14px;border:1px solid rgba(231,150,221,.45);border-radius:11px;
-  background:rgba(229,126,212,.12);color:#f4d4ec;text-decoration:none;
-  font-size:.82rem;font-weight:800;line-height:1.5;cursor:pointer!important;
-}
-#tarotToolQuotaOverlay .tarot-quota-dialog-actions a{background:linear-gradient(125deg,#dfa1d4,#b982d7);color:#1f1029;border-color:#eab1e5}
-#tarotToolQuotaOverlay .tarot-quota-dialog-actions a:hover,#tarotToolQuotaOverlay .tarot-quota-dialog-actions button:hover{filter:brightness(1.1)}
-#tarotToolQuotaOverlay .tarot-quota-dialog-close{
-  position:absolute;right:12px;top:11px;width:37px;height:37px;border:1px solid rgba(231,150,221,.24);
-  border-radius:50%;background:rgba(255,255,255,.07);color:#f3d9e9;font-size:1.5rem;line-height:1;cursor:pointer!important;
-}
-#tarotToolQuotaOverlay small{display:block;color:#bcadbd;font-size:.7rem;line-height:1.75}
-@media(max-width:560px){#tarotToolQuotaOverlay .tarot-quota-dialog-card{padding:23px 18px 19px}#tarotToolQuotaOverlay .tarot-quota-dialog-actions{flex-direction:column}#tarotToolQuotaOverlay .tarot-quota-dialog-actions a,#tarotToolQuotaOverlay .tarot-quota-dialog-actions button{width:100%}}
 </style>
 </body>
 </html>
