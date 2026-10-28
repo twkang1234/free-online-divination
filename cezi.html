@@ -703,6 +703,8 @@ html[data-theme="light"] .cezi-footer-disclaimer{color:#736677}
 .cezi-points-buy:hover{border-color:var(--pink);background:rgba(233,164,187,.09)}
 .cezi-quota-hint{margin:10px 0 4px;padding:10px 12px;border:1px solid rgba(234,203,139,.38);border-radius:10px;background:rgba(234,203,139,.055);color:var(--text);font-size:13px;line-height:1.75}
 .cezi-quota-hint a{color:var(--gold);text-underline-offset:3px;font-weight:750}
+.cezi-quota-hint a:hover{color:var(--pink)}
+.cezi-quota-hint a:focus-visible{outline:2px solid var(--pink);outline-offset:3px;border-radius:3px}
 #result .loading:not(.hidden){display:flex;justify-content:center;align-items:center;gap:16px;padding:18px 20px;border:1px solid rgba(233,164,187,.36);border-radius:13px;background:rgba(233,164,187,.065);color:var(--text);font-size:16px;font-weight:750}
 #result .loading .spinner{flex:0 0 44px;width:44px;height:44px;border-width:4px;border-color:rgba(233,164,187,.22);border-top-color:var(--pink);box-shadow:0 0 15px rgba(233,164,187,.08)}
 .cezi-ai-export{max-width:1550px;margin:20px auto 10px;padding:11px 14px;border:1px solid rgba(233,164,187,.36);border-radius:12px;background:rgba(233,164,187,.05);display:flex;align-items:center;justify-content:space-between;gap:11px;flex-wrap:wrap}
@@ -714,6 +716,8 @@ html[data-theme="light"] .cezi-footer-disclaimer{color:#736677}
 .cezi-ai-export small{flex:0 0 100%;color:var(--muted);font-size:12px}
 .cezi-ai-export small:empty{display:none}
 html[data-theme="light"] .cezi-quota-hint{background:#fffbf2;border-color:#cfb382;color:#4c3748}
+html[data-theme="light"] .cezi-quota-hint a{color:#763b81}
+html[data-theme="light"] .cezi-quota-hint a:hover{color:#a14c75}
 html[data-theme="light"] .cezi-ai-export{background:#fff8fc;border-color:#d5b4ce}
 html[data-theme="light"] .cezi-ai-export-actions button:not(:first-child){background:#f5e7ef;color:#613c62;border-color:#cfb4ca}
 html[data-theme="light"] #result .loading:not(.hidden){background:#fff6fc;border-color:#ccafc5;color:#46304a}
@@ -840,10 +844,10 @@ html[data-theme="light"] .site-footer .cezi-footer-tool-nav a.active small{color
     <div class="cezi-entitlement-card cezi-points-card">
       <h2>專業解鎖點數</h2>
       <strong class="cezi-points-value" id="ceziProfessionalPoints">登入後查看</strong>
-      <p>八字、塔羅、易經共用</p>
-      <p>依各專業區塊扣點</p>
-      <a class="cezi-points-buy" href="/pricing.html" aria-label="參考加購方案">🛒 參考加購方案</a>
-      <span class="cezi-points-notice">測字目前不收取專業點數</span>
+      <p>僅適用於有啟用專業點數的工具</p>
+      <p>實際使用規則依各工具頁面顯示</p>
+      <a class="cezi-points-buy" href="https://divinationhub.tw/pricing.html" aria-label="查看額度與點數加購方案">🛒 參考加購方案</a>
+      <span class="cezi-points-notice">測字不扣專業解鎖點數</span>
     </div>
   </div>
 </section>
@@ -852,7 +856,7 @@ html[data-theme="light"] .site-footer .cezi-footer-tool-nav a.active small{color
  <section class="panel" id="qpanel" aria-labelledby="step3-title"><div class="step">STEP 03 · 問事題目</div><h2 id="step3-title">選擇你想知道的問題</h2><div class="options" id="questions"></div><div class="hidden custom-question" id="customQuestionBox"><label for="customQuestion">自行輸入完整問題（6～160 字）</label><textarea id="customQuestion" maxlength="160" placeholder="例如：我明年是否適合到國外工作？" rows="3"></textarea><p class="small">自訂問題會配合目前選擇的問事情境與所測中文字一起分析。</p></div></section>
  <section class="panel" id="charpanel" aria-labelledby="step4-title"><div class="step">STEP 04 · 一字測事</div><h2 id="step4-title">專心默念問題，輸入第一個浮現的中文字</h2><p class="small" id="selectedQuestion"></p><div class="hanzi"><input aria-label="輸入一個中文字" autocomplete="off" id="hanzi" inputmode="text" maxlength="2" placeholder="輸入文字" type="text"/></div><div class="small" style="text-align:center">請輸入一個中文字。測字用於象徵性理解，不保證預測實際發生時間。</div><button class="primary" id="start" type="button">開始測字</button><p id="notice" role="status"></p></section>
 </div>
-<section class="panel hidden" id="result" aria-label="測字分析結果"><div class="reporthead"><div class="step">一念知機 · 測字問事</div><div class="largechar" id="resultchar"></div><div id="resultquestion"></div></div><section aria-label="第一階段固定測字分析" class="cezi-foundation" id="foundation"></section><div aria-label="固定分析與 AI 解讀分界" class="cezi-phase-break" role="separator"><span class="phase-rule"></span><span class="phase-mark">✦ 第二階段 · AI 問事深度解讀</span><span class="phase-rule"></span><p class="phase-descr">從字形與字義出發，深入解析問題的關鍵、未來發展與行動建議。</p></div><button class="primary" id="interpret" type="button">開始 AI 深度解讀（工具 -1・AI -1）</button><p class="cezi-quota-hint hidden" id="ceziAiQuotaNotice" role="status">目前可用額度不足，可等待下次免費補充或 <a href="/pricing.html">參考加購方案</a>。</p><div class="loading hidden" id="loading" role="status"><div class="spinner"></div><span>AI 正在解讀中…</span></div><p class="reading-status" id="readingstatus" role="status"></p><div class="cezi-ai-metadata hidden" id="ceziAiMetrics" role="status" aria-live="polite"><span class="cezi-ai-dot" aria-hidden="true">●</span><span id="ceziAiMetricsText"></span></div><article class="reading-prose" id="reading"></article><p class="small" id="readnotice" role="status"></p><div class="cezi-error-report hidden" id="ceziAiReport"><details><summary>回報站內 AI 異常</summary><p id="ceziFaultTrace" class="small"></p><label for="ceziFaultMessage">簡短說明問題（10～400 字）</label><textarea id="ceziFaultMessage" maxlength="400" rows="3" placeholder="例如：AI 解讀尚未完成，重試仍失敗"></textarea><button type="button" id="ceziFaultSubmit">送出異常回報</button><p id="ceziFaultStatus" class="small" role="status"></p></details></div><div class="hidden" id="followupbox" style="margin-top:28px;padding-top:20px;border-top:1px solid var(--line)"><h2>✦ AI 追問</h2><textarea id="followquestion" maxlength="500" placeholder="例如：我該如何增加遇到對象的機會？" rows="3" style="width:100%;border:1px solid var(--line);background:#090915;color:var(--text);border-radius:12px;padding:14px;font:inherit"></textarea><button class="primary" id="followbutton" type="button">送出追問（AI -1）</button><p class="cezi-quota-hint hidden" id="ceziFollowQuotaNotice" role="status">AI 額度已用完，可等待下次免費補充或 <a href="/pricing.html">參考加購方案</a>。</p><div class="loading hidden" id="followloading"><div class="spinner"></div><span>AI 正在解讀中…</span></div><div id="followanswers"></div></div><div class="cezi-ai-export hidden" id="ceziAiExport" aria-label="保存完整 AI 問答"><span>✦ AI 解讀可自行保存</span><div class="cezi-ai-export-actions"><button type="button" id="ceziAiDownload">↓ 下載完整解讀</button><button type="button" id="ceziAiCopy">複製完整解讀</button></div><small id="ceziAiExportStatus" role="status"></small></div><div class="result-actions"><button class="hidden" id="restart" type="button">↻ 重新測字</button></div></section>
+<section class="panel hidden" id="result" aria-label="測字分析結果"><div class="reporthead"><div class="step">一念知機 · 測字問事</div><div class="largechar" id="resultchar"></div><div id="resultquestion"></div></div><section aria-label="第一階段固定測字分析" class="cezi-foundation" id="foundation"></section><div aria-label="固定分析與 AI 解讀分界" class="cezi-phase-break" role="separator"><span class="phase-rule"></span><span class="phase-mark">✦ 第二階段 · AI 問事深度解讀</span><span class="phase-rule"></span><p class="phase-descr">從字形與字義出發，深入解析問題的關鍵、未來發展與行動建議。</p></div><button class="primary" id="interpret" type="button">開始 AI 深度解讀（工具 -1・AI -1）</button><p class="cezi-quota-hint hidden" id="ceziAiQuotaNotice" role="status" aria-live="polite">可用額度不足，可等待下次免費補充或 <a href="https://divinationhub.tw/pricing.html">參考加購方案</a>。</p><div class="loading hidden" id="loading" role="status"><div class="spinner"></div><span>AI 正在解讀中…</span></div><p class="reading-status" id="readingstatus" role="status"></p><div class="cezi-ai-metadata hidden" id="ceziAiMetrics" role="status" aria-live="polite"><span class="cezi-ai-dot" aria-hidden="true">●</span><span id="ceziAiMetricsText"></span></div><article class="reading-prose" id="reading"></article><p class="small" id="readnotice" role="status"></p><div class="cezi-error-report hidden" id="ceziAiReport"><details><summary>回報站內 AI 異常</summary><p id="ceziFaultTrace" class="small"></p><label for="ceziFaultMessage">簡短說明問題（10～400 字）</label><textarea id="ceziFaultMessage" maxlength="400" rows="3" placeholder="例如：AI 解讀尚未完成，重試仍失敗"></textarea><button type="button" id="ceziFaultSubmit">送出異常回報</button><p id="ceziFaultStatus" class="small" role="status"></p></details></div><div class="hidden" id="followupbox" style="margin-top:28px;padding-top:20px;border-top:1px solid var(--line)"><h2>✦ AI 追問</h2><textarea id="followquestion" maxlength="500" placeholder="例如：我該如何增加遇到對象的機會？" rows="3" style="width:100%;border:1px solid var(--line);background:#090915;color:var(--text);border-radius:12px;padding:14px;font:inherit"></textarea><button class="primary" id="followbutton" type="button">送出追問（AI -1）</button><p class="cezi-quota-hint hidden" id="ceziFollowQuotaNotice" role="status" aria-live="polite">AI 解讀額度不足，可等待下次免費補充或 <a href="https://divinationhub.tw/pricing.html">參考加購 AI 額度</a>。</p><div class="loading hidden" id="followloading"><div class="spinner"></div><span>AI 正在解讀中…</span></div><div id="followanswers"></div></div><div class="cezi-ai-export hidden" id="ceziAiExport" aria-label="保存完整 AI 問答"><span>✦ AI 解讀可自行保存</span><div class="cezi-ai-export-actions"><button type="button" id="ceziAiDownload">↓ 下載完整解讀</button><button type="button" id="ceziAiCopy">複製完整解讀</button></div><small id="ceziAiExportStatus" role="status"></small></div><div class="result-actions"><button class="hidden" id="restart" type="button">↻ 重新測字</button></div></section>
 
 <div class="seo-home landing-only" id="cezi-seo-content">
  <nav class="seo-jump" aria-label="測字介紹導覽"><a href="#cezi-about">測字算命介紹</a><a href="#cezi-features">AI 測字特色</a><a href="#cezi-how">線上測字流程</a><a href="#cezi-topic">測字問事題目</a><a href="#cezi-topic-network">五大測字專題</a><a href="#cezi-faq">常見問題</a></nav>
@@ -991,17 +995,31 @@ function ceziUpdateQuotaGuidance(d=ceziQuotaSnapshot){
  const fq=d?.freeQuota;
  if(!fq)return;
  const wallet=d?.wallet;
- const hasWallet=wallet&&Number.isFinite(Number(wallet.tool))&&Number.isFinite(Number(wallet.ai));
+ const hasWallet=!!wallet&&wallet.tool!=null&&wallet.ai!=null&&Number.isFinite(Number(wallet.tool))&&Number.isFinite(Number(wallet.ai));
  const freeTool=Number(fq.tool?.remaining),freeAi=Number(fq.ai?.remaining);
  if(!Number.isFinite(freeTool)||!Number.isFinite(freeAi))return;
- // 若後端沒有可靠的會員共用額度資料，不以 0 猜測額度，避免誤鎖功能。
- const toolEmpty=hasWallet&&freeTool<=0&&Number(wallet.tool)<=0;
- const aiEmpty=hasWallet&&freeAi<=0&&Number(wallet.ai)<=0;
- const notice=$('ceziAiQuotaNotice'),followNotice=$('ceziFollowQuotaNotice');
+ const loggedIn=!!ceziAuthToken();
+ // 會員共用額度尚未取得時，不猜測為零；訪客只能使用已確認的免費額度。
+ const toolEmpty=loggedIn?(hasWallet&&freeTool<=0&&Number(wallet.tool)<=0):freeTool<=0;
+ const aiEmpty=loggedIn?(hasWallet&&freeAi<=0&&Number(wallet.ai)<=0):freeAi<=0;
  const blocked=toolEmpty||aiEmpty;
- if(notice){notice.classList.toggle('hidden',!blocked);
-  notice.firstChild.textContent=blocked?`${toolEmpty?'工具':'AI 解讀'}額度已用完，可等待下次免費補充或 `:'';}
- if(followNotice){followNotice.classList.toggle('hidden',!aiEmpty)}
+ const notice=$('ceziAiQuotaNotice'),followNotice=$('ceziFollowQuotaNotice');
+ function showHint(el,visible,message,linkLabel){
+  if(!el)return;
+  el.classList.toggle('hidden',!visible);
+  if(!visible)return;
+  el.firstChild.textContent=message;
+  const link=el.querySelector('a');
+  if(link){link.href=loggedIn?'https://divinationhub.tw/pricing.html':'member.html';link.textContent=linkLabel;}
+ }
+ if(blocked){
+  const what=toolEmpty&&aiEmpty?'工具與 AI 解讀額度':toolEmpty?'工具額度':'AI 解讀額度';
+  showHint(notice,true,loggedIn?`${what}${toolEmpty&&aiEmpty?'皆':'已'}${toolEmpty&&aiEmpty?'已用完':'用完'}，可等待下次免費補充或 `:`本期免費${what}已用完，可 `,
+   loggedIn?toolEmpty&&aiEmpty?'參考加購工具與 AI 額度':toolEmpty?'參考加購工具額度':'參考加購 AI 額度':'免費登入查看會員額度');
+ }else showHint(notice,false,'','');
+ // 追問只會使用 AI 額度，不應因工具額度用完而阻擋追問。
+ showHint(followNotice,aiEmpty,loggedIn?'AI 解讀額度已用完，可等待下次免費補充或 ':'本期免費 AI 解讀額度已用完，可 ',
+  loggedIn?'參考加購 AI 額度':'免費登入查看會員額度');
  const interpret=$('interpret'),follow=$('followbutton');
  if(interpret)interpret.disabled=busy||blocked;
  if(follow)follow.disabled=busy||aiEmpty;
@@ -1176,6 +1194,17 @@ async function refresh(){
    const t=$('ceziDailyTool'),a=$('ceziDailyAi');if(t)t.textContent='暫時無法查詢';if(a)a.textContent='暫時無法查詢';
  }
 }
+// 從加購頁或會員登入頁返回時，重新確認後端額度，讓已補充的額度恢復按鈕。
+let ceziQuotaRefreshAt=0;
+function ceziRefreshQuotaOnReturn(){
+ if(document.hidden)return;
+ const now=Date.now();if(now-ceziQuotaRefreshAt<2500)return;
+ ceziQuotaRefreshAt=now;void refresh();
+}
+window.addEventListener('pageshow',ceziRefreshQuotaOnReturn);
+window.addEventListener('focus',ceziRefreshQuotaOnReturn);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)ceziRefreshQuotaOnReturn()});
+window.addEventListener('storage',e=>{if(e.key==='divinationhub-auth-session-v1'||e.key==='divinationhub-auth-event')ceziRefreshQuotaOnReturn()});
 function syncQuota(d){
  const q=d?.freeQuota;if(!q)return;
  ceziQuotaSnapshot=d;ceziUpdateQuotaGuidance(d);
