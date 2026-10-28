@@ -619,7 +619,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
         body:JSON.stringify({orderNo})});
       const j=await r.json().catch(()=>({}));
       if(!r.ok||j.success!==true)throw Error(j.error||'交易核對暫時無法完成');
-      status.textContent=j.message||'核對完成';
+      status.textContent=j.alreadyCredited===true?'此筆訂單已付款成功，購買額度也已發放至您的帳戶，無須再次領取。':(j.message||'核對完成');
       if(j.paid){void refreshSharedWallet();void refreshProfessionalPoints();}
     }catch(e){
       console.warn('MEMBER_PAYMENT_RECHECK_FAILED',String(e?.message||e));
