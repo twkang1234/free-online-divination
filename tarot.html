@@ -5562,8 +5562,9 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     if(found?.charged)return true;
     if(tarotCustomPendingBusy)return false;
     tarotCustomPendingBusy=true;
+    // Keep kind in scope for both the debit attempt and its error handler (including free topic's two-credit flow).
+    const kind=overrideKind||(sourceKey==='topic:free'?'topic':'question');
     try{
-      const kind=overrideKind||(sourceKey==='topic:free'?'topic':'question');
       // Retry identical operation IDs after transient network failures; server ledger prevents double charge.
       const operationId=found?.operationId||crypto.randomUUID();
       tarotCustomCache.set(sourceKey,{operationId,charged:false,kind});
