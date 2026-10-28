@@ -239,6 +239,30 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 @media(max-width:360px){#signalGrid .signal-card{grid-template-columns:1fr;grid-template-areas:'top' 'status' 'buttons' 'meta';gap:4px}#signalGrid .signal-switch{justify-content:stretch}#signalGrid .signal-choice{flex:1}}
 
 
+
+/* 僅供會員查閱的已付款額度紀錄：預設收合、只讀，不影響結帳與餘額。 */
+.member-purchase-history{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:var(--base);overflow:hidden}
+.member-purchase-history>summary{cursor:pointer;list-style:none;padding:11px 14px;font-size:.84rem;font-weight:800;color:var(--primary);display:flex;align-items:center;gap:9px}
+.member-purchase-history>summary::-webkit-details-marker{display:none}
+.member-purchase-history>summary::before{content:'▸';transition:transform .15s ease;display:inline-block;font-size:.8rem}
+.member-purchase-history[open]>summary::before{transform:rotate(90deg)}
+.member-purchase-history[open]>summary{border-bottom:1px solid var(--line)}
+.member-purchase-body{padding:11px 15px 14px}
+.member-purchase-status{color:var(--sub);font-size:.78rem;margin:0 0 8px}
+.member-purchase-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.member-purchase-row:first-child{border-top:0}
+.member-purchase-info{min-width:0;flex:1;overflow-wrap:anywhere}
+.member-purchase-info strong{font-size:.87rem;display:block;line-height:1.55}
+.member-purchase-info small{display:block;font-size:.73rem;color:var(--sub);line-height:1.7}
+.member-purchase-number{text-align:right;flex:0 0 auto;min-width:78px}
+.member-purchase-number strong{display:block;font-size:1.09rem;color:var(--green);line-height:1.5}
+.member-purchase-number strong.is-pending{color:var(--gold)}
+.member-purchase-number small{display:block;color:var(--muted);font-size:.7rem;line-height:1.55}
+.member-purchase-note{font-size:.7rem;color:var(--muted);margin:10px 0 0}
+.member-purchase-refresh{border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--sub);padding:5px 10px;font-size:.73rem;min-height:30px}
+.member-purchase-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+@media(max-width:580px){.member-purchase-history>summary{padding:10px 12px}.member-purchase-body{padding:10px 12px}.member-purchase-row{gap:8px}.member-purchase-number{min-width:70px}}
+
 .member-payment-recheck{margin-top:9px;font-size:.79rem;color:var(--sub)}
 .member-payment-recheck summary{cursor:pointer;color:var(--primary);font-weight:700;list-style-position:inside}
 .member-payment-recheck-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 4px}
@@ -283,6 +307,17 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       <div class="simple-panel"><b>專業解鎖點數</b><h3 id="memberWalletPoints">— 點</h3><small>依已開放的專業區塊價格解鎖</small></div>
     </div>
     <p class="caption" id="memberWalletNote" role="status">登入後即可查看實際剩餘額度。</p>
+    <details class="member-purchase-history" id="memberPurchaseHistory">
+      <summary>我的額度購買紀錄</summary>
+      <div class="member-purchase-body">
+        <div class="member-purchase-controls">
+          <p class="member-purchase-status" id="memberPurchaseHistoryStatus" role="status" aria-live="polite">展開後查詢本人已付款的額度訂單。</p>
+          <button type="button" class="member-purchase-refresh" id="memberPurchaseHistoryRefresh">重新整理</button>
+        </div>
+        <div id="memberPurchaseHistoryList" aria-live="polite"></div>
+        <p class="member-purchase-note">僅列出最近 30 筆已確認成功的會員商品付款；若尚未完成額度入帳，會另外標示「待確認」。不包含免費額度、工具使用或自由支持。</p>
+      </div>
+    </details>
     <details class="member-payment-recheck" id="memberPaymentRecheck">
       <summary>已付款但額度未增加？核對交易紀錄</summary>
       <div class="member-payment-recheck-controls">
@@ -450,6 +485,64 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
    function savedSession(){try{return localStorage.getItem(SESSION_KEY)||''}catch(_){return ''}}
    function storeSession(token){try{if(token)localStorage.setItem(SESSION_KEY,token);else localStorage.removeItem(SESSION_KEY);return true}catch(_){return false}}
    function sessionHeaders(){const t=savedSession();return t?{Authorization:'Bearer '+t}:{}}
+  // 購買紀錄僅透過本人 Session 讀取既有訂單，不參與付款、核對或加減點。
+  let memberPurchaseReadSeq=0;
+  function purchaseDateTaiwan(value){
+    if(!value)return '付款時間未提供';
+    let raw=String(value).trim();
+    // SQLite CURRENT_TIMESTAMP 為 UTC 無時區格式；付款 Worker 的 ISO 時間已含 Z。
+    if(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/.test(raw))raw=raw.replace(' ','T')+'Z';
+    const t=Date.parse(raw);
+    if(!Number.isFinite(t))return '付款時間未提供';
+    return new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(t));
+  }
+  function renderMemberPurchases(records){
+    const root=document.getElementById('memberPurchaseHistoryList');
+    root.replaceChildren();
+    if(!records.length){root.append(textNode('p','目前尚無已完成付款的額度購買紀錄。','member-purchase-status'));return}
+    const names={tool:'共用工具額度',ai:'共用 AI 解讀額度',professional:'專業解鎖點數'};
+    for(const r of records){
+      const unit=r.productType==='professional'?'點':'次';
+      const row=textNode('div','','member-purchase-row');
+      const info=textNode('div','','member-purchase-info');
+      info.append(textNode('strong',r.productName||'額度商品'));
+      info.append(textNode('small',purchaseDateTaiwan(r.paidAt)+'（台灣時間） · '+(names[r.productType]||'額度')));
+      info.append(textNode('small','實付 NT$ '+Number(r.amountTwd||0).toLocaleString('zh-TW')+' · 訂單 '+r.orderNo));
+      const number=textNode('div','','member-purchase-number');
+      number.append(textNode('strong',(r.credited?'+':'待確認 +')+Number(r.quantity||0)+' '+unit,r.credited?'':'is-pending'));
+      number.append(textNode('small',r.credited?'已完成額度入帳':'付款成功・額度待確認'));
+      row.append(info,number);root.append(row);
+    }
+  }
+  async function loadMemberPurchaseHistory(){
+    const seq=++memberPurchaseReadSeq;
+    const root=document.getElementById('memberPurchaseHistoryList');
+    const status=document.getElementById('memberPurchaseHistoryStatus');
+    const memberSub=verifiedSessionMember?.sub||'',token=savedSession();
+    root.replaceChildren();
+    if(!memberSub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(token)){
+      status.textContent='請先登入會員，即可查看自己的購買紀錄。';return;
+    }
+    status.textContent='正在查詢已付款紀錄…';
+    try{
+      const response=await fetch(API_MEMBER+'/member/purchases',{cache:'no-store',headers:{Accept:'application/json',Authorization:'Bearer '+token}});
+      const result=await response.json().catch(()=>null);
+      if(seq!==memberPurchaseReadSeq||memberSub!==verifiedSessionMember?.sub||token!==savedSession())return;
+      if(!response.ok||result?.success!==true||!Array.isArray(result.records))throw Error('PURCHASE_HISTORY_UNAVAILABLE');
+      renderMemberPurchases(result.records);
+      status.textContent='以下只顯示本人已付款的會員商品（最多 30 筆）。';
+    }catch(_){
+      if(seq!==memberPurchaseReadSeq||memberSub!==verifiedSessionMember?.sub||token!==savedSession())return;
+      status.textContent='購買紀錄暫時無法讀取，請稍後重新整理。';
+    }
+  }
+  const purchaseHistoryDetails=document.getElementById('memberPurchaseHistory');
+  purchaseHistoryDetails.addEventListener('toggle',()=>{
+    if(purchaseHistoryDetails.open)void loadMemberPurchaseHistory();
+    else ++memberPurchaseReadSeq;
+  });
+  document.getElementById('memberPurchaseHistoryRefresh').addEventListener('click',()=>void loadMemberPurchaseHistory());
+
   async function refreshProfessionalPoints(){
     const el=document.getElementById('memberWalletPoints');
     const sub=verifiedSessionMember?.sub||'';
@@ -469,6 +562,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     }catch(_){if(sub===verifiedSessionMember?.sub)el.textContent='暫時無法查詢'}
   }
   async function refreshSharedWallet(){
+    if(purchaseHistoryDetails.open)void loadMemberPurchaseHistory();
     const note=document.getElementById('memberWalletNote');
     if(!verifiedSessionMember?.sub){
       for(const id of ['memberWalletTool','memberWalletAI'])document.getElementById(id).textContent='— 次';
