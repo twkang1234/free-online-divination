@@ -805,7 +805,7 @@ td.muted{color:var(--muted)}
             <button type="button" data-dh-period="30" aria-pressed="false">近 30 天</button>
           </div>
           <label for="dhAiToolFilter">工具</label>
-          <select id="dhAiToolFilter"><option value="all">全部工具</option><option value="bazi">八字</option><option value="tarot">塔羅</option><option value="yijing">易經</option><option value="cezi">測字</option></select>
+          <select id="dhAiToolFilter"><option value="all">全部工具</option><option value="bazi">八字</option><option value="tarot">塔羅</option><option value="yijing">易經</option><option value="cezi">測字</option><option value="wuxing">五行</option></select>
           <button type="button" class="btn secondary" id="dhAiReload">重新查詢</button>
         </div>
         <div class="dh-ai-cards">
@@ -2140,13 +2140,15 @@ $('baziGiftSend')?.addEventListener('click',send);
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),API='https://admin-api.ezgocpu.workers.dev';
-const labels={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字'};
+const labels={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字',wuxing:'五行'};
 // 中文名稱是問題分類，不能單憑瀏覽器文字確定根因；仍需保留原始碼供排查。
 const errorInfo={
  NO_AVAILABLE_PROVIDER:['全部 AI 通道暫時不可用','AI 總控沒有可使用的解讀通道，請檢查備援服務設定。'],
  ALL_PROVIDER_ATTEMPTS_FAILED:['所有 AI 備援均失敗','此請求的可用通道都沒有成功，可能是外部服務、額度或請求限制。'],
  AI_SERVICE_TEMPORARILY_UNAVAILABLE:['AI 解讀服務暫時無法完成','工具未能完成整次解讀，請查看 Worker 與 AI 總控的終局紀錄。'],
  CENTER_METERING_UNAVAILABLE:['AI 總控計量紀錄異常','AI 呼叫紀錄未能正常完成，請確認 AI 總控服務及資料庫。'],
+ AI_CENTER_NOT_CONFIGURED:['AI 總控連接設定異常','工具 Worker 尚未完成 AI 總控連線設定。'],
+ AI_UNAVAILABLE:['AI 最終解讀失敗','AI 解讀未能完整交付，請檢查工具 Worker 與 AI 總控。'],
  AI_CENTER_YIJING_NOT_CONFIGURED:['易經 AI 連接設定異常','易經工具與 AI 總控間的設定可能缺漏。'],
  WALLET_UNAVAILABLE:['會員共用額度服務異常','會員額度系統無法正常讀取或預留額度。'],
  QUOTA_RECORD_UNAVAILABLE:['扣額度紀錄失敗','會員額度紀錄未能正常寫入，請確認交易紀錄。'],
@@ -2178,7 +2180,7 @@ function startDay(asOf){const now=new Date(new Date(asOf).getTime()+8*3600000),d
 function dailyTotals(data){
  const since=startDay(data.asOf),list=(data.daily||[]).filter(x=>x.day>=since&&(tool==='all'||x.tool===tool));
  const total=new Map();for(const r of list){let item=total.get(r.day)||{day:r.day,success:0,failure:0};item.success+=r.success;item.failure+=r.failure;total.set(r.day,item)}
- const byTool={};for(const key of ['bazi','tarot','yijing','cezi'])byTool[key]={success:0,failure:0};
+ const byTool={};for(const key of ['bazi','tarot','yijing','cezi','wuxing'])byTool[key]={success:0,failure:0};
  for(const r of list){byTool[r.tool].success+=r.success;byTool[r.tool].failure+=r.failure}
  const summary=[...total.values()].reduce((sum,v)=>({success:sum.success+v.success,failure:sum.failure+v.failure}),{success:0,failure:0});
  return {byTool,days:[...total.values()].sort((a,b)=>b.day.localeCompare(a.day)),summary};
@@ -2231,7 +2233,7 @@ function render(data){
  $('dhAiDataNotice').textContent=notice.join('；');
  const toolStats=$('dhAiToolStats');toolStats.replaceChildren();
  if(!data.dailyAvailable)toolStats.append(node('p','AI 最終結果資料目前無法讀取，不能計算各工具成功率。','dh-ai-status'));
- else for(const key of ['bazi','tarot','yijing','cezi']){
+ else for(const key of ['bazi','tarot','yijing','cezi','wuxing']){
    if(tool!=='all'&&tool!==key)continue;
    const r=stats.byTool[key],card=node('div','','dh-ai-tool'),recent=data.outcomes?.byTool?.[key]||{};
    card.append(node('b',labels[key]+'｜成功 '+r.success+' 次／失敗 '+r.failure+' 次'));
