@@ -72,7 +72,7 @@
     @media(min-width:561px){.pricing-back-short{display:none}}
     @media(max-width:340px){.sitebar{gap:6px}.pricing-top-actions{gap:4px}.pricing-member-main{padding:7px 8px}.pricing-top-actions .backlink{padding:7px 7px}}
 
-    /* 完整購買入口：所有方案均顯示，點擊後開啟結帳摘要；金流未串時仍能預覽。 */
+    /* 完整購買入口：商品方案及結帳摘要依後端回應顯示。 */
     .buy,.spot-buy{transition:transform .15s,filter .15s;box-shadow:0 8px 22px rgba(126,87,199,.13)}
     .buy:hover,.spot-buy:hover{transform:translateY(-1px)}
     .checkout-modal{width:min(520px,calc(100% - 28px));max-height:min(88vh,800px);overflow:auto;inset:0;margin:auto;background:var(--panel);color:var(--text);border:1px solid var(--violet);border-radius:20px;padding:0;box-shadow:0 26px 100px rgba(0,0,0,.55)}
@@ -96,6 +96,11 @@
     .checkout-pay:disabled{opacity:.48;cursor:not-allowed;box-shadow:none}
     .checkout-back{border:1px solid var(--stroke);border-radius:10px;padding:10px;background:var(--panel2);color:var(--text);cursor:pointer}
     .checkout-state{font-size:.74rem;color:var(--muted);line-height:1.7;margin-top:10px}
+    /* 付款及客服資訊僅作為輔助小字連結，不增設影響結帳的提示卡片。 */
+    .pricing-quiet-link,.pricing-footer-links a{color:inherit;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--subtle) 48%,transparent);text-underline-offset:3px}
+    .pricing-quiet-link:hover,.pricing-footer-links a:hover{color:var(--violet);text-decoration-color:currentColor}
+    .pricing-quiet-link:focus-visible,.pricing-footer-links a:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+    .pricing-footer-links{display:inline;color:var(--subtle)}
     [hidden]{display:none!important}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
@@ -206,7 +211,7 @@
       <div class="explain"><div><strong>共用工具額度</strong><p>參與共用制度的工具可以使用同一筆工具額度；各工具定期免費額度依自己的規則先行使用。</p></div><div><strong>AI 解讀另外計次</strong><p>AI 解析與工具使用次數分開管理，實際消耗依各工具功能說明為準。</p></div><div><strong>專業解鎖點數</strong><p>專業內容依不同工具與區塊計價，不會直接替代工具額度或 AI 解讀次數。</p></div></div>
     </div>
   </main>
-  <footer>© 一念知機 · DivinationHub</footer>
+  <footer>© 一念知機 · DivinationHub <span class="pricing-footer-links">· <a href="payment.html">付款及退款說明</a> · <a href="mailto:ezgocpu@gmail.com">聯絡客服</a></span></footer>
   <dialog class="checkout-modal" id="dhCheckoutDialog" aria-labelledby="dhCheckoutTitle">
     <div class="checkout-header">
       <div><div class="checkout-eyebrow">DIVINATION HUB · CHECKOUT</div><h2 id="dhCheckoutTitle">確認購買方案</h2></div>
@@ -225,7 +230,7 @@
         <button id="dhCheckoutPay" class="checkout-pay" type="button" disabled>前往安全付款</button>
         <button id="dhCheckoutBack" class="checkout-back" type="button">返回方案列表</button>
       </div>
-      <div class="checkout-state">結帳金額以伺服器確認為準。付款前須登入會員；付款總開關關閉時按鈕維持停用，且後端不會建立交易。</div>
+      <div class="checkout-state">實際金額以結帳確認為準。請先登入會員並確認購買內容。<a class="pricing-quiet-link" href="payment.html" target="_blank" rel="noopener noreferrer">付款與退款說明</a></div>
     </div>
   </dialog>
 
@@ -354,7 +359,7 @@
           checkoutField('dhCheckoutQuantity').textContent=Number(q.quantity).toLocaleString('zh-TW')+' '+q.unit;
           checkoutField('dhCheckoutAmount').textContent=formatTwd(q.priceTwd);
           if(q.isPromotion){checkoutField('dhCheckoutSale').hidden=false;checkoutField('dhCheckoutSale').textContent='限時優惠 · 一般售價 '+formatTwd(q.listPriceTwd)+' · 此次現省 '+formatTwd(q.listPriceTwd-q.priceTwd)}
-          const reasons={product_unavailable:'此方案目前暫不提供購買。',payment_closed:'目前尚未開放付款；方案與金額可以先查看。',payment_unavailable:'藍新金流尚未完成設定，暫時不能付款。'};
+          const reasons={product_unavailable:'此方案目前暫不提供購買。',payment_closed:'目前暫停付款服務，請稍後再試。',payment_unavailable:'付款服務暫時無法使用，請稍後再試。'};
           const signedIn=!!sessionToken();
           checkoutField('dhCheckoutNotice').textContent=q.paymentAvailable===true?(signedIn?'已確認商品與金額，可以前往藍新付款。':'已確認價格，請先免費登入會員才能購買。'):(reasons[q.status]||'目前不接受付款。');
           checkoutField('dhCheckoutPay').textContent=q.paymentAvailable&&!signedIn?'登入會員後付款':'前往安全付款';
