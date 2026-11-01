@@ -1430,6 +1430,30 @@ html[data-theme="light"] #numAiSection .num-ai-history-group-toggle{background:#
 .num-method-quiet p{margin:10px 0 0;line-height:1.75}
 @media(max-width:940px){#numAiSection .num-ai-question-rail{min-width:0}}
 </style>
+<style id="numerology-v15-stage-ai">
+/* AI 人生四階段：選當前年齡，仍可手動改選過往或未來的階段。 */
+#numAiSection .num-ai-question-rail #numAiStageSelector{order:2;margin:12px 0 14px}
+#numAiSection .num-ai-question-rail #numAiGuidedPane{order:3}
+#numAiSection .num-ai-question-rail #numAiFixedPane,#numAiSection .num-ai-question-rail #numAiCustomPane{order:4}
+#numAiSection .num-ai-question-rail #numAiHistoryBox{order:5}
+#numAiStageSelector[hidden]{display:none!important}
+#numAiStageSelector{border:1px solid rgba(133,216,228,.32);background:linear-gradient(140deg,rgba(102,78,158,.17),rgba(36,39,75,.6));border-radius:13px;padding:12px}
+#numAiStageSelector .num-ai-stage-picker-head{display:flex;justify-content:space-between;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+#numAiStageSelector .num-ai-stage-picker-head strong{font-size:.98rem;color:#f6ebff}
+#numAiStageSelector .num-ai-stage-picker-head small{font-size:.79rem;color:#b9e5e8}
+#numAiStageOptions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#numAiStageOptions .num-ai-stage-option{position:relative;display:flex;min-width:0;flex-direction:column;gap:4px;min-height:98px;padding:10px 9px;text-align:left;background:#27223f;border:1px solid rgba(164,146,209,.35);border-radius:10px;color:#e6d9f5;cursor:pointer;transition:border-color .15s,background .15s}
+#numAiStageOptions .num-ai-stage-option:hover{border-color:#a791e6;background:#33284c}
+#numAiStageOptions .num-ai-stage-option[aria-pressed="true"]{background:linear-gradient(135deg,rgba(175,144,238,.32),rgba(105,192,214,.18));border:2px solid #a4e0ea;padding:9px 8px}
+#numAiStageOptions .num-ai-stage-option strong{font-size:.94rem;line-height:1.35}
+#numAiStageOptions .num-ai-stage-option .num-ai-stage-age{font-size:.84rem;line-height:1.4;color:#e5d8f6}
+#numAiStageOptions .num-ai-stage-option .num-ai-stage-numbers{font-size:.78rem;line-height:1.4;color:#c9bddf}
+#numAiStageOptions .num-ai-stage-option .num-ai-stage-current{font-size:.72rem;line-height:1.3;color:#b1f3e4;font-weight:800}
+#numAiStageSelected{margin-top:10px;padding:9px 10px;border:1px solid rgba(166,144,224,.3);background:rgba(15,15,38,.52);border-radius:9px;font-size:.84rem;line-height:1.6;color:#e7d8fb}
+#numAiSection .num-ai-choice-grid .num-ai-choice small{line-height:1.45}
+@media(max-width:390px){#numAiStageOptions .num-ai-stage-option{min-height:102px;padding:8px 7px}#numAiStageOptions .num-ai-stage-option[aria-pressed="true"]{padding:7px 6px}#numAiStageOptions .num-ai-stage-option strong{font-size:.86rem}#numAiStageOptions .num-ai-stage-option .num-ai-stage-age{font-size:.78rem}}
+html[data-theme="light"] #numAiStageSelector{background:#24203e;color:#fff}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -1542,6 +1566,11 @@ html[data-theme="light"] #numAiSection .num-ai-history-group-toggle{background:#
    <aside class="num-ai-question-rail" aria-label="專屬 AI 題目與操作">
     <div class="num-ai-rail-heading"><span>AI QUESTIONS</span><strong>選擇解讀問題</strong><small>完成的文章會暫存在此分頁，可隨時切回</small></div>
     <div class="num-ai-tabs" role="group" aria-label="AI 提問方式"><button type="button" id="numAiModeFixed" data-ai-mode="fixed" aria-pressed="true">固定題目</button><button type="button" id="numAiModeCustom" data-ai-mode="custom" aria-pressed="false">自訂提問</button></div>
+    <section id="numAiStageSelector" class="num-ai-stage-picker" aria-label="選擇人生四階段" hidden>
+      <div class="num-ai-stage-picker-head"><strong>選擇要批盤的人生階段</strong><small id="numAiStageAgeNow">依生日自動匹配目前階段</small></div>
+      <div id="numAiStageOptions" class="num-ai-stage-options" role="group" aria-label="人生四階段與年齡"></div>
+      <div id="numAiStageSelected" class="num-ai-stage-selected" role="status" aria-live="polite"></div>
+    </section>
     <div id="numAiGuidedPane" class="num-ai-guided" hidden><div class="num-ai-guided-kicker">已選的專屬題目</div><p id="numAiGuidedQuestion"></p><button type="button" id="numAiChooseOther">切換其他固定題目</button></div>
     <div id="numAiFixedPane"><div id="numAiChoices" class="num-ai-choice-grid" role="group" aria-label="本區專屬固定 AI 題目"></div><button type="button" id="numAiMoreTopics" class="num-ai-more-topics" hidden>展開更多命盤專題</button></div>
     <div id="numAiCustomPane" hidden><label for="numAiQuestion" id="numAiCustomLabel" class="num-ai-custom-label">你最想深入問什麼？</label><textarea id="numAiQuestion" class="num-ai-textarea" maxlength="2000" placeholder="例如：我準備創業，但又怕失敗。請結合命盤深入分析。"></textarea></div>
@@ -2325,12 +2354,12 @@ function renderMonths(c){
  const NUM_AI_GENERAL_EXTRA=['health','social','lifestyle','colors','spirit'];
  const NUM_AI_SECTION_BANK={
    stage:[
-     {id:'stage-present',name:'目前高峰的機會與考驗',tag:'當前高峰數'},
-     {id:'stage-conflict',name:'高峰與挑戰的拉扯',tag:'真正的盲點'},
-     {id:'stage-transition',name:'下一階段的轉變',tag:'人生轉折'},
-     {id:'stage-career',name:'這階段的工作與財富',tag:'職涯與資源'},
-     {id:'stage-relations',name:'這階段的感情與家庭',tag:'親密與責任'},
-     {id:'stage-four',name:'四大階段的全局比較',tag:'完整生命歷程'}
+     {id:'stage-present',name:'我現在的「人生主打歌」是什麼？',tag:'解析這一階段的機會與考驗'},
+     {id:'stage-conflict',name:'為什麼我總是在「鬼打牆」？',tag:'揭開高峰與挑戰的矛盾、盲點'},
+     {id:'stage-transition',name:'我要怎麼把「爛牌打成好牌」？',tag:'這一階段的破局與轉化指南'},
+     {id:'stage-career',name:'我的職場與財富「避雷針」在哪裡？',tag:'工作策略與金錢風險'},
+     {id:'stage-relations',name:'為什麼我越愛，越覺得窒息？',tag:'感情、家庭、責任與界線'},
+     {id:'stage-four',name:'如果人生是一場遊戲，我現在走到第幾關？',tag:'回顧與展望四大生命階段'}
    ],
    timing:[
      {id:'timing-year',name:'選定年度的整體運勢',tag:'流年全局'},
@@ -2343,11 +2372,37 @@ function renderMonths(c){
  };
  const NUM_AI_SECTION_META={
    general:{heading:'AI 核心命盤 · 個人深度批盤',lead:'這裡專門解讀九宮格、生命數、空缺與連線，以及事業、感情、家庭、天賦等個人命盤主題。人生高峰和流年流月請在各自專區發問。',label:'你想從自己的命盤深入問什麼？',placeholder:'例如：我的九宮格完整連線與空缺，如何同時影響事業與親密關係？'},
-   stage:{heading:'AI 人生四階段 · 高峰與挑戰批盤',lead:'本區只提供人生高峰數、挑戰數與四階段轉換的專屬問題。選擇當前階段或切換其他高峰後，AI 會連同命盤一起解讀。',label:'你想詢問哪個人生階段的課題？',placeholder:'例如：我現在選的高峰數與挑戰數，對我轉換工作與家庭責任有什麼提醒？'},
+   stage:{heading:'AI 人生四階段 · 高峰與挑戰批盤',lead:'已依生日與今天的實際年齡自動選好目前階段；也可手動查看早年或未來階段。六個題目均以命理師口吻，交叉批斷高峰、挑戰、本命與九宮格。',label:'你想詢問哪個人生階段的課題？',placeholder:'例如：我現在選的高峰數與挑戰數，對我轉換工作與家庭責任有什麼提醒？'},
    timing:{heading:'AI 九年流年 · 十二流月批盤',lead:'本區只提供流年、流月與跨年度的專屬問題。先點選年份和月份，再問事業、感情、財富的時間變化。',label:'你想詢問哪一年、哪一個月份？',placeholder:'例如：我選的這一年和月份適合轉換工作嗎？請連同明年流年做比較。'}
  };
  let numAiShowMore=false;
- let aiMode='fixed',aiTopic='full',numAiGuidedQuestion='',numAiGuidedLabel='',numAiActiveDock='general';
+ let aiMode='fixed',aiTopic='full',numAiGuidedQuestion='',numAiGuidedLabel='',numAiGuidedId='',numAiActiveDock='general',numAiSelectedStage=0;
+ function numAiStageTitle(i=numAiSelectedStage){return `第 ${i+1} 階段｜${stageAgeLabels(stageData(current).first)[i]}`}
+ function numAiStageLabel(id,i=numAiSelectedStage){const t=NUM_AI_SECTION_BANK.stage.find(q=>q.id===id);return `${numAiStageTitle(i)}｜${t?.name||'人生四階段專題'}`}
+ function numAiRenderStageSelector(){
+  const outer=$('numAiStageSelector');outer.hidden=numAiActiveDock!=='stage';if(outer.hidden||!current)return;
+  const st=stageData(current),now=stageIndexAtAge(st.age,st.first),labels=stageAgeLabels(st.first),options=$('numAiStageOptions');
+  numAiSelectedStage=Math.max(0,Math.min(3,numAiSelectedStage));options.replaceChildren();
+  $('numAiStageAgeNow').textContent=`目前 ${st.age} 歲，自動匹配第 ${now+1} 階段`;
+  for(let i=0;i<4;i++){
+   const b=document.createElement('button');b.type='button';b.className='num-ai-stage-option';b.dataset.numAiStage=String(i);b.setAttribute('aria-pressed',String(i===numAiSelectedStage));
+   b.append(textElm('strong',`第 ${i+1} 階段`),textElm('span',labels[i],'num-ai-stage-age'),textElm('span',`高峰 ${st.peaks[i]} · 挑戰 ${st.challenges[i]}`,'num-ai-stage-numbers'));
+   if(i===now)b.append(textElm('span','● 目前所屬階段','num-ai-stage-current'));
+   options.appendChild(b);
+  }
+  const s=numAiSelectedStage,relation=s<now?'過往回顧':s>now?'未來前瞻':'當前批盤';
+  $('numAiStageSelected').textContent=`已選第 ${s+1} 階段（${labels[s]}）｜高峰 ${st.peaks[s]} · 挑戰 ${st.challenges[s]}｜${relation}。下方題目以此階段為主；第六題比較完整四階段。`;
+ }
+ function numAiChooseStage(next){
+  if(!current||aiRequestBusy||next<0||next>3||!Number.isInteger(next))return;
+  if(next===numAiSelectedStage)return;
+  numAiSelectedStage=next;
+  if(numAiActiveDock==='stage'&&aiMode==='guided'){
+   const id=numAiGuidedId||'stage-present';numAiGuidedQuestion=numAiPresetQuestion(id);numAiGuidedLabel=numAiStageLabel(id);
+  }
+  numAiQuestionChanged();renderAiInterface();aiStatus(`已切換至${numAiStageTitle(next)}。請選擇題目，送出後才會使用 AI 額度。`);
+ }
+ $('numAiStageOptions').addEventListener('click',e=>{const b=e.target.closest('[data-num-ai-stage]');if(b)numAiChooseStage(Number(b.dataset.numAiStage))});
  function currentAiTopic(){return ORIGINAL_AI_TOPICS.find(x=>x.id===aiTopic)||ORIGINAL_AI_TOPICS[0]}
  function renderAiInterface(){
   if(!current)return;
@@ -2356,6 +2411,7 @@ function renderMonths(c){
   $('numAiScopeHeading').textContent=meta.heading;
   document.querySelectorAll('#numAiSection .num-ai-work-tabs [data-open-ai]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.openAi===scope)));
   $('numAiScopeLead').textContent=meta.lead;
+  numAiRenderStageSelector();
   $('numAiCustomLabel').textContent=meta.label;
   $('numAiQuestion').placeholder=meta.placeholder;
   $('numAiModeFixed').setAttribute('aria-pressed',String(fixed));
@@ -2372,7 +2428,7 @@ function renderMonths(c){
   for(const topic of topics){
    const btn=document.createElement('button');btn.type='button';btn.className='num-ai-choice';
    if(scope==='general'){btn.dataset.aiTopic=topic.id;btn.setAttribute('aria-pressed',String(topic.id===aiTopic))}
-   else{btn.dataset.aiPreset=topic.id;btn.setAttribute('aria-pressed',String(guided&&numAiGuidedLabel===topic.name))}
+   else{btn.dataset.aiPreset=topic.id;btn.setAttribute('aria-pressed',String(guided&&numAiGuidedId===topic.id))}
    btn.append(textElm('b',topic.name),textElm('small',topic.tag));choices.append(btn)
   }
   const more=$('numAiMoreTopics');more.hidden=!(scope==='general'&&aiMode==='fixed');
@@ -2384,7 +2440,7 @@ function renderMonths(c){
     fixed?t.summary:($('numAiQuestion').value.trim()?'送出自訂題目後，AI 將交叉解讀目前命盤。':'請輸入你真正想問的事。');
   const chips=$('numAiProfileChips');chips.replaceChildren();
   const words=[`生命數 ${current.life}`,`生日數 ${current.d}／${current.birth}`,`態度數 ${current.attitude}`];
-  if(scope==='stage'){const st=stageData(current);words.push(`第 ${selectedStage+1} 階段｜高峰 ${st.peaks[selectedStage]}｜挑戰 ${st.challenges[selectedStage]}`)}
+  if(scope==='stage'){const st=stageData(current);words.push(`第 ${numAiSelectedStage+1} 階段｜高峰 ${st.peaks[numAiSelectedStage]}｜挑戰 ${st.challenges[numAiSelectedStage]}`)}
   else if(scope==='timing')words.push(`${selectedYear} 流年 ${yearAt(current,selectedYear)}`,`${selectedMonth} 月流月 ${pure(yearAt(current,selectedYear)+selectedMonth)}`);
   else words.push(`${current.yearCalendar} 流年 ${current.year}`,`完整連線 ${NUM_LINES.filter(l=>lineInfo(current,l).complete).map(l=>l.id).join('、')||'無'}`);
   for(const word of words)chips.append(textElm('span',word,'num-ai-pill'));
@@ -2394,26 +2450,34 @@ function renderMonths(c){
  function numAiQuestionChanged(){if(!$('numAiAnswerPanel').hidden){$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');aiStatus(numAiHistory.length?'已切換題目。先前完成的解讀保留在左側「本次問答紀錄」。':'')}}
  function aiStatus(msg){$('numAiStatus').textContent=msg}
  const NUM_AI_DOCKS={general:'numAiGeneralDock',stage:'numAiStageDock',timing:'numAiTimingDock'};
- function openNumAiIn(scope,mode='fixed',guidedQuestion='',topic='full',guidedLabel=''){
+ function openNumAiIn(scope,mode='fixed',guidedQuestion='',topic='full',guidedLabel='',presetId=''){
   if(!current||aiRequestBusy)return;
   const dock=$(NUM_AI_DOCKS.general);
   const changing=scope!==numAiActiveDock||mode!==aiMode||(mode==='guided'&&guidedQuestion!==numAiGuidedQuestion);
   if(changing&&$('numAiAnswerPanel').hidden===false){$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view')}
   dock.appendChild($('numAiSection'));
   numAiActiveDock=scope;
-  if(scope!=='general'&&mode==='fixed'){mode='guided';const first=NUM_AI_SECTION_BANK[scope][0];guidedQuestion=numAiPresetQuestion(first.id);guidedLabel=first.name;topic='timing'}
+  if(scope!=='general'&&mode==='fixed'){mode='guided';const first=NUM_AI_SECTION_BANK[scope][0];numAiGuidedId=first.id;guidedQuestion=numAiPresetQuestion(first.id);guidedLabel=scope==='stage'?numAiStageLabel(first.id):first.name;topic='timing'}
+  else if(mode!=='guided')numAiGuidedId='';
+  if(presetId)numAiGuidedId=presetId;
   aiMode=mode;aiTopic=topic;numAiGuidedQuestion=guidedQuestion;numAiGuidedLabel=guidedLabel;
   $('numAiSection').hidden=false;
   renderAiInterface();aiStatus('');void refreshNumAiQuota();
   $('numAiSection').scrollIntoView({block:'start',behavior:'smooth'});
  }
- function numAiPresetQuestion(which){const c=current,st=stageData(c),i=selectedStage,peak=st.peaks[i],challenge=st.challenges[i],year=selectedYear,yr=yearAt(c,year),month=selectedMonth,mon=pure(yr+month);const prefix=`請以我 ${c.date} 的完整生命靈數命盤作深度交叉批盤（生命數 ${c.life}、生日數 ${c.birth}、態度數 ${c.attitude}），不要再重教算式。`;
- const stage=`我目前選的是人生第 ${i+1} 階段，高峰數 ${peak}、挑戰數 ${challenge}。四個高峰數為 ${st.peaks.join('、')}；挑戰數為 ${st.challenges.join('、')}。`;
+ function numAiPresetQuestion(which){const c=current,st=stageData(c),i=numAiSelectedStage,peak=st.peaks[i],challenge=st.challenges[i],year=selectedYear,yr=yearAt(c,year),month=selectedMonth,mon=pure(yr+month);const prefix=`請以我 ${c.date} 的完整生命靈數命盤作深度交叉批盤（生命數 ${c.life}、生日數 ${c.birth}、態度數 ${c.attitude}），不要再重教算式。`;
+ const currentStageIndex=stageIndexAtAge(st.age,st.first),phase=i<currentStageIndex?'已經歷過的階段，請用回顧語氣':i>currentStageIndex?'尚未到來的階段，請用前瞻推演語氣':'目前正在經歷的階段，請用現況語氣';
+ const boundaries=stageAgeLabels(st.first),pattern=commonFactors(c),missings=pattern.missing.join('、')||'無',lines=pattern.full.map(l=>l.id).join('、')||'無';
+ const stage=`我現在實歲 ${st.age}，按本站四高峰規則目前屬第 ${currentStageIndex+1} 階段；此次特別選擇「第 ${i+1} 階段（${boundaries[i]}）」，高峰數 ${peak}、挑戰數 ${challenge}，屬於${phase}。四個高峰數為 ${st.peaks.join('、')}，四個挑戰數為 ${st.challenges.join('、')}；四段年齡依序為 ${boundaries.join('／')}。生日九宮格空缺數字為 ${missings}，已成立完整連線為 ${lines}。請勿把過去或未來階段說成我此刻正在經歷。`;
+ const style=`請仿照專業生命靈數命理師的批盤筆法，語氣白話、犀利、有故事、有命理象徵與具體職場、財富、感情、家庭例子；明確指出盲點、避雷和可執行的破局方法。不要採心理諮商口吻，不要重教公式，也不要把象徵推演說成已發生的事實；要結合本命數及九宮格空缺、連線（僅用實際存在的數字），不硬套固定人格。`;
  const time=`我目前選擇 ${year} 年（流年 ${yr}），其中 ${month} 月（流月 ${mon}）。`;
  const questions={
- 'stage-present':`${prefix}${stage}請深入推演這個階段的核心人生課題、內在矛盾、可能的事業與家庭情境、最大的盲點及實際應對。請分章節批斷，並比較長期核心數與目前高峰、挑戰數的拉扯。`,
- 'stage-transition':`${prefix}${stage}請比較目前與下一階段（若已到第4階段，則回顧前一階段）的轉換，深入分析事業走向、感情家庭責任、個人目標與需要放下的習慣。請以具體案例和時間軸詳述。`,
- 'stage-conflict':`${prefix}${stage}從高峰數與挑戰數的衝突出發，指出容易反覆犯下的選擇錯誤、事業人際的代價、可能被忽略的機會，並用情境推演說明如何調整。`,
+ 'stage-present':`${prefix}${stage}${style}題目「我現在的『人生主打歌』是什麼？」請根據所選人生階段說出這一關的主旋律、高峰數帶來的機會與考驗，和本命數在這段時期碰撞後最容易遇到的具體生活處境；用一句有力度的命理師警語作結。`,
+ 'stage-conflict':`${prefix}${stage}${style}題目「為什麼我總是在『鬼打牆』？」深入批斷本命、高峰數、挑戰數與九宮格的矛盾，指出反覆踩同一個坑的原因，請舉出職場或家庭反覆內耗的具體情境，以及破除盲點的實際做法。`,
+ 'stage-transition':`${prefix}${stage}${style}題目「我要怎麼把『爛牌打成好牌』？」直接分析這一階段挑戰數帶來的難關，哪種個性或行動最可能讓機會變阻礙；提供具體破局方案，包括最先要停止的錯誤習慣、第一個小行動與下一階段可預先準備的事。`,
+ 'stage-career':`${prefix}${stage}${style}題目「我的職場與財富『避雷針』在哪裡？」請深入解讀這段年齡的工作位置、資源與收入、容易因人情或性格踩到的金錢地雷，說出職場與財務的具體命理情境，分別提出有力度的避雷警示和行動處方。`,
+ 'stage-relations':`${prefix}${stage}${style}題目「為什麼我越愛，越覺得窒息？」交叉解讀本命、所選高峰、挑戰及九宮空缺，談在這個年齡階段的伴侶、家人、照顧責任或溝通困境，指出可能混淆控制與關心、責任與愛的盲點，提出實際關係破局的方法。`,
+ 'stage-four':`${prefix}${stage}${style}題目「如果人生是一場遊戲，我現在走到第幾關？」請依照四個真實年齡分界與四組高峰、挑戰數，逐關述說早年、成長、轉化與整合的命運主題。清楚標示我目前正在第 ${currentStageIndex+1} 關、這次選看的第 ${i+1} 關；比較各關的事業、關係、財富及最終該學會的本事，像命理師為整段人生做總批。`,
  'timing-year':`${prefix}${time}請針對選定年度，分事業、財富、感情、家庭與自我發展深度解讀這一年可能面臨的主題、衝突及機會；並對照上一年與下一年，給出具體行動策略。`,
  'timing-month':`${prefix}${time}請針對這個流月作詳細批斷，交叉分析核心生命數、流年與流月，分工作、感情、財富、人際及重要抉擇，提供情境推演、盲點和本月行動方案。`,
  'timing-compare':`${prefix}${time}請詳細比較 ${year}、${year+1}、${year+2} 連續三年的流年主題，指出九年循環中的轉換節點，從事業、感情、財務與人生階段提出三年規劃與可能風險。`,
@@ -2426,7 +2490,7 @@ function renderMonths(c){
  };
  return questions[which]||'';
  }
- document.querySelectorAll('[data-num-ai-preset]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.numAiPreset,q=numAiPresetQuestion(id);if(q)openNumAiIn(id.startsWith('stage-')?'stage':'timing','guided',q,'timing',b.textContent.trim())}));
+ document.querySelectorAll('[data-num-ai-preset]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.numAiPreset,q=numAiPresetQuestion(id);if(q)openNumAiIn(id.startsWith('stage-')?'stage':'timing','guided',q,'timing',id.startsWith('stage-')?numAiStageLabel(id):b.textContent.trim(),id)}));
  document.querySelectorAll('[data-open-ai]').forEach(b=>b.addEventListener('click',()=>{const scope=b.dataset.openAi||'general',custom=b.dataset.aiCustom==='true';openNumAiIn(scope,custom?'custom':'fixed','',scope==='general'?'full':'timing')}));
  $('numOpenAi').addEventListener('click',()=>openNumAiIn('general'));
  $('numAiJump').addEventListener('click',()=>openNumAiIn('general'));
@@ -2436,7 +2500,7 @@ function renderMonths(c){
  $('numAiChoices').addEventListener('click',e=>{
   const b=e.target.closest('[data-ai-topic],[data-ai-preset]');if(!b)return;
   numAiQuestionChanged();
-  if(b.dataset.aiPreset){const id=b.dataset.aiPreset,q=numAiPresetQuestion(id);if(q){aiMode='guided';aiTopic='timing';numAiGuidedQuestion=q;numAiGuidedLabel=b.querySelector('b')?.textContent||b.textContent.trim()}}
+  if(b.dataset.aiPreset){const id=b.dataset.aiPreset,q=numAiPresetQuestion(id);if(q){aiMode='guided';aiTopic='timing';numAiGuidedId=id;numAiGuidedQuestion=q;numAiGuidedLabel=numAiActiveDock==='stage'?numAiStageLabel(id):(b.querySelector('b')?.textContent||b.textContent.trim())}}
   else{aiMode='fixed';aiTopic=b.dataset.aiTopic}
   renderAiInterface();if($('numAiAnswerPanel').hidden)aiStatus('');
  });
@@ -2644,19 +2708,21 @@ function renderMonths(c){
   if(!current){aiStatus('請先計算生日。');return}
   if(!isFollowup&&numAiActiveDock!=='general'&&aiMode==='fixed'){aiStatus('請先選擇專屬題目。');return}
   const question=isFollowup?$('numAiFollowup').value.trim():(aiMode==='guided'?numAiGuidedQuestion:aiMode==='custom'?$('numAiQuestion').value.trim():'');
+  const actualQuestion=(!isFollowup&&numAiActiveDock==='stage'&&aiMode==='custom')?numAiPresetQuestion('stage-present').split('題目「')[0]+`我的自訂問題：${question}`:question;
   if((isFollowup||aiMode==='custom'||aiMode==='guided')&&(question.length<4||question.length>1600)){aiStatus('請輸入 4～1600 字的問題。');return}
+  if(actualQuestion.length>1600){aiStatus('題目與命盤階段背景合計超過 1600 字，請將自訂問題簡短一些。');return}
   if(!numAiToken()){aiStatus('請先登入會員，才能使用站內 AI 解讀。');return}
   const parentId=isFollowup?numAiActiveId:null;
   if(isFollowup&&(!parentId||!numAiHistory.some(r=>r.id===parentId))){aiStatus('請先在左側選擇一篇已完成的解讀，再進行追問。');return}
   if(!confirm('本次將使用會員共用 AI 額度 1 次。只有成功完成可閱讀的解讀才扣次，確認送出？'))return;
   const id=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
-  const label=isFollowup?'延伸追問｜'+question.slice(0,65):aiMode==='guided'?numAiGuidedLabel:aiMode==='custom'?question.slice(0,65):currentAiTopic().name+'｜'+currentAiTopic().tag;
-  const context={id,label,question:isFollowup||aiMode!=='fixed'?question:`完整解讀：${label}`,scope:numAiActiveDock,parentId};
+  const label=isFollowup?'延伸追問｜'+question.slice(0,65):aiMode==='guided'?numAiGuidedLabel:aiMode==='custom'?(numAiActiveDock==='stage'?`${numAiStageTitle()}｜`: '')+question.slice(0,65):currentAiTopic().name+'｜'+currentAiTopic().tag;
+  const context={id,label,question:isFollowup||aiMode!=='fixed'?actualQuestion:`完整解讀：${label}`,scope:numAiActiveDock,parentId};
   try{localStorage.setItem(NUM_AI_LAST_KEY,JSON.stringify({operationId:id,date:current.date,questionLabel:label,question:context.question,scope:context.scope,parentId}))}catch(_){}
   $('numAiReportBox').hidden=true;aiRequestBusy=true;numAiPendingOperation=id;
   numAiSetBusy(true,isFollowup?'正在根據原篇解讀延伸分析；原文章仍保留在左側問答紀錄。':'正在整理專屬命盤，完成後自動新增一篇紀錄。');
   aiStatus('AI 正在處理，請勿重複送出；可以在左側查看以前已完成的解讀。');
-  const payload={operationId:id,date:current.date,mode:isFollowup||aiMode==='guided'?'custom':aiMode,topic:aiTopic,question,previousOperationId:parentId};
+  const payload={operationId:id,date:current.date,mode:isFollowup||aiMode==='guided'?'custom':aiMode,topic:aiTopic,question:actualQuestion,previousOperationId:parentId};
   let result=null,pending=false;
   try{
    const {r,data}=await numAiFetch('/ai/interpret','POST',payload);
@@ -2678,7 +2744,7 @@ function renderMonths(c){
  $('numAiSideDownload').addEventListener('click',()=>$('numAiAnswerTxt').click());
  $('numAiAnswerCopy').addEventListener('click',async()=>{const r=numAiHistory.find(x=>x.id===numAiActiveId);if(!r)return;try{await navigator.clipboard.writeText(numAiArchiveText(numAiThreadRecords(r)));aiStatus('已複製目前題目及其追問。')}catch(_){aiStatus('目前無法複製，請改用下載 TXT。')}});
  $('numAiAnswerTxt').addEventListener('click',()=>{const r=numAiHistory.find(x=>x.id===numAiActiveId);if(r)numAiReportFile('生命靈數-單組AI解讀與追問-'+current.date,numAiArchiveText(numAiThreadRecords(r)))});
- function renderResult(data){document.documentElement.classList.add("num-calculated");reportLineFocus=null;current=data;$('result').hidden=false;$('lifeNumber').textContent=data.life;$('masterChip').hidden=![11,22,33].includes(data.life);$('lifeLabel').textContent=MODEL[data.life].title;$('lifeFormula').textContent=`${CORE_SUMMARIES[data.life]}`;$('birthdayNumber').textContent=`${data.d} / ${data.birth}`;$('numBirthdayMeaning').textContent=`補充：${MODEL[pure(data.birth)].title}，與核心數從不同角度並讀`;$('attitudeNumber').textContent=data.attitude;$('numAttitudeMeaning').textContent=`互動傾向：${MODEL[pure(data.attitude)].title}`;$('yearNumber').textContent=data.year;$('numYearMeaning').textContent=`今年主題：${YEAR[data.year][0]}`;$('yearHeading').textContent=`${data.yearCalendar} 個人流年`;$('resultDate').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日｜以西元生日計算`;renderProfileExplanation(data,'life');setProfileExplainOpen(true);$('numProfileFoldCurrent').textContent='｜生命數';aiMode='fixed';aiTopic='full';numAiShowMore=false;numAiGuidedQuestion='';numAiGuidedLabel='';numAiActiveDock='general';$('numAiGeneralDock').appendChild($('numAiSection'));$('numAiSection').hidden=true;$('numAiQuestion').value='';lastNumerologyResult=null;lastNumerologyOperation=null;lastFailedNumerologyOperation=null;numAiLoadHistory();numAiSetBusy(false);$('numAiReportBox').hidden=true;$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');$('numAiQuota').textContent='尚未查詢額度';aiStatus('');setTab('overview');updateNumExperience(data);renderDeep(data);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+ function renderResult(data){document.documentElement.classList.add("num-calculated");reportLineFocus=null;current=data;$('result').hidden=false;$('lifeNumber').textContent=data.life;$('masterChip').hidden=![11,22,33].includes(data.life);$('lifeLabel').textContent=MODEL[data.life].title;$('lifeFormula').textContent=`${CORE_SUMMARIES[data.life]}`;$('birthdayNumber').textContent=`${data.d} / ${data.birth}`;$('numBirthdayMeaning').textContent=`補充：${MODEL[pure(data.birth)].title}，與核心數從不同角度並讀`;$('attitudeNumber').textContent=data.attitude;$('numAttitudeMeaning').textContent=`互動傾向：${MODEL[pure(data.attitude)].title}`;$('yearNumber').textContent=data.year;$('numYearMeaning').textContent=`今年主題：${YEAR[data.year][0]}`;$('yearHeading').textContent=`${data.yearCalendar} 個人流年`;$('resultDate').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日｜以西元生日計算`;renderProfileExplanation(data,'life');setProfileExplainOpen(true);$('numProfileFoldCurrent').textContent='｜生命數';aiMode='fixed';aiTopic='full';numAiShowMore=false;numAiGuidedQuestion='';numAiGuidedLabel='';numAiGuidedId='';numAiSelectedStage=stageIndexAtAge(stageData(data).age,stageData(data).first);numAiActiveDock='general';$('numAiGeneralDock').appendChild($('numAiSection'));$('numAiSection').hidden=true;$('numAiQuestion').value='';lastNumerologyResult=null;lastNumerologyOperation=null;lastFailedNumerologyOperation=null;numAiLoadHistory();numAiSetBusy(false);$('numAiReportBox').hidden=true;$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');$('numAiQuota').textContent='尚未查詢額度';aiStatus('');setTab('overview');updateNumExperience(data);renderDeep(data);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
 
  function report(){
   if(!current)return '';const c=current,st=stageData(c);
