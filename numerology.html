@@ -1334,9 +1334,7 @@ html[data-theme="light"] .num-time-fold-body strong{color:#267c80}
 /* Only one set of topic tabs: directly beside the AI workbench heading. */
 .num-v8-ai-scopes{display:none!important}
 /* Once a report is selected, its article is the focus. New question restores topic controls. */
-#numAiSection.num-ai-reading-view .num-ai-question-rail .num-ai-tabs,
-#numAiSection.num-ai-reading-view #numAiFixedPane,
-#numAiSection.num-ai-reading-view #numAiCustomPane{display:none!important}
+/* V14: the question list remains accessible while reading completed reports. */
 #numAiSection.num-ai-reading-view .num-ai-question-rail .num-ai-side-tools{display:grid!important}
 #numAiSection .num-ai-question-rail .num-ai-history-list{max-height:260px}
 .num-ai-busy-toast{position:fixed;bottom:20px;right:20px;display:flex;align-items:center;gap:13px;z-index:120;background:#26203f;border:1px solid #86d7e1;box-shadow:0 12px 40px #08071990;color:#f7f0ff;border-radius:14px;padding:13px 18px;width:min(400px,calc(100vw - 30px));pointer-events:none}
@@ -1405,6 +1403,33 @@ html[data-theme="light"] .num-time-fold-body strong{color:#267c80}
 @media(max-width:530px){#numAiSection .num-ai-topline{grid-template-columns:1fr auto!important}#numAiSection .num-ai-topline>.num-ai-work-tabs{grid-row:2;grid-column:1/-1;gap:5px}#numAiSection .num-ai-work-tabs button{min-height:44px;flex:1;padding:8px 5px;font-size:.79rem}#numAiSection .num-ai-article-headings strong{font-size:1.1rem}#numAiSection .num-ai-answer-head{top:51px}#numAiSection .num-ai-fold-action{font-size:.83rem;min-height:39px;padding:7px 10px}#numAiSection .num-ai-history-item strong{font-size:.86rem}#numAiSection .num-ai-history-item small{font-size:.74rem}#numAiSection .num-ai-history-export{grid-template-columns:repeat(2,minmax(0,1fr))}#numAiSection .num-ai-article-end{align-items:stretch}#numAiSection .num-ai-article-end button{width:100%}}
 html[data-theme="light"] #numAiSection .num-ai-history-group-toggle{background:#382e53;color:#fff}html[data-theme="light"] #numAiSection .num-ai-collapsed-card{background:#292442;color:#fff}html[data-theme="light"] #numAiSection .num-ai-answer-head{background:#1c1934}
 </style>
+
+<style id="numerology-v14-workflow">
+/* Left rail is a permanent question picker; records are a secondary archive beneath it. */
+#numAiSection .num-ai-question-rail{display:flex;flex-direction:column;gap:0;align-self:start}
+#numAiSection .num-ai-question-rail .num-ai-rail-heading{order:0}
+#numAiSection .num-ai-question-rail .num-ai-tabs{order:1;display:flex!important}
+#numAiSection .num-ai-question-rail #numAiGuidedPane{order:2}
+#numAiSection .num-ai-question-rail #numAiFixedPane{order:3}
+#numAiSection .num-ai-question-rail #numAiCustomPane{order:3}
+#numAiSection .num-ai-question-rail #numAiHistoryBox{order:4;margin:19px 0 0;border-top:1px solid rgba(198,175,234,.3)}
+#numAiSection .num-ai-question-rail .num-ai-side-tools{display:none!important}
+#numAiSection.num-ai-reading-view .num-ai-question-rail .num-ai-tabs{display:flex!important}
+#numAiSection.num-ai-reading-view .num-ai-question-rail #numAiFixedPane:not([hidden]){display:block!important}
+#numAiSection.num-ai-reading-view .num-ai-question-rail #numAiCustomPane:not([hidden]){display:block!important}
+#numAiSection .num-ai-question-rail #numAiFixedPane[hidden],#numAiSection .num-ai-question-rail #numAiCustomPane[hidden]{display:none!important}
+#numAiSection .num-ai-session-history .num-ai-history-head strong{font-size:1.02rem}
+#numAiSection .num-ai-history-list{max-height:none!important;overflow:visible!important}
+#numAiSection .num-ai-session-history .num-ai-history-export{margin-top:10px}
+#numAiSection .num-ai-session-history .num-ai-save-reminder{margin-top:10px}
+#numAiSection .num-ai-rail-heading small{line-height:1.6}
+#numAiSection .num-ai-collapsed-card{margin-top:10px}
+#numAiSection .num-ai-article-headings strong{overflow-wrap:anywhere}
+.num-method-quiet{margin:12px 0 0;border:1px solid rgba(175,151,217,.28);border-radius:11px;padding:10px 14px;color:#bcb1d1;background:rgba(45,36,80,.22);font-size:.82rem}
+.num-method-quiet summary{cursor:pointer;color:#c8b7e7;font-weight:750}
+.num-method-quiet p{margin:10px 0 0;line-height:1.75}
+@media(max-width:940px){#numAiSection .num-ai-question-rail{min-width:0}}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -1461,7 +1486,7 @@ html[data-theme="light"] #numAiSection .num-ai-history-group-toggle{background:#
  <article class="summary-card num-profile-card"><button type="button" class="num-profile-trigger" data-profile="attitude" aria-controls="numProfileExplanation" aria-expanded="false"><span class="label">ATTITUDE NUMBER</span><span class="value" id="attitudeNumber">—</span><span class="num-profile-title">態度數</span><span class="num-profile-meaning" id="numAttitudeMeaning">初次互動的象徵風格</span><span class="num-profile-cta">看月、日如何算出它 <span aria-hidden="true">⌄</span></span></button></article>
  <article class="summary-card num-profile-card"><button type="button" class="num-profile-trigger" data-profile="year" aria-controls="numProfileExplanation" aria-expanded="false"><span class="label">PERSONAL YEAR</span><span class="value" id="yearNumber">—</span><span class="num-profile-title" id="yearHeading">個人流年</span><span class="num-profile-meaning" id="numYearMeaning">今年值得留意的生活主題</span><span class="num-profile-cta">看今年為什麼是這個數 <span aria-hidden="true">⌄</span></span></button></article>
  </div>
- <section id="numProfileExplanation" class="num-profile-explainer" aria-label="核心數字解說" aria-live="polite" aria-expanded="true"><div class="num-profile-expander-top"><h3>✦ 核心數字詳細解說 <span id="numProfileFoldCurrent">｜生命數</span></h3><button type="button" id="numProfileFold" aria-expanded="true" aria-controls="numProfileExplainContent">收合說明 ▲</button></div><div id="numProfileExplainContent"><div class="num-profile-explainer-head"><div><span class="num-profile-eyebrow">READ YOUR NUMBERS · 不懂命理也能看懂</span><h3 id="numProfileExplainTitle">你的數字是怎麼來的？</h3><p id="numProfileExplainIntro">先看數字怎麼算，再理解它在生命靈數裡象徵什麼。</p></div><span id="numProfileExplainTag" class="num-profile-tag">核心數</span></div><div id="numProfileExplainBody"></div><p class="num-profile-explain-foot">生命靈數屬於數字象徵與文化探索，不是科學的人格測驗或命運預言；這裡把「計算過程」與「象徵解讀」分開說明。</p></div></section><div class="num-ai-entry"><div><b>✦ AI 生命靈數深度批盤</b><p>12 類專業主題＋自由問事，登入後直接於站內取得長篇命理解讀，並自動帶入整張命盤。</p></div><button type="button" id="numAiJump">前往完整 AI 解讀 →</button></div><section class="num-experience" id="num-map-stage" aria-labelledby="num-experience-title">
+ <section id="numProfileExplanation" class="num-profile-explainer" aria-label="核心數字解說" aria-live="polite" aria-expanded="true"><div class="num-profile-expander-top"><h3>✦ 核心數字詳細解說 <span id="numProfileFoldCurrent">｜生命數</span></h3><button type="button" id="numProfileFold" aria-expanded="true" aria-controls="numProfileExplainContent">收合說明 ▲</button></div><div id="numProfileExplainContent"><div class="num-profile-explainer-head"><div><span class="num-profile-eyebrow">READ YOUR NUMBERS · 不懂命理也能看懂</span><h3 id="numProfileExplainTitle">你的數字是怎麼來的？</h3><p id="numProfileExplainIntro">先看數字怎麼算，再理解它在生命靈數裡象徵什麼。</p></div><span id="numProfileExplainTag" class="num-profile-tag">核心數</span></div><div id="numProfileExplainBody"></div><p class="num-profile-explain-foot">生命靈數屬於數字象徵與文化探索，不是科學的人格測驗或命運預言；這裡把「計算過程」與「象徵解讀」分開說明。</p></div></section><details class="num-method-quiet"><summary>計算方法與流派差異</summary><p>計算方法：西元出生年、月、日先各自化簡（遇 11、22、33 保留），再加總化簡；不同流派存在差異，本站顯示完整算式，結果僅供文化與自我探索參考。</p></details><div class="num-ai-entry"><div><b>✦ AI 生命靈數深度批盤</b><p>12 類專業主題＋自由問事，登入後直接於站內取得長篇命理解讀，並自動帶入整張命盤。</p></div><button type="button" id="numAiJump">前往完整 AI 解讀 →</button></div><section class="num-experience" id="num-map-stage" aria-labelledby="num-experience-title">
  <div class="num-experience-header"><div><div class="eyebrow">03 / INTERACTIVE LIFE MAP · 互動命盤</div><h2 id="num-experience-title">喚醒你的九宮數字星圖</h2><p>讓九宮格本身說故事：點亮的線能直接互動，選擇一條線就能看它在性格、工作、感情中的不同象徵；左邊星圖不會消失。</p></div><span class="num-v4-tag">LIFE PATTERN · 01</span></div>
  <div class="num-metrics" aria-label="九宮格統計">
   <div class="num-metric"><span>生日出現的數字</span><strong id="numPresentCount">—</strong><small>9 種數字中</small></div>
@@ -1516,12 +1541,12 @@ html[data-theme="light"] #numAiSection .num-ai-history-group-toggle{background:#
   <div class="num-ai-workbench">
    <aside class="num-ai-question-rail" aria-label="專屬 AI 題目與操作">
     <div class="num-ai-rail-heading"><span>AI QUESTIONS</span><strong>選擇解讀問題</strong><small>完成的文章會暫存在此分頁，可隨時切回</small></div>
-    <section class="num-ai-session-history" id="numAiHistoryBox" aria-label="本次 AI 問答紀錄" hidden><div class="num-ai-history-head"><strong>本次問答紀錄（<span id="numAiHistoryCount">0</span> 篇）</strong><small>依主題收納 · 暫存於本分頁</small></div><div id="numAiHistoryList" class="num-ai-history-list" aria-label="依主題分類的 AI 紀錄"></div><button type="button" id="numAiNewQuestion" class="num-ai-new-question-v12">＋ 提出新問題</button><div class="num-ai-history-export"><button type="button" id="numAiAllTxt" class="num-ai-all-export">下載全部 TXT</button><button type="button" id="numAiAllCopy" class="num-ai-all-export">複製全部</button></div><small class="num-ai-save-reminder">關閉分頁前，請下載保存完整問答。</small></section>
     <div class="num-ai-tabs" role="group" aria-label="AI 提問方式"><button type="button" id="numAiModeFixed" data-ai-mode="fixed" aria-pressed="true">固定題目</button><button type="button" id="numAiModeCustom" data-ai-mode="custom" aria-pressed="false">自訂提問</button></div>
     <div id="numAiGuidedPane" class="num-ai-guided" hidden><div class="num-ai-guided-kicker">已選的專屬題目</div><p id="numAiGuidedQuestion"></p><button type="button" id="numAiChooseOther">切換其他固定題目</button></div>
     <div id="numAiFixedPane"><div id="numAiChoices" class="num-ai-choice-grid" role="group" aria-label="本區專屬固定 AI 題目"></div><button type="button" id="numAiMoreTopics" class="num-ai-more-topics" hidden>展開更多命盤專題</button></div>
     <div id="numAiCustomPane" hidden><label for="numAiQuestion" id="numAiCustomLabel" class="num-ai-custom-label">你最想深入問什麼？</label><textarea id="numAiQuestion" class="num-ai-textarea" maxlength="2000" placeholder="例如：我準備創業，但又怕失敗。請結合命盤深入分析。"></textarea></div>
     <div class="num-ai-side-tools" aria-label="解讀文件操作"><button type="button" id="numAiSideCopy">複製本次回答</button><button type="button" id="numAiSideDownload">下載本次解讀 TXT</button></div>
+    <section class="num-ai-session-history" id="numAiHistoryBox" aria-label="本次 AI 問答紀錄" hidden><div class="num-ai-history-head"><strong>本次問答紀錄（<span id="numAiHistoryCount">0</span> 篇）</strong><small>依主題收納 · 暫存於本分頁</small></div><div id="numAiHistoryList" class="num-ai-history-list" aria-label="依主題分類的 AI 紀錄"></div><div class="num-ai-history-export"><button type="button" id="numAiAllTxt" class="num-ai-all-export">下載全部 TXT</button><button type="button" id="numAiAllCopy" class="num-ai-all-export">複製全部</button></div><small class="num-ai-save-reminder">關閉分頁前，請下載保存完整問答。</small></section>
    </aside>
    <div class="num-ai-article-column">
     <div id="numAiProfileChips" class="num-ai-pillrow" aria-label="當前命盤要點"></div>
@@ -1535,7 +1560,7 @@ html[data-theme="light"] #numAiSection .num-ai-history-group-toggle{background:#
        <div class="num-ai-current-question"><span>本次問事</span><strong id="numAiConversationQuestion">你的專屬生命靈數命盤</strong></div>
        <div id="numAiAnswerPanel" class="num-ai-answer-panel" hidden>
         <div class="num-ai-answer-head"><div class="num-ai-article-headings"><strong>你的專屬生命靈數 AI 批盤</strong><small id="numAiTrace"></small></div><button type="button" id="numAiArticleToggle" class="num-ai-fold-action" aria-expanded="true" aria-controls="numAiAnswer">收起本文 ↑</button></div>
-        <div id="numAiCollapsedCard" class="num-ai-collapsed-card" hidden><strong id="numAiCollapsedTitle">此篇已收起 · 仍保留在左側問答紀錄</strong><p>文章與追問沒有刪除；重新展開閱讀、切換其他題目都不會重複扣點。</p><button type="button" id="numAiCollapsedOpen" class="num-ai-new-question-v12">展開這篇批盤 ↓</button></div>
+        <div id="numAiCollapsedCard" class="num-ai-collapsed-card" hidden><strong id="numAiCollapsedTitle">此篇已收起 · 仍保留在左側問答紀錄</strong><p>文章與追問沒有刪除；重新展開閱讀、切換其他題目都不會重複扣點。</p></div>
         <div id="numAiAnswer" class="num-ai-answer"></div>
         <div class="num-ai-answer-actions"><button type="button" id="numAiAnswerCopy">複製解讀</button><button type="button" id="numAiAnswerTxt">下載解讀 TXT</button></div>
         <div class="num-ai-followup"><label for="numAiFollowup">想對這份批盤再深入追問？（每次另扣 AI 1 次）</label><textarea id="numAiFollowup" rows="3" maxlength="1600" placeholder="例如：請把事業盲點和 2027 年的新階段講得更深入，並舉兩個具體情境。"></textarea><button type="button" id="numAiFollowupRun">✦ 送出延伸追問</button></div>
@@ -1587,7 +1612,7 @@ html[data-theme="light"] #numAiSection .num-ai-history-group-toggle{background:#
  <p class="num-deep-disclaimer">生命靈數與其延伸系統屬數字命理的文化／象徵框架，不是科學人格檢測，也無法保證預測感情、健康、財務或人生事件。</p>
 </section>
 
-<p class="seo-footer-note">計算方法：西元出生年、月、日先各自化簡（遇 11、22、33 保留），再加總化簡；不同流派存在差異，本站顯示完整算式，結果僅供文化與自我探索參考。</p></div>
+</div>
 </section>
 <main>
 <section class="section wrap" id="about"><div class="eyebrow">NUMEROLOGY · INTRODUCTION</div><h2>生命靈數是什麼？</h2><p>生命靈數（Life Path Number）是一種以西元生日為基礎的數字象徵系統。本站採用先分別化簡出生年、月、日，再把三部分加總的方式，得到 1～9 或部分流派保留的 11、22、33 大師數。生命靈數常被用來談個性偏好、價值觀、擅長的方式與需要留意的慣性，但並不是以科學方式測量人格或預知命運。</p><div class="jump-links"><a href="#calculator">直接查生命靈數</a><a href="#howto">計算教學</a><a href="#dimensions">解讀內容</a><a href="#faq">常見問題</a></div></section>
@@ -2422,7 +2447,7 @@ function renderMonths(c){
  const NUM_AI_SESSION_PREFIX='divinationhub-numerology-session-v12:';
  let numAiHistory=[],numAiActiveId=null,numAiUnsaved=false,numAiPendingOperation=null;
  const NUM_AI_GROUPS=[['general','綜合命盤'],['stage','人生四階段'],['timing','流年流月']];
- let numAiOpenGroups=new Set(['general']),numAiOpenThreads=new Set(),numAiFoldedIds=new Set();
+ let numAiOpenGroups=new Set(),numAiOpenThreads=new Set(),numAiFoldedIds=new Set();
  let numAiSaveWarning=false;
  function numAiCurrentSessionKey(){return NUM_AI_SESSION_PREFIX+(current?.date||'')}
  function numAiPersistHistory(){
@@ -2431,7 +2456,7 @@ function renderMonths(c){
   catch(_){numAiSaveWarning=true; const note=document.querySelector(".num-ai-save-reminder");if(note)note.textContent="瀏覽器暫存空間不足：目前仍可閱讀，請立即下載全部 TXT 保存。";}
  }
  function numAiLoadHistory(){
-  numAiHistory=[];numAiActiveId=null;numAiUnsaved=false;numAiOpenGroups=new Set(['general']);numAiOpenThreads=new Set();numAiFoldedIds=new Set();numAiSaveWarning=false;
+  numAiHistory=[];numAiActiveId=null;numAiUnsaved=false;numAiOpenGroups=new Set();numAiOpenThreads=new Set();numAiFoldedIds=new Set();numAiSaveWarning=false;
   try{const saved=JSON.parse(sessionStorage.getItem(numAiCurrentSessionKey())||'null');if(saved&&Array.isArray(saved.records)){
     numAiHistory=saved.records.filter(r=>r&&r.id&&r.date===current.date&&typeof r.answer==='string'&&r.answer.trim()).slice(-40);
     numAiActiveId=saved.activeId||null;numAiFoldedIds=new Set((saved.foldedIds||[]).filter(x=>typeof x==='string'));
@@ -2529,8 +2554,7 @@ function renderMonths(c){
  function numAiShowArchiveRecord(r,scroll=false){
   if(!r||r.date!==current?.date)return;
   numAiActiveId=r.id;lastNumerologyOperation=r.id;lastNumerologyResult=r.answer;
-  numAiOpenGroups=new Set([r.scope||'general']);
-  let parent=r,n=0;while(parent.parentId&&n++<20){const root=numAiHistory.find(x=>x.id===parent.parentId);if(!root)break;parent=root;}numAiOpenThreads=new Set([parent.id]);
+  let parent=r,n=0;while(parent.parentId&&n++<20){const root=numAiHistory.find(x=>x.id===parent.parentId);if(!root)break;parent=root;}numAiOpenThreads.add(parent.id);
   $('numAiReadingGrid').hidden=false;$('numAiAnswerPanel').hidden=false;
   $('numAiSection').classList.add('num-ai-reading-view');$('numAiConversationQuestion').textContent=r.label;
   $('numAiTrace').textContent=`通道 ${r.channel||'?'}｜追蹤 ${r.traceId||'無'}`;
@@ -2567,8 +2591,7 @@ function renderMonths(c){
  });
  $('numAiArticleToggle').addEventListener('click',()=>numAiSetArticleFold(!$('numAiAnswerPanel').classList.contains('num-ai-article-collapsed'),true));
  $('numAiArticleBottomFold').addEventListener('click',()=>numAiSetArticleFold(true,true));
- $('numAiCollapsedOpen').addEventListener('click',()=>numAiSetArticleFold(false,true));
- $('numAiNewQuestion').addEventListener('click',()=>{numAiQuestionChanged();aiMode='fixed';numAiGuidedQuestion='';numAiGuidedLabel='';renderAiInterface();aiStatus('請選擇固定題目或自訂新問題。')});
+
  $('numAiAllTxt').addEventListener('click',()=>{if(!numAiHistory.length)return;numAiReportFile('生命靈數-本次全部AI問答-'+current.date,numAiArchiveText(numAiHistory));numAiUnsaved=false;aiStatus('已下載本次全部問答 TXT。')});
  $('numAiAllCopy').addEventListener('click',async()=>{if(!numAiHistory.length)return;try{await navigator.clipboard.writeText(numAiArchiveText(numAiHistory));aiStatus('已複製本次全部 AI 問答。')}catch(_){aiStatus('複製失敗，請改用 TXT 下載。')}});
  // A second calculation must not interrupt an unfinished, quota-reserved AI operation.
@@ -2628,7 +2651,7 @@ function renderMonths(c){
   if(!confirm('本次將使用會員共用 AI 額度 1 次。只有成功完成可閱讀的解讀才扣次，確認送出？'))return;
   const id=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
   const label=isFollowup?'延伸追問｜'+question.slice(0,65):aiMode==='guided'?numAiGuidedLabel:aiMode==='custom'?question.slice(0,65):currentAiTopic().name+'｜'+currentAiTopic().tag;
-  const context={id,label,question:isFollowup||aiMode!=='fixed'?question:`完整解讀：${label}`,scope:isFollowup?(numAiHistory.find(r=>r.id===parentId)?.scope||numAiActiveDock):numAiActiveDock,parentId};
+  const context={id,label,question:isFollowup||aiMode!=='fixed'?question:`完整解讀：${label}`,scope:numAiActiveDock,parentId};
   try{localStorage.setItem(NUM_AI_LAST_KEY,JSON.stringify({operationId:id,date:current.date,questionLabel:label,question:context.question,scope:context.scope,parentId}))}catch(_){}
   $('numAiReportBox').hidden=true;aiRequestBusy=true;numAiPendingOperation=id;
   numAiSetBusy(true,isFollowup?'正在根據原篇解讀延伸分析；原文章仍保留在左側問答紀錄。':'正在整理專屬命盤，完成後自動新增一篇紀錄。');
@@ -2822,7 +2845,7 @@ function renderMonths(c){
   head.appendChild(title);panel.appendChild(head);panes[key]=panel;
  }
  // Move, never clone: all original IDs, listeners, computed content and selected state remain unchanged.
- panes.numbers.append(summary,profile);
+ panes.numbers.append(summary,profile,document.querySelector('.num-method-quiet'));
  if(reading){reading.hidden=false;panes.reading.appendChild(reading)}
  panes.stage.appendChild(pinnacle);panes.timing.appendChild(timeline);
  pinnacle.classList.remove('num-fold-closed');timeline.classList.remove('num-fold-closed');
