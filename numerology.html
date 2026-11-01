@@ -1052,6 +1052,26 @@ body.num-v4-ready .num-v4-panel .num-deep-card-head{margin-bottom:7px!important}
 body.num-v4-ready .num-v4-panel .num-local-ai{display:none!important}
 @media(max-width:750px){#num-map-stage .num-v4-navigation{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}#num-map-stage .num-v4-navigation button{padding:10px 6px;font-size:.75rem}.num-v4-panel-title h3{font-size:1rem}.num-v4-birthsummary{flex-wrap:wrap}}
 </style>
+<style id="numV5SideNavigation">
+/* V5 layout-only refinement: original left star map AND right inspector remain intact. */
+#num-map-stage .num-v5-workbench{display:grid;grid-template-columns:clamp(132px,10.5vw,172px) minmax(0,1fr);gap:clamp(10px,1.1vw,18px);align-items:start;width:100%;min-width:0}
+#num-map-stage .num-v5-workbench>.num-v4-navigation{display:flex;flex-direction:column;flex-wrap:nowrap;gap:9px;margin:0;padding:0;align-self:start;position:sticky;top:78px;min-width:0}
+#num-map-stage .num-v5-workbench>.num-v4-navigation button{display:block;width:100%;min-height:51px;text-align:left;padding:11px 12px;white-space:normal;line-height:1.4;font-size:clamp(.77rem,.86vw,.9rem)}
+#num-map-stage .num-v5-workbench>#numV4Panels{min-width:0;width:100%}
+#num-map-stage .num-v5-workbench .num-console{min-width:0;width:100%;max-width:none}
+/* Keep the two original panels side-by-side on wide desktop screens. */
+@media(min-width:1101px){#num-map-stage .num-v5-workbench .num-reader-layout{grid-template-columns:minmax(0,1.25fr) minmax(335px,.75fr)}}
+/* Narrow screens: use compact horizontal navigation instead of squeezing the star chart. */
+@media(max-width:1100px){
+ #num-map-stage .num-v5-workbench{display:block}
+ #num-map-stage .num-v5-workbench>.num-v4-navigation{position:static;display:flex;flex-direction:row;flex-wrap:wrap;gap:7px;margin:0 0 12px}
+ #num-map-stage .num-v5-workbench>.num-v4-navigation button{width:auto;min-height:40px;text-align:center;padding:8px 11px}
+}
+@media(max-width:600px){
+ #num-map-stage .num-v5-workbench>.num-v4-navigation{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ #num-map-stage .num-v5-workbench>.num-v4-navigation button{width:100%;min-height:43px;padding:9px 6px}
+}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -2103,8 +2123,9 @@ function storyCard(title,text){const card=document.createElement('section');card
  panes.stage.appendChild(pinnacle);panes.timing.appendChild(timeline);
  pinnacle.classList.remove('num-fold-closed');timeline.classList.remove('num-fold-closed');
  if(share){share.open=false;panes.share.appendChild(share)}
- map.querySelector('.num-experience-header')?.after(nav);
- nav.after(host);for(const [key] of items)host.appendChild(panes[key]);
+ const workbench=document.createElement('div');workbench.className='num-v5-workbench';
+ map.querySelector('.num-experience-header')?.after(workbench);
+ workbench.append(nav,host);for(const [key] of items)host.appendChild(panes[key]);
  let active='grid';
  function switchTo(key,scroll=true){
   if(!panes[key])key='grid';active=key;
