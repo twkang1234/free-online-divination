@@ -510,6 +510,12 @@ html[data-theme="light"] .num-deep-card .num-ai-dock .num-ai-footnote{color:#c6b
 .num-stage-detail .num-stage-fold-body p{font-size:.9rem;line-height:1.88;color:var(--dim);margin:9px 0}
 .num-stage-detail .num-stage-fold-body .num-stage-lead{color:var(--text)}
 html[data-theme="light"] .num-stage-detail .num-stage-fold{background:rgba(125,95,186,.045);border-color:#ded2ef}
+
+/* V11：更有力的命理批盤；前端維持原有左右雙欄與折疊。 */
+.num-year-detail .num-time-warning,.num-month-detail .num-time-warning{padding:10px 12px;border-left:3px solid #edc180;background:rgba(225,190,120,.07);border-radius:0 9px 9px 0}
+.num-year-detail .num-time-action,.num-month-detail .num-time-action{padding:10px 12px;border-left:3px solid #83dcd3;background:rgba(83,194,193,.07);border-radius:0 9px 9px 0}
+.num-year-detail>p:not(.num-time-tags),.num-month-detail>p{line-height:1.85;margin:10px 0 12px}
+html[data-theme="light"] .num-time-warning{background:#fff6e9!important}html[data-theme="light"] .num-time-action{background:#e9f8f6!important}
 </style>
 <style id="v45-design">
 /* V4.5: narrative-first, contrast checked, responsive additions */
@@ -2004,37 +2010,98 @@ function storyCard(title,text){const card=document.createElement('section');card
   if(monthNum==null&&age>=20)extra.push(`這一年約落在你的第 ${idx+1} 人生階段，高峰數 ${peak}。如果眼前的抉擇剛好牽涉這段人生的長期課題，可以再切到「人生四階段」對照閱讀。`);
   return extra.slice(0,2);
  }
- function renderYears(c){
-  const now=c.yearCalendar;selectedYear=Math.max(now,Math.min(now+8,selectedYear||now));const rail=$('numYearRail');rail.replaceChildren();
-  for(let y=now;y<=now+8;y++){const n=yearAt(c,y),b=makeButton('num-year-button',`<span class="num-year-dot">${n}</span><span class="num-year-title">${y}</span><span class="num-year-theme">${YEAR[n][0]}</span>`,()=>{selectedYear=y;renderYears(c)},y===selectedYear);b.title=`${y} 年流年 ${n} · ${YEAR[n][0]}`;rail.appendChild(b)}
-  const n=yearAt(c,selectedYear),life=timeCoreNumber(c),a=TIME_ANNUAL[n],detail=$('numYearDetail');detail.replaceChildren();
-  detail.append(timeNode('div',`${selectedYear} 年 · 個人流年 ${n}`,'num-time-eyebrow'));
-  detail.append(timeNode('h4',`${a.title}`));
-  detail.append(timeNode('p',`生命數 ${c.life} × 流年 ${n}｜年度關鍵字：${a.tag}`,'num-time-tags'));
-  timeLine(detail,'這一年要面對什麼？',a.hook);
-  timeLine(detail,'你的命盤與今年的拉扯',TIME_LIFE_YEAR[life][n-1]);
-  timeLine(detail,'生活會怎麼呈現？',a.scene);
-  if(c.life!==life)timeLine(detail,'大師數的提醒',`你的核心數 ${c.life} 同時帶著基礎數 ${life} 的特質；這些情境是參考角度，不應當成命定事件。`,'num-time-context');
-  timeFold(detail,'職場、金錢與感情的三大情境',[['工作與事業',a.work],['金錢與資源',a.money],['感情與人際',a.love]]);
-  timeFold(detail,'年度避雷指南與行動處方',[['最需要避開的盲點',a.risk],['今年可以做的事',a.action]]);
-  const ctx=timeContext(c,n,null);if(ctx.length)timeFold(detail,'延伸看你的九宮格與人生階段',ctx.map((x,i)=>[i===0?'個人命盤提醒':'延伸對照',x]));
-  const months=$('numMonthGrid');months.replaceChildren();selectedMonth=Math.max(1,Math.min(12,selectedMonth||todayTaipei().m));for(let m=1;m<=12;m++){const mon=pure(n+m),b=makeButton('num-month-button',`<small>${m} 月</small><b>${mon}</b>`,()=>{selectedMonth=m;renderMonths(c)},selectedMonth===m);months.appendChild(b)}renderMonths(c);
-  $('numCycleMethod').textContent=`本站採曆年制。個人流年：出生月 ${c.mo}、出生日 ${c.d} 與西元年 ${selectedYear} 的數字逐位加總並化簡為 1～9（不另保留大師數），本年的結果是 ${n}。個人流月：當年流年 ${n}＋所選月份 ${selectedMonth}，化簡為 ${pure(n+selectedMonth)}。本站以 1 月 1 日至 12 月 31 日為年度分界；其他流派可能以生日作為年度切換點。`;
+/* V11 命理師流年流月批盤：以站長提供的《修改的部份(2).txt》為行文規格。
+   只修改前端文章渲染；生命數、流年、流月及九宮格公式保留原有演算。 */
+const V11_ANNUAL_STORY={
+ 1:'你已經站在九年循環的第一道門口。以前一直想做、卻被現實與責任壓住的念頭，今年會一再敲門：難道往後的日子，還要永遠照別人安排的路走？新局的誘惑很大，但真正的考題不是你敢不敢辭掉工作、換掉人生，而是能不能承擔選擇之後的責任。想做副業、換跑道、展開合作都可以，先讓一件小事真正做出成績，再談下一步。',
+ 2:'這一年很像命運刻意把你放在關係的十字路口。你明明想快點把事情做好，偏偏許多進度不再由你一個人決定。合作對象會不會履約？家人是否真的理解你？一段關係究竟是互相扶持，還是只有你不斷退讓？這些問題可能比成績單更刺眼。別把忍耐當成熟；把話講明白、把責任分清楚，反而是這一年最實際的修行。',
+ 3:'過去悶在心裡的話，今年可能越來越藏不住。你可能想寫作、上台發言、經營新作品，也可能突然發現自己在感情裡早就不甘心只當一個安靜配合的人。這一年不是只有玩樂與好運，真正考驗的是你敢不敢把感受說清楚，再把點子做成結果。最怕嘴上說要改變，心裡卻一直害怕被笑，最後什麼都沒有留下。',
+ 4:'這一年像在替人生的房子驗收地基。表面上未必有轟轟烈烈的變化，卻會接連看見以前放著不管的小問題：職場流程靠人硬撐、帳務有漏洞、家務總是同一個人在做。你可能覺得怎麼努力半天，處理的都是麻煩事。但命理上的「築基」從來不是風光的工作；先把會反覆漏水的地方補好，往後才有資格住得安穩。',
+ 5:'這一年最讓人不安的不是變化太多，而是你發現過去以為不會改變的事情，其實從來沒有那麼牢靠。工作調整、合作換人、生活節奏被打斷，甚至連自己的興趣都可能突然轉向。你想逃離僵局是正常的，但不能把「換一個地方」當成處理所有問題的答案。真正有本事的人，不是從不出亂子，而是遇到亂子後知道什麼該守、什麼該換。',
+ 6:'家人、伴侶、工作團隊的責任，這一年可能像接力棒一樣交到你手裡。有人說「這件事只有你最可靠」，聽起來是肯定，久了也可能成為枷鎖。你會開始懷疑：我到底是被愛，還是因為好用才一直被需要？這一年真正要學的不是更加犧牲，而是讓照顧有界線、讓承諾能分工。太愛操心的人，往往不是輸在能力，而是輸在不肯把責任交出去。',
+ 7:'這一年外表可能沒有太多戲劇性，內心卻不斷追問：我現在辛苦追求的，真的還是自己想要的嗎？你可能對原本的職位、生活方式、甚至長年堅持的看法產生懷疑，想讀書、想沉澱，也想遠離人群好好想一想。別急著把這種停頓當成退步；真正需要提防的是想了又想，最後把「再研究一下」變成永遠不必下決定的藉口。',
+ 8:'這一年，現實會把「成果」兩個字擺在你眼前。努力多年的專案能不能收成？薪水和責任是否相稱？為家人、事業耗費的時間究竟換來什麼？你可能更在意權力、資源、效率，也更容易拿別人的成績跟自己比。真正的考驗不是你能不能掌握更多，而是掌握之後，會不會把自己和身邊的人都逼到喘不過氣。能做出成績是一回事，能守住代價才叫本事。',
+ 9:'九年循環走到最後一年，命運像在請你清點一間住了很久的房子。哪些東西還值得留下？哪些責任其實早就不屬於你？你可能面對拖延已久的工作交接、老關係的重新定位，或一筆一直不願承認需要整理的支出。可怕的不是結束，而是明知不合適，還拿「我以前投入那麼多」當藉口繼續耗。舊的不肯讓位，新的又怎麼進得來？'
+};
+const V11_MONTH_STORY={
+ 1:'一個新念頭可能突然冒出來。也許是重寫履歷、學一項技能、把副業計畫翻出來，或終於想正面談一件拖了好久的事。這種衝勁很珍貴，但它不是叫你把全部人生立即推倒重來。你可以先試、先問、先準備，不必用一筆大錢或一句狠話證明自己有決心。',
+ 2:'這個月像有人按下了人生的慢速鍵。你想把事情推進，偏偏還得等合作對象的回音、家人的態度，或另一半願不願意說真話。最怕的是你表面答應，心裡卻把每一筆委屈記得清清楚楚。與其悶到爆炸，不如趁事情還能談，把期限、界線和期待先講明白。',
+ 3:'有些話，你可能早就想說，只是一直找不到合適的開頭。工作會議上想提出不同看法，感情裡想安排一點浪漫，或忽然想重拾畫畫、唱歌與寫作等興趣。這個月不只問你會不會說話，更問你敢不敢真實地讓人看見自己。別怕笨拙，怕的是又用「算了」把自己吞回去。',
+ 4:'眼前的功課不一定好玩，卻往往是最不能再拖的。文件、帳務、工作流程、家裡堆放的東西，甚至答應別人很久沒完成的承諾，可能都在提醒你該清一次帳。你可以做得很紮實，卻別把要求完美變成拖延的藉口；先補最會漏水的一個洞，比把每一面牆重新粉刷更重要。',
+ 5:'一件臨時變動就可能把你原本排好的行程打亂：會議突然改期、同事換手、合作方案翻盤，或者有個讓人心癢的新機會。你會很想立刻反擊、立刻改方向，但這個月真正的本領是見招拆招。能調整的就調整，該守住的底線就守住；不要只因為不舒服，就急著作出無法收回的決定。',
+ 6:'這個月，家人、伴侶、同事可能又把麻煩交到你手上。你一看就知道怎麼做，於是順手接下，等忙完才發現自己連喘口氣的時間都沒有。你需要學的不是再多付出一點，而是問清楚：這件事真的是我的責任嗎？關係裡的愛不該只能靠一個人長期加班維持。',
+ 7:'這個月可能突然很想安靜。別人忙著社交、趕進度，你卻想研究一件問題、讀完一本書，或重新想想過去的選擇。獨處不是壞事，但要提防越想越細、越想越怕。某些答案沒有辦法坐在原地想出來；把疑問釐清後，仍然要拿出一個可以驗證的小動作。',
+ 8:'現實問題會顯得特別刺眼：工作成果能不能交付？花出去的錢換回什麼？誰該負責、誰又拿走了功勞？你可能突然想把所有帳算得清清楚楚。算帳沒有錯，錯的是一著急就把每段關係都變成輸贏。該爭取的要爭取，但不要為了扳回一城而承擔自己根本吃不下的風險。',
+ 9:'這個月有點像一場個人的告別儀式。可能不是什麼轟轟烈烈的大事件，而是你終於願意結束拖了很久的合作、整理失去用途的東西，或不再跟一段消耗你的相處方式糾纏。捨不得是正常的，但千萬別拿過去的辛苦，要求自己往後繼續受累。留下經驗，放下包袱，下一步才走得出去。'
+};
+const V11_FOCUS={
+ 1:'新局與主動',2:'磨合與界線',3:'表達與創意',4:'築基與整理',5:'變動與應變',6:'責任與照顧',7:'沉澱與追問',8:'成果與資源',9:'收尾與斷捨離'
+};
+const V11_SPECIAL_YEAR={
+ '4-9': '對你這個最怕失去安定的 4 號人來說，流年 9 簡直是在逼你練習「放下控制」。你明明知道某份工作、某段關係或一種老習慣已經不合時宜，心裡卻總冒出一句：「我辛苦建立那麼久，怎能說放就放？」今年的拉扯就在這裡：不是你沒有能力守住，而是有些東西越守，越把未來堵死。',
+ '4-1': '4 號人做事講求萬全準備，可是流年 1 偏偏要你先踏出第一步。你會一邊想換跑道、開新局，一邊拿出十個理由說服自己再等一等。記住，這一年不是要你賭上全部，而是要你證明：就算條件還不完美，你仍有能力從小地方開始。',
+ '4-5': '4 號人最愛排好的進度，流年 5 卻偏愛打亂既定節奏。原本可預期的工作突然變動，或者你自己開始受不了日復一日的安排。你越想把一切硬壓回老路，越容易累到脾氣暴躁。這年不是叫你放棄原則，而是教你有些方法真的該換了。',
+ '4-8': '你這個重視秩序、執行力的 4 號人，遇到流年 8 容易把成績看得特別重。做出成果當然值得驕傲，但你也可能把工作變成一場永遠無法拿滿分的考試。別讓「我再拚一下」變成無限加班、無限承擔的藉口。'
+};
+const V11_SPECIAL_MONTH={
+ '4-9-1':'這是一個很矛盾的月份：今年的收尾課題還沒做完，1 月卻讓你忍不住想重新開始。你可能想學新技術、開副業、換一種工作方式，卻又擔心自己一動就把多年穩定打散。這個月適合先做市場調查、先寫計畫，不急著下大注；等舊帳整理好，下一輪的新局才有真正的落腳點。',
+ '4-9-3':'年度要求你整理舊包袱，本月卻把「說出來」擺到面前。你可能在工作上終於想說出不合理的分工，也可能想對伴侶講一句藏了很久的心裡話。對慣於用行動代替表達的 4 號人，這甚至比埋頭苦幹還難。若生日九宮格也缺少 3，更可把本月當作練習開口的時機，而不是認定自己天生不會說話。',
+ '4-9-5':'今年已經在逼你放下過去，這個月還可能把行程、工作或合作條件弄得更不安穩。對講求規律的你來說，臨時改期或主管突然換方向，會讓你氣得想立刻翻桌。先別急著認定一切失控：把可以調整的部分列出來，真正不能退讓的底線另外守住。',
+ '4-9-9':'一年是流年 9，這個月又走到流月 9，好像命理上的兩次告別同時敲門。你可能格外不願意承認某件事真的到了尾聲：多年的合作、沒有前景的計畫、甚至只剩責任的關係。感傷可以有，拖延卻不能無止境。先辦完一項交接、整理一項支出，把新的空間留給下一輪。'
+};
+function v11ReadP(host,label,body,cls=''){const p=timeLine(host,label,body,cls);return p}
+function v11Folder(host,label,items){return timeFold(host,label,items)}
+function v11BirthLine(c,focus){const counts=c.counts||[]; const missing=counts[focus]===0, repeat=(counts[focus]||0)>=2;
+ if(missing)return `你的生日九宮格沒有出現 ${focus}；因此這個階段所要求的本領，可能不像你熟悉的做法那樣順手。這不是「命中沒有能力」，而是提醒你別只靠老習慣過關。`;
+ if(repeat)return `生日九宮格裡 ${focus} 出現 ${counts[focus]} 次；這類處事傾向也許比較熟悉，但越順手的本領，越要小心用過頭、用錯場合。`;
+ return '';
+}
+function v11Transition(c,y,n){const next=yearAt(c,y+1),prior=yearAt(c,y-1);if(n===9)return `今年先把該結的案、該清的關係和資源整理好；${y+1} 年進入流年 ${next}，新的循環才有空間展開。`;
+ if(n===1)return `這一步也不是憑空開始：回頭看 ${y-1} 年流年 ${prior} 留下什麼功課，將它整理成可以帶往新局的經驗。`;
+ return `今年的課題會延續到下一輪：${y+1} 年轉入流年 ${next}（${V11_FOCUS[next]}）。現在做的選擇，不只是為眼前一兩個月。`;
+}
+function v11Annual(c,y,n){const a=TIME_ANNUAL[n],life=timeCoreNumber(c),detail=$('numYearDetail');detail.replaceChildren();
+ detail.append(timeNode('div',`${y} 年 · 個人流年 ${n}`,'num-time-eyebrow'));
+ detail.append(timeNode('h4',`${a.title}｜${V11_FOCUS[n]}`));
+ detail.append(timeNode('p',`年度關鍵字：${a.tag}`,'num-time-tags'));
+ v11ReadP(detail,'給你的專屬警示',V11_SPECIAL_YEAR[`${life}-${n}`]||TIME_LIFE_YEAR[life][n-1]);
+ v11ReadP(detail,'命理師深度批盤',V11_ANNUAL_STORY[n]);
+ v11Folder(detail,'三大領域｜事業、金錢、感情',[['事業職場',a.work],['金錢財務',a.money],['感情人際',a.love]]);
+ v11ReadP(detail,'今年最要避開的雷',a.risk,'num-time-warning');
+ v11ReadP(detail,'年度處方籤',a.action,'num-time-action');
+ const extra=v11BirthLine(c,n);const extensions=[['下一年的伏筆',v11Transition(c,y,n)]];
+ if(extra)extensions.push(['九宮格的提醒',extra]);
+ v11Folder(detail,'進階閱讀｜九宮格與前後年度',extensions);
+}
+function v11Monthly(c,y,m,n,mn){const life=timeCoreNumber(c),info=TIME_MONTH[mn],detail=$('numMonthDetail');detail.replaceChildren();
+ detail.append(timeNode('div',`${y} 年 ${m} 月 · 個人流月 ${mn}`,'num-time-eyebrow'));
+ detail.append(timeNode('h4',`${info.name}｜${V11_FOCUS[mn]}`));
+ v11ReadP(detail,'本月命理主題',TIME_YEAR_MONTH[n][mn-1]);
+ let specific=V11_SPECIAL_MONTH[`${life}-${n}-${mn}`];
+ if(specific&&life===4&&n===9&&mn===3){
+  specific=specific.replace('若生日九宮格也缺少 3，更可把本月當作練習開口的時機，而不是認定自己天生不會說話。',c.counts[3]===0?'你的九宮格又剛好缺少 3，更要練習把心裡話說出口；不是天生不會，而是不能老靠沉默帶過。':'你的九宮格雖然出現 3，也不能只靠會說話就算過關；重要的話還是要真正講清楚。');
  }
- function renderMonths(c){
-  const n=yearAt(c,selectedYear),m=selectedMonth,mn=pure(n+m),life=timeCoreNumber(c),mdata=TIME_MONTH[mn],detail=$('numMonthDetail');
-  $('numMonthGrid').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',String(i+1===m)));
-  detail.replaceChildren();detail.append(timeNode('div',`${selectedYear} 年 ${m} 月 · 個人流月 ${mn}`,'num-time-eyebrow'));
-  detail.append(timeNode('h4',mdata.name));
-  detail.append(timeNode('p',`生命數 ${c.life} × 流年 ${n} × 流月 ${mn}`,'num-time-tags'));
-  timeLine(detail,'本月核心',TIME_YEAR_MONTH[n][mn-1]);
-  timeLine(detail,'你的個人盲點',TIME_LIFE_MONTH[life][mn-1]);
-  timeLine(detail,'可能遇到的生活情境',mdata.scene);
-  timeFold(detail,'本月職場、財務、感情怎麼走？',[['工作與事業',mdata.work],['金錢與資源',mdata.money],['感情與人際',mdata.love]]);
-  timeFold(detail,'本月避雷與行動指南',[['需要小心的地方',mdata.risk],['具體行動',mdata.action],['生活提醒',TIME_MONTH_CALENDAR[m-1]]]);
-  const ctx=timeContext(c,n,mn);if(ctx.length)timeFold(detail,'你的九宮格加碼提醒',ctx.map((x,i)=>[i?'額外線索':'命盤對照',x]));
-  $('numCycleMethod').textContent=`本站採曆年制。個人流年：出生月 ${c.mo}、出生日 ${c.d} 與西元年 ${selectedYear} 的數字逐位加總並化簡為 1～9（不另保留大師數），本年的結果是 ${n}。個人流月：當年流年 ${n}＋所選月份 ${m}＝${n+m}，化簡為 ${mn}。本站以 1 月 1 日至 12 月 31 日為年度分界；其他流派可能以生日作為年度切換點。`;
- }
+ v11ReadP(detail,'這個月可能怎麼上演',specific||V11_MONTH_STORY[mn]);
+ v11ReadP(detail,'你的個人盲點',TIME_LIFE_MONTH[life][mn-1]);
+ const focus={1:[['職場',info.work],['財務',info.money]],2:[['職場',info.work],['感情',info.love]],3:[['職場',info.work],['感情',info.love]],4:[['職場',info.work],['財務',info.money]],5:[['職場',info.work],['財務',info.money]],6:[['財務',info.money],['感情',info.love]],7:[['職場',info.work],['感情',info.love]],8:[['職場',info.work],['財務',info.money]],9:[['職場',info.work],['感情',info.love]]}[mn];
+ v11Folder(detail,'本月生活情境｜兩個實用提醒',focus);
+ v11ReadP(detail,'本月避雷',info.risk,'num-time-warning');
+ v11ReadP(detail,'本月處方',info.action,'num-time-action');
+}
+function renderYears(c){
+ const now=c.yearCalendar;selectedYear=Math.max(now,Math.min(now+8,selectedYear||now));const rail=$('numYearRail');rail.replaceChildren();
+ for(let y=now;y<=now+8;y++){const n=yearAt(c,y),b=makeButton('num-year-button',`<span class="num-year-dot">${n}</span><span class="num-year-title">${y}</span><span class="num-year-theme">${YEAR[n][0]}</span>`,()=>{selectedYear=y;renderYears(c)},y===selectedYear);b.title=`${y} 年流年 ${n} · ${YEAR[n][0]}`;rail.appendChild(b)}
+ const n=yearAt(c,selectedYear);v11Annual(c,selectedYear,n);
+ const months=$('numMonthGrid');months.replaceChildren();selectedMonth=Math.max(1,Math.min(12,selectedMonth||todayTaipei().m));for(let m=1;m<=12;m++){const mon=pure(n+m),b=makeButton('num-month-button',`<small>${m} 月</small><b>${mon}</b>`,()=>{selectedMonth=m;renderMonths(c)},selectedMonth===m);months.appendChild(b)}renderMonths(c);
+}
+function renderMonths(c){
+ const n=yearAt(c,selectedYear),m=selectedMonth,mn=pure(n+m);
+ $('numMonthGrid').querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',String(i+1===m)));
+ v11Monthly(c,selectedYear,m,n,mn);
+ $('numCycleMethod').textContent=`本站採曆年制。流年：出生月 ${c.mo}、出生日 ${c.d} 與西元年 ${selectedYear} 數字加總化簡為 1～9，得 ${n}。流月：流年 ${n} 加月份 ${m}，化簡為 ${mn}。年度分界為 1 月 1 日；其他流派可能以生日作為轉換日。算法僅在此處說明。`;
+}
+
+
  function renderDeep(c){const sd=stageData(c);selectedStage=stageIndexAtAge(sd.age,sd.first);selectedYear=c.yearCalendar;selectedMonth=todayTaipei().m;renderStage(c);renderYears(c)}
 
 
