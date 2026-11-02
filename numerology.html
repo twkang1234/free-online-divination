@@ -2157,6 +2157,10 @@ html[data-theme="light"] #readingNav [data-report-locked="true"]{border-color:#8
 html[data-theme="light"] .num-report-gate-button{background:linear-gradient(105deg,#e5dafa,#d5f3f5);border-color:#7e61ae;color:#30244c}
 html[data-theme="light"] .num-report-gate-copy,html[data-theme="light"] .num-report-gate-status{color:#30244c}
 @media(max-width:560px){.num-report-gate-actions{flex-direction:column;align-items:stretch}.num-report-gate-button{width:100%}}
+.num-report-gate-quota{color:var(--dim);font-size:.89rem;line-height:1.8;margin:0;max-width:100%;overflow-wrap:anywhere}
+html[data-theme="light"] .num-report-gate-quota{color:#615577}
+#numAiCheckQuota[hidden]{display:none!important}
+#numAiQuota{overflow-wrap:anywhere}
 </style>
 <style id="numBirthSaveV31Styles">
 /* V31 · birthday actions, member saved birthdays and one authoritative birth heading */
@@ -2385,10 +2389,10 @@ html[data-theme="light"] .num-birth-saved-details small{color:#62587c}
     <div id="numAiProfileChips" class="num-ai-pillrow" aria-label="當前命盤要點"></div>
     <div class="num-ai-target"><strong id="numAiTopicTitle">綜合命盤・靈魂藍圖</strong><p id="numAiTopicSummary">從性格盲點到生命階段，完整剖析。</p></div>
     <div class="num-ai-live-panel">
-      <div class="num-ai-live-head"><div><strong>✦ 站內 AI 深度解讀</strong><p>左側選題，右側閱讀完整報告；AI 成功交付才扣 1 次會員共用額度。</p></div><button type="button" id="numAiCheckQuota">查詢 AI 餘額</button></div>
-      <p id="numAiQuota" aria-live="polite" class="num-ai-quota">尚未查詢額度</p><button type="button" id="numAiRecover" class="num-ai-recover">找回最近一次 AI 解讀</button>
+      <div class="num-ai-live-head"><div><strong>✦ 站內 AI 深度解讀</strong><p>系統自動選擇可用通道</p></div><button type="button" id="numAiCheckQuota" hidden>查詢 AI 餘額</button></div>
+      <p id="numAiQuota" aria-live="polite" class="num-ai-quota">正在查詢 AI 額度…</p><button type="button" id="numAiRecover" class="num-ai-recover">找回最近一次 AI 解讀</button>
       <div id="numAiBusyPanel" class="num-ai-busy-panel" role="status" aria-live="polite" hidden><span class="num-ai-spinner" aria-hidden="true"></span><div><strong>AI 正在為你進行命盤深度批盤…</strong><p id="numAiBusyDetail">正在整理命盤數字與個人情境，請勿重複發送。</p></div></div><p id="numAiStatus" class="num-ai-status" role="status" aria-live="polite"></p>
-      <button type="button" id="numAiRun" class="num-ai-run">✦ 開始站內 AI 深度解讀</button>
+      <button type="button" id="numAiRun" class="num-ai-run">✦ 開始站內 AI 解讀 -1 次</button>
       <div id="numAiReadingGrid" class="num-ai-reading-grid" hidden>
        <div class="num-ai-current-question"><span>本次問事</span><strong id="numAiConversationQuestion">你的專屬生命靈數命盤</strong></div>
        <div id="numAiAnswerPanel" class="num-ai-answer-panel" hidden>
@@ -2871,12 +2875,13 @@ let reportLineFocus=null;
    const title=numReportPayTopics[section],isLogin=!!numAiToken();
    panel.replaceChildren();panel.classList.add('num-report-gated');
    panel.append(textElm('span','PERSONAL REPORT · 單篇解鎖','eyebrow'),textElm('h3','🔒 '+title+'｜專題解讀'));
-   const info=textElm('p',isLogin?'本篇為付費解鎖內容。使用 1 次會員共用 AI 解讀額度，即可閱讀這個出生日期的完整文章；同一生日、同一專題不重複扣點。':'登入會員後，可使用 1 次 AI 解讀額度解鎖這篇專題。','num-report-gate-copy');panel.append(info);
+   const info=textElm('p',isLogin?'正在查詢 AI 額度…':'請先登入會員查看 AI 額度。','num-report-gate-quota');info.id='numReportGateQuota';info.setAttribute('aria-live','polite');panel.append(info);
    const actions=document.createElement('div');actions.className='num-report-gate-actions';
-   const btn=document.createElement('button');btn.type='button';btn.className='num-report-gate-button';btn.textContent=isLogin?'使用 1 次 AI 解讀額度解鎖':'先登入會員';btn.disabled=numReportUnlockLoading;
+   const btn=document.createElement('button');btn.type='button';btn.className='num-report-gate-button';btn.textContent=isLogin?'✦ 使用 AI 解讀 -1 次｜解鎖':'先登入會員';btn.disabled=numReportUnlockLoading;
    btn.addEventListener('click',()=>{if(!numAiToken()){window.location.href='member.html';return}void numUnlockReport(section)});
-   actions.append(btn);const free=textElm('span','01 性格深讀及 04～06 專題維持免費。','num-report-gate-help');actions.append(free);panel.append(actions);
+   actions.append(btn);panel.append(actions);
    const status=textElm('p','','num-report-gate-status');status.id='numReportGateStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');panel.append(status);
+   if(isLogin)void refreshNumAiQuota();
  }
  async function numRefreshReportUnlocks(date){
    const seq=++numReportUnlockCheckSeq,sessionToken=numAiToken();
@@ -2895,11 +2900,15 @@ let reportLineFocus=null;
    if(numReportUnlocks.has(section)){renderDeepReading(section);return}
    const date=current.date,sessionToken=numAiToken();
    if(!sessionToken){numGateMessage(section,'請先登入會員。');return}
-   if(!window.confirm('將使用 1 次會員共用 AI 解讀額度解鎖「'+numReportPayTopics[section]+'」\n出生日期：'+date+'\n同一會員、同一生日、同一篇只扣一次。是否確認？'))return;
+   // The Worker decides whether to request consent, using its authoritative free allowance.
    numReportUnlockLoading=true;numRenderReportGate(section);numGateMessage(section,'正在確認額度與解鎖狀態，請勿重複點擊。');
    try{
      const operationId='numunlock_'+crypto.randomUUID().replaceAll('-','');
-     const {r,data}=await numAiFetch('/ai/unlock','POST',{date,section,operationId});
+     let {r,data}=await numAiFetch('/ai/unlock','POST',{date,section,operationId});
+     if(!r.ok&&data?.error==='SHARED_AI_CONFIRM_REQUIRED'){
+       if(!numConfirmSharedAi(data.sharedAiRemaining)){numGateMessage(section,'');return}
+       ({r,data}=await numAiFetch('/ai/unlock','POST',{date,section,operationId,confirmSharedAi:true}));
+     }
      if(current?.date!==date)return;
      if(!r.ok||!data?.ok||!data.unlocked){
        const err=data?.error==='AI_EXHAUSTED'?'會員共用 AI 解讀額度不足，可至會員中心加購。':data?.error==='UNLOCK_PROCESSING'?'解鎖正在處理，請稍後重新開啟。':'解鎖未完成，本次不應扣點；請稍後再試。';
@@ -2907,7 +2916,7 @@ let reportLineFocus=null;
      }
      if(numAiToken()!==sessionToken)return;numReportUnlockDate=date;numReportUnlockToken=sessionToken;numReportUnlocks.add(section);numUpdateReportTabBadges();
      if(activeTab===section)renderDeepReading(section);
-     void refreshNumQuotaBoard();
+     void refreshNumQuotaBoard();void refreshNumAiQuota();
    }catch(_){if(current?.date===date)numGateMessage(section,'連線失敗，請稍後重試；如擔心已扣點，重新開啟此專題會先查詢解鎖紀錄。')}
    finally{numReportUnlockLoading=false;if(current?.date===date&&activeTab===section&&!numReportUnlocks.has(section)){const btn=document.querySelector('#readingPanel .num-report-gate-button');if(btn)btn.disabled=false}}
  }
@@ -3692,7 +3701,7 @@ function renderMonths(c){
   else words.push(`${current.yearCalendar} 流年 ${current.year}`,`完整連線 ${NUM_LINES.filter(l=>lineInfo(current,l).complete).map(l=>l.id).join('、')||'無'}`);
   for(const word of words)chips.append(textElm('span',word,'num-ai-pill'));
   $('numAiRun').disabled=aiRequestBusy||(scope!=='general'&&aiMode==='fixed');
-  $('numAiRun').textContent=scope!=='general'&&aiMode==='fixed'?'請先點選上方專屬題目':'✦ 開始站內 AI 深度解讀';
+  $('numAiRun').textContent=scope!=='general'&&aiMode==='fixed'?'請先點選上方專屬題目':'✦ 開始站內 AI 解讀 -1 次';
  }
  function numAiQuestionChanged(){if(!$('numAiAnswerPanel').hidden){$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');aiStatus(numAiHistory.length?'已切換題目。先前完成的解讀保留在左側「本次問答紀錄」。':'')}}
  function aiStatus(msg){$('numAiStatus').textContent=msg}
@@ -4019,7 +4028,26 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
    }catch(e){$('numBirthLoadStatus').textContent=e.message||'讀取失敗，請稍後再試'}
  });
  $('numBirthLoadClose').addEventListener('click',()=>numBirthCloseDialog('numBirthLoadDialog'));
- async function refreshNumAiQuota(){if(document.documentElement.classList.contains('num-calculated'))void refreshNumQuotaBoard();if(!numAiToken()){$('numAiQuota').textContent='請先登入會員使用站內 AI。';return}try{const {r,data}=await numAiFetch('/ai/quota');$('numAiQuota').textContent=r.ok?`生命靈數免費 AI ${data.ai.remaining} / ${data.ai.limit} 次（每 ${data.ai.days} 天補充）；會員共用 AI 尚餘 ${data.sharedAiRemaining} 次。每次成功解讀或追問扣 1 次，優先使用免費額度。`:'無法讀取 AI 額度：'+numAiResponseError(data.error)}catch(e){$('numAiQuota').textContent=numAiResponseError(e.message)}}
+ let numAiQuotaCheckSeq=0;
+ function numAiQuotaSummary(data){
+   const a=data?.ai||{},free=Math.max(0,Number(a.remaining)||0),limit=Math.max(0,Number(a.limit)||0);
+   const shared=Math.max(0,Number(data?.sharedAiRemaining)||0);
+   return `本期免費 AI 解讀額度 ${free}/${limit} 次｜會員共用 AI 解讀額度 ${shared} 次｜合計可用 ${free+shared} 次`;
+ }
+ function numConfirmSharedAi(balance){
+   const n=Math.max(0,Number(balance)||0);
+   if(n<1)return false;
+   return window.confirm('本期免費 AI 解讀額度已用完。\n\n本次將扣除會員共用 AI 解讀額度 1 次（目前剩餘 '+n+' 次）。\n確定繼續嗎？');
+ }
+ async function refreshNumAiQuota(){
+   const seq=++numAiQuotaCheckSeq,token=numAiToken();
+   const put=(value)=>{if(seq!==numAiQuotaCheckSeq||token!==numAiToken())return;const live=$('numAiQuota'),gate=$('numReportGateQuota');if(live)live.textContent=value;if(gate)gate.textContent=value};
+   if(!token){put('請先登入會員使用站內 AI。');return}
+   try{
+     const {r,data}=await numAiFetch('/ai/quota');
+     put(r.ok&&data?.ok?numAiQuotaSummary(data):'無法讀取 AI 額度：'+numAiResponseError(data?.error));
+   }catch(e){put('暫時無法查詢 AI 額度，請稍後再試。')}
+ }
  function numAiPresentAnswer(answer){
  const target=$('numAiAnswer');target.replaceChildren();
  let paragraph=[],list=null,listType='';
@@ -4090,7 +4118,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   if(!numAiToken()){aiStatus('請先登入會員，才能使用站內 AI 解讀。');return}
   const parentId=isFollowup?numAiActiveId:null;
   if(isFollowup&&(!parentId||!numAiHistory.some(r=>r.id===parentId))){aiStatus('請先在左側選擇一篇已完成的解讀，再進行追問。');return}
-  if(!confirm('本次將使用會員共用 AI 額度 1 次。只有成功完成可閱讀的解讀才扣次，確認送出？'))return;
+  // No confirmation when the periodic free allowance can cover this request.
   const id=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
   const label=isFollowup?'延伸追問｜'+question.slice(0,65):aiMode==='guided'?numAiGuidedLabel:aiMode==='custom'?(numAiActiveDock==='stage'?`${numAiStageTitle()}｜`:numAiActiveDock==='timing'?`${numAiTimingYear} 年 ${numAiTimingMonth} 月｜`:'')+question.slice(0,65):currentAiTopic().name+'｜'+currentAiTopic().tag;
   const previousRecord=isFollowup?numAiHistory.find(r=>r.id===parentId):null;
@@ -4104,14 +4132,22 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   numAiSetBusy(true,isFollowup?'正在根據原篇解讀延伸分析；原文章仍保留在左側問答紀錄。':'正在整理專屬命盤，完成後自動新增一篇紀錄。');
   aiStatus('AI 正在處理，請勿重複送出；可以在左側查看以前已完成的解讀。');
   const payload={operationId:id,date:current.date,mode:isFollowup?'custom':aiMode,topic:aiTopic,presetId:aiMode==='guided'&&!isFollowup?numAiGuidedId:'',question:actualQuestion,area:requestScope,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,previousOperationId:parentId};
-  let result=null,pending=false;
+  let result=null,pending=false,cancelled=false;
   try{
-   const {r,data}=await numAiFetch('/ai/interpret','POST',payload);
-   if(r.ok&&data.ok)result=data;
+   let {r,data}=await numAiFetch('/ai/interpret','POST',payload);
+   if(!r.ok&&data?.error==='SHARED_AI_CONFIRM_REQUIRED'){
+     if(!numConfirmSharedAi(data.sharedAiRemaining)){
+       cancelled=true;aiStatus('');
+       try{const prev=JSON.parse(localStorage.getItem(NUM_AI_LAST_KEY)||'null');if(prev?.operationId===id)localStorage.removeItem(NUM_AI_LAST_KEY)}catch(_){}
+     }else ({r,data}=await numAiFetch('/ai/interpret','POST',{...payload,confirmSharedAi:true}));
+   }
+   if(cancelled){} // Consent was declined, no charge and no AI request.
+   else if(r.ok&&data.ok)result=data;
    else if(r.status===202){pending=true;result=await numAiGetResult(id)}
    else{aiStatus(numAiResponseError(data.error)+(data.traceId?`｜追蹤碼 ${data.traceId}`:''));if(r.status===503&&data.operationId){lastFailedNumerologyOperation=data.operationId;$('numAiReportBox').hidden=false}}
   }catch(e){pending=true;result=await numAiGetResult(id);if(!result)aiStatus('連線中斷，已保留操作編號 '+id+'。請使用「找回最近一次 AI 解讀」確認狀態，勿直接重複送出。')}
   finally{aiRequestBusy=false;numAiPendingOperation=null;numAiSetBusy(false);renderAiInterface();void refreshNumAiQuota()}
+  if(cancelled)return;
   if(result){numAiShowResult(result,context);if(isFollowup)$('numAiFollowup').value=''}
   else if(pending)aiStatus('目前仍未取得完整結果；請用「找回最近一次 AI 解讀」檢查同一筆請求。操作編號 '+id);
  }
