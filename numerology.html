@@ -2261,7 +2261,7 @@ html[data-theme="light"] .num-birth-saved-details small{color:#62587c}
   <div class="num-date-head"><span class="birth-label">出生日期</span><div class="num-cal-switch" role="group" aria-label="出生日期曆法"><button type="button" class="is-active" id="numSolarBtn" aria-pressed="true">國曆</button><button type="button" id="numLunarBtn" aria-pressed="false">農曆</button></div></div>
 <div class="num-date-parts"><label><span>出生年份</span><select id="numYear" aria-label="出生年份"></select><small>年</small></label><label><span>出生月份</span><select id="numMonth" aria-label="出生月份"></select><small>月</small></label><label><span>出生日期</span><select id="numDay" aria-label="出生日期"></select><small>日</small></label></div>
 <input type="hidden" id="birthDate" name="birthDate">
- </div><div class="calc-actions"><button type="submit" class="calc-submit">開始免費計算 ✦</button><button type="button" class="num-birth-save" id="numBirthSaveBtn">儲存生日</button><button type="button" class="num-birth-load" id="numBirthLoadBtn">載入生日</button></div></div><p class="calc-note" id="calcNote">選擇出生年、月、日即可免費計算；切換農曆時會自動換算。無需出生時辰與性別。</p><p id="calcError" role="alert" class="error" hidden></p></form>
+ </div><div class="calc-actions"><button type="submit" class="calc-submit">開始計算 ✦</button><button type="button" class="num-birth-save" id="numBirthSaveBtn">儲存生日</button><button type="button" class="num-birth-load" id="numBirthLoadBtn">載入生日</button></div></div><p class="calc-note" id="calcNote">選擇出生年、月、日即可免費計算；切換農曆時會自動換算。無需出生時辰與性別。</p><p id="calcError" role="alert" class="error" hidden></p></form>
 <!-- Quota overview stays beside the birthday form before and after calculation.
      Counts are obtained from existing read-only wallet endpoints. -->
 <section id="numQuotaPanel" class="num-quota-panel" aria-label="生命靈數免費與會員使用額度">
@@ -2390,7 +2390,6 @@ html[data-theme="light"] .num-birth-saved-details small{color:#62587c}
     <div id="numAiGuidedPane" class="num-ai-guided" hidden><div class="num-ai-guided-kicker">已選的專屬題目</div><p id="numAiGuidedQuestion"></p><button type="button" id="numAiChooseOther">切換其他固定題目</button></div>
     <div id="numAiFixedPane"><div id="numAiChoices" class="num-ai-choice-grid" role="group" aria-label="本區專屬固定 AI 題目"></div><button type="button" id="numAiMoreTopics" class="num-ai-more-topics" hidden>展開更多命盤專題</button></div>
     <div id="numAiCustomPane" hidden><label for="numAiQuestion" id="numAiCustomLabel" class="num-ai-custom-label">你最想深入問什麼？</label><textarea id="numAiQuestion" class="num-ai-textarea" maxlength="2000" placeholder="例如：我準備創業，但又怕失敗。請結合命盤深入分析。"></textarea></div>
-    <div class="num-ai-side-tools" aria-label="解讀文件操作"><button type="button" id="numAiSideCopy">複製本次回答</button><button type="button" id="numAiSideDownload">下載本次解讀 TXT</button></div>
     <section class="num-ai-session-history" id="numAiHistoryBox" aria-label="本次 AI 問答紀錄" hidden><div class="num-ai-history-head"><strong>本次問答紀錄（<span id="numAiHistoryCount">0</span> 篇）</strong><small>依主題收納 · 暫存於本分頁</small></div><div id="numAiHistoryList" class="num-ai-history-list" aria-label="依主題分類的 AI 紀錄"></div><div class="num-ai-history-export"><button type="button" id="numAiAllTxt" class="num-ai-all-export">下載全部 TXT</button><button type="button" id="numAiAllCopy" class="num-ai-all-export">複製全部</button></div><small class="num-ai-save-reminder">關閉分頁前，請下載保存完整問答。</small></section>
    </aside>
    <div class="num-ai-article-column">
@@ -2398,7 +2397,7 @@ html[data-theme="light"] .num-birth-saved-details small{color:#62587c}
     <div class="num-ai-target"><strong id="numAiTopicTitle">綜合命盤・靈魂藍圖</strong><p id="numAiTopicSummary">從性格盲點到生命階段，完整剖析。</p></div>
     <div class="num-ai-live-panel">
       <div class="num-ai-live-head"><div><strong>✦ 站內 AI 深度解讀</strong><p>系統自動選擇可用通道</p></div><button type="button" id="numAiCheckQuota" hidden>查詢 AI 餘額</button></div>
-      <p id="numAiQuota" aria-live="polite" class="num-ai-quota">正在查詢 AI 額度…</p><button type="button" id="numAiRecover" class="num-ai-recover">找回最近一次 AI 解讀</button>
+      <p id="numAiQuota" aria-live="polite" class="num-ai-quota">正在查詢 AI 額度…</p>
       <div id="numAiBusyPanel" class="num-ai-busy-panel" role="status" aria-live="polite" hidden><span class="num-ai-spinner" aria-hidden="true"></span><div><strong>AI 正在為你進行命盤深度批盤…</strong><p id="numAiBusyDetail">正在整理命盤數字與個人情境，請勿重複發送。</p></div></div><p id="numAiStatus" class="num-ai-status" role="status" aria-live="polite"></p>
       <button type="button" id="numAiRun" class="num-ai-run">✦ 開始站內 AI 解讀 -1 次</button>
       <div id="numAiReadingGrid" class="num-ai-reading-grid" hidden>
@@ -3727,6 +3726,8 @@ function renderMonths(c){
   aiMode=mode;aiTopic=topic;numAiGuidedQuestion=guidedQuestion;numAiGuidedLabel=guidedLabel;
   $('numAiSection').hidden=false;
   renderAiInterface();aiStatus('');void refreshNumAiQuota();
+  // Recover a previously submitted but not yet archived result without an extra UI entry.
+  void numAiAutoRecoverLast();
   $('numAiSection').scrollIntoView({block:'start',behavior:'smooth'});
  }
  function numAiPresetQuestion(which){const c=current,st=stageData(c),i=numAiSelectedStage,peak=st.peaks[i],challenge=st.challenges[i],year=which.startsWith('timing-')?numAiTimingYear:selectedYear,yr=yearAt(c,year),month=which.startsWith('timing-')?numAiTimingMonth:selectedMonth,mon=pure(yr+month);const prefix=`請以我 ${c.date} 的完整生命靈數命盤作深度交叉批盤（生命數 ${c.life}、生日數 ${c.birth}、態度數 ${c.attitude}），不要再重教算式。`;
@@ -3791,6 +3792,8 @@ function renderMonths(c){
     numAiActiveId=saved.activeId||null;numAiFoldedIds=new Set((saved.foldedIds||[]).filter(x=>typeof x==='string'));
   }}catch(_){}
   numAiUnsaved=!!numAiHistory.length;
+  const active=numAiHistory.find(r=>r.id===numAiActiveId);
+  if(active){numAiOpenGroups.add(active.scope||'general');if(active.parentId)numAiOpenThreads.add(numAiThreadRecords(active)[0]?.id||active.parentId)}
   numAiRefreshHistory();
  }
  function numAiRefreshHistory(){
@@ -3900,6 +3903,8 @@ function renderMonths(c){
    scope:meta.scope||previous?.scope||numAiActiveDock,stageIndex:meta.stageIndex??previous?.stageIndex??null,targetYear:meta.targetYear??previous?.targetYear??null,targetMonth:meta.targetMonth??previous?.targetMonth??null,createdAt:previous?.createdAt||new Date().toLocaleString('zh-TW',{hour12:false}),
    traceId:out.traceId||previous?.traceId||'',channel:out.channel||previous?.channel||''};
   if(previous)numAiHistory[numAiHistory.indexOf(previous)]=r;else numAiHistory.push(r);
+  // Deliveries expand the matching category automatically; replies expand their thread.
+  numAiOpenGroups.add(r.scope||'general');
   numAiUnsaved=true;
   if(numAiHistory.length>40){const note=document.querySelector('.num-ai-save-reminder');if(note)note.textContent='已超過 40 篇：舊紀錄可能無法於重新整理後還原，請立刻下載全部 TXT。';}numAiShowArchiveRecord(r,true);
  }
@@ -3946,6 +3951,14 @@ function renderMonths(c){
    const r=await fetch(NUMEROLOGY_AI_API+path,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined,cache:'no-store'});
    const data=await r.json().catch(()=>({error:'BAD_RESPONSE'}));return {r,data};
   }
+  function numUpdateCalcCta(remaining,sharedRemaining,isMember){
+   const btn=document.querySelector('#calcForm .calc-submit');if(!btn)return;
+   const free=Number(remaining),shared=Number(sharedRemaining);
+   if(remaining===null||remaining===undefined||!Number.isFinite(free)){btn.textContent='開始計算 ✦';return}
+   if(free>0){btn.textContent='開始免費計算 ✦';return}
+   if(!isMember){btn.textContent='今日免費額度已用完';return}
+   btn.textContent=Number.isFinite(shared)&&shared>0?'會員額度 -1 次 ✦':'可用計算額度已用完';
+  }
   async function refreshNumQuotaBoard(){
    const panel=$('numQuotaPanel');if(!panel)return;
    panel.hidden=false;
@@ -3955,6 +3968,7 @@ function renderMonths(c){
     const {r,data}=await numQuotaFetch('/quota/status');if(seq!==numQuotaRequestSeq)return;
     if(!r.ok||!data.ok)throw Error('QUOTA_READ_FAILED');
     const t=data.tool||{},a=data.ai||{};
+    numUpdateCalcCta(t.remaining,data.sharedToolRemaining,!!numAiToken());
     freeTool.textContent=`${t.remaining} / ${t.limit} 次`;
     toolNote.textContent=`每 ${t.days===1?'天':t.days+' 天'}補充，不累積`;
     free.textContent=numAiToken()?`${a.remaining} / ${a.limit} 次`:'登入後可用';
@@ -3963,7 +3977,7 @@ function renderMonths(c){
      ai.textContent=Number(data.sharedAiRemaining||0)+' 次';
      tool.textContent=Number(data.sharedToolRemaining||0)+' 次';
     }else{ai.textContent='登入後可用';tool.textContent='登入後可用'}
-   }catch(_){if(seq!==numQuotaRequestSeq)return;freeTool.textContent='暫時無法查詢';free.textContent='暫時無法查詢';tool.textContent='暫時無法查詢';ai.textContent='暫時無法查詢'}
+   }catch(_){if(seq!==numQuotaRequestSeq)return;numUpdateCalcCta(null,null,false);freeTool.textContent='暫時無法查詢';free.textContent='暫時無法查詢';tool.textContent='暫時無法查詢';ai.textContent='暫時無法查詢'}
   }
   queueMicrotask(()=>void refreshNumQuotaBoard());
 function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){}return /^dhs_[A-Za-z0-9_-]{43}$/.test(t)?t:''}
@@ -4154,20 +4168,33 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
    else if(r.ok&&data.ok)result=data;
    else if(r.status===202){pending=true;result=await numAiGetResult(id)}
    else{aiStatus(numAiResponseError(data.error)+(data.traceId?`｜追蹤碼 ${data.traceId}`:''));if(r.status===503&&data.operationId){lastFailedNumerologyOperation=data.operationId;$('numAiReportBox').hidden=false}}
-  }catch(e){pending=true;result=await numAiGetResult(id);if(!result)aiStatus('連線中斷，已保留操作編號 '+id+'。請使用「找回最近一次 AI 解讀」確認狀態，勿直接重複送出。')}
+  }catch(e){pending=true;result=await numAiGetResult(id);if(!result)aiStatus('連線中斷，已保留操作編號 '+id+'。重新進入 AI 區時會自動查詢同一筆請求，請勿重複送出。')}
   finally{aiRequestBusy=false;numAiPendingOperation=null;numAiSetBusy(false);renderAiInterface();void refreshNumAiQuota()}
   if(cancelled)return;
   if(result){numAiShowResult(result,context);if(isFollowup)$('numAiFollowup').value=''}
-  else if(pending)aiStatus('目前仍未取得完整結果；請用「找回最近一次 AI 解讀」檢查同一筆請求。操作編號 '+id);
+  else if(pending)aiStatus('目前仍未取得完整結果；重新進入 AI 區時會自動檢查同一筆請求。操作編號 '+id);
  }
- $('numAiRecover').addEventListener('click',async()=>{let old=null;try{old=JSON.parse(localStorage.getItem(NUM_AI_LAST_KEY)||'null')}catch(_){}if(!old?.operationId||old.date!==current?.date){aiStatus('這個生日目前沒有可找回的近期解讀編號。');return}aiStatus('正在查詢上次的 AI 解讀狀態…');try{const {r,data}=await numAiFetch('/ai/result?operationId='+encodeURIComponent(old.operationId));if(r.ok&&data.ok){numAiShowResult(data,{label:old.questionLabel||'找回的 AI 解讀',question:old.question||'',scope:old.scope||'general',parentId:old.parentId||null,stageIndex:old.stageIndex,targetYear:old.targetYear,targetMonth:old.targetMonth});return}if(r.status===202){aiStatus('上一筆 AI 仍在處理，稍後可以再按「找回」。');return}if(data.state==='failed'){lastFailedNumerologyOperation=old.operationId;$('numAiReportBox').hidden=false;aiStatus('上一筆 AI 未能完成，額度應已由後端返還；可回報異常。');return}aiStatus('未找到已完成的 AI 結果：'+numAiResponseError(data.error))}catch(e){aiStatus('目前無法連線查詢，請稍後再試。')}});
+ // If an earlier request finished during a connection interruption, query its original
+ // operationId on the next AI workspace entry; never resubmit and never debit again.
+ let numAiAutoRecoverBusy=false;
+ async function numAiAutoRecoverLast(){
+  if(numAiAutoRecoverBusy||aiRequestBusy||!current||!numAiToken())return;
+  let old=null;try{old=JSON.parse(localStorage.getItem(NUM_AI_LAST_KEY)||'null')}catch(_){}
+  if(!old?.operationId||old.date!==current.date||numAiHistory.some(r=>r.id===old.operationId))return;
+  const date=old.date;numAiAutoRecoverBusy=true;
+  try{
+   const {r,data}=await numAiFetch('/ai/result?operationId='+encodeURIComponent(old.operationId));
+   if(current?.date!==date||$('numAiSection').hidden)return;
+   if(r.ok&&data?.ok){numAiShowResult(data,{label:old.questionLabel||'生命靈數 AI 解讀',question:old.question||'',scope:old.scope||'general',parentId:old.parentId||null,stageIndex:old.stageIndex,targetYear:old.targetYear,targetMonth:old.targetMonth});return}
+   if(r.status===202){aiStatus('上一筆 AI 解讀仍在處理中；重新進入本區時會自動查詢，不必重複送出。');return}
+   if(data?.state==='failed'){lastFailedNumerologyOperation=old.operationId;$('numAiReportBox').hidden=false;aiStatus('上一筆 AI 未能完成，額度應已由後端返還；可回報異常。')}
+  }catch(_){}finally{numAiAutoRecoverBusy=false}
+ }
  $('numAiReport').addEventListener('click',async()=>{if(!lastFailedNumerologyOperation){aiStatus('沒有可回報的失敗請求。');return}const comment=$('numAiReportComment').value.trim()||'AI 解讀已發起，但未交付完整可閱讀的解讀結果';try{const {r,data}=await numAiFetch('/ai/report','POST',{operationId:lastFailedNumerologyOperation,comment});if(r.ok&&data.ok){aiStatus('AI 異常已送至監控紀錄。');$('numAiReportBox').hidden=true}else aiStatus('回報未能送出：'+(data.error||'REPORT_ERROR'))}catch(e){aiStatus('暫時無法送出異常回報。')}});
  $('numAiCheckQuota').addEventListener('click',refreshNumAiQuota);
  $('numAiRun').addEventListener('click',()=>numAiRunRequest(false));
  $('numAiFollowupRun').addEventListener('click',()=>numAiRunRequest(true));
  
- $('numAiSideCopy').addEventListener('click',()=>$('numAiAnswerCopy').click());
- $('numAiSideDownload').addEventListener('click',()=>$('numAiAnswerTxt').click());
  $('numAiAnswerCopy').addEventListener('click',async()=>{const r=numAiHistory.find(x=>x.id===numAiActiveId);if(!r)return;try{await navigator.clipboard.writeText(numAiArchiveText(numAiThreadRecords(r)));aiStatus('已複製目前題目及其追問。')}catch(_){aiStatus('目前無法複製，請改用下載 TXT。')}});
  $('numAiAnswerTxt').addEventListener('click',()=>{const r=numAiHistory.find(x=>x.id===numAiActiveId);if(r)numAiReportFile('生命靈數-單組AI解讀與追問-'+current.date,numAiArchiveText(numAiThreadRecords(r)))});
  function renderResult(data){numProtectedReadings.clear();numReportReadingSeq++;document.documentElement.classList.add("num-calculated");reportLineFocus=null;current=data;$('numBirthHighlightText').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日`;$('numBirthHighlight').hidden=false;numReportUnlockDate=data.date;numReportUnlocks.clear();numUpdateReportTabBadges();void numRefreshReportUnlocks(data.date);void refreshNumQuotaBoard();$('result').hidden=false;$('lifeNumber').textContent=data.life;$('masterChip').hidden=![11,22,33].includes(data.life);$('lifeLabel').textContent=MODEL[data.life].title;$('lifeFormula').textContent=`${CORE_SUMMARIES[data.life]}`;$('birthdayNumber').textContent=`${data.d} / ${data.birth}`;$('numBirthdayMeaning').textContent=`補充：${MODEL[pure(data.birth)].title}，與核心數從不同角度並讀`;$('attitudeNumber').textContent=data.attitude;$('numAttitudeMeaning').textContent=`互動傾向：${MODEL[pure(data.attitude)].title}`;$('yearNumber').textContent=data.year;$('numYearMeaning').textContent=`今年主題：${YEAR[data.year][0]}`;$('yearHeading').textContent=`${data.yearCalendar} 個人流年`;$('resultDate').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日｜以西元生日計算`;renderProfileExplanation(data,'life');setProfileExplainOpen(true);$('numProfileFoldCurrent').textContent='｜生命數';aiMode='fixed';aiTopic='full';numAiShowMore=false;numAiGuidedQuestion='';numAiGuidedLabel='';numAiGuidedId='';numAiSelectedStage=stageIndexAtAge(stageData(data).age,stageData(data).first);numAiTimingYear=todayTaipei().y;numAiTimingMonth=todayTaipei().m;numAiActiveDock='general';$('numAiGeneralDock').appendChild($('numAiSection'));$('numAiSection').hidden=true;$('numAiQuestion').value='';lastNumerologyResult=null;lastNumerologyOperation=null;lastFailedNumerologyOperation=null;numAiLoadHistory();numAiSetBusy(false);$('numAiReportBox').hidden=true;$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');$('numAiQuota').textContent='尚未查詢額度';aiStatus('');setTab('overview');updateNumExperience(data);renderDeep(data);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
