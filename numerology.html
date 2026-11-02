@@ -1805,53 +1805,243 @@ const NUANCE={
 9:{core:'9 常被視為理想、同理與整合的象徵，不只是「善良」。它能代表從比較大的角度看問題、重視事情的意義，也可能在看到現實與理想差距時，產生挫折與無力感。',shadow:'9 的盲點是承擔超出自己能力範圍的責任，或因為希望一切都合理而難以接受不完美。能辨認哪些事真正可改變、哪些需要放下，也是一種成熟的理想主義。',work:'工作中的9可用來思考使命感、整合不同角色及長期影響，而非必須從事公益。當理想過大時，透過具體里程碑與現實資源檢查，才比較可能把價值轉成可持續成果。',bond:'在關係裡，9 的同理心可能讓人過度合理化對方的行為。理解對方原因，不等於需要接受不尊重或長期失衡的相處。'}
 };
 const MASTER_NOTE={11:'11／2 除了2的協調主題，還常以靈感與高度敏銳作為補充。這不是更高等的人格，而是提醒把感受和直覺與可驗證的事實並列。',22:'22／4 除了4的建立主題，也常象徵把構想帶入較大的系統。這不表示注定成功，而是更需要檢查規模、資源與長期可執行性。',33:'33／6 除了6的關懷主題，也常聯想到教導與支持。它不是必須犧牲自我、拯救他人的責任，更需要合理界線。'};
-const textBlock=(title,lines)=>({title,lines:Array.isArray(lines)?lines:[lines]});
-function readingSections(c,topic){
- const main=pure(c.life),birth=pure(c.birth),att=pure(c.attitude),t=NUANCE[main],mr=MODEL[c.life],br=MODEL[birth],ar=MODEL[att],st=stageData(c),idx=stageIndexAtAge(st.age,st.first),p=st.peaks[idx],ch=st.challenges[idx],mn=yearAt(c,c.yearCalendar),next=yearAt(c,c.yearCalendar+1),cf=commonFactors(c);
- const ctx=`本次生日 ${c.y}/${c.mo}/${c.d}：主命數 ${c.life}（${mr.title}）、出生日 ${c.d}／${c.birth}（${br.title}）、態度數 ${c.attitude}（${ar.title}）。這三個數字出自不同算法，適合並排比較，但不應合併成性格分數。`;
- const compare=main===birth?`核心數與生日化簡數同指向 ${main}，在本套閱讀中代表「${FOCUS[main].key}」主題重複出現。重複並不等於天賦加倍，更值得觀察這種行事方式是否在不同場合都出現。`:main===att?`核心數與態度化簡數都是 ${main}，長期方向與初步反應具有同一個象徵主題；生日數 ${birth} 則提醒你還有「${FOCUS[birth].key}」這個不同的表現角度。`:`核心 ${main}、生日 ${birth}、態度 ${att} 並不完全相同。可以把核心數看成長期偏好，生日數看成補充風格，態度數看成與環境互動時的初步傾向；不同不代表人格矛盾。`;
- const diff=cf.full.length?`完整連線為 ${cf.full.map(x=>x.id).join('、')}。它們只是原始生日數字的幾何組合，名稱與心理意義為本站的延伸解讀，不是單憑連線就能判定此人的能力。`:'這個生日沒有完整三點連線。這是原始數字分布的結果，並不等於缺乏哪項能力。';
- const missing=cf.missing.length?`原始生日裡沒有 ${cf.missing.join('、')}；這些是未出現在日期中的符號，不代表你真的缺少那些能力。`:'九個數字都出現在生日原始數字中；這同樣不是人格全面性的證明。';
- const repeated=cf.repeat.length?`其中 ${cf.repeat.map(x=>`${x} 出現 ${c.counts[x]} 次`).join('，')}。數字頻率讓圖形有不同外觀，但不能直接換算能力強度。`:'原始生日沒有重複的非零數字，並不意味特質較弱。';
- const stage=`目前約 ${st.age} 歲，按本站高峰期算法位於第 ${idx+1} 階段，高峰數 ${p}（${numbered(p).title}），當期對照挑戰 ${ch}（${CHALLENGE[ch]}）；另有長期主要挑戰數 ${st.challenges[2]}。高峰與挑戰屬不同象徵維度，不應當成會準時發生的事件。`;
- const year=`${c.yearCalendar} 年的個人流年是 ${mn}（${YEAR[mn][0]}），${c.yearCalendar+1} 年為 ${next}（${YEAR[next][0]}）。這是曆年制的數字週期，不是吉凶預言。`;
- const data=textBlock('本次命盤使用的計算依據',[ctx,`核心生命數的計算步驟已集中在上方四張核心數字卡。`,`${repeated}${missing}${diff}`,stage,year]);
+/* V17 · 六大免費專題：範本式命理師敘事引擎。保留原先精確計算、互動盤及 AI 設定。 */
+const NUM_STORY={
+ 1:{persona:'天生不想走別人鋪好的路',image:'別人還在等指示，你已經想好第一步要怎麼走。',strength:'遇到局面卡死時，你往往能先承擔開頭的責任，讓大家有方向。',shadow:'你最怕的不是做不到，而是努力半天還要聽別人指揮；一急就想把方向盤搶回來。',workTitle:'從孤軍先鋒到帶隊開路的人',workScene:'會議上大家還在觀望，你已經先把方案寫出來；可是一旦有人要求改動，你可能立刻覺得自己的判斷遭到否定。',workRisk:'凡事親自定奪，團隊只會等你下命令；你忙到分身乏術，功勞卻很難擴大。',workMove:'把方向講清楚，再交出一部分決策權；真正的開創者不是永遠自己衝第一，而是讓別人也能跑起來。',loveTitle:'在主導與被理解之間練習愛',loveScene:'你可能習慣替兩個人決定週末去哪裡、問題該怎麼處理；對方卻只是想先被問一句「你想怎樣？」',loveRisk:'越想把關係推向正確方向，對方越覺得沒有發言權。',loveMove:'把「照我的做比較快」換成「我們各有什麼在意的？」；讓人有選擇，親密才不會變成聽命行事。',quote:'「我有能力自己做，為什麼還要等？」',tension:'獨立的本事與被理解的渴望互相拉扯'},
+ 2:{persona:'總替全場收拾情緒的隱形協調者',image:'大家還沒吵起來，你已經察覺氣氛不對，開始想辦法讓每個人都舒服。',strength:'你懂得從語氣和細節找到他人沒說出口的需要，這是很難得的協調力。',shadow:'最難的是輪到你不舒服時，卻怕一句拒絕破壞和氣；最後所有人都被照顧了，只有你委屈。',workTitle:'從安靜補位者到有立場的協調者',workScene:'同事一有爭議就找你當和事佬，你把雙方意見都整理好了，自己的提案卻永遠排到最後。',workRisk:'怕得罪人、怕被嫌難配合，會讓你成為各方壓力的轉運站。',workMove:'下一次協調先說明你的底線與判斷；善於傾聽不等於每次都要讓步。',loveTitle:'太懂別人的人，為何總忘了自己',loveScene:'伴侶一句「沒事」你就反覆猜測，甚至連對方今天心情不好，都會懷疑是不是自己做錯了什麼。',loveRisk:'用猜測和討好維持和諧，久了容易累積沒說出口的怨氣。',loveMove:'練習問清楚，再把「我希望」也放進句子；真正的默契不是一個人永遠讀心。',quote:'「只要大家都好，我晚點再說也沒關係。」',tension:'想維持關係與想保護自己的界線互相拔河'},
+ 3:{persona:'把人生過成舞台卻怕冷場的創作者',image:'你很會讓沉悶的場合活起來，腦中總有新點子；但只有你知道，散場後的安靜也會讓人不安。',strength:'你能把複雜的事講成別人聽得懂的故事，讓氣氛、作品和人際重新有了光。',shadow:'最怕的不是沒靈感，而是興奮三天後碰到漫長的收尾；一句「怎麼還沒做完」就可能讓熱情降溫。',workTitle:'從點子製造機到能交付的創作者',workScene:'你在會議上提出三種漂亮的做法，大家熱烈鼓掌；等到要整理版本、追蹤進度，卻開始覺得枯燥。',workRisk:'創意一多，承諾也跟著增加；被看見的才華可能輸在最後一公里。',workMove:'把最想做的一件事訂出交付日期；真正的舞台，不只在提案那一刻，也在作品完成的那一刻。',loveTitle:'總讓人開心，卻不擅長說難過',loveScene:'吵架時你可能先講笑話想緩和氣氛，對方卻覺得自己的傷心被當成玩笑。',loveRisk:'用輕鬆掩飾嚴肅話題，會讓真正的期待長期沒被聽見。',loveMove:'當關係需要答案時，少用一個笑話，多說一句真心話。',quote:'「先讓大家開心，難過的事以後再說。」',tension:'渴望被欣賞與害怕面對冷場和責任互相牽動'},
+ 4:{persona:'披著「工程師」外衣的隱世智者',image:'你給人的印象往往是可靠、守規矩、做事有條理；別人放心把問題交給你，卻很少知道你心裡其實有多少疑問。',strength:'你能把一團亂的事情整理成可執行的步驟，替別人建立長期可以依靠的地基。',shadow:'你最怕的不是吃苦，而是辛苦建立的秩序突然被人打亂；一旦失控，就容易把「我來做比較快」掛在心上。',workTitle:'從「過勞工具人」到「策略掌舵者」',workScene:'你常是公司裡的定海神針，流程出問題找你，細節沒人管也找你；最諷刺的是，真正輪到分功勞時，你又覺得只要把事情做好就夠了。',workRisk:'「別人做不好，不如我自己來」是你最昂貴的工作習慣。你越能幹，別人越依賴你，最後你變成整個系統不能休假的那顆螺絲。',workMove:'不要只展示你做了多少事，要清楚說出你替團隊省了什麼成本、建立了什麼制度，並學會把工作教給別人。',loveTitle:'在「木頭」與「刺蝟」之間尋找愛',loveScene:'你可能會替伴侶修好家電、安排帳單、規劃長遠生活，心裡想的是「我做這麼多，就是在愛你」；對方卻問：「你可不可以先聽我說話？」',loveRisk:'你想替對方解決問題，對方卻想先得到情緒上的理解；你越講道理，關係可能越冷。',loveMove:'先把「我告訴你怎麼做」吞回去，問一句「你現在需要我聽你說，還是一起想辦法？」',quote:'「明明我都做好了，為什麼你們還是不滿意？」',tension:'渴望掌控秩序與內心對細節的懷疑互相消耗'},
+ 5:{persona:'不甘心被生活關住的自由冒險家',image:'在別人眼裡，你的生活好像永遠有新選項；可一旦每天都照同一張表走，你就開始想開另一扇門。',strength:'別人遇到變動先慌，你卻能很快找到新的路線，從陌生環境裡摸出機會。',shadow:'你不喜歡被綁住，卻也容易把一段必須熬過的考驗誤認成「不適合我」，轉身太快就錯過累積。',workTitle:'從到處救火的快手到懂得選戰場的人',workScene:'突然接到新任務時，你最能迅速應變；可是制度一成不變，就想換部門、換跑道，結果一年開了好多頭。',workRisk:'追逐變化卻沒留下成果，容易讓你的資歷看似豐富、成績單卻沒有主軸。',workMove:'每次轉向前先問：這是更好的機會，還是我不想面對眼前的困難？留下至少一件可交付的成績。',loveTitle:'想自由，卻也想有人始終等你',loveScene:'關係剛開始時你很熱情，日子穩定之後，卻可能開始嫌生活太普通，想安排新的刺激。',loveRisk:'如果把承諾聽成限制，伴侶很難知道自己在你的未來有沒有位置。',loveMove:'把需要的空間講明白，同時守住答應的事；自由與可靠可以同時存在。',quote:'「人生只有一次，為什麼非得照這條路走？」',tension:'追求新鮮與建立長久成果之間不斷拉扯'},
+ 6:{persona:'把別人的事當成自己功課的守護者',image:'家人有事、同事求助、朋友難過，你常常比當事人還積極；有人需要幫忙，你很難假裝沒看到。',strength:'你能替人守住生活與關係裡的細節，讓原本鬆散的團隊有溫度和規矩。',shadow:'你的致命盲點，是把「我不幫就沒人幫」當成責任；久了，連別人的人生你都想替他安排。',workTitle:'從萬能保母到能培養接班人的領路者',workScene:'同事犯了錯你去補，客戶臨時變更你去扛，大家誇你可靠，你卻越來越沒有自己的時間。',workRisk:'把自己當成最後一道防線，短期看似有功，長期卻可能養出不負責任的團隊。',workMove:'把你的標準教出去，訂清楚責任歸屬；最好的照顧不是永遠替人收尾，而是讓他能獨立。',loveTitle:'愛得太用力，反而讓人想逃',loveScene:'你為對方安排飲食、健康、作息和未來，對方卻嫌被管太多；你心裡想的是「這還不是為你好」。',loveRisk:'照顧一旦變成替對方做主，關係就容易從溫暖走向壓迫。',loveMove:'詢問對方真正要的是陪伴、建議還是自由，也讓自己有被照顧的機會。',quote:'「沒有我，這一切怎麼辦？」',tension:'渴望付出與渴望被珍惜之間產生失衡'},
+ 7:{persona:'看似冷靜卻在腦中開了百場辯論的觀察者',image:'你不一定話多，但一件事進到腦中，就會被拆成原因、證據和例外，直到你覺得說得通。',strength:'你能抓出表面熱鬧下真正的問題，不容易被一句「大家都這樣」說服。',shadow:'你最容易被自己的腦袋困住：別人早已開始，你還在研究究竟哪個版本最好。',workTitle:'從幕後破解難題的人到能讓世界聽懂的專家',workScene:'你常把技術問題查得很透，寫出一份完美分析；但開會時沒有說出結論，功勞反而落到表達得比較大聲的人身上。',workRisk:'過度蒐集資訊和反覆驗證，容易讓好機會在你準備到一百分之前就溜走。',workMove:'替研究訂出停止點，把專業濃縮成一句結論、三個證據和一個下一步。',loveTitle:'想要靈魂共鳴，卻總先築起高牆',loveScene:'伴侶想和你談心，你卻說「我需要想一下」然後沉默很久；你是在整理心情，對方卻可能以為你在冷戰。',loveRisk:'用沉默保護自己的邊界，容易讓重要的人誤以為被拒絕。',loveMove:'說清楚你需要多久整理思緒，以及什麼時候回來談；深度不必透過距離感來證明。',quote:'「事情真的有這麼簡單？我不信。」',tension:'追求確定答案與必須先行動的現實互相碰撞'},
+ 8:{persona:'外表像掌舵者、心裡永遠在算總帳的人',image:'別人看的是當下辛不辛苦，你看的是這件事能不能產生結果、資源有沒有放對位置。',strength:'你能把願景、現金流、進度與人力放在同一張圖上，知道光靠熱情無法養活一個計畫。',shadow:'太想掌控成果，可能讓你對自己和別人都無法放鬆，連休息都覺得在損失機會。',workTitle:'從績效追逐者到真正懂得分配權責的人',workScene:'你很會算成本，也敢向目標衝刺；但遇到表現不如預期的同事，常忍不住直接接手指揮。',workRisk:'只把人當成資源，短期有效率，長期卻可能失去信任與願意跟隨的人。',workMove:'分清楚績效與價值，既談成果也談權責；把時間花在制定規則，而非控制每個細節。',loveTitle:'什麼都有計畫，唯獨感情無法靠績效表',loveScene:'對方抱怨你太忙，你可能提出更好的時間管理方案，卻忘了先問對方是不是只是想你陪伴。',loveRisk:'用安排與提供資源表達愛，可能讓對方覺得自己像專案，而不是伴侶。',loveMove:'練習在沒有待辦事項的時候陪伴，把聽見心情也當成重要的一種投入。',quote:'「成果說話，其他都是藉口。」',tension:'要贏的慾望與被愛的需要彼此拉扯'},
+ 9:{persona:'總想拯救世界卻忘了自己的人',image:'你常能看見事情背後的委屈與不公平；對別人的故事很有感，對自己的需求卻一再往後放。',strength:'你能從不同立場看同一件事，幫看似對立的人找到共同願景。',shadow:'你最怕的是看著別人受苦卻袖手旁觀；但如果每個人的問題都想解決，最後誰來照顧你？',workTitle:'從理想燃燒者到能把使命落地的人',workScene:'你願意為有意義的事額外加班，卻可能因為理念高於現實預算，讓團隊永遠追不上承諾。',workRisk:'把所有需求都當急件，最終反而沒有一項真正能長久。',workMove:'把理想拆成可量化的階段，幫助別人之前先確認自己能負擔多少。',loveTitle:'太會原諒的人，最容易忘記設界線',loveScene:'明明受了委屈，你還在替對方找理由：「他只是最近壓力大。」久了，你的難過變成理所當然。',loveRisk:'同理不是無條件接受傷害；一味包容會讓關係失去互相負責的基礎。',loveMove:'把你能包容的事和不能接受的事說清楚，愛不等於無限延期的原諒。',quote:'「我再幫這一次，應該就會變好了。」',tension:'想成全所有人與需要守住自身價值之間出現矛盾'}
+};
+const NUM_BIRTH_LENS={
+1:{inner:'你心裡那位不服輸的先鋒，遇到模糊指令時最想自己做決定。',work:'能快速替工作定方向，但有時太快決定，沒留下其他人參與的空間。',love:'想被尊重個人的自由，不喜歡每一步都被詢問或檢查。',stuck:'先衝再說',gift:'把決策帶出第一步'},
+2:{inner:'你有一個特別會感受人心的雷達，別人語氣稍微不同，你可能已經察覺。',work:'看見團隊關係中的細縫，卻可能為了不要撕破臉而把話吞下去。',love:'需要溫柔而明確的回應，最怕對方一句「隨便」讓你猜半天。',stuck:'反覆顧慮誰會不高興',gift:'聽見別人的真正顧慮'},
+3:{inner:'你內心有個很想被聽見的創作者，總能把同一件事看出不同玩法。',work:'擅長轉譯、發想與說服，但在反覆收尾時容易失去耐性。',love:'期待聊天、有趣的交流和被稱讚，不喜歡一直處理冷冰冰的日常。',stuck:'用笑話掩飾難說出口的事',gift:'把難懂的事講得生動'},
+4:{inner:'你心裡有位嚴格的監工，凡事都希望先把地基打穩再開工。',work:'重視制度、步驟和品質，碰上臨時變更會特別想知道誰該負責。',love:'認定一段關係就會認真經營，卻容易用責任而非語言表達在乎。',stuck:'認為按計畫走才算安心',gift:'把承諾做成長久成果'},
+5:{inner:'你裡面藏著一個不願被困住的旅行者，即使表面穩定，心裡仍想試點不同的。',work:'擅長換角度解決問題，反覆重複同一套程序卻容易煩躁。',love:'需要生活保有新鮮感；當關係過於制式，你可能先覺得喘不過氣。',stuck:'遇到沉悶就想換一條路',gift:'在僵局裡看出轉機'},
+6:{inner:'你常不自覺替身邊的人操心，對「沒人照顧的地方」特別難以放下。',work:'會替團隊補漏洞，但也容易把別人的工作納入自己的責任。',love:'喜歡照顧對方的生活細節；對方不接受時，反而可能覺得委屈。',stuck:'用付出證明自己不可替代',gift:'讓身邊的人被妥善照顧'},
+7:{inner:'你心裡有一套「除錯程式」，聽到「大家都這樣」只會想追問到底為什麼。',work:'碰上瓶頸能研究真正原因，但太多驗證有時也會拖慢決策。',love:'需要獨處和精神共鳴；若覺得對方不懂自己，你可能選擇先沉默。',stuck:'想得太多而遲遲不肯出手',gift:'找到別人沒看見的問題根源'},
+8:{inner:'你心裡有一套成果儀表板，做事很自然會問值不值得、能換來什麼。',work:'能看資源、權責與結果，但也容易不耐煩反覆討論。',love:'在關係中希望彼此可靠，也會用實際承擔證明重視。',stuck:'一急就想接管局面',gift:'把分散的資源整合起來'},
+9:{inner:'你內心有很大的理想感，總希望一件事不只是做完，還能對人有意義。',work:'擅長整合不同視角，但可能把不必要的責任也扛進來。',love:'容易替對方找理由，感情往往不只是一時喜歡，更關乎價值觀。',stuck:'太怕辜負他人的期待',gift:'看懂一件事背後的長遠意義'}
+};
+const NUM_ATT_LENS={
+1:{outer:'對外看起來果斷、獨立，習慣先說結論',work:'能在會議上迅速定方向',love:'不喜歡一直被追問行蹤',shadow:'把討論聽成挑戰權威'},
+2:{outer:'對外顯得體貼、會照顧氣氛',work:'很會聽見團隊裡不同的立場',love:'容易先觀察對方心情才說自己的需求',shadow:'把拒絕說得太含糊'},
+3:{outer:'對外比較活潑、健談或善於展示',work:'適合把複雜方案講得讓人願意聽',love:'會用幽默拉近距離',shadow:'用玩笑跳過嚴肅話題'},
+4:{outer:'對外顯得謹慎、守規矩、值得信任',work:'容易成為維護流程與品質的人',love:'傾向用守承諾代替甜言蜜語',shadow:'太快挑出問題而忘了讚美'},
+5:{outer:'對外看起來靈活、好奇、願意嘗試',work:'能在變動中迅速找到替代方案',love:'喜歡保有臨時出發的空間',shadow:'讓他人感覺計畫隨時會變'},
+6:{outer:'對外給人負責、照顧他人的印象',work:'會替夥伴想好交接與後續',love:'常以實際幫忙表達關心',shadow:'把過度操心誤認為關愛'},
+7:{outer:'對外話不一定多，但提問很準',work:'能抓出說法中缺少的關鍵證據',love:'需要先整理自己的情緒才說得出口',shadow:'讓沉默變成別人的不安'},
+8:{outer:'對外顯得目標明確、像個管理者',work:'在分配資源、談判與定標準時很有底氣',love:'一遇到問題就想立刻控制局面',shadow:'把相處變成績效檢討'},
+9:{outer:'對外顯得有格局、會為整體著想',work:'會先考慮方案的長期影響',love:'傾向先理解再判斷',shadow:'替別人找藉口而忽略界線'}
+};
+const NUM_MISSING_STORY={
+1:{life:'缺 1 容易形成「有想法卻不敢先開口」的象徵課題。',work:'工作上不妨練習先提出自己的主張，別總等上級點名。',love:'在關係裡，別期待對方替你做完所有選擇。'},
+2:{life:'缺 2 可以把「聽懂他人」當成一門後天補修的功課。',work:'即使你的方案很完整，也要確認合作對象是不是真的跟上。',love:'對方的情緒不是多餘資訊，先聽再解決才不會錯頻。'},
+3:{life:'缺 3 可能讓你在需要表達和放鬆的時候特別生硬，容易被誤會成沒情趣。',work:'別只默默埋頭做事，也要練習把功勞與想法說出來。',love:'另一半未必要求華麗情話，卻常希望你直接說句「我在乎你」。'},
+4:{life:'缺 4 會提醒你：即使主命數重視穩定，原始生日也未必自帶「按表操課」這種模式。',work:'不要只憑意志力撐住秩序，真正可用的流程得靠練習建立。',love:'安全感不會因為一份完美計畫而自動到來。'},
+5:{life:'缺 5 象徵對彈性與變通的陌生；事情不如預期時，可能更需要刻意練習調整。',work:'把小型試錯納入工作流程，免得每次改變都像推倒重來。',love:'關係不可能永遠照劇本走，試著為驚喜留一點餘地。'},
+6:{life:'缺 6 提醒你：承擔責任與照顧關係可能需要用更有意識的方法學習。',work:'交辦工作不能只管結果，還要安排適度的支持。',love:'重要的人想被理解，不一定只想被指導。'},
+7:{life:'缺 7 象徵「深入思考」這門課要有意識地補足，而不是每次都追求立刻結論。',work:'重要專案不妨多留一輪檢查證據的時間。',love:'別在情緒最熱的時候就替對方下判斷。'},
+8:{life:'缺 8 不等於沒錢，而是可能較少把權力、談價碼和資源競爭當成自然語言。',work:'當你太相信「好好做就有人看見」，成果容易被低估；學會說出價值。',love:'不要為了證明付出而承擔超出能力的人情與金錢責任。'},
+9:{life:'缺 9 可以用來提醒自己：做事不只看眼前，還要抬頭看看長遠的意義。',work:'把計畫的目的寫清楚，免得只剩完成待辦。',love:'對方的處境可能和你理解的不同，留些空間給對方說明。'}
+};
+const NUM_LINE_STORY={
+'951':{life:'你有一條從理想（9）經過變動（5）走向自主（1）的「意志與持續」線；不是只會守著一套 SOP，必要時也想自己破局。',work:'951 意志線讓「看見新方向」成為你的職場提醒：當舊流程卡住，別只等命令，試著提出可驗證的改善方案。',love:'951 也可能讓你很有自己的原則；關係中的堅持若沒有解釋，對方容易聽成不願妥協。'},
+'276':{life:'276 把理解（2）、深究（7）與照顧（6）連在一起；你可能很會看出別人沒說出口的問題，適合做軍師與協調者。',work:'276 行動協調線提醒你：先理解對方、再查明狀況、最後負起該負的責任，不必每一步都自己做。',love:'276 在關係中的畫面是：你看得出對方不對勁，卻要小心別把觀察變成過度替對方操心。'},
+'492':{life:'492 思考線讓整理想法、看長遠與理解人際期待同時出現在命盤裡。',work:'492 在工作上可轉成先規劃架構、再確認合作人的需求。',love:'492 讓你傾向先想清楚再談感受，別讓對方等太久。'},
+'357':{life:'357 感受線讓表達、應變與研究可以在同一個題目上互相支援。',work:'357 在專案中能幫你把觀察轉成新的表達方式。',love:'357 提醒你：情緒不是要立刻判誰對誰錯，也值得被好好表達。'},
+'816':{life:'816 實踐線把資源、主動與責任連起來，容易把想做的事推成行動。',work:'816 能提醒你兼顧權責與成果，別讓能者多勞成為常態。',love:'816 常以行動來表達重視，但實際付出仍需要情感交流。'},
+'438':{life:'438 規劃線串起建立、表達與管理，象徵會把秩序變成能溝通的流程。',work:'438 在職場上象徵建立制度也能說清楚制度，避免只剩規定。',love:'438 提醒你：制定規則之前先確認兩個人是否都願意遵守。'},
+'456':{life:'456 連線把結構、轉變與照顧連成一套，你可能擅長在變動中維持秩序。',work:'456 在工作上提醒你，調整制度也要兼顧使用它的人。',love:'456 象徵願意為關係調整做法，但別把自己變成永遠負責修補的人。'},
+'258':{life:'258 連線把關係、變動與資源連起來，提醒你能從合作中尋找新的機會。',work:'258 讓你在談合作與分配資源時多了一個觀察角度。',love:'258 提醒你：為維持關係而承諾金錢或資源前，先確認自己的界線。'}
+};
+const NUM_STAGE_STORY={
+1:'這個高峰像一首要求你勇敢站出來的歌：機會是自己開路，考驗則是不必每一關都單打獨鬥。',2:'這個高峰把合作與等待推到眼前：機會是找到可靠夥伴，考驗是別為維持和氣把自己的聲音弄丟。',3:'這個高峰像在催你把內心說出來：機會是表達與創意，考驗是別只留下一堆未完成的點子。',4:'這個高峰要求你築起真正能長久的基礎：機會是累積，考驗是不要把規矩當成唯一答案。',5:'這個高峰像人生忽然換了劇本：機會是探索，考驗是不要每次不舒服都急著逃離。',6:'這個高峰把責任與照顧推到面前：機會是成為依靠，考驗是別替所有人過他們的人生。',7:'這個高峰像被命運按下暫停鍵：機會是深究與看清，考驗是不要在懷疑裡失去行動力。',8:'這個高峰要你正視成果與資源：機會是掌握局面，考驗是別把自己和他人都變成績效數字。',9:'這個高峰要求你交出舊包袱：機會是整合與放下，考驗是別把每個人的困難都當成自己的使命。',11:'這個高峰把敏感與靈感放大：機會是看見更深的意義，考驗是別把所有感受都當成預兆。',22:'這個高峰催你把大願景落成制度：機會是建構，考驗是不要一個人扛下整座大樓。',33:'這個高峰強調引導與支持：機會是傳承，考驗是別把照顧變成自我犧牲。'};
+function numStoryBuild(c,topic,data){
+ const main=pure(c.life),birth=pure(c.birth),att=pure(c.attitude),s=NUM_STORY[main],b=NUM_BIRTH_LENS[birth],a=NUM_ATT_LENS[att],cf=commonFactors(c),st=stageData(c),idx=stageIndexAtAge(st.age,st.first),p=st.peaks[idx],challenge=st.challenges[idx],yr=yearAt(c,c.yearCalendar),nyr=yearAt(c,c.yearCalendar+1),today=todayTaipei(),mo=pure(yr+today.m),mainMissing=cf.missing.includes(main);
+ const has=n=>cf.missing.includes(n),lines=cf.full.map(x=>x.id),miss=cf.missing;
+ const lineText=mode=>lines.length?lines.slice(0,2).map(id=>`${id}｜${NUM_LINE_STORY[id]?.[mode]||NUM_LINE_STORY[id]?.life||'這條完整連線可以作為補充觀察的主題。'}`):'這張九宮格沒有完整三點連線。與其把它說成「沒天賦」，不如觀察你平常是如何用後天的學習，把不同位置串成自己的本事。';
+ const missingText=mode=>miss.length?[...miss].sort((x,y)=>(mode==='work'?(y===8)-(x===8):mode==='love'?(y===3)-(x===3):0)).slice(0,mode==='life'?3:2).map(n=>`缺 ${n}｜${NUM_MISSING_STORY[n][mode]}`):['九個格位都曾出現數字，這不是萬能護身符；每一種優勢能否用得成熟，仍要看你的現實選擇。'];
+ const coreTitle=c.life===11?'11／2 號的高感應':c.life===22?'22／4 號的大建構':c.life===33?'33／6 號的引導責任':`${c.life} 號的${MODEL[c.life].title.replace('・','與')}`;
+ const master=c.life!==main?`你的主命數是 ${c.life}，兼有基礎數 ${main} 的底色；比起把「大師數」當成高人一等的標誌，更值得觀察這股力量是否讓你對自己要求更高。`:'';
+ const contrast=main===birth?`本命 ${c.life} 與生日 ${c.birth} 都指向 ${main}，等於同一首歌在內外反覆播放；好處是你很容易堅持到底，代價是最難允許自己換打法。`:main===att?`本命 ${c.life} 與態度 ${c.attitude} 有同一種底色，旁人很容易認出你的行事風格；生日 ${c.birth} 卻提醒你，真正獨處時還有另一種想法。`:`真正有趣的是：本命 ${c.life} 想要「${FOCUS[main].key}」，生日 ${c.birth} 卻帶著「${FOCUS[birth].key}」，對外的態度 ${c.attitude} 又先展現「${FOCUS[att].key}」。你不是單一個標籤，而是三股力量要在同一個人生裡共事。`;
+ const coreMiss=mainMissing?`尤其你的本命基礎數 ${main} 並未直接出現在原始生日格位；在命理的語境裡，這個反差像是「人生很想學會 ${FOCUS[main].key}，卻得靠後天一次次實作」，因此越想做好時，越可能把自己逼得太緊。`:'';
  let title='',lede='',blocks=[];
  if(topic==='overview'){
-  title=`生命靈數 ${c.life} 的性格深讀｜${mr.title}`;lede=`${t.core}${MASTER_NOTE[c.life]?' '+MASTER_NOTE[c.life]:''}`;
-  blocks=[textBlock('一、這個數字如何描述你的行事方向',[t.core,`傳統生命靈數談的是「偏好如何做事」，不是斷定一個人永遠如此。${mr.gift} 即使是同一個生命數，處於不同家庭、教育、職涯環境，也會表現得非常不同。`]),textBlock('二、這三種數字，如何形成不同的生活面向',[`長期偏好偏向「${FOCUS[main].key}」，生日帶出「${FOCUS[birth].key}」，而與新環境互動時可能先展現「${FOCUS[att].key}」。這些不是三個人格，而是同一個人可能依情境採取的不同方式。`,compare,`出生日 ${c.d} 所代表的 ${c.birth}（${br.title}），可當成另一個象徵角度。${br.growth} 態度數 ${c.attitude} 的觀察方向則是「${FOCUS[att].key}」，與核心數「${FOCUS[main].key}」相比，可能呈現不同節奏。`]),textBlock('三、強項轉成負擔的時候',[t.shadow,`這份閱讀不把「優勢」當成固定不變的天賦。${mr.watch} 真正可留意的是什麼情境讓原本有用的習慣變得不合適，以及是否能依情況調整。`]),textBlock('四、九宮格帶來的另一種線索',[`與其逐個數字比對，不如看命盤裡真正形成的結構。${cf.full.length?`目前成立的 ${cf.full.map(l=>`${l.id}（${LINE_LENSES[l.id].short}）`).join('、')}，提供值得延伸閱讀的主題。`:'目前沒有形成完整連線，也不代表你的能力比較少。'}`,`九宮星圖可以讓你直接看到這些關係；想了解原始數字如何計算，請展開下方「命盤數字依據」，不必在每篇文章裡反覆研究公式。`]),textBlock('五、把一份符號解讀放回真實生活',[`數字提供的是傳統文化的象徵語言，不是客觀人格診斷。面對自己的行為，你可以檢查：${FOCUS[main].action} 並以實際經歷和他人的回饋核對，而不是因為報告說了某一種特質，就認定自己只能如此。`])];
+  title=main===4&&birth===7?'披著「工程師」外衣的隱世智者':`性格深讀｜${s.persona}`;
+  lede=`${s.image}${b.inner} ${a.outer}。你最特別的地方，未必是單一生命數，而是這幾股看似不一樣的力道如何住在同一個人身上。`;
+  blocks=[
+   textBlock('一、外表與內心：你其實有兩套作業系統',[
+    `本命 ${c.life}（${MODEL[c.life].title}）是你做事的地基。${s.strength} ${master}`,
+    `生日 ${c.d}／${c.birth} 像內建的「隱藏程式」：${b.inner} 而態度 ${c.attitude} 則像出門時穿上的外套：${a.outer}。因此有時候別人看你很篤定，你心裡卻未必真的放心。`,
+    `你可能常常想：「${s.quote.replace(/[「」]/g,'')}」這種心聲有時幫你撐過難關，有時也讓你在該放鬆的時候停不下來。`
+   ]),
+   textBlock('二、你的核心拉扯：強項為什麼變成內耗',[
+    contrast,`如果遇到重要決定，${b.stuck}，再碰上「${a.shadow}」，就很容易形成一個迴圈：你原本只是想做好，最後卻把一件事想得越來越難。`,
+    `真正的盲點不是你不夠聰明或不夠努力，而是「${s.tension}」。${s.shadow} 這是這份命盤最值得對照自己人生的地方。`
+   ]),
+   textBlock('三、九宮格連線：你不只會一種生存方式',[
+    ...(lines.length?lineText('life'):[lineText('life')]),
+    `這些完整連線像是命盤中已經接通的道路。當你覺得自己只剩下「${FOCUS[main].key}」這一招時，不妨回頭看：你其實還能借助${lines.length?'這些連線提醒的另一種做法':'後天練習出來的另一種做法'}。`
+   ]),
+   textBlock(`四、空缺數的補修學分${miss.length?`（${miss.join('、')}）`:''}`,[
+    `空缺不是判你不合格，而是提醒有些事可能不會自動變成你的習慣。${coreMiss}`,
+    ...missingText('life'),
+    `別只盯著自己沒有的數字；真正有力量的人，是知道什麼該自己學、什麼可以借助別人的長處。`
+   ]),
+   textBlock('五、命理師給你的破局提醒',[
+    `當你再一次覺得「為什麼事情總要我來處理」時，先別急著責怪環境。檢查一下：是別人真的沒做，還是你太習慣按照自己的方式接手？`,
+    `給你一個實際練習：${FOCUS[main].action}再問自己：如果今天只做到八十分，事情是否仍能前進？你要練的不是放棄優勢，而是讓優勢不再反過來綁住你。`
+   ])
+  ];
  }else if(topic==='work'){
-  title='事業、工作方式與資源管理';lede=t.work;
-  blocks=[textBlock('一、你可能如何處理工作與責任',[t.work,`從核心 ${c.life} 的「${FOCUS[main].key}」延伸，可以閱讀其偏向啟動、合作、表達、建構、調整、照顧、研究、管理或整合的象徵。這不代表某一份職業一定合適；適合程度仍然由專業技能、工作條件與偏好決定。`]),textBlock('二、不同做事風格，如何在工作中互相配合',[`長期做事偏重「${FOCUS[main].key}」，需要處理新任務時可以補上「${FOCUS[birth].key}」，與團隊接觸又可能先展現「${FOCUS[att].key}」。例如同一個人能維持穩定流程，也可能在面對專業問題時更愛研究細節。`, `可把一件真實工作拆成「定方向、執行、溝通」三部分，想想哪一段做起來最順，哪一段需要尋求協助。${compare}`]),textBlock('三、合作與壓力容易出現的摩擦',[t.shadow,`在工作分配時，可觀察自己是過度接手、太快定案、反覆蒐集資訊，還是較難說明需求；同一個數字不能取代真實工作紀錄。${mr.watch}`]),textBlock('四、資源與財務不等於「命中有財」',[`生命數 ${c.life} 並不能測量收入、投資報酬或適合購買什麼標的。比較實用的做法，是透過「${FOCUS[main].key}」的象徵提醒檢查自己的風險、時間與資源安排，而實際判斷仍要看現金流、成本、能力與現實限制。`,`當前高峰數 ${p}（${numbered(p).title}），可以當作不同職涯時期的反思主題，而不是宣稱某歲必定升官或發財。`]),textBlock('五、可以怎麼使用這份內容',[`${FOCUS[main].action} 這是由數字主題推導出的行動提醒，不是必須遵從的指令；如果它與你的現實情況不符，應以實際條件優先。`])];
+  title=`事業與資源｜${s.workTitle}`;
+  lede=`${s.workScene} 這是你命盤最值得留意的職場課題：不是能不能吃苦，而是吃了這麼多苦，是否真的換成了你應得的成果與位置。`;
+  blocks=[
+   textBlock('一、你在職場扮演的角色，可能比你以為的還重',[
+    `本命 ${c.life} 的「${MODEL[c.life].title}」是你工作風格的底色。${s.strength} 當這項能力被看見，團隊也可能越來越習慣把難題交給你。`,
+    `但也要小心，${s.workRisk} 你可能很熟悉這種感覺：明明整個專案靠你撐住，到了績效檢討，大家只說你「很可靠」，卻沒有人知道你到底創造了多少價值。`
+   ]),
+   textBlock('二、三種數字怎麼分工：不要把所有事攬在身上',[
+    `本命 ${c.life} 是你的基本做事風格；生日 ${c.birth} 告訴你另一種解題能力：${b.work} 態度 ${c.attitude} 則是你和主管、客戶或夥伴接觸時的樣子：${a.work}。`,
+    `真正懂得運用命盤，不是每天說「我是 ${main} 號人」，而是知道什麼時候該自己動手、什麼時候該讓人協助。${contrast}`,
+    `下次接到新任務，先問：「這是我的專業責任，還是別人懶得負責而丟過來的工作？」這句話可能比你再多加兩小時班更有用。`
+   ]),
+   textBlock('三、九宮格與你可能被低估的工作價值',[
+    ...(lines.length?lineText('work'):[lineText('work')]),
+    ...missingText('work'),
+    `如果你有提出改善方案、解決客訴或替公司降低成本的經驗，請把成果寫成具體紀錄。專業若永遠只藏在你腦中，別人就只會看到你一直很忙。`
+   ]),
+   textBlock('四、升職與金錢的真正避雷針',[
+    `「${s.quote.replace(/[「」]/g,'')}」若變成你工作的信念，可能讓你一再重演同樣的疲憊。${s.shadow}`,
+    `財富不是靠生命數字直接算出來的，但命理能提醒你的資源習慣：你是太不敢談價碼、太想控制預算，還是因人情壓力承接了不該承接的責任？特別${has(8)?'是你原始九宮格沒有 8，這個「談權責、談資源」的題目更值得練習':'需要看清楚，成果和付出的時間是否對等'}。`,
+    `真正的升遷，不只是證明「沒有你不行」，而是讓你不必親自做每一件事，制度仍能運作。`
+   ]),
+   textBlock('五、命理師給你的實戰處方',[
+    `${s.workMove} ${FOCUS[birth].action}`,
+    `請列出你最近三項工作成果，寫清楚它替誰解決了什麼問題、節省多少時間或成本。下次談合作、加薪或交接時，少講「我很努力」，多講「我替這個團隊帶來什麼」。`
+   ])
+  ];
  }else if(topic==='love'){
-  title='感情、親密關係與人際界線';lede=t.bond;
-  blocks=[textBlock('一、這組數字對關係的象徵',[t.bond,`長期核心 ${c.life} 的關係風格，可以和出生數 ${c.birth} 所代表的「${FOCUS[birth].key}」、態度數 ${c.attitude} 所代表的「${FOCUS[att].key}」分開閱讀。這不是對你或另一半的定論，只是三種不同的提問角度。`]),textBlock('二、初識與熟識可能有不同的表現',[`態度數是以出生月、日得出的數字；依這套象徵模型，可拿來反思初次接觸時可能偏向的互動方式。${ar.love}`,`核心數 ${c.life} 則提供較長期的相處主題：${mr.love} 當兩者不同，不代表「表裡不一」，而是可能需要區分熟悉程度和情境。`]),textBlock('三、當期待不一致時',[t.shadow,`當雙方對自由、陪伴、承諾或時間安排有不同看法，與其用數字推測對方想法，應把模糊期待說成具體可討論的安排。${FOCUS[att].rel}`]),textBlock('四、不要拿合盤或空缺數定義他人',[`${missing} 它們不能據此推斷你缺愛、缺乏同理心，或註定感情不順。`, `即使兩人的出生數字相同，也不能代替實際的互相尊重、信任、相處經驗及雙方意願。`]),textBlock('五、回到具體的溝通',[`${FOCUS[birth].rel} 可以用這句提醒設計一次對話，但不需要讓另一個人配合命盤的假設。`])];
+  title=`感情與人際｜${s.loveTitle}`;
+  lede=`${s.loveScene} 你以為自己已經把心意表達得很清楚，對方卻可能接收到完全不同的訊息。這不是誰比較愛，而是兩種「愛的語言」撞在一起。`;
+  blocks=[
+   textBlock('一、你談感情的方式：把真心藏在哪裡',[
+    `本命 ${c.life} 的底色是「${MODEL[c.life].title}」。${s.loveRisk} 對你而言，愛不一定要轟轟烈烈；有時把日常照顧好，就是你最真實的告白。`,
+    `生日 ${c.birth} 的內心需求則是：${b.love} 態度 ${c.attitude} 在剛認識時又會呈現：${a.love}。別人可能喜歡你表面上的樣子，真正相處才發現你還有另一層需要被理解。`
+   ]),
+   textBlock('二、初識很吸引人，熟了卻容易卡在這一關',[
+    `剛認識時，${a.outer}；熟悉以後，你的本命 ${c.life} 和生日 ${c.birth} 會更明顯。${contrast}`,
+    `例如約會臨時取消、訊息很久沒回、對方沒有照你的期待反應，你可能先冒出「${s.quote.replace(/[「」]/g,'')}」的念頭，接著${b.stuck}。問題不一定是誰不愛誰，而是兩個人對「被重視」的定義不同。`,
+    `${has(3)?'尤其九宮格缺 3，命理上會把輕鬆表達與示弱視為需要補修的功課；你可能明明在意，說出口卻只有一句「沒事」。':'就算九宮格有 3，也不表示你永遠很會表達；情緒濃的時候，誰都可能說錯話。'}`
+   ]),
+   textBlock('三、吵架時，你的防禦機制會怎麼啟動',[
+    `如果對方說「你根本不懂我」，你可能會${a.shadow}，再用你最熟悉的方式處理：${s.loveRisk} 結果明明想修復關係，卻讓人更想躲開。`,
+    `有一種常見的拉扯是：你希望事情立刻有答案，對方卻只是想讓情緒先被接住。你越急著證明自己有道理，越可能錯過真正要談的事。`,
+    ...(lines.length?lineText('love'):[lineText('love')])
+   ]),
+   textBlock(`四、命盤空缺提醒的感情功課${miss.length?`（缺 ${miss.join('、')}）`:''}`,[
+    ...missingText('love'),
+    `不要拿空缺數去指責伴侶「你就是缺這個」，更不要用命盤替一段關係判死刑。這些線索真正有用的地方，是提醒你哪一種表達方式值得刻意練習。`
+   ]),
+   textBlock('五、命理師給你的感情處方',[
+    `${s.loveMove} 當下次意見不同時，試著把「你就是不對」換成「這件事讓我感到什麼，我希望我們怎麼調整」。`,
+    `如果你已經很久沒好好說話，不妨留二十分鐘，不討論誰有理、也不急著解決問題，只確認彼此真正想被怎樣對待。親密不是把對方改造成理想版本，而是兩個人都還有呼吸的空間。`
+   ])
+  ];
  }else if(topic==='growth'){
-  title='人生階段、高峰數與長期課題';lede=stage;
-  blocks=[textBlock('一、現在位於哪個高峰階段',[stage,`高峰數以月＋日、日＋年、前兩高峰相加、月＋年形成四組主題。你目前的高峰數 ${p}（${numbered(p).title}），與長期核心數 ${c.life}（${mr.title}）可一同閱讀：前者是這個時間模型的階段主題，後者是不隨年份改變的生日數字。`]),textBlock('二、四個階段如何接續',[...st.peaks.map((n,i)=>`第 ${i+1} 階段：高峰 ${n}（${numbered(n).title}），約 ${stageAgeLabels(st.first)[i]}；${STAGE_TOPICS[i].scene}`)]),textBlock('三、挑戰數與高峰數不是同一件事',[`你的四個挑戰數是 ${st.challenges.join('、')}。第 3 挑戰數 ${st.challenges[2]} 是長期主要挑戰；它不是到了第三個階段才突然出現。`,`目前並列的挑戰數 ${ch} 提醒的是：${CHALLENGE[ch]}。這些代表傳統數字命理的觀察主題，沒有能力證明未來某個事件必然發生。`]),textBlock('四、如何理解轉換而不是預言',[`依本頁的標示，第 2 階段在約 ${st.first} 歲生日交接，後續每九年進入下一高峰。年齡是算法約定的邊界，不是人生必須發生變動的時刻。`,idx<3?`下一階段高峰數 ${st.peaks[idx+1]}（${numbered(st.peaks[idx+1]).title}）可以和現在的「${FOCUS[pure(p)].key}」比較，而不是認為到那一年就自動改變性格。`:'目前在第四階段；這個系統不設定下一個第五高峰，不表示人生往後沒有新變化。']),textBlock('五、回到個人的真實故事',[`高峰圖表能幫忙整理時間，但解讀不能取代你真實經歷的判斷。${STAGE_TOPICS[idx].q}`])];
+  title=`人生階段｜${idx===3&&p===6?'學會放手與傳承的智慧':`第 ${idx+1} 階段，命運要你學會的事`}`;
+  lede=`你目前約 ${st.age} 歲，走在金字塔第 ${idx+1} 階段（${stageAgeLabels(st.first)[idx]}），高峰數 ${p}、挑戰數 ${challenge}。${NUM_STAGE_STORY[p]||NUM_STAGE_STORY[pure(p)]} 對本命 ${c.life} 的你而言，這可能恰好碰上${s.tension}的老課題。`;
+  blocks=[textBlock('一、回頭看：四段人生並非四張無關的牌',[
+    ...st.peaks.map((n,i)=>`第 ${i+1} 階段（${stageAgeLabels(st.first)[i]}）｜高峰 ${n}：${NUM_STAGE_STORY[n]||NUM_STAGE_STORY[pure(n)]}`)
+   ]),textBlock('二、你現在這一關，最難的究竟是什麼',[
+    `目前高峰 ${p} 強調「${numbered(p).title}」，而挑戰數 ${challenge} 是「${CHALLENGE[challenge]}」。別把高峰想成獎賞、挑戰當成懲罰；這是同一段人生裡，一邊給你機會、一邊要求你補功課。`,
+    `你可能很熟悉${s.quote}的心聲。到了這個時期，命盤像在問：你還要繼續靠以前那套方法硬撐，還是願意讓角色、責任和生活重心重新分配？`
+   ]),textBlock('三、從上一關到這一關：不是換數字就換命',[
+    idx?`上一階段高峰 ${st.peaks[idx-1]} 帶來「${numbered(st.peaks[idx-1]).title}」的主題。走到現在的 ${p}，最值得帶走的不是過去的頭銜，而是那些真正在你身上留下來的本事。`:'你目前處於最初的奠基階段。眼前的家庭、學習與早期工作方式，可能正逐漸變成日後面對世界的習慣。',
+    `九宮格${lines.length?`已有 ${lines.join('、')} 等連線，這些舊有的處事習慣不會因生日過了一年就消失`:'沒有完整連線，也不代表你每次轉換都得從零開始'}。真正的轉變，是懂得換一種運用既有能力的方式。`
+   ]),textBlock('四、命理師給你的下一步提醒',[
+    `${s.workMove} 而在家庭與關係裡，${s.loveMove}`,
+    `問自己：如果未來十年只能留下三項成果、知識或重要關係，我最想守護的是什麼？這個答案，比一個年齡標籤更有力量。`
+   ])];
  }else if(topic==='year'){
-  title=`${c.yearCalendar} 年至未來九年的流年閱讀`;lede=year;
-  blocks=[textBlock('一、流年與主命數有何不同',[`核心生命靈數 ${c.life} 由生日計算，沒有每年改變；流年數使用出生月日及選定西元年份計算，按 1～9 循環。${year}`,`你的長期核心主題是「${FOCUS[main].key}」，今年的象徵性年度主題是「${YEAR[mn][0]}」。兩者是兩把不同的尺，不能加成個人運氣評分。`]),textBlock('二、今年著重什麼',[YEAR[mn][1],`工作面可思考如何調整計畫與資源；關係面可思考如何溝通彼此節奏；個人面則可以留意過去一年需要收尾或建立的習慣。這些是延伸提示，不是特定事件的預測。`]),textBlock('三、接下來的轉換',[`下一年 ${c.yearCalendar+1} 的流年是 ${next}（${YEAR[next][0]}）。與今年相比，象徵主題會從「${YEAR[mn][0]}」轉向「${YEAR[next][0]}」。`,`${YEAR[next][1]} 如果想做年度規劃，可以把兩年並排思考，而不是因某個數字就推斷明年一定升職、結婚或破財。`]),textBlock('四、今年月份如何變化',[...Array.from({length:12},(_,i)=>{const m=i+1,n=pure(mn+m);return `${m} 月：流月 ${n}（${YEAR[n][0]}）。`; }).reduce((acc,item,i)=>{if(i%3===0)acc.push('');acc[acc.length-1]+=item;return acc;},[])]),textBlock('五、完整九年軌跡',[Array.from({length:9},(_,i)=>{const y=c.yearCalendar+i,n=yearAt(c,y);return `${y}：${n}（${YEAR[n][0]}）`}).join(' → '),`下方時間軸可以點選每一年與十二個月份，查看數字如何推導。這裡採曆年制，月份變化是象徵性工具而非吉凶日曆。`])];
- }else{
-  title='九宮格：原始日期、重複、空缺與連線';lede=`${cf.present.length} 種非零數字、${cf.full.length} 條完整連線。九宮格使用原始西元生日數字，不採用運算後的主命數補位；採洛書排列，連線名稱依流派不同，本站的跨主題連線閱讀是明示的延伸詮釋。`;
-  blocks=[textBlock('一、格位怎麼來',[`固定排列為 4、9、2／3、5、7／8、1、6，源自洛書九宮。你的生日原始數字為 ${String(c.date).replace(/\D/g,'').split('').join('、')}；0 不填格。`,`${cf.present.map(n=>`${n} × ${c.counts[n]}`).join('、')||'無'}。${repeated}`]),textBlock('二、空缺數字應如何理解',[missing,`如果主命數的基礎數 ${main}${c.counts[main]?'出現在':'沒有出現在'}生日原始數字中，這只說明「日期字元」與「算出的生命路徑」不同，不表示命盤衝突或本人缺乏某項特質。`]),textBlock('三、每條線都應能直接核對',[...NUM_LINES.map(l=>{const f=lineInfo(c,l);return `${l.id}（${l.name}）：${f.complete?'三個數字皆出現，完整':`已出現 ${f.present.join('、')||'無'}，尚未出現 ${f.missing.join('、')}`}`})]),textBlock('四、連線的象徵解讀應保持界線',[diff,`九宮格的幾何結構可以計算與重現；把特定連線命名為「規劃、關係、累積」等，是本站的文字化閱讀方式。不同生命靈數流派可能採其他排列或名稱，不應將本頁的分類視為普遍共識。`]),textBlock('五、如何真正使用互動圖',[`在下方星圖點擊每個數字，可以查看該日期中出現次數、哪些連線因此成立；點選「空缺」可以看到原始日期沒有的數字。圖表的價值是讓計算透明，而不是用發光效果證明心理特質。`])];
+  title=`年度與流月｜${c.yearCalendar} 年，在「流年 ${yr}」裡如何走下一步`;
+  const special=yr===9?'今年像在替人生做大掃除：有些事情明明早已不合適，你卻捨不得放手。':yr===1?'這一年像新一輪開局：有些事需要你先站出來，而不是等人替你安排。':`這一年流年 ${yr} 的主題是「${YEAR[yr][0]}」；你會更容易注意到與這個主題有關的人和選擇。`;
+  lede=`${c.yearCalendar} 年你走入流年 ${yr}（${YEAR[yr][0]}）。${special} 對本命 ${c.life} 的你來說，最難的常常不是看不見機會，而是如何帶著自己的舊習慣，走向新的節奏。`;
+  blocks=[textBlock('一、這一年，命運真正考你的題目',[
+    `${YEAR[yr][1]} 但把這句話放進你的命盤，還要多問一層：本命 ${c.life} 的你最熟悉的是「${FOCUS[main].key}」，流年 ${yr} 卻要求「${YEAR[yr][0]}」。兩者若方向不同，感覺可能像一腳踩油門、一腳踩煞車。`,
+    `你可能開始重新衡量一份工作、家庭責任或長期承諾：有些事不是做不到，而是不值得繼續用舊方法硬撐。`
+   ]),textBlock('二、職場、財富與關係的年度避雷針',[
+    `工作上：${s.workRisk} 今年請檢查哪些專案值得留下、哪些應重新分工；不要單憑流年數字就辭職或投入大筆資金。`,
+    `金錢上：${has(8)?NUM_MISSING_STORY[8].work:'先檢查自己的現金流和真實風險，再談擴張或換跑道。'} 感情上：${s.loveRisk} 今年若想清理關係，先分清楚「可以談的摩擦」和「長期不願負責的模式」。`
+   ]),textBlock('三、當月與接下來的新循環',[
+    `${today.m} 月的流月 ${mo}（${YEAR[mo][0]}）是在流年 ${yr} 裡的一小段轉折。大方向和單月節奏可能不完全一致，別因為某個月想改變，就假定整年都要翻盤。`,
+    `下一年 ${c.yearCalendar+1} 走向流年 ${nyr}（${YEAR[nyr][0]}）。今年適合先整理要帶走的成果和要放下的負擔，明年再看哪些計畫值得重新啟動。想看十二流月細節，可直接切換「流年與流月」功能。`
+   ]),textBlock('四、命理師給你的年度行動',[
+    `列出三件正在消耗時間、金錢或情緒的事，辨認哪一件能停止、哪一件要重談條件、哪一件值得繼續做。這才是把流年主題用在現實上的方法。`,
+    `不要只問「今年會不會發財」；更值得問的是「什麼機會值得我保留籌碼，什麼負擔我已經付太多代價？」`
+   ])];
+ }else if(topic==='grid'){
+  title='命盤數字依據｜這不是宿命，而是你的「原廠設定」';
+  lede=`生日 ${c.y}/${c.mo}/${c.d} 的原始非零數字組成了這張九宮格：${cf.present.length} 種數字、${lines.length} 條完整連線。與其看到缺 ${miss.join('、')||'無'} 就擔心「是不是我不好」，不如把它當成一份你可以親自核對的出廠說明書。`;
+  blocks=[textBlock('一、這張九宮格是怎麼來的',[
+    `原始生日依次為 ${String(c.date).replace(/\D/g,'').split('').join('、')}，0 不填格。按 4・9・2／3・5・7／8・1・6 排成九宮；其中 ${cf.repeat.length?cf.repeat.map(n=>`${n} 出現 ${c.counts[n]} 次`).join('，'):'沒有重複的非零數字'}。`,
+    `主命數 ${c.life} 是計算得到的主題，不會拿來補入原始九宮格。這件事很重要：${mainMissing?`你可能很在意「${FOCUS[main].key}」，原始格位卻沒有 ${main}，這正是值得用生活經驗對照的反差。`:'算出的主命數與出生日期格位可以相互參照，卻不代表命運被數字寫死。'}`
+   ]),textBlock('二、空缺不是缺陷，而是補修學分',[
+    ...missingText('life'),
+    `不要把空缺數當成注定失敗的證據。它真正有用的地方，是提醒你哪些習慣未必自然而然形成，值得透過選擇和練習補足。`
+   ]),textBlock('三、你的完整連線，哪幾條真的接通',[
+    ...(lines.length?lineText('life'):[lineText('life')]),
+    `線條只在原始生日三個格位皆有數字時才算完整。你可以回九宮星圖逐一點選核對，不必背誦所有代號。`
+   ]),textBlock('四、怎麼把數字變成可用的提醒',[
+    `當你下一次又覺得自己重複撞上同一面牆，先問「我是不是太依賴${FOCUS[main].key}？」再看看生日 ${c.birth} 的「${FOCUS[birth].key}」和態度 ${c.attitude} 的「${FOCUS[att].key}」能不能借你另一種做法。`,
+    `數字不能替你決定愛誰、做什麼工作或投資哪一檔；但若它讓你看見一個長期忽略的盲點，就已經不只是漂亮的星圖。`
+   ])];
  }
- // Integrate line state INTO each substantive chapter, not just the picture or a footnote.
- const chapterLabel={overview:'命盤結構如何補充性格閱讀',work:'九宮格如何進入工作與資源分析',love:'九宮格如何進入感情與人際分析',growth:'固定出生連線與人生高峰如何並讀',year:'固定數字連線與流年月運的差異',grid:'完整連線的逐條解讀與組合'};
- if(topic==='grid'){
-  blocks[3]=textBlock('四、完整連線、組合與未完成的差別',contextualLineEvidence(c,topic));
- }else{
-  blocks.splice(2,0,textBlock(topic==='overview'?'三、'+chapterLabel[topic]:chapterLabel[topic],contextualLineEvidence(c,topic)));
- }
- // Visual and TXT reports must use a single, ordered chapter index after insertion.
- const chineseNumbers=['一','二','三','四','五','六','七','八','九','十'];
- for(let i=0;i<blocks.length;i++)blocks[i].title=`${chineseNumbers[i]}、${blocks[i].title.replace(/^[一二三四五六七八九十]+、/,'')}`;
+ // Keep the free tasting readings close to the supplied TXT length; prioritize story, real scenes and personalized blind spots.
+ const cut={
+  overview:[[0,1],[0,2],[0,1],null,[1]],
+  work:[[0,1],[0],null,[1],[1]],
+  love:[[0,1],[0,2],[0,2],null,[0]],
+  growth:[null,[0],[0],[0]],
+  year:[[0,1],[0,1],[0,1],[0]],
+  grid:[[0,1],null,[0,1],[0]]
+ }[topic];
+ if(cut)blocks=blocks.map((section,i)=>{
+  let indices=cut[i];
+  if(indices===null){
+   if(topic==='overview'&&i===3)indices=section.lines.map((_,j)=>j).slice(0,4);
+   else if(topic==='work'&&i===2){const m=section.lines.findIndex(t=>t.includes('缺 8'));indices=[0,1,...(m>1?[m]:[2])];}
+   else if(topic==='love'&&i===3)indices=section.lines.map((_,j)=>j).slice(0,1);
+   else if(topic==='grid'&&i===1)indices=section.lines.map((_,j)=>j).slice(0,3);
+   else indices=section.lines.map((_,j)=>j);
+  }
+  return {...section,lines:indices.filter(j=>j<section.lines.length).map(j=>section.lines[j])};
+ });
  return {title,lede,blocks,data};
+}
+
+const textBlock=(title,lines)=>({title,lines:Array.isArray(lines)?lines:[lines]});
+function readingSections(c,topic){
+ const birth=pure(c.birth),att=pure(c.attitude),cf=commonFactors(c),sd=stageData(c),idx=stageIndexAtAge(sd.age,sd.first);
+ const ctx=`本次生日 ${c.y}/${c.mo}/${c.d}：主命數 ${c.life}（${MODEL[c.life].title}）、生日數 ${c.d}／${c.birth}（${MODEL[birth].title}）、態度數 ${c.attitude}（${MODEL[att].title}）。`;
+ const missing=cf.missing.length?`原始生日空缺 ${cf.missing.join('、')}。`:'原始生日九個數字均出現。';
+ const repeats=cf.repeat.length?`重複數字：${cf.repeat.map(n=>`${n} 出現 ${c.counts[n]} 次`).join('、')}。`:'沒有重複的非零數字。';
+ const completed=`完整連線：${cf.full.map(x=>x.id).join('、')||'無'}。`;
+ const stage=`目前約 ${sd.age} 歲；依本站高峰算法位於第 ${idx+1} 階段，高峰 ${sd.peaks[idx]}、挑戰 ${sd.challenges[idx]}。`;
+ const annual=`${c.yearCalendar} 個人流年 ${yearAt(c,c.yearCalendar)}；下一年 ${c.yearCalendar+1} 個人流年 ${yearAt(c,c.yearCalendar+1)}。`;
+ const data=textBlock('本次命盤計算依據',[ctx,`原始日期九宮格採 4、9、2／3、5、7／8、1、6，0 不入格；${repeats}${missing}${completed}`,`生命數化簡：${c.lifeTrail}。`,stage,annual,'以上為可核對的生日計算與傳統數字符號；情境文章為命理推演，不等於已確認發生的事件。']);
+ return numStoryBuild(c,topic,data);
 }
 let reportLineFocus=null;
  function renderDeepReading(topic){if(!current)return;const c=current,reading=readingSections(c,topic),el=$('readingPanel');activeTab=topic;document.querySelectorAll('[data-tab]').forEach(b=>{const selected=b.dataset.tab===topic;b.classList.toggle('active',selected);b.setAttribute('aria-selected',String(selected))});el.replaceChildren();
  el.append(textElm('span','INDIVIDUAL INTERPRETATION · 個人專題解讀','eyebrow'),textElm('h3',reading.title));appendPara(el,reading.lede,'reading-lead');
- const evidence=document.createElement('div');evidence.className='num-report-evidence';const strong=textElm('b','本篇閱讀重點：');const connected=NUM_LINES.filter(l=>lineInfo(c,l).complete).map(l=>l.id);const themes={overview:'性格與慣性',work:'工作與資源',love:'感情與人際',growth:'人生階段',year:'年度主題',grid:'九宮格結構'};evidence.append(strong,document.createTextNode(`以核心 ${c.life}（${MODEL[c.life].title}）、生日 ${c.birth}（${MODEL[pure(c.birth)].title}）、態度 ${c.attitude}（${MODEL[pure(c.attitude)].title}）交叉閱讀「${themes[topic]}」；連線 ${connected.join('、')||'無'} 僅作為象徵補充。數字如何產生，請看上方四張卡片。`));el.append(evidence);
+ const evidence=document.createElement('div');evidence.className='num-report-evidence';const strong=textElm('b','命盤交叉：');const connected=NUM_LINES.filter(l=>lineInfo(c,l).complete).map(l=>l.id);const themes={overview:'性格與慣性',work:'工作與資源',love:'感情與人際',growth:'人生階段',year:'年度主題',grid:'九宮格結構'};evidence.append(strong,document.createTextNode(`本命 ${c.life} × 生日 ${c.birth} × 態度 ${c.attitude}｜九宮完整連線 ${connected.join('、')||'無'}。這篇從「${themes[topic]}」切入，計算細節可於文章最下方展開。`));el.append(evidence);
  if(reportLineFocus){const line=NUM_LINES.find(l=>l.id===reportLineFocus);if(line){const focus=document.createElement('section');focus.className='num-reading-focus';focus.append(textElm('div','從九宮格帶來的深入分析','num-insight-kicker'),textElm('h4',`${line.id}｜${LINE_LENSES[line.id].short}`));for(const sentence of focusedLineDetail(c,line.id,topic))appendPara(focus,sentence);el.append(focus)}}
  for(const part of reading.blocks){el.appendChild(textElm('h4',part.title));for(const line of part.lines){if(part===reading.blocks[0]&&line===reading.lede)continue;appendPara(el,line)}}
  const methods=document.createElement('details');methods.className='num-method';const summary=textElm('summary','展開本次計算依據（不作為人格診斷）');methods.append(summary);for(const line of reading.data.lines)appendPara(methods,line);el.append(methods);
