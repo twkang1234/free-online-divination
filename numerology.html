@@ -2140,6 +2140,24 @@ html[data-theme="light"] #numQuotaPanel .num-quota-shared .num-quota-line strong
 html[data-theme="light"] #numQuotaPanel .num-quota-line small,html[data-theme="light"] #numQuotaPanel .num-quota-help p,html[data-theme="light"] #numQuotaPanel .num-quota-buy small{color:#52607b!important}
 html[data-theme="light"] #numQuotaPanel .num-quota-buy{background:#f7f6fc!important;border-color:#adbdd9!important;color:#282247!important}
 </style>
+
+<style id="numV28ReportGateStyles">
+/* 02/03 account-backed report unlock: all other report tabs keep their existing design */
+#readingNav [data-report-locked="true"]{border-style:dashed;opacity:1}
+#readingNav [data-report-locked="true"]:focus-visible,.num-report-gate-button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+#readingPanel.num-report-gated{min-height:280px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:12px}
+#readingPanel.num-report-gated h3{margin:0}
+.num-report-gate-copy{max-width:700px;color:var(--text);font-size:1rem;line-height:1.85}
+.num-report-gate-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.num-report-gate-button{min-height:44px;padding:10px 18px;border:1px solid var(--accent);border-radius:10px;color:var(--text);background:linear-gradient(110deg,rgba(166,128,245,.25),rgba(90,194,212,.25));font-weight:800;cursor:pointer}
+.num-report-gate-button:disabled{opacity:.60;cursor:wait}
+.num-report-gate-help{font-size:.85rem;color:var(--dim)}
+.num-report-gate-status{font-size:.9rem;color:var(--text);min-height:1em}
+html[data-theme="light"] #readingNav [data-report-locked="true"]{border-color:#8977ab;color:#33244b}
+html[data-theme="light"] .num-report-gate-button{background:linear-gradient(105deg,#e5dafa,#d5f3f5);border-color:#7e61ae;color:#30244c}
+html[data-theme="light"] .num-report-gate-copy,html[data-theme="light"] .num-report-gate-status{color:#30244c}
+@media(max-width:560px){.num-report-gate-actions{flex-direction:column;align-items:stretch}.num-report-gate-button{width:100%}}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -2254,7 +2272,7 @@ html[data-theme="light"] #numQuotaPanel .num-quota-buy{background:#f7f6fc!import
    <section id="numReadingSection" class="num-reading-section num-stage-deep" aria-label="生命靈數六大深度解讀" hidden>
  <div class="num-stage-deep-head"><div><span>PERSONAL REPORT · COMPLETE INTERPRETATION</span><strong>你的生命靈數 · 六大深度解讀</strong></div><button id="numBackBoard" type="button">◁ 回九宮格</button></div>
  <p class="num-stage-deep-hint" id="numStageDeepHint">六大分析與九宮格在同一個主畫面；右側可隨時選擇連線。</p>
- <div class="reading-grid"><div class="reading-nav" id="readingNav" role="tablist" aria-label="生命靈數各類解讀"><button type="button" role="tab" aria-selected="true" class="active" data-tab="overview">01｜性格深讀</button><button type="button" role="tab" aria-selected="false" data-tab="work">02｜事業與資源</button><button type="button" role="tab" aria-selected="false" data-tab="love">03｜感情與人際</button><button type="button" role="tab" aria-selected="false" data-tab="growth">04｜人生階段</button><button type="button" role="tab" aria-selected="false" data-tab="year">05｜年度與流月</button><button type="button" role="tab" aria-selected="false" data-tab="grid">06｜命盤數字依據</button></div><article class="reading-panel" id="readingPanel" role="tabpanel" tabindex="0" aria-live="polite"></article></div></section>
+ <div class="reading-grid"><div class="reading-nav" id="readingNav" role="tablist" aria-label="生命靈數各類解讀"><button type="button" role="tab" aria-selected="true" class="active" data-tab="overview">01｜性格深讀</button><button type="button" role="tab" aria-selected="false" data-tab="work" data-report-locked="true">🔒 02｜事業與資源</button><button type="button" role="tab" aria-selected="false" data-tab="love" data-report-locked="true">🔒 03｜感情與人際</button><button type="button" role="tab" aria-selected="false" data-tab="growth">04｜人生階段</button><button type="button" role="tab" aria-selected="false" data-tab="year">05｜年度與流月</button><button type="button" role="tab" aria-selected="false" data-tab="grid">06｜命盤數字依據</button></div><article class="reading-panel" id="readingPanel" role="tabpanel" tabindex="0" aria-live="polite"></article></div></section>
   </div>
   <aside class="num-inspector" aria-label="固定的命盤計算結果選單">
    <div class="num-inspector-head"><div class="eyebrow">YOUR CALCULATED RESULTS</div><h3>命盤探索選單</h3><p>選擇成立連線、空缺數字或星圖節點，於右側展開相關白話解讀。</p></div>
@@ -2876,7 +2894,68 @@ function readingSections(c,topic){
  return numStoryBuild(c,topic,data);
 }
 let reportLineFocus=null;
- function renderDeepReading(topic){if(!current)return;const c=current,reading=readingSections(c,topic),el=$('readingPanel');activeTab=topic;document.querySelectorAll('[data-tab]').forEach(b=>{const selected=b.dataset.tab===topic;b.classList.toggle('active',selected);b.setAttribute('aria-selected',String(selected))});el.replaceChildren();
+ // V28: 02/03 are account-scoped unlocks for one birth date, never localStorage grants.
+ const numReportPayTopics={work:'事業與資源',love:'感情與人際'};
+ let numReportUnlocks=new Set(),numReportUnlockDate='',numReportUnlockToken='',numReportUnlockLoading=false,numReportUnlockCheckSeq=0;
+ function numUpdateReportTabBadges(){
+   document.querySelectorAll('#readingNav [data-tab]').forEach(button=>{
+     const section=button.dataset.tab,label=numReportPayTopics[section];if(!label)return;
+     const granted=!!numAiToken()&&numAiToken()===numReportUnlockToken&&numReportUnlockDate===current?.date&&numReportUnlocks.has(section);
+     button.dataset.reportLocked=String(!granted);
+     button.textContent=(granted?'✓ ':'🔒 ')+(section==='work'?'02':'03')+'｜'+label;
+     button.title=granted?'此生日已解鎖；再次閱讀不扣點':'使用 1 次 AI 解讀額度解鎖此生日的'+label;
+   });
+ }
+ function numGateMessage(section,message){const status=$('numReportGateStatus');if(status)status.textContent=message}
+ function numRenderReportGate(section){
+   const panel=$('readingPanel');if(!panel)return;
+   const title=numReportPayTopics[section],isLogin=!!numAiToken();
+   panel.replaceChildren();panel.classList.add('num-report-gated');
+   panel.append(textElm('span','PERSONAL REPORT · 單篇解鎖','eyebrow'),textElm('h3','🔒 '+title+'｜專題解讀'));
+   const info=textElm('p',isLogin?'本篇為付費解鎖內容。使用 1 次會員共用 AI 解讀額度，即可閱讀這個出生日期的完整文章；同一生日、同一專題不重複扣點。':'登入會員後，可使用 1 次 AI 解讀額度解鎖這篇專題。','num-report-gate-copy');panel.append(info);
+   const actions=document.createElement('div');actions.className='num-report-gate-actions';
+   const btn=document.createElement('button');btn.type='button';btn.className='num-report-gate-button';btn.textContent=isLogin?'使用 1 次 AI 解讀額度解鎖':'先登入會員';btn.disabled=numReportUnlockLoading;
+   btn.addEventListener('click',()=>{if(!numAiToken()){window.location.href='member.html';return}void numUnlockReport(section)});
+   actions.append(btn);const free=textElm('span','01 性格深讀及 04～06 專題維持免費。','num-report-gate-help');actions.append(free);panel.append(actions);
+   const status=textElm('p','','num-report-gate-status');status.id='numReportGateStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');panel.append(status);
+ }
+ async function numRefreshReportUnlocks(date){
+   const seq=++numReportUnlockCheckSeq,sessionToken=numAiToken();
+   if(numReportUnlockDate!==date||!sessionToken||sessionToken!==numReportUnlockToken){numReportUnlocks.clear();numReportUnlockDate=date;numReportUnlockToken=sessionToken}numUpdateReportTabBadges();
+   if(!sessionToken)return;
+   try{
+     const {r,data}=await numAiFetch('/ai/unlocks?date='+encodeURIComponent(date));
+     if(seq!==numReportUnlockCheckSeq||current?.date!==date||numAiToken()!==sessionToken)return;
+     if(!r.ok||!data?.ok)throw Error(data?.error||'UNLOCK_STATUS');
+     numReportUnlocks=new Set((data.unlocked||[]).filter(t=>Object.hasOwn(numReportPayTopics,t)));
+     numUpdateReportTabBadges();if(numReportPayTopics[activeTab])renderDeepReading(activeTab);
+   }catch(_){if(seq===numReportUnlockCheckSeq&&numReportPayTopics[activeTab])numGateMessage(activeTab,'暫時無法確認解鎖紀錄，請檢查網路後再試。')}
+ }
+ async function numUnlockReport(section){
+   if(!current||!numReportPayTopics[section]||numReportUnlockLoading)return;
+   if(numReportUnlocks.has(section)){renderDeepReading(section);return}
+   const date=current.date,sessionToken=numAiToken();
+   if(!sessionToken){numGateMessage(section,'請先登入會員。');return}
+   if(!window.confirm('將使用 1 次會員共用 AI 解讀額度解鎖「'+numReportPayTopics[section]+'」\n出生日期：'+date+'\n同一會員、同一生日、同一篇只扣一次。是否確認？'))return;
+   numReportUnlockLoading=true;numRenderReportGate(section);numGateMessage(section,'正在確認額度與解鎖狀態，請勿重複點擊。');
+   try{
+     const operationId='numunlock_'+crypto.randomUUID().replaceAll('-','');
+     const {r,data}=await numAiFetch('/ai/unlock','POST',{date,section,operationId});
+     if(current?.date!==date)return;
+     if(!r.ok||!data?.ok||!data.unlocked){
+       const err=data?.error==='AI_EXHAUSTED'?'會員共用 AI 解讀額度不足，可至會員中心加購。':data?.error==='UNLOCK_PROCESSING'?'解鎖正在處理，請稍後重新開啟。':'解鎖未完成，本次不應扣點；請稍後再試。';
+       numGateMessage(section,err);return;
+     }
+     if(numAiToken()!==sessionToken)return;numReportUnlockDate=date;numReportUnlockToken=sessionToken;numReportUnlocks.add(section);numUpdateReportTabBadges();
+     if(activeTab===section)renderDeepReading(section);
+     void refreshNumQuotaBoard();
+   }catch(_){if(current?.date===date)numGateMessage(section,'連線失敗，請稍後重試；如擔心已扣點，重新開啟此專題會先查詢解鎖紀錄。')}
+   finally{numReportUnlockLoading=false;if(current?.date===date&&activeTab===section&&!numReportUnlocks.has(section)){const btn=document.querySelector('#readingPanel .num-report-gate-button');if(btn)btn.disabled=false}}
+ }
+ function renderDeepReading(topic){if(!current)return;const c=current,el=$('readingPanel');activeTab=topic;
+   document.querySelectorAll('[data-tab]').forEach(b=>{const selected=b.dataset.tab===topic;b.classList.toggle('active',selected);b.setAttribute('aria-selected',String(selected))});
+   if(numReportPayTopics[topic]&&(!numAiToken()||numAiToken()!==numReportUnlockToken||numReportUnlockDate!==c.date||!numReportUnlocks.has(topic))){numRenderReportGate(topic);return}
+   el.classList.remove('num-report-gated');const reading=readingSections(c,topic);el.replaceChildren();document.querySelectorAll('[data-tab]').forEach(b=>{const selected=b.dataset.tab===topic;b.classList.toggle('active',selected);b.setAttribute('aria-selected',String(selected))});el.replaceChildren();
  el.append(textElm('span','INDIVIDUAL INTERPRETATION · 個人專題解讀','eyebrow'),textElm('h3',reading.title));appendPara(el,reading.lede,'reading-lead');
  const evidence=document.createElement('div');evidence.className='num-report-evidence';const strong=textElm('b','命盤交叉：');const connected=NUM_LINES.filter(l=>lineInfo(c,l).complete).map(l=>l.id);const themes={overview:'性格與慣性',work:'工作與資源',love:'感情與人際',growth:'人生階段',year:'年度主題',grid:'九宮格結構'};evidence.append(strong,document.createTextNode(`本命 ${c.life} × 生日 ${c.birth} × 態度 ${c.attitude}｜九宮完整連線 ${connected.join('、')||'無'}。這篇從「${themes[topic]}」切入，計算細節可於文章最下方展開。`));el.append(evidence);
  if(reportLineFocus){const line=NUM_LINES.find(l=>l.id===reportLineFocus);if(line){const focus=document.createElement('section');focus.className='num-reading-focus';focus.append(textElm('div','從九宮格帶來的深入分析','num-insight-kicker'),textElm('h4',`${line.id}｜${LINE_LENSES[line.id].short}`));for(const sentence of focusedLineDetail(c,line.id,topic))appendPara(focus,sentence);el.append(focus)}}
@@ -2885,7 +2964,7 @@ let reportLineFocus=null;
  for(const [href,title] of [['#num-map-stage','互動九宮格 ↗'],['#numPinnaclesSection','人生高峰圖 ↗'],['#numTimelineSection','九年時間軸 ↗']]){const a=document.createElement('a');a.href=href;a.className='num-report-link';a.textContent=title;el.append(a)}
 }
 function setTab(name){renderDeepReading(name)}
-function richReportText(c){const names=[['overview','性格深讀'],['work','事業與資源'],['love','感情與人際'],['growth','人生階段'],['year','年度與流月'],['grid','九宮格依據']];return names.map(([key,label])=>{const s=readingSections(c,key);return `【${label}｜${s.title}】\n${s.lede}\n${s.blocks.map(b=>b.title+'\n'+b.lines.join('\n')).join('\n\n')}`}).join('\n\n---\n\n')}
+function richReportText(c){const names=[['overview','性格深讀'],['work','事業與資源'],['love','感情與人際'],['growth','人生階段'],['year','年度與流月'],['grid','九宮格依據']];return names.filter(([key])=>!numReportPayTopics[key]||(!!numAiToken()&&numAiToken()===numReportUnlockToken&&numReportUnlockDate===c.date&&numReportUnlocks.has(key))).map(([key,label])=>{const s=readingSections(c,key);return `【${label}｜${s.title}】\n${s.lede}\n${s.blocks.map(b=>b.title+'\n'+b.lines.join('\n')).join('\n\n')}`}).join('\n\n---\n\n')}
 
  // Interactive date-only Lo Shu grid: 8 geometric paths; no additional driver, conductor or Kua numbers.
  const NUM_ORDER=[4,9,2,3,5,7,8,1,6];
@@ -3990,7 +4069,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  $('numAiSideDownload').addEventListener('click',()=>$('numAiAnswerTxt').click());
  $('numAiAnswerCopy').addEventListener('click',async()=>{const r=numAiHistory.find(x=>x.id===numAiActiveId);if(!r)return;try{await navigator.clipboard.writeText(numAiArchiveText(numAiThreadRecords(r)));aiStatus('已複製目前題目及其追問。')}catch(_){aiStatus('目前無法複製，請改用下載 TXT。')}});
  $('numAiAnswerTxt').addEventListener('click',()=>{const r=numAiHistory.find(x=>x.id===numAiActiveId);if(r)numAiReportFile('生命靈數-單組AI解讀與追問-'+current.date,numAiArchiveText(numAiThreadRecords(r)))});
- function renderResult(data){document.documentElement.classList.add("num-calculated");reportLineFocus=null;current=data;void refreshNumQuotaBoard();$('result').hidden=false;$('lifeNumber').textContent=data.life;$('masterChip').hidden=![11,22,33].includes(data.life);$('lifeLabel').textContent=MODEL[data.life].title;$('lifeFormula').textContent=`${CORE_SUMMARIES[data.life]}`;$('birthdayNumber').textContent=`${data.d} / ${data.birth}`;$('numBirthdayMeaning').textContent=`補充：${MODEL[pure(data.birth)].title}，與核心數從不同角度並讀`;$('attitudeNumber').textContent=data.attitude;$('numAttitudeMeaning').textContent=`互動傾向：${MODEL[pure(data.attitude)].title}`;$('yearNumber').textContent=data.year;$('numYearMeaning').textContent=`今年主題：${YEAR[data.year][0]}`;$('yearHeading').textContent=`${data.yearCalendar} 個人流年`;$('resultDate').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日｜以西元生日計算`;renderProfileExplanation(data,'life');setProfileExplainOpen(true);$('numProfileFoldCurrent').textContent='｜生命數';aiMode='fixed';aiTopic='full';numAiShowMore=false;numAiGuidedQuestion='';numAiGuidedLabel='';numAiGuidedId='';numAiSelectedStage=stageIndexAtAge(stageData(data).age,stageData(data).first);numAiTimingYear=todayTaipei().y;numAiTimingMonth=todayTaipei().m;numAiActiveDock='general';$('numAiGeneralDock').appendChild($('numAiSection'));$('numAiSection').hidden=true;$('numAiQuestion').value='';lastNumerologyResult=null;lastNumerologyOperation=null;lastFailedNumerologyOperation=null;numAiLoadHistory();numAiSetBusy(false);$('numAiReportBox').hidden=true;$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');$('numAiQuota').textContent='尚未查詢額度';aiStatus('');setTab('overview');updateNumExperience(data);renderDeep(data);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+ function renderResult(data){document.documentElement.classList.add("num-calculated");reportLineFocus=null;current=data;numReportUnlockDate=data.date;numReportUnlocks.clear();numUpdateReportTabBadges();void numRefreshReportUnlocks(data.date);void refreshNumQuotaBoard();$('result').hidden=false;$('lifeNumber').textContent=data.life;$('masterChip').hidden=![11,22,33].includes(data.life);$('lifeLabel').textContent=MODEL[data.life].title;$('lifeFormula').textContent=`${CORE_SUMMARIES[data.life]}`;$('birthdayNumber').textContent=`${data.d} / ${data.birth}`;$('numBirthdayMeaning').textContent=`補充：${MODEL[pure(data.birth)].title}，與核心數從不同角度並讀`;$('attitudeNumber').textContent=data.attitude;$('numAttitudeMeaning').textContent=`互動傾向：${MODEL[pure(data.attitude)].title}`;$('yearNumber').textContent=data.year;$('numYearMeaning').textContent=`今年主題：${YEAR[data.year][0]}`;$('yearHeading').textContent=`${data.yearCalendar} 個人流年`;$('resultDate').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日｜以西元生日計算`;renderProfileExplanation(data,'life');setProfileExplainOpen(true);$('numProfileFoldCurrent').textContent='｜生命數';aiMode='fixed';aiTopic='full';numAiShowMore=false;numAiGuidedQuestion='';numAiGuidedLabel='';numAiGuidedId='';numAiSelectedStage=stageIndexAtAge(stageData(data).age,stageData(data).first);numAiTimingYear=todayTaipei().y;numAiTimingMonth=todayTaipei().m;numAiActiveDock='general';$('numAiGeneralDock').appendChild($('numAiSection'));$('numAiSection').hidden=true;$('numAiQuestion').value='';lastNumerologyResult=null;lastNumerologyOperation=null;lastFailedNumerologyOperation=null;numAiLoadHistory();numAiSetBusy(false);$('numAiReportBox').hidden=true;$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');$('numAiQuota').textContent='尚未查詢額度';aiStatus('');setTab('overview');updateNumExperience(data);renderDeep(data);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
 
  function report(){
   if(!current)return '';const c=current,st=stageData(c);
@@ -4001,8 +4080,8 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
    '延伸來源：https://www.worldnumerology.com/do-your-own-reading/','https://divinationhub.tw/numerology.html'].join('\n');
  }
  $('calcForm').addEventListener('submit',e=>{e.preventDefault();try{if(numCalendarMode==='solar'){const y=Number($('numYear').value);if(!Number.isInteger(y)||y<1900||y>todayTaipei().y)throw Error('請選擇有效的西元出生年份。')}const d=calcDate(syncDatePreview());$('calcError').hidden=true;renderResult(d)}catch(err){$('calcError').textContent=err.message;$('calcError').hidden=false}});
- $('resetBtn').addEventListener('click',()=>{$('calcForm').reset();resetBirthPicker();$('calcError').hidden=true;$('result').hidden=true;document.documentElement.classList.remove('num-calculated');numQuotaRequestSeq++;void refreshNumQuotaBoard();current=null;reportLineFocus=null;$('numYear').focus()});$('recalcBtn').addEventListener('click',()=>{$('calculator').scrollIntoView({behavior:'smooth'});$('numYear').focus()});
- $('readingNav').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){setTab(b.dataset.tab);const pane=$('readingPanel');if(pane)pane.scrollTop=0}});
+ $('resetBtn').addEventListener('click',()=>{$('calcForm').reset();resetBirthPicker();$('calcError').hidden=true;$('result').hidden=true;document.documentElement.classList.remove('num-calculated');numQuotaRequestSeq++;void refreshNumQuotaBoard();current=null;reportLineFocus=null;numReportUnlockDate='';numReportUnlockToken='';numReportUnlocks.clear();numReportUnlockCheckSeq++;numUpdateReportTabBadges();$('numYear').focus()});$('recalcBtn').addEventListener('click',()=>{$('calculator').scrollIntoView({behavior:'smooth'});$('numYear').focus()});
+ $('readingNav').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){setTab(b.dataset.tab);if(numReportPayTopics[b.dataset.tab]&&current)void numRefreshReportUnlocks(current.date);const pane=$('readingPanel');if(pane)pane.scrollTop=0}});
  $('copyBtn').addEventListener('click',async()=>{if(!current)return;const btn=$('copyBtn');try{if(!navigator.clipboard||!window.isSecureContext)throw Error('Clipboard unavailable');await navigator.clipboard.writeText(report());btn.textContent='已複製 ✓'}catch(_){const ta=document.createElement('textarea');ta.value=report();ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();btn.textContent=ok?'已複製 ✓':'無法自動複製，請使用下載'}setTimeout(()=>btn.textContent='複製結果',2300)});
  $('downloadBtn').addEventListener('click',()=>{if(!current)return;const blob=new Blob(['\ufeff'+report()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`生命靈數-${current.date}.txt`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200)});
  function syncTheme(){const light=document.documentElement.dataset.theme==='light';$('themeIcon').textContent=light?'☾':'☀';$('themeText').textContent=light?'深色':'淺色';$('themeToggle').setAttribute('aria-label',light?'切換成深色模式':'切換成淺色模式')}
