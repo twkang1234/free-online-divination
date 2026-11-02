@@ -2212,8 +2212,8 @@ html[data-theme="light"] .num-report-gate-copy,html[data-theme="light"] .num-rep
   <div class="num-quota-columns">
     <section class="num-quota-card" aria-label="定期免費額度">
       <h3>定期免費額度</h3>
-      <div class="num-quota-line"><span>生命靈數計算</span><strong id="numQuotaFreeTool">不限次數</strong><small>本機免費計算，不扣工具額度</small></div>
-      <div class="num-quota-line"><span>AI 解讀</span><strong id="numQuotaFreeAi">0 次</strong><small id="numQuotaFreeNote">目前未提供本工具的定期免費 AI 次數</small></div>
+      <div class="num-quota-line"><span>生命靈數計算</span><strong id="numQuotaFreeTool">查詢中…</strong><small id="numQuotaToolNote">每天補充，不累積</small></div>
+      <div class="num-quota-line"><span>AI 解讀</span><strong id="numQuotaFreeAi">查詢中…</strong><small id="numQuotaFreeNote">每 3 天補充，不累積</small></div>
     </section>
     <section class="num-quota-card num-quota-shared" aria-label="會員共用額度">
       <h3>會員共用額度</h3>
@@ -3846,40 +3846,48 @@ function renderMonths(c){
  window.addEventListener('beforeunload',e=>{if((numAiUnsaved&&numAiHistory.length)||aiRequestBusy){e.preventDefault();e.returnValue=''}});
 
  
-  /* V24 wallet overview. Pure GET reads, no AI generation, no charge. */
+  /* V30 quota board: read-only, authoritative numerology Worker; no dates shown to visitors. */
   let numQuotaRequestSeq=0;
+  function numGuestId(){
+   const key='divinationhub-numerology-visitor-v1';let id='';
+   try{id=localStorage.getItem(key)||''}catch(_){ }
+   if(!/^[A-Za-z0-9_-]{32,80}$/.test(id)){
+    id=Array.from(crypto.getRandomValues(new Uint8Array(24)),v=>v.toString(16).padStart(2,'0')).join('');
+    try{localStorage.setItem(key,id)}catch(_){ }
+   }
+   return id;
+  }
+  async function numQuotaFetch(path,body=null){
+   const token=numAiToken(),headers={'Accept':'application/json','X-Numerology-Guest':numGuestId()};
+   if(token)headers.Authorization='Bearer '+token;
+   if(body)headers['Content-Type']='application/json';
+   const r=await fetch(NUMEROLOGY_AI_API+path,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined,cache:'no-store'});
+   const data=await r.json().catch(()=>({error:'BAD_RESPONSE'}));return {r,data};
+  }
   async function refreshNumQuotaBoard(){
-    const panel=$('numQuotaPanel');if(!panel)return;
-    panel.hidden=false;
-    const token=numAiToken(),seq=++numQuotaRequestSeq;
-    const tool=$('numQuotaSharedTool'),ai=$('numQuotaSharedAi'),free=$('numQuotaFreeAi'),note=$('numQuotaFreeNote');
-    if(!token){tool.textContent='登入後可用';ai.textContent='登入後可用';free.textContent='0 次';note.textContent='目前未提供本工具的定期免費 AI 次數';return;}
-    tool.textContent='查詢中…';ai.textContent='查詢中…';
-    // The numerology worker is the authoritative source for numerology AI allowance.
-    const aiJob=(async()=>{try{
-      const {r,data}=await numAiFetch('/ai/quota');if(seq!==numQuotaRequestSeq||!numAiToken())return;
-      if(!r.ok||!data?.ok)throw Error('quota');
-      const amount=Number(data.sharedAiRemaining);ai.textContent=Number.isFinite(amount)?Math.max(0,amount)+' 次':'暫時無法查詢';
-      const periodic=Number(data.periodicAiRemaining||0);free.textContent=Number.isFinite(periodic)?Math.max(0,periodic)+' 次':'—';
-      note.textContent=periodic>0?'免費次數依後台設定，未用不累積':'目前未提供本工具的定期免費 AI 次數';
-    }catch(_){if(seq===numQuotaRequestSeq)ai.textContent='暫時無法查詢';}})();
-    // Tarot's read-only status endpoint exposes the same shared tool wallet; its
-    // daily TAROT allowance is intentionally ignored here.
-    const toolJob=(async()=>{try{
-      const key='divinationhub-tarot-ai-visitor-id-v1';let visitor='';
-      try{visitor=localStorage.getItem(key)||'';if(!/^[0-9a-f-]{36}$/i.test(visitor)){visitor=crypto.randomUUID();localStorage.setItem(key,visitor)}}catch(_){visitor=crypto.randomUUID()}
-      const res=await fetch('https://tarot-api.ezgocpu.workers.dev/wallet/tarot/status',{cache:'no-store',headers:{Authorization:'Bearer '+token,'X-Tarot-Visitor-Id':visitor}});
-      const data=await res.json();if(seq!==numQuotaRequestSeq||!numAiToken())return;
-      if(!res.ok||!data?.ok||!data.wallet)throw Error('quota');
-      const count=Number(data.wallet.tool);tool.textContent=Number.isFinite(count)?Math.max(0,count)+' 次':'暫時無法查詢';
-    }catch(_){if(seq===numQuotaRequestSeq)tool.textContent='暫時無法查詢';}})();
-    await Promise.allSettled([aiJob,toolJob]);
+   const panel=$('numQuotaPanel');if(!panel)return;
+   panel.hidden=false;
+   const seq=++numQuotaRequestSeq;
+   const tool=$('numQuotaSharedTool'),ai=$('numQuotaSharedAi'),free=$('numQuotaFreeAi'),freeTool=$('numQuotaFreeTool'),note=$('numQuotaFreeNote'),toolNote=$('numQuotaToolNote');
+   try{
+    const {r,data}=await numQuotaFetch('/quota/status');if(seq!==numQuotaRequestSeq)return;
+    if(!r.ok||!data.ok)throw Error('QUOTA_READ_FAILED');
+    const t=data.tool||{},a=data.ai||{};
+    freeTool.textContent=`${t.remaining} / ${t.limit} 次`;
+    toolNote.textContent=`每 ${t.days===1?'天':t.days+' 天'}補充，不累積`;
+    free.textContent=numAiToken()?`${a.remaining} / ${a.limit} 次`:'登入後可用';
+    note.textContent=`每 ${a.days} 天補充，不累積`;
+    if(numAiToken()){
+     ai.textContent=Number(data.sharedAiRemaining||0)+' 次';
+     tool.textContent=Number(data.sharedToolRemaining||0)+' 次';
+    }else{ai.textContent='登入後可用';tool.textContent='登入後可用'}
+   }catch(_){if(seq!==numQuotaRequestSeq)return;freeTool.textContent='暫時無法查詢';free.textContent='暫時無法查詢';tool.textContent='暫時無法查詢';ai.textContent='暫時無法查詢'}
   }
   queueMicrotask(()=>void refreshNumQuotaBoard());
 function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){}return /^dhs_[A-Za-z0-9_-]{43}$/.test(t)?t:''}
- function numAiResponseError(code){return ({LOGIN_REQUIRED:'請先登入會員才能使用站內 AI。',AI_NOT_CONFIGURED:'AI 後端尚未完成部署或密鑰設定。',AI_EXHAUSTED:'會員共用 AI 額度已使用完畢，請至會員中心查看加購方案。',ORIGIN_DENIED:'網頁來源未被 AI 後端允許。',QUESTION_LENGTH:'請輸入 4～1600 字的自訂問題。',ALREADY_PROCESSING:'上一筆解讀仍在處理中。',AI_UNAVAILABLE:'AI 通道目前未能完整交付解讀，本次不應扣除 AI 額度。',WORKER_UNAVAILABLE:'AI Worker 暫時無法使用，請稍後再試。',INVALID_BIRTH_DATE:'出生日期無效，請重新計算命盤。',INVALID_PRESET:'AI 專題不存在，請重新選擇。',INVALID_STAGE:'人生階段選擇有誤，請重新選擇階段。',INVALID_TARGET_YEAR:'解讀年份不能早於出生年份，也不能超出可選範圍。',INVALID_TARGET_MONTH:'出生前的月份無法作個人流月解讀，請選擇出生當月以後。',INVALID_CONTEXT:'所選時間或階段有誤，請重新選擇。'})[code]||'站內 AI 暫時無法完成本次請求（'+code+'）。'}
+ function numAiResponseError(code){return ({LOGIN_REQUIRED:'請先登入會員才能使用站內 AI。',AI_NOT_CONFIGURED:'AI 後端尚未完成部署或密鑰設定。',AI_EXHAUSTED:'免費 AI 與會員共用 AI 額度皆已用完，請至會員中心查看加購方案。',ORIGIN_DENIED:'網頁來源未被 AI 後端允許。',QUESTION_LENGTH:'請輸入 4～1600 字的自訂問題。',ALREADY_PROCESSING:'上一筆解讀仍在處理中。',AI_UNAVAILABLE:'AI 通道目前未能完整交付解讀，本次不應扣除 AI 額度。',WORKER_UNAVAILABLE:'AI Worker 暫時無法使用，請稍後再試。',INVALID_BIRTH_DATE:'出生日期無效，請重新計算命盤。',INVALID_PRESET:'AI 專題不存在，請重新選擇。',INVALID_STAGE:'人生階段選擇有誤，請重新選擇階段。',INVALID_TARGET_YEAR:'解讀年份不能早於出生年份，也不能超出可選範圍。',INVALID_TARGET_MONTH:'出生前的月份無法作個人流月解讀，請選擇出生當月以後。',INVALID_CONTEXT:'所選時間或階段有誤，請重新選擇。'})[code]||'站內 AI 暫時無法完成本次請求（'+code+'）。'}
  async function numAiFetch(path,method='GET',body=null){const token=numAiToken();if(!token)throw Error('LOGIN_REQUIRED');const r=await fetch(NUMEROLOGY_AI_API+path,{method,headers:{Authorization:'Bearer '+token,Accept:'application/json',...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,cache:'no-store'});const data=await r.json().catch(()=>({error:'BAD_RESPONSE'}));return {r,data}}
- async function refreshNumAiQuota(){if(document.documentElement.classList.contains('num-calculated'))void refreshNumQuotaBoard();if(!numAiToken()){$('numAiQuota').textContent='請先登入會員使用站內 AI。';return}try{const {r,data}=await numAiFetch('/ai/quota');$('numAiQuota').textContent=r.ok?`會員共用 AI 尚餘 ${data.sharedAiRemaining} 次；每次完成完整解讀或追問扣 1 次。`:'無法讀取 AI 額度：'+numAiResponseError(data.error)}catch(e){$('numAiQuota').textContent=numAiResponseError(e.message)}}
+ async function refreshNumAiQuota(){if(document.documentElement.classList.contains('num-calculated'))void refreshNumQuotaBoard();if(!numAiToken()){$('numAiQuota').textContent='請先登入會員使用站內 AI。';return}try{const {r,data}=await numAiFetch('/ai/quota');$('numAiQuota').textContent=r.ok?`生命靈數免費 AI ${data.ai.remaining} / ${data.ai.limit} 次（每 ${data.ai.days} 天補充）；會員共用 AI 尚餘 ${data.sharedAiRemaining} 次。每次成功解讀或追問扣 1 次，優先使用免費額度。`:'無法讀取 AI 額度：'+numAiResponseError(data.error)}catch(e){$('numAiQuota').textContent=numAiResponseError(e.message)}}
  function numAiPresentAnswer(answer){
  const target=$('numAiAnswer');target.replaceChildren();
  let paragraph=[],list=null,listType='';
@@ -4008,7 +4016,25 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
    '規則與限制：生命靈數與高峰挑戰以本頁說明的化簡規則計算，九宮格只使用西元生日原始數字，流年月運採曆年制。象徵性閱讀並非科學人格診斷或未來事件預測。',
    '延伸來源：https://www.worldnumerology.com/do-your-own-reading/','https://divinationhub.tw/numerology.html'].join('\n');
  }
- $('calcForm').addEventListener('submit',e=>{e.preventDefault();try{if(numCalendarMode==='solar'){const y=Number($('numYear').value);if(!Number.isInteger(y)||y<1900||y>todayTaipei().y)throw Error('請選擇有效的西元出生年份。')}const d=calcDate(syncDatePreview());$('calcError').hidden=true;renderResult(d)}catch(err){$('calcError').textContent=err.message;$('calcError').hidden=false}});
+ let numCalcBusy=false;
+ $('calcForm').addEventListener('submit',async e=>{
+  e.preventDefault();if(numCalcBusy||aiRequestBusy)return;
+  let originalBtn=$('calcForm').querySelector('button[type="submit"]');numCalcBusy=true;
+  if(originalBtn)originalBtn.disabled=true;
+  try{
+   if(numCalendarMode==='solar'){const y=Number($('numYear').value);if(!Number.isInteger(y)||y<1900||y>todayTaipei().y)throw Error('請選擇有效的西元出生年份。')}
+   const d=calcDate(syncDatePreview());$('calcError').hidden=true;
+   const id='numcalc_'+Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+   const {r,data}=await numQuotaFetch('/quota/calculate',{date:d.date,operationId:id});
+   if(!r.ok||!data.ok){
+    if(data.error==='NUMEROLOGY_CALC_EXHAUSTED')throw Error('今日免費計算次數已用完；登入會員可使用共用工具額度。');
+    if(data.error==='LOGIN_REQUIRED')throw Error('登入狀態已過期，請重新登入後再計算。');
+    throw Error('免費次數暫時無法驗證，請稍後再試，不會扣除次數。');
+   }
+   renderResult(d);void refreshNumQuotaBoard();
+  }catch(err){$('calcError').textContent=err.message;$('calcError').hidden=false}
+  finally{numCalcBusy=false;if(originalBtn)originalBtn.disabled=false}
+ });
  $('resetBtn').addEventListener('click',()=>{$('calcForm').reset();resetBirthPicker();$('calcError').hidden=true;$('result').hidden=true;document.documentElement.classList.remove('num-calculated');numQuotaRequestSeq++;void refreshNumQuotaBoard();current=null;reportLineFocus=null;numProtectedReadings.clear();numReportReadingSeq++;numReportUnlockDate='';numReportUnlockToken='';numReportUnlocks.clear();numReportUnlockCheckSeq++;numUpdateReportTabBadges();$('numYear').focus()});$('recalcBtn').addEventListener('click',()=>{$('calculator').scrollIntoView({behavior:'smooth'});$('numYear').focus()});
  $('readingNav').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){setTab(b.dataset.tab);if(numReportPayTopics[b.dataset.tab]&&current)void numRefreshReportUnlocks(current.date);const pane=$('readingPanel');if(pane)pane.scrollTop=0}});
  $('copyBtn').addEventListener('click',async()=>{if(!current)return;const btn=$('copyBtn');try{await numLoadUnlockedForExport(current)}catch(err){alert(err.message||'已解鎖文章暫時無法載入');return}try{if(!navigator.clipboard||!window.isSecureContext)throw Error('Clipboard unavailable');await navigator.clipboard.writeText(report());btn.textContent='已複製 ✓'}catch(_){const ta=document.createElement('textarea');ta.value=report();ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();btn.textContent=ok?'已複製 ✓':'無法自動複製，請使用下載'}setTimeout(()=>btn.textContent='複製結果',2300)});
