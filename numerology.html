@@ -962,7 +962,7 @@ html[data-theme="light"] .num-ai-question-rail .num-ai-choice small{color:#c6b9d
 html[data-theme="light"] .num-ai-question-rail .num-ai-tabs button{background:#2d2646!important;color:#f8edff!important}
 html[data-theme="light"] .num-ai-question-rail .num-ai-tabs button[aria-pressed="true"]{background:#55457c!important;border-color:#b6a0ee!important}
 html[data-theme="light"] .num-ai-question-rail .num-ai-rail-heading strong{color:#f9efff!important}
-html[data-theme="light"] .num-ai-question-rail .num-ai-textarea{background:#211a34!important;color:#fff!important}
+/* The custom question field inherits the AI workbench palette in either theme. */
 html[data-theme="light"] .num-ai-article-column #numAiAnswerPanel{background:linear-gradient(140deg,#1c1934,#131b30 84%)!important}
 html[data-theme="light"] .num-ai-article-column .num-ai-current-question{background:#26203e!important}
 html[data-theme="light"] .num-ai-article-column .num-ai-current-question strong{color:#f6eaff!important}
@@ -1439,7 +1439,7 @@ html[data-theme="light"] #numAiSection .num-ai-history-group-toggle{background:#
 #numAiStageSelected{margin-top:10px;padding:9px 10px;border:1px solid rgba(166,144,224,.3);background:rgba(15,15,38,.52);border-radius:9px;font-size:.84rem;line-height:1.6;color:#e7d8fb}
 #numAiSection .num-ai-choice-grid .num-ai-choice small{line-height:1.45}
 @media(max-width:390px){#numAiStageOptions .num-ai-stage-option{min-height:102px;padding:8px 7px}#numAiStageOptions .num-ai-stage-option[aria-pressed="true"]{padding:7px 6px}#numAiStageOptions .num-ai-stage-option strong{font-size:.86rem}#numAiStageOptions .num-ai-stage-option .num-ai-stage-age{font-size:.78rem}}
-html[data-theme="light"] #numAiStageSelector{background:#24203e;color:#fff}
+/* Light-mode stage picker surface is owned by the common AI palette. */
 </style>
 <style id="numerology-v16-timing-ai">
 /* AI 年月獨立選擇，固定置於題目清單前；與九年時間軸互不干擾。 */
@@ -1457,7 +1457,7 @@ html[data-theme="light"] #numAiStageSelector{background:#24203e;color:#fff}
 .num-ai-timing-selected{margin-top:11px;padding:10px;border-radius:9px;border:1px solid rgba(138,211,223,.24);background:rgba(15,24,46,.65);line-height:1.6;font-size:.85rem;color:#e7e2fc}
 #numAiSection .num-ai-choice-grid .num-ai-choice b{line-height:1.45}
 @media(max-width:430px){.num-ai-timing-picker-head{flex-wrap:wrap}.num-ai-timing-fields{gap:6px}.num-ai-timing-fields label{font-size:.79rem}}
-html[data-theme="light"] #numAiTimingSelector{background:#292441;color:#fff}
+/* Light-mode timing picker surface is owned by the common AI palette. */
 </style>
 
 <style id="num-seo-landing-footer-v17">
@@ -1904,6 +1904,94 @@ html[data-theme="light"] #numAiSection .num-ai-history-item strong{color:#33294a
  body.num-v4-ready .num-v4-panel[data-v4-panel="stage"] .num-pinnacle-chart{position:sticky;top:92px;align-self:start}
 }
 
+
+/* V23 | Shared theme parity — source selectors, not separate page-level overlay.
+   Check: selected stage/month, badges, timing labels, history, custom questions,
+   disabled actions, calculation fold, navigation, and diagram visual scale. */
+#numAiSection .num-ai-stage-selected,
+#numAiSection .num-ai-timing-selected{
+  background:var(--nw-raised);color:var(--nw-ink);border:1px solid var(--nw-edge);
+  font-size:.89rem;line-height:1.75;overflow-wrap:anywhere;
+}
+#numAiSection .num-ai-pillrow{gap:7px;margin-bottom:12px}
+#numAiSection .num-ai-pill{color:var(--nw-ink);background:var(--nw-raised);border:1px solid var(--nw-edge);font-size:.76rem;line-height:1.5;font-weight:750;padding:5px 10px}
+#numAiSection .num-ai-timing-fields label{color:var(--nw-ink);font-size:.9rem;font-weight:780;line-height:1.45}
+#numAiSection .num-ai-timing-fields select{background:var(--nw-input);color:var(--nw-ink);border:1px solid var(--nw-edge);font-size:1rem;font-weight:750}
+#numAiSection #numAiTimingToday{background:var(--nw-raised);color:var(--nw-ink);border:1px solid var(--nw-edge);font-size:.85rem;line-height:1.35;font-weight:750}
+#numAiSection #numAiTimingToday:hover{border-color:var(--nw-link)}
+#numAiSection .num-ai-stage-picker-head small{color:var(--nw-muted);font-size:.84rem}
+#numAiSection .num-ai-stage-option .num-ai-stage-current{color:var(--nw-highlight);font-size:.79rem}
+#numAiSection #numAiQuestion{background:var(--nw-input);color:var(--nw-ink);border:1px solid var(--nw-edge);font-size:1rem;line-height:1.7;min-height:132px}
+#numAiSection #numAiQuestion::placeholder{color:var(--nw-muted);opacity:1}
+#numAiSection #numAiQuestion:focus-visible,#numAiSection .num-ai-timing-fields select:focus-visible{
+  outline:3px solid var(--nw-link);outline-offset:2px
+}
+#numAiSection #numAiRun:disabled{
+  opacity:1;cursor:wait;box-shadow:none;background:var(--nw-raised);color:var(--nw-muted);border:1px solid var(--nw-edge)
+}
+/* A visually disabled action must remain LEGIBLE, not disappear. */
+html[data-theme="light"] #numAiSection .num-ai-stage-selected,
+html[data-theme="light"] #numAiSection .num-ai-timing-selected{
+  background:#e7f2f4!important;color:#23394d!important;border-color:#91bac3!important;
+}
+html[data-theme="light"] #numAiSection .num-ai-pill{
+  background:#ece7f7!important;color:#493767!important;border-color:#c4b4e2!important;
+}
+html[data-theme="light"] #numAiSection .num-ai-timing-fields label{
+  color:#3a2e52!important;
+}
+html[data-theme="light"] #numAiSection .num-ai-timing-fields select{
+  background:#fff!important;color:#2c2440!important;border-color:#b1a2c9!important;
+}
+html[data-theme="light"] #numAiSection #numAiTimingToday{
+  background:#fff!important;color:#255b6b!important;border-color:#9aabc9!important;
+}
+html[data-theme="light"] #numAiSection #numAiQuestion{
+  background:#fff!important;color:#302641!important;border-color:#a89bbb!important;
+}
+html[data-theme="light"] #numAiSection #numAiQuestion::placeholder{
+  color:#645671!important;opacity:1!important;
+}
+html[data-theme="light"] #numAiSection #numAiRun:disabled{
+  opacity:1!important;color:#514162!important;
+  background:#e8e1f3!important;border:1px solid #b9aad0!important;
+}
+html[data-theme="light"] #numAiSection .num-ai-stage-option .num-ai-stage-current{color:#246b68!important}
+/* Sidebar: no unrelated dark-purple button group on a light page. */
+html[data-theme="light"] body.num-v4-ready #num-map-stage .num-v5-workbench>.num-v4-navigation button:not([aria-selected="true"]):not([data-v4-target="ai"]){
+  color:#32274a!important;background:#f7f4fd!important;border:1px solid #b9afd1!important;
+}
+html[data-theme="light"] body.num-v4-ready #num-map-stage .num-v5-workbench>.num-v4-navigation button[aria-selected="true"]:not([data-v4-target="ai"]){
+  color:#21394e!important;background:linear-gradient(115deg,#cab7f7,#8fdae5)!important;border-color:#8c9dc0!important;
+}
+/* Method and explanatory fold should look interactive in light mode. */
+html[data-theme="light"] .num-method-quiet{
+  background:#f2eef9!important;color:#403551!important;border-color:#c4b8dc!important;
+}
+html[data-theme="light"] .num-method-quiet summary{
+  color:#463162!important;font-weight:800;font-size:.9rem;cursor:pointer;
+}
+html[data-theme="light"] .num-method-quiet p{color:#3e3350!important;font-size:.86rem;line-height:1.75}
+html[data-theme="light"] #num-map-stage .num-method-quiet summary:hover{color:#1f6c7b!important}
+/* Invariant mystical art can be dark in light theme, but needs to USE the canvas.
+   Keep original SVG/interactive dots and button listeners intact. */
+@media(min-width:1100px){
+  body.num-v4-ready .num-v4-panel[data-v4-panel="grid"] .num-stage .num-board{
+    width:min(100%,650px);max-width:650px; margin:6px auto 9px; padding:28px;
+  }
+  body.num-v4-ready .num-v4-panel[data-v4-panel="stage"] .num-pinnacle-chart .num-stage-button{
+    width:clamp(118px,8.8vw,140px);height:clamp(99px,7.2vw,116px);
+  }
+  body.num-v4-ready .num-v4-panel[data-v4-panel="stage"] .num-pinnacle-chart .num-stage-button .stage-idx{font-size:clamp(.67rem,.74vw,.79rem)}
+  body.num-v4-ready .num-v4-panel[data-v4-panel="stage"] .num-pinnacle-chart .num-stage-button .stage-age{font-size:clamp(.66rem,.74vw,.78rem)}
+  body.num-v4-ready .num-v4-panel[data-v4-panel="stage"] .num-pinnacle-chart .num-stage-button .stage-number{font-size:clamp(2rem,2.4vw,2.65rem)}
+}
+@media(max-width:700px){
+  #numAiSection .num-ai-stage-selected,#numAiSection .num-ai-timing-selected{font-size:.88rem;line-height:1.67}
+  #numAiSection .num-ai-pill{font-size:.74rem;padding:5px 8px}
+  #numAiSection .num-ai-timing-fields label{font-size:.85rem}
+  #numAiSection #numAiTimingToday{min-height:40px}
+}
 </style>
 </head>
 <body>
