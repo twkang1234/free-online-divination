@@ -2303,6 +2303,11 @@ html[data-theme="light"] .num-ai-guide-copy small{color:#346c80}
 html[data-theme="light"] .num-ai-guide-copy strong{color:#3d285f}
 html[data-theme="light"] .num-report-gate-choice-hint{color:#59466c}
 @media(max-width:530px){.num-ai-guide-bridge{padding:12px;gap:9px}.num-ai-guide-button,.num-report-gate-alt{width:100%}}
+/* V38: Quota exhausted -> meaningful purchase action, legible in both themes. */
+.num-calc-buy-credits{display:inline-flex;align-items:center;gap:7px;margin:9px 0 0;padding:10px 15px;border:1px solid #bd9fff;border-radius:10px;background:rgba(129,93,207,.21);font-weight:800;font-size:.89rem;color:#f4e9ff;text-decoration:none}
+.num-calc-buy-credits[hidden]{display:none!important}
+.num-calc-buy-credits:hover,.num-calc-buy-credits:focus-visible{outline:2px solid #a6dadd;outline-offset:2px}
+html[data-theme="light"] .num-calc-buy-credits{color:#443077;background:#eee8fe;border-color:#aa93d7}
 </style>
 </head>
 <body>
@@ -2351,7 +2356,7 @@ html[data-theme="light"] .num-report-gate-choice-hint{color:#59466c}
   <div class="num-date-head"><span class="birth-label">出生日期</span><div class="num-cal-switch" role="group" aria-label="出生日期曆法"><button type="button" class="is-active" id="numSolarBtn" aria-pressed="true">國曆</button><button type="button" id="numLunarBtn" aria-pressed="false">農曆</button></div></div>
 <div class="num-date-parts"><label><span>出生年份</span><select id="numYear" aria-label="出生年份"></select><small>年</small></label><label><span>出生月份</span><select id="numMonth" aria-label="出生月份"></select><small>月</small></label><label><span>出生日期</span><select id="numDay" aria-label="出生日期"></select><small>日</small></label></div>
 <input type="hidden" id="birthDate" name="birthDate">
- </div><div class="calc-actions"><button type="submit" class="calc-submit">開始計算 ✦</button><button type="button" class="num-birth-save" id="numBirthSaveBtn">儲存生日</button><button type="button" class="num-birth-load" id="numBirthLoadBtn">載入生日</button></div></div><p class="calc-note" id="calcNote">選擇出生年、月、日即可免費計算；切換農曆時會自動換算。無需出生時辰與性別。</p><p id="calcError" role="alert" class="error" hidden></p></form>
+ </div><div class="calc-actions"><button type="submit" class="calc-submit">開始計算 ✦</button><button type="button" class="num-birth-save" id="numBirthSaveBtn">儲存生日</button><button type="button" class="num-birth-load" id="numBirthLoadBtn">載入生日</button></div></div><p class="calc-note" id="calcNote">選擇出生年、月、日即可免費計算；切換農曆時會自動換算。無需出生時辰與性別。</p><p id="calcError" role="alert" class="error" hidden></p><a id="numCalcBuyCredits" class="num-calc-buy-credits" href="/pricing.html" hidden>🛒 查看加購工具額度方案</a></form>
 <!-- Quota overview stays beside the birthday form before and after calculation.
      Counts are obtained from existing read-only wallet endpoints. -->
 <section id="numQuotaPanel" class="num-quota-panel" aria-label="生命靈數免費與會員使用額度">
@@ -3030,7 +3035,7 @@ let reportLineFocus=null;
        const err=data?.error==='AI_EXHAUSTED'?'會員共用 AI 解讀額度不足，可至會員中心加購。':data?.error==='UNLOCK_PROCESSING'?'解鎖正在處理，請稍後重新開啟。':'解鎖未完成，本次不應扣點；請稍後再試。';
        numGateMessage(section,err);return;
      }
-     if(numAiToken()!==sessionToken)return;numReportUnlockDate=date;numReportUnlockToken=sessionToken;numReportUnlocks.add(section);numUpdateReportTabBadges();
+     if(numAiToken()!==sessionToken)return;if(data.alreadyUnlocked!==true)numMarkValuableUse('unlock');numReportUnlockDate=date;numReportUnlockToken=sessionToken;numReportUnlocks.add(section);numUpdateReportTabBadges();
      if(activeTab===section)renderDeepReading(section);
      void refreshNumQuotaBoard();void refreshNumAiQuota();
    }catch(_){if(current?.date===date)numGateMessage(section,'連線失敗，請稍後重試；如擔心已扣點，重新開啟此專題會先查詢解鎖紀錄。')}
@@ -4060,6 +4065,7 @@ function renderMonths(c){
   const answer=String(out.answer||'');if(!answer.trim())return;
   const id=out.operationId||meta.id;if(!id)return;
   const previous=numAiHistory.find(x=>x.id===id);
+  if(!previous)numMarkValuableUse('aiResult');
   const r={id,date:current.date,answer,label:meta.label||previous?.label||'生命靈數深度批盤',
    question:meta.question||previous?.question||'',parentId:meta.parentId||previous?.parentId||null,
    scope:meta.scope||previous?.scope||numAiActiveDock,stageIndex:meta.stageIndex??previous?.stageIndex??null,targetYear:meta.targetYear??previous?.targetYear??null,targetMonth:meta.targetMonth??previous?.targetMonth??null,createdAt:previous?.createdAt||new Date().toLocaleString('zh-TW',{hour12:false}),
@@ -4092,7 +4098,36 @@ function renderMonths(c){
  $('numAiAllCopy').addEventListener('click',async()=>{if(!numAiHistory.length)return;try{await navigator.clipboard.writeText(numAiArchiveText(numAiHistory));aiStatus('已複製本次全部 AI 問答。')}catch(_){aiStatus('複製失敗，請改用 TXT 下載。')}});
  // A second calculation must not interrupt an unfinished, quota-reserved AI operation.
  $('calcForm').addEventListener('submit',e=>{if(aiRequestBusy){e.preventDefault();e.stopImmediatePropagation();aiStatus('AI 尚在處理中。請等本次請求完成或確認狀態，再重新計算生日。')}},true);
- window.addEventListener('beforeunload',e=>{if((numAiUnsaved&&numAiHistory.length)||aiRequestBusy){e.preventDefault();e.returnValue=''}});
+ // V38: Valuable use in THIS page visit includes shared-tool calculations, report unlocks,
+ // and full AI responses. Reading a free article or just switching tabs does not count.
+ const numSpentThisVisit={sharedTool:0,unlock:0,aiResult:0};
+ let numLeaveApproved=false;
+ function numMarkValuableUse(kind){if(Object.hasOwn(numSpentThisVisit,kind))numSpentThisVisit[kind]++}
+ function numShouldWarnLeaving(){return aiRequestBusy||(numAiUnsaved&&numAiHistory.length)||Object.values(numSpentThisVisit).some(n=>n>0)}
+ function numLeaveWarningText(){
+  const parts=[];
+  if(numSpentThisVisit.sharedTool)parts.push('會員共用工具額度 '+numSpentThisVisit.sharedTool+' 次');
+  if(numSpentThisVisit.unlock)parts.push('專題解鎖／AI 額度 '+numSpentThisVisit.unlock+' 次');
+  if(numSpentThisVisit.aiResult)parts.push('AI 解讀 '+numSpentThisVisit.aiResult+' 篇');
+  const intro=parts.length?'本次已使用：'+parts.join('、')+'。':'目前仍有尚未保存的 AI 解讀內容。';
+  return intro+'\n\n離開後目前命盤畫面與未下載的解讀可能無法直接恢復；若要重新計算，可能再使用一次計算額度。已解鎖專題仍保留在會員帳戶。\n\n建議先保存重要內容。確定要離開這個頁面嗎？';
+ }
+ // Internal navigation: provide specific wording. Same-page panel/hash switches are unaffected.
+ document.addEventListener('click',e=>{
+  if(e.defaultPrevented||e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;
+  const a=e.target.closest('a[href]');if(!a||a.hasAttribute('download')||a.target==='_blank')return;
+  let target;try{target=new URL(a.href,location.href)}catch(_){return}
+  if(!/^https?:$/.test(target.protocol))return;
+  if(target.origin===location.origin&&target.pathname===location.pathname&&target.search===location.search)return;
+  if(!numShouldWarnLeaving())return;
+  if(!window.confirm(numLeaveWarningText())){e.preventDefault();e.stopImmediatePropagation();return}
+  numLeaveApproved=true;
+  // If another click listener prevents navigation, restore the leave guard immediately.
+  queueMicrotask(()=>{if(e.defaultPrevented)numLeaveApproved=false});
+ },true);
+ window.addEventListener('beforeunload',e=>{
+  if(!numLeaveApproved&&numShouldWarnLeaving()){e.preventDefault();e.returnValue=''}
+ });
 
  
   /* V30 quota board: read-only, authoritative numerology Worker; no dates shown to visitors. */
@@ -4119,7 +4154,7 @@ function renderMonths(c){
    if(remaining===null||remaining===undefined||!Number.isFinite(free)){btn.textContent='開始計算 ✦';return}
    if(free>0){btn.textContent='開始免費計算 ✦';return}
    if(!isMember){btn.textContent='今日免費額度已用完';return}
-   btn.textContent=Number.isFinite(shared)&&shared>0?'會員額度 -1 次 ✦':'可用計算額度已用完';
+   btn.textContent=Number.isFinite(shared)&&shared>0?'會員額度 -1 次 ✦':'額度已用完・查看加購';
   }
   async function refreshNumQuotaBoard(){
    const panel=$('numQuotaPanel');if(!panel)return;
@@ -4131,6 +4166,7 @@ function renderMonths(c){
     if(!r.ok||!data.ok)throw Error('QUOTA_READ_FAILED');
     const t=data.tool||{},a=data.ai||{};
     numUpdateCalcCta(t.remaining,data.sharedToolRemaining,!!numAiToken());
+    $('numCalcBuyCredits').hidden=!(!!numAiToken()&&Number(t.remaining)===0&&Number(data.sharedToolRemaining)===0);
     freeTool.textContent=`${t.remaining} / ${t.limit} 次`;
     toolNote.textContent=`每 ${t.days===1?'天':t.days+' 天'}補充，不累積`;
     free.textContent=numAiToken()?`${a.remaining} / ${a.limit} 次`:'登入後可用';
@@ -4389,7 +4425,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   if(originalBtn)originalBtn.disabled=true;
   try{
    if(numCalendarMode==='solar'){const y=Number($('numYear').value);if(!Number.isInteger(y)||y<1900||y>todayTaipei().y)throw Error('請選擇有效的西元出生年份。')}
-   const d=calcDate(syncDatePreview());$('calcError').hidden=true;
+   const d=calcDate(syncDatePreview());$('calcError').hidden=true;$('numCalcBuyCredits').hidden=true;
    const id='numcalc_'+Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
    // V34: first request is NEVER authorized to spend a shared tool credit.
    // Reuse the operation ID for the confirmed retry; the Worker enforces consent.
@@ -4397,17 +4433,18 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
    let {r,data}=first;
    if(!r.ok&&data.error==='SHARED_TOOL_CONFIRM_REQUIRED'){
     const count=Number(data.sharedToolRemaining);
-    if(!Number.isSafeInteger(count)||count<1)throw Error('目前共用工具額度不足，本次沒有扣除次數。');
+    if(!Number.isSafeInteger(count)||count<1)throw Error('會員共用工具額度不足，請參考加購方案。');
     const approved=window.confirm('今日免費生命靈數計算次數已用完。\n\n本次將扣除會員共用工具額度 1 次（目前剩餘 '+count+' 次）。\n確定繼續嗎？');
     if(!approved){$('calcError').hidden=true;return}
     ({r,data}=await numQuotaFetch('/quota/calculate',{date:d.date,operationId:id,confirmSharedTool:true}));
    }
    if(!r.ok||!data.ok){
-    if(data.error==='NUMEROLOGY_CALC_EXHAUSTED')throw Error(numAiToken()?'免費計算及會員共用工具額度都已用完；本次沒有扣除次數。':'今日免費計算次數已用完；登入會員可使用共用工具額度。');
+    if(data.error==='NUMEROLOGY_CALC_EXHAUSTED'){if(numAiToken())$('numCalcBuyCredits').hidden=false;throw Error(numAiToken()?'今日免費生命靈數計算次數與會員共用工具額度都已用完，請參考加購方案繼續使用。':'今日免費計算次數已用完；登入會員可使用共用工具額度。')}
     if(data.error==='LOGIN_REQUIRED')throw Error('登入狀態已過期，請重新登入後再計算。');
-    if(data.error==='SHARED_TOOL_CONFIRM_REQUIRED')throw Error('共用工具額度尚未確認，沒有扣除次數。請重新操作。');
+    if(data.error==='SHARED_TOOL_CONFIRM_REQUIRED')throw Error('共用工具額度尚未確認，請重新操作。');
     throw Error('計算額度暫時無法驗證，請稍後再試；若已扣點請先查看額度紀錄，避免重複點擊。');
    }
+   if(data.bucket==='shared'&&data.replayed!==true)numMarkValuableUse('sharedTool');
    renderResult(d);void refreshNumQuotaBoard();
   }catch(err){$('calcError').textContent=err.message;$('calcError').hidden=false}
   finally{numCalcBusy=false;if(originalBtn)originalBtn.disabled=false}
