@@ -2315,18 +2315,22 @@ html[data-theme="light"] .num-calc-buy-credits{color:#443077;background:#eee8fe;
 </style>
 
 <style id="numerology-v43-entitlement-style">
-/* V43: compact four-step reward navigation. All styles scoped to numerology. */
-.num-v4-navigation .num-reward-nav{width:100%;display:grid!important;grid-template-columns:1fr;gap:3px!important;min-height:0!important;text-align:left!important;padding:11px 10px!important;margin:0 0 2px;border:1px solid rgba(230,194,139,.64)!important;border-radius:12px!important;background:linear-gradient(140deg,rgba(121,83,161,.25),rgba(49,38,82,.9))!important;color:#f5d99f!important;box-shadow:0 4px 20px rgba(31,21,61,.10)}
-.num-reward-nav .num-reward-title{font-size:clamp(.73rem,.82vw,.87rem);font-weight:850;line-height:1.35;letter-spacing:.005em}
-.num-reward-nav .num-reward-help{display:none!important}
-.num-reward-nav .num-reward-link{font-size:.69rem;color:#a5e5ea;font-weight:750;line-height:1.4}
-.num-v4-navigation .num-reward-nav:hover,.num-v4-navigation .num-reward-nav:focus-visible{border-color:#f5d69d!important;background:linear-gradient(135deg,rgba(130,91,185,.38),rgba(47,41,86,.94))!important;outline-offset:2px}
-.num-v4-navigation .num-reward-nav[hidden]{display:none!important}
-/* Milestones occupy only the unused horizontal space between heading and birth date. */
-#num-map-stage .num-experience-header .num-header-reward{flex:0 1 360px;min-width:250px;max-width:360px;margin-left:auto;padding:6px 10px;background:transparent;border:1px solid rgba(173,148,233,.23);border-radius:12px;color:var(--text);text-align:center;cursor:pointer;line-height:1.25}
-#num-map-stage .num-header-reward:hover,#num-map-stage .num-header-reward:focus-visible{border-color:rgba(135,226,231,.76);background:rgba(144,115,212,.09);outline-offset:2px}
-.num-header-reward-label{display:flex;justify-content:center;align-items:center;gap:8px;min-width:0;margin-bottom:3px;font-size:.69rem;font-weight:820;white-space:nowrap;color:var(--gold)}
-.num-header-reward-count{color:var(--accent2);font-size:.69rem;font-weight:860}
+/* V44: one central unlock strip, no side promo card and no explanation modal. */
+.num-v4-nav-label{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.num-v4-nav-text{display:inline}
+.num-v4-nav-state{display:none;margin-left:2px;padding:2px 8px;border-radius:999px;font-size:.7rem;font-weight:860;line-height:1.2;border:1px solid rgba(126,211,214,.46);background:rgba(103,188,196,.12);color:#9de6e6}
+.num-v4-navigation button[data-nav-state="new"] .num-v4-nav-state,
+.num-v4-navigation button[data-nav-state="open"] .num-v4-nav-state{display:inline-flex;align-items:center}
+.num-v4-navigation button[data-nav-state="new"] .num-v4-nav-state{background:rgba(246,213,155,.16);border-color:rgba(246,213,155,.52);color:#f5d69c}
+.num-v4-navigation button[data-nav-state="new"]{box-shadow:0 0 0 1px rgba(246,213,155,.18),0 0 18px rgba(246,213,155,.09)}
+.num-v4-navigation button.num-nav-pulse{animation:numNavUnlockPulse 1s ease-in-out 3}
+@keyframes numNavUnlockPulse{0%,100%{transform:none;box-shadow:0 0 0 1px rgba(246,213,155,.18),0 0 18px rgba(246,213,155,.09)}50%{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(142,231,232,.4),0 0 22px rgba(142,231,232,.22)}}
+#num-map-stage .num-experience-header{display:grid!important;grid-template-columns:minmax(240px,1fr) auto auto;align-items:center;gap:12px 18px}
+#num-map-stage .num-experience-header>div:first-child{min-width:0}
+#num-map-stage .num-experience-header .num-header-reward{justify-self:center;align-self:center;width:min(100%,380px);min-width:300px;max-width:380px;padding:8px 12px;background:rgba(18,17,43,.35);border:1px solid rgba(173,148,233,.3);border-radius:14px;color:var(--text);text-align:center;line-height:1.25}
+.num-header-reward-label{display:flex;justify-content:center;align-items:center;gap:8px;min-width:0;margin-bottom:4px;font-size:.76rem;font-weight:860;white-space:nowrap;color:var(--gold)}
+.num-header-reward-count{color:var(--accent2);font-size:.95rem;font-weight:900}
+.num-header-reward-note{display:block;margin-top:4px;color:var(--dim);font-size:.66rem;line-height:1.35}
 .num-header-reward-steps{display:grid;grid-template-columns:27px minmax(12px,1fr) 27px minmax(12px,1fr) 27px minmax(12px,1fr) 27px;align-items:center;max-width:300px;margin:0 auto}
 .num-header-reward-node{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;border:1px solid rgba(164,148,199,.6);background:rgba(55,47,89,.35);color:var(--dim);font-size:.72rem;font-weight:900;transition:background .2s,box-shadow .2s,color .2s}
 .num-header-reward-line{height:2px;background:rgba(161,148,193,.4);transition:background .2s}
@@ -2334,41 +2338,13 @@ html[data-theme="light"] .num-calc-buy-credits{color:#443077;background:#eee8fe;
 .num-header-reward-line.is-done{background:linear-gradient(90deg,#a88cea,#75dbe1)}
 html[data-theme="light"] .num-header-reward-node{background:#ede7fa;color:#685787;border-color:#beb0d5}
 html[data-theme="light"] .num-header-reward-node.is-done{background:linear-gradient(135deg,#9b76d3,#6fcad5);color:#17122a;border-color:#76bfc4}
-/* Quiet report-level reminder: the detailed policy lives in a dialog. */
 #numReadingSection .num-unlock-progress{gap:12px;padding:10px 14px;margin:9px 0 13px;border-radius:12px;align-items:center}
 #numReadingSection .num-unlock-progress strong{font-size:.86rem}
 #numReadingSection .num-unlock-progress p{font-size:.72rem;line-height:1.5;margin:3px 0 0}
 #numReadingSection .num-unlock-meter b{font-size:1.18rem}
-.num-unlock-info-btn{border:1px solid rgba(167,149,224,.55);border-radius:8px;padding:6px 9px;font-size:.69rem;font-weight:780;color:var(--accent2);background:rgba(148,113,216,.09);white-space:nowrap;cursor:pointer}
-.num-unlock-info-btn:hover{background:rgba(143,120,215,.23)}
-/* Native dialog is an accessible, bounded explanation panel, not an extra page. */
-#numUnlockDialog{width:min(690px,calc(100vw - 24px));max-height:min(90vh,940px);overflow-y:auto;margin:auto;padding:0;border:1px solid rgba(173,151,232,.55);border-radius:20px;color:var(--text);background:var(--panel);box-shadow:0 24px 90px rgba(0,0,0,.55)}
-#numUnlockDialog::backdrop{background:rgba(6,6,20,.76);backdrop-filter:blur(5px)}
-.num-unlock-dialog-body{padding:clamp(18px,3vw,28px);display:grid;gap:14px}
-.num-unlock-dialog-head{display:flex;align-items:start;justify-content:space-between;gap:12px}
-.num-unlock-dialog-head h2{font-size:clamp(1.22rem,2.3vw,1.65rem);margin:0;line-height:1.4;color:var(--text)}
-.num-unlock-dialog-lead{color:var(--dim);font-size:.86rem;line-height:1.7;margin:0}
-.num-unlock-dialog-x{border:1px solid var(--line);border-radius:9px;color:var(--text);background:var(--panel2);padding:4px 9px;min-width:38px;min-height:36px;flex-shrink:0}
-.num-unlock-dialog-progress{background:var(--panel2);padding:13px 15px;border:1px solid var(--line);border-radius:12px;display:grid;gap:10px}
-.num-unlock-dialog-count{display:flex;align-items:center;justify-content:space-between;gap:9px;font-size:.88rem;font-weight:800}
-.num-unlock-dialog-count b{color:var(--accent2);font-size:1.2rem}
-.num-unlock-dialog-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-.num-unlock-dialog-step{min-width:0;text-align:center;padding:12px 2px 10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:.74rem;color:var(--dim);font-weight:800}
-.num-unlock-dialog-step span{display:block;font-size:1.12rem;margin-bottom:2px}
-.num-unlock-dialog-step.is-done{border-color:rgba(95,186,184,.7);background:rgba(113,204,199,.1);color:var(--text)}
-.num-unlock-dialog-benefits{display:grid;gap:10px;margin:0;padding:0;list-style:none}
-.num-unlock-dialog-benefits li{display:flex;gap:10px;color:var(--dim);font-size:.86rem;line-height:1.7}
-.num-unlock-dialog-benefits li b{color:var(--text)}
-.num-unlock-dialog-benefits .num-check{font-size:1.06rem;color:#51c5a4;flex-shrink:0}
-.num-unlock-dialog-rules{font-size:.75rem;line-height:1.75;border-top:1px solid var(--line);padding-top:10px;color:var(--dim)}
-.num-unlock-dialog-rules p{margin:5px 0}
-.num-unlock-dialog-actions{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
-.num-unlock-dialog-go{flex:1;min-width:190px;min-height:42px;border-radius:10px;border:0;background:linear-gradient(110deg,#bba5fa,#78dae1);color:#1b1931;font-weight:900;padding:10px 14px}
-.num-unlock-dialog-secondary{min-height:42px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:10px 14px}
-@media(max-width:1220px){#num-map-stage .num-experience-header .num-header-reward{flex-basis:270px;min-width:220px;max-width:270px}}
-@media(max-width:1050px){#num-map-stage .num-experience-header .num-header-reward{order:3;flex:1 1 100%;max-width:100%;min-width:0;margin:4px 0 0;padding:7px 8px}.num-header-reward-steps{max-width:360px}}
-@media(max-width:1100px){#num-map-stage .num-v4-navigation .num-reward-nav{width:auto;flex:0 0 auto;padding:8px 11px!important}.num-reward-nav .num-reward-help{display:none}}
-@media(max-width:600px){#num-map-stage .num-v4-navigation .num-reward-nav{width:100%!important;grid-column:1/-1;min-height:48px!important;grid-template-columns:1fr auto;align-items:center;gap:3px 9px!important}.num-reward-nav .num-reward-help{display:none}.num-reward-nav .num-reward-link{grid-column:2;grid-row:1}.num-header-reward-label{font-size:.66rem}#numReadingSection .num-unlock-progress{flex-direction:row;align-items:center;flex-wrap:wrap}.num-unlock-dialog-body{gap:11px}.num-unlock-dialog-step{font-size:.65rem}}
+@media(max-width:1220px){#num-map-stage .num-experience-header{grid-template-columns:minmax(220px,1fr) minmax(260px,340px) auto}#num-map-stage .num-experience-header .num-header-reward{min-width:250px;max-width:340px}}
+@media(max-width:900px){#num-map-stage .num-experience-header{grid-template-columns:1fr;align-items:flex-start}#num-map-stage .num-experience-header .num-header-reward{justify-self:center;order:2;width:min(100%,380px);min-width:0;margin:2px auto 0}#num-map-stage .num-experience-header>#numBirthHighlight{order:3;justify-self:flex-start;margin:0}#num-map-stage .num-experience-header>div:first-child{order:1}}
+@media(max-width:600px){.num-header-reward-label{font-size:.69rem}#numReadingSection .num-unlock-progress{flex-direction:row;align-items:center;flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -2474,7 +2450,7 @@ html[data-theme="light"] .num-header-reward-node.is-done{background:linear-gradi
  <article class="summary-card num-profile-card"><button type="button" class="num-profile-trigger" data-profile="year" aria-controls="numProfileExplanation" aria-expanded="false"><span class="label">PERSONAL YEAR</span><span class="value" id="yearNumber">—</span><span class="num-profile-title" id="yearHeading">個人流年</span><span class="num-profile-meaning" id="numYearMeaning">今年值得留意的生活主題</span><span class="num-profile-cta">看今年為什麼是這個數 <span aria-hidden="true">⌄</span></span></button></article>
  </div>
  <section id="numProfileExplanation" class="num-profile-explainer" aria-label="核心數字解說" aria-live="polite" aria-expanded="true"><div class="num-profile-expander-top"><h3>✦ 核心數字詳細解說 <span id="numProfileFoldCurrent">｜生命數</span></h3><button type="button" id="numProfileFold" aria-expanded="true" aria-controls="numProfileExplainContent">收合說明 ▲</button></div><div id="numProfileExplainContent"><div class="num-profile-explainer-head"><div><span class="num-profile-eyebrow">READ YOUR NUMBERS · 不懂命理也能看懂</span><h3 id="numProfileExplainTitle">你的數字是怎麼來的？</h3><p id="numProfileExplainIntro">先看數字怎麼算，再理解它在生命靈數裡象徵什麼。</p></div><span id="numProfileExplainTag" class="num-profile-tag">核心數</span></div><div id="numProfileExplainBody"></div><p class="num-profile-explain-foot">生命靈數屬於數字象徵與文化探索，不是科學的人格測驗或命運預言；這裡把「計算過程」與「象徵解讀」分開說明。</p></div></section><details class="num-method-quiet"><summary>計算方法與流派差異</summary><p>計算方法：西元出生年、月、日先各自化簡（遇 11、22、33 保留），再加總化簡；不同流派存在差異，本站顯示完整算式，結果僅供文化與自我探索參考。</p></details><div class="num-ai-entry"><div><b>✦ AI 生命靈數深度批盤</b><p>12 類專業主題＋自由問事，登入後直接於站內取得長篇命理解讀，並自動帶入整張命盤。</p></div><button type="button" id="numAiJump">前往完整 AI 解讀 →</button></div><section class="num-experience" id="num-map-stage" aria-labelledby="num-experience-title">
- <div class="num-experience-header"><div><div class="eyebrow">03 / INTERACTIVE LIFE MAP · 互動命盤</div><h2 id="num-experience-title">喚醒你的九宮數字星圖</h2><p>讓九宮格本身說故事：點亮的線能直接互動，選擇一條線就能看它在性格、工作、感情中的不同象徵；左邊星圖不會消失。</p></div><button type="button" id="numHeaderReward" class="num-header-reward" aria-label="查看四次 AI 解讀全盤解鎖進度與規則"><span class="num-header-reward-label"><span id="numHeaderRewardLabel">✦ AI 解讀 4 次，全盤解鎖</span><span class="num-header-reward-count" id="numHeaderRewardCount">0 / 4</span></span><span class="num-header-reward-steps" id="numHeaderRewardSteps" aria-hidden="true"><span class="num-header-reward-node">1</span><span class="num-header-reward-line"></span><span class="num-header-reward-node">2</span><span class="num-header-reward-line"></span><span class="num-header-reward-node">3</span><span class="num-header-reward-line"></span><span class="num-header-reward-node">🎁</span></span></button><div id="numBirthHighlight" class="num-birth-highlight" role="status" aria-live="polite" hidden><strong id="numBirthHighlightText"></strong></div></div>
+ <div class="num-experience-header"><div><div class="eyebrow">03 / INTERACTIVE LIFE MAP · 互動命盤</div><h2 id="num-experience-title">喚醒你的九宮數字星圖</h2><p>讓九宮格本身說故事：點亮的線能直接互動，選擇一條線就能看它在性格、工作、感情中的不同象徵；左邊星圖不會消失。</p></div><div id="numHeaderReward" class="num-header-reward" role="status" aria-live="polite"><span class="num-header-reward-label"><span id="numHeaderRewardLabel">✦ AI 解讀 4 次，全盤解鎖</span><span class="num-header-reward-count" id="numHeaderRewardCount">0 / 4</span></span><span class="num-header-reward-steps" id="numHeaderRewardSteps" aria-hidden="true"><span class="num-header-reward-node">1</span><span class="num-header-reward-line"></span><span class="num-header-reward-node">2</span><span class="num-header-reward-line"></span><span class="num-header-reward-node">3</span><span class="num-header-reward-line"></span><span class="num-header-reward-node">🎁</span></span><small class="num-header-reward-note" id="numHeaderRewardNote">01 性格免費看；每次 AI 成功會再開啟更多內容。</small></div><div id="numBirthHighlight" class="num-birth-highlight" role="status" aria-live="polite" hidden><strong id="numBirthHighlightText"></strong></div></div>
  <div class="num-metrics" aria-label="九宮格統計">
   <div class="num-metric"><span>生日出現的數字</span><strong id="numPresentCount">—</strong><small>9 種數字中</small></div>
   <div class="num-metric"><span>尚未出現的數字</span><strong id="numMissingCount">—</strong><small>並非缺點或不幸</small></div>
@@ -2504,7 +2480,7 @@ html[data-theme="light"] .num-header-reward-node.is-done{background:linear-gradi
    <section id="numReadingSection" class="num-reading-section num-stage-deep" aria-label="生命靈數六大深度解讀" hidden>
  <div class="num-stage-deep-head"><div><span>PERSONAL REPORT · COMPLETE INTERPRETATION</span><strong>你的生命靈數 · 六大深度解讀</strong></div><button id="numBackBoard" type="button">◁ 回九宮格</button></div>
  <p class="num-stage-deep-hint" id="numStageDeepHint">01 性格深讀完整免費；其他專題隨對應 AI 解讀開放，累積 4 次全面解鎖。</p>
- <div class="num-unlock-progress" id="numUnlockProgress" role="status" aria-live="polite"><div><strong id="numUnlockTitle">🎁 AI 解讀 4 次，全盤解鎖</strong><p id="numUnlockDesc">01 性格深讀免費公開；完成對應 AI 解讀可解鎖其他專題。</p></div><div class="num-unlock-meter"><b id="numUnlockMeter">0 / 4</b><div class="num-unlock-track" id="numUnlockTrack" aria-label="解鎖進度"><i></i><i></i><i></i><i></i></div></div><button type="button" id="numUnlockInlineInfo" class="num-unlock-info-btn">解鎖規則 ›</button></div>
+ <div class="num-unlock-progress" id="numUnlockProgress" role="status" aria-live="polite"><div><strong id="numUnlockTitle">🎁 AI 解讀 4 次，全盤解鎖</strong><p id="numUnlockDesc">01 性格深讀免費公開；完成對應 AI 解讀可解鎖其他專題。</p></div><div class="num-unlock-meter"><b id="numUnlockMeter">0 / 4</b><div class="num-unlock-track" id="numUnlockTrack" aria-label="解鎖進度"><i></i><i></i><i></i><i></i></div></div></div>
  <div class="reading-grid"><div class="reading-nav" id="readingNav" role="tablist" aria-label="生命靈數各類解讀"><button type="button" role="tab" aria-selected="true" class="active" data-tab="overview">✓ 01｜性格深讀・免費</button><button type="button" role="tab" aria-selected="false" data-tab="work" data-report-locked="true">🔒 02｜事業與資源</button><button type="button" role="tab" aria-selected="false" data-tab="love" data-report-locked="true">🔒 03｜感情與人際</button><button type="button" role="tab" aria-selected="false" data-tab="growth">04｜人生階段</button><button type="button" role="tab" aria-selected="false" data-tab="year">05｜年度與流月</button><button type="button" role="tab" aria-selected="false" data-tab="grid">06｜命盤數字依據</button></div><article class="reading-panel" id="readingPanel" role="tabpanel" tabindex="0" aria-live="polite"></article></div></section>
   </div>
   <aside class="num-inspector" aria-label="固定的命盤計算結果選單">
@@ -2713,26 +2689,65 @@ let reportLineFocus=null;
   })();
  }
  let numEntitlement={paidCount:0,required:4,fullUnlocked:false,stageAll:false,timingAll:false,stageIndices:[],years:[],months:[]};
+ const numNavHintState={reading:0,stage:0,timing:0};
+ let numActiveMainSection='grid';
  function numStageUnlocked(index){return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.stageAll||(numEntitlement.stageIndices||[]).includes(index))}
  function numYearUnlocked(year){return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.timingAll||(numEntitlement.years||[]).includes(year))}
  function numMonthUnlocked(year,month){return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.timingAll||(numEntitlement.months||[]).includes(year+'-'+month))}
+ function numNavHasUnlocks(key){
+   if(key==='reading')return !!numAiToken()&&(numEntitlement.fullUnlocked||['work','love','growth','year','grid'].some(t=>numReportUnlocks.has(t)));
+   if(key==='stage')return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.stageAll||((numEntitlement.stageIndices||[]).length>0));
+   if(key==='timing')return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.timingAll||((numEntitlement.years||[]).length>0)||((numEntitlement.months||[]).length>0));
+   return false;
+ }
+ function numMarkNavHint(key,delta=1){
+   if(!numNavHintState[key]&&delta>0)numNavHintState[key]=0;
+   numNavHintState[key]=Math.max(0,(numNavHintState[key]||0)+delta);
+ }
+ function numClearNavHint(key){if(!(key in numNavHintState))return;numNavHintState[key]=0;numUpdateMainNavBadges()}
+ function numPulseNavButton(btn){if(!btn)return;btn.classList.remove('num-nav-pulse');void btn.offsetWidth;btn.classList.add('num-nav-pulse');setTimeout(()=>btn.classList.remove('num-nav-pulse'),3200)}
+ function numUpdateMainNavBadges(){
+   document.querySelectorAll('.num-v4-navigation [data-v4-target]').forEach(btn=>{
+     const key=btn.dataset.v4Target,base=btn.dataset.baseLabel||btn.querySelector('.num-v4-nav-text')?.textContent||btn.textContent||'';
+     const text=btn.querySelector('.num-v4-nav-text');if(text)text.textContent=base;
+     const state=btn.querySelector('.num-v4-nav-state');if(!state)return;
+     const prevMode=btn.dataset.navState||'';
+     let mode='';
+     if(key in numNavHintState && numNavHintState[key]>0)mode='new';
+     else if(numNavHasUnlocks(key))mode='open';
+     btn.dataset.navState=mode;
+     if(mode){state.hidden=false;state.textContent=mode==='new'?'(+'+numNavHintState[key]+')':'(解鎖)'}else{state.hidden=true;state.textContent=''}
+     if(mode==='new' && prevMode!=='new')numPulseNavButton(btn);
+   });
+ }
+ function numDiffUnlockSignals(prevEnt,nextEnt,prevSet,nextSet){
+   const allPrev=!!prevEnt.fullUnlocked,allNext=!!nextEnt.fullUnlocked;
+   if(!allPrev && allNext){numMarkNavHint('reading',1);numMarkNavHint('stage',1);numMarkNavHint('timing',1);return;}
+   const reportTopics=['work','love','growth','year','grid'];
+   if(reportTopics.some(t=>!prevSet.has(t)&&nextSet.has(t)))numMarkNavHint('reading',1);
+   const prevStageAll=!!prevEnt.stageAll, nextStageAll=!!nextEnt.stageAll;
+   const prevStages=new Set(prevEnt.stageIndices||[]), nextStages=new Set(nextEnt.stageIndices||[]);
+   if((!prevStageAll&&nextStageAll)||[...nextStages].some(v=>!prevStages.has(v)))numMarkNavHint('stage',1);
+   const prevTimeAll=!!prevEnt.timingAll, nextTimeAll=!!nextEnt.timingAll;
+   const prevYears=new Set(prevEnt.years||[]), nextYears=new Set(nextEnt.years||[]);
+   const prevMonths=new Set(prevEnt.months||[]), nextMonths=new Set(nextEnt.months||[]);
+   if((!prevTimeAll&&nextTimeAll)||[...nextYears].some(v=>!prevYears.has(v))||[...nextMonths].some(v=>!prevMonths.has(v)))numMarkNavHint('timing',1);
+ }
  function numUpdateProgress(){
    const count=Math.min(4,Number(numEntitlement.paidCount)||0);const title=$('numUnlockTitle'),desc=$('numUnlockDesc'),meter=$('numUnlockMeter');
    if(!title||!meter||!desc)return;
    const all=!!numEntitlement.fullUnlocked;
    title.textContent=all?'✓ 全盤已解鎖':'🎁 AI 解讀 4 次，全盤解鎖';
    meter.textContent=count+' / 4';
-   desc.textContent=all?'六大專題、人生階段、流年流月的站內固定文章已全部開放。':`01 性格深讀免費閱讀；再完成 ${4-count} 次符合資格的 AI 解讀即可全盤解鎖。`;
+   desc.textContent=all?'六大專題、人生四階段、流年流月的站內固定文章已全部開放。':`01 性格深讀免費閱讀；再完成 ${4-count} 次符合資格的 AI 解讀即可全盤解鎖。`;
    $('numUnlockTrack').querySelectorAll('i').forEach((bar,i)=>bar.classList.toggle('complete',i<count));
-   const hCount=$('numHeaderRewardCount'),hLabel=$('numHeaderRewardLabel');
+   const hCount=$('numHeaderRewardCount'),hLabel=$('numHeaderRewardLabel'),hNote=$('numHeaderRewardNote');
    if(hCount)hCount.textContent=count+' / 4';
    if(hLabel)hLabel.textContent=all?'✓ 完整命盤已解鎖':'✦ AI 解讀 4 次，全盤解鎖';
+   if(hNote)hNote.textContent=all?'六大深度解讀、人生四階段、流年流月已全部開放。':'01 性格免費看；每次 AI 成功會再開啟更多內容。';
    $('numHeaderRewardSteps')?.querySelectorAll('.num-header-reward-node').forEach((node,i)=>node.classList.toggle('is-done',i<count));
    $('numHeaderRewardSteps')?.querySelectorAll('.num-header-reward-line').forEach((line,i)=>line.classList.toggle('is-done',i<count-1));
-   const reward=$('numNavReward');if(reward){reward.querySelector('.num-reward-title').textContent=all?'✓ 完整命盤已解鎖':'🎁 AI 4 次，全盤解鎖';reward.querySelector('.num-reward-help').textContent=all?'全部站內解讀已開放':'完成 4 次符合資格的 AI 解讀';}
-   const dlgCount=$('numUnlockDialogCount');if(dlgCount)dlgCount.textContent=count+' / 4';
-   const dlgHint=$('numUnlockDialogRemaining');if(dlgHint)dlgHint.textContent=all?'恭喜！全部站內固定解讀已開放':`距離全盤解鎖還差 ${4-count} 次符合資格的 AI 解讀`;
-   document.querySelectorAll('#numUnlockDialogSteps .num-unlock-dialog-step').forEach((step,i)=>step.classList.toggle('is-done',i<count));
+   numUpdateMainNavBadges();
  }
  function numRenderLockedDetail(host,{title,scope='general',topic='full',preset='',stage=null,year=null,month=null}={}){
    host.replaceChildren();const gate=document.createElement('div');gate.className='num-locked-detail';
@@ -2792,15 +2807,25 @@ let reportLineFocus=null;
 
  async function numRefreshReportUnlocks(date){
    const seq=++numReportUnlockCheckSeq,sessionToken=numAiToken();
-   if(numReportUnlockDate!==date||!sessionToken||sessionToken!==numReportUnlockToken){numReportUnlocks.clear();numReportUnlocks.add('overview');numProtectedReadings.clear();numEntitlement={paidCount:0,required:4,fullUnlocked:false,stageAll:false,timingAll:false,stageIndices:[],years:[],months:[]};numReportUnlockDate=date;numReportUnlockToken=sessionToken}numUpdateReportTabBadges();
+   if(numReportUnlockDate!==date||!sessionToken||sessionToken!==numReportUnlockToken){
+     numReportUnlocks.clear();numReportUnlocks.add('overview');numProtectedReadings.clear();
+     numEntitlement={paidCount:0,required:4,fullUnlocked:false,stageAll:false,timingAll:false,stageIndices:[],years:[],months:[]};
+     numReportUnlockDate=date;numReportUnlockToken=sessionToken;
+     numNavHintState.reading=0;numNavHintState.stage=0;numNavHintState.timing=0;
+   }
+   numUpdateReportTabBadges();
    if(!sessionToken)return;
    try{
+     const prevSet=new Set(numReportUnlocks);
+     const prevEnt={...numEntitlement,stageIndices:[...(numEntitlement.stageIndices||[])],years:[...(numEntitlement.years||[])],months:[...(numEntitlement.months||[])]};
      const {r,data}=await numAiFetch('/ai/unlocks?date='+encodeURIComponent(date));
      if(seq!==numReportUnlockCheckSeq||current?.date!==date||numAiToken()!==sessionToken)return;
      if(!r.ok||!data?.ok)throw Error(data?.error||'UNLOCK_STATUS');
      numReportUnlocks=new Set(['overview',...(data.unlocked||[]).filter(t=>Object.hasOwn(numReportPayTopics,t))]);
      numEntitlement={...data};
-     numUpdateReportTabBadges();if(numReportPayTopics[activeTab])renderDeepReading(activeTab);
+     numDiffUnlockSignals(prevEnt,numEntitlement,prevSet,numReportUnlocks);
+     numUpdateReportTabBadges();
+     if(numReportPayTopics[activeTab])renderDeepReading(activeTab);
      if(current?.date===date){renderStage(current);renderYears(current)}
    }catch(_){if(seq===numReportUnlockCheckSeq&&numReportPayTopics[activeTab])numGateMessage(activeTab,'暫時無法確認解鎖紀錄，請檢查網路後再試。')}
  }
@@ -4308,18 +4333,15 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  const gridPane=document.createElement('div');gridPane.className='num-v4-panel';gridPane.dataset.v4Panel='grid';
  consoleEl.parentNode.insertBefore(gridPane,consoleEl);gridPane.appendChild(consoleEl);panes.grid=gridPane;
  for(const [key,label] of items){
-  const b=document.createElement('button');b.type='button';b.dataset.v4Target=key;b.textContent=label;b.setAttribute('aria-selected',String(key==='grid'));nav.appendChild(b);
+  const b=document.createElement('button');b.type='button';b.dataset.v4Target=key;b.dataset.baseLabel=label;b.setAttribute('aria-selected',String(key==='grid'));
+  b.innerHTML='<span class="num-v4-nav-label"><span class="num-v4-nav-text">'+label+'</span><span class="num-v4-nav-state" hidden></span></span>';
+  nav.appendChild(b);
   if(key==='grid')continue;
   const panel=document.createElement('section');panel.className='num-v4-panel';panel.dataset.v4Panel=key;panel.hidden=true;
   const head=document.createElement('div');head.className='num-v4-panel-title';
   const title=document.createElement('h3');title.textContent=label;
   head.appendChild(title);panel.appendChild(head);panes[key]=panel;
  }
- // Offer: placed directly BEFORE AI deep reading, with a short message and a separate explanation dialog.
- const rewardBtn=document.createElement('button');rewardBtn.type='button';rewardBtn.id='numNavReward';rewardBtn.className='num-reward-nav';rewardBtn.setAttribute('aria-label','查看四次 AI 解讀全部命盤解鎖說明');
- rewardBtn.innerHTML='<span class="num-reward-title">🎁 AI 4 次，全盤解鎖</span><span class="num-reward-help">完成 4 次符合資格的 AI 解讀</span><span class="num-reward-link">查看權益 ›</span>';
- const aiNavBtn=nav.querySelector('[data-v4-target="ai"]');if(aiNavBtn)nav.insertBefore(rewardBtn,aiNavBtn);
- rewardBtn.addEventListener('click',()=>document.getElementById('numUnlockDialog')?.showModal());
  // Move, never clone: all original IDs, listeners, computed content and selected state remain unchanged.
  panes.numbers.append(summary,profile,document.querySelector('.num-method-quiet'));
  if(reading){reading.hidden=false;panes.reading.appendChild(reading)}
@@ -4342,11 +4364,12 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  }
  if($('numAiSection'))new MutationObserver(positionBirthday).observe($('numAiSection'),{attributes:true,attributeFilter:['hidden']});
  function switchTo(key,scroll=true){
-  if(!panes[key])key='grid';active=key;
+  if(!panes[key])key='grid';active=key;numActiveMainSection=key;
   if(key==='reading'&&reading)reading.hidden=false;
   if(key==='grid')document.dispatchEvent(new Event('num:restore-nine-grid'));
   for(const [name,p] of Object.entries(panes))p.hidden=name!==key;
   nav.querySelectorAll('button[data-v4-target]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v4Target===key)));
+  if(['reading','stage','timing'].includes(key))numClearNavHint(key);
   positionBirthday();
   if(scroll)map.scrollIntoView({behavior:'smooth',block:'start'});
  }
@@ -4400,31 +4423,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();</script>
-<script id="numV43RewardBehavior">(()=>{
- function boot(){
-  const modal=document.getElementById('numUnlockDialog');if(!modal)return;
-  const open=()=>{if(!modal.open){modal.showModal()}};
-  document.getElementById('numHeaderReward')?.addEventListener('click',open);
-  document.getElementById('numUnlockInlineInfo')?.addEventListener('click',open);
-  document.getElementById('numUnlockDialogClose')?.addEventListener('click',()=>modal.close());
-  modal.addEventListener('click',event=>{if(event.target===modal)modal.close()});
-  const switchTo=key=>{modal.close();document.querySelector('.num-v4-navigation [data-v4-target="'+key+'"]')?.click()};
-  document.getElementById('numUnlockDialogFree')?.addEventListener('click',()=>{
-   switchTo('reading');document.querySelector('#readingNav [data-tab="overview"]')?.click();
-  });
-  document.getElementById('numUnlockDialogGoAi')?.addEventListener('click',()=>switchTo('ai'));
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-})();</script>
-<dialog id="numUnlockDialog" aria-labelledby="numUnlockDialogTitle" aria-describedby="numUnlockDialogLead">
- <div class="num-unlock-dialog-body">
-  <div class="num-unlock-dialog-head"><div><h2 id="numUnlockDialogTitle">🎁 AI 解讀 4 次，全盤免費解鎖</h2><p class="num-unlock-dialog-lead" id="numUnlockDialogLead">先體驗完整的免費性格解讀，再問你真正關心的問題；每次成功解讀，都可能帶來更多命盤內容。</p></div><button type="button" class="num-unlock-dialog-x" id="numUnlockDialogClose" aria-label="關閉解鎖說明">✕</button></div>
-  <div class="num-unlock-dialog-progress"><div class="num-unlock-dialog-count"><span>此生日命盤的解鎖進度</span><b id="numUnlockDialogCount">0 / 4</b></div><div id="numUnlockDialogSteps" class="num-unlock-dialog-track"><div class="num-unlock-dialog-step"><span>①</span>第 1 次</div><div class="num-unlock-dialog-step"><span>②</span>第 2 次</div><div class="num-unlock-dialog-step"><span>③</span>第 3 次</div><div class="num-unlock-dialog-step"><span>🎁</span>全部解鎖</div></div><div id="numUnlockDialogRemaining" class="num-unlock-dialog-lead" role="status" aria-live="polite">距離全盤解鎖還差 4 次符合資格的 AI 解讀</div></div>
-  <ul class="num-unlock-dialog-benefits"><li><span class="num-check">✓</span><span><b>01 性格深讀完全免費。</b>不需消耗 AI 額度，也不用登入，先看完整內容再決定。</span></li><li><span class="num-check">✓</span><span><b>AI 解讀成功，自動開放對應站內專題。</b>解讀文章與解鎖權益一起取得，無須再買單篇文章。</span></li><li><span class="num-check">✓</span><span><b>同一命盤累積 4 次，共享全部固定解讀。</b>其他五大專題、人生四階段、年度及各月固定文章全部開放。</span></li><li><span class="num-check">✓</span><span><b>已解鎖內容可以反覆閱讀。</b>同一會員、同一出生日期，日後再登入無須重複消耗額度。</span></li></ul>
-  <div class="num-unlock-dialog-rules"><b>計算規則</b><p>每次成功消耗 1 次「會員共用 AI 解讀額度」，累計進度增加 1 次。每日定期免費 AI 額度雖能解鎖對應專題，但不會增加 0／4 的進度；AI 失敗、退款、重看文章或只選題都不計次。</p><p>四次是同一會員、同一生日的專屬進度。解鎖後，站內固定文章不再扣點；只有新的 AI 提問或追問，才依原規則使用額度。</p></div>
-  <div class="num-unlock-dialog-actions"><button type="button" class="num-unlock-dialog-secondary" id="numUnlockDialogFree">先看免費 01 性格深讀</button><button type="button" class="num-unlock-dialog-go" id="numUnlockDialogGoAi">✦ 選擇 AI 解讀題目</button></div>
- </div>
-</dialog>
+<script id="numV43RewardBehavior">(()=>{})();</script>
 <div id="numAiBusyToast" class="num-ai-busy-toast" role="status" aria-live="polite" hidden><span class="num-ai-spinner" aria-hidden="true"></span><div><strong>AI 命盤批盤進行中…</strong><small>請勿重複送出，完成後會加入本次紀錄</small></div></div>
 </body>
 </html>
