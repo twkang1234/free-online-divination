@@ -4105,18 +4105,20 @@ function renderMonths(c){
  function numMarkValuableUse(kind){if(Object.hasOwn(numSpentThisVisit,kind))numSpentThisVisit[kind]++}
  function numShouldWarnLeaving(){return aiRequestBusy||(numAiUnsaved&&numAiHistory.length)||Object.values(numSpentThisVisit).some(n=>n>0)}
  function numLeaveWarningText(){
+  // Count only valuable operations completed during this visit. 02/03 unlocks
+  // use AI reading quota, so describe them alongside delivered AI readings.
   const used=[];
   if(numSpentThisVisit.sharedTool)used.push('會員共用工具額度 '+numSpentThisVisit.sharedTool+' 次');
-  if(numSpentThisVisit.unlock)used.push('專題解鎖 '+numSpentThisVisit.unlock+' 次');
-  if(numSpentThisVisit.aiResult)used.push('AI 解讀 '+numSpentThisVisit.aiResult+' 篇');
-  const notes=[];
-  if(aiRequestBusy)notes.push('AI 正在處理中，現在離開可能中斷本次解讀。');
-  if(numAiUnsaved&&numAiHistory.length)notes.push('目前有尚未下載的 AI 解讀，離開後可能無法找回。');
-  if(numSpentThisVisit.sharedTool)notes.push('目前命盤可能無法在離開後直接恢復；重新計算可能再次使用額度。');
-  if(numSpentThisVisit.unlock)notes.push('已解鎖的專題會保留在會員帳戶，可再次閱讀。');
-  if(!notes.length)notes.push('離開後可能無法直接回到目前的解讀畫面。');
+  const aiCount=numSpentThisVisit.unlock+numSpentThisVisit.aiResult;
+  if(aiCount)used.push('AI 解讀額度 '+aiCount+' 次');
   const intro=used.length?'本次已使用：'+used.join('、')+'。':'目前有尚未保存的解讀內容。';
-  return [intro,...notes,'建議先保存重要內容。確定要離開生命靈數頁面嗎？'].join('\n\n');
+  return [
+   intro,
+   ...(aiRequestBusy?['AI 解讀仍在進行中，離開將中斷目前的處理。']:[]),
+   '離開後，本次尚未保存的命盤與解讀內容將無法恢復。',
+   '請先保存重要內容，再離開頁面，以免重新操作時再次扣點。',
+   '確定要離開生命靈數頁面嗎？'
+  ].join('\n\n');
  }
  // Internal navigation: provide specific wording. Same-page panel/hash switches are unaffected.
  document.addEventListener('click',e=>{
