@@ -833,6 +833,7 @@ html[data-theme="light"] .site-footer .cezi-footer-tool-nav a.active small{color
     </div>
     <div class="cezi-entitlement-card cezi-common-card">
       <h2>會員共用額度</h2>
+       <button type="button" class="dh-manual-quota-btn" id="dhManualQuotaBtn" title="重新向伺服器查詢最新剩餘次數，不會扣除額度" aria-label="更新剩餘次數，不會扣除額度"><span class="dh-manual-quota-icon" aria-hidden="true">↻</span><span class="dh-manual-quota-label">更新剩餘次數</span></button>
       <div class="cezi-common-content">
         <div class="cezi-common-values">
           <div class="cezi-quota-group">
@@ -1189,6 +1190,7 @@ window.addEventListener('pageshow',ceziRefreshQuotaOnReturn);
 window.addEventListener('focus',ceziRefreshQuotaOnReturn);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)ceziRefreshQuotaOnReturn()});
 window.addEventListener('storage',e=>{if(e.key==='divinationhub-auth-session-v1'||e.key==='divinationhub-auth-event')ceziRefreshQuotaOnReturn()});
+window.dhCeziManualFreeRefresh=refresh;
 function syncQuota(d){
  const q=d?.freeQuota;if(!q)return;
  ceziQuotaSnapshot=d;ceziUpdateQuotaGuidance(d);
@@ -1302,6 +1304,7 @@ document.querySelectorAll('[data-start-cezi]').forEach(a=>a.addEventListener('cl
  layoutMenu.querySelectorAll('[data-cezi-layout]').forEach(b=>b.addEventListener('click',()=>setLayout(b.dataset.ceziLayout)));
  document.addEventListener('click',e=>{if(!layoutRoot.contains(e.target)){layoutMenu.hidden=true;layoutButton.setAttribute('aria-expanded','false')}if(!el('ceziMemberControl').contains(e.target))closeMember()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){layoutMenu.hidden=true;closeMember()}});
+ window.dhCeziManualMemberRefresh=checkSession;
  initTheme();let initLayout='auto';try{initLayout=localStorage.getItem(LAYOUT_KEY)||'auto'}catch(_){};setLayout(initLayout);
  void checkSession();window.addEventListener('cezi:quota-changed',()=>void checkSession());window.addEventListener('pageshow',()=>void checkSession());window.addEventListener('focus',()=>void checkSession());document.addEventListener('visibilitychange',()=>{if(!document.hidden)void checkSession()});window.addEventListener('storage',e=>{if(e.key===AUTH_KEY||e.key==='divinationhub-auth-event')void checkSession();if(e.key===THEME_KEY)initTheme()});
 })();
@@ -1316,6 +1319,65 @@ document.querySelectorAll('[data-start-cezi]').forEach(a=>a.addEventListener('cl
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',showActiveTool,{once:true});
   else showActiveTool();
+})();
+</script>
+
+<!-- 2026-11-03：會員共用額度手動更新按鈕。 -->
+<style id="dh-manual-quota-btn-style">
+#ceziQuotaPanel .cezi-common-card{position:relative!important;}
+#ceziQuotaPanel .cezi-common-card > h2{padding-right:160px!important;}
+#ceziQuotaPanel .cezi-common-card > .dh-manual-quota-btn{
+  position:absolute!important;top:11px!important;right:12px!important;z-index:4!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;
+  min-height:29px!important;width:auto!important;max-width:156px!important;
+  padding:4px 10px!important;border:1px solid rgba(188,165,239,.56)!important;
+  border-radius:999px!important;background:rgba(167,133,231,.12)!important;color:#e4d1ff!important;
+  font:700 .7rem/1.4 -apple-system,BlinkMacSystemFont,'Noto Sans TC','Microsoft JhengHei',sans-serif!important;
+  letter-spacing:0!important;white-space:nowrap!important;text-decoration:none!important;cursor:pointer!important;
+  box-shadow:none!important;transform:none!important;opacity:1!important;
+}
+#ceziQuotaPanel .cezi-common-card > .dh-manual-quota-btn:hover:not(:disabled){border-color:rgba(215,193,255,.9)!important;background:rgba(167,133,231,.24)!important;}
+#ceziQuotaPanel .cezi-common-card > .dh-manual-quota-btn:focus-visible{outline:2px solid #9ee0e3!important;outline-offset:2px!important;}
+#ceziQuotaPanel .cezi-common-card > .dh-manual-quota-btn:disabled{opacity:.68!important;cursor:progress!important;}
+#ceziQuotaPanel .cezi-common-card .dh-manual-quota-icon{font-size:1rem!important;line-height:1!important;}
+#ceziQuotaPanel .cezi-common-card .dh-manual-quota-btn[data-state='success']{color:#b9f3d7!important;border-color:rgba(128,215,165,.6)!important;}
+#ceziQuotaPanel .cezi-common-card .dh-manual-quota-btn[data-state='error']{color:#ffd8b6!important;border-color:rgba(231,151,106,.65)!important;}
+html[data-theme='light'] #ceziQuotaPanel .cezi-common-card > .dh-manual-quota-btn{color:#653d96!important;background:#f5eefa!important;border-color:#aa90ca!important;}
+html[data-theme='light'] #ceziQuotaPanel .cezi-common-card .dh-manual-quota-btn[data-state='success']{color:#216d48!important;}
+html[data-theme='light'] #ceziQuotaPanel .cezi-common-card .dh-manual-quota-btn[data-state='error']{color:#a14c28!important;}
+@media(max-width:430px){#ceziQuotaPanel .cezi-common-card > h2{padding-right:142px!important;}#ceziQuotaPanel .cezi-common-card > .dh-manual-quota-btn{right:7px!important;top:10px!important;padding:4px 7px!important;font-size:.65rem!important;}}
+</style>
+
+<script id="dh-manual-quota-btn-script">
+(()=>{'use strict';
+ const btn=document.getElementById('dhManualQuotaBtn');if(!btn)return;
+ const icon=btn.querySelector('.dh-manual-quota-icon');
+ const label=btn.querySelector('.dh-manual-quota-label');
+ let resetTimer=null;
+ function setStatus(state,text,hint){btn.dataset.state=state;icon.textContent=state==='success'?'✓':'↻';label.textContent=text;btn.title=hint||text;}
+ async function dhReadOnlyRefresh(){
+  const outcomes=await Promise.allSettled([
+    Promise.resolve().then(()=>window.dhCeziManualFreeRefresh()),
+    Promise.resolve().then(()=>window.dhCeziManualMemberRefresh())
+  ]);
+  const ids=['ceziDailyTool','ceziDailyAi','ceziSharedTool','ceziSharedAi','ceziProfessionalPoints'];
+  return outcomes.every(x=>x.status==='fulfilled') && ids.every(id=>{
+    const v=(document.getElementById(id)?.textContent||'').trim();
+    return v && !/暫時無法|無法查詢|查詢中|待確認/.test(v);
+  });
+}
+ btn.addEventListener('click',async()=>{
+   if(btn.disabled)return;
+   if(resetTimer){clearTimeout(resetTimer);resetTimer=null;}
+   btn.disabled=true;btn.setAttribute('aria-busy','true');
+   setStatus('loading','正在更新…','重新查詢最新剩餘次數，不會扣除額度');
+   let ok=false;
+   try{ok=await dhReadOnlyRefresh();}catch(e){console.warn('額度手動更新失敗',e);}
+   btn.disabled=false;btn.removeAttribute('aria-busy');
+   if(ok)setStatus('success','已更新','已重新查詢最新剩餘次數；沒有扣除額度');
+   else setStatus('error','部分更新失敗','部分額度暫時無法確認，請稍後再按一次');
+   resetTimer=setTimeout(()=>{setStatus('idle','更新剩餘次數','重新向伺服器查詢最新剩餘次數，不會扣除額度');resetTimer=null;},ok?2500:6500);
+ });
 })();
 </script>
 </body></html>

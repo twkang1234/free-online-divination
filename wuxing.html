@@ -1077,6 +1077,7 @@ body.wx-tool-started #wxIntroHero,body.wx-tool-started #wxSeoKnowledge,body.wx-t
     </article>
     <article class="wx-quota-card wx-quota-shared">
       <h2>會員共用額度</h2>
+       <button type="button" class="dh-manual-quota-btn" id="dhManualQuotaBtn" title="重新向伺服器查詢最新剩餘次數，不會扣除額度" aria-label="更新剩餘次數，不會扣除額度"><span class="dh-manual-quota-icon" aria-hidden="true">↻</span><span class="dh-manual-quota-label">更新剩餘次數</span></button>
       <div class="wx-shared-layout">
         <div class="wx-shared-amounts">
           <div class="wx-quota-row"><span>工具額度（全平台共用）</span><strong id="wxSharedTool">登入後查看</strong><small>八字、塔羅、易經等工具皆可使用</small></div>
@@ -2343,8 +2344,66 @@ window.addEventListener('pageshow',()=>{void restoreMember();});
 window.addEventListener('focus',()=>{void restoreMember();});
 window.addEventListener('storage',e=>{if(e.key===SKEY||e.key==='divinationhub-auth-event')void restoreMember();});
 
+// 手動更新顯示：只呼叫現有 GET 額度介面，不重做五行計算或 AI 扣點。
+window.dhWxManualQuotaRefresh=async()=>{
+  // 工具、AI 的免費額度先讀取，最後以會員錢包的查詢為共用額度準據。
+  const steps=await Promise.allSettled([wxRefreshToolQuota(),wxAiRefreshStatus()]);
+  const shared=await Promise.allSettled([wxRefreshSharedQuota()]);
+  const ids=['wxFreeTool','wxFreeAi','wxSharedTool','wxSharedAi','wxProfessionalPoints'];
+  const valid=ids.every(id=>{const v=($(id)?.textContent||'').trim();return v&&!/暫時無法|無法查詢|查詢中|讀取中|查詢實際剩餘/.test(v);});
+  return steps.every(s=>s.status==='fulfilled') && shared.every(s=>s.status==='fulfilled') && valid && wxAiReady;
+};
 function init(){const y=new Date().getFullYear();options($('year'),1900,Math.min(2100,y),'年');options($('month'),1,12,'月');$('year').value='1990';$('month').value='5';options($('day'),1,31,'日');$('day').value='15';updateCalendarHint();createTopics();try{wxApplyLayout(localStorage.getItem("divinationhub-wuxing-layout-mode-v1")||"auto")}catch(_){wxApplyLayout("auto")};void wxRefreshPeriodicQuota();void restoreMember();void wxAiRefreshStatus();}init();
 
+</script>
+
+<!-- 2026-11-03：會員共用額度手動更新按鈕。 -->
+<style id="dh-manual-quota-btn-style">
+#wxQuotaPanel .wx-quota-shared{position:relative!important;}
+#wxQuotaPanel .wx-quota-shared > h2{padding-right:160px!important;}
+#wxQuotaPanel .wx-quota-shared > .dh-manual-quota-btn{
+  position:absolute!important;top:11px!important;right:12px!important;z-index:4!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;
+  min-height:29px!important;width:auto!important;max-width:156px!important;
+  padding:4px 10px!important;border:1px solid rgba(188,165,239,.56)!important;
+  border-radius:999px!important;background:rgba(167,133,231,.12)!important;color:#e4d1ff!important;
+  font:700 .7rem/1.4 -apple-system,BlinkMacSystemFont,'Noto Sans TC','Microsoft JhengHei',sans-serif!important;
+  letter-spacing:0!important;white-space:nowrap!important;text-decoration:none!important;cursor:pointer!important;
+  box-shadow:none!important;transform:none!important;opacity:1!important;
+}
+#wxQuotaPanel .wx-quota-shared > .dh-manual-quota-btn:hover:not(:disabled){border-color:rgba(215,193,255,.9)!important;background:rgba(167,133,231,.24)!important;}
+#wxQuotaPanel .wx-quota-shared > .dh-manual-quota-btn:focus-visible{outline:2px solid #9ee0e3!important;outline-offset:2px!important;}
+#wxQuotaPanel .wx-quota-shared > .dh-manual-quota-btn:disabled{opacity:.68!important;cursor:progress!important;}
+#wxQuotaPanel .wx-quota-shared .dh-manual-quota-icon{font-size:1rem!important;line-height:1!important;}
+#wxQuotaPanel .wx-quota-shared .dh-manual-quota-btn[data-state='success']{color:#b9f3d7!important;border-color:rgba(128,215,165,.6)!important;}
+#wxQuotaPanel .wx-quota-shared .dh-manual-quota-btn[data-state='error']{color:#ffd8b6!important;border-color:rgba(231,151,106,.65)!important;}
+html[data-theme='light'] #wxQuotaPanel .wx-quota-shared > .dh-manual-quota-btn{color:#653d96!important;background:#f5eefa!important;border-color:#aa90ca!important;}
+html[data-theme='light'] #wxQuotaPanel .wx-quota-shared .dh-manual-quota-btn[data-state='success']{color:#216d48!important;}
+html[data-theme='light'] #wxQuotaPanel .wx-quota-shared .dh-manual-quota-btn[data-state='error']{color:#a14c28!important;}
+@media(max-width:430px){#wxQuotaPanel .wx-quota-shared > h2{padding-right:142px!important;}#wxQuotaPanel .wx-quota-shared > .dh-manual-quota-btn{right:7px!important;top:10px!important;padding:4px 7px!important;font-size:.65rem!important;}}
+</style>
+
+<script id="dh-manual-quota-btn-script">
+(()=>{'use strict';
+ const btn=document.getElementById('dhManualQuotaBtn');if(!btn)return;
+ const icon=btn.querySelector('.dh-manual-quota-icon');
+ const label=btn.querySelector('.dh-manual-quota-label');
+ let resetTimer=null;
+ function setStatus(state,text,hint){btn.dataset.state=state;icon.textContent=state==='success'?'✓':'↻';label.textContent=text;btn.title=hint||text;}
+ async function dhReadOnlyRefresh(){return !!(await window.dhWxManualQuotaRefresh());}
+ btn.addEventListener('click',async()=>{
+   if(btn.disabled)return;
+   if(resetTimer){clearTimeout(resetTimer);resetTimer=null;}
+   btn.disabled=true;btn.setAttribute('aria-busy','true');
+   setStatus('loading','正在更新…','重新查詢最新剩餘次數，不會扣除額度');
+   let ok=false;
+   try{ok=await dhReadOnlyRefresh();}catch(e){console.warn('額度手動更新失敗',e);}
+   btn.disabled=false;btn.removeAttribute('aria-busy');
+   if(ok)setStatus('success','已更新','已重新查詢最新剩餘次數；沒有扣除額度');
+   else setStatus('error','部分更新失敗','部分額度暫時無法確認，請稍後再按一次');
+   resetTimer=setTimeout(()=>{setStatus('idle','更新剩餘次數','重新向伺服器查詢最新剩餘次數，不會扣除額度');resetTimer=null;},ok?2500:6500);
+ });
+})();
 </script>
 </body>
 </html>

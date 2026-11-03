@@ -3755,6 +3755,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
   </section>
   <section class="dh-clean-card dh-clean-card-shared dh-quota-gift" aria-label="會員共用額度">
     <b class="dh-clean-title">會員共用額度</b>
+     <button type="button" class="dh-manual-quota-btn" id="dhManualQuotaBtn" title="重新向伺服器查詢最新剩餘次數，不會扣除額度" aria-label="更新剩餘次數，不會扣除額度"><span class="dh-manual-quota-icon" aria-hidden="true">↻</span><span class="dh-manual-quota-label">更新剩餘次數</span></button>
     <div class="dh-clean-shared-wrap">
       <div class="dh-clean-stack">
         <div class="dh-clean-row">
@@ -5263,9 +5264,9 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
   // 登入 Session 恢復前後屬不同身分；不可共用 15 秒查詢快取或讓訪客回應覆蓋會員餘額。
   let dhTarotToolAt=0,dhTarotToolSnapshot=null,dhTarotToolAuthKey='',dhTarotToolRequestId=0;
   async function refreshTarotToolStatus(force=false){
-    const label=document.getElementById('tarotToolWalletLabel');if(!label)return;
+    const label=document.getElementById('tarotToolWalletLabel');if(!label)return false;
     const heading=document.getElementById('tarotToolWalletTitle');
-    if(isAdminTestActive()){label.textContent='管理員模擬不扣正式額度。';return;}
+    if(isAdminTestActive()){label.textContent='管理員模擬不扣正式額度。';return true;}
     const token=authToken();
     const authKey=token?'member:'+String(tarotSessionMember?.sub||'')+':'+token:'guest';
     // 首頁通常先以訪客查詢，稍後才完成 30 天會員 Session 驗證。身分變更必須立即重新查。
@@ -5277,7 +5278,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       const toolCount=document.getElementById('tarotSharedToolCount');
       if(toolCount)toolCount.textContent='查詢中…';
     }
-    if(!force&&Date.now()-dhTarotToolAt<15000)return;
+    if(!force&&Date.now()-dhTarotToolAt<15000)return true;
     dhTarotToolAt=Date.now();
     const requestId=++dhTarotToolRequestId;
     try{
@@ -5291,11 +5292,13 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       const toolCount=document.getElementById('tarotSharedToolCount');if(toolCount)toolCount.textContent=d.wallet?d.wallet.tool+' 次':'登入後可用';
       label.textContent='每 '+(d.daily.days||1)+' 天補充，不累積';
       tarotUpdateSelectionHints();
+      return true;
     }catch(_){
       if(requestId!==dhTarotToolRequestId||token!==authToken())return;
       label.textContent='免費次數依後台設定';
       const toolCount=document.getElementById('tarotSharedToolCount');if(toolCount)toolCount.textContent='暫時無法查詢';
       tarotUpdateSelectionHints();
+      return false;
     }
   }
   function updateQuotaUI(){
@@ -7002,7 +7005,7 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
     if(isGuestLoginRequired()){
       tarotRealAiQuota=null;if(display)display.textContent='此瀏覽器曾登入會員，請先重新登入才能解讀';
       const emptyBar=root?.querySelector('[data-tarot-ai-quota-empty]');if(emptyBar)emptyBar.hidden=true;
-      return;
+      return true;
     }
     try{
       const d=await tarotAPI('/ai/center/quota');
@@ -7030,14 +7033,28 @@ html[data-theme="light"] .tarot-site-ai-inline-actions button:hover{background:#
       const status=root?.querySelector('[data-site-ai-status]');
       if(status&&!onsiteAiBusy&&!['failed','cancelled'].includes(root.dataset.siteAiResult))status.textContent='';
       updateAccessMini();updateQuotaUI();renderAdminTestBanner();
+      return true;
     }catch(e){
       if(display)display.textContent='目前無法確認 AI 額度，請稍後重試。';
       const emptyBar=root?.querySelector('[data-tarot-ai-quota-empty]');if(emptyBar)emptyBar.hidden=true;
       if(btn){btn.classList.remove('tarot-ai-no-quota');btn.textContent='AI 額度暫時無法確認';}
       if(root?.querySelector('[data-site-ai-status]')&&!root.dataset.siteAiResult)root.querySelector('[data-site-ai-status]').textContent='額度查詢失敗：'+String(e.message||e);
       if(btn)btn.disabled=true; // fail closed
+      return false;
     }
   }
+  // 手動更新顯示：沿用已存在的唯讀額度查詢，不觸發抽牌或 AI 扣點。
+  window.dhTarotManualQuotaRefresh=async()=>{
+    const results=await Promise.allSettled([refreshTarotToolStatus(true),refreshOnsiteAiQuota()]);
+    // Both functions handle their own network errors; check the labels as well.
+    const freeTool=document.getElementById('tarotToolWalletTitle')?.textContent||'';
+    const sharedTool=document.getElementById('tarotSharedToolCount')?.textContent||'';
+    const freeAi=document.getElementById('tarotQuotaCount')?.textContent||'';
+    const sharedAi=document.getElementById('tarotSharedAiCount')?.textContent||'';
+    const values=[freeTool,sharedTool,freeAi,sharedAi];
+    return results.every(r=>r.status==='fulfilled' && r.value===true) && values.every(v=>v.trim() && !/暫時無法|無法確認|查詢中|正在查詢/.test(v))
+      && !/免費次數依後台設定/.test(document.getElementById('tarotToolWalletLabel')?.textContent||'');
+  };
   // V3: render a small, safe Markdown subset with DOM APIs, never via untrusted innerHTML.
   function renderOnsiteAiArticle(host, source){
     const frag=document.createDocumentFragment();
@@ -8393,5 +8410,54 @@ body.has-bazi-chart footer.page-footer.dh-five-tools-footer{display:block!import
 @media(prefers-reduced-motion:reduce){footer.page-footer.dh-five-tools-footer .dh-footer-nav a{transition:none}}
 @media print{footer.page-footer.dh-five-tools-footer .dh-footer-nav{display:none!important}}
 </style>
+
+<!-- 2026-11-03：會員共用額度手動更新按鈕。 -->
+<style id="dh-manual-quota-btn-style">
+#tarotQuotaPanel .dh-clean-card-shared{position:relative!important;}
+#tarotQuotaPanel .dh-clean-card-shared > .dh-clean-title{padding-right:160px!important;}
+#tarotQuotaPanel .dh-clean-card-shared > .dh-manual-quota-btn{
+  position:absolute!important;top:11px!important;right:12px!important;z-index:4!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;
+  min-height:29px!important;width:auto!important;max-width:156px!important;
+  padding:4px 10px!important;border:1px solid rgba(188,165,239,.56)!important;
+  border-radius:999px!important;background:rgba(167,133,231,.12)!important;color:#e4d1ff!important;
+  font:700 .7rem/1.4 -apple-system,BlinkMacSystemFont,'Noto Sans TC','Microsoft JhengHei',sans-serif!important;
+  letter-spacing:0!important;white-space:nowrap!important;text-decoration:none!important;cursor:pointer!important;
+  box-shadow:none!important;transform:none!important;opacity:1!important;
+}
+#tarotQuotaPanel .dh-clean-card-shared > .dh-manual-quota-btn:hover:not(:disabled){border-color:rgba(215,193,255,.9)!important;background:rgba(167,133,231,.24)!important;}
+#tarotQuotaPanel .dh-clean-card-shared > .dh-manual-quota-btn:focus-visible{outline:2px solid #9ee0e3!important;outline-offset:2px!important;}
+#tarotQuotaPanel .dh-clean-card-shared > .dh-manual-quota-btn:disabled{opacity:.68!important;cursor:progress!important;}
+#tarotQuotaPanel .dh-clean-card-shared .dh-manual-quota-icon{font-size:1rem!important;line-height:1!important;}
+#tarotQuotaPanel .dh-clean-card-shared .dh-manual-quota-btn[data-state='success']{color:#b9f3d7!important;border-color:rgba(128,215,165,.6)!important;}
+#tarotQuotaPanel .dh-clean-card-shared .dh-manual-quota-btn[data-state='error']{color:#ffd8b6!important;border-color:rgba(231,151,106,.65)!important;}
+html[data-theme='light'] #tarotQuotaPanel .dh-clean-card-shared > .dh-manual-quota-btn{color:#653d96!important;background:#f5eefa!important;border-color:#aa90ca!important;}
+html[data-theme='light'] #tarotQuotaPanel .dh-clean-card-shared .dh-manual-quota-btn[data-state='success']{color:#216d48!important;}
+html[data-theme='light'] #tarotQuotaPanel .dh-clean-card-shared .dh-manual-quota-btn[data-state='error']{color:#a14c28!important;}
+@media(max-width:430px){#tarotQuotaPanel .dh-clean-card-shared > .dh-clean-title{padding-right:142px!important;}#tarotQuotaPanel .dh-clean-card-shared > .dh-manual-quota-btn{right:7px!important;top:10px!important;padding:4px 7px!important;font-size:.65rem!important;}}
+</style>
+
+<script id="dh-manual-quota-btn-script">
+(()=>{'use strict';
+ const btn=document.getElementById('dhManualQuotaBtn');if(!btn)return;
+ const icon=btn.querySelector('.dh-manual-quota-icon');
+ const label=btn.querySelector('.dh-manual-quota-label');
+ let resetTimer=null;
+ function setStatus(state,text,hint){btn.dataset.state=state;icon.textContent=state==='success'?'✓':'↻';label.textContent=text;btn.title=hint||text;}
+ async function dhReadOnlyRefresh(){return !!(await window.dhTarotManualQuotaRefresh());}
+ btn.addEventListener('click',async()=>{
+   if(btn.disabled)return;
+   if(resetTimer){clearTimeout(resetTimer);resetTimer=null;}
+   btn.disabled=true;btn.setAttribute('aria-busy','true');
+   setStatus('loading','正在更新…','重新查詢最新剩餘次數，不會扣除額度');
+   let ok=false;
+   try{ok=await dhReadOnlyRefresh();}catch(e){console.warn('額度手動更新失敗',e);}
+   btn.disabled=false;btn.removeAttribute('aria-busy');
+   if(ok)setStatus('success','已更新','已重新查詢最新剩餘次數；沒有扣除額度');
+   else setStatus('error','部分更新失敗','部分額度暫時無法確認，請稍後再按一次');
+   resetTimer=setTimeout(()=>{setStatus('idle','更新剩餘次數','重新向伺服器查詢最新剩餘次數，不會扣除額度');resetTimer=null;},ok?2500:6500);
+ });
+})();
+</script>
 </body>
 </html>
