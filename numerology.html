@@ -2359,7 +2359,6 @@ html[data-theme="light"] .num-calc-buy-credits{color:#443077;background:#eee8fe;
 .num-unlock-sheet-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 .num-unlock-sheet-actions button{min-height:45px;padding:10px 15px;border-radius:11px;font-size:.88rem;font-weight:850;cursor:pointer}
 #numUnlockSheetReturn{background:#26223f;border:1px solid #655387;color:#f1e9ff}
-#numUnlockSheetVisit{background:linear-gradient(110deg,#bba0fb,#78d8df);border:1px solid transparent;color:#18182c}
 html[data-theme="light"] .num-unlock-sheet-page{background:linear-gradient(135deg,#f6f1ff,#eaf4f8);border-color:#b5a4d7}
 html[data-theme="light"] .num-unlock-sheet-head h2{color:#513273}
 html[data-theme="light"] .num-unlock-sheet-eyebrow{color:#38768b}
@@ -2371,6 +2370,27 @@ html[data-theme="light"] .num-unlock-sheet-changes{background:#e6f8f7;border-col
 html[data-theme="light"] .num-unlock-sheet-changes h3{color:#236b71}
 html[data-theme="light"] .num-unlock-sheet-chip{background:#e2f4f4;color:#215660}
 @media(max-width:580px){.num-unlock-sheet-page{gap:12px}.num-unlock-sheet-actions button{flex:1 1 100%}#numAiUnlockSheet .num-header-reward{padding:16px 12px}#numAiUnlockSheet .num-header-reward-steps{grid-template-columns:33px minmax(8px,1fr) 33px minmax(8px,1fr) 33px minmax(8px,1fr) 33px}#numAiUnlockSheet .num-header-reward-node{width:33px;height:33px;font-size:.95rem}#numAiUnlockSheet .num-header-reward-caption{font-size:.67rem;gap:2px}#numAiUnlockSheet .num-header-reward-note{font-size:.79rem}#numAiUnlockSheet .num-header-reward-detail{font-size:.69rem}}
+
+/* v47: Compact, server-backed entitlement preview immediately ABOVE AI deep reading. */
+#num-map-stage .num-v5-workbench>.num-v4-navigation button.num-unlock-thumb{box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;gap:8px;width:100%;min-height:0;height:auto;padding:12px 10px;margin:7px 0 1px;text-align:left;line-height:1.3;background:linear-gradient(145deg,rgba(51,36,88,.90),rgba(35,28,63,.98));border:1px solid rgba(176,148,242,.75);border-radius:13px;cursor:pointer;color:#f3e8ff;box-shadow:0 7px 20px rgba(18,10,41,.14);transition:border-color .18s,box-shadow .18s}
+#num-map-stage .num-v5-workbench>.num-v4-navigation button.num-unlock-thumb[hidden]{display:none!important}
+#num-map-stage .num-v5-workbench>.num-v4-navigation button.num-unlock-thumb:hover,#num-map-stage .num-v5-workbench>.num-v4-navigation button.num-unlock-thumb:focus-visible{border-color:#8bdeea;box-shadow:0 0 0 2px rgba(141,220,233,.14)}
+.num-unlock-thumb-heading{display:flex;align-items:center;gap:5px;color:#f5d89e;font-size:.74rem;font-weight:880;letter-spacing:0}
+.num-unlock-thumb-stats{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:3px 5px}
+.num-unlock-thumb-stats strong{font-size:1.42rem;line-height:1.12;font-weight:930;color:#84e1e7;white-space:nowrap}
+.num-unlock-thumb-stats small{font-size:.61rem;line-height:1.35;color:#dcd0ed}
+.num-unlock-thumb-track{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:100%}
+.num-unlock-thumb-track i{height:5px;border-radius:99px;background:rgba(147,132,183,.48)}
+.num-unlock-thumb-track i.is-done{background:#88dce4;box-shadow:0 0 6px rgba(136,220,228,.26)}
+.num-unlock-thumb-cta{display:flex;justify-content:space-between;align-items:center;gap:5px;color:#cabbea;font-size:.66rem;font-weight:750}
+.num-unlock-thumb-cta .arrow{font-size:1rem;line-height:1;color:#91e4e6}
+html[data-theme="light"] #num-map-stage .num-v5-workbench>.num-v4-navigation button.num-unlock-thumb{background:linear-gradient(145deg,#f4eaff,#ebedf9);border-color:#a48ac6;color:#402a60}
+html[data-theme="light"] .num-unlock-thumb-heading{color:#6b468f}
+html[data-theme="light"] .num-unlock-thumb-stats strong{color:#256e84}
+html[data-theme="light"] .num-unlock-thumb-stats small,html[data-theme="light"] .num-unlock-thumb-cta{color:#57426f}
+@media(min-width:1101px){#num-map-stage .num-v5-workbench>.num-v4-navigation button.num-unlock-thumb{margin-top:9px}}
+@media(min-width:601px) and (max-width:1100px){#num-map-stage .num-v5-workbench>.num-v4-navigation button.num-unlock-thumb{flex:0 0 210px;margin:0 4px 0 0;padding:9px 10px;align-self:stretch}}
+@media(max-width:600px){#num-map-stage .num-v5-workbench>.num-v4-navigation button.num-unlock-thumb{grid-column:1 / -1;margin:2px 0 0;padding:10px 12px;gap:6px}.num-unlock-thumb-stats strong{font-size:1.26rem}.num-unlock-thumb-heading{font-size:.83rem}.num-unlock-thumb-cta{font-size:.73rem}}
 @media(prefers-reduced-motion:reduce){#numAiUnlockSheet *,#numAiUnlockSheet::backdrop{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -2842,6 +2862,7 @@ window.numClearNavHint=numClearNavHint;
      numEntitlement={paidCount:0,required:4,fullUnlocked:false,stageAll:false,timingAll:false,stageIndices:[],years:[],months:[]};
      numReportUnlockDate=date;numReportUnlockToken=sessionToken;
      numNavHintState.reading=0;numNavHintState.stage=0;numNavHintState.timing=0;numUnlockStatusReady=false;
+     window.dispatchEvent(new CustomEvent('num:unlock-invalidated',{detail:{date}}));
    }
    numUpdateReportTabBadges();
    if(!sessionToken)return false;
@@ -2856,6 +2877,7 @@ window.numClearNavHint=numClearNavHint;
      if(notify)numDiffUnlockSignals(prevEnt,numEntitlement,prevSet,numReportUnlocks);
      numUnlockStatusReady=true;
      numUpdateReportTabBadges();
+     window.dispatchEvent(new CustomEvent('num:unlock-status',{detail:{date,after:numCurrentUnlockState()}}));
      if(numReportPayTopics[activeTab])renderDeepReading(activeTab);
      if(current?.date===date){renderStage(current);renderYears(current)}
      return true;
@@ -4176,7 +4198,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  
  $('numAiAnswerCopy').addEventListener('click',async()=>{const r=numAiHistory.find(x=>x.id===numAiActiveId);if(!r)return;try{await navigator.clipboard.writeText(numAiArchiveText(numAiThreadRecords(r)));aiStatus('已複製目前題目及其追問。')}catch(_){aiStatus('目前無法複製，請改用下載 TXT。')}});
  $('numAiAnswerTxt').addEventListener('click',()=>{const r=numAiHistory.find(x=>x.id===numAiActiveId);if(r)numAiReportFile('生命靈數-單組AI解讀與追問-'+current.date,numAiArchiveText(numAiThreadRecords(r)))});
- function renderResult(data){numProtectedReadings.clear();numReportReadingSeq++;document.documentElement.classList.add("num-calculated");reportLineFocus=null;current=data;$('numBirthHighlightText').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日`;$('numBirthHighlight').hidden=false;numReportUnlockDate=data.date;numReportUnlocks.clear();numReportUnlocks.add('overview');numEntitlement={paidCount:0,required:4,fullUnlocked:false,stageAll:false,timingAll:false,stageIndices:[],years:[],months:[]};numUnlockStatusReady=false;numNavHintState.reading=0;numNavHintState.stage=0;numNavHintState.timing=0;numUpdateReportTabBadges();void numRefreshReportUnlocks(data.date);numQuotaScheduleRefresh();$('result').hidden=false;$('lifeNumber').textContent=data.life;$('masterChip').hidden=![11,22,33].includes(data.life);$('lifeLabel').textContent=MODEL[data.life].title;$('lifeFormula').textContent=`${CORE_SUMMARIES[data.life]}`;$('birthdayNumber').textContent=`${data.d} / ${data.birth}`;$('numBirthdayMeaning').textContent=`補充：${MODEL[pure(data.birth)].title}，與核心數從不同角度並讀`;$('attitudeNumber').textContent=data.attitude;$('numAttitudeMeaning').textContent=`互動傾向：${MODEL[pure(data.attitude)].title}`;$('yearNumber').textContent=data.year;$('numYearMeaning').textContent=`今年主題：${YEAR[data.year][0]}`;$('yearHeading').textContent=`${data.yearCalendar} 個人流年`;$('resultDate').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日｜以西元生日計算`;renderProfileExplanation(data,'life');setProfileExplainOpen(true);$('numProfileFoldCurrent').textContent='｜生命數';aiMode='fixed';aiTopic='full';numAiShowMore=false;numAiGuidedQuestion='';numAiGuidedLabel='';numAiGuidedId='';numAiSelectedStage=stageIndexAtAge(stageData(data).age,stageData(data).first);numAiTimingYear=todayTaipei().y;numAiTimingMonth=todayTaipei().m;numAiActiveDock='general';$('numAiGeneralDock').appendChild($('numAiSection'));$('numAiSection').hidden=true;$('numAiQuestion').value='';lastNumerologyResult=null;lastNumerologyOperation=null;lastFailedNumerologyOperation=null;numAiLoadHistory();numAiSetBusy(false);$('numAiReportBox').hidden=true;$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');$('numAiQuota').textContent='尚未查詢額度';aiStatus('');setTab('overview');updateNumExperience(data);renderDeep(data);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
+ function renderResult(data){numProtectedReadings.clear();numReportReadingSeq++;document.documentElement.classList.add("num-calculated");reportLineFocus=null;current=data;window.dispatchEvent(new CustomEvent('num:unlock-profile',{detail:{date:data.date}}));$('numBirthHighlightText').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日`;$('numBirthHighlight').hidden=false;numReportUnlockDate=data.date;numReportUnlocks.clear();numReportUnlocks.add('overview');numEntitlement={paidCount:0,required:4,fullUnlocked:false,stageAll:false,timingAll:false,stageIndices:[],years:[],months:[]};numUnlockStatusReady=false;numNavHintState.reading=0;numNavHintState.stage=0;numNavHintState.timing=0;numUpdateReportTabBadges();void numRefreshReportUnlocks(data.date);numQuotaScheduleRefresh();$('result').hidden=false;$('lifeNumber').textContent=data.life;$('masterChip').hidden=![11,22,33].includes(data.life);$('lifeLabel').textContent=MODEL[data.life].title;$('lifeFormula').textContent=`${CORE_SUMMARIES[data.life]}`;$('birthdayNumber').textContent=`${data.d} / ${data.birth}`;$('numBirthdayMeaning').textContent=`補充：${MODEL[pure(data.birth)].title}，與核心數從不同角度並讀`;$('attitudeNumber').textContent=data.attitude;$('numAttitudeMeaning').textContent=`互動傾向：${MODEL[pure(data.attitude)].title}`;$('yearNumber').textContent=data.year;$('numYearMeaning').textContent=`今年主題：${YEAR[data.year][0]}`;$('yearHeading').textContent=`${data.yearCalendar} 個人流年`;$('resultDate').textContent=`出生日期：${data.y} 年 ${data.mo} 月 ${data.d} 日｜以西元生日計算`;renderProfileExplanation(data,'life');setProfileExplainOpen(true);$('numProfileFoldCurrent').textContent='｜生命數';aiMode='fixed';aiTopic='full';numAiShowMore=false;numAiGuidedQuestion='';numAiGuidedLabel='';numAiGuidedId='';numAiSelectedStage=stageIndexAtAge(stageData(data).age,stageData(data).first);numAiTimingYear=todayTaipei().y;numAiTimingMonth=todayTaipei().m;numAiActiveDock='general';$('numAiGeneralDock').appendChild($('numAiSection'));$('numAiSection').hidden=true;$('numAiQuestion').value='';lastNumerologyResult=null;lastNumerologyOperation=null;lastFailedNumerologyOperation=null;numAiLoadHistory();numAiSetBusy(false);$('numAiReportBox').hidden=true;$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');$('numAiQuota').textContent='尚未查詢額度';aiStatus('');setTab('overview');updateNumExperience(data);renderDeep(data);$('result').scrollIntoView({behavior:'smooth',block:'start'})}
 
  async function numLoadUnlockedForExport(c){
    if(!c||!numAiToken()||numAiToken()!==numReportUnlockToken||c.date!==numReportUnlockDate)return;
@@ -4476,17 +4498,18 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   <div id="numHeaderReward" class="num-header-reward" role="status" aria-live="polite"><span class="num-header-reward-label"><span id="numHeaderRewardLabel">✦ AI 解讀 4 次，全盤解鎖</span><span class="num-header-reward-count" id="numHeaderRewardCount">0 / 4</span></span><span class="num-header-reward-steps" id="numHeaderRewardSteps" aria-hidden="true"><span class="num-header-reward-node">1</span><span class="num-header-reward-line"></span><span class="num-header-reward-node">2</span><span class="num-header-reward-line"></span><span class="num-header-reward-node">3</span><span class="num-header-reward-line"></span><span class="num-header-reward-node">🎁</span></span><span class="num-header-reward-caption" aria-hidden="true"><span>第 1 次</span><span>第 2 次</span><span>第 3 次</span><span>全部開放</span></span><small class="num-header-reward-note" id="numHeaderRewardNote">01 性格深讀先免費看；成功完成 AI 解讀，可開啟對應命盤專題。</small><small class="num-header-reward-detail" id="numHeaderRewardDetail">累積完成 4 次後，六大深度解讀、人生四階段、流年流月的固定文章都能直接閱讀。</small></div>
   <section id="numUnlockSheetChanges" class="num-unlock-sheet-changes" aria-live="polite"><h3 id="numUnlockSheetChangesTitle">已解鎖內容</h3><div id="numUnlockSheetList" class="num-unlock-sheet-list"></div></section>
   <p id="numUnlockSheetHint" class="num-unlock-sheet-hint">這是站內固定命盤解讀的附加權益；完整 AI 文章已保留在原本的批盤頁面。</p>
-  <div class="num-unlock-sheet-actions"><button id="numUnlockSheetReturn" type="button">返回 AI 解讀文章</button><button id="numUnlockSheetVisit" type="button" hidden>查看新解鎖內容</button></div>
+  <div class="num-unlock-sheet-actions"><button id="numUnlockSheetReturn" type="button">返回 AI 解讀文章</button></div>
  </div>
 </dialog>
-<script id="numV46UnlockSheetBehavior">(()=>{
+<script id="numV47UnlockSheetBehavior">(()=>{
  const modal=document.getElementById('numAiUnlockSheet'),list=document.getElementById('numUnlockSheetList');
  if(!modal||!list)return;
- const x=document.getElementById('numUnlockSheetX'),back=document.getElementById('numUnlockSheetReturn'),visit=document.getElementById('numUnlockSheetVisit');
+ const x=document.getElementById('numUnlockSheetX'),back=document.getElementById('numUnlockSheetReturn');
  const sectionLabels={work:'02 事業與資源',love:'03 感情與人際',growth:'04 人生階段',year:'05 年度與流月',grid:'06 命盤數字依據'};
  const readable=val=>String(val||'');
- let fallbackSection='reading';
+ let activeDate='',status=null,lastDetail=null,thumbnail=null;
  const close=()=>{if(modal.open)modal.close()};
+ const open=()=>{if(!modal.open){if(typeof modal.showModal==='function')modal.showModal();else modal.setAttribute('open','')}};
  x.addEventListener('click',close);back.addEventListener('click',close);
  modal.addEventListener('click',e=>{if(e.target===modal)close()});
  function go(section,report){
@@ -4494,9 +4517,65 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   document.querySelector('.num-v4-navigation [data-v4-target="'+section+'"]')?.click();
   if(section==='reading'&&report)document.querySelector('#readingNav [data-tab="'+report+'"]')?.click();
  }
- visit.addEventListener('click',()=>go(fallbackSection,''));
- window.addEventListener('num:unlock-delivered',event=>{
-  const d=event.detail||{},before=d.before||{},after=d.after||{},ready=!!d.ok;
+ function ensureThumbnail(){
+  if(thumbnail&&thumbnail.isConnected)return thumbnail;
+  const nav=document.querySelector('#num-map-stage .num-v4-navigation'),ai=nav?.querySelector('[data-v4-target="ai"]');
+  if(!nav||!ai)return null;
+  const btn=document.createElement('button');btn.type='button';btn.className='num-unlock-thumb';btn.id='numUnlockNavThumb';btn.hidden=true;
+  btn.setAttribute('aria-label','重新查看命盤解鎖進度與成果');
+  btn.innerHTML='<span class="num-unlock-thumb-heading">🎁 命盤解鎖進度</span><span class="num-unlock-thumb-stats"><strong id="numUnlockThumbCount">0 / 4</strong><small id="numUnlockThumbRemaining">再 4 次全盤解鎖</small></span><span class="num-unlock-thumb-track" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="num-unlock-thumb-cta">查看解鎖成果 <span class="arrow">›</span></span>';
+  nav.insertBefore(btn,ai);thumbnail=btn;
+  btn.addEventListener('click',()=>{
+   if(btn.hidden||!status||!activeDate)return;
+   if(!lastDetail||lastDetail.date!==activeDate)renderOverview(status);
+   open();
+  });
+  return btn;
+ }
+ function updateThumbnail(){
+  const btn=ensureThumbnail();if(!btn)return;
+  const count=Math.max(0,Math.min(4,Number(status?.count)||0));
+  const show=!!activeDate&&!!status&&(count>=1||status.full);
+  btn.hidden=!show;
+  if(!show)return;
+  btn.querySelector('#numUnlockThumbCount').textContent=count+' / 4';
+  btn.querySelector('#numUnlockThumbRemaining').textContent=status.full?'已全盤解鎖':'再 '+(4-count)+' 次全盤解鎖';
+  btn.querySelectorAll('.num-unlock-thumb-track i').forEach((bar,i)=>bar.classList.toggle('is-done',i<count));
+  btn.setAttribute('aria-label','查看命盤解鎖成果，目前 '+count+'／4'+(status.full?'，已全部解鎖':'，還差 '+(4-count)+' 次'));
+ }
+ function addChip(text,target,tab=''){
+  const btn=document.createElement('button');btn.type='button';btn.className='num-unlock-sheet-chip';btn.textContent='✓ '+text+' ›';
+  btn.addEventListener('click',()=>go(target,tab));list.append(btn);
+ }
+ function showChanges(change,title){
+  const panel=document.getElementById('numUnlockSheetChanges');
+  list.replaceChildren();
+  document.getElementById('numUnlockSheetChangesTitle').textContent=title;
+  if(change.length){change.forEach(item=>addChip(item.text,item.target,item.tab||''));panel.hidden=false}
+  else panel.hidden=false;
+ }
+ function renderOverview(after){
+  document.getElementById('numUnlockSheetTitle').textContent=after.full?'✓ 完整命盤已解鎖':'✦ 我的命盤解鎖成果';
+  const change=[];
+  const add=(text,target,tab='')=>change.push({text,target,tab});
+  if(after.full){add('六大深度解讀全部開放','reading');add('人生四階段全部開放','stage');add('所有年度與流月解讀全部開放','timing')}
+  else{
+   (after.reports||[]).filter(k=>k!=='overview').forEach(key=>add(sectionLabels[key]||key,'reading',key));
+   if(after.stageAll)add('人生四階段全部開放','stage');
+   else if((after.stageIndices||[]).length)add('已解鎖的人生階段解讀','stage');
+   if(after.timingAll)add('流年流月全部開放','timing');
+   else if((after.years||[]).length||(after.months||[]).length)add('已解鎖的流年流月解讀','timing');
+  }
+  if(change.length)showChanges(change,'目前已開放的命盤內容');
+  else{
+   list.replaceChildren();
+   const item=document.createElement('span');item.className='num-unlock-sheet-chip';item.textContent='已有解讀進度，尚無其他已開放的固定專題。';list.append(item);
+   document.getElementById('numUnlockSheetChangesTitle').textContent='目前解鎖狀態';
+  }
+  document.getElementById('numUnlockSheetHint').textContent='已解鎖的固定命盤文章可再次閱讀，不需重複使用 AI 額度。';
+ }
+ function renderDelivered(d){
+  const before=d.before||{},after=d.after||{},ready=!!d.ok;
   const change=[];
   const add=(text,target,tab='')=>change.push({text,target,tab});
   const was=new Set(before.reports||[]);
@@ -4515,20 +4594,39 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
    }
   }
   document.getElementById('numUnlockSheetTitle').textContent=!ready?'✦ AI 批盤完成｜進度待確認':after.full?'🎉 恭喜！整份命盤已全面解鎖':'✦ AI 批盤完成｜查看本次解鎖成果';
-  const panel=document.getElementById('numUnlockSheetChanges'),title=document.getElementById('numUnlockSheetChangesTitle');
-  list.replaceChildren();
-  if(ready&&change.length){
-   title.textContent=(d.hadBaseline?'這次新解鎖':'目前已開放')+'的命盤內容';
-   change.forEach(item=>{const btn=document.createElement('button');btn.type='button';btn.className='num-unlock-sheet-chip';btn.textContent='✓ '+item.text+'  ›';btn.addEventListener('click',()=>go(item.target,item.tab));list.append(btn)});
-   fallbackSection=change[0].target;visit.hidden=false;visit.textContent=after.full?'前往閱讀完整命盤':'查看新解鎖內容';
-  }else{
-   title.textContent=ready?'本次已完成 AI 專屬解讀':'暫時無法確認解鎖狀態';
-   const p=document.createElement('span');p.className='num-unlock-sheet-chip';
-   p.textContent=ready?'目前沒有新增固定專題；解讀文章已成功交付。':'解讀文章已完成，但解鎖進度尚未取得，稍後可重新整理頁面查看。';list.append(p);visit.hidden=true;
+  if(ready&&change.length){showChanges(change,(d.hadBaseline?'這次新解鎖':'目前已開放')+'的命盤內容')}
+  else{
+   list.replaceChildren();
+   document.getElementById('numUnlockSheetChangesTitle').textContent=ready?'本次已完成 AI 專屬解讀':'暫時無法確認解鎖狀態';
+   const el=document.createElement('span');el.className='num-unlock-sheet-chip';
+   el.textContent=ready?'目前沒有新增固定專題；解讀文章已成功交付。':'解讀文章已完成，但解鎖進度尚未取得，稍後可重新整理頁面查看。';list.append(el);
   }
   document.getElementById('numUnlockSheetHint').textContent=!ready?'本次 AI 文章已保留。若解鎖狀態暫時無法查詢，不會因此重複發出 AI 請求。':after.full?'這份生日命盤的站內固定文章已全部開放，返回網站後可自由切換閱讀。':'站內 AI 文章已保留在原頁；每次符合資格的會員共用 AI 解讀計入四次進度，定期免費額度不計次。';
-  if(!modal.open){if(typeof modal.showModal==='function')modal.showModal();else modal.setAttribute('open','')}
+ }
+ window.addEventListener('num:unlock-profile',event=>{
+  // Rechecking the same birthdate also invalidates the previous display until the server verifies it.
+  activeDate=event.detail?.date||'';status=null;lastDetail=null;
+  close();updateThumbnail();
  });
+ window.addEventListener('num:unlock-invalidated',event=>{
+  const d=event.detail||{};
+  if(d.date!==activeDate)return;
+  status=null;lastDetail=null;close();updateThumbnail();
+ });
+ window.addEventListener('num:unlock-status',event=>{
+  const d=event.detail||{};
+  if(!d.date||d.date!==activeDate)return;
+  status=d.after||null;
+  updateThumbnail();
+ });
+ window.addEventListener('num:unlock-delivered',event=>{
+  const d=event.detail||{};
+  if(d.date!==activeDate)return;
+  lastDetail=d;renderDelivered(d);
+  if(d.ok){status=d.after||status;updateThumbnail()}
+  open();
+ });
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>ensureThumbnail(),{once:true});else ensureThumbnail();
 })();</script>
 </body>
 </html>
