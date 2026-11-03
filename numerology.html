@@ -2286,6 +2286,24 @@ html[data-theme="light"] #numAiSection #numBirthHighlight strong{color:#221b37}
  #num-map-stage #numBirthHighlight strong,#numAiSection #numBirthHighlight strong{font-size:1.08rem;white-space:normal}
 }
 </style>
+<style id="numV37AiGuideStyle">
+/* V37: contextual guided question links */
+.num-ai-guide-bridge{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:11px 18px;margin:18px 0 7px;padding:15px 17px;border:1px solid rgba(134,208,222,.44);border-radius:13px;background:linear-gradient(105deg,rgba(101,78,170,.16),rgba(76,186,197,.11))}
+.num-ai-guide-copy{min-width:0;flex:1 1 215px}
+.num-ai-guide-copy small{display:block;margin:0 0 4px;color:#a9dfeb;font-weight:800;font-size:.68rem;letter-spacing:.09em}
+.num-ai-guide-copy strong{display:block;color:#f4e2ff;font-size:clamp(.89rem,.94vw,1.02rem);line-height:1.5}
+.num-ai-guide-button,.num-report-gate-alt{min-height:41px;padding:9px 15px;border:1px solid rgba(134,217,223,.62);border-radius:10px;background:linear-gradient(110deg,#9778e2,#73d3e0);color:#191832;font-size:.87rem;font-weight:850;line-height:1.45;cursor:pointer;text-align:center;box-shadow:0 5px 12px rgba(49,42,94,.11)}
+.num-ai-guide-button:hover,.num-report-gate-alt:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.num-ai-guide-button:focus-visible,.num-report-gate-alt:focus-visible{outline:2px solid #f4d58b;outline-offset:3px}
+.num-ai-guide-button:disabled,.num-report-gate-alt:disabled{opacity:.56;cursor:wait}
+.num-report-gate-choice-hint{font-size:.82rem;line-height:1.65;color:#d6c6ef;margin:3px 0 0}
+.num-report-gate-actions{flex-wrap:wrap;gap:9px!important}
+html[data-theme="light"] .num-ai-guide-bridge{background:linear-gradient(110deg,#f2ecff,#e6f4f7);border-color:#b8a2e1}
+html[data-theme="light"] .num-ai-guide-copy small{color:#346c80}
+html[data-theme="light"] .num-ai-guide-copy strong{color:#3d285f}
+html[data-theme="light"] .num-report-gate-choice-hint{color:#59466c}
+@media(max-width:530px){.num-ai-guide-bridge{padding:12px;gap:9px}.num-ai-guide-button,.num-report-gate-alt{width:100%}}
+</style>
 </head>
 <body>
 <header class="page-topbar">
@@ -2947,6 +2965,22 @@ let reportLineFocus=null;
      button.title=granted?'此生日已解鎖；再次閱讀不扣點':'使用 1 次 AI 解讀額度解鎖此生日的'+label;
    });
  }
+
+ // V37: one contextual link per meaningful reading surface; never spends credits.
+ function numAppendAiGuide(host,{scope='general',topic='full',preset='',label='想把這個問題看得更深入？',button='✦ 交給站內 AI 深入批盤',stage=null,year=null,month=null}={}){
+  if(!host||!current)return null;
+  const box=document.createElement('div');box.className='num-ai-guide-bridge';
+  const copy=document.createElement('div');copy.className='num-ai-guide-copy';
+  copy.append(textElm('small','接著探索 · AI 專屬延伸'),textElm('strong',label));
+  const b=document.createElement('button');b.type='button';b.className='num-ai-guide-button';b.dataset.numAiGuide=scope;
+  if(scope==='general')b.dataset.numAiTopic=topic;
+  else b.dataset.numAiPresetTarget=preset;
+  if(stage!==null)b.dataset.numAiStageTarget=String(stage);
+  if(year!==null)b.dataset.numAiYearTarget=String(year);
+  if(month!==null)b.dataset.numAiMonthTarget=String(month);
+  b.textContent=button;
+  box.append(copy,b);host.append(box);return box;
+ }
  function numGateMessage(section,message){const status=$('numReportGateStatus');if(status)status.textContent=message}
  function numRenderReportGate(section){
    const panel=$('readingPanel');if(!panel)return;
@@ -2957,7 +2991,11 @@ let reportLineFocus=null;
    const actions=document.createElement('div');actions.className='num-report-gate-actions';
    const btn=document.createElement('button');btn.type='button';btn.className='num-report-gate-button';btn.textContent=isLogin?'✦ 使用 AI 解讀 -1 次｜解鎖':'先登入會員';btn.disabled=numReportUnlockLoading;
    btn.addEventListener('click',()=>{if(!numAiToken()){window.location.href='member.html';return}void numUnlockReport(section)});
-   actions.append(btn);panel.append(actions);
+   actions.append(btn);
+   const ask=document.createElement('button');ask.type='button';ask.className='num-report-gate-alt';ask.dataset.numAiGuide='general';ask.dataset.numAiTopic=section==='work'?'career':'love';
+   ask.textContent=section==='work'?'✦ 直接向 AI 詢問事業與資源':'✦ 直接向 AI 詢問感情與人際';
+   actions.append(ask);panel.append(actions);
+   panel.append(textElm('p','不必先解鎖本篇，也可以選擇 AI 專題；點擊選題不會扣除額度。','num-report-gate-choice-hint'));
    const status=textElm('p','','num-report-gate-status');status.id='numReportGateStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');panel.append(status);
    if(isLogin)void refreshNumAiQuota();
  }
@@ -3029,6 +3067,15 @@ let reportLineFocus=null;
  if(reportLineFocus){const line=NUM_LINES.find(l=>l.id===reportLineFocus);if(line){const focus=document.createElement('section');focus.className='num-reading-focus';focus.append(textElm('div','從九宮格帶來的深入分析','num-insight-kicker'),textElm('h4',`${line.id}｜${LINE_LENSES[line.id].short}`));for(const sentence of focusedLineDetail(c,line.id,topic))appendPara(focus,sentence);el.append(focus)}}
  for(const part of reading.blocks){el.appendChild(textElm('h4',part.title));for(const line of part.lines){if(part===reading.blocks[0]&&line===reading.lede)continue;appendPara(el,line)}}
  const methods=document.createElement('details');methods.className='num-method';const summary=textElm('summary','展開本次計算依據（不作為人格診斷）');methods.append(summary);for(const line of reading.data.lines)appendPara(methods,line);el.append(methods);
+ const reportGuides={
+  overview:{topic:'full',label:'你的性格盲點，是否正影響工作與關係？',button:'✦ 向 AI 深問性格與人生課題'},
+  work:{topic:'career',label:'工作上總是吃力不討好？把你的職場困境交給 AI。',button:'✦ 讓 AI 分析事業與資源'},
+  love:{topic:'love',label:'在感情中反覆出現的難題，值得再深入問一次。',button:'✦ 讓 AI 分析感情與人際'},
+  growth:{scope:'stage',preset:'stage-present',stage:stageIndexAtAge(stageData(c).age,stageData(c).first),label:'你目前這一階段最重要的機會與考驗是什麼？',button:'✦ 問 AI 我的當前人生階段'},
+  year:{scope:'timing',preset:'timing-year',year:c.yearCalendar,month:todayTaipei().m,label:'今年該衝還是守？用個人流年深入追問。',button:'✦ 問 AI 今年的機會與風險'},
+  grid:{topic:'full',label:'空缺數字與完整連線，究竟會怎樣交互影響？',button:'✦ 問 AI 九宮格與命盤盲點'}
+ };
+ numAppendAiGuide(el,reportGuides[topic]);
  for(const [href,title] of [['#num-map-stage','互動九宮格 ↗'],['#numPinnaclesSection','人生高峰圖 ↗'],['#numTimelineSection','九年時間軸 ↗']]){const a=document.createElement('a');a.href=href;a.className='num-report-link';a.textContent=title;el.append(a)}
 }
 function setTab(name){renderDeepReading(name)}
@@ -3174,6 +3221,8 @@ function storyCard(title,text){const card=document.createElement('section');card
  if(canTab){const tabs=document.createElement('div');tabs.className='num-story-tabs';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','切換這條線的解讀主題');for(const [key,label] of [['overview','性格特質'],['work','事業工作'],['love','感情人際']]){const b=document.createElement('button');b.type='button';b.dataset.numStoryTopic=key;b.setAttribute('aria-pressed',String(numStoryTopic===key));b.textContent=label;tabs.append(b)}panel.append(tabs)}
  const actions=document.createElement('div');actions.className='num-story-actions';const reset=document.createElement('button');reset.type='button';reset.dataset.numStoryAction='overview';reset.textContent='◎ 顯示全部連線';const next=document.createElement('button');next.type='button';next.className='next';next.dataset.numStoryAction='next';next.textContent='下一條值得看的線 →';actions.append(reset,next);panel.append(actions);
  const hint=textElm('p','連線是原始生日數字形成的圖形；解讀採象徵性觀點，不是人格或未來的科學測量。','num-story-note');panel.append(hint);
+ const lineTopic=canTab&&numStoryTopic==='work'?'career':canTab&&numStoryTopic==='love'?'love':'full';
+ numAppendAiGuide(panel,{topic:lineTopic,label:canTab&&numStoryTopic==='work'?'這條連線如何影響工作上的合作與決策？':canTab&&numStoryTopic==='love'?'這條連線如何影響感情中的互動與界線？':'想把九宮格的連線、空缺與性格盲點一起看懂？',button:'✦ 前往對應的 AI 命盤專題'});
  const mini=$('numMiniIndicator');if(mini)mini.textContent=selected.type==='line'?'現在聚焦：'+title:selected.type==='number'?'正在探索：'+title:`星圖總覽 · ${lines.length} 條完整連線同時顯示`;
  }
  $('numStoryPanel').addEventListener('click',e=>{const topic=e.target.closest('[data-num-story-topic]');if(topic){numStoryTopic=topic.dataset.numStoryTopic;renderStoryPanel();return}const action=e.target.closest('[data-num-story-action]');if(!action)return;if(action.dataset.numStoryAction==='next')nextStoryLine();else{numSelected={type:'overview',value:null};numMode='all';numReaderView='board';numStoryTopic='overview';refreshNumDisplay()}});
@@ -3221,6 +3270,7 @@ function storyCard(title,text){const card=document.createElement('section');card
   const board=document.createElement('button');board.type='button';board.textContent='◁ 返回九宮星圖';board.dataset.focusAction='board';actions.append(board);
   const whole=document.createElement('button');whole.type='button';whole.textContent='閱讀完整六大專題';whole.dataset.focusAction='report';actions.append(whole);
   area.append(actions);
+  numAppendAiGuide(area,{topic:'full',label:'想知道這個九宮格特徵與其他數字交互作用的真相？',button:'✦ 深入問 AI 九宮格命盤'});
  }
  function renderNumReader(){
   if(!current)return;
@@ -3325,7 +3375,7 @@ function storyCard(title,text){const card=document.createElement('section');card
  function renderStage(c){
   const sd=stageData(c),idx=Math.max(0,Math.min(3,selectedStage)),labels=stageAgeLabels(sd.first),titles=['早期奠基','方向成長','經驗轉化','整合延伸'];const chart=$('numPinnacleChart');chart.replaceChildren();
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 600 500');svg.setAttribute('class','num-pyramid-path');svg.setAttribute('aria-hidden','true');
-  for(const [k,d] of [['M150 345 L450 345','base'],['M150 345 L300 225 L450 345','mid'],['M300 225 L300 80','summit'],['M150 345 L300 80 L450 345','outline']]){const el=document.createElementNS('http://www.w3.org/2000/svg','path');el.setAttribute('d',d);if(k===['base','mid','mid','summit'][idx]||k==='outline')el.classList.add('active');svg.append(el)}chart.append(svg);
+  for(const [k,d] of [['M150 345 L450 345','base'],['M150 345 L300 225 L450 345','mid'],['M300 225 L300 80','summit'],['M150 345 L300 80 L450 345','outline']]){const el=document.createElementNS('http://www.w3.org/2000/svg','path');el.setAttribute('d',k);if(d===['base','mid','mid','summit'][idx]||d==='outline')el.classList.add('active');svg.append(el)}chart.append(svg);
   chart.appendChild(textElm('div','PINNACLES · FOUR CHAPTERS','num-pyramid-heading'));
   sd.peaks.forEach((n,i)=>{const b=makeButton('num-stage-button',`<span class="stage-idx">第 ${i+1} 階段 · ${titles[i]}</span><span class="stage-number">${n}</span><span class="stage-age">${labels[i]}</span>`,()=>{selectedStage=i;renderStage(c)},idx===i);b.setAttribute('aria-label',`第${i+1}階段：高峰數${n}，${labels[i]}，點擊查看解讀`);chart.appendChild(b)});
   chart.appendChild(textElm('div',`出生月 ${c.mo} ／ 出生日 ${c.d} ／ 出生年 ${c.y}　·　點選三角形上的數字`,`num-pyramid-source`));
@@ -3402,6 +3452,7 @@ function storyCard(title,text){const card=document.createElement('section');card
   fold('03｜最容易忽略的盲點與責任',[`這個階段的挑戰是 ${ch}。${hurdles[ch]||hurdles[4]}`,`有時候，你不是沒有能力改變，而是太習慣某種反應：${core}。當心裡不安時，先問自己，是事情真的需要這麼做，還是我害怕別人失望？`],false);
   fold('04｜回頭看看，下一步怎麼走',[reflection[idx],action[idx],idx<3?`下一階段會走向「${(peaks[sd.peaks[idx+1]]||peaks[pure(sd.peaks[idx+1])]||story).name}」。現在不必急著準備所有答案，但可以慢慢放下已經不適合你的舊習慣。`:'你不必再靠扛起所有事證明價值，允許自己把人生過得有選擇，也是成熟的一部分。'],false);
   $('numPinnacleMethod').textContent=`這套生命靈數算法依月與日、日與年、前兩個高峰，以及月與年推算四個高峰數。挑戰數用年月日的個位數差額計算。本命 ${c.life} 的第一轉換點約在 ${sd.first} 歲生日，其後每九年一階段；四階段高峰為 ${sd.peaks.join('、')}，挑戰數為 ${sd.challenges.join('、')}。不同流派對大師數和年齡界線可能有不同處理方式。此處供想追溯算法的讀者核對，並非人生事件發生日期。`;
+  numAppendAiGuide(detail,{scope:'stage',preset:'stage-present',stage:idx,label:`第 ${idx+1} 階段｜高峰 ${peak}、挑戰 ${ch}：真正該注意的轉折是什麼？`,button:'✦ AI 深入分析這個人生階段'});
  }
  /* V10 | 個人化流年、流月白話批盤。保留原有 yearAt/pure 計算規則。 */
  const TIME_ANNUAL={
@@ -3547,6 +3598,7 @@ function v11Annual(c,y,n){const a=TIME_ANNUAL[n],life=timeCoreNumber(c),detail=$
  const extra=v11BirthLine(c,n);const extensions=[['下一年的伏筆',v11Transition(c,y,n)]];
  if(extra)extensions.push(['九宮格的提醒',extra]);
  v11Folder(detail,'進階閱讀｜九宮格與前後年度',extensions);
+ numAppendAiGuide(detail,{scope:'timing',preset:'timing-year',year:y,month:selectedMonth,label:`${y} 年流年 ${n}：機會與危機，現在該進還是該守？`,button:`✦ AI 深問 ${y} 年的整體運勢`});
 }
 function v11Monthly(c,y,m,n,mn){const life=timeCoreNumber(c),info=TIME_MONTH[mn],detail=$('numMonthDetail');detail.replaceChildren();
  detail.append(timeNode('div',`${y} 年 ${m} 月 · 個人流月 ${mn}`,'num-time-eyebrow'));
@@ -3562,6 +3614,7 @@ function v11Monthly(c,y,m,n,mn){const life=timeCoreNumber(c),info=TIME_MONTH[mn]
  v11Folder(detail,'本月生活情境｜兩個實用提醒',focus);
  v11ReadP(detail,'本月避雷',info.risk,'num-time-warning');
  v11ReadP(detail,'本月處方',info.action,'num-time-action');
+ numAppendAiGuide(detail,{scope:'timing',preset:'timing-month',year:y,month:m,label:`${y} 年 ${m} 月（流月 ${mn}）：最需要提防的轉折與機會？`,button:'✦ AI 深問這個月的具體問題'});
 }
 function renderYears(c){
  const now=c.yearCalendar;selectedYear=Math.max(now,Math.min(now+8,selectedYear||now));const rail=$('numYearRail');rail.replaceChildren();
@@ -3618,6 +3671,13 @@ function renderMonths(c){
    reading.append(profileBlock('今年的生活主題',YEAR[c.year][1]),profileBlock('與核心生命數有什麼不同？',`核心數 ${c.life} 不會每年改變；流年 ${c.year} 只對應 ${c.yearCalendar} 年的象徵主題。可以用來整理年度計畫，不是吉凶保證。`));
   }
   body.append(steps,formula,reading);
+  const guide={
+   life:{topic:'full',label:'核心數字背後的性格矛盾與人生盲點，還有哪些沒看懂？',button:'✦ 交給 AI 深入解讀核心命盤'},
+   birthday:{topic:'talent',label:'生日數帶來哪些天賦與學習慣性？',button:'✦ 問 AI 我的天賦與學習方式'},
+   attitude:{topic:'social',label:'初見他人的互動風格，如何影響日常人際？',button:'✦ 問 AI 我的社交與溝通盲點'},
+   year:{scope:'timing',preset:'timing-year',year:c.yearCalendar,month:todayTaipei().m,label:'想知道今年最重要的轉折，該進還是該守？',button:'✦ 讓 AI 深入分析今年流年'}
+  };
+  numAppendAiGuide(body,guide[kind]);
  }
  $('result').addEventListener('click',event=>{const btn=event.target.closest('[data-profile]');if(!btn||!current)return;renderProfileExplanation(current,btn.dataset.profile);setProfileExplainOpen(true);$('numProfileFoldCurrent').textContent='｜'+({life:'生命數',birthday:'生日數',attitude:'態度數',year:'個人流年'}[btn.dataset.profile]||'生命數')});
  function profileExportText(c){const v=c.lifeParts,birth=pure(c.birth),att=pure(c.attitude);return [
@@ -3786,7 +3846,7 @@ function renderMonths(c){
  function openNumAiIn(scope,mode='fixed',guidedQuestion='',topic='full',guidedLabel='',presetId=''){
   if(!current||aiRequestBusy)return;
   const dock=$(NUM_AI_DOCKS.general);
-  const changing=scope!==numAiActiveDock||mode!==aiMode||(mode==='guided'&&guidedQuestion!==numAiGuidedQuestion);
+  const changing=scope!==numAiActiveDock||mode!==aiMode||(mode==='guided'&&guidedQuestion!==numAiGuidedQuestion)||(scope==='general'&&mode==='fixed'&&topic!==aiTopic);
   if(changing&&$('numAiAnswerPanel').hidden===false){$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view')}
   dock.appendChild($('numAiSection'));
   numAiActiveDock=scope;
@@ -3800,6 +3860,39 @@ function renderMonths(c){
   void numAiAutoRecoverLast();
   $('numAiSection').scrollIntoView({block:'start',behavior:'smooth'});
  }
+
+ // V37: contextual handoff only selects an existing question. It must never submit /ai/interpret.
+ document.addEventListener('click',event=>{
+  const b=event.target.closest('[data-num-ai-guide]');if(!b||!current)return;
+  event.preventDefault();
+  if(aiRequestBusy)return;
+  const scope=b.dataset.numAiGuide;
+  if(scope==='general'){
+   const topic=b.dataset.numAiTopic||'full';
+   if(!ORIGINAL_AI_TOPICS.some(t=>t.id===topic))return;
+   if(NUM_AI_GENERAL_EXTRA.includes(topic))numAiShowMore=true;
+   openNumAiIn('general','fixed','',topic);
+   return;
+  }
+  if(scope==='stage'){
+   const preset=b.dataset.numAiPresetTarget||'stage-present';
+   if(!NUM_AI_SECTION_BANK.stage.some(t=>t.id===preset))return;
+   const requested=Number(b.dataset.numAiStageTarget);
+   numAiSelectedStage=b.dataset.numAiStageTarget!==undefined&&Number.isInteger(requested)?Math.min(3,Math.max(0,requested)):stageIndexAtAge(stageData(current).age,stageData(current).first);
+   openNumAiIn('stage','guided',numAiPresetQuestion(preset),'timing',numAiStageLabel(preset),preset);
+   return;
+  }
+  if(scope==='timing'){
+   const preset=b.dataset.numAiPresetTarget||'timing-year';
+   if(!NUM_AI_SECTION_BANK.timing.some(t=>t.id===preset))return;
+   const y=Number(b.dataset.numAiYearTarget),m=Number(b.dataset.numAiMonthTarget);
+   const today=todayTaipei();
+   numAiTimingYear=Number.isInteger(y)&&y>=current.y&&y<=today.y+20?y:selectedYear;
+   numAiTimingMonth=Number.isInteger(m)&&m>=1&&m<=12?m:selectedMonth;
+   numAiTimingMonth=Math.max(numAiTimingYear===current.y?current.mo:1,Math.min(12,numAiTimingMonth));
+   openNumAiIn('timing','guided',numAiPresetQuestion(preset),'timing',numAiTimingQuestionLabel(preset),preset);
+  }
+ });
  function numAiPresetQuestion(which){const c=current,st=stageData(c),i=numAiSelectedStage,peak=st.peaks[i],challenge=st.challenges[i],year=which.startsWith('timing-')?numAiTimingYear:selectedYear,yr=yearAt(c,year),month=which.startsWith('timing-')?numAiTimingMonth:selectedMonth,mon=pure(yr+month);const prefix=`請以我 ${c.date} 的完整生命靈數命盤作深度交叉批盤（生命數 ${c.life}、生日數 ${c.birth}、態度數 ${c.attitude}），不要再重教算式。`;
  const currentStageIndex=stageIndexAtAge(st.age,st.first),phase=i<currentStageIndex?'已經歷過的階段，請用回顧語氣':i>currentStageIndex?'尚未到來的階段，請用前瞻推演語氣':'目前正在經歷的階段，請用現況語氣';
  const boundaries=stageAgeLabels(st.first),pattern=commonFactors(c),missings=pattern.missing.join('、')||'無',lines=pattern.full.map(l=>l.id).join('、')||'無';
@@ -4428,11 +4521,11 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
     }
     // Additional user actions remain usable even if the destination was collapsed.
     document.addEventListener('click',event=>{
-      const target=event.target.closest('a[href^="#"], [data-open-ai], #numAiJump, .num-local-ai button');
+      const target=event.target.closest('a[href^="#"], [data-open-ai], [data-num-ai-guide], #numAiJump, .num-local-ai button');
       if(!target)return;
       const link=target.matches('a[href^="#"]')?target.getAttribute('href'):null;
       if(link&&link.length>1){try{reveal(document.querySelector(link))}catch(_){}}
-      if(target.matches('[data-open-ai],#numAiJump,.num-local-ai button'))open('numAiGeneralHub',true);
+      if(target.matches('[data-open-ai],[data-num-ai-guide],#numAiJump,.num-local-ai button'))open('numAiGeneralHub',true);
     },true);
     window.addEventListener('hashchange',()=>{if(location.hash){try{reveal(document.querySelector(location.hash))}catch(_){}}});
     if(location.hash){try{reveal(document.querySelector(location.hash))}catch(_){}}
@@ -4506,7 +4599,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  }
  nav.addEventListener('click',e=>{const btn=e.target.closest('[data-v4-target]');if(!btn)return;switchTo(btn.dataset.v4Target);if(btn.dataset.v4Target==='ai'&&$('numAiSection')?.hidden)ai.querySelector('[data-open-ai=general]')?.click();});
  // Existing AI shortcuts switch the entire shared workspace into the AI panel.
- document.addEventListener('click',event=>{if(event.target.closest('[data-open-ai],#numOpenAi,#numAiJump,.num-local-ai-choices button'))switchTo('ai',false)},true);
+ document.addEventListener('click',event=>{if(event.target.closest('[data-open-ai],[data-num-ai-guide],#numOpenAi,#numAiJump,.num-local-ai-choices button'))switchTo('ai',false)},true);
  // Existing inspector shortcuts continue to open their original functions.
  $('numOpenReport')?.addEventListener('click',()=>{switchTo('reading');queueMicrotask(()=>{if(reading)reading.hidden=false})},true);
  document.addEventListener('click',e=>{
