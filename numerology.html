@@ -2739,48 +2739,70 @@ let reportLineFocus=null;
  let numUnlockStatusReady=false;
  const numNavHintState={reading:0,stage:0,timing:0};
  let numActiveMainSection='grid';
- function numStageUnlocked(index){return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.stageAll||(numEntitlement.stageIndices||[]).includes(index))}
- function numYearUnlocked(year){return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.timingAll||(numEntitlement.years||[]).includes(year))}
- function numMonthUnlocked(year,month){return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.timingAll||(numEntitlement.months||[]).includes(year+'-'+month))}
+ // V48: a menu badge must derive from the exact permissions used to render protected text.
+ // Unknown / malformed fields are treated as locked; never infer an area's unlock from a report title.
+ function numNormalizeEntitlement(data){
+   const validStage=value=>{const n=Number(value);return value!==null && value!=='' && (typeof value==='number'||typeof value==='string'&&/^\d+$/.test(value)) && Number.isInteger(n)&&n>=0&&n<4?n:null};
+   const stages=Array.isArray(data.stageIndices)?[...new Set(data.stageIndices.map(validStage).filter(v=>v!==null))].sort((a,b)=>a-b):[];
+   const years=Array.isArray(data.years)?[...new Set(data.years.map(y=>Number(y)).filter(y=>Number.isInteger(y)&&y>=1900&&y<=2200))].sort((a,b)=>a-b):[];
+   const months=Array.isArray(data.months)?[...new Set(data.months.map(v=>{const m=/^(\d{4})-(\d{1,2})$/.exec(String(v));return m&&Number(m[1])>=1900&&Number(m[1])<=2200&&Number(m[2])>=1&&Number(m[2])<=12?Number(m[1])+'-'+Number(m[2]):null}).filter(v=>v!==null))]:[];
+   return {...data,paidCount:Math.max(0,Math.min(4,Math.floor(Number(data.paidCount)||0))),fullUnlocked:data.fullUnlocked===true,stageAll:data.stageAll===true,timingAll:data.timingAll===true,stageIndices:stages,years,months};
+ }
+ function numEntitlementVerified(){
+   const token=numAiToken();
+   return !!(numUnlockStatusReady && token && token===numReportUnlockToken && current?.date && current.date===numReportUnlockDate);
+ }
+ function numStageGranted(e,index){return e.fullUnlocked===true||e.stageAll===true||Array.isArray(e.stageIndices)&&e.stageIndices.includes(index)}
+ function numYearGranted(e,year){return e.fullUnlocked===true||e.timingAll===true||Array.isArray(e.years)&&e.years.includes(Number(year))}
+ function numMonthGranted(e,year,month){return e.fullUnlocked===true||e.timingAll===true||Array.isArray(e.months)&&e.months.includes(year+'-'+month)}
+ function numStageUnlocked(index){return numEntitlementVerified() && Number.isInteger(index)&&index>=0&&index<4&&numStageGranted(numEntitlement,index)}
+ function numYearUnlocked(year){return numEntitlementVerified()&&numYearGranted(numEntitlement,year)}
+ function numMonthUnlocked(year,month){return numEntitlementVerified()&&numMonthGranted(numEntitlement,year,month)}
+ function numUnlockedStageIndexes(){return [0,1,2,3].filter(numStageUnlocked)}
  function numNavHasUnlocks(key){
-   if(key==='reading')return !!numAiToken()&&(numEntitlement.fullUnlocked||['work','love','growth','year','grid'].some(t=>numReportUnlocks.has(t)));
-   if(key==='stage')return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.stageAll||((numEntitlement.stageIndices||[]).length>0));
-   if(key==='timing')return !!numAiToken()&&(numEntitlement.fullUnlocked||numEntitlement.timingAll||((numEntitlement.years||[]).length>0)||((numEntitlement.months||[]).length>0));
+   if(!numEntitlementVerified())return false;
+   if(key==='reading')return !!(numEntitlement.fullUnlocked||['work','love','growth','year','grid'].some(t=>numReportUnlocks.has(t)));
+   if(key==='stage')return numUnlockedStageIndexes().length>0;
+   if(key==='timing')return !!(numEntitlement.fullUnlocked||numEntitlement.timingAll||(numEntitlement.years||[]).some(numYearUnlocked)||(numEntitlement.months||[]).some(v=>{const [y,m]=v.split('-').map(Number);return numMonthUnlocked(y,m)}));
    return false;
  }
- function numMarkNavHint(key,delta=1){
-   if(!numNavHintState[key]&&delta>0)numNavHintState[key]=0;
-   numNavHintState[key]=Math.max(0,(numNavHintState[key]||0)+delta);
+ function numNavUnlockLabel(key){
+   if(key==='stage'&&!numEntitlement.fullUnlocked&&!numEntitlement.stageAll){
+     const stages=numUnlockedStageIndexes();
+     if(stages.length===1)return '第'+(stages[0]+1)+'階段可讀';
+     if(stages.length>1)return stages.length+'個階段可讀';
+   }
+   return numEntitlement.fullUnlocked?'全盤已解鎖':'解鎖';
  }
+ function numMarkNavHint(key,delta=1){numNavHintState[key]=Math.max(0,(numNavHintState[key]||0)+delta)}
  function numClearNavHint(key){if(!(key in numNavHintState))return;numNavHintState[key]=0;numUpdateMainNavBadges()}
-window.numClearNavHint=numClearNavHint;
+ window.numClearNavHint=numClearNavHint;
  function numPulseNavButton(btn){if(!btn)return;btn.classList.remove('num-nav-pulse');void btn.offsetWidth;btn.classList.add('num-nav-pulse');setTimeout(()=>btn.classList.remove('num-nav-pulse'),3200)}
  function numUpdateMainNavBadges(){
    document.querySelectorAll('.num-v4-navigation [data-v4-target]').forEach(btn=>{
      const key=btn.dataset.v4Target,base=btn.dataset.baseLabel||btn.querySelector('.num-v4-nav-text')?.textContent||btn.textContent||'';
-     const text=btn.querySelector('.num-v4-nav-text');if(text)text.textContent=base;
-     const state=btn.querySelector('.num-v4-nav-state');if(!state)return;
-     const prevMode=btn.dataset.navState||'';
-     let mode='';
-     if(key in numNavHintState && numNavHintState[key]>0)mode='new';
-     else if(numNavHasUnlocks(key))mode='open';
+     const label=btn.querySelector('.num-v4-nav-text');if(label)label.textContent=base;
+     const badge=btn.querySelector('.num-v4-nav-state');if(!badge)return;
+     const permitted=numNavHasUnlocks(key),prevMode=btn.dataset.navState||'';
+     const mode=permitted&&numNavHintState[key]>0?'new':permitted?'open':'';
      btn.dataset.navState=mode;
-     if(mode){state.hidden=false;state.textContent=mode==='new'?'(+'+numNavHintState[key]+')':'(解鎖)'}else{state.hidden=true;state.textContent=''}
-     if(mode==='new' && prevMode!=='new')numPulseNavButton(btn);
+     if(mode){badge.hidden=false;badge.textContent=mode==='new'?'(+'+numNavHintState[key]+')':'('+numNavUnlockLabel(key)+')';}
+     else {badge.hidden=true;badge.textContent=''}
+     if(mode==='new'&&prevMode!=='new')numPulseNavButton(btn);
    });
  }
  function numDiffUnlockSignals(prevEnt,nextEnt,prevSet,nextSet){
-   const allPrev=!!prevEnt.fullUnlocked,allNext=!!nextEnt.fullUnlocked;
-   if(!allPrev && allNext){numMarkNavHint('reading',1);numMarkNavHint('stage',1);numMarkNavHint('timing',1);return;}
+   const allPrev=prevEnt.fullUnlocked===true,allNext=nextEnt.fullUnlocked===true;
+   if(!allPrev&&allNext){numMarkNavHint('reading',1);numMarkNavHint('stage',1);numMarkNavHint('timing',1);return;}
    const reportTopics=['work','love','growth','year','grid'];
-   if(reportTopics.some(t=>!prevSet.has(t)&&nextSet.has(t)))numMarkNavHint('reading',1);
-   const prevStageAll=!!prevEnt.stageAll, nextStageAll=!!nextEnt.stageAll;
-   const prevStages=new Set(prevEnt.stageIndices||[]), nextStages=new Set(nextEnt.stageIndices||[]);
-   if((!prevStageAll&&nextStageAll)||[...nextStages].some(v=>!prevStages.has(v)))numMarkNavHint('stage',1);
-   const prevTimeAll=!!prevEnt.timingAll, nextTimeAll=!!nextEnt.timingAll;
-   const prevYears=new Set(prevEnt.years||[]), nextYears=new Set(nextEnt.years||[]);
-   const prevMonths=new Set(prevEnt.months||[]), nextMonths=new Set(nextEnt.months||[]);
-   if((!prevTimeAll&&nextTimeAll)||[...nextYears].some(v=>!prevYears.has(v))||[...nextMonths].some(v=>!prevMonths.has(v)))numMarkNavHint('timing',1);
+   const newReports=reportTopics.filter(t=>!prevSet.has(t)&&nextSet.has(t));
+   if(newReports.length)numMarkNavHint('reading',newReports.length);
+   const newStages=[0,1,2,3].filter(i=>!numStageGranted(prevEnt,i)&&numStageGranted(nextEnt,i));
+   if(newStages.length)numMarkNavHint('stage',newStages.length);
+   const priorYears=new Set(prevEnt.years||[]),priorMonths=new Set(prevEnt.months||[]);
+   const newYears=(nextEnt.years||[]).filter(y=>!priorYears.has(y));
+   const newMonths=(nextEnt.months||[]).filter(m=>!priorMonths.has(m));
+   if((!prevEnt.timingAll&&nextEnt.timingAll)||newYears.length||newMonths.length)numMarkNavHint('timing',1);
  }
  function numUpdateProgress(){
    const count=Math.min(4,Number(numEntitlement.paidCount)||0);const title=$('numUnlockTitle'),desc=$('numUnlockDesc'),meter=$('numUnlockMeter');
@@ -2873,7 +2895,7 @@ window.numClearNavHint=numClearNavHint;
      if(seq!==numReportUnlockCheckSeq||current?.date!==date||numAiToken()!==sessionToken)return;
      if(!r.ok||!data?.ok)throw Error(data?.error||'UNLOCK_STATUS');
      numReportUnlocks=new Set(['overview',...(data.unlocked||[]).filter(t=>Object.hasOwn(numReportPayTopics,t))]);
-     numEntitlement={...data};
+     numEntitlement=numNormalizeEntitlement(data);
      if(notify)numDiffUnlockSignals(prevEnt,numEntitlement,prevSet,numReportUnlocks);
      numUnlockStatusReady=true;
      numUpdateReportTabBadges();
