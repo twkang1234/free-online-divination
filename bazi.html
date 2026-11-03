@@ -3217,6 +3217,7 @@ html[data-theme="light"] #baziPersonalAiReports .bazi-followup-box .bazi-reading
         </article>
         <article class="bazi-ai-free-card dh-quota-card dh-quota-gift">
           <strong class="dh-quota-section-title">會員共用額度</strong>
+          <button type="button" class="dh-quota-update-action" id="baziUpdateRemainingBtn" aria-label="更新剩餘次數，重新查詢免費額度、會員共用額度與專業點數" title="如果顯示的剩餘次數不正確，按這裡重新查詢最新資料"><span class="dh-quota-update-icon" aria-hidden="true">↻</span><span class="dh-quota-update-label">更新剩餘次數</span></button>
           <div class="dh-quota-lines">
             <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading quota-triple"><strong class="quota-cell quota-cell-label">工具額度（全平台共用）</strong><b class="quota-cell quota-cell-value" id="baziSharedToolCount">— 次</b><span class="dh-quota-gift-detail quota-cell quota-cell-note">八字、塔羅、易經皆可使用</span></div></div>
             <div class="dh-quota-gift-row"><div class="dh-quota-gift-heading quota-triple"><strong class="quota-cell quota-cell-label" id="baziQuotaAccountLabel">AI 解讀（全平台共用）</strong><b class="quota-cell quota-cell-value" id="baziQuotaDailyCount">— 次</b><span class="dh-quota-gift-detail quota-cell quota-cell-note">各工具 AI 解讀皆可使用</span></div></div>
@@ -3941,15 +3942,17 @@ html[data-theme="light"] #baziPersonalAiReports .bazi-followup-box .bazi-reading
     btn.dataset.quotaMode=mode;
   }
   window.baziSyncCastCta=baziSyncCastCta;
+  let baziCastQuotaRequestSequence=0;
   async function baziCastRefreshQuota(){
-    const el=document.getElementById('baziCastQuotaCount');if(!el)return;
+    const el=document.getElementById('baziCastQuotaCount');if(!el)return false;
+    const requestSequence=++baziCastQuotaRequestSequence;
     if(!baziCastCtaQuota)baziSyncCastCta();
     const t=baziSessionMember?.sub?baziAuthToken():'',known=baziKnownMemberOnDevice();
     try{
       const headers={'X-Bazi-Visitor-Id':baziVisitorId(),...(t?{Authorization:'Bearer '+t}:{})};
       const res=await fetch(BAZI_API_BASE+'/cast/quota',{headers,cache:'no-store'}),data=await res.json();
       if(!res.ok||!data.ok)throw Error(data.error||'額度查詢失敗');
-      if(t!==(baziSessionMember?.sub?baziAuthToken():''))return;
+      if(requestSequence!==baziCastQuotaRequestSequence||t!==(baziSessionMember?.sub?baziAuthToken():''))return false;
       const isMember=!!data.authenticated;
       window.dhBaziWallet=data.wallet||null;
       const sharedTool=document.getElementById('baziSharedToolCount');if(sharedTool)sharedTool.textContent=data.authenticated?(data.wallet?.tool??'—')+' 次':'登入後可用';
@@ -3964,7 +3967,12 @@ html[data-theme="light"] #baziPersonalAiReports .bazi-followup-box .bazi-reading
       const login=document.getElementById('baziCastQuotaLogin');if(login)login.hidden=isMember||remain>0;
       document.body.classList.toggle('bazi-member-verified',isMember);
       window.baziRefreshShenshaGate?.();
-    }catch(_){el.textContent='暫時無法查詢';baziCastCtaQuota=null;baziSyncCastCta();}
+      return true;
+    }catch(_){
+      if(requestSequence!==baziCastQuotaRequestSequence)return false;
+      el.textContent='暫時無法查詢';baziCastCtaQuota=null;baziSyncCastCta();
+      return false;
+    }
   }
   window.baziCastRefreshQuota=baziCastRefreshQuota;
   window.baziCastBrowserHeaders=()=>({'X-Bazi-Visitor-Id':baziVisitorId()});
@@ -6403,10 +6411,10 @@ ${tasks}
     const requestSequence=++baziQuotaRequestSequence;
     const authAtStart=baziAuthToken();
     const target=document.getElementById('baziGeminiQuota');
-    if(!target)return;
+    if(!target)return false;
     try{
       const r=await fetch(BAZI_API_BASE+'/ai/status',{cache:'no-store',headers:{...baziAiHeaders(),...window.baziCastBrowserHeaders()}}),j=await r.json();
-      if(requestSequence!==baziQuotaRequestSequence||authAtStart!==baziAuthToken())return;
+      if(requestSequence!==baziQuotaRequestSequence||authAtStart!==baziAuthToken())return false;
       if(!j.ok)throw Error(j.error||'UNKNOWN');
       // 命盤頁只在 AI 使用入口凸顯個人額度；全站共享額度維持次要資訊。
       const personal=document.createElement('strong');personal.className='bazi-ai-daily-emphasis';
@@ -6420,8 +6428,13 @@ ${tasks}
       }
       target.replaceChildren(personal,shared);
       baziAiUpdateVisible(j);
-    }catch(_){if(requestSequence===baziQuotaRequestSequence)target.textContent='免費額度暫時無法取得';}
+      return true;
+    }catch(_){
+      if(requestSequence===baziQuotaRequestSequence)target.textContent='免費額度暫時無法取得';
+      return false;
+    }
   }
+  window.baziRefreshGeminiQuotaNow=()=>baziGeminiRefreshQuota();
   function baziGeminiSetup(){
     const btn=document.getElementById('baziGeminiRun');
     if(!btn||btn.dataset.bound)return;
@@ -9772,17 +9785,25 @@ html[data-theme="light"] .bazi-personal-stage .bazi-custom-action-line .bazi-ai-
       }
       const fault=new Error(message);fault.code=String(j.error||'');fault.traceId=String(j.traceId||'');fault.httpStatus=r.status;throw fault;
     }return j;}
+  let baziPersonalQuotaRequestSequence=0;
   async function refreshPersonalQuota(){
-    const target=$('baziPersonalQuota');if(!target)return;
+    const target=$('baziPersonalQuota');if(!target)return null;
+    const requestSequence=++baziPersonalQuotaRequestSequence;
     try{
       const token=typeof baziAuthToken==='function'?baziAuthToken():'';
       const r=await fetch(API+'/ai/status',{headers:{...window.baziCastBrowserHeaders(),...(token?{'Authorization':'Bearer '+token}:{})},cache:'no-store'});
-      const j=await r.json();if(!r.ok||!j.ok)throw Error('ACCESS_STATUS_UNAVAILABLE');
+      const j=await r.json();
+      if(requestSequence!==baziPersonalQuotaRequestSequence||token!==(typeof baziAuthToken==='function'?baziAuthToken():''))return null;
+      if(!r.ok||!j.ok)throw Error('ACCESS_STATUS_UNAVAILABLE');
       accessInfo=j;quotaReady=true;
       target.textContent=`免費 ${j.periodicAi?.remaining??0} 次`+(j.authenticated?'｜共用 '+(j.sharedAiRemaining??0)+' 次':'｜登入可用共用額度');
       renderTopicAccess();return j;
-    }catch(_){target.textContent='AI 權限暫時無法查詢';accessInfo={authenticated:false,personalRemaining:0,usedTopics:[]};quotaReady=false;renderTopicAccess();return null;}
+    }catch(_){
+      if(requestSequence!==baziPersonalQuotaRequestSequence)return null;
+      target.textContent='AI 權限暫時無法查詢';accessInfo={authenticated:false,personalRemaining:0,usedTopics:[]};quotaReady=false;renderTopicAccess();return null;
+    }
   }
+  window.baziRefreshPersonalQuotaNow=()=>refreshPersonalQuota();
 
   function identity(options){
     const t=testRole();
@@ -11527,31 +11548,32 @@ html[data-theme="light"] #baziAiQuotaPanel .dh-professional-points-card>b{color:
  function token(){try{return localStorage.getItem(STORAGE)||''}catch(_){return ''}}
  function update(value,message){number.textContent=value;note.textContent=(value==='— 點'?message:'八字、塔羅、易經共用')}
  async function refresh(force=false){
-   if(location.protocol==='file:')return update('— 點','請在正式網站登入後查看');
+   if(location.protocol==='file:'){update('— 點','請在正式網站登入後查看');return null;}
    const t=token();
    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(t)){
      requestSeq++;
      update('— 點','登入後查看｜三工具共用');
-     return;
+     return null;
    }
    const now=Date.now();
-   if(!force && now-lastRequest<1500)return;
+   if(!force && now-lastRequest<1500)return null;
    lastRequest=now;
    const seq=++requestSeq;
    try{
      const response=await fetch(API,{cache:'no-store',headers:{Accept:'application/json',Authorization:'Bearer '+t}});
      const data=await response.json().catch(()=>null);
      // Avoid painting an old member's result after a logout / account switch.
-     if(token()!==t||seq!==requestSeq)return;
+     if(token()!==t||seq!==requestSeq)return null;
      if(!response.ok||data?.success!==true||!Number.isSafeInteger(data?.points?.balance)||data.points.balance<0){
        update('— 點',response.status===401?'登入已失效，請重新登入':'暫時無法查詢餘額，請稍後重試');
-       return;
+       return false;
      }
      update(data.points.balance+' 點','八字・塔羅・易經共用｜按區塊計價');
      // A legacy small badge may already exist in BaZi's chapter navigation.
      const chapterBadge=document.getElementById('dh-sp-balance');
      if(chapterBadge)chapterBadge.textContent='專業解鎖點數 '+data.points.balance+' 點';
-   }catch(_){if(token()===t)update('— 點','暫時無法查詢餘額，請稍後重試')}
+     return true;
+   }catch(_){if(token()===t)update('— 點','暫時無法查詢餘額，請稍後重試');return false;}
  }
  window.dhRefreshProfessionalPoints=()=>refresh(true);
  const start=()=>{void refresh(true);setTimeout(()=>void refresh(true),1700)};
@@ -12949,5 +12971,83 @@ body.has-bazi-chart footer.page-footer.dh-five-tools-footer{display:block!import
 @media(prefers-reduced-motion:reduce){footer.page-footer.dh-five-tools-footer .dh-footer-nav a{transition:none}}
 @media print{footer.page-footer.dh-five-tools-footer .dh-footer-nav{display:none!important}}
 </style>
+
+<!-- 會員額度手動更新：沿用既有唯讀查詢 API，不修改點數或額度。 -->
+<style id="bazi-quota-refresh-action-20261103">
+#baziAiQuotaPanel .dh-quota-gift{position:relative!important}
+#baziAiQuotaPanel .dh-quota-gift > .dh-quota-section-title{padding-right:152px!important}
+#baziAiQuotaPanel .dh-quota-gift > .dh-quota-update-action{
+  position:absolute!important;z-index:3!important;top:10px!important;right:12px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;
+  min-height:29px!important;max-width:160px!important;padding:4px 10px!important;
+  border:1px solid rgba(186,165,244,.46)!important;border-radius:999px!important;
+  background:rgba(171,142,240,.10)!important;color:#e2d3ff!important;
+  font-family:var(--sans)!important;font-size:.70rem!important;font-weight:700!important;
+  line-height:1.3!important;letter-spacing:0!important;white-space:nowrap!important;
+  cursor:pointer!important;box-shadow:none!important;transition:background .18s,border-color .18s!important;
+}
+#baziAiQuotaPanel .dh-quota-gift > .dh-quota-update-action:hover:not(:disabled),
+#baziAiQuotaPanel .dh-quota-gift > .dh-quota-update-action:focus-visible{
+  background:rgba(171,142,240,.22)!important;border-color:rgba(217,195,255,.83)!important;
+}
+#baziAiQuotaPanel .dh-quota-gift > .dh-quota-update-action:focus-visible{outline:2px solid var(--cyan,#75dce4)!important;outline-offset:2px!important}
+#baziAiQuotaPanel .dh-quota-gift > .dh-quota-update-action:disabled{cursor:progress!important;opacity:.70!important}
+#baziAiQuotaPanel .dh-quota-update-icon{font-size:1rem!important;line-height:1!important}
+#baziAiQuotaPanel .dh-quota-update-action[data-state="success"]{color:#baf4db!important;border-color:rgba(136,226,181,.5)!important}
+#baziAiQuotaPanel .dh-quota-update-action[data-state="error"]{color:#ffd3b0!important;border-color:rgba(242,176,133,.55)!important}
+html[data-theme="light"] #baziAiQuotaPanel .dh-quota-gift > .dh-quota-update-action{background:#f7f1ff!important;color:#614196!important;border-color:#ad94d2!important}
+html[data-theme="light"] #baziAiQuotaPanel .dh-quota-update-action[data-state="success"]{color:#187747!important}
+html[data-theme="light"] #baziAiQuotaPanel .dh-quota-update-action[data-state="error"]{color:#a04919!important}
+@media(max-width:420px){
+ #baziAiQuotaPanel .dh-quota-gift > .dh-quota-section-title{padding-right:142px!important}
+ #baziAiQuotaPanel .dh-quota-gift > .dh-quota-update-action{top:10px!important;right:9px!important;padding:4px 7px!important;font-size:.66rem!important}
+}
+@media(prefers-reduced-motion:reduce){#baziAiQuotaPanel .dh-quota-gift > .dh-quota-update-action{transition:none!important}}
+</style>
+<script id="bazi-quota-refresh-action-20261103">
+(()=>{'use strict';
+  const button=document.getElementById('baziUpdateRemainingBtn');
+  if(!button)return;
+  const icon=button.querySelector('.dh-quota-update-icon');
+  const label=button.querySelector('.dh-quota-update-label');
+  let clearTimer=null;
+  const normal='更新剩餘次數';
+  const set=(state,message,description)=>{
+    button.dataset.state=state;
+    if(icon)icon.textContent=state==='success'?'✓':'↻';
+    if(label)label.textContent=message;
+    button.title=description||message;
+  };
+  button.addEventListener('click',async()=>{
+    if(button.disabled)return;
+    if(clearTimer){clearTimeout(clearTimer);clearTimer=null;}
+    button.disabled=true;
+    button.setAttribute('aria-busy','true');
+    set('loading','查詢最新次數…','正在重新查詢後端的最新剩餘次數，不會扣除額度');
+    const tasks=[
+      ()=>window.baziCastRefreshQuota?.(),
+      ()=>window.baziRefreshGeminiQuotaNow?.(),
+      ()=>window.baziRefreshPersonalQuotaNow?.(),
+      ()=>window.dhRefreshProfessionalPoints?.()
+    ];
+    const results=await Promise.allSettled(tasks.map(run=>Promise.resolve().then(run)));
+    const failed=results.some((r,i)=>{
+      if(r.status==='rejected')return true;
+      if(i===0||i===1)return r.value!==true;
+      if(i===2)return !r.value?.ok;
+      // 未登入時專業點數本來就是「登入後查看」，不算查詢失敗。
+      return r.value===false;
+    });
+    button.disabled=false;
+    button.removeAttribute('aria-busy');
+    if(failed){
+      set('error','部分更新失敗','有些額度暫時無法查詢，請再按一次；已成功查詢的項目仍顯示最新資料');
+    }else{
+      set('success','已更新','已重新查詢免費額度、會員共用額度、AI 及專業點數；本次沒有扣點');
+    }
+    clearTimer=setTimeout(()=>{set('idle',normal,'若剩餘次數有疑問，可重新查詢最新資料');clearTimer=null;},failed?6500:2500);
+  });
+})();
+</script>
 </body>
 </html>
