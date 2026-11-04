@@ -103,9 +103,43 @@
 
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js" defer></script>
+<style id="bazi-v15-reading-style">
+/* Mobile AI reading: semantic color, comfortable proportions, no AI copy rewriting. */
+.reading-copy.bazi-v15-readable{font-size:16px;line-height:1.85;font-weight:400;letter-spacing:0;color:#dbe3ec;text-wrap:pretty;overflow-wrap:anywhere}
+.reading-copy.bazi-v15-readable p{margin:0 0 16px;line-height:1.85;color:inherit}
+.reading-copy.bazi-v15-readable :is(h3,h4){line-height:1.55;letter-spacing:.005em;scroll-margin-top:78px;clear:both}
+.reading-copy.bazi-v15-readable h3{font-size:18px;color:#edcd86;margin:25px 0 12px;border-bottom:1px solid #4a473c;padding-bottom:7px}
+.reading-copy.bazi-v15-readable h4{font-size:16px;color:#ebd6a6;margin:19px 0 9px}
+.reading-copy.bazi-v15-readable :is(strong,b){font-weight:760;color:#f0ce85}
+.reading-copy.bazi-v15-readable .bazi-v15-basis{color:#85d7e5!important}
+.reading-copy.bazi-v15-readable .bazi-v15-good{color:#91d7b3!important}
+.reading-copy.bazi-v15-readable .bazi-v15-risk{color:#edab83!important}
+.reading-copy.bazi-v15-readable :is(h3,h4).bazi-v15-key{color:#edcd86!important}
+.reading-copy.bazi-v15-readable :is(ul,ol){margin:12px 0 19px;padding-left:1.45em}
+.reading-copy.bazi-v15-readable li{margin:9px 0;line-height:1.82;padding-left:.12em}
+.reading-copy.bazi-v15-readable li::marker{color:#d2ae68}
+.reading-copy.bazi-v15-readable blockquote{border-left:3px solid #d9b975;background:#ddbb7210;padding:12px 14px;margin:17px 0;border-radius:0 9px 9px 0}
+.reading-copy.bazi-v15-readable blockquote p{margin:0;color:#edd9ae}
+.reading-copy.bazi-v15-readable hr{border:0;border-top:1px solid #3c4651;margin:22px 0}
+.reading-copy.bazi-v15-readable code{font-size:.9em;overflow-wrap:anywhere;color:#a2d7e2}
+.bazi-v15-toc{margin:5px 0 21px;padding:0 12px;border:1px solid #455667;border-radius:10px;background:#1b2632}
+.bazi-v15-toc summary{cursor:pointer;padding:11px 0;color:#e3c17c;font-size:13px;font-weight:750}
+.bazi-v15-toc-list{border-top:1px solid #354656;display:grid;gap:5px;padding:8px 0}
+.bazi-v15-toc-list button{border:0;background:none;text-align:left;padding:9px 4px;color:#c0d8e1;line-height:1.5;white-space:normal}
+.bazi-v15-table-scroll{overflow:auto;width:100%;max-width:100%;margin:15px 0 20px;border:1px solid #364b5a;border-radius:9px}
+.bazi-v15-table-scroll table{border-collapse:collapse;min-width:450px;font-size:14px;line-height:1.7;width:100%}
+.bazi-v15-table-scroll :is(th,td){border-bottom:1px solid #334454;padding:9px 11px;text-align:left;vertical-align:top}
+.bazi-v15-table-scroll th{color:#edcd86;background:#edcd8612}
+.reading-meta{font-size:12px!important;line-height:1.65;color:#8799ab!important;margin:4px 0 12px;overflow-wrap:anywhere}
+.reading-title{font-size:18px;line-height:1.5;margin:0 0 10px;color:#f2e1c2}
+#questionRefresh.bazi-v15-flash{animation:baziV15GentleFlash 1.12s ease-in-out 5}
+@keyframes baziV15GentleFlash{0%,100%{filter:brightness(1);text-shadow:none}50%{filter:brightness(1.45);text-shadow:0 0 11px #86dbe599}}
+@media(prefers-reduced-motion:reduce){#questionRefresh.bazi-v15-flash{animation:none!important}}
+@media(max-width:360px){.reading-copy.bazi-v15-readable{font-size:16px}}
+</style>
 </head>
 <body>
-<header class="sitebar"><div class="wrap sitebar-in"><a href="/" class="brand" aria-label="返回一念知機首頁"><span class="brand-symbol">命</span><span>一念知機</span><span class="version-chip" aria-label="八字手機版版本 V14">V14</span></a><div class="header-actions"><a href="/bazi.html?view=desktop" class="quiet-link">電腦版</a><button class="small-btn" id="accountBtn" type="button">會員登入</button></div></div></header>
+<header class="sitebar"><div class="wrap sitebar-in"><a href="/" class="brand" aria-label="返回一念知機首頁"><span class="brand-symbol">命</span><span>一念知機</span><span class="version-chip" aria-label="八字手機版版本 V15">V15</span></a><div class="header-actions"><a href="/bazi.html?view=desktop" class="quiet-link">電腦版</a><button class="small-btn" id="accountBtn" type="button">會員登入</button></div></div></header>
 <main class="wrap">
 <section class="hero" aria-label="八字排盤手機版"><div class="eyebrow">一念知機 · BAZI</div><div class="spark">✧</div><h1>八字排盤手機版</h1><div class="hero-subtitle">四柱命盤・五行摘要・AI 輔助解讀</div><p>輸入出生年月日時，快速建立四柱命盤，透過 AI 探索個人特質、事業財富與人生運勢。</p></section>
 <section class="card" id="birthCard" aria-labelledby="birthTitle"><div class="section-head"><h2 id="birthTitle">出生資料</h2><small class="quota-label" id="castQuotaInline">額度查詢中…</small></div>
@@ -954,6 +988,73 @@ function renderTraceError(e,section){if(!tracePattern.test(e.traceId)||!Number.i
  });
 }
 function textEl(name,content,cls){const e=document.createElement(name);e.textContent=safe(content);if(cls)e.className=cls;return e}
+
+/* BAZI V15: safe, shared reading rules. Text remains plain DOM, never HTML injected. */
+function baziV15RenderReading(target,source){
+ if(!target)return;
+ target.replaceChildren();target.classList.add('bazi-v15-readable');
+ const text=String(source||'').replace(/\r\n?/g,'\n').replace(/<br\s*\/?\s*>/gi,'\n')
+   .replace(/<\/?p(?:\s+[^>]*)?>/gi,'\n\n');
+ const lines=text.split('\n'),fragment=document.createDocumentFragment(),headings=[];
+ let pending=[],list=null,listType='',quote=null;
+ const wordTone=(str)=>{
+  const s=String(str||'');
+  if(/風險|盲點|破財|小人|警示|危機|忌|警惕|注意|沖突|衝突|障礙|刑害|官非|不利|制約|代價/.test(s))return 'bazi-v15-risk';
+  if(/建議|機會|優勢|有利|貴人|助力|宜|改善|策略|發展方向|行動|可行|突破|具體做法/.test(s))return 'bazi-v15-good';
+  if(/日主|月令|五行|十神|比肩|劫財|食神|傷官|正財|偏財|正官|七殺|正印|偏印|財星|官殺|食傷|配偶宮|夫妻宮|合沖|干支|大運|流年|流月|格局|節氣|藏干/.test(s))return 'bazi-v15-basis';
+  return 'bazi-v15-key';
+ };
+ function inline(el,s){
+  for(const part of String(s).split(/(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`)/g)){
+   if(!part)continue;
+   if(/^\*\*[^*\n]+\*\*$/.test(part)||/^__[^_\n]+__$/.test(part)){
+    const t=part.slice(2,-2),b=document.createElement('strong');b.textContent=t;b.classList.add(wordTone(t));el.append(b);
+   }else if(/^`[^`\n]+`$/.test(part)){const c=document.createElement('code');c.textContent=part.slice(1,-1);el.append(c)}
+   else el.append(document.createTextNode(part.replace(/\\\*/g,'*')));
+  }
+ }
+ function para(s){if(!s.trim())return;const p=document.createElement('p');inline(p,s.trim());fragment.append(p)}
+ function flush(){if(!pending.length)return;const full=pending.join(' ').trim();pending=[];
+  if(full.length<=250){para(full);return}
+  const sentences=full.match(/[^。！？!?；;]+[。！？!?；;]?/g)||[full];let part='';
+  for(const sentence of sentences){if(part.length>=100&&part.length+sentence.length>210){para(part);part=''}part+=sentence}
+  para(part);
+ }
+ function reset(){list=null;listType='';quote=null}
+ function parseCells(line){const t=line.trim();if(!/^\|.+\|$/.test(t))return null;const a=t.slice(1,-1).split(/(?<!\\)\|/).map(x=>x.replace(/\\\|/g,'|').trim());return a.length>=2&&a.length<=8?a:null}
+ function isSeparator(cells){return cells&&cells.every(c=>/^:?-{3,}:?$/.test(c.replace(/\s/g,'')))}
+ function table(rows){const cols=rows[0].length,clean=rows.filter(r=>r.length===cols&&!isSeparator(r));if(clean.length<2)return false;
+  const wrap=document.createElement('div');wrap.className='bazi-v15-table-scroll';wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','AI 解讀表格，可左右滑動');
+  const tbl=document.createElement('table');let section=null;const header=rows.length>1&&isSeparator(rows[1]);
+  clean.forEach((r,i)=>{if(!section||(header&&i===1)){section=document.createElement(header&&i===0?'thead':'tbody');tbl.append(section)}
+   const tr=document.createElement('tr');r.forEach(cell=>{const td=document.createElement(header&&i===0?'th':'td');if(td.tagName==='TH')td.scope='col';inline(td,cell);tr.append(td)});section.append(tr)});
+  wrap.append(tbl);fragment.append(wrap);return true;
+ }
+ for(let i=0;i<lines.length;i++){
+  const raw=lines[i],v=raw.trim();if(!v){flush();reset();continue}
+  const cells=parseCells(v),next=parseCells(lines[i+1]||'');
+  if(cells&&next&&cells.length===next.length){flush();reset();const rows=[cells];while(i+1<lines.length){const n=parseCells(lines[i+1]);if(!n||n.length!==cells.length)break;rows.push(n);i++}if(!table(rows))rows.forEach(r=>para(r.join('｜')));continue}
+  if(/^(?:-{3,}|\*{3,}|_{3,})$/.test(v)){flush();reset();fragment.append(document.createElement('hr'));continue}
+  const heading=v.match(/^(#{1,6})\s+(.+)$/),numbered=v.match(/^[一二三四五六七八九十]+[、.．]\s*(.{2,80})$/),solo=v.match(/^\*\*([^*\n]{3,65})\*\*$/);
+  if(heading||numbered||solo){flush();reset();const title=heading?heading[2]:numbered?v:solo[1];
+   const el=document.createElement(heading&&heading[1].length>=3?'h4':'h3');inline(el,title);el.classList.add(wordTone(title));fragment.append(el);headings.push(el);continue}
+  const q=v.match(/^>\s*(.+)$/);if(q){flush();list=null;listType='';if(!quote){quote=document.createElement('blockquote');fragment.append(quote)}const p=document.createElement('p');inline(p,q[1]);quote.append(p);continue}
+  quote=null;
+  const bullet=v.match(/^(?:[-*•●]\s+)(.+)$/),ordered=v.match(/^(?:\d{1,3}[.)、．]\s+)(.+)$/);
+  if(bullet||ordered){flush();const kind=ordered?'ol':'ul';if(!list||listType!==kind){list=document.createElement(kind);fragment.append(list);listType=kind}const li=document.createElement('li');inline(li,(bullet||ordered)[1]);list.append(li);continue}
+  if(list&&/^\s{2,}\S/.test(raw)&&list.lastElementChild){list.lastElementChild.append(document.createTextNode(' '));inline(list.lastElementChild,v);continue}
+  list=null;listType='';pending.push(cells?cells.join('｜'):v);
+ }
+ flush();target.append(fragment);
+ const chinese=(text.match(/[\u3400-\u9fff]/g)||[]).length;
+ if(chinese>=1500&&headings.length>=3){
+  const nav=document.createElement('details');nav.className='bazi-v15-toc';const summary=document.createElement('summary');summary.textContent='本篇章節 · 點選快速跳轉';nav.append(summary);
+  const links=document.createElement('div');links.className='bazi-v15-toc-list';
+  headings.slice(0,20).forEach((h,i)=>{const b=document.createElement('button');b.type='button';b.textContent=h.textContent.slice(0,48);b.addEventListener('click',()=>{h.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});nav.open=false});links.append(b)});
+  nav.append(links);target.prepend(nav);
+ }
+}
+
 function markdownNodes(target,raw){target.replaceChildren();
  // AI 回答是不可信的文字，這裡永遠不呼叫 innerHTML。
  const lines=safe(raw).replace(/\r\n?/g,'\n').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/?p\s*>/gi,'\n').split('\n');
@@ -988,9 +1089,9 @@ function renderReports(){const root=$('reportHistory');root.replaceChildren();co
   if(state.expanded===item.key){const body=document.createElement('div');body.className='report-content';const h=textEl('h3',item.title,'reading-title');body.append(h);
    if(item.custom)body.append(textEl('p','原題：'+safe(item.entry.question),'reading-meta'));
    if(tracePattern.test(item.entry.traceId))body.append(textEl('p',( /^[A-E]$/.test(item.entry.channel)?'通道 '+item.entry.channel+'｜':'')+'追蹤碼：'+item.entry.traceId,'reading-meta'));
-   const article=document.createElement('article');article.className='reading-copy';markdownNodes(article,item.entry.reading);body.append(article);
+   const article=document.createElement('article');article.className='reading-copy';baziV15RenderReading(article,item.entry.reading);body.append(article);
    if(item.custom){const r=item.entry,follow=document.createElement('section');follow.className='follow';
-    if(r.followupReading){follow.append(textEl('h4','追問｜'+safe(r.followupQuestion)));const answer=document.createElement('article');answer.className='reading-copy';markdownNodes(answer,r.followupReading);follow.append(answer);body.append(follow)}
+    if(r.followupReading){follow.append(textEl('h4','追問｜'+safe(r.followupQuestion)));const answer=document.createElement('article');answer.className='reading-copy';baziV15RenderReading(answer,r.followupReading);follow.append(answer);body.append(follow)}
     else if(r.followupId){follow.append(textEl('h4','AI 追問 · 限一次（AI -1）'));const area=document.createElement('textarea');area.maxLength=400;area.rows=3;area.placeholder='請輸入追問（5～400 字）';const action=textEl('button','送出追問 · AI -1','button-secondary');action.type='button';action.disabled=state.aiBusy||!state.member||!aiAvailable();action.addEventListener('click',()=>runFollowup(item.index,area,action));follow.append(area,action);body.append(follow)}
    }
    const actions=document.createElement('div');actions.className='report-actions';const copy=textEl('button','複製全文','button-secondary'),download=textEl('button','下載 TXT','button-secondary');copy.type=download.type='button';copy.addEventListener('click',()=>copyTxt(item,copy));download.addEventListener('click',()=>downloadTxt(item));actions.append(copy,download);body.append(actions);
@@ -1009,40 +1110,42 @@ function renderReports(){const root=$('reportHistory');root.replaceChildren();co
 }
 function setupQuestionSwipeCue(){
  const rail=$('questionCategories'),details=$('customBox');
- if(!rail||!details||!('IntersectionObserver' in window)||
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
- let played=false,cancelled=false,frame=0,observer;
- const cancel=()=>{cancelled=true;if(frame)cancelAnimationFrame(frame);rail.style.scrollSnapType='';};
- for(const type of ['pointerdown','touchstart','wheel','keydown'])rail.addEventListener(type,cancel,{once:true,passive:true});
+ if(!rail||!details||!('IntersectionObserver' in window)||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ let stopped=false,visible=false,frame=0,last=0,observer,origin=0;
+ const stop=()=>{if(stopped)return;stopped=true;visible=false;cancelAnimationFrame(frame);rail.style.scrollSnapType='';observer?.disconnect();};
+ ['pointerdown','touchstart','wheel','keydown','click'].forEach(t=>rail.addEventListener(t,stop,{once:true,passive:true}));
+ // Visible-only repeat: ease right -> pause -> ease left -> pause, until real user interaction.
  const ease=t=>t*t*(3-2*t);
- const glide=(start,end,duration,next)=>{
-  const began=performance.now();
-  function tick(now){
-   if(cancelled||!details.open){rail.style.scrollSnapType='';return;}
-   const t=Math.min(1,(now-began)/duration);
-   rail.scrollLeft=start+(end-start)*ease(t);
-   if(t<1)frame=requestAnimationFrame(tick);
-   else if(next)next();else rail.style.scrollSnapType='';
-  }
-  frame=requestAnimationFrame(tick);
- };
+ function animate(now){
+  if(stopped||!visible||!details.open||document.hidden)return;
+  if(!last)last=now;
+  const travel=Math.min(105,rail.scrollWidth-rail.clientWidth);
+  if(travel<40){stop();return}
+  const phase=((now-last)%5200)/1000;
+  if(phase<1.6)rail.scrollLeft=origin+travel*ease(phase/1.6);
+  else if(phase<2.2)rail.scrollLeft=origin+travel;
+  else if(phase<3.8)rail.scrollLeft=origin+travel*(1-ease((phase-2.2)/1.6));
+  else rail.scrollLeft=origin;
+  frame=requestAnimationFrame(animate);
+ }
  observer=new IntersectionObserver(entries=>{
-  if(played||!entries.some(e=>e.isIntersecting&&e.intersectionRatio>=.7))return;
-  if(!details.open||rail.scrollWidth-rail.clientWidth<90||rail.scrollLeft>6)return;
-  played=true;observer.disconnect();
-  setTimeout(()=>{
-   if(cancelled||!details.open||rail.scrollLeft>6)return;
-   const distance=Math.min(118,rail.scrollWidth-rail.clientWidth);
-   rail.style.scrollSnapType='none';
-   glide(0,distance,1250,()=>{
-    setTimeout(()=>{
-     if(!cancelled&&details.open)glide(rail.scrollLeft,0,850);
-     else rail.style.scrollSnapType='';
-    },220);
-   });
-  },500);
- },{threshold:[.7]});
- observer.observe(rail);
+  const inView=entries.some(e=>e.isIntersecting&&e.intersectionRatio>=.65);
+  if(stopped)return;
+  if(!inView){visible=false;cancelAnimationFrame(frame);frame=0;last=0;rail.style.scrollSnapType='';rail.scrollLeft=origin;return}
+  if(!details.open||document.hidden)return;
+  if(!visible){visible=true;origin=0;rail.style.scrollSnapType='none';last=0;frame=requestAnimationFrame(animate)}
+ },{threshold:[0,.65]});observer.observe(rail);
+ document.addEventListener('visibilitychange',()=>{if(stopped)return;if(document.hidden){cancelAnimationFrame(frame);frame=0;last=0}else if(visible&&details.open){frame=requestAnimationFrame(animate)}});
+ details.addEventListener('toggle',()=>{if(stopped)return;if(!details.open){visible=false;cancelAnimationFrame(frame);frame=0;last=0;rail.style.scrollSnapType='';rail.scrollLeft=0}});
+}
+function setupQuestionRefreshCue(){
+ const btn=$('questionRefresh'),section=$('customBox');if(!btn||!section||!('IntersectionObserver' in window)||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ let played=false;const observer=new IntersectionObserver(entries=>{
+  if(played||!section.open||!entries.some(e=>e.isIntersecting&&e.intersectionRatio>=.65))return;
+  played=true;observer.disconnect();btn.classList.add('bazi-v15-flash');
+ },{threshold:[.65]});observer.observe(btn);
+ btn.addEventListener('click',()=>btn.classList.remove('bazi-v15-flash'),{once:true});
+ btn.addEventListener('animationend',()=>btn.classList.remove('bazi-v15-flash'),{once:true});
 }
 function setupQuestions(){
  const cats=$('questionCategories'),examples=$('questionExamples'),refresh=$('questionRefresh'),exampleTitle=$('questionExamplesTitle');
@@ -1083,7 +1186,7 @@ function setupQuestions(){
   }
  }
  renderSuggestions();
- setupQuestionSwipeCue();
+ setupQuestionSwipeCue();setupQuestionRefreshCue();
 }
 function showModal(id){$(id).hidden=false;document.body.style.overflow='hidden';$(id).querySelector('button')?.focus()}
 function closeModal(){for(const id of ['saveModal','chartsModal'])$(id).hidden=true;document.body.style.overflow=''}
