@@ -24,12 +24,16 @@
   .faq{padding:8px 0 20px}.faq details{border-top:1px solid #2b333f;padding:12px 0}.faq summary{color:#c6cbd5;font-size:.77rem;font-weight:700;cursor:pointer}.faq p{color:var(--quiet);font-size:.72rem;margin:10px 0 0;line-height:1.8}.foot{border-top:1px solid #29313c;padding:22px 0 30px;text-align:center;color:var(--quiet);font-size:.67rem}.foot-nav{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:13px}.foot-nav a{color:#959eaf;text-decoration:none}.low-action{margin:10px auto 0;color:#909ba7;font-size:.68rem;text-align:center}.trace{margin-top:10px;font-size:.67rem;color:#b5c2cd;overflow-wrap:anywhere}.error-actions{margin-top:10px}.muted-inset{padding:9px 11px;border:1px solid #2d3947;border-radius:9px;font-size:.72rem;color:var(--sub)}
   @media(max-width:360px){.wrap{padding-left:11px;padding-right:11px}.card{padding:13px}.topic-grid{gap:7px}.topic-btn{padding:9px}.pillar b,.pillar em{font-size:1.65rem}.topic-btn strong{font-size:.75rem}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}} 
 
-  /* Mobile-only birth-year shortcuts and concise AI eligibility message. */
-  .year-jump{margin:-3px 0 13px;color:#b7c0ce}
-  .year-jump>span{display:block;font-size:.69rem;margin-bottom:7px}
-  .decade-buttons{display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin;padding:0 0 5px;-webkit-overflow-scrolling:touch}
-  .decade-buttons button{flex:0 0 auto;min-width:51px;min-height:35px;padding:6px 10px;border:1px solid #3a4554;border-radius:9px;background:#141d29;color:#d2dce9;font-size:.72rem;font-weight:750}
-  .decade-buttons button.active{border-color:#c59f5a;background:#39301f;color:#ffe4ac}
+  /* Mobile-only quota labels, active AI spinner and end-of-article collapse. */
+  .quota-label{color:#e9cc92!important;font-size:.72rem!important;line-height:1.5;text-align:right;overflow-wrap:anywhere;max-width:58%}
+  #castQuotaInline{max-width:62%}
+  #aiStatus.busy::before{content:"";display:inline-block;width:13px;height:13px;margin-right:8px;vertical-align:-2px;border:2px solid #546778;border-top-color:#8bdae0;border-radius:50%;animation:aiSpin .8s linear infinite}
+  .ai-working{position:fixed;z-index:120;left:50%;transform:translateX(-50%);bottom:max(15px,env(safe-area-inset-bottom));width:min(calc(100% - 28px),470px);display:flex;gap:11px;align-items:center;background:#203044f5;box-shadow:0 15px 45px #0009;border:1px solid #45868b;border-radius:13px;padding:12px 15px;color:#f4f1e9;backdrop-filter:blur(12px)}
+  .ai-working[hidden]{display:none!important}
+  .ai-spinner{flex:0 0 23px;width:23px;height:23px;border:3px solid #56737e;border-top-color:#9ceaf0;border-radius:50%;animation:aiSpin .85s linear infinite}
+  .ai-working-text{display:grid;gap:2px;min-width:0;line-height:1.4}.ai-working-text strong{font-size:.81rem}.ai-working-text small{color:#c7d4e0;font-size:.7rem}
+  .collapse-bottom{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:17px!important;min-height:44px!important;border:1px solid #b69a63!important;color:#f2d69d!important;background:#292318!important;font-size:.78rem!important;font-weight:800!important}
+  @keyframes aiSpin{to{transform:rotate(360deg)}}
   .ai-gate{border:1px solid #72613e;border-radius:11px;padding:12px;margin:0 0 12px;background:#231f18;color:#f2d9a7;display:grid;gap:9px;font-size:.76rem;line-height:1.6}
   .ai-gate[hidden]{display:none!important}
   .ai-gate .button-secondary{justify-self:start;min-height:35px}
@@ -40,22 +44,22 @@
 <header class="sitebar"><div class="wrap sitebar-in"><a href="/" class="brand" aria-label="返回一念知機首頁"><span class="brand-symbol">命</span><span>一念知機 <span style="font-weight:550;color:#b1b9c4">｜八字</span></span></a><div class="header-actions"><a href="/bazi.html?view=desktop" class="quiet-link">專業版</a><button class="small-btn" id="accountBtn" type="button">會員登入</button></div></div></header>
 <main class="wrap">
 <section class="hero" aria-label="八字 AI 解讀"><div class="eyebrow">BAZI · PERSONAL AI</div><div class="spark">✧</div><h1>你的四柱，<span>專屬 AI 解讀</span></h1><p>簡單排出八字，選擇你最想了解的人生主題。</p></section>
-<section class="card" id="birthCard" aria-labelledby="birthTitle"><div class="section-head"><h2 id="birthTitle">01 · 出生資料</h2><small>建立四柱命盤</small></div>
+<section class="card" id="birthCard" aria-labelledby="birthTitle"><div class="section-head"><h2 id="birthTitle">01 · 出生資料</h2><small class="quota-label" id="castQuotaInline">額度查詢中…</small></div>
  <div class="pill-switch" role="group" aria-label="選擇出生曆法"><button type="button" class="active" id="solarBtn" aria-pressed="true">國曆</button><button type="button" id="lunarBtn" aria-pressed="false">農曆</button></div>
  <div class="date-grid"><label class="field"><span>出生年份</span><select id="birthYear" required><option value="">年份</option></select></label><label class="field"><span>月份</span><select id="birthMonth" required><option value="">月份</option></select></label><label class="field"><span>日期</span><select id="birthDay" required><option value="">日期</option></select></label></div>
- <div class="year-jump" aria-label="快速選出生年代"><span>快速選年代，年份只需選該年代的 10 年</span><div class="decade-buttons" id="decadeButtons"></div></div>
  <div class="tinyrow" id="lunarLine" hidden><label><input type="checkbox" id="lunarLeap"> 閏月</label><span id="dateConvertNote">農曆換算為國曆後排盤</span></div>
  <div class="dual-grid"><label class="field"><span>性別</span><select id="gender"><option value="1">男</option><option value="0">女</option></select></label><label class="field"><span>出生時辰</span><select id="birthSlot"></select></label></div>
  <details class="advanced" id="timeOptions"><summary>精確時間／23 點換日設定 ▾</summary><div class="advanced-content"><label class="tinyrow"><input type="checkbox" id="useExact"> 使用精確出生時間</label><label class="field" id="exactBox" hidden><span>出生時間（24 小時制）</span><input type="time" id="exactTime" value="12:00"></label><label class="field"><span>23:00 換日方式</span><select id="sect"><option value="2">23:00 後仍算當日</option><option value="1">23:00 起算次日</option></select></label><p class="fine">時辰不確定可先選兩小時區間，與原電腦版使用相同排盤規則。</p></div></details>
  <button type="button" class="button-primary" id="castBtn">免費排出我的八字</button><p class="help-row" id="castHint">排盤額度由系統確認；超出免費額度時將先詢問。</p><p class="status" id="castStatus" role="status" aria-live="polite"></p>
 </section>
 <section class="card" id="chartCard" hidden aria-labelledby="chartTitle"><div class="section-head"><h2 id="chartTitle">02 · 我的四柱命盤</h2><span class="eyetag">基本排盤</span></div><div class="chart-meta" id="chartMeta"></div><div class="four" id="fourPillars"></div><div class="master-desc"><strong id="dayMaster">日主 —</strong><span id="dayMasterType">四柱重點</span></div><div class="chart-actions"><button type="button" class="button-secondary" id="saveBtn">儲存八字</button><button type="button" class="button-secondary" id="myChartsBtn">我的八字</button><button type="button" class="button-secondary" id="editBirthBtn">修改生日</button></div><p class="fine">這裡只保留四柱與日主；其餘專業判讀請選擇下方 AI 解讀。</p></section>
-<section class="card" id="aiCard" hidden aria-labelledby="aiTitle"><div class="section-head"><h2 id="aiTitle">03 · AI 命理解讀</h2><small id="quotaInline">額度查詢中…</small></div><div class="ai-note">八大固定問題，每次成功解讀使用 1 次 AI 額度。免費額度用完時，將先確認是否使用會員共用額度。</div>
+<section class="card" id="aiCard" hidden aria-labelledby="aiTitle"><div class="section-head"><h2 id="aiTitle">03 · AI 命理解讀</h2><small class="quota-label" id="quotaInline">AI 額度查詢中…</small></div><div class="ai-note">八大固定問題，每次成功解讀使用 1 次 AI 額度。免費額度用完時，將先確認是否使用會員共用額度。</div>
 <div class="ai-gate" id="aiGate" hidden role="status"><span id="aiGateMessage"></span><button id="aiGateAction" type="button" class="button-secondary">登入會員</button></div><div class="topic-grid" id="topicGrid"></div>
 <details class="custom" id="customBox"><summary>09 · 我有自己的問題 <span>⌄</span></summary><div class="custom-body"><div class="chips" id="questionCategories" role="group" aria-label="問題分類"></div><div class="suggestions" id="questionExamples"></div><label class="field"><span>自訂問題（5～400 字；需登入會員）</span><textarea id="customQuestion" maxlength="400" rows="4" placeholder="輸入想問的事，或點選上面的範例…"></textarea></label><button id="askCustomBtn" type="button" class="button-primary">開始自訂 AI 解讀 · 1 次</button></div></details><p id="aiStatus" class="status" role="status" aria-live="polite"></p></section>
 <section class="card reader" id="readerCard" hidden aria-labelledby="readerTitle"><div class="section-head reading-head"><h2 id="readerTitle">04 · AI 解讀文章</h2><small>完整閱讀 · 可複製保存</small></div><div id="reportHistory" class="history"></div></section>
-<section class="faq" aria-label="八字排盤常見問題"><details><summary>四柱八字是什麼？</summary><p>四柱依出生年、月、日、時排列，由天干與地支組成。日柱的天干稱為日主，是命盤的一個主要閱讀起點。</p></details><details><summary>為什麼手機版沒有八大站內長篇分析？</summary><p>手機版以精簡排盤與 AI 主題解讀為核心。想查看原本電腦版的專業分區，可點選上方「專業版」。</p></details><details><summary>AI 解讀的次數如何計算？</summary><p>免費與會員共用 AI 額度由八字後端統一判斷。請以解讀按鈕旁的最新提示及確認訊息為準；失敗時後端依既有規則處理扣點。</p></details><details><summary>換成手機後需要重新註冊會員嗎？</summary><p>不需要。同一網站使用原本的會員登入系統，已保存的出生資料與會員共用額度可跨裝置使用。AI 文章請自行下載保存，避免離開頁面後無法恢復。</p></details></section>
+<section class="faq" aria-label="手機版與專業版說明"><details><summary>為什麼手機版沒有八大站內長篇分析？</summary><p>這裡是專為手機設計的精簡八字版，讓你快速輸入生日、查看基本四柱，並直接使用 AI 解讀感情、事業、財富及流年等主題，因此沒有放入大量長篇圖表與專業分區，避免在小螢幕上反覆滑動。</p><p>如果想深入研究十神、五行、干支合沖、八步大運與完整的站內專業分析，可以開啟<a href="/bazi.html?view=desktop">八字電腦專業版</a>。兩個版本共用原有會員、八字後端與額度，無須另外註冊。</p></details></section>
 </main>
+<div class="ai-working" id="aiWorking" hidden role="status" aria-live="polite"><span class="ai-spinner" aria-hidden="true"></span><span class="ai-working-text"><strong id="aiWorkingTitle">AI 正在解讀…</strong><small id="aiWorkingTimer">已等待 0 秒，請勿重複送出或離開頁面</small></span></div>
 <footer class="foot"><div class="wrap"><nav class="foot-nav" aria-label="其他命理工具"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經</a><a href="/cezi.html">測字</a><a href="/wuxing.html">五行</a><a href="/numerology.html">生命靈數</a></nav><div>© 一念知機 · 八字 AI 手機專用版</div></div></footer>
 <div class="modal" id="saveModal" hidden role="dialog" aria-modal="true" aria-labelledby="saveTitle"><div class="modal-window"><h3 id="saveTitle">儲存目前八字</h3><label for="nickname">命盤名稱</label><input type="text" id="nickname" maxlength="40" placeholder="例如：我的八字" value="我的八字"><label class="tinyrow"><input type="checkbox" id="saveDefault"> 設為預設命盤</label><button type="button" class="button-primary" id="confirmSave">確定儲存</button><div class="modal-footer"><button type="button" class="button-link" data-close-modal>取消</button></div><p id="saveStatus" class="status" role="status"></p></div></div>
 <div class="modal" id="chartsModal" hidden role="dialog" aria-modal="true" aria-labelledby="chartsTitle"><div class="modal-window"><div class="section-head"><h3 id="chartsTitle">我的已存八字</h3><button type="button" class="button-secondary" data-close-modal>關閉</button></div><div id="savedList" class="list"></div><p id="savedStatus" class="status" role="status"></p></div></div>
@@ -290,17 +294,20 @@ async function refreshCastQuota(){
  }catch(_){if(seq!==state.castQuotaSeq)return null;state.castQuota=null;state.castQuotaVerified=false;updateCastHint();return null;}
 }
 function updateCastHint(){
- const j=state.castQuota;let label='排出我的四柱',hint='免費排盤及共用額度，按下後由系統確認。';
+ const j=state.castQuota;let label='排出我的四柱',hint='免費與共用排盤額度，由後端確認。';
+ let total='額度查詢中…';
  if(j){
-  const remain=Math.max(0,Number(j.remaining)||0),shared=Math.max(0,Number(j.wallet?.tool)||0);
-  if(remain>0){label='免費排出我的八字';hint='尚有 '+remain+' 次免費排盤額度';}
-  else if(j.authenticated&&shared>0){label='排出四柱 · 共用額度 1 次';hint='本期免費額度已用完，使用前會再次確認。';}
-  else if(j.knownMember||knownMember()){label='請重新登入會員再排盤';hint='已使用過會員服務，登入後才能繼續。';}
-  else if(!j.authenticated){label='免費額度用完 · 登入會員';hint='登入會員後可以查看共用工具額度。';}
-  else{label='排盤額度已用完';hint='本期免費與共用排盤額度皆已用完。';}
- }
+  const remain=Math.max(0,Number(j.remaining)||0),shared=Math.max(0,Number(j.wallet?.tool??j.sharedToolRemaining)||0);
+  total='免費 '+remain+' 次'+(j.authenticated?'｜共用 '+shared+' 次':'｜會員共用額度登入後可查');
+  if(remain>0){label='免費排出我的八字';hint='免費排盤剩餘 '+remain+' 次，不扣會員共用額度。';}
+  else if(j.authenticated&&shared>0){label='會員排八字｜扣 1 次（剩 '+shared+' 次）';hint='本次將使用 1 次會員共用工具額度，送出前會再次確認。';}
+  else if(j.knownMember||knownMember()){label='登入會員後排盤';hint='登入後可以確認會員共用工具額度。';}
+  else if(!j.authenticated){label='免費額度用完 · 登入會員';hint='登入會員後可查看會員共用工具額度。';}
+  else{label='排盤額度已用完';hint='本期免費與會員共用工具額度皆已用完。';}
+ } else if(state.castQuotaVerified===false){total='排盤額度尚未確認';}
  if(!state.castBusy){$('castBtn').textContent=label;$('castBtn').disabled=state.authPending;}
  $('castHint').textContent=hint;
+ $('castQuotaInline').textContent=total;
 }
 async function refreshAiQuota(){
  const seq=++state.aiQuotaSeq;
@@ -309,7 +316,7 @@ async function refreshAiQuota(){
   const j=await fetchJson(API+'/ai/status',{headers:headers()});
   if(seq!==state.aiQuotaSeq||t!==signedToken()||memberId!==(state.member?.sub||''))return null;
   state.aiQuota=j;state.quotaVerified=true;
-  $('quotaInline').textContent='免費 '+Math.max(0,Number(j.periodicAi?.remaining)||0)+' · 共用 '+(j.authenticated?Math.max(0,Number(j.sharedAiRemaining)||0):'登入後可用');
+  $('quotaInline').textContent='AI 免費 '+Math.max(0,Number(j.periodicAi?.remaining)||0)+' 次｜共用 '+(j.authenticated?Math.max(0,Number(j.sharedAiRemaining)||0)+' 次':'登入後可用');
   renderTopicButtons();return j;
  }catch(_){if(seq!==state.aiQuotaSeq)return null;state.aiQuota=null;state.quotaVerified=false;$('quotaInline').textContent='額度查詢失敗';renderTopicButtons();return null;}
 }
@@ -355,39 +362,19 @@ function showChart(){const c=state.chart;if(!c)return;const data=c.data;
 }
 function pad(n){return String(n).padStart(2,'0')}
 function option(select,value,label=value){const el=document.createElement('option');el.value=String(value);el.textContent=String(label);select.append(el)}
-// Year selection is intentionally limited to one decade at a time.
-// It avoids scrolling through 200 years on a small touch screen.
-function setBirthDecade(decade,keepYear){
- const start=Math.max(1900,Math.min(2020,Number(decade)||1970));
- const end=Math.min(new Date().getFullYear(),start+9);
- const select=$('birthYear'),previous=keepYear?Number(select.value):0;
- select.replaceChildren();option(select,'','年份');
- for(let y=start;y<=end;y++)option(select,y,y+' 年');
- select.value=previous>=start&&previous<=end?String(previous):'';
- document.querySelectorAll('#decadeButtons button').forEach(btn=>{
-  const active=Number(btn.dataset.decade)===start;
-  btn.classList.toggle('active',active);btn.setAttribute('aria-pressed',String(active));
- });
-}
+// Keep the native year selector; pre-select a realistic birth date so it opens near 1980.
 function setYearValue(year){
  const y=Number(year);
  if(!Number.isInteger(y)||y<1900||y>new Date().getFullYear())return false;
- setBirthDecade(Math.floor(y/10)*10,false);
- $('birthYear').value=String(y);return true;
+ $('birthYear').value=String(y);return $('birthYear').value===String(y);
 }
 function setupFields(){
- const decades=$('decadeButtons');
- for(let y=1900;y<=2020;y+=10){
-  const b=document.createElement('button');b.type='button';b.dataset.decade=String(y);
-  b.textContent=String(y).slice(2)+' 年代';b.setAttribute('aria-label',y+' 年代');
-  b.addEventListener('click',()=>{setBirthDecade(y,false);state.birthTouched=true;showCalendarNote();});
-  decades.append(b);
- }
- setBirthDecade(1970,false);
- // Center the popular birth decades in the horizontal shortcut strip.
- const active=decades.querySelector('button.active');if(active)decades.scrollLeft=Math.max(0,active.offsetLeft-decades.offsetLeft-40);
+ const currentYear=new Date().getFullYear();
+ for(let y=currentYear;y>=1900;y--)option($('birthYear'),y,y+' 年');
  for(let m=1;m<=12;m++)option($('birthMonth'),m,m+' 月');
  for(let d=1;d<=31;d++)option($('birthDay'),d,d+' 日');
+ // Default only: restoring a member's saved birth data may replace it later.
+ setYearValue(1980);$('birthMonth').value='5';fixDays();$('birthDay').value='10';
  BAZI_HOUR_SLOTS.forEach((x,i)=>option($('birthSlot'),i,x[0]));
  $('birthSlot').value='6';$('gender').value='1';$('sect').value='2';
  for(const id of ['birthYear','birthMonth','birthDay'])$(id).addEventListener('change',()=>{state.birthTouched=true;if(id!=='birthDay')fixDays();showCalendarNote()});
@@ -512,11 +499,25 @@ async function aiPost(body,shared){
  try{return await fetchJson(API+'/v2/ai/report',options)}
  catch(e){if(e.code==='SHARED_AI_CONFIRM_REQUIRED'&&!shared&&state.member){const left=Number(e.data?.sharedAiRemaining??state.aiQuota?.sharedAiRemaining??0);if(left>0&&confirm('本次需使用會員共用 AI 額度 1 次（剩 '+left+' 次），確定？'))return fetchJson(API+'/v2/ai/report',{...options,headers:{...options.headers,'X-DH-Shared-Confirm':'1'}})}throw e}
 }
-function setAiBusy(isBusy,button){state.aiBusy=isBusy;renderTopicButtons();if(button&&isBusy){button.disabled=true;button.dataset.loading='1'}else if(button){delete button.dataset.loading}}
+let aiWorkingInterval=null,aiWorkingStartedAt=0;
+function setAiBusy(isBusy,button,label='AI 正在解讀…'){
+ state.aiBusy=isBusy;
+ const banner=$('aiWorking'),status=$('aiStatus');
+ banner.hidden=!isBusy;status.classList.toggle('busy',isBusy);
+ if(aiWorkingInterval){clearInterval(aiWorkingInterval);aiWorkingInterval=null;}
+ if(isBusy){
+  aiWorkingStartedAt=Date.now();$('aiWorkingTitle').textContent=label;
+  const tick=()=>{$('aiWorkingTimer').textContent='已等待 '+Math.floor((Date.now()-aiWorkingStartedAt)/1000)+' 秒，請勿重複送出或離開頁面';};
+  tick();aiWorkingInterval=setInterval(tick,1000);
+ }
+ renderTopicButtons();
+ if(button&&isBusy){button.disabled=true;button.dataset.loading='1'}
+ else if(button){delete button.dataset.loading}
+}
 async function runFixed(topic,btn){if(!state.chart||state.aiBusy||state.castBusy)return;
  const previous=state.reports?.[topic];if(previous?.reading&&!confirm('這個主題已有 AI 解讀，重新產生會覆蓋舊文章。請先複製或下載。\n確定重新解讀？'))return;
  const permit=await permissionForAi();if(!permit)return;
- const chart={...state.chart},key=chart.key;setAiBusy(true,btn);setStatus('aiStatus','AI 正在解讀「'+(topicList.find(x=>x.id===topic)?.name||topic)+'」，請勿離開頁面。');
+ const chart={...state.chart},key=chart.key;setAiBusy(true,btn,'AI 正在解讀：'+(topicList.find(x=>x.id===topic)?.name||topic));setStatus('aiStatus','AI 解讀進行中，請勿重複操作。');
  try{
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic,aiOpId:newId()},permit.shared);
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未回傳完整可讀文章');
@@ -528,7 +529,7 @@ async function runCustom(){if(!state.member){openMember();return}if(!state.chart
  const question=$('customQuestion').value.normalize('NFKC').trim().replace(/\s+/g,' ');
  if(question.length<5||question.length>400){setStatus('aiStatus','請輸入 5～400 字的問題。','error');return}
  const permit=await permissionForAi();if(!permit)return;
- const chart={...state.chart},key=chart.key,btn=$('askCustomBtn');setAiBusy(true,btn);setStatus('aiStatus','正在分析你的專屬問題，請勿離開頁面。');
+ const chart={...state.chart},key=chart.key,btn=$('askCustomBtn');setAiBusy(true,btn,'AI 正在分析專屬問題');setStatus('aiStatus','正在分析你的專屬問題，請勿離開頁面。');
  const meta={category:state.questionCategory,presetLabel:state.questionPreset?.label||'',template:state.questionPreset?.text||''};
  try{
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_question',question,questionMeta:meta,aiOpId:newId()},permit.shared);
@@ -545,7 +546,7 @@ async function runFollowup(index,input,button){if(!state.member||state.aiBusy||!
  if(!r?.followupId||r.followupReading){setStatus('aiStatus','這篇解讀已無法追問。','error');return}
  if(question.length<5||question.length>400){setStatus('aiStatus','請輸入 5～400 字的追問內容。','error');return}
  const permit=await permissionForAi();if(!permit)return;
- const chart={...state.chart},key=chart.key;setAiBusy(true,button);setStatus('aiStatus','AI 正在回答追問…');
+ const chart={...state.chart},key=chart.key;setAiBusy(true,button,'AI 正在回答追問');setStatus('aiStatus','AI 正在回答追問…');
  try{
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_followup',question,followupId:r.followupId,aiOpId:newId()},permit.shared);
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('追問未返回完整答案');
@@ -596,7 +597,10 @@ function renderReports(){const root=$('reportHistory');root.replaceChildren();co
     if(r.followupReading){follow.append(textEl('h4','追問｜'+safe(r.followupQuestion)));const answer=document.createElement('article');answer.className='reading-copy';markdownNodes(answer,r.followupReading);follow.append(answer);body.append(follow)}
     else if(r.followupId){follow.append(textEl('h4','AI 追問 · 限一次（AI -1）'));const area=document.createElement('textarea');area.maxLength=400;area.rows=3;area.placeholder='請輸入追問（5～400 字）';const action=textEl('button','送出追問 · AI -1','button-secondary');action.type='button';action.disabled=state.aiBusy||!state.member||!aiAvailable();action.addEventListener('click',()=>runFollowup(item.index,area,action));follow.append(area,action);body.append(follow)}
    }
-   const actions=document.createElement('div');actions.className='report-actions';const copy=textEl('button','複製全文','button-secondary'),download=textEl('button','下載 TXT','button-secondary');copy.type=download.type='button';copy.addEventListener('click',()=>copyTxt(item,copy));download.addEventListener('click',()=>downloadTxt(item));actions.append(copy,download);body.append(actions);card.append(body);
+   const actions=document.createElement('div');actions.className='report-actions';const copy=textEl('button','複製全文','button-secondary'),download=textEl('button','下載 TXT','button-secondary');copy.type=download.type='button';copy.addEventListener('click',()=>copyTxt(item,copy));download.addEventListener('click',()=>downloadTxt(item));actions.append(copy,download);body.append(actions);
+    const collapse=textEl('button','↑ 收合本篇文章，返回文章列表','button-secondary collapse-bottom');collapse.type='button';
+    collapse.addEventListener('click',()=>{state.expanded='';renderReports();requestAnimationFrame(()=>{const r=$('readerCard');if(!r.hidden)r.scrollIntoView({behavior:'instant',block:'start'});});});
+    body.append(collapse);card.append(body);
   }root.append(card);
  }
 }
