@@ -58,6 +58,49 @@
   #aiTitle{font-size:.98rem;letter-spacing:-.025em}
   #quotaInline{max-width:42%;font-size:.67rem!important;white-space:normal}
   @media(max-width:360px){.birth-save-actions button{min-width:69px;padding-left:7px;padding-right:7px;font-size:.69rem}#aiTitle{font-size:.91rem}#quotaInline{font-size:.63rem!important}}
+
+/* V8 · 手機專用免費體驗：共用四柱資料與官方免費流日 API */
+.free-insight{margin-top:13px;border:1px solid #33414f;border-radius:14px;background:#121b26;overflow:hidden;scroll-margin-top:75px}
+.free-insight>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:9px;padding:14px 13px;color:#e8c982}
+.free-insight>summary::-webkit-details-marker{display:none}
+.free-insight>summary:after{content:'⌄';color:#b9a778;font-size:18px;line-height:1;flex:none;transition:transform .15s}
+.free-insight[open]>summary:after{transform:rotate(180deg)}
+.free-insight .summary-text{display:grid;gap:2px;min-width:0}
+.free-insight .summary-text strong{font-size:.94rem;line-height:1.45}
+.free-insight .summary-text small{font-size:.68rem;color:#8ba4ae;font-weight:550}
+.free-insight .free-tag{font-size:.67rem;font-weight:750;color:#89d8dd;border:1px solid #37626a;background:#16282d;border-radius:999px;padding:3px 7px;white-space:nowrap;flex:none}
+.free-insight-body{border-top:1px solid #2d3b49;padding:16px 14px 15px}
+.free-personality{font-size:16px;line-height:1.93;letter-spacing:.012em;color:#d9e0e9;overflow-wrap:anywhere}
+.free-personality p{margin:0 0 15px}
+.free-personality .opening{font-size:17px;color:#f3d89a;font-weight:760;line-height:1.8;margin-bottom:20px}
+.free-personality strong{color:#f2d38e;font-weight:760}
+.free-personality .keyline{margin:20px 0;padding:10px 0 10px 14px;border-left:3px solid #d5ad66;background:#d5ad660b;color:#efd097;font-size:16px;font-weight:760;line-height:1.85}
+.free-personality .closing{color:#e8d3ab}
+.free-source{margin:0 0 8px;font-size:.67rem;line-height:1.6;color:#8e9aaa}
+.free-collapse{display:block;margin:12px auto 0;padding:10px 13px;border:1px solid #564a36;background:#261f16;color:#ead095;border-radius:9px;min-height:40px;font-size:.76rem;font-weight:780}
+.daily-free-body{padding:12px 12px 15px}
+.daily-date{font-size:.67rem;color:#a0adbc;margin:0 0 9px}
+.daily-item{border-bottom:1px solid #293543;padding:9px 0;overflow:hidden}
+.daily-item:last-of-type{border-bottom:0}
+.daily-item>summary{display:block;cursor:pointer;list-style:none}
+.daily-item>summary::-webkit-details-marker{display:none}
+.daily-head{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-bottom:7px}
+.daily-name{font-size:.79rem;font-weight:800;color:#dce4ec}
+.daily-rate{font-size:.83rem;color:#e5bf77;font-weight:850;font-variant-numeric:tabular-nums}
+.daily-rate small{font-size:.61rem;color:#8794a5;font-weight:500}
+.daily-bar{height:6px;background:#273241;border-radius:8px;overflow:hidden}
+.daily-bar>span{display:block;height:100%;background:#8acbb8;border-radius:8px}
+.daily-item.tone-low .daily-rate{color:#dfbc76}
+.daily-item.tone-low .daily-bar>span{background:#dfbc76}
+.daily-item>summary .daily-indicator{color:#a4aebc;font-size:.65rem;margin-left:4px}
+.daily-item[open] .daily-indicator{color:#d7bb7e}
+.daily-note{padding:8px 4px 3px;color:#bfcbd6;font-size:.77rem;line-height:1.85}
+.daily-msg{font-size:.73rem;color:#aeb8c6;line-height:1.8;padding:5px 0}
+.daily-retry{font-size:.72rem;color:#e1c28a;background:#25221c;border:1px solid #564b36;border-radius:8px;padding:7px 10px;margin-top:7px}
+.custom-quota-note{text-align:center;margin:9px 0 0;font-size:.72rem;color:#d6b873;font-weight:690;min-height:1.3em}
+@media(max-width:360px){.free-insight .summary-text strong{font-size:.87rem}.free-insight .free-tag{font-size:.64rem}.free-personality{font-size:16px}.free-insight-body{padding:14px 12px}}
+@media(prefers-reduced-motion:reduce){.free-insight>summary:after{transition:none}}
+
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js" defer></script>
 </head>
@@ -73,10 +116,11 @@
  <div class="birth-utility-row"><details class="advanced" id="timeOptions"><summary>進階 ▾</summary><div class="advanced-content"><label class="tinyrow"><input type="checkbox" id="useExact"> 使用精確出生時間</label><label class="field" id="exactBox" hidden><span>出生時間（24 小時制）</span><input type="time" id="exactTime" value="12:00"></label><label class="field"><span>23:00 換日方式</span><select id="sect"><option value="2">23:00 後仍算當日</option><option value="1">23:00 起算次日</option></select></label><p class="fine">時辰不確定可先選兩小時區間，與原電腦版使用相同排盤規則。</p></div></details><div class="birth-save-actions"><button type="button" class="birth-action-save" id="saveBtn">儲存八字</button><button type="button" class="birth-action-load" id="myChartsBtn">載入八字</button></div></div>
  <button type="button" class="button-primary" id="castBtn">免費排出我的八字</button><p class="help-row" id="castHint">排盤額度由系統確認；超出免費額度時將先詢問。</p><p class="status" id="castStatus" role="status" aria-live="polite"></p>
 </section>
-<section class="card" id="chartCard" hidden aria-labelledby="chartTitle"><div class="section-head"><h2 id="chartTitle">02 · 我的四柱命盤</h2><span class="eyetag">基本排盤</span></div><div class="chart-meta" id="chartMeta"></div><div class="four" id="fourPillars"></div><div class="master-desc"><strong id="dayMaster">日主 —</strong><span id="dayMasterType">四柱重點</span></div><div class="chart-actions"><button type="button" class="button-secondary" id="editBirthBtn">修改生日</button></div><p class="fine">這裡只保留四柱與日主；其餘專業判讀請選擇下方 AI 解讀。</p></section>
+<section class="card" id="chartCard" hidden aria-labelledby="chartTitle"><div class="section-head"><h2 id="chartTitle">02 · 我的四柱命盤</h2><span class="eyetag">基本排盤</span></div><div class="chart-meta" id="chartMeta"></div><div class="four" id="fourPillars"></div><div class="master-desc"><strong id="dayMaster">日主 —</strong><span id="dayMasterType">四柱重點</span></div><details class="free-insight" id="personalityDetails"><summary><span class="summary-text"><strong>免費綜合命盤解讀 · 性格特質</strong><small>你的優勢、習慣與容易忽略的盲點</small></span><span class="free-tag">免費 · 約 400 字</span></summary><div class="free-insight-body"><div id="personalityReading" class="free-personality"></div><p class="free-source">以四柱日主、五行與十神線索進行站內規則式推演；不使用 AI、不扣額度，僅供自我觀察參考。</p><button type="button" class="free-collapse" data-collapse="personalityDetails">↑ 收合性格解讀，返回命盤</button></div></details>
+<details class="free-insight" id="dailyDetails" open><summary><span class="summary-text"><strong>今日運勢</strong><small>財運・事業・感情・健康・人際</small></span><span class="free-tag">免費 · 每日更新</span></summary><div class="free-insight-body daily-free-body"><p class="daily-date" id="dailyDate">台灣時間 · 正在取得今日運勢…</p><div id="dailyResults"><p class="daily-msg">正在查詢今日運勢…</p></div><p class="free-source">分數是本站流日規則式的相對提示，非事件機率；健康項目僅涉及生活作息，非醫療建議。</p><button type="button" class="free-collapse" data-collapse="dailyDetails">↑ 收合今日運勢，返回命盤</button></div></details></section>
 <section class="card" id="aiCard" hidden aria-labelledby="aiTitle"><div class="section-head"><h2 id="aiTitle">03 · AI 解讀（八字詳批）</h2><small class="quota-label" id="quotaInline">會員 AI 解讀額度查詢中…</small></div><div class="ai-note">八大固定問題，每次成功解讀扣除 1 次會員 AI 額度，送出前會再次確認。</div>
 <div class="ai-gate" id="aiGate" hidden role="status"><span id="aiGateMessage"></span><button id="aiGateAction" type="button" class="button-secondary">登入會員</button></div><div class="topic-grid" id="topicGrid"></div>
-<details class="custom" id="customBox"><summary>09 · 我有自己的問題 <span>⌄</span></summary><div class="custom-body"><div class="chips" id="questionCategories" role="group" aria-label="問題分類"></div><div class="suggestions" id="questionExamples"></div><label class="field"><span>自訂問題（5～400 字；需登入會員）</span><textarea id="customQuestion" maxlength="400" rows="4" placeholder="輸入想問的事，或點選上面的範例…"></textarea></label><button id="askCustomBtn" type="button" class="button-primary">開始自訂 AI 解讀 · 1 次</button></div></details><p id="aiStatus" class="status" role="status" aria-live="polite"></p></section>
+<details class="custom" id="customBox"><summary>09 · 我有自己的問題 <span>⌄</span></summary><div class="custom-body"><div class="chips" id="questionCategories" role="group" aria-label="問題分類"></div><div class="suggestions" id="questionExamples"></div><label class="field"><span>自訂問題（5～400 字；需登入會員）</span><textarea id="customQuestion" maxlength="400" rows="4" placeholder="輸入想問的事，或點選上面的範例…"></textarea></label><button id="askCustomBtn" type="button" class="button-primary">開始自訂 AI 解讀 · 1 次</button><div class="custom-quota-note" id="customQuotaInline" aria-live="polite">會員 AI 解讀額度查詢中…</div></div></details><p id="aiStatus" class="status" role="status" aria-live="polite"></p></section>
 <section class="card reader" id="readerCard" hidden aria-labelledby="readerTitle"><div class="section-head reading-head"><h2 id="readerTitle">04 · AI 解讀文章</h2><small>完整閱讀 · 可複製保存</small></div><div id="reportHistory" class="history"></div></section>
 <section class="faq" aria-label="手機版與電腦版說明"><details><summary>八字排盤有手機版與電腦版嗎？</summary><p>有的。一念知機提供兩種八字排盤版本。手機版以精簡四柱命盤與 AI 解讀為主，方便隨時查詢；電腦版則提供五行、十神、干支合沖、大運流年等更完整的站內分析，適合深入研究八字命盤。</p><p>想了解更多？可前往<a href="/bazi.html?view=desktop">八字電腦版</a>查看完整功能。兩個版本共用原有會員與額度，無須另外註冊。</p></details></section>
 </main>
@@ -346,8 +390,9 @@ async function refreshAiQuota(){
   if(seq!==state.aiQuotaSeq||t!==signedToken()||memberId!==(state.member?.sub||''))return null;
   state.aiQuota=j;state.quotaVerified=true;
   $('quotaInline').textContent=j.authenticated?'會員 AI 解讀 剩餘 '+Math.max(0,Number(j.sharedAiRemaining)||0)+' 次':'登入查看會員 AI 額度';
+  $('customQuotaInline').textContent=$('quotaInline').textContent;
   renderTopicButtons();return j;
- }catch(_){if(seq!==state.aiQuotaSeq)return null;state.aiQuota=null;state.quotaVerified=false;$('quotaInline').textContent='額度查詢失敗';renderTopicButtons();return null;}
+ }catch(_){if(seq!==state.aiQuotaSeq)return null;state.aiQuota=null;state.quotaVerified=false;$('quotaInline').textContent='額度查詢失敗';$('customQuotaInline').textContent='會員 AI 解讀額度查詢失敗';renderTopicButtons();return null;}
 }
 function aiAvailable(){return state.quotaVerified&&Number(state.aiQuota?.aiRemaining||0)>0;}
 function updateAiGate(){
@@ -376,6 +421,112 @@ function renderTopicButtons(){
  $('askCustomBtn').textContent=state.member?'開始自訂 AI 解讀 · 1 次':'登入會員後可自由提問';
  updateAiGate();
 }
+
+/* 免費性格體驗只由成功排盤後回傳的公開四柱產生，不使用付費完整命盤資料。 */
+const FREE_ELEMENT={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+const FREE_HIDDEN={子:[['癸',1]],丑:[['己',.6],['癸',.3],['辛',.1]],寅:[['甲',.6],['丙',.3],['戊',.1]],卯:[['乙',1]],辰:[['戊',.6],['乙',.3],['癸',.1]],巳:[['丙',.6],['戊',.3],['庚',.1]],午:[['丁',.7],['己',.3]],未:[['己',.6],['丁',.3],['乙',.1]],申:[['庚',.6],['壬',.3],['戊',.1]],酉:[['辛',1]],戌:[['戊',.6],['辛',.3],['丁',.1]],亥:[['壬',.7],['甲',.3]]};
+const FREE_GEN={木:'火',火:'土',土:'金',金:'水',水:'木'};
+const FREE_CONTROL={木:'土',土:'水',水:'火',火:'金',金:'木'};
+const FREE_DM={
+ 甲:{open:'你常把方向想得很長遠，表面不容易動搖，內心卻很怕自己努力了半天，最後走在不值得的路上。',nature:'甲木重視原則與成長；你遇事多半先問「這件事能走多久」，不太願意為眼前的小方便犧牲長期的想法。',blind:'你最大的力量是能長期堅持，最大的阻力卻可能是不肯及時轉彎。'},
+ 乙:{open:'你未必是場上最強勢的人，卻經常比別人更早察覺一句話背後的情緒與變化。',nature:'乙木帶有柔軟而有韌性的象徵；你擅長調整方法，不表示沒有主張，只是希望事情能在不傷關係的情況下前進。',blind:'你的優點是懂得轉圜，盲點則是為了顧全別人，太晚說出真正的拒絕。'},
+ 丙:{open:'你有時不是沒有耐性，而是事情一旦看見方向，就很難忍受大家還停在原地討論。',nature:'丙火傾向把想法帶到檯面上；當一件事值得投入，你通常願意先發出光亮，甚至替別人帶起行動的氣氛。',blind:'你最大的優點是能鼓舞人，盲點卻是把別人的慢，誤以為別人不夠在乎。'},
+ 丁:{open:'你看起來未必張揚，真正放進心裡的事，卻常會在安靜時反覆想上好幾遍。',nature:'丁火重視感受與細節；與其同時照亮很多地方，你更願意把時間花在少數真正重要的人事物上。',blind:'你最強的地方是專注與細膩，最難放下的也常是某個旁人覺得沒什麼的小細節。'},
+ 戊:{open:'你很容易成為別人遇到麻煩時想依靠的人，但未必常有人反過來問你到底累不累。',nature:'戊土重視穩定與承擔；你習慣先把局面撐住，再談自己的感受，因此往往不知不覺成了大家心中的可靠角色。',blind:'你的責任感可以穩住局面，也可能讓你把本來應該一起分擔的重量全部留給自己。'},
+ 己:{open:'你看起來很好商量，真正遇到自己的安排被打亂時，卻可能比想像中還要固執。',nature:'己土擅長整理、照顧與培養；你常能把別人沒注意的細節慢慢收攏，讓一件原本凌亂的事情變得可運作。',blind:'你最擅長照料細節，卻也容易把「只有我做才放心」變成新的負擔。'},
+ 庚:{open:'你是一個外表看起來很有主見，實際上卻經常在心裡反覆思考的人。',nature:'庚金重視原則、效率與界線；遇到做事不夠俐落的人，你往往先想著如何把事情修正，而不是花時間說服對方。',blind:'你最大的優點是責任感，最大的盲點也可能是責任感。'},
+ 辛:{open:'你很少把自己有多在意說得很大聲，但一個不對勁的細節，可能會在心裡停留很久。',nature:'辛金重視品質與分寸；你未必要求每件事都完美，卻很難接受明明能做得更好，大家卻選擇草率帶過。',blind:'你的敏銳能讓作品更精緻，也可能讓你對自己和親近的人太不容易滿意。'},
+ 壬:{open:'你不喜歡被同一套規矩困住太久；一旦看到新的可能，腦袋就容易比腳步先跑得很遠。',nature:'壬水有流動與開闊的象徵；你習慣從不同角度看問題，也能在局面改變時想出別人沒想到的路。',blind:'你最可貴的是視野和變通，但可能同時攤開太多選項，反而難以選定一件事深做。'},
+ 癸:{open:'你經常先觀察很久才開口；不是沒有想法，而是不願在尚未看清楚時就急著表態。',nature:'癸水偏向細膩的感知與累積；很多時候你比別人更早注意到小小的變化，只是不一定立刻說出來。',blind:'你看得見別人忽略的訊號，也可能因為想得太細，讓重要的決定遲遲無法落地。'}
+};
+const FREE_DOM={
+ 木:{trait:'木氣較醒目，你在意一件事有沒有方向、能不能繼續生長；遇到想完成的目標，容易為它反覆調整做法。',risk:'但若事情一直沒有向前，你會特別受不了停滯，有時不知不覺把自己逼得很緊。'},
+ 火:{trait:'火氣較明顯，你對氣氛、節奏與回應通常敏感；事情一有進展，你很容易投入更多熱度。',risk:'只是熱度上來時，也可能先答應太多，等到安靜下來才發現自己沒有留足空間。'},
+ 土:{trait:'土氣偏重，你很看重事情是否穩當、說過的話能否兌現；別人隨口承諾，你卻可能默默記在心裡。',risk:'你也可能因為太想把一切安排妥當，連不該由你負責的細節都一起接下。'},
+ 金:{trait:'金氣較突出，對標準與效率往往比較有感；旁人覺得「差不多就好」，你可能會想「既然要做，何不做好」。',risk:'但太早把標準拉高，也可能讓合作變得緊繃，讓你覺得與其解釋不如自己來。'},
+ 水:{trait:'水氣較顯著，你常留意事情背後的訊息與可能性；表面看似平靜，腦中可能早已推演好幾種結果。',risk:'只是資訊一多，反覆比較就容易變成猶豫，該行動時反而又想再確認一次。'}
+};
+const FREE_GROUP={
+ 比劫:{strength:'你對「自己決定」這件事的需求較強，尤其在能力範圍內的事，不太喜歡每一步都被過問。',friction:'當他人想改變你的做法，表面上也許可以配合，心裡卻可能把這件事記成一次不被信任。',social:'在熟悉的關係裡，你比較重視並肩處理事情，而不喜歡一方一直命令另一方。'},
+ 食傷:{strength:'你需要讓想法有出口；能夠動手、表達、完成作品時，往往比只照著規定坐著等待更有精神。',friction:'如果明明有更好的方法卻不能說，你的不耐煩可能寫在語氣裡，讓人誤會你是在挑戰對方。',social:'你重視有話直說，但對方有時更需要先聽到感受，而不是立刻收到解決方案。'},
+ 財星:{strength:'你會留意投入與回報是否成比例；不一定只在乎金錢，更在乎花出去的時間有沒有換來實際成果。',friction:'當別人一直改變需求、卻不願交代條件時，你可能迅速失去耐性，覺得自己被當成理所當然。',social:'你表達關心時往往先做事、先安排，卻容易忘記對方也想聽見一句直接的心意。'},
+ 官殺:{strength:'你對責任、期限與交代十分敏感；事情到自己手裡，就不願讓結果隨便失控。',friction:'壓力大時，你可能一邊不滿別人的要求，一邊又把要求完成，久了變成只有自己知道的委屈。',social:'在人際裡你重承諾，最怕別人隨口答應卻沒有下文；但偶爾也要容許別人的節奏和你不同。'},
+ 印星:{strength:'你做決定前通常希望先把資訊與方法弄懂；同樣一件事，你可能比別人多查幾個來源才放心。',friction:'遇到不熟的情況時，準備越充分越踏實，但也可能一直想等到完全確定，才肯真正動手。',social:'你未必擅長當場把感受說完，卻很願意在事後用實際協助支持在乎的人。'}
+};
+const FREE_PAIR={
+  金土:'這種土金交織的組合，容易讓「標準」與「承擔」綁在一起：你認為自己能處理的事，就很難放心交出去。',
+  土金:'土金同時明顯時，你對秩序和品質的要求容易互相加強；事情越重要，你越不願意將就。',
+  木水:'水木互相呼應時，想像力與長線規劃可能一起啟動；你擅長設想下一步，也容易想得比眼前更遠。',
+  水木:'水木互相呼應時，你很擅長從細節看到趨勢；但思考越豐富，越需要一個明確的落地時間。',
+  火木:'木火組合明顯時，你可能一有方向便想採取行動；停滯的環境尤其容易讓你煩躁。',
+  木火:'木火組合明顯時，想法和熱情較容易連在一起；越有理念的事，你越願意主動投入。'
+};
+const FREE_CLASH=new Set(['子午','午子','丑未','未丑','寅申','申寅','卯酉','酉卯','辰戌','戌辰','巳亥','亥巳']);
+function freeTenGroup(master,other){const own=FREE_ELEMENT[master],them=FREE_ELEMENT[other];if(!own||!them)return '';
+ if(own===them)return '比劫';if(FREE_GEN[own]===them)return '食傷';if(FREE_CONTROL[own]===them)return '財星';if(FREE_CONTROL[them]===own)return '官殺';return '印星';}
+function buildFreePersonality(data){
+ const pillars=Array.isArray(data?.pillars)?data.pillars:[],day=data?.dayMaster;
+ if(pillars.length!==4||!FREE_DM[day]||pillars.some(p=>!FREE_ELEMENT[p.gan]||!FREE_HIDDEN[p.zhi]))return null;
+ const weights=Object.fromEntries(['木','火','土','金','水'].map(e=>[e,0]));
+ const groups=Object.fromEntries(['比劫','食傷','財星','官殺','印星'].map(e=>[e,0]));
+ pillars.forEach((p,i)=>{weights[FREE_ELEMENT[p.gan]]+=1;
+  if(i!==2)groups[freeTenGroup(day,p.gan)]+=1;
+  FREE_HIDDEN[p.zhi].forEach(([g,w])=>{const v=w*(i===1?1.35:1.05);weights[FREE_ELEMENT[g]]+=v;groups[freeTenGroup(day,g)]+=v;});
+ });
+ const elements=Object.keys(weights).sort((a,b)=>weights[b]-weights[a]);
+ const ranking=Object.keys(groups).sort((a,b)=>groups[b]-groups[a]);
+ const primary=elements[0],next=elements[1],group=ranking[0],profile=FREE_DM[day],theme=FREE_GROUP[group],ele=FREE_DOM[primary];
+ const dateBranch=pillars[2].zhi,otherBranches=[pillars[0].zhi,pillars[1].zhi,pillars[3].zhi];
+ const clashed=otherBranches.some(b=>FREE_CLASH.has(dateBranch+b)),repeated=otherBranches.some(b=>b===dateBranch);
+ const relation=clashed?'日支與其他地支有相沖的線索，親近關係裡可能更常遇到「想靠近，又想保有自己節奏」的拉扯。當爭執出現時，先說出需求，往往比急著判斷誰對誰錯更有用。':repeated?'日支與其他地支有重複，某些熟悉的相處方式容易反覆出現。對別人好的做法，也可以偶爾停下來問問：這真的是對方此刻需要的嗎？':'從日支來看，親近關係不只是在乎是否合得來，更要看雙方能不能把日常步調說清楚。你習慣用自己理解的方式關心人，對方卻未必會自動讀懂。';
+ const ng=ranking[1]||group,secondaryGroup=FREE_GROUP[ng];
+ const both=FREE_PAIR[primary+next]||`命盤中${primary}與${next}兩種氣息較鮮明，會讓你在不同處境中呈現不一樣的一面；不能只用一個日主詞語就把性格全部說完。`;
+ const yinCount=pillars.reduce((a,p)=>a+((['乙','丁','己','辛','癸'].includes(p.gan))?1:0)+((['丑','卯','巳','未','酉','亥'].includes(p.zhi))?1:0),0);
+ const inner=yinCount>=5?'你未必會當場把情緒表現出來，很多話會先放在心裡整理；別人以為你沒意見，其實你只是還在觀察。':yinCount<=3?'你遇事較容易先做出反應，願意推動局面；但速度快的時候，也要留意身邊的人是不是跟得上。':'你既有想主動處理事情的一面，也有需要安靜觀察的一面；當兩種需求拉扯時，外界未必看得出來。';
+ return [
+  {kind:'opening',chunks:[{text:profile.open,strong:true}]},
+  {kind:'body',chunks:[{text:profile.nature+' '+ele.trait},{text:' '+both,strong:true}]},
+  {kind:'body',chunks:[{text:`從四柱十神線索看，「${group}」這類主題較醒目。`},{text:theme.strength,strong:true}]},
+  {kind:'quote',chunks:[{text:profile.blind,strong:true}]},
+  {kind:'body',chunks:[{text:inner+' '+ele.risk}]},
+  {kind:'body',chunks:[{text:relation}]},
+  {kind:'closing',chunks:[{text:'這張命盤最值得留意的，不只是你有什麼本事，而是你會不會把一項本來很好的長處，使用到讓自己吃力的程度。',strong:true}]}
+ ];
+}
+function renderFreePersonality(data){const root=$('personalityReading');root.replaceChildren();const paragraphs=buildFreePersonality(data);
+ if(!paragraphs){root.append(textEl('p','目前四柱資料不足，無法生成免費性格解讀。'));return;}
+ for(const item of paragraphs){const p=document.createElement(item.kind==='quote'?'blockquote':'p');p.className=item.kind==='quote'?'keyline':item.kind==='opening'?'opening':item.kind==='closing'?'closing':'';
+  item.chunks.forEach(part=>{const el=document.createElement(part.strong?'strong':'span');el.textContent=part.text;p.append(el)});root.append(p);
+ }
+}
+let dailyRequestSeq=0;
+async function refreshFreeDaily(){const target=$('dailyResults'),seq=++dailyRequestSeq,chart=state.chart;
+ target.replaceChildren();target.append(textEl('p','正在取得今天的五項運勢…','daily-msg'));$('dailyDate').textContent='台灣時間 · 正在查詢今天的流日';
+ if(!chart)return;
+ try{
+  const pillars=chart.data.pillars.map(({gan,zhi})=>({gan,zhi}));
+  const response=await fetchJson(API+'/v2/public-daily',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({calendar:{pillars},offset:0})});
+  if(seq!==dailyRequestSeq||state.chart!==chart)return;
+  const f=response.dailyFlow,entries=f?.full?.domains;
+  if(!Array.isArray(entries)||entries.length!==5)throw Error('後端沒有回傳完整的今日運勢');
+  const expected=['money','work','love','health','social'];
+  if(entries.some((d,i)=>d?.key!==expected[i]||!Number.isFinite(Number(d.score))))throw Error('流日資料格式不正確');
+  $('dailyDate').textContent=`台灣時間 · ${safe(f.date)||'今日'} · 點選項目展開提醒`;
+  target.replaceChildren();
+  for(const d of entries){
+   const wrap=document.createElement('details');wrap.className='daily-item'+(Number(d.score)<75?' tone-low':'');
+   const summary=document.createElement('summary'),head=document.createElement('div');head.className='daily-head';
+   const name=textEl('span',safe(d.label),'daily-name'),rate=textEl('span',Math.min(100,Math.max(0,Math.round(Number(d.score))))+' ','daily-rate');rate.append(textEl('small','/100'));
+   head.append(name,rate);const bar=document.createElement('div');bar.className='daily-bar';const fill=document.createElement('span');fill.style.width=Math.min(100,Math.max(0,Number(d.score)))+'%';bar.append(fill);
+   summary.append(head,bar);wrap.append(summary,textEl('p',safe(d.note),'daily-note'));target.append(wrap);
+  }
+ }catch(e){if(seq!==dailyRequestSeq||state.chart!==chart)return;
+  target.replaceChildren();target.append(textEl('p','目前無法取得今日運勢，沒有扣除排盤或 AI 額度。','daily-msg'));
+  const retry=textEl('button','重新取得今日運勢','daily-retry');retry.type='button';retry.addEventListener('click',refreshFreeDaily);target.append(retry);
+  $('dailyDate').textContent='今天的運勢暫時無法顯示';
+ }
+}
+
 function showChart(){const c=state.chart;if(!c)return;const data=c.data;
  const p=$('fourPillars');p.replaceChildren();for(let i=0;i<4;i++){
   const x=data.pillars[i],box=document.createElement('div');box.className='pillar'+(i===2?' master':'');
@@ -387,7 +538,8 @@ function showChart(){const c=state.chart;if(!c)return;const data=c.data;
  $('chartMeta').textContent='國曆 '+safe(data.solarText).slice(0,16).replace('T',' ')+'　｜　農曆 '+safe(data.lunarText);
  const stem=safe(data.dayMaster),types={甲:'陽木',乙:'陰木',丙:'陽火',丁:'陰火',戊:'陽土',己:'陰土',庚:'陽金',辛:'陰金',壬:'陽水',癸:'陰水'};
  $('dayMaster').textContent='日主 '+stem;$('dayMasterType').textContent=types[stem]||'四柱命盤';
- $('chartCard').hidden=false;$('aiCard').hidden=false;renderTopicButtons();renderReports();
+ $('personalityDetails').open=false;$('dailyDetails').open=true;renderFreePersonality(data);
+ $('chartCard').hidden=false;$('aiCard').hidden=false;renderTopicButtons();renderReports();void refreshFreeDaily();
 }
 function pad(n){return String(n).padStart(2,'0')}
 function option(select,value,label=value){const el=document.createElement('option');el.value=String(value);el.textContent=String(label);select.append(el)}
@@ -678,7 +830,7 @@ async function showSaved(){if(needMember())return;showModal('chartsModal');const
   }
  }catch(e){setStatus('savedStatus',e.message,'error')}
 }
-function wire(){setupFields();setupQuestions();$('castBtn').addEventListener('click',castBirth);$('accountBtn').addEventListener('click',()=>state.member?location.assign('/member.html'):openMember());$('saveBtn').addEventListener('click',saveChart);$('myChartsBtn').addEventListener('click',showSaved);$('editBirthBtn').addEventListener('click',()=>scrollTo($('birthCard')));$('askCustomBtn').addEventListener('click',runCustom);$('confirmSave').addEventListener('click',confirmSave);$('aiGateAction').addEventListener('click',()=>{const action=$('aiGateAction').dataset.action;if(action==='retry')void refreshAiQuota();else if(action==='member')location.assign('/member.html');else openMember();});
+function wire(){setupFields();setupQuestions();$('castBtn').addEventListener('click',castBirth);$('accountBtn').addEventListener('click',()=>state.member?location.assign('/member.html'):openMember());$('saveBtn').addEventListener('click',saveChart);$('myChartsBtn').addEventListener('click',showSaved);$('askCustomBtn').addEventListener('click',runCustom);document.querySelectorAll('[data-collapse]').forEach(b=>b.addEventListener('click',()=>{const panel=$(b.dataset.collapse);if(panel){panel.querySelector(':scope > summary')?.focus({preventScroll:true});panel.open=false;panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});}}));$('confirmSave').addEventListener('click',confirmSave);$('aiGateAction').addEventListener('click',()=>{const action=$('aiGateAction').dataset.action;if(action==='retry')void refreshAiQuota();else if(action==='member')location.assign('/member.html');else openMember();});
  document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
  window.addEventListener('storage',e=>{if(e.key===SESSION){void restoreSession()} });
  window.addEventListener('pageshow',e=>{if(!e.persisted)return;if(state.member||currentSession())void restoreSession();else {void refreshCastQuota();void refreshAiQuota()}});
