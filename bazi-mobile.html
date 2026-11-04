@@ -305,9 +305,17 @@ function updateCastHint(){
  let total='額度查詢中…';
  if(j){
   const remain=Math.max(0,Number(j.remaining)||0),shared=Math.max(0,Number(j.wallet?.tool??j.sharedToolRemaining)||0);
-  total='免費 '+remain+' 次'+(j.authenticated?'｜共用 '+shared+' 次':'｜會員共用額度登入後可查');
+  const days=Number(j.days),limit=Math.max(0,Number(j.limit)||0);
+  if(j.knownMember&&!j.authenticated){
+   total='免費 0 次（登入後查詢）';
+  }else if(Number.isFinite(days)&&days>=1&&limit>0){
+   const reset=days===1?'每日補 '+limit+' 次':'每 '+days+' 天補 '+limit+' 次';
+   total='免費 '+remain+' 次（'+reset+'）';
+  }else{
+   total='免費 '+remain+' 次（依後端額度）';
+  }
   if(remain>0){label='免費排出我的八字';hint='免費排盤剩餘 '+remain+' 次，不扣會員共用額度。';}
-  else if(j.authenticated&&shared>0){label='會員排八字｜扣 1 次（剩 '+shared+' 次）';hint='本次將使用 1 次會員共用工具額度，送出前會再次確認。';}
+  else if(j.authenticated&&shared>0){label='會員排八字｜扣 1 次';hint='本次將使用 1 次會員共用工具額度，會員額度剩 '+shared+' 次';}
   else if(j.knownMember||knownMember()){label='登入會員後排盤';hint='登入後可以確認會員共用工具額度。';}
   else if(!j.authenticated){label='免費額度用完 · 登入會員';hint='登入會員後可查看會員共用工具額度。';}
   else{label='排盤額度已用完';hint='本期免費與會員共用工具額度皆已用完。';}
