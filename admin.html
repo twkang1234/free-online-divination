@@ -1758,7 +1758,7 @@ async function loadIssueStats(){
     const overview=$('issueCountOverview');
     overview.replaceChildren();
     const heading=document.createElement('strong');
-    heading.textContent=totalFlags?`目前共有 ${totalFlags} 筆紅燈回報狀態，分布於 ${affected.length} 套工具`:'目前三套工具均無會員亮紅燈';
+    heading.textContent=totalFlags?`目前共有 ${totalFlags} 筆紅燈回報狀態，分布於 ${affected.length} 套工具`:`目前 ${counts.length} 套工具均無會員亮紅燈`;
     const extra=document.createElement('small');
     extra.textContent=totalFlags
       ?`各工具：${counts.map(t=>t.label+' '+t.reportCount+' 人').join(' · ')}。同一會員可能回報多套工具，所以總筆數不等於不重複會員人數。`
@@ -1788,7 +1788,7 @@ async function loadIssueStats(){
     const reports=counts.filter(t=>t.reportCount>0);
     status.textContent=maintenance.length?'🔴 維修中：'+maintenance.map(t=>t.label).join('、')+'。會員心得測試表單已暫停。'+(reports.length?'｜目前亮紅燈：'+reports.map(t=>t.label+' '+t.reportCount+' 人').join('、'):''):
       alerts.length?'⚠ 警戒：'+alerts.map(t=>t.label+' '+t.reportCount+' 人').join('、')+'。請前往對應工具確認。':
-      reports.length?'目前有會員亮紅燈，但尚未達警戒門檻：'+reports.map(t=>t.label+' '+t.reportCount+' 人').join('、')+'。':'目前三套工具皆沒有會員亮紅燈。';
+      reports.length?'目前有會員亮紅燈，但尚未達警戒門檻：'+reports.map(t=>t.label+' '+t.reportCount+' 人').join('、')+'。':`目前 ${counts.length} 套工具皆沒有會員亮紅燈。`;
     status.className='issue-info'+(alerts.length||maintenance.length?' alert':'');
   }catch(err){$('issueCountOverview').textContent='讀取異常回報失敗，無法確定目前人數';$('issueFetchTime').textContent='查詢失敗：請稍後重新查詢';status.textContent='異常回報讀取失敗：'+err.message+'。原本的會員及付款資訊不受影響。';status.className='issue-info error'}
   finally{issueRequestBusy=false;}
@@ -1958,7 +1958,7 @@ document.addEventListener('visibilitychange',()=>{
 let reviewAdminFilter='pending',reviewAdminOffset=0,reviewAdminBusy=false,reviewAdminMore=false,reviewModerating=false;
 let reviewAdminFirstPageSignature='';
 let reviewAdminEditingId=null;
-const reviewToolNames={bazi:'八字排盤',tarot:'塔羅占卜',yijing:'易經占卜',site:'整體網站體驗'};
+const reviewToolNames={bazi:'八字排盤',tarot:'塔羅占卜',yijing:'易經占卜',cezi:'測字問事',wuxing:'五行查詢',numerology:'生命靈數',site:'整體網站體驗'};
 const reviewStates={pending:'待審核',approved:'已刊登',rejected:'未通過',hidden:'已下架'};
 function reviewAdminMessage(t,isError=false){const el=$('reviewAdminStatus');el.textContent=t;el.classList.toggle('error',isError)}
 async function adminReviewRequest(path,method='GET',payload){
