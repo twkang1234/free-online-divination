@@ -44,6 +44,20 @@
   .ai-gate{border:1px solid #72613e;border-radius:11px;padding:12px;margin:0 0 12px;background:#231f18;color:#f2d9a7;display:grid;gap:9px;font-size:.76rem;line-height:1.6}
   .ai-gate[hidden]{display:none!important}
   .ai-gate .button-secondary{justify-self:start;min-height:35px}
+
+  /* V6: compact birth-row actions and understated advanced settings. */
+  .birth-utility-row{position:relative;border-top:1px solid #2b3139;margin:2px 0 12px;padding-top:8px;min-height:45px}
+  .birth-utility-row .advanced{border:0;margin:0;padding:0;min-height:36px}
+  .birth-utility-row .advanced summary{display:inline-flex;align-items:center;min-height:36px;color:#7e8a9c;font-size:.7rem;font-weight:600;padding-right:8px}
+  .birth-utility-row .advanced summary:hover{color:#b5beca}
+  .birth-utility-row .advanced-content{padding-top:12px;padding-bottom:5px}
+  .birth-save-actions{display:flex;align-items:center;gap:7px;position:absolute;right:0;top:8px}
+  .birth-save-actions button{min-height:36px;min-width:76px;padding:6px 9px;border:1px solid #394655;border-radius:9px;background:#19212b;color:#b7c4d0;font-size:.72rem;font-weight:700;white-space:nowrap}
+  .birth-save-actions .birth-action-save{color:#d9c294;border-color:#554936}
+  .birth-save-actions button:active{background:#2b3440}
+  #aiTitle{font-size:.98rem;letter-spacing:-.025em}
+  #quotaInline{max-width:42%;font-size:.67rem!important;white-space:normal}
+  @media(max-width:360px){.birth-save-actions button{min-width:69px;padding-left:7px;padding-right:7px;font-size:.69rem}#aiTitle{font-size:.91rem}#quotaInline{font-size:.63rem!important}}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js" defer></script>
 </head>
@@ -56,11 +70,11 @@
  <div class="date-grid"><label class="field"><span>出生年份</span><select id="birthYear" required><option value="">年份</option></select></label><label class="field"><span>月份</span><select id="birthMonth" required><option value="">月份</option></select></label><label class="field"><span>日期</span><select id="birthDay" required><option value="">日期</option></select></label></div>
  <div class="tinyrow" id="lunarLine" hidden><label><input type="checkbox" id="lunarLeap"> 閏月</label><span id="dateConvertNote">農曆換算為國曆後排盤</span></div>
  <div class="dual-grid"><label class="field"><span>性別</span><select id="gender"><option value="1">男</option><option value="0">女</option></select></label><label class="field"><span>出生時辰</span><select id="birthSlot"></select></label></div>
- <details class="advanced" id="timeOptions"><summary>精確時間／23 點換日設定 ▾</summary><div class="advanced-content"><label class="tinyrow"><input type="checkbox" id="useExact"> 使用精確出生時間</label><label class="field" id="exactBox" hidden><span>出生時間（24 小時制）</span><input type="time" id="exactTime" value="12:00"></label><label class="field"><span>23:00 換日方式</span><select id="sect"><option value="2">23:00 後仍算當日</option><option value="1">23:00 起算次日</option></select></label><p class="fine">時辰不確定可先選兩小時區間，與原電腦版使用相同排盤規則。</p></div></details>
+ <div class="birth-utility-row"><details class="advanced" id="timeOptions"><summary>進階 ▾</summary><div class="advanced-content"><label class="tinyrow"><input type="checkbox" id="useExact"> 使用精確出生時間</label><label class="field" id="exactBox" hidden><span>出生時間（24 小時制）</span><input type="time" id="exactTime" value="12:00"></label><label class="field"><span>23:00 換日方式</span><select id="sect"><option value="2">23:00 後仍算當日</option><option value="1">23:00 起算次日</option></select></label><p class="fine">時辰不確定可先選兩小時區間，與原電腦版使用相同排盤規則。</p></div></details><div class="birth-save-actions"><button type="button" class="birth-action-save" id="saveBtn">儲存八字</button><button type="button" class="birth-action-load" id="myChartsBtn">載入八字</button></div></div>
  <button type="button" class="button-primary" id="castBtn">免費排出我的八字</button><p class="help-row" id="castHint">排盤額度由系統確認；超出免費額度時將先詢問。</p><p class="status" id="castStatus" role="status" aria-live="polite"></p>
 </section>
-<section class="card" id="chartCard" hidden aria-labelledby="chartTitle"><div class="section-head"><h2 id="chartTitle">02 · 我的四柱命盤</h2><span class="eyetag">基本排盤</span></div><div class="chart-meta" id="chartMeta"></div><div class="four" id="fourPillars"></div><div class="master-desc"><strong id="dayMaster">日主 —</strong><span id="dayMasterType">四柱重點</span></div><div class="chart-actions"><button type="button" class="button-secondary" id="saveBtn">儲存八字</button><button type="button" class="button-secondary" id="myChartsBtn">我的八字</button><button type="button" class="button-secondary" id="editBirthBtn">修改生日</button></div><p class="fine">這裡只保留四柱與日主；其餘專業判讀請選擇下方 AI 解讀。</p></section>
-<section class="card" id="aiCard" hidden aria-labelledby="aiTitle"><div class="section-head"><h2 id="aiTitle">03 · AI 命理解讀</h2><small class="quota-label" id="quotaInline">AI 額度查詢中…</small></div><div class="ai-note">八大固定問題，每次成功解讀使用 1 次 AI 額度。免費額度用完時，將先確認是否使用會員共用額度。</div>
+<section class="card" id="chartCard" hidden aria-labelledby="chartTitle"><div class="section-head"><h2 id="chartTitle">02 · 我的四柱命盤</h2><span class="eyetag">基本排盤</span></div><div class="chart-meta" id="chartMeta"></div><div class="four" id="fourPillars"></div><div class="master-desc"><strong id="dayMaster">日主 —</strong><span id="dayMasterType">四柱重點</span></div><div class="chart-actions"><button type="button" class="button-secondary" id="editBirthBtn">修改生日</button></div><p class="fine">這裡只保留四柱與日主；其餘專業判讀請選擇下方 AI 解讀。</p></section>
+<section class="card" id="aiCard" hidden aria-labelledby="aiTitle"><div class="section-head"><h2 id="aiTitle">03 · AI 解讀（八字詳批）</h2><small class="quota-label" id="quotaInline">會員 AI 額度查詢中…</small></div><div class="ai-note">八大固定問題，每次成功解讀扣除 1 次會員 AI 額度，送出前會再次確認。</div>
 <div class="ai-gate" id="aiGate" hidden role="status"><span id="aiGateMessage"></span><button id="aiGateAction" type="button" class="button-secondary">登入會員</button></div><div class="topic-grid" id="topicGrid"></div>
 <details class="custom" id="customBox"><summary>09 · 我有自己的問題 <span>⌄</span></summary><div class="custom-body"><div class="chips" id="questionCategories" role="group" aria-label="問題分類"></div><div class="suggestions" id="questionExamples"></div><label class="field"><span>自訂問題（5～400 字；需登入會員）</span><textarea id="customQuestion" maxlength="400" rows="4" placeholder="輸入想問的事，或點選上面的範例…"></textarea></label><button id="askCustomBtn" type="button" class="button-primary">開始自訂 AI 解讀 · 1 次</button></div></details><p id="aiStatus" class="status" role="status" aria-live="polite"></p></section>
 <section class="card reader" id="readerCard" hidden aria-labelledby="readerTitle"><div class="section-head reading-head"><h2 id="readerTitle">04 · AI 解讀文章</h2><small>完整閱讀 · 可複製保存</small></div><div id="reportHistory" class="history"></div></section>
@@ -331,7 +345,7 @@ async function refreshAiQuota(){
   const j=await fetchJson(API+'/ai/status',{headers:headers()});
   if(seq!==state.aiQuotaSeq||t!==signedToken()||memberId!==(state.member?.sub||''))return null;
   state.aiQuota=j;state.quotaVerified=true;
-  $('quotaInline').textContent='AI 免費 '+Math.max(0,Number(j.periodicAi?.remaining)||0)+' 次｜共用 '+(j.authenticated?Math.max(0,Number(j.sharedAiRemaining)||0)+' 次':'登入後可用');
+  $('quotaInline').textContent=j.authenticated?'會員 AI 剩餘 '+Math.max(0,Number(j.sharedAiRemaining)||0)+' 次':'登入查看會員 AI 額度';
   renderTopicButtons();return j;
  }catch(_){if(seq!==state.aiQuotaSeq)return null;state.aiQuota=null;state.quotaVerified=false;$('quotaInline').textContent='額度查詢失敗';renderTopicButtons();return null;}
 }
@@ -342,8 +356,8 @@ function updateAiGate(){
  box.hidden=false;
  if(state.authPending){message.textContent='正在確認會員登入與 AI 額度，完成後即可選擇題目。';action.hidden=true;return}
  if(!state.quotaVerified){message.textContent=state.aiQuota===null?'AI 額度尚未取得或查詢失敗，請重新查詢；未確認前不會開始 AI 解讀。':'AI 額度暫時無法確認，請重新查詢。';action.hidden=false;action.textContent='重新查詢 AI 額度';action.dataset.action='retry';return}
- if(state.member){message.textContent='目前免費 AI 及會員共用 AI 額度都已用完，這是題目暫時無法點選的原因，並不是 AI 沒有接入。';action.hidden=false;action.textContent='查看會員額度';action.dataset.action='member';return}
- message.textContent=knownMember()?'目前尚未登入會員，請重新登入，以確認你的會員 AI 共用額度。':'目前訪客免費 AI 額度已用完；登入會員後可確認是否還有共用額度。';
+ if(state.member){message.textContent='目前會員 AI 額度已用完，因此暫時無法選擇題目。';action.hidden=false;action.textContent='查看會員額度';action.dataset.action='member';return}
+ message.textContent=knownMember()?'目前尚未登入會員，請重新登入以確認 AI 額度。':'目前沒有可用的 AI 額度；登入會員後可查詢會員額度。';
  action.hidden=false;action.textContent='登入會員';action.dataset.action='login';
 }
 function renderTopicButtons(){
@@ -507,7 +521,7 @@ async function permissionForAi(){
  const free=Math.max(0,Number(q.periodicAi?.remaining)||0),shared=Math.max(0,Number(q.sharedAiRemaining)||0);
  if(free>0)return {shared:false};
  if(shared>0&&q.authenticated){if(confirm('本次將使用會員共用 AI 額度 1 次，目前剩餘 '+shared+' 次。確定開始？'))return {shared:true};return null}
- setStatus('aiStatus',q.authenticated?'免費及會員共用 AI 額度皆已用完。':'免費 AI 額度已用完。登入後可以查看會員共用額度。','error');return null;
+ setStatus('aiStatus',q.authenticated?'會員 AI 額度已用完。':'目前沒有可用的 AI 額度，登入會員後可查詢。','error');return null;
 }
 async function aiPost(body,shared){
  const options={method:'POST',headers:{...headers(true),...(shared?{'X-DH-Shared-Confirm':'1'}:{})},body:JSON.stringify(body)};
@@ -631,7 +645,9 @@ function showModal(id){$(id).hidden=false;document.body.style.overflow='hidden';
 function closeModal(){for(const id of ['saveModal','chartsModal'])$(id).hidden=true;document.body.style.overflow=''}
 function needMember(){if(state.member)return false;openMember();return true}
 async function memberRequest(path,options={}){if(!state.member)throw Error('請先登入會員');return fetchJson(MEMBER+path,{...options,headers:{...headers(!!options.body),Accept:'application/json'}})}
-async function saveChart(){if(needMember())return;if(!state.birth||!state.chart){setStatus('castStatus','請先排出自己的八字。','error');return}
+async function saveChart(){if(needMember())return;if(!state.birth||!state.chart){setStatus('castStatus','請先排出自己的八字，再儲存。','error');return}
+ let current;try{current=collectBirth()}catch(e){setStatus('castStatus',e.message,'error');return}
+ if(current.datetime!==state.birth.datetime||current.gender!==state.birth.gender||current.sect!==state.birth.sect||JSON.stringify(current.birthInput)!==JSON.stringify(state.birth.birthInput)){setStatus('castStatus','出生資料已修改，請重新排盤後再儲存。','error');return}
  $('nickname').value='我的八字';$('saveDefault').checked=false;setStatus('saveStatus','');showModal('saveModal');}
 async function confirmSave(){const nickname=$('nickname').value.trim();if(!nickname){setStatus('saveStatus','請輸入命盤名稱','error');return}
  $('confirmSave').disabled=true;setStatus('saveStatus','儲存中…');try{const data=await memberRequest('/saved-bazi',{method:'POST',body:JSON.stringify({...state.birth.birthInput,nickname,is_default:$('saveDefault').checked})});
