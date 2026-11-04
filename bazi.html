@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+  <!-- 手機入口分流：手機開啟 bazi.html 時自動切換；?view=desktop 保留電腦版。 -->
+  <script id="bazi-device-redirect">
+  (function () {
+    try {
+      var qs = new URLSearchParams(window.location.search);
+      if (qs.get('view') === 'desktop') return;
+      var ua = navigator.userAgent || '';
+      var isPhone = (navigator.userAgentData && navigator.userAgentData.mobile === true)
+        || /iPhone|iPod|Windows Phone|IEMobile|BlackBerry|Mobi|Android[^)]*Mobile/i.test(ua);
+      if (isPhone) {
+        window.location.replace('/bazi-mobile.html' + window.location.search + window.location.hash);
+      }
+    } catch (_) { /* 裝置偵測失敗時安全保留電腦版 */ }
+  }());
+  </script>
   <script type="application/json" id="dh-billing-sections">{"toolId":"bazi","sections":[{"id":"report-elements","title":"02 五行與陰陽"},{"id":"report-tengods","title":"03 十神結構"},{"id":"report-relations","title":"04 干支合沖"},{"id":"report-shensha","title":"05 常用神煞"},{"id":"report-reading","title":"06 命盤結構"},{"id":"report-luck","title":"07 八步大運"},{"id":"report-years","title":"08 三年流年"}]}</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +23,7 @@
   <meta name="description" content="一念知機專業八字排盤，免費線上建立個人四柱命盤，查看日主、十神五行與每日流日，並依權限探索干支合沖、八步大運、三年流年及 AI 輔助解讀。基礎排盤免費，進階分析依實際額度與會員權限開放。">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
   <link rel="canonical" href="https://divinationhub.tw/bazi.html">
+  <link rel="alternate" media="only screen and (max-width: 640px)" href="https://divinationhub.tw/bazi-mobile.html">
   <meta property="og:title" content="專業八字排盤｜免費線上四柱命盤、十神五行與大運流年">
   <meta property="og:description" content="免費線上建立四柱八字命盤，探索十神五行、八步大運與三年流年；專業分區分析及 AI 輔助解讀依實際權限開放。">
   <meta property="og:url" content="https://divinationhub.tw/bazi.html">
