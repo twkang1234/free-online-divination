@@ -9738,7 +9738,7 @@ html[data-theme="light"] .bazi-personal-stage .bazi-custom-action-line .bazi-ai-
     const chart={...current},reportKey=current.key;
     clearPersonalAiFailure(status);aiBusy=true;btn.disabled=true;btn.textContent='AI 正在解讀中…';status.textContent='AI 正在解讀中…';status.classList.add('bazi-ai-working');status.setAttribute('aria-busy','true');
     try{
-      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_followup',question,followupId:record.followupId,aiOpId:crypto.randomUUID()},followConsent.shared);
+      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_followup',question,followupId:record.followupId,aiOpId:crypto.randomUUID(),clientSurface:'desktop'},followConsent.shared);
       if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未回傳完整追問答案');
       let saved={...reports};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){}
       const history=Array.isArray(saved.custom_questions)?saved.custom_questions.slice(-12):[];
@@ -10373,7 +10373,7 @@ function baziV15RenderReading(target,source){
     clearPersonalAiFailure(status);aiBusy=true;showAiWorking(btn,topic,true);
     status.textContent='AI 正在解讀中…';scrollToAiProgress();
     try{
-      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic,aiOpId:crypto.randomUUID()},permission.shared);
+      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic,aiOpId:crypto.randomUUID(),clientSurface:'desktop'},permission.shared);
       if(!j.reading)throw Error('AI 沒有回傳有效的解讀');
       let saved=current?.key===reportKey?{...reports}:{};
       try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){ }
@@ -10403,7 +10403,7 @@ function baziV15RenderReading(target,source){
     try{
       status.textContent='AI 正在解讀中…';scrollToAiProgress();
       const questionMeta={category:field?.dataset.aiQuestionCategory||'',presetLabel:field?.dataset.aiQuestionPreset||'',template:field?.dataset.aiQuestionTemplate||''};
-      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_question',question,questionMeta,aiOpId:crypto.randomUUID()},permission.shared);
+      const j=await post('/v2/ai/report',{datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_question',question,questionMeta,aiOpId:crypto.randomUUID(),clientSurface:'desktop'},permission.shared);
       if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 尚未回傳完整解讀。');
       let saved={...reports};try{saved={...saved,...JSON.parse(sessionStorage.getItem(storePrefix+reportKey)||'{}')}}catch(_){ }
       const history=Array.isArray(saved.custom_questions)?saved.custom_questions.slice(-11):[];
