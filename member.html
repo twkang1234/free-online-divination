@@ -8,6 +8,27 @@
 <title>會員中心｜一念知機</title>
 <meta name="member-desktop-build" content="desktop-20261105-unified-records-v2">
 <meta name="description" content="一念知機會員中心：查看共用額度、八字與其他占卜紀錄、生命靈數等十種工具入口、心得評價及工具問題回報。">
+<!-- 會員中心統一入口：僅在手機進入 member.html 時切換至獨立手機頁。 -->
+<script id="memberMobileRouter">
+(()=>{
+  'use strict';
+  try{
+    // 本機檔案預覽不跳轉，避免編輯時跨檔案導致測試混亂。
+    if(location.protocol!=='https:'&&location.protocol!=='http:')return;
+    const ua=navigator.userAgent||'';
+    const uaDataMobile=navigator.userAgentData?.mobile===true;
+    const phoneUA=/iPhone|iPod|Android[^;]*Mobile|Windows Phone|IEMobile|BlackBerry|BB10|Opera Mini|webOS/i.test(ua);
+    // 部分手機瀏覽器隱藏 UA；窄螢幕且使用觸控時仍進入手機版。
+    const narrowTouch=matchMedia('(max-width: 600px) and (pointer: coarse)').matches;
+    if(!uaDataMobile&&!phoneUA&&!narrowTouch)return;
+    const target=new URL('member-mobile.html',location.href);
+    // 保留既有登入、登出、返回工具的參數及錨點。
+    target.search=location.search;
+    target.hash=location.hash;
+    location.replace(target.href);
+  }catch(err){console.warn('會員中心手機版轉址略過',err);}
+})();
+</script>
 <script>document.documentElement.dataset.theme='dark';</script>
 <style>
 :root{color-scheme:dark;--bg:#080910;--base:#0d0f19;--surface:#121522;--surface2:#181c2b;--ink:#f0edf6;--sub:#b2acc4;--muted:#9894ac;--line:rgba(196,200,235,.13);--primary:#bca6ff;--primary2:#725cbb;--gold:#ebc881;--green:#76cda7;--red:#f08894;--shadow:0 25px 70px rgba(0,0,0,.26)}
