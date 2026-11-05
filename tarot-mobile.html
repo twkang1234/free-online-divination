@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#090913">
-<meta name="tarot-mobile-version" content="V1.2.0">
+<meta name="tarot-mobile-version" content="V1.3.0">
 <!-- 測試階段不讓搜尋引擎收錄獨立手機頁；啟用自動分流時再共同檢查 SEO。 -->
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="https://divinationhub.tw/tarot.html">
@@ -72,18 +72,31 @@
 .footer-nav a{color:#a99db5;font-size:.68rem}
 .footer-disclaimer{line-height:1.7;max-width:480px;margin:auto;overflow-wrap:anywhere}
 @media(max-width:360px){.report-toolhead{gap:7px}.report-question{font-size:.89rem}.report-fold{min-width:78px;font-size:.68rem;padding:7px 8px}.next-step .actions button,.final-step .actions button{font-size:.74rem}}
+
+/* V1.3 · temporary build indicator, quiet article footnote, discoverable question topics. */
+.brand-eyebrow{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:nowrap;white-space:nowrap}
+.build-chip{display:inline-flex;align-items:center;justify-content:center;flex:none;border:1px solid #594768;background:#21182e;color:#beb0ce;border-radius:6px;padding:2px 6px;font-family:inherit;font-size:.59rem;font-weight:800;letter-spacing:0;line-height:1.45}
+.report-heading small{font-size:.69rem;color:#c8a0c6}
+.report-question{color:#f4d69d;font-size:1.04rem;font-weight:820;line-height:1.55}
+.report-meta{display:block;margin:16px 0 9px;padding:11px 0 0;border:0;border-top:1px solid #302a3b;color:#897e94;font-size:.66rem;line-height:1.55;overflow-wrap:anywhere;word-break:break-word}
+#topics{scroll-snap-type:x proximity;overscroll-behavior-x:contain;touch-action:pan-x pan-y;scroll-padding-left:2px}
+#topics .pill{scroll-snap-align:start}
+#moreQuestions.is-cue{animation:tarotCueFlash 1.12s ease-in-out 5}
+@keyframes tarotCueFlash{0%,100%{filter:brightness(1);text-shadow:none}50%{filter:brightness(1.5);text-shadow:0 0 11px #dca1ec8c}}
+@media(max-width:350px){.brand-eyebrow{gap:6px}.build-chip{font-size:.56rem;padding:2px 5px}.report-question{font-size:.94rem}}
+@media(prefers-reduced-motion:reduce){#moreQuestions.is-cue{animation:none!important}}
 </style>
 </head>
 <body>
 <header class="sitebar"><div class="sitebar-inner"><a class="brand" href="/" aria-label="返回一念知機首頁">一念知機</a><nav class="header-tool-nav" aria-label="其他命理工具"><div class="header-tool-scroll" tabindex="0" aria-label="命理工具，可左右滑動"><a href="/qimen.html" draggable="false">奇門</a><a href="/tarot-mobile.html" draggable="false">塔羅</a><a href="/bazi.html" draggable="false">八字</a><a href="/ziwei.html" draggable="false">紫微</a><a href="/meihua.html" draggable="false">梅花</a><a href="/liuyao.html" draggable="false">六爻</a><a href="/yijing.html" draggable="false">易經64卦</a><a href="/cezi.html" draggable="false">測字</a><a href="/wuxing.html" draggable="false">五行</a><a href="/numerology.html" draggable="false">生命靈數</a></div></nav><div class="header-right"><a class="member-link" id="memberBtn" href="/member.html">免費登入</a></div></div></header>
 <main class="wrap">
-<section class="hero" id="hero"><div class="eyebrow">DIVINATION HUB · TAROT</div><div class="spark">✧</div><h1>AI 塔羅<span>占卜</span></h1><p>選個問題、抽三張牌，讓 AI 深入解析。想看得更完整，再補抽三張。</p></section>
+<section class="hero" id="hero"><div class="eyebrow brand-eyebrow"><span>DIVINATION HUB · TAROT</span><span class="build-chip" aria-label="目前頁面版本 V1.3">V1.3</span></div><div class="spark">✧</div><h1>AI 塔羅<span>占卜</span></h1><p>選個問題、抽三張牌，讓 AI 深入解析。想看得更完整，再補抽三張。</p></section>
 <section class="card" id="quotaCard" aria-labelledby="quotaTitle"><div class="quota-top"><strong id="quotaTitle">我的使用額度</strong><button type="button" class="text-btn" id="refreshQuota">更新額度 ↻</button></div><div class="quota-stats"><div class="quota-cell"><small>免費抽牌</small><b id="freeDraw">查詢中…</b></div><div class="quota-cell"><small>會員共用工具額度</small><b id="sharedDraw">查詢中…</b></div><div class="quota-cell"><small>免費 AI 解讀</small><b id="freeAI">查詢中…</b></div><div class="quota-cell"><small>會員共用 AI 額度</small><b id="sharedAI">查詢中…</b></div></div><p class="quota-note">抽牌與 AI 解讀分開計次；免費用完時，會先確認是否使用共用額度。</p><p class="status" id="quotaStatus" role="status" aria-live="polite"></p></section>
-<section class="card" id="questionPanel" aria-labelledby="questionTitle"><div class="section-head"><h2 id="questionTitle">選擇塔羅問題</h2><small>STEP 01 / 03</small></div><p class="caption">先選主題，再點選參考問題。也可以自行提問。</p><div class="pills" id="topics" role="group" aria-label="選擇問題主題"></div><div class="samples-head"><strong>參考題目 · 點選可帶入修改</strong><button type="button" class="text-btn" id="moreQuestions">換一批 ↻</button></div><div id="samples" class="sample-list"></div><details class="custom" id="customDetails"><summary>自己輸入問題 <span aria-hidden="true">⌄</span></summary><div class="custom-body"><textarea class="input" id="customQuestion" maxlength="120" placeholder="例如：我最近適合換工作嗎？"></textarea><p class="fine">需至少 5 個字元；修改參考題目也會改以自訂題規則計價。</p></div></details><div class="selection-info" id="paymentHint">請先選擇一個問題，不會立即扣點。</div><button type="button" class="primary" id="beginReading" disabled>確認問題，開始抽牌</button><p class="status" id="selectionStatus" role="status" aria-live="polite"></p><button type="button" class="ghost" id="resetSelection" hidden>取消這次，重新選題</button></section>
+<section class="card" id="questionPanel" aria-labelledby="questionTitle"><div class="section-head"><h2 id="questionTitle">選擇塔羅問題</h2><small>STEP 01 / 03</small></div><p class="caption">選擇主題或參考題目，也可以自行提問。</p><div class="pills" id="topics" role="group" aria-label="選擇問題主題"></div><div class="samples-head"><strong>參考題目 · 點選可帶入修改</strong><button type="button" class="text-btn" id="moreQuestions">換一批 ↻</button></div><div id="samples" class="sample-list"></div><details class="custom" id="customDetails"><summary>自己輸入問題 <span aria-hidden="true">⌄</span></summary><div class="custom-body"><textarea class="input" id="customQuestion" maxlength="120" placeholder="例如：我最近適合換工作嗎？"></textarea><p class="fine">需至少 5 個字元；修改參考題目也會改以自訂題規則計價。</p></div></details><div class="selection-info" id="paymentHint">請先選擇一個問題，不會立即扣點。</div><button type="button" class="primary" id="beginReading" disabled>確認問題，開始抽牌</button><p class="status" id="selectionStatus" role="status" aria-live="polite"></p><button type="button" class="ghost" id="resetSelection" hidden>取消這次，重新選題</button></section>
 <section class="card" id="drawPanel" hidden aria-labelledby="drawTitle"><div class="step-indicator" aria-hidden="true"><span class="active"></span><span id="drawProgressB"></span><span id="drawProgressAI"></span></div><div class="section-head"><h2 id="drawTitle">第一輪｜抽三張牌</h2><small id="drawPhaseLabel">STEP 02 / 03</small></div><div class="chosen-q"><small>本次占卜問題</small><strong id="drawQuestion"></strong></div><p class="caption" id="spreadDesc">系統已為你準備三張牌，依序點擊抽出。</p><div class="card-row" id="drawSlots"></div><div class="draw-board"><button type="button" class="draw-back" id="drawNext" aria-label="抽下一張牌"></button></div><p class="draw-hint" id="drawHint">點擊上方牌背，抽出第 1 張</p><p class="status" id="drawStatus" role="status" aria-live="polite"></p></section>
-<section class="card" id="resultPanel" hidden aria-labelledby="resultTitle"><div class="section-head"><h2 id="resultTitle">你的三張牌</h2><small id="resultPhaseLabel">第一階段</small></div><div class="chosen-q"><small>本次問題</small><strong id="resultQuestion"></strong></div><p class="big-label" id="firstSpreadLabel">第一組牌陣</p><div id="firstCards" class="card-row large"></div><div class="ai-box" id="aiAreaA"><div id="aiIntroA"><h3>第一階段｜三張牌 AI 解讀</h3></div><button type="button" class="primary" id="runAiA">下一步：開始三張牌 AI 解讀｜扣 1 次</button><div id="loadingA" class="ai-busy" hidden><span class="spinner"></span><span>正在進行三張牌深度分析…</span></div><p class="status" id="aiStatusA" role="status" aria-live="polite"></p><div id="reportA" hidden><div class="report-toolhead"><div class="report-heading"><small>第一階段｜三張牌解讀</small><h3 class="report-question" id="reportQuestionA"></h3></div><button type="button" class="report-fold" data-fold="a" aria-controls="reportDetailsA" aria-expanded="true">↑ 收合文章</button></div><div class="report-details" id="reportDetailsA"><div class="report-detail-inner"><div class="report-meta" id="reportMetaA" aria-label="AI 通道與追蹤碼">通道 —｜追蹤碼：—</div><div class="report-body" id="reportTextA"></div><div class="report-foot"><button type="button" class="secondary" data-copy="a">複製文章</button><button type="button" class="secondary gold" data-download="a">下載文章</button></div><button type="button" class="report-fold report-fold-bottom" data-fold="a" aria-controls="reportDetailsA" aria-expanded="true">↑ 收合文章，返回標題</button></div></div></div></div><div id="continuePanel" hidden class="next-step"><h3>還想進一步了解嗎？</h3><div class="actions"><button type="button" class="secondary" id="finishFirst">結束占卜</button><button type="button" class="primary" id="beginSecond" style="flex:1.6">繼續補抽三張</button></div><p class="next-cost">第二輪抽牌、AI 解讀各 1 次額度（免費優先）</p></div><div id="secondResult" hidden><p class="big-label" id="secondSpreadLabel">第二組補充牌陣</p><div id="secondCards" class="card-row large"></div><div class="ai-box"><div id="aiIntroB"><h3>第二階段｜六張牌整合解讀</h3></div><button type="button" class="primary" id="runAiB">下一步：開始六張牌 AI 整合解讀｜扣 1 次</button><div id="loadingB" class="ai-busy" hidden><span class="spinner"></span><span>正在整合六張牌的訊息…</span></div><p class="status" id="aiStatusB" role="status" aria-live="polite"></p><div id="reportB" hidden><div class="report-toolhead"><div class="report-heading"><small>第二階段｜六張牌整合</small><h3 class="report-question" id="reportQuestionB"></h3></div><button type="button" class="report-fold" data-fold="b" aria-controls="reportDetailsB" aria-expanded="true">↑ 收合文章</button></div><div class="report-details" id="reportDetailsB"><div class="report-detail-inner"><div class="report-meta" id="reportMetaB" aria-label="AI 通道與追蹤碼">通道 —｜追蹤碼：—</div><div class="report-body" id="reportTextB"></div><div class="report-foot"><button type="button" class="secondary" data-copy="b">複製文章</button><button type="button" class="secondary gold" data-download="b">下載文章</button></div><button type="button" class="report-fold report-fold-bottom" data-fold="b" aria-controls="reportDetailsB" aria-expanded="true">↑ 收合文章，返回標題</button></div></div></div></div></div><div id="finalActions" hidden class="final-step"><div class="finish" id="finishLabel">✓ 占卜完成</div><div class="actions"><button type="button" class="secondary gold" id="downloadAll">下載完整解讀</button><button type="button" class="secondary" id="newQuestion">開始新問題</button></div></div><p id="recordStatus" class="status archive-error" role="status" aria-live="polite" hidden></p></section>
+<section class="card" id="resultPanel" hidden aria-labelledby="resultTitle"><div class="section-head"><h2 id="resultTitle">你的三張牌</h2><small id="resultPhaseLabel">第一階段</small></div><div class="chosen-q"><small>本次問題</small><strong id="resultQuestion"></strong></div><p class="big-label" id="firstSpreadLabel">第一組牌陣</p><div id="firstCards" class="card-row large"></div><div class="ai-box" id="aiAreaA"><div id="aiIntroA"><h3>第一輪｜三張牌 AI 解讀</h3></div><button type="button" class="primary" id="runAiA">下一步：開始三張牌 AI 解讀｜扣 1 次</button><div id="loadingA" class="ai-busy" hidden><span class="spinner"></span><span>正在進行三張牌深度分析…</span></div><p class="status" id="aiStatusA" role="status" aria-live="polite"></p><div id="reportA" hidden><div class="report-toolhead"><div class="report-heading"><small>第一輪｜三張牌 AI 解讀</small><h3 class="report-question" id="reportQuestionA"></h3></div><button type="button" class="report-fold" data-fold="a" aria-controls="reportDetailsA" aria-expanded="true">↑ 收合文章</button></div><div class="report-details" id="reportDetailsA"><div class="report-detail-inner"><div class="report-body" id="reportTextA"></div><p class="report-meta" id="reportMetaA" aria-label="AI 通道與追蹤碼">通道 —｜追蹤碼：—</p><div class="report-foot"><button type="button" class="secondary" data-copy="a">複製文章</button><button type="button" class="secondary gold" data-download="a">下載文章</button></div><button type="button" class="report-fold report-fold-bottom" data-fold="a" aria-controls="reportDetailsA" aria-expanded="true">↑ 收合文章，返回標題</button></div></div></div></div><div id="continuePanel" hidden class="next-step"><h3>還想進一步了解嗎？</h3><div class="actions"><button type="button" class="secondary" id="finishFirst">結束占卜</button><button type="button" class="primary" id="beginSecond" style="flex:1.6">繼續補抽三張</button></div><p class="next-cost">第二輪抽牌、AI 解讀各 1 次額度（免費優先）</p></div><div id="secondResult" hidden><p class="big-label" id="secondSpreadLabel">第二組補充牌陣</p><div id="secondCards" class="card-row large"></div><div class="ai-box"><div id="aiIntroB"><h3>第二輪｜六張牌整合解讀</h3></div><button type="button" class="primary" id="runAiB">下一步：開始六張牌 AI 整合解讀｜扣 1 次</button><div id="loadingB" class="ai-busy" hidden><span class="spinner"></span><span>正在整合六張牌的訊息…</span></div><p class="status" id="aiStatusB" role="status" aria-live="polite"></p><div id="reportB" hidden><div class="report-toolhead"><div class="report-heading"><small>第二輪｜六張牌 AI 整合解讀</small><h3 class="report-question" id="reportQuestionB"></h3></div><button type="button" class="report-fold" data-fold="b" aria-controls="reportDetailsB" aria-expanded="true">↑ 收合文章</button></div><div class="report-details" id="reportDetailsB"><div class="report-detail-inner"><div class="report-body" id="reportTextB"></div><p class="report-meta" id="reportMetaB" aria-label="AI 通道與追蹤碼">通道 —｜追蹤碼：—</p><div class="report-foot"><button type="button" class="secondary" data-copy="b">複製文章</button><button type="button" class="secondary gold" data-download="b">下載文章</button></div><button type="button" class="report-fold report-fold-bottom" data-fold="b" aria-controls="reportDetailsB" aria-expanded="true">↑ 收合文章，返回標題</button></div></div></div></div></div><div id="finalActions" hidden class="final-step"><div class="finish" id="finishLabel">✓ 占卜完成</div><div class="actions"><button type="button" class="secondary gold" id="downloadAll">下載完整解讀</button><button type="button" class="secondary" id="newQuestion">開始新問題</button></div></div><p id="recordStatus" class="status archive-error" role="status" aria-live="polite" hidden></p></section>
 <section class="faq"><details><summary>三張與六張牌有什麼不同？</summary><p>前三張是完整占卜；想更深入，可再抽三張，進行六張整合解讀。</p></details><details><summary>如何切換電腦版？</summary><p><a href="/tarot.html?view=desktop">開啟塔羅電腦版</a>，使用更多抽牌設定。</p></details></section>
-</main><footer class="footer"><div class="wrap"><p class="footer-heading">✨ 探索其他免費命理工具</p><nav class="footer-nav" aria-label="其他命理工具"><a href="/qimen.html">奇門</a><a href="/tarot-mobile.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經</a><a href="/cezi.html">測字</a><a href="/wuxing.html">五行</a><a href="/numerology.html">生命靈數</a></nav><div class="footer-disclaimer">© 一念知機｜塔羅占卜與 AI 解讀僅供參考，重大決策請審慎判斷。</div></div></footer>
+</main><footer class="footer"><div class="wrap"><p class="footer-heading">✨ 探索其他免費命理工具</p><nav class="footer-nav" aria-label="其他命理工具"><a href="/qimen.html">奇門</a><a href="/tarot-mobile.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經</a><a href="/cezi.html">測字</a><a href="/wuxing.html">五行</a><a href="/numerology.html">生命靈數</a></nav><div class="footer-disclaimer">© 一念知機｜塔羅占卜與 AI 解讀僅供參考，可能存在誤差。重大決策請審慎判斷，必要時諮詢專業人士。</div></div></footer>
 <div id="toast" class="notify" hidden role="status" aria-live="polite"></div>
 <script>
 (() => {'use strict';
@@ -261,7 +274,7 @@ function renderResult(){
  $('downloadAll').disabled=!a&&!b;
  updateArchiveMessage();
  $('resultTitle').textContent=b?'你的六張牌':'你的三張牌';
- $('resultPhaseLabel').textContent=b?'第二階段完成':hasSecond?'第二階段':'第一階段';
+ $('resultPhaseLabel').textContent=b?'第二輪完成':hasSecond?'第二輪':'第一輪';
 }
 function render(){const selecting=state.stage==='select',drawing=state.stage==='drawA'||state.stage==='drawB';$('hero').hidden=!selecting;$('questionPanel').hidden=!selecting;$('drawPanel').hidden=!drawing;$('resultPanel').hidden=selecting||drawing;
  if(selecting)displayCategory();if(drawing)renderDraw();if(!selecting&&!drawing)renderResult();}
@@ -310,7 +323,7 @@ function renderMarkdown(host,source){const frag=document.createDocumentFragment(
  }flush();host.replaceChildren(frag);
 }
 function reportText(which){const list=['一念知機｜塔羅占卜完整解讀',`問題：${state.question?.text||''}`,`主題：${topic(state.topicId).name}`,''];
- for(const [id,title] of [['a','第一階段｜三張牌 AI 解讀'],['b','第二階段｜六張牌整合解讀']]){if(which&&which!==id)continue;const r=state[id==='a'?'reportA':'reportB'];if(!r)continue;list.push('═'.repeat(18),title,`通道：${r.channel||'—'}｜追蹤碼：${r.traceId||'—'}`,r.answer,'');}
+ for(const [id,title] of [['a','第一輪｜三張牌 AI 解讀'],['b','第二輪｜六張牌整合解讀']]){if(which&&which!==id)continue;const r=state[id==='a'?'reportA':'reportB'];if(!r)continue;list.push('═'.repeat(18),title,r.answer,'',`通道：${r.channel||'—'}｜追蹤碼：${r.traceId||'—'}`,'');}
  list.push('完整 AI 解讀由使用者自行保存，站內會員紀錄只存摘要。');return list.join('\r\n');
 }
 function downloadReport(which=''){const text=reportText(which);const blob=new Blob(['\uFEFF',text],{type:'text/plain;charset=UTF-8'}),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='tarot-ai-'+(which==='a'?'three':which==='b'?'six':'complete')+'-'+new Date().toISOString().slice(0,10)+'.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1200);notice('已開始下載，請確認檔案確實保存。')}
@@ -362,6 +375,53 @@ function setReportExpanded(which,expanded,fromBottom=false,remember=true){
 function resetAll(){if(busy)return;if(archiveInFlight){notice('會員紀錄正在自動儲存，請完成後再開始新問題。',true);return;}if(member&&state.reportA&&Number(state.archivedStage||0)<(state.reportB?6:3)&&!confirm('會員紀錄尚未成功自動儲存。請先下載完整 AI 文章，確定仍要開始新問題嗎？'))return;if((state.reportA||state.chargedA||state.customPaid)&&!confirm('重新開始會清除目前牌面與 AI 文章。\n請先下載完整解讀；已扣的使用額度不會退回。確定開始新問題嗎？'))return;
  try{sessionStorage.removeItem(DRAFT_KEY)}catch(_){}
  state=defaultState();currentCat='love';selected=null;typed='';sampleStart=0;drawDeck=[];save();render();setStatus('selectionStatus','');scrollToEl('questionPanel');}
+
+function setupTopicSwipeCue(){
+ const rail=$('topics'),panel=$('questionPanel');
+ if(!rail||!panel||!('IntersectionObserver' in window)||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ let stopped=false,visible=false,frame=0,last=0,origin=0;
+ let observer;
+ const stop=()=>{if(stopped)return;stopped=true;visible=false;cancelAnimationFrame(frame);frame=0;rail.style.scrollSnapType='';observer?.disconnect();};
+ ['pointerdown','touchstart','wheel','keydown','click'].forEach(type=>rail.addEventListener(type,stop,{once:true,passive:true}));
+ const ease=t=>t*t*(3-2*t);
+ function animate(now){
+  if(stopped||!visible||panel.hidden||document.hidden){frame=0;return;}
+  if(!last)last=now;
+  const travel=Math.min(105,Math.max(0,rail.scrollWidth-rail.clientWidth));
+  if(travel<35){stop();return;}
+  const phase=((now-last)%5200)/1000;
+  if(phase<1.6)rail.scrollLeft=origin+travel*ease(phase/1.6);
+  else if(phase<2.2)rail.scrollLeft=origin+travel;
+  else if(phase<3.8)rail.scrollLeft=origin+travel*(1-ease((phase-2.2)/1.6));
+  else rail.scrollLeft=origin;
+  frame=requestAnimationFrame(animate);
+ }
+ observer=new IntersectionObserver(entries=>{
+  if(stopped)return;
+  const inView=!panel.hidden&&entries.some(e=>e.isIntersecting&&e.intersectionRatio>=.65);
+  if(!inView){visible=false;cancelAnimationFrame(frame);frame=0;last=0;rail.style.scrollSnapType='';rail.scrollLeft=origin;return;}
+  if(document.hidden)return;
+  if(!visible){visible=true;origin=0;rail.style.scrollSnapType='none';last=0;frame=requestAnimationFrame(animate);}
+ },{threshold:[0,.65]});
+ observer.observe(rail);
+ document.addEventListener('visibilitychange',()=>{
+  if(stopped)return;
+  if(document.hidden){cancelAnimationFrame(frame);frame=0;last=0;}
+  else if(visible&&!panel.hidden&&!frame){frame=requestAnimationFrame(animate);}
+ });
+}
+function setupQuestionRefreshCue(){
+ const btn=$('moreQuestions'),panel=$('questionPanel');
+ if(!btn||!panel||!('IntersectionObserver' in window)||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ let played=false;
+ const observer=new IntersectionObserver(entries=>{
+  if(played||panel.hidden||!entries.some(e=>e.isIntersecting&&e.intersectionRatio>=.65))return;
+  played=true;observer.disconnect();btn.classList.add('is-cue');
+ },{threshold:[.65]});
+ observer.observe(btn);
+ btn.addEventListener('click',()=>btn.classList.remove('is-cue'),{once:true});
+ btn.addEventListener('animationend',()=>btn.classList.remove('is-cue'),{once:true});
+}
 function initListeners(){
  $('refreshQuota').addEventListener('click',()=>{void refreshQuota()});
  $('topics').addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b||busy)return;currentCat=b.dataset.topic;selected=null;typed='';sampleStart=0;displayCategory();});
@@ -381,7 +441,7 @@ function initListeners(){
 }
 function init(){restore();if(state.stage==='drawA'&&state.cardsA.length===3){state.stage='aiA';save()}if(state.stage==='drawB'&&state.cardsB.length===3){state.stage='aiB';save()}if(state.stage==='completeA'&&state.chargedB&&state.cardsB.length<3){state.stage='drawB';save()}currentCat=state.topicId||'love';if(state.stage==='select'&&state.question){typed=state.querySnapshot||state.question.text;selected=state.questionType==='fixed'?state.question:null}
  if(state.stage==='drawA'||state.stage==='drawB')drawDeck=shuffledDeck().filter(i=>!(state.stage==='drawB'?state.cardsB:state.cardsA).some(c=>c.index===i));
- initListeners();updateMemberButton();render();void restoreMember();void refreshQuota();}
+ initListeners();updateMemberButton();render();setupTopicSwipeCue();setupQuestionRefreshCue();void restoreMember();void refreshQuota();}
 init();
 })();
 </script>
