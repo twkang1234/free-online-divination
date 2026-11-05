@@ -332,6 +332,22 @@ html{background:var(--bg);scroll-padding-top:72px}body{font-size:14px;line-heigh
 @media(max-width:355px){.top-inner{width:calc(100% - 18px);gap:6px}.topbar .brand{font-size:.83rem}.topbar .btn.small{padding:6px 7px;font-size:.66rem}.shell{width:calc(100% - 22px)}#memberWalletCards .simple-panel{padding:8px 3px!important}#memberWalletCards .simple-panel b{font-size:.62rem!important}.member-record-tab{font-size:.72rem!important}#signalGrid .signal-choice{font-size:.63rem!important;padding:5px 4px!important}.review-stars button{padding:0 2px}}
 @media(min-width:650px){body{background:var(--bg)}.shell{width:min(520px,calc(100% - 36px))}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 
+
+/* 我的紀錄：移除重複的大型前往按鈕後，直接在列表閱讀細節。 */
+.member-preview-details{border-bottom:1px solid var(--line);overflow:hidden}
+.member-preview-details:last-of-type{border-bottom:0}
+.member-preview-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:3px 6px;min-height:55px;border-radius:10px}
+.member-preview-details>summary::-webkit-details-marker{display:none}
+.member-preview-details>summary:hover{background:color-mix(in srgb,var(--primary) 7%,transparent)}
+.member-preview-details>summary .member-preview-row{flex:1;min-width:0;border:0;padding:6px 0;pointer-events:none}
+.member-preview-details .preview-chevron{flex:none;color:var(--primary);font-size:1.1rem;transition:transform .16s}
+.member-preview-details[open] .preview-chevron{transform:rotate(180deg)}
+.member-preview-detail-body{padding:8px 12px 15px;border-top:1px solid var(--line);font-size:.81rem;line-height:1.8;color:var(--sub);overflow-wrap:anywhere}
+.member-preview-detail-body p{margin:8px 0;white-space:pre-wrap}
+.member-preview-detail-body h4{font-size:.88rem;margin:14px 0 6px;color:var(--gold)}
+.member-preview-detail-body ol{padding-left:1.4em;margin:8px 0}.member-preview-detail-body li{margin:5px 0}
+.member-preview-detail-body textarea,.member-preview-detail-body input,.member-preview-detail-body select{max-width:100%}
+.member-preview-detail-body .tarot-mini-settings{margin-top:12px}
 </style>
 </head>
 <body>
@@ -391,7 +407,7 @@ html{background:var(--bg);scroll-padding-top:72px}body{font-size:14px;line-heigh
       <p class="member-payment-recheck-contact" id="memberPaymentRecheckContact" hidden>付款核對暫時無法完成，請來信通知管理員協助處理：<a href="mailto:ezgocpu@gmail.com">ezgocpu@gmail.com</a></p>
     </details>
   </section>
-  <section class="section" id="mobileRecordsSection" style="margin-top:27px;padding-top:28px"><div class="section-top"><div><div class="eyebrow">MY DIVINATION</div><h2>我的占卜與命盤</h2><p class="section-lead">選擇工具，直接查看已保存的近期紀錄；需要閱讀詳細內容時可在同一區塊展開。</p></div></div>
+  <section class="section" id="mobileRecordsSection" style="margin-top:27px;padding-top:28px"><div class="section-top"><div><div class="eyebrow">MY DIVINATION</div><h2>我的占卜與命盤</h2><p class="section-lead">選擇工具，直接查看最近儲存的紀錄；有詳細內容的紀錄可在下方展開閱讀。</p></div></div>
     <nav class="member-record-tabs" id="memberRecordTabs" aria-label="選擇我的紀錄工具">
       <button type="button" class="member-record-tab is-active" data-member-record-tab="bazi" aria-selected="true"><span aria-hidden="true">◈</span> 八字</button>
       <button type="button" class="member-record-tab" data-member-record-tab="wuxing" aria-selected="false"><span aria-hidden="true">✦</span> 五行</button>
@@ -403,7 +419,6 @@ html{background:var(--bg);scroll-padding-top:72px}body{font-size:14px;line-heigh
     <div class="member-record-panel" id="memberRecordPanel" aria-live="polite">
       <div class="member-record-panel-head">
         <div><h3 id="memberRecordTitle">八字命盤</h3><p id="memberRecordDesc" class="caption">管理已儲存的出生資料與預設命盤。</p></div>
-        <button type="button" class="btn small ghost" id="memberRecordOpen">管理八字紀錄 ↗</button>
       </div>
       <div class="member-record-preview" id="memberRecordPreview"><p class="caption">登入後可以查看自己的近期紀錄。</p></div>
     </div>
@@ -843,7 +858,6 @@ html{background:var(--bg);scroll-padding-top:72px}body{font-size:14px;line-heigh
     }
     $('memberRecordTitle').textContent=recordToolLabels[tool][0];
     $('memberRecordDesc').textContent=recordToolLabels[tool][1];
-    $('memberRecordOpen').textContent=tool==='wuxing'?'前往五行查詢 ↗':tool==='numerology'?'前往生命靈數 ↗':tool==='tarot'?'查看塔羅紀錄 ↓':('管理'+recordToolLabels[tool][0]+' ↗');
     void loadHomeRecordPreview(tool);
   }
   // 工具使用各自原本的紀錄來源，不另造新的儲存系統。
@@ -893,9 +907,28 @@ html{background:var(--bg);scroll-padding-top:72px}body{font-size:14px;line-heigh
       if(tool==='tarot'){
         const data=await toolRecordFetch(API_TAROT,'/member/records?page=0');
         if(seq!==homePreviewSeq||token!==savedSession()||who!==profile()?.sub||homeRecordTool!==tool||currentView!=='home')return;
-        const list=Array.isArray(data.records)?data.records:[];
-        homePreviewRows(node,list.map(r=>[r.question||'塔羅占卜',taiwanDate(r.createdAt)+' · '+(r.stage===6?'六張牌':'三張牌')]),
-          '最近 '+Math.min(3,list.length)+' 組；點上方「查看塔羅紀錄」即可展開牌面、心得與提醒，不會跳到其他 HTML 頁面。');
+        const list=Array.isArray(data.records)?data.records.slice(0,3):[];
+        node.replaceChildren();
+        if(!list.length){node.append(textNode('div','目前沒有儲存的塔羅紀錄。','member-preview-tip'));return}
+        for(const record of list){
+          const detail=document.createElement('details');detail.className='member-preview-details';
+          const trigger=document.createElement('summary');trigger.append(homePreviewRow(record.question||'塔羅占卜',taiwanDate(record.createdAt)+' · '+(record.stage===6?'六張牌':'三張牌')));
+          const arrow=textNode('span','⌄','preview-chevron');arrow.setAttribute('aria-hidden','true');trigger.append(arrow);detail.append(trigger);
+          const body=textNode('div','展開後讀取牌面與精簡解讀…','member-preview-detail-body');detail.append(body);
+          let busy=false,loaded=false;
+          detail.addEventListener('toggle',async()=>{
+            if(!detail.open||busy||loaded)return;
+            busy=true;body.textContent='正在讀取這組塔羅紀錄…';
+            try{
+              const result=await toolRecordFetch(API_TAROT,'/member/records/'+encodeURIComponent(record.id));
+              if(seq!==homePreviewSeq||who!==profile()?.sub||token!==savedSession()||homeRecordTool!=='tarot')return;
+              tarotDetailRender(result.record,body,()=>loadHomeRecordPreview('tarot'));loaded=true;
+            }catch(e){body.textContent='讀取失敗：'+e.message}
+            finally{busy=false}
+          });
+          node.append(detail);
+        }
+        node.append(textNode('p','最近 '+list.length+' 組；點選紀錄展開牌面、精簡解讀、心得與提醒。','caption member-preview-foot'));
         return;
       }
       if(tool==='numerology'){
@@ -909,8 +942,25 @@ html{background:var(--bg);scroll-padding-top:72px}body{font-size:14px;line-heigh
       const data=await api(tool==='bazi'?'/saved-bazi':'/member/archive/'+tool);
       if(seq!==homePreviewSeq||token!==savedSession()||who!==profile()?.sub||homeRecordTool!==tool||currentView!=='home')return;
       const list=Array.isArray(data.records)?data.records:[];
-      homePreviewRows(node,list.map(r=>tool==='bazi'?[r.nickname||'未命名命盤',baziDate(r)+(Number(r.is_default)?' · ★ 預設':'')]:[r.title||'占卜紀錄',taiwanDate(r.createdAt)+' · '+String(r.question||'未記錄問題')]),
-        '顯示最近 '+Math.min(list.length,3)+' 筆；詳細內容及管理請進入上方管理頁面。');
+      if(tool==='yijing'||tool==='cezi'){
+        node.replaceChildren();
+        if(!list.length){node.append(textNode('div','目前還沒有儲存的紀錄。','member-preview-tip'));return}
+        for(const r of list.slice(0,3)){
+          const detail=document.createElement('details');detail.className='member-preview-details';
+          const trigger=document.createElement('summary');trigger.append(homePreviewRow(r.title||'占卜紀錄',taiwanDate(r.createdAt)+' · '+String(r.question||'未記錄問題')));
+          const arrow=textNode('span','⌄','preview-chevron');arrow.setAttribute('aria-hidden','true');trigger.append(arrow);detail.append(trigger);
+          const body=textNode('div','','member-preview-detail-body'),info=r.details||{};
+          const fields=tool==='yijing'?[info.base?'本卦：'+info.base:'',info.changed?'變卦：'+info.changed:'',info.moving?'動爻：'+info.moving:'']:[info.hanzi?'測字：'+info.hanzi:'',info.topic?'主題：'+info.topic:''];
+          if(fields.some(Boolean))body.append(textNode('p',fields.filter(Boolean).join('｜')));
+          if(r.summary)body.append(textNode('p','精簡解讀：'+r.summary));
+          if(!fields.some(Boolean)&&!r.summary)body.append(textNode('p','此筆紀錄目前沒有更多可顯示的內容。'));
+          detail.append(body);node.append(detail);
+        }
+        node.append(textNode('p','最近 '+Math.min(list.length,3)+' 組；點選紀錄可展開已儲存的內容。','caption member-preview-foot'));
+      }else{
+        homePreviewRows(node,list.map(r=>[r.nickname||'未命名命盤',baziDate(r)+(Number(r.is_default)?' · ★ 預設':'')]),
+          '顯示最近 '+Math.min(list.length,3)+' 筆；出生資料的載入、刪除與預設設定請在八字排盤工具內操作。');
+      }
     }catch(err){
       if(seq!==homePreviewSeq||token!==savedSession()||homeRecordTool!==tool)return;
       node.replaceChildren(textNode('div','暫時無法取得紀錄：'+err.message,'member-preview-tip'));
@@ -930,7 +980,7 @@ html{background:var(--bg);scroll-padding-top:72px}body{font-size:14px;line-heigh
   }
   function tarotLocalToday(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
   function tarotSmallText(tag,value,cls){return textNode(tag,String(value||''),cls||'')}
-  function tarotDetailRender(record,root){
+  function tarotDetailRender(record,root,onDelete){
     root.replaceChildren();
     const cards=Array.isArray(record.cards)?record.cards:[];
     if(cards.length){
@@ -975,7 +1025,7 @@ html{background:var(--bg);scroll-padding-top:72px}body{font-size:14px;line-heigh
     remove.addEventListener('click',async()=>{
       if(!confirm('確定永久刪除這組塔羅紀錄？牌面、心得與提醒將一起刪除，無法恢復。'))return;
       remove.disabled=true;
-      try{await toolRecordFetch(API_TAROT,'/member/records/'+encodeURIComponent(record.id)+'/delete',{method:'POST',body:'{}'});await loadTarotArchive()}
+      try{await toolRecordFetch(API_TAROT,'/member/records/'+encodeURIComponent(record.id)+'/delete',{method:'POST',body:'{}'});await (onDelete?onDelete():loadTarotArchive())}
       catch(e){remove.disabled=false;feedback.textContent='刪除失敗：'+e.message}
     });actions.append(remove,feedback);root.append(actions);
   }
@@ -1520,7 +1570,6 @@ html{background:var(--bg);scroll-padding-top:72px}body{font-size:14px;line-heigh
     $('memberAnnouncementToggle').addEventListener('click',()=>{const root=$('memberAnnouncement'),toggle=$('memberAnnouncementToggle');const expanded=root.classList.toggle('is-expanded');toggle.setAttribute('aria-expanded',String(expanded));toggle.textContent=expanded?'收合公告 ↑':'展開完整公告 ↓';});
     for(const tile of document.querySelectorAll('[data-page]'))tile.addEventListener('click',()=>navigate(tile.dataset.page));for(const b of document.querySelectorAll('[data-back]'))b.addEventListener('click',()=>navigate('home'));
     for(const tab of document.querySelectorAll('[data-member-record-tab]'))tab.addEventListener('click',()=>switchHomeRecordTab(tab.dataset.memberRecordTab));
-    $('memberRecordOpen').addEventListener('click',()=>{if(homeRecordTool==='wuxing')location.href='wuxing.html';else if(homeRecordTool==='numerology')location.href='numerology.html';else navigate(homeRecordTool)});
     for(const tool of tools){const row=document.querySelector(`[data-tool="${tool}"]`);for(const button of row.querySelectorAll('[data-health-state]'))button.addEventListener('click',()=>changeHealthState(tool,button.dataset.healthState))}
     $('baziRefresh').addEventListener('click',loadBazi);
     $('chatForm').addEventListener('submit',sendChat);$('chatText').addEventListener('input',()=>{$('chatCounter').textContent=[...$('chatText').value].length+' / 500 字';$('chatSend').disabled=!chatData?.open||!$('chatText').value.trim()||(chatData.messages||[]).filter(m=>m.role==='member').length>=6});$('chatThreadSelect').addEventListener('change',()=>{selectedChatId=Number($('chatThreadSelect').value)||null;refreshMemberChat()});

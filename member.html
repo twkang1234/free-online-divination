@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0a0b12">
 <title>會員中心｜一念知機</title>
 <meta name="member-desktop-build" content="desktop-20261105-unified-records-v2">
-<meta name="description" content="一念知機會員中心：查看共用額度、八字與其他占卜紀錄、生命靈數等十種工具入口、心得評價及網站異常回報。">
+<meta name="description" content="一念知機會員中心：查看共用額度、八字與其他占卜紀錄、生命靈數等十種工具入口、心得評價及工具問題回報。">
 <script>document.documentElement.dataset.theme='dark';</script>
 <style>
 :root{color-scheme:dark;--bg:#080910;--base:#0d0f19;--surface:#121522;--surface2:#181c2b;--ink:#f0edf6;--sub:#b2acc4;--muted:#9894ac;--line:rgba(196,200,235,.13);--primary:#bca6ff;--primary2:#725cbb;--gold:#ebc881;--green:#76cda7;--red:#f08894;--shadow:0 25px 70px rgba(0,0,0,.26)}
@@ -285,6 +285,37 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 .member-payment-recheck-contact{margin:7px 0;color:var(--sub);font-size:.79rem;line-height:1.75}
 .member-payment-recheck-contact a{font-weight:800;color:var(--primary);overflow-wrap:anywhere}
 .member-payment-recheck-controls button:disabled{opacity:.48;cursor:not-allowed}
+
+/* 我的紀錄：移除重複的大型前往按鈕後，直接在列表閱讀細節。 */
+.member-preview-details{border-bottom:1px solid var(--line);overflow:hidden}
+.member-preview-details:last-of-type{border-bottom:0}
+.member-preview-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:3px 6px;min-height:55px;border-radius:10px}
+.member-preview-details>summary::-webkit-details-marker{display:none}
+.member-preview-details>summary:hover{background:color-mix(in srgb,var(--primary) 7%,transparent)}
+.member-preview-details>summary .member-preview-row{flex:1;min-width:0;border:0;padding:6px 0;pointer-events:none}
+.member-preview-details .preview-chevron{flex:none;color:var(--primary);font-size:1.1rem;transition:transform .16s}
+.member-preview-details[open] .preview-chevron{transform:rotate(180deg)}
+.member-preview-detail-body{padding:8px 12px 15px;border-top:1px solid var(--line);font-size:.81rem;line-height:1.8;color:var(--sub);overflow-wrap:anywhere}
+.member-preview-detail-body p{margin:8px 0;white-space:pre-wrap}
+.member-preview-detail-body h4{font-size:.88rem;margin:14px 0 6px;color:var(--gold)}
+.member-preview-detail-body ol{padding-left:1.4em;margin:8px 0}.member-preview-detail-body li{margin:5px 0}
+.member-preview-detail-body textarea,.member-preview-detail-body input,.member-preview-detail-body select{max-width:100%}
+.member-preview-detail-body .tarot-mini-settings{margin-top:12px}
+
+/* 電腦版：把站長詢問收進工具問題回報的同一個流程。 */
+.desktop-chat-fold{margin:18px 0 4px;border:1px solid var(--line);border-radius:15px;background:var(--base);overflow:hidden}
+.desktop-chat-fold>summary{display:flex;align-items:center;flex-wrap:wrap;gap:11px;padding:16px 18px;cursor:pointer;list-style:none;min-height:65px}
+.desktop-chat-fold>summary::-webkit-details-marker{display:none}
+.desktop-chat-title{font-size:.98rem;font-weight:800;color:var(--gold)}
+.desktop-chat-hint{font-size:.76rem;color:var(--sub);flex:1 1 230px}
+.desktop-chat-arrow{font-size:1.2rem;color:var(--primary);transition:transform .18s}
+.desktop-chat-fold[open] .desktop-chat-arrow{transform:rotate(180deg)}
+.desktop-chat-fold[open]>summary{border-bottom:1px solid var(--line)}
+.desktop-chat-badge{font-size:.72rem;border:1px solid color-mix(in srgb,var(--gold) 55%,var(--line));color:var(--gold);border-radius:99px;padding:4px 9px}
+.desktop-chat-fold #chatPanel{border:0;margin:0;padding:18px;box-shadow:none;border-radius:0;background:transparent}
+#issueSection .signal-meta:empty{display:none}
+#issueSection .signal-card.is-normal .signal-footnote{color:var(--muted)}
+@media(max-width:720px){.desktop-chat-fold>summary{padding:13px}.desktop-chat-fold #chatPanel{padding:13px}}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -345,7 +376,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       <p class="member-payment-recheck-contact" id="memberPaymentRecheckContact" hidden>付款核對暫時無法完成，請來信通知管理員協助處理：<a href="mailto:ezgocpu@gmail.com">ezgocpu@gmail.com</a></p>
     </details>
   </section>
-  <section class="section" style="margin-top:27px;padding-top:28px"><div class="section-top"><div><div class="eyebrow">MY DIVINATION</div><h2>我的占卜與命盤</h2><p class="section-lead">選擇工具，直接查看已保存的近期紀錄；需要閱讀詳細內容時可在同一區塊展開。</p></div></div>
+  <section class="section" style="margin-top:27px;padding-top:28px"><div class="section-top"><div><div class="eyebrow">MY DIVINATION</div><h2>我的占卜與命盤</h2><p class="section-lead">選擇工具，直接查看最近儲存的紀錄；有詳細內容的紀錄可在下方展開閱讀。</p></div></div>
     <nav class="member-record-tabs" id="memberRecordTabs" aria-label="選擇我的紀錄工具">
       <button type="button" class="member-record-tab is-active" data-member-record-tab="bazi" aria-selected="true"><span aria-hidden="true">◈</span> 八字</button>
       <button type="button" class="member-record-tab" data-member-record-tab="wuxing" aria-selected="false"><span aria-hidden="true">✦</span> 五行</button>
@@ -357,76 +388,77 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     <div class="member-record-panel" id="memberRecordPanel" aria-live="polite">
       <div class="member-record-panel-head">
         <div><h3 id="memberRecordTitle">八字命盤</h3><p id="memberRecordDesc" class="caption">管理已儲存的出生資料與預設命盤。</p></div>
-        <button type="button" class="btn small ghost" id="memberRecordOpen">管理八字紀錄 ↗</button>
       </div>
       <div class="member-record-preview" id="memberRecordPreview"><p class="caption">登入後可以查看自己的近期紀錄。</p></div>
     </div>
   </section>
-  <section class="section" id="issueSection"><div class="section-top"><div><div class="eyebrow">SITE HEALTH</div><h2>網站異常回報</h2><p class="section-lead">遇到異常時可回報紅燈，恢復後切回綠燈。各工具是否開放操作，以後端回傳狀態為準。</p></div><span class="pill">會員回報 · 不公開</span></div>
+  <section class="section" id="issueSection"><div class="section-top"><div><div class="eyebrow">SITE HEALTH</div><h2>工具問題回報與處理</h2><p class="section-lead">排盤失敗、按鈕沒反應或 AI 解讀出錯？請在對應工具按「回報問題」，問題解決後再按「正常／已恢復」。站長若需了解細節，會在下方留言。</p></div><span class="pill">僅你與站長可查看</span></div>
     <div id="issueNotice" class="notice warn" role="status" aria-live="polite">正在檢查異常回報功能……</div>
     <div id="maintenanceBanner" class="signal-maintenance" role="status" aria-live="polite" hidden><strong>站長維修中</strong><span id="maintenanceText"></span></div>
     <div class="signal-grid" id="signalGrid">
       <div class="signal-card is-unknown" data-tool="bazi">
-        <div class="signal-top"><span class="signal-name">八字排盤</span><span class="signal-sub">個人回報開關</span></div>
+        <div class="signal-top"><span class="signal-name">八字排盤</span><span class="signal-sub">你的回報狀態</span></div>
         <div class="signal-status"><span class="light off" aria-hidden="true"></span><strong class="signal-status-text status-unknown">狀態尚未連線</strong></div>
         <div class="signal-meta">正在檢查回報系統……</div>
         <div class="signal-switch" role="group" aria-label="八字排盤異常回報狀態">
-          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常中</button>
-          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>提報異常</button>
+          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常／已恢復</button>
+          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>回報問題</button>
         </div><div class="signal-footnote">回報服務尚未啟用</div>
       </div>
       <div class="signal-card is-unknown" data-tool="tarot">
-        <div class="signal-top"><span class="signal-name">塔羅占卜</span><span class="signal-sub">個人回報開關</span></div>
+        <div class="signal-top"><span class="signal-name">塔羅占卜</span><span class="signal-sub">你的回報狀態</span></div>
         <div class="signal-status"><span class="light off" aria-hidden="true"></span><strong class="signal-status-text status-unknown">狀態尚未連線</strong></div>
         <div class="signal-meta">正在檢查回報系統……</div>
         <div class="signal-switch" role="group" aria-label="塔羅占卜異常回報狀態">
-          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常中</button>
-          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>提報異常</button>
+          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常／已恢復</button>
+          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>回報問題</button>
         </div><div class="signal-footnote">回報服務尚未啟用</div>
       </div>
       <div class="signal-card is-unknown" data-tool="yijing">
-        <div class="signal-top"><span class="signal-name">易經占卜</span><span class="signal-sub">個人回報開關</span></div>
+        <div class="signal-top"><span class="signal-name">易經占卜</span><span class="signal-sub">你的回報狀態</span></div>
         <div class="signal-status"><span class="light off" aria-hidden="true"></span><strong class="signal-status-text status-unknown">狀態尚未連線</strong></div>
         <div class="signal-meta">正在檢查回報系統……</div>
         <div class="signal-switch" role="group" aria-label="易經占卜異常回報狀態">
-          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常中</button>
-          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>提報異常</button>
+          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常／已恢復</button>
+          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>回報問題</button>
         </div><div class="signal-footnote">回報服務尚未啟用</div>
       </div>
       <div class="signal-card is-unknown" data-tool="cezi">
-        <div class="signal-top"><span class="signal-name">測字問事</span><span class="signal-sub">個人回報開關</span></div>
+        <div class="signal-top"><span class="signal-name">測字問事</span><span class="signal-sub">你的回報狀態</span></div>
         <div class="signal-status"><span class="light off" aria-hidden="true"></span><strong class="signal-status-text status-unknown">狀態尚未連線</strong></div>
         <div class="signal-meta">正在檢查回報系統……</div>
         <div class="signal-switch" role="group" aria-label="測字問事異常回報狀態">
-          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常中</button>
-          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>提報異常</button>
+          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常／已恢復</button>
+          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>回報問題</button>
         </div><div class="signal-footnote">回報服務尚未啟用</div>
       </div>
       <div class="signal-card is-unknown" data-tool="wuxing" aria-label="五行查詢會員異常回報">
-        <div class="signal-top"><span class="signal-name">五行查詢</span><span class="signal-sub">個人回報開關</span></div>
+        <div class="signal-top"><span class="signal-name">五行查詢</span><span class="signal-sub">你的回報狀態</span></div>
         <div class="signal-status"><span class="light off" aria-hidden="true"></span><strong class="signal-status-text status-unknown">狀態尚未連線</strong></div>
         <div class="signal-meta">正在檢查回報系統……</div>
         <div class="signal-switch" role="group" aria-label="五行查詢異常回報狀態">
-          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常中</button>
-          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>提報異常</button>
+          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常／已恢復</button>
+          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>回報問題</button>
         </div><div class="signal-footnote">回報服務尚未啟用</div>
       </div>
       <div class="signal-card is-unknown" data-tool="numerology" aria-label="生命靈數會員異常回報">
-        <div class="signal-top"><span class="signal-name">生命靈數</span><span class="signal-sub">個人回報開關</span></div>
+        <div class="signal-top"><span class="signal-name">生命靈數</span><span class="signal-sub">你的回報狀態</span></div>
         <div class="signal-status"><span class="light off" aria-hidden="true"></span><strong class="signal-status-text status-unknown">狀態尚未連線</strong></div>
         <div class="signal-meta">正在向伺服器確認回報狀態……</div>
         <div class="signal-switch" role="group" aria-label="生命靈數異常回報狀態">
-          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常中</button>
-          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>提報異常</button>
+          <button type="button" class="signal-choice normal" data-health-state="normal" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>正常／已恢復</button>
+          <button type="button" class="signal-choice issue" data-health-state="issue" aria-pressed="false" disabled><span class="choice-dot" aria-hidden="true"></span>回報問題</button>
         </div><div class="signal-footnote">後端確認後開放操作</div>
       </div>
     </div>
-    <p class="signal-note">◎ 只有確實遇到異常才提報紅燈；會員個人回報與站長維修公告互相獨立。</p>
-    <div class="panel chat locked" id="chatPanel"><div class="chat-header"><h3>🔒 站長詢問訊息</h3><span id="chatState" class="pill">預設關閉</span></div><p id="chatInfo" class="chat-placeholder">只有站長主動向您詢問異常細節後，此對話框才會開放。會員無法自行開啟私人對話。</p>
+    <p class="signal-note">這裡顯示的是你的回報狀態，不代表工具一定正常；請只在真的遇到問題時回報。</p>
+    <details class="desktop-chat-fold" id="desktopChatFold"><summary><span class="desktop-chat-title">✉ 站長回覆與問題確認</span><span class="desktop-chat-hint">站長若需確認問題，會在這裡詢問；你可直接回覆</span><span class="desktop-chat-badge" id="desktopIssueChatBadge" hidden>站長有詢問</span><span class="desktop-chat-arrow" aria-hidden="true">⌄</span></summary>
+    <div class="panel chat locked" id="chatPanel"><div class="chat-header"><h3>問題確認訊息</h3><span id="chatState" class="pill">尚無訊息</span></div><p id="chatInfo" class="chat-placeholder">如果站長需要了解更多故障細節，會在這裡留言。收到詢問後，就可以直接回覆。</p>
       <div id="chatSelectRow" class="chat-select-row" hidden><label for="chatThreadSelect">站長詢問的工具</label><select class="field" id="chatThreadSelect"></select></div>
       <div id="chatMessages" class="chat-messages" hidden></div><form id="chatForm" class="chat-form"><label class="field-label" for="chatText">回覆站長</label><textarea id="chatText" class="field textarea" maxlength="500" disabled placeholder="目前未開放，等待站長詢問……"></textarea><div class="chat-foot"><span id="chatCounter" class="caption">0 / 500 字</span><button class="btn primary small" id="chatSend" type="submit" disabled>送出回覆</button></div></form>
       <div id="chatNotice" class="caption" role="status" style="margin-top:9px"></div>
     </div>
+    </details>
   </section>
   <section class="section reviews-block" id="reviewSection">
     <div class="section-top"><div><div class="eyebrow">MEMBER REVIEWS</div><h2>會員心得評價</h2></div></div>
@@ -491,7 +523,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   <div class="heading-row"><div><div class="kicker">MY CEZI</div><h1 class="page-heading">我的測字</h1><p class="lead">完成第二階段站內 AI 解讀後，自動保存最近 3 組測字紀錄。</p></div><a href="cezi.html" class="btn primary">前往線上測字 ↗</a></div>
   <div id="ceziArchiveList" class="record-list"><div class="empty-state">登入後查詢最近 3 組測字紀錄。</div></div>
 </section>
-<footer class="footer">© 一念知機 Divination Hub · 全站共用 Google 會員帳號<br>占卜紀錄僅限帳號本人存取；網站異常回報不是私人占卜諮詢服務。<div style="margin-top:8px"><a href="index.html">網站首頁</a><a href="qimen.html">奇門</a><a href="tarot.html">塔羅</a><a href="bazi.html">八字</a><a href="ziwei.html">紫微</a><a href="meihua.html">梅花</a><a href="liuyao.html">六爻</a><a href="yijing.html">易經</a><a href="cezi.html">測字</a><a href="wuxing.html">五行</a><a href="numerology.html">生命靈數</a></div></footer>
+<footer class="footer">© 一念知機 Divination Hub · 全站共用 Google 會員帳號<br>占卜紀錄僅限帳號本人存取；工具問題回報僅用於回報網站故障，不提供私人占卜諮詢。<div style="margin-top:8px"><a href="index.html">網站首頁</a><a href="qimen.html">奇門</a><a href="tarot.html">塔羅</a><a href="bazi.html">八字</a><a href="ziwei.html">紫微</a><a href="meihua.html">梅花</a><a href="liuyao.html">六爻</a><a href="yijing.html">易經</a><a href="cezi.html">測字</a><a href="wuxing.html">五行</a><a href="numerology.html">生命靈數</a></div></footer>
 </main>
 <script>
 (()=>{'use strict';
@@ -790,7 +822,6 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     }
     $('memberRecordTitle').textContent=recordToolLabels[tool][0];
     $('memberRecordDesc').textContent=recordToolLabels[tool][1];
-    $('memberRecordOpen').textContent=tool==='wuxing'?'前往五行查詢 ↗':tool==='numerology'?'前往生命靈數 ↗':tool==='tarot'?'查看塔羅紀錄 ↓':('管理'+recordToolLabels[tool][0]+' ↗');
     void loadHomeRecordPreview(tool);
   }
   // 工具使用各自原本的紀錄來源，不另造新的儲存系統。
@@ -840,9 +871,28 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       if(tool==='tarot'){
         const data=await toolRecordFetch(API_TAROT,'/member/records?page=0');
         if(seq!==homePreviewSeq||token!==savedSession()||who!==profile()?.sub||homeRecordTool!==tool||currentView!=='home')return;
-        const list=Array.isArray(data.records)?data.records:[];
-        homePreviewRows(node,list.map(r=>[r.question||'塔羅占卜',taiwanDate(r.createdAt)+' · '+(r.stage===6?'六張牌':'三張牌')]),
-          '最近 '+Math.min(3,list.length)+' 組；點上方「查看塔羅紀錄」即可展開牌面、心得與提醒，不會跳到其他 HTML 頁面。');
+        const list=Array.isArray(data.records)?data.records.slice(0,3):[];
+        node.replaceChildren();
+        if(!list.length){node.append(textNode('div','目前沒有儲存的塔羅紀錄。','member-preview-tip'));return}
+        for(const record of list){
+          const detail=document.createElement('details');detail.className='member-preview-details';
+          const trigger=document.createElement('summary');trigger.append(homePreviewRow(record.question||'塔羅占卜',taiwanDate(record.createdAt)+' · '+(record.stage===6?'六張牌':'三張牌')));
+          const arrow=textNode('span','⌄','preview-chevron');arrow.setAttribute('aria-hidden','true');trigger.append(arrow);detail.append(trigger);
+          const body=textNode('div','展開後讀取牌面與精簡解讀…','member-preview-detail-body');detail.append(body);
+          let busy=false,loaded=false;
+          detail.addEventListener('toggle',async()=>{
+            if(!detail.open||busy||loaded)return;
+            busy=true;body.textContent='正在讀取這組塔羅紀錄…';
+            try{
+              const result=await toolRecordFetch(API_TAROT,'/member/records/'+encodeURIComponent(record.id));
+              if(seq!==homePreviewSeq||who!==profile()?.sub||token!==savedSession()||homeRecordTool!=='tarot')return;
+              tarotDetailRender(result.record,body,()=>loadHomeRecordPreview('tarot'));loaded=true;
+            }catch(e){body.textContent='讀取失敗：'+e.message}
+            finally{busy=false}
+          });
+          node.append(detail);
+        }
+        node.append(textNode('p','最近 '+list.length+' 組；點選紀錄展開牌面、精簡解讀、心得與提醒。','caption member-preview-foot'));
         return;
       }
       if(tool==='numerology'){
@@ -856,8 +906,25 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       const data=await api(tool==='bazi'?'/saved-bazi':'/member/archive/'+tool);
       if(seq!==homePreviewSeq||token!==savedSession()||who!==profile()?.sub||homeRecordTool!==tool||currentView!=='home')return;
       const list=Array.isArray(data.records)?data.records:[];
-      homePreviewRows(node,list.map(r=>tool==='bazi'?[r.nickname||'未命名命盤',baziDate(r)+(Number(r.is_default)?' · ★ 預設':'')]:[r.title||'占卜紀錄',taiwanDate(r.createdAt)+' · '+String(r.question||'未記錄問題')]),
-        '顯示最近 '+Math.min(list.length,3)+' 筆；詳細內容及管理請進入上方管理頁面。');
+      if(tool==='yijing'||tool==='cezi'){
+        node.replaceChildren();
+        if(!list.length){node.append(textNode('div','目前還沒有儲存的紀錄。','member-preview-tip'));return}
+        for(const r of list.slice(0,3)){
+          const detail=document.createElement('details');detail.className='member-preview-details';
+          const trigger=document.createElement('summary');trigger.append(homePreviewRow(r.title||'占卜紀錄',taiwanDate(r.createdAt)+' · '+String(r.question||'未記錄問題')));
+          const arrow=textNode('span','⌄','preview-chevron');arrow.setAttribute('aria-hidden','true');trigger.append(arrow);detail.append(trigger);
+          const body=textNode('div','','member-preview-detail-body'),info=r.details||{};
+          const fields=tool==='yijing'?[info.base?'本卦：'+info.base:'',info.changed?'變卦：'+info.changed:'',info.moving?'動爻：'+info.moving:'']:[info.hanzi?'測字：'+info.hanzi:'',info.topic?'主題：'+info.topic:''];
+          if(fields.some(Boolean))body.append(textNode('p',fields.filter(Boolean).join('｜')));
+          if(r.summary)body.append(textNode('p','精簡解讀：'+r.summary));
+          if(!fields.some(Boolean)&&!r.summary)body.append(textNode('p','此筆紀錄目前沒有更多可顯示的內容。'));
+          detail.append(body);node.append(detail);
+        }
+        node.append(textNode('p','最近 '+Math.min(list.length,3)+' 組；點選紀錄可展開已儲存的內容。','caption member-preview-foot'));
+      }else{
+        homePreviewRows(node,list.map(r=>[r.nickname||'未命名命盤',baziDate(r)+(Number(r.is_default)?' · ★ 預設':'')]),
+          '顯示最近 '+Math.min(list.length,3)+' 筆；出生資料的載入、刪除與預設設定請在八字排盤工具內操作。');
+      }
     }catch(err){
       if(seq!==homePreviewSeq||token!==savedSession()||homeRecordTool!==tool)return;
       node.replaceChildren(textNode('div','暫時無法取得紀錄：'+err.message,'member-preview-tip'));
@@ -877,7 +944,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   }
   function tarotLocalToday(){return new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
   function tarotSmallText(tag,value,cls){return textNode(tag,String(value||''),cls||'')}
-  function tarotDetailRender(record,root){
+  function tarotDetailRender(record,root,onDelete){
     root.replaceChildren();
     const cards=Array.isArray(record.cards)?record.cards:[];
     if(cards.length){
@@ -922,7 +989,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     remove.addEventListener('click',async()=>{
       if(!confirm('確定永久刪除這組塔羅紀錄？牌面、心得與提醒將一起刪除，無法恢復。'))return;
       remove.disabled=true;
-      try{await toolRecordFetch(API_TAROT,'/member/records/'+encodeURIComponent(record.id)+'/delete',{method:'POST',body:'{}'});await loadTarotArchive()}
+      try{await toolRecordFetch(API_TAROT,'/member/records/'+encodeURIComponent(record.id)+'/delete',{method:'POST',body:'{}'});await (onDelete?onDelete():loadTarotArchive())}
       catch(e){remove.disabled=false;feedback.textContent='刪除失敗：'+e.message}
     });actions.append(remove,feedback);root.append(actions);
   }
@@ -1079,30 +1146,30 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       row.classList.remove('is-planned');row.classList.toggle('is-unknown',!known);row.classList.toggle('is-normal',known&&!reported&&!maintenance);row.classList.toggle('is-reported',known&&reported&&!maintenance);row.classList.toggle('is-maintenance',maintenance);
       light.className='light '+(maintenance||reported?'on':known?'fixed':'off');
       name.className='signal-status-text '+(maintenance||reported?'status-error':known?'status-normal':'status-unknown');
-      name.textContent=maintenance?'站長維修中':!known?'狀態尚未連線':reported?'紅燈 · 提報異常中':'綠燈 · 正常中';
+      name.textContent=maintenance?'站長維修中':!known?'暫時無法查詢':reported?'已回報問題':'尚未回報問題';
       for(const btn of row.querySelectorAll('[data-health-state]')){
         const active=!maintenance&&known&&((btn.dataset.healthState==='issue')===reported);
         btn.classList.toggle('is-selected',active);btn.setAttribute('aria-pressed',String(active));btn.disabled=!canSwitch;
-        btn.title=maintenance?'站長已啟動維修，目前暫停切換':!canSwitch?'後端尚未確認可操作，請稍後重新整理':'切換此工具的個人回報狀態';
+        btn.title=maintenance?'此工具正在維修，暫時無法切換':!canSwitch?'目前無法操作，請稍後重新整理':'更新這項工具的問題回報狀態';
       }
-      if(maintenance){meta.textContent='站長已確認異常，正在檢查或維修；所有會員皆會看到紅燈。';note.textContent='全面維修中 · 暫停個人切換';}
+      if(maintenance){meta.textContent='站長正在檢查或維修，暫時無法更改回報狀態。';note.textContent='維修中，暫停操作';}
       else if(previewSupported){meta.textContent=reported?'本機示範紅燈，尚未傳給站長。':'本機示範綠燈，尚未連線正式後端。';note.textContent='僅供本機切換展示，不會真的回報';}
 
-      else if(!profile()){meta.textContent='請先登入 Google 會員，才能切換個人回報狀態。';note.textContent='登入後開放（需回報後端啟用）';}
-      else if(!r){meta.textContent='目前無法確認回報狀態，尚不能送出。';note.textContent='後端未啟用或暫時無法連線';}
-      else if(!toggleSupported(r)){meta.textContent='可查看目前回報狀態，但後端尚未支援雙向切換。';note.textContent='等待正式後端支援';}
-      else if(reported){meta.textContent='你目前已提報異常；如果恢復正常，可以自行切回綠燈。';note.textContent='隨時可取消自己的紅燈';}
-      else{meta.textContent='目前未回報異常。確實發現功能問題時，再切成紅燈。';note.textContent='提報紅燈前需要確認';}
+      else if(!profile()){meta.textContent='請先登入會員，才能回報問題或取消回報。';note.textContent='需登入會員';}
+      else if(!r){meta.textContent='目前無法連線，請稍後重新整理。';note.textContent='回報暫時不可用';}
+      else if(!toggleSupported(r)){meta.textContent='此工具目前暫時不接受問題回報。';note.textContent='暫不可操作';}
+      else if(reported){meta.textContent='已通知站長。如果問題解決了，請按「正常／已恢復」。';note.textContent='可以取消回報';}
+      else{meta.textContent='';note.textContent='尚無回報';}
     }
     $('issueNotice').hidden=false;
     const notice=$('maintenanceBanner');notice.hidden=!isSiteMaintenance();
     if(!notice.hidden){$('maintenanceText').textContent='｜'+[...new Set(maintenanceList)].join('、')+' 正在維修。維修中的工具暫停個人回報，其餘工具仍可使用紅綠燈。';}
     if(preview)showNotice('issueNotice','本機外觀示範：綠／紅開關可以操作，但不會保存或傳送給站長。正式回報功能仍需後端啟用。','warn');
-    else if(!profile())showNotice('issueNotice','請先登入 Google 會員。若站長已進入維修模式，登入後會顯示全體維修公告。','warn');
-    else if(!hasBackend)showNotice('issueNotice','異常回報後端尚未啟用或暫時無法連線。目前所有開關均停用，無法傳送回報。','warn');
-    else if(isSiteMaintenance())showNotice('issueNotice','部分工具正在維修，該工具暫停個人回報；其他工具仍可回報。待全部維修解除後，心得投稿恢復。','warn');
-    else if(tools.some(t=>!lightItem(t)))showNotice('issueNotice','部分工具尚未由後端提供回報功能：'+tools.filter(t=>!lightItem(t)).map(t=>toolNames[t]).join('、')+'。已支援的工具仍可正常切換。','warn');
-    else if(!lightData.lights.every(r=>toggleSupported(r)||serverMaintenance(r)))showNotice('issueNotice','後端已有回報資料，但部分工具尚未開放綠／紅雙向切換；請等站長完成後端設定。','warn');
+    else if(!profile())showNotice('issueNotice','請先登入會員，才能回報工具問題。','warn');
+    else if(!hasBackend)showNotice('issueNotice','目前無法連接問題回報服務，請稍後重新整理。','warn');
+    else if(isSiteMaintenance())showNotice('issueNotice','部分工具正在維修，這些工具的回報按鈕已暫停；其他工具仍可回報。','warn');
+    else if(tools.some(t=>!lightItem(t)))showNotice('issueNotice','以下工具目前暫不接受回報：'+tools.filter(t=>!lightItem(t)).map(t=>toolNames[t]).join('、')+'。其他工具仍可使用。','warn');
+    else if(!lightData.lights.every(r=>toggleSupported(r)||serverMaintenance(r)))showNotice('issueNotice','部分工具目前暫不提供問題回報或取消功能。','warn');
     else $('issueNotice').hidden=true; // 正常運作時不重複顯示連線成功文字。
     syncReviewMaintenance();
   }
@@ -1153,7 +1220,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       previewHealth[tool]=report;renderLights();return;
     }
     if(!profile()||!toggleSupported(r)||!!r.reported===report)return;
-    if(report&&!confirm(`你確實遇到「${toolNames[tool]}」的功能異常嗎？\n\n請不要為了測試或好玩而誤報。\n確認後會將你的個人狀態切為紅燈。`))return;
+    if(report&&!confirm(`確定要回報「${toolNames[tool]}」的使用問題嗎？\n\n請只在真的遇到問題時回報；送出後站長會在後台看到這項回報。`))return;
     issueBusy.add(tool);renderLights();
     try{
       const token=getToken();
@@ -1185,11 +1252,12 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       memberChatVisualKey=visualKey;
     }
     $('chatSelectRow').hidden=all.length<2;
-    $('chatState').textContent=open?'站長已開啟':'目前沒有新訊息';
+    $('chatState').textContent=open?'可以回覆':'目前無詢問';
+    $('desktopIssueChatBadge').hidden=!open;
     $('chatInfo').textContent=open
-      ?`站長正在詢問${toolNames[chatData.tool]||'網站'}的異常細節。您已回覆 ${used}/6 則；問題修復後由站長關閉並清除對話。`
-      :'只有站長主動詢問後，對話框才會開啟。會員無法主動私訊站長。';
-    area.placeholder=!open?'目前未開放，等待站長詢問……':canReply?'請簡單回覆站長詢問的問題……':'這段對話已達六則回覆上限，請等待站長處理';
+      ?`站長正在向你確認「${toolNames[chatData.tool]||'網站'}」的使用問題。你已回覆 ${used}/6 則；問題處理後，站長會關閉對話。`
+      :'目前沒有需要回覆的訊息。如果站長需要確認故障細節，會在這裡留言。';
+    area.placeholder=!open?'目前沒有需要回覆的訊息':canReply?'請簡單回覆站長詢問的問題……':'這段對話已達六則回覆上限，請等待站長處理';
     messages.hidden=!open;
     if(open&&visualChanged){
       for(const m of (Array.isArray(chatData.messages)?chatData.messages:[])){
@@ -1466,7 +1534,6 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     $('memberAnnouncementToggle').addEventListener('click',()=>{const root=$('memberAnnouncement'),toggle=$('memberAnnouncementToggle');const expanded=root.classList.toggle('is-expanded');toggle.setAttribute('aria-expanded',String(expanded));toggle.textContent=expanded?'收合公告 ↑':'展開完整公告 ↓';});
     for(const tile of document.querySelectorAll('[data-page]'))tile.addEventListener('click',()=>navigate(tile.dataset.page));for(const b of document.querySelectorAll('[data-back]'))b.addEventListener('click',()=>navigate('home'));
     for(const tab of document.querySelectorAll('[data-member-record-tab]'))tab.addEventListener('click',()=>switchHomeRecordTab(tab.dataset.memberRecordTab));
-    $('memberRecordOpen').addEventListener('click',()=>{if(homeRecordTool==='wuxing')location.href='wuxing.html';else if(homeRecordTool==='numerology')location.href='numerology.html';else navigate(homeRecordTool)});
     for(const tool of tools){const row=document.querySelector(`[data-tool="${tool}"]`);for(const button of row.querySelectorAll('[data-health-state]'))button.addEventListener('click',()=>changeHealthState(tool,button.dataset.healthState))}
     $('baziRefresh').addEventListener('click',loadBazi);
     $('chatForm').addEventListener('submit',sendChat);$('chatText').addEventListener('input',()=>{$('chatCounter').textContent=[...$('chatText').value].length+' / 500 字';$('chatSend').disabled=!chatData?.open||!$('chatText').value.trim()||(chatData.messages||[]).filter(m=>m.role==='member').length>=6});$('chatThreadSelect').addEventListener('change',()=>{selectedChatId=Number($('chatThreadSelect').value)||null;refreshMemberChat()});
