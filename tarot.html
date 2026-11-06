@@ -9,6 +9,7 @@
   <meta name="description" content="一念知機 AI 塔羅占卜提供限額免費線上塔羅抽牌體驗，支援 78 張塔羅牌正逆位、六種抽牌方式、三張及 3＋3 六張整合解讀。由站內 AI 依問題與牌陣完整解析，另有五種老師風格與三種報告格式；免費額度和進階權限依頁面顯示。">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
   <link rel="canonical" href="https://divinationhub.tw/tarot.html">
+  <link rel="alternate" media="only screen and (max-width: 640px)" href="https://divinationhub.tw/tarot-mobile.html">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:title" content="AI 塔羅占卜｜免費線上抽牌、專業塔羅解讀｜一念知機">
@@ -23,11 +24,29 @@
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://divinationhub.tw/#website","url":"https://divinationhub.tw/","name":"一念知機","alternateName":["Divination Hub","免費線上占卜"],"inLanguage":"zh-Hant","publisher":{"@id":"https://divinationhub.tw/#organization"}},{"@type":"Organization","@id":"https://divinationhub.tw/#organization","name":"一念知機","url":"https://divinationhub.tw/","alternateName":"Divination Hub"},{"@type":"WebPage","@id":"https://divinationhub.tw/tarot.html#webpage","url":"https://divinationhub.tw/tarot.html","name":"AI 塔羅占卜｜免費線上抽牌、專業塔羅解讀｜一念知機","description":"一念知機 AI 塔羅占卜提供限額免費線上塔羅抽牌體驗，支援 78 張塔羅牌正逆位、六種抽牌方式、三張及 3＋3 六張整合解讀。由站內 AI 依問題與牌陣完整解析，另有五種老師風格與三種報告格式；免費額度和進階權限依頁面顯示。","inLanguage":"zh-Hant","isPartOf":{"@id":"https://divinationhub.tw/#website"},"creator":{"@id":"https://divinationhub.tw/#organization"},"about":[{"@type":"Thing","name":"AI 塔羅占卜"},{"@type":"Thing","name":"線上塔羅占卜"},{"@type":"Thing","name":"塔羅牌三張牌陣"},{"@type":"Thing","name":"六張牌整合解讀"}],"publisher":{"@id":"https://divinationhub.tw/#organization"},"breadcrumb":{"@id":"https://divinationhub.tw/tarot.html#breadcrumb"},"mainEntity":{"@id":"https://divinationhub.tw/tarot.html#app"}},{"@type":"WebApplication","@id":"https://divinationhub.tw/tarot.html#app","name":"一念知機 AI 塔羅占卜","url":"https://divinationhub.tw/tarot.html","applicationCategory":"LifestyleApplication","operatingSystem":"Web","offers":{"@type":"Offer","name":"基本免費體驗","url":"https://divinationhub.tw/tarot.html","price":0,"priceCurrency":"TWD","description":"限額免費體驗，實際額度及使用資格依網站顯示；不包含需要額外解鎖的進階功能。"},"description":"線上塔羅抽牌與站內 AI 完整解讀工具，支援 78 張塔羅牌正逆位、多種抽牌方式、三張牌及 3＋3 六張整合解讀、三種報告格式與五種老師風格。基本功能提供有限免費體驗，部分進階功能依網站權限開放。","inLanguage":"zh-Hant","publisher":{"@id":"https://divinationhub.tw/#organization"},"featureList":["78 張塔羅牌與正逆位抽牌","六種抽牌方式（依使用權限開放）","三張塔羅牌陣與 3＋3 六張整合解讀","站內 AI 自動調度與備援（依額度與使用權限）","三種解讀報告格式與五種老師風格"]},{"@type":"BreadcrumbList","@id":"https://divinationhub.tw/tarot.html#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"一念知機｜免費線上占卜","item":"https://divinationhub.tw/"},{"@type":"ListItem","position":2,"name":"AI 塔羅占卜","item":"https://divinationhub.tw/tarot.html"}]}]}</script>
 
 
+  <!-- 手機入口分流：手機開啟 tarot.html 自動切換到獨立手機版；?view=desktop 明確保留電腦版。 -->
+  <script id="tarot-device-redirect">
+  (function () {
+    try {
+      var qs = new URLSearchParams(window.location.search);
+      var view = qs.get('view');
+      if (view === 'desktop') return;
+      var ua = navigator.userAgent || '';
+      var isPhone = (navigator.userAgentData && navigator.userAgentData.mobile === true)
+        || /iPhone|iPod|Windows Phone|IEMobile|BlackBerry|Mobi|Android[^)]*Mobile/i.test(ua);
+      if (view === 'mobile' || isPhone) {
+        window.location.replace('/tarot-mobile.html' + window.location.search + window.location.hash);
+      }
+    } catch (_) { /* 偵測失敗時安全保留原電腦版 */ }
+  }());
+  </script>
   <script id="tarotLayoutInit">
   (()=>{
     const key='divinationhub-tarot-layout-mode-v1';
     let mode='auto';
     try{const saved=localStorage.getItem(key);if(['auto','mobile','desktop'].includes(saved))mode=saved;}catch(_){}
+    // 手機從「切換電腦版」進站時，確保是真正的桌機寬版，而不是舊手機排版。
+    try{if(new URLSearchParams(window.location.search).get('view')==='desktop')mode='desktop';}catch(_){}
     document.documentElement.dataset.tarotLayout=mode;
     if(mode==='desktop' && window.screen && window.screen.width<=760){
       document.querySelector('meta[name="viewport"]')?.setAttribute('content','width=1100, initial-scale=1');
