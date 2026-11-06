@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#07110c"><meta name="color-scheme" content="dark">
-<meta name="yijing-mobile-version" content="v16-ai-reading-hierarchy">
+<meta name="yijing-mobile-version" content="v17-list-markdown-fix">
 <meta name="yijing-mobile-version" content="20261106-v5-result-tight-article-clean">
 <title>專業易經占卜｜免費線上起卦、易經64卦與動爻解讀｜一念知機</title>
 <meta name="description" content="一念知機提供專業易經占卜與易經64卦免費線上起卦體驗，支援三枚硬幣、雙數、實體硬幣輸入及停選起卦，並呈現本卦、動爻、變卦與白話解讀；站內 AI 解卦依會員權限及可用額度開放。">
@@ -193,6 +193,10 @@ button.is-loading{display:inline-flex;align-items:center;justify-content:center;
 /* V10: only after a successful initial AI reading, present restarting as the other next action. */
 #readerCard .restart-after-ai{display:block;width:100%;min-height:47px;margin-top:13px;padding:10px 13px;border:1px solid #977b46;border-radius:10px;background:#313019;color:#f0d18c;font-size:.84rem;font-weight:800;line-height:1.5}
 #readerCard .restart-after-ai:hover{background:#40381e;border-color:#c4a461}
+
+/* V17: 條列小標可以包含 <strong>，保持整組標籤一致且不顯示 Markdown 星號。 */
+.reader .reading-copy li .report-list-label{font-weight:770;color:#a9eabb}
+.reader .reading-copy li .report-list-label .report-emphasis{color:#b9f0c5;font-weight:790}
 
 /* V16 · AI 閱讀層級：僅修飾既有 AI 文字，保留原文、AI 呼叫、會員及扣點邏輯。 */
 .reader .report-card{padding:clamp(13px,3.6vw,18px);border-color:#355140;background:linear-gradient(170deg,#101f17,#0a1912)}
@@ -567,6 +571,29 @@ function reportExtractHeading(s){
   if(m)return {text:m[1],tag:'h4'};
   return null;
 }
+// V17: 在完整辨識 Markdown 粗體之後，才拆開條列項目的小標題與正文。
+// 避免「1. **先做某事：** 說明」在冒號處切斷兩側星號。
+function reportAppendListItem(li,value){
+  const content=str(value);
+  // 接受冒號在粗體內、粗體外或缺少冒號的 AI 寫法，無須剝除任何原文。
+  const marked=content.match(/^(\*\*[^*\n]+\*\*|__[^_\n]+__)([：:]?)[ \t]*(.*)$/);
+  if(marked){
+    const label=document.createElement('span');label.className='report-list-label';
+    reportAppendInline(label,marked[1]);
+    if(marked[2])label.append(document.createTextNode(marked[2]));
+    li.append(label);
+    if(marked[3]){li.append(document.createTextNode(' '));reportAppendInline(li,marked[3])}
+    return;
+  }
+  // 普通標籤（不是 Markdown 強調標記）沿用原本的「小標題：說明」排版。
+  const plain=content.match(/^([^*_\n]{2,26}?[：:])[ \t]*(.+)$/);
+  if(plain){
+    const label=document.createElement('span');label.className='report-list-label';
+    reportAppendInline(label,plain[1]);li.append(label,document.createTextNode(' '));
+    reportAppendInline(li,plain[2]);return;
+  }
+  reportAppendInline(li,content);
+}
 function renderMarkdown(id,text){
   const root=$(id);root.replaceChildren();let list=null,sectionRole='',counts={warning:0,focus:0,summary:0};
   const lines=str(text).replace(/\r\n?/g,'\n').split('\n');
@@ -582,16 +609,16 @@ function renderMarkdown(id,text){
       sectionRole=role;
       continue;
     }
-    let m=s.match(/^[-*•●]\s+(.+)$/),num=s.match(/^\d{1,2}[.)、．]\s*(.+)$/),circ=s.match(/^[①②③④⑤⑥⑦⑧⑨⑩]\s*(.+)$/);
+    let m=s.match(/^[-*•●]\s+(.+)$/),num=s.match(/^\d{1,3}[.)、．]\s*(.+)$/),circ=s.match(/^[①②③④⑤⑥⑦⑧⑨⑩]\s*(.+)$/);
     if(m||num||circ){
       const ordered=!!num||!!circ,tag=ordered?'ol':'ul';
       if(!list||list.tagName!==tag.toUpperCase()){
         list=document.createElement(tag);list.className='report-list';root.append(list)
       }
       const li=document.createElement('li'),value=(m||num||circ)[1];
-      const lead=value.match(/^(.{2,20}?)[：:]\s*(.+)$/);
-      if(lead){const label=document.createElement('strong');label.className='report-list-label';reportAppendInline(label,lead[1]);label.append(document.createTextNode('：'));li.append(label);reportAppendInline(li,lead[2])}
-      else reportAppendInline(li,value);
+      // 保留 AI 原文的清單編號（如從 3. 開始），避免重新編成 1.。
+      if(num){const originalNumber=Number(s.match(/^\d{1,3}/)[0]);if(originalNumber>=1)li.value=originalNumber}
+      reportAppendListItem(li,value);
       list.append(li);continue;
     }
     list=null;
