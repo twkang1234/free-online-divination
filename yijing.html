@@ -7,10 +7,34 @@
   <!-- DivinationHub 易經前端｜V6.5 core + Admin AI Custom Questions｜2026-10-18 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 易經電腦版：僅對一般手機使用者自動分流。?view=desktop 保留專業電腦版。 -->
+  <script id="yijing-mobile-auto-route">
+  (() => {
+    'use strict';
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      const view = String(qs.get('view') || '').toLowerCase();
+      // 手機版 FAQ 的電腦版連結，以及管理員測試入口，不得自動轉走。
+      if (view === 'desktop' || qs.get('admin') === '1') return;
+      const ua = navigator.userAgent || '';
+      const isPhone = (navigator.userAgentData && navigator.userAgentData.mobile === true) ||
+        /iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile|BlackBerry|BB10|Opera Mini|Mobile Safari/i.test(ua);
+      // 以手機裝置判斷，不因電腦縮窄視窗而誤轉；?view=mobile 可人工測試。
+      if (view !== 'mobile' && !isPhone) return;
+      const to = new URL('/yijing-mobile.html', window.location.origin);
+      // 保留常用行銷追蹤參數，不傳送 view / admin / 可能包含個資的其他查詢參數。
+      ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'].forEach(k => {
+        if (qs.has(k)) to.searchParams.set(k, qs.get(k));
+      });
+      window.location.replace(to.href);
+    } catch (_) { /* 分流失敗則留在可正常操作的電腦版 */ }
+  })();
+  </script>
   <title>專業易經占卜｜免費線上起卦、易經64卦與動爻解讀｜一念知機</title>
   <meta name="description" content="一念知機提供專業易經占卜與易經64卦免費線上起卦體驗，支援三枚硬幣、雙數、實體硬幣輸入及停選起卦，並呈現本卦、動爻、變卦與白話解讀；站內 AI 解卦依會員權限及可用額度開放。">
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
   <link rel="canonical" href="https://divinationhub.tw/yijing.html">
+  <link rel="alternate" media="only screen and (max-width: 640px)" href="https://divinationhub.tw/yijing-mobile.html">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="zh_TW">
   <meta property="og:title" content="專業易經占卜｜免費線上起卦、易經64卦與動爻解讀｜一念知機">
