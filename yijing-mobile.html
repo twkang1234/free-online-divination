@@ -224,6 +224,12 @@ button.is-loading{display:inline-flex;align-items:center;justify-content:center;
 .mobile-seo-section .resource-basic-listing{border:1px solid #2d4535;border-radius:10px;padding:11px 12px;background:#101f16;margin:11px 0;overflow-wrap:anywhere}.mobile-seo-section .resource-basic-listing p{margin:0 0 9px}.mobile-seo-section .resource-basic-listing p:last-child{margin-bottom:0}
 .mobile-seo-section .resource-note{font-size:.7rem;color:#92ac99}.mobile-seo-section .resource-intro{margin:0 0 12px}
 .mobile-seo-body a{color:#bce4c1;text-underline-offset:2px}
+/* V14: Long-form knowledge can also be collapsed from its end. */
+.mobile-seo-collapse-row{display:flex;justify-content:flex-end;margin-top:18px;padding-top:15px;border-top:1px solid #2c4033}
+.mobile-seo-collapse{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:43px;padding:9px 15px;border:1px solid #49644d;border-radius:10px;background:#1c2c20;color:#edcf88;font-size:.79rem;font-weight:800;line-height:1.4;cursor:pointer}
+.mobile-seo-collapse:hover,.mobile-seo-collapse:focus-visible{border-color:#c0aa6c;background:#2a3525;color:#ffe5aa}
+.mobile-seo-collapse:focus-visible{outline:2px solid #e1c56e;outline-offset:3px}
+.mobile-seo-collapse .collapse-up{font-size:1.1rem;line-height:1;color:#e1c56e}
 @media(max-width:360px){.mobile-seo-shell>summary{padding:12px}.mobile-seo-body{padding:4px 12px 13px}}
 @media(prefers-reduced-motion:reduce){.mobile-seo-chevron{transition:none}}
 </style>
@@ -310,6 +316,9 @@ button.is-loading{display:inline-flex;align-items:center;justify-content:center;
 </div>
 <p class="resource-note">本區僅整理相關資源資訊；各服務內容、價格與聯繫方式，以服務提供者網站公告為準。</p>
 </section></section>
+<div class="mobile-seo-collapse-row">
+<button type="button" class="mobile-seo-collapse" id="mobileSeoCollapseBottom" aria-controls="mobileSeoDetails" aria-label="收合易經64卦專業知識文章">收合專業知識 <span class="collapse-up" aria-hidden="true">⌃</span></button>
+</div>
 </div>
 </details>
 </section>
@@ -458,5 +467,17 @@ function toggleReport(){state.reportCollapsed=!state.reportCollapsed;$('reportDe
 async function restartAfterAi(){if(!state.initial||state.aiBusy||state.followBusy)return;const ok=await confirmAction('重新起卦會清除本頁目前的 AI 解讀文章。確定要重新開始嗎？');if(!ok)return;try{sessionStorage.removeItem(REPORT_KEY)}catch(_){}location.reload()}
 function wire(){renderTopics();initializeTopicCue();renderQuestions();setSelection(null);$('accountBtn').onclick=()=>state.member?location.assign('/member.html'):login();$('refreshQuestions').onclick=()=>{state.page++;renderQuestions()};$('useCustom').onclick=()=>{const q=$('customQuestion').value.trim();if(q.length<5||q.length>400){setStatus('questionStatus','自訂問題請輸入 5～400 字',true);return}setSelection({type:'custom',topic:'general',scenario:'free',scenarioName:'自由提問',scenarioDesc:'直接輸入問題',question:q});$('customBox').open=false;renderQuestions();setStatus('questionStatus','✓ 已選擇自訂問題，免費起卦，不扣工具額度')};$('customQuestion').addEventListener('input',()=>{if(state.selection?.type==='custom'&&$('customQuestion').value.trim()!==state.selection.question)setSelection(null)});$('selectedQuestionText').addEventListener('input',onSelectedQuestionInput);$('startBtn').onclick=start;$('tossBtn').onclick=toss;$('refreshQuotaTop').onclick=()=>{void refreshQuota()};$('aiBtn').onclick=()=>aiRequest(false);$('followBtn').onclick=()=>aiRequest(true);$('restartAfterAi').onclick=restartAfterAi;$('copyReport').onclick=copyReport;$('downloadReport').onclick=downloadReport;$('collapseReport').onclick=toggleReport;$('foldTop').onclick=toggleReport;if(wasReloaded()){try{sessionStorage.removeItem(REPORT_KEY)}catch(_){}renderLines('lineStack',[])}else if(!restoreSession())renderLines('lineStack',[]);void restoreMember()}
 window.addEventListener('beforeunload',e=>{if(state.aiBusy||state.followBusy){e.preventDefault();e.returnValue=''}});window.addEventListener('storage',e=>{if(e.key===SESSION||e.key==='divinationhub-auth-event')void restoreMember()});window.addEventListener('focus',()=>{if(!document.hidden)void restoreMember()});window.addEventListener('DOMContentLoaded',wire);
+})();
+</script><script id="yijing-v14-seo-bottom-collapse">
+(()=>{
+  const article=document.getElementById('mobileSeoDetails');
+  const collapse=document.getElementById('mobileSeoCollapseBottom');
+  const section=document.getElementById('mobileYijingKnowledge');
+  if(!article||!collapse||!section)return;
+  collapse.addEventListener('click',()=>{
+    article.open=false;
+    // Return to the collapsed heading, without a long upward swipe.
+    section.scrollIntoView({behavior:'auto',block:'start'});
+  });
 })();
 </script></body></html>
