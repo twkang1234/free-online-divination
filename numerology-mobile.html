@@ -2679,7 +2679,7 @@ html.numerology-mobile-page #num-map-stage #numProfileFold{padding:6px 9px!impor
 <body>
 
 <div class="num-mobile-nav" id="numMobileNav"><div class="num-mobile-nav-inner"><a href="/" class="num-mobile-brand">一念知機</a><nav class="num-mobile-scroller" aria-label="命理工具導覽"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經</a><a href="/cezi.html">測字</a><a href="/wuxing.html">五行</a><a href="/numerology-mobile.html">生命靈數</a></nav><a class="num-mobile-member" href="/member.html?return=%2Fnumerology-mobile.html" id="numMobileMember">免費登入</a></div></div>
-<section class="num-mobile-hero" aria-label="生命靈數手機版"><span class="num-mobile-kicker">一念知機 · NUMEROLOGY <span id="numMobileRelease" class="num-mobile-build-stamp">V9.4</span> <span id="numMobileApiRelease" class="num-mobile-api-stamp" aria-live="polite">API 待確認</span></span><h1>專業<em>生命靈數</em></h1><p>免費生日九宮格・數字性格・AI 深度批盤</p></section>
+<section class="num-mobile-hero" aria-label="生命靈數手機版"><span class="num-mobile-kicker">一念知機 · NUMEROLOGY <span id="numMobileRelease" class="num-mobile-build-stamp">V9.5</span> <span id="numMobileApiRelease" class="num-mobile-api-stamp" aria-live="polite">API 待確認</span></span><h1>專業<em>生命靈數</em></h1><p>免費生日九宮格・數字性格・AI 深度批盤</p></section>
 
 <header class="page-topbar">
  <div class="topbar-left">
@@ -2966,7 +2966,7 @@ html.numerology-mobile-page #num-map-stage #numProfileFold{padding:6px 9px!impor
  const numCheckApiVersion=async()=>{const label=document.getElementById('numMobileApiRelease');if(!label)return;try{
   const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),5000);
   try{const res=await fetch(NUMEROLOGY_AI_API+'/health',{cache:'no-store',signal:controller.signal});const data=await res.json();
-   if(res.ok&&data?.version==='V9.4'){label.textContent='API V9.4';label.classList.add('ok')}
+   if(res.ok&&data?.version==='V9.5'){label.textContent='API V9.5';label.classList.add('ok')}
    else{label.textContent=data?.version?'API '+String(data.version).slice(0,12)+'（舊）':'API 舊版／未確認';label.classList.add('warning')}}finally{clearTimeout(timeout)}
  }catch(_){label.textContent='API 未確認';label.classList.add('warning')}};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',numCheckApiVersion,{once:true});else void numCheckApiVersion();
@@ -4507,7 +4507,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   if(bullet){pushList('ul',bullet[1]);continue}
   const numbered=/^\d{1,2}[.)]\s+(.+)$/.exec(line);
   if(numbered){pushList('ol',numbered[1]);continue}
-  if(/^>\s?/.test(line)){flush();list=null;listType='';const q=document.createElement('blockquote');inline(q,line.replace(/^>\s?/,''));target.append(q);continue}
+  if(/^>\s?/.test(line)){flush();list=null;listType='';const q=document.createElement('blockquote');const contents=line.replace(/^>\s?/, '');if(/^(?:命盤線索|數字依據|命盤依據|命理依據)[：:]/.test(contents))q.classList.add('num-ai-number-evidence');inline(q,contents);target.append(q);continue}
   list=null;listType='';paragraph.push(line);
  }
  flush();
@@ -4585,7 +4585,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
     const backend=data?.apiVersion?`｜後端 ${data.apiVersion}`:'';
     aiStatus(numAiResponseError(data.error)+detail+backend+(data.traceId?`｜追蹤碼 ${data.traceId}`:''));
     if(r.status===503&&data.operationId){lastFailedNumerologyOperation=data.operationId;$('numAiReportBox').hidden=false;
-     if($('numAiFailureCode'))$('numAiFailureCode').textContent=`手機 V9.4｜${data?.apiVersion?'後端 '+data.apiVersion:'後端版本未確認'}｜${data.reasonCode||data.error||'原因未知'}｜${data.traceId||''}`;}
+     if($('numAiFailureCode'))$('numAiFailureCode').textContent=`手機 V9.5｜${data?.apiVersion?'後端 '+data.apiVersion:'後端版本未確認'}｜${data.reasonCode||data.error||'原因未知'}｜${data.traceId||''}`;}
    }
   }catch(e){pending=true;result=await numAiGetResult(id);if(!result)aiStatus('連線中斷，已保留操作編號 '+id+'。重新進入 AI 區時會自動查詢同一筆請求，請勿重複送出。')}
   finally{aiRequestBusy=false;numAiPendingOperation=null;numAiSetBusy(false);renderAiInterface();void refreshNumAiQuota()}
@@ -5937,6 +5937,34 @@ html.numerology-mobile-page #numMobileTestPanel .num-v7-warning{font-size:.75rem
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
+
+
+<!-- V9.5: visual hierarchy inside AI reading: numerology evidence is quiet, plain-language result is prominent. -->
+<style id="numMobileV95PlainLanguageReader">
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer > p:first-of-type{
+  font-size:1.01rem!important;line-height:1.86!important;color:#f9f0fb!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer p strong,
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer li strong{
+  color:#f8d69e!important;font-weight:800!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer blockquote.num-ai-number-evidence{
+  margin:7px 0 12px!important;padding:7px 10px!important;
+  background:#201c31!important;border-left:2px solid #74658b!important;border-radius:0 7px 7px 0!important;
+  color:#bdb3ca!important;font-size:.80rem!important;line-height:1.65!important;font-weight:400!important;
+  letter-spacing:0!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer blockquote.num-ai-number-evidence strong{
+  color:#c9bed8!important;font-weight:650!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer h3,
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer h4{
+  font-size:1.055rem!important;line-height:1.55!important;margin:21px 0 10px!important;
+}
+@media(max-width:359px){
+ html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer blockquote.num-ai-number-evidence{font-size:.78rem!important}
+}
+</style>
 
 </body>
 </html>
