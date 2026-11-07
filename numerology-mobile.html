@@ -3525,6 +3525,58 @@ function storyCard(title,text){const card=document.createElement('section');card
  function stageYearLabels(c,first){return [`出生～${c.y+first}年轉換前`,`${c.y+first}～${c.y+first+9}`,`${c.y+first+9}～${c.y+first+18}`,`${c.y+first+18}年起`];}
  function stageIndexAtAge(age,first){return age<first?0:age<first+9?1:age<first+18?2:3;}
  function commonFactors(c){const count=c.counts;return {full:NUM_LINES.filter(l=>lineInfo(c,l).complete),missing:NUM_ORDER.filter(n=>!count[n]),repeat:NUM_ORDER.filter(n=>count[n]>1),present:NUM_ORDER.filter(n=>count[n]>0)};}
+ // Temporary mobile diagnostic bridge: authoritative calculations from this same page.
+ // No payments, entitlement writes, or independent rewrite of life-path calculations.
+ window.numMobileV7Snapshot=function(){
+  if(!current)return null;
+  const c=current,st=stageData(c),basis=commonFactors(c),today=todayTaipei();
+  const picker=document.getElementById('numTestTargetDate');
+  let d={y:today.y,m:today.m,d:today.d};
+  if(picker?.value){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(picker.value);if(m){const dt=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));if(dt.getUTCFullYear()===+m[1]&&dt.getUTCMonth()+1===+m[2]&&dt.getUTCDate()===+m[3])d={y:+m[1],m:+m[2],d:+m[3]}}}
+  const py=yearAt(c,d.y),pm=pure(py+d.m),pd=pure(pm+d.d),idx=stageIndexAtAge(st.age,st.first);
+  const situation=String(document.getElementById('numTestSituation')?.value||'').trim().slice(0,240);
+  const partnerDate=String(document.getElementById('numTestPartnerBirth')?.value||'').trim();
+  const partnerAllowed=!!document.getElementById('numTestPartnerConsent')?.checked;
+  let partner=null,partnerError='';
+  if(partnerDate&&partnerAllowed){try{partner=calcDate(partnerDate)}catch(e){partnerError=String(e?.message||'第二人生日無效')}}
+  const formatDate=String(d.y)+'-'+String(d.m).padStart(2,'0')+'-'+String(d.d).padStart(2,'0');
+  return {birth:c.date,life:c.life,lifeTrail:c.lifeTrail,birthNumber:c.d,birthReduced:c.birth,attitude:c.attitude,
+   digits:c.date.replace(/\D/g,''), counts:c.counts.slice(1),fullLines:basis.full.map(x=>x.id+' '+x.name),
+   missing:basis.missing,stages:st.peaks.map((peak,i)=>({phase:i+1,age:stageAgeLabels(st.first)[i],peak,challenge:st.challenges[i]})),
+   stageIndex:idx,age:st.age,target:formatDate,year:py,month:pm,day:pd,situation,
+   partner:partner?{date:partner.date,life:partner.life,birth:partner.birth,attitude:partner.attitude,missing:commonFactors(partner).missing,lines:commonFactors(partner).full.map(x=>x.id)}:null,partnerError,
+   flowDayRule:'測試推算：流月＝個人流年＋西元月份化簡；流日＝流月＋日期化簡（原站尚未另有正式流日規格）'};
+ };
+ window.numMobileV7ContextText=function(){
+  const x=window.numMobileV7Snapshot?.();if(!x)return '';
+  const stages=x.stages.map(t=>`第${t.phase}階段${t.age}:高峰${t.peak}/挑戰${t.challenge}`).join('；');
+  const parts=[`【本站命盤資料】生日${x.birth}；生命數${x.life}（${x.lifeTrail}）；生日數${x.birthNumber}/${x.birthReduced}；態度數${x.attitude}。`,
+   `九宮格原始日期數字${x.digits}；完整連線${x.fullLines.join('、')||'無'}；原始缺數${x.missing.join('、')||'無'}。核心生命數或生日數出現3/7，與原始生日九宮格缺3/7並不矛盾，兩者來自不同公式。`,
+   `人生四階段${stages}；目前實歲${x.age}，在第${x.stageIndex+1}階段。`,
+   `問事日期${x.target}：流年${x.year}、流月${x.month}、測試流日${x.day}。流日使用「流月加日期化簡」的試算規則，非確定事件預測。`];
+  if(x.situation)parts.push(`【使用者親自提供的現況】${x.situation}`);
+  if(x.partner)parts.push(`【使用者同意提供的第二人生日】${x.partner.date}：生命數${x.partner.life}、生日數${x.partner.birth}、態度數${x.partner.attitude}；缺數${x.partner.missing.join('、')||'無'}、完整線${x.partner.lines.join('、')||'無'}。合盤只作互動差異討論。`);
+  else parts.push('未提供可使用的第二人生日，不得虛構對方命盤或聲稱已完成雙人合盤。');
+  parts.push('數字是象徵性解讀，不可憑命盤斷言使用者真實遭遇；問題若缺少情境要用條件式推演。');
+  return parts.join('\n');
+ };
+ window.numMobileV7ExportText=function(){
+  const x=window.numMobileV7Snapshot?.();if(!x)return '尚未計算命盤。';
+  const out=['一念知機｜生命靈數手機版診斷資料（暫時測試）','生成時間：'+new Date().toLocaleString('zh-TW',{hour12:false}),
+   '生日：'+x.birth,'核心生命數：'+x.life,'生命數計算過程：'+x.lifeTrail,
+   '生日數：'+x.birthNumber+'／'+x.birthReduced,'態度數：'+x.attitude,'九宮格原始日期：'+x.digits,
+   '九宮格出現次數：'+x.counts.map((n,i)=>(i+1)+'='+n).join('、'),'完整連線：'+(x.fullLines.join('、')||'無'),
+   '缺數：'+(x.missing.join('、')||'無'),'',
+   '四階段高峰／挑戰（使用本站規則）：'];
+  for(const t of x.stages)out.push(`第${t.phase}階段｜${t.age}｜高峰${t.peak}｜挑戰${t.challenge}${t.phase===x.stageIndex+1?'（目前）':''}`);
+  out.push('',`指定日期：${x.target}`,`個人流年：${x.year}`,`個人流月：${x.month}`,`個人流日（測試）：${x.day}`,x.flowDayRule,
+   '',`目前實際情境：${x.situation||'未提供'}`,`第二人生日：${x.partner?.date||'未提供／未同意傳送'}`);
+  if(x.partner)out.push(`第二人生命數${x.partner.life}、生日數${x.partner.birth}、態度數${x.partner.attitude}`,`第二人缺數：${x.partner.missing.join('、')||'無'}`,`第二人完整連線：${x.partner.lines.join('、')||'無'}`);
+  if(x.partnerError)out.push('第二人生日錯誤：'+x.partnerError);
+  out.push('','注意：本資料僅供檢查演算法及 AI 解讀，非科學預測；沒有提供的個人經歷不可自行補造。');
+  return out.join('\n');
+ };
+
  function oneLayer(c,mode){const a=pure(c.life),b=pure(c.birth),v=pure(c.attitude),parts=[];
   parts.push(`核心 ${c.life} 的「${FOCUS[a].key}」偏向長期人生主題，生日 ${c.d}／${c.birth} 補上「${FOCUS[b].key}」的個人表現角度；態度數 ${c.attitude} 則用來觀察與外界互動的「${FOCUS[v].key}」方式。這些數字來自不同公式，並非人格測量。`);
   if(a===b)parts.push(`核心與生日化簡數都指向 ${a}：可特別檢查「${FOCUS[a].key}」是否既是習慣優勢、又是過度使用時的盲點。`);
@@ -4089,7 +4141,8 @@ function renderMonths(c){
  }
  function numAiArchiveText(records){
   const title=['一念知機｜生命靈數 AI 問答暫存紀錄',`出生日期：${current?.date||''}`,`核心生命數：${current?.life??''}｜生日數：${current?.birth??''}｜態度數：${current?.attitude??''}`,'提醒：本紀錄由使用者在本次分頁產生並下載，並非永久雲端存檔。',''];
-  records.forEach((r,i)=>{title.push('='.repeat(38),`${i+1}. ${r.parentId?'延伸追問':'完整解讀'}｜${r.label}`,`時間：${r.createdAt||''}`,`分類：${r.scope||''}`,`問題：${r.question||''}`,r.parentId?`承接解讀：${r.parentId}`:'',`追蹤碼：${r.traceId||''}`,'',r.answer||'','')});
+  if(typeof window.numMobileV7ExportText==='function')title.push('【目前命盤診斷資料】',window.numMobileV7ExportText(),'');
+  records.forEach((r,i)=>{title.push('='.repeat(38),`${i+1}. ${r.parentId?'延伸追問':'完整解讀'}｜${r.label}`,`時間：${r.createdAt||''}`,`分類：${r.scope||''}`,`問題：${r.question||''}`,r.parentId?`承接解讀：${r.parentId}`:'',`追蹤碼：${r.traceId||''}`,r.diagnostic?`本篇 AI 收到的補充資料：\n${r.diagnostic}`:'','',r.answer||'','')});
   return title.join('\n');
  }
  function numAiSetArticleFold(fold,scroll=false){
@@ -4128,7 +4181,7 @@ function renderMonths(c){
   const r={id,date:current.date,answer,label:meta.label||previous?.label||'生命靈數深度批盤',
    question:meta.question||previous?.question||'',parentId:meta.parentId||previous?.parentId||null,
    scope:meta.scope||previous?.scope||numAiActiveDock,stageIndex:meta.stageIndex??previous?.stageIndex??null,targetYear:meta.targetYear??previous?.targetYear??null,targetMonth:meta.targetMonth??previous?.targetMonth??null,createdAt:previous?.createdAt||new Date().toLocaleString('zh-TW',{hour12:false}),
-   traceId:out.traceId||previous?.traceId||'',channel:out.channel||previous?.channel||''};
+   traceId:out.traceId||previous?.traceId||'',channel:out.channel||previous?.channel||'',diagnostic:meta.diagnostic||previous?.diagnostic||''};
   if(previous)numAiHistory[numAiHistory.indexOf(previous)]=r;else numAiHistory.push(r);
   // Deliveries expand the matching category automatically; replies expand their thread.
   numAiOpenGroups.add(r.scope||'general');
@@ -4479,10 +4532,16 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   if(!isFollowup&&numAiActiveDock!=='general'&&aiMode==='fixed'){aiStatus('請先選擇專屬題目。');return}
   const question=isFollowup?$('numAiFollowup').value.trim():(aiMode==='guided'?numAiGuidedQuestion:aiMode==='custom'?$('numAiQuestion').value.trim():'');
   const actualQuestion=question; // Preserve user's question as the visible title and history entry.
+  const mobileDiagnostics=window.numMobileV7Snapshot?.();
+  if(mobileDiagnostics?.partnerError){aiStatus('第二人生日無效，請先修正測試資料中的生日。');return}
   // Request the mobile reading style from the existing Worker without changing its API schema.
   // The Worker/model ultimately controls generation, so this is a length instruction, not a hard server-side cap.
-  const mobileAnswerGuide='【手機閱讀格式】請用繁體中文、命理師口吻回答本題；全文以1500～1800個中文字為目標，絕不超過1800個中文字（包含小標與表格）；先說結論，再以本命、九宮格和相關流年作依據，點明盲點並給可執行建議；最多5個短標題、每段2～4句、不要表格、公式、重複套話或長篇虛構情節；結尾完整。這段是排版規格，不是使用者的問題，請勿在解讀中重述。';
-  const modelQuestion=(actualQuestion+'\n\n'+mobileAnswerGuide);
+  const mobileAnswerGuide='【手機閱讀格式】請用繁體中文、命理師口吻回答本題；全文以1500～1800個中文字為目標，絕不超過1800個中文字（包含小標與表格）；先說結論，再以本命、九宮格和相關流年作依據，點明盲點並給可執行建議；最多5個短標題、每段2～4句、不要表格、公式、重複套話或長篇虛構情節；結尾完整。';
+  const diagnosticText=typeof window.numMobileV7ContextText==='function'?window.numMobileV7ContextText():'';
+  // Keep the original question intact. Limit auxiliary context so Worker question-length validation is not broken.
+  const room=Math.max(0,1500-actualQuestion.length-mobileAnswerGuide.length-8);
+  const includedDiagnostic=diagnosticText.slice(0,room);
+  const modelQuestion=(actualQuestion+'\n\n'+(includedDiagnostic?includedDiagnostic+'\n\n':'')+mobileAnswerGuide);
   if((isFollowup||aiMode==='custom')&&(question.length<4||question.length>400)){aiStatus('請輸入 4～400 字的問題。');return}
   if(aiMode==='guided'&&!isFollowup&&(question.length<4||question.length>1600)){aiStatus('所選題目內容異常，請重新選擇。');return}
   if(actualQuestion.length>1600){aiStatus('題目超過 1600 字，請將問題簡短一些。');return}
@@ -4497,8 +4556,8 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   const requestStage=isFollowup&&Number.isInteger(previousRecord?.stageIndex)?previousRecord.stageIndex:numAiSelectedStage;
   const requestYear=isFollowup&&Number.isInteger(previousRecord?.targetYear)?previousRecord.targetYear:numAiTimingYear;
   const requestMonth=isFollowup&&Number.isInteger(previousRecord?.targetMonth)?previousRecord.targetMonth:numAiTimingMonth;
-  const context={id,label,question:isFollowup||aiMode!=='fixed'?actualQuestion:`完整解讀：${label}`,scope:requestScope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth};
-  try{localStorage.setItem(NUM_AI_LAST_KEY,JSON.stringify({operationId:id,date:current.date,questionLabel:label,question:context.question,scope:context.scope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth}))}catch(_){}
+  const context={id,label,question:isFollowup||aiMode!=='fixed'?actualQuestion:`完整解讀：${label}`,scope:requestScope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,diagnostic:includedDiagnostic};
+  try{localStorage.setItem(NUM_AI_LAST_KEY,JSON.stringify({operationId:id,date:current.date,questionLabel:label,question:context.question,scope:context.scope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,diagnostic:includedDiagnostic}))}catch(_){}
   $('numAiReportBox').hidden=true;aiRequestBusy=true;numAiPendingOperation=id;
   numAiSetBusy(true,isFollowup?'正在根據原篇解讀延伸分析；原文章仍保留在本次問答紀錄。':'正在整理專屬命盤，完成後自動新增一篇紀錄。');
   aiStatus('AI 正在處理，請勿重複送出；可以在本次問答紀錄查看以前的解讀。');
@@ -4533,7 +4592,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   try{
    const {r,data}=await numAiFetch('/ai/result?operationId='+encodeURIComponent(old.operationId));
    if(current?.date!==date||$('numAiSection').hidden)return;
-   if(r.ok&&data?.ok){numAiShowResult(data,{label:old.questionLabel||'生命靈數 AI 解讀',question:old.question||'',scope:old.scope||'general',parentId:old.parentId||null,stageIndex:old.stageIndex,targetYear:old.targetYear,targetMonth:old.targetMonth});return}
+   if(r.ok&&data?.ok){numAiShowResult(data,{label:old.questionLabel||'生命靈數 AI 解讀',question:old.question||'',scope:old.scope||'general',parentId:old.parentId||null,stageIndex:old.stageIndex,targetYear:old.targetYear,targetMonth:old.targetMonth,diagnostic:old.diagnostic||''});return}
    if(r.status===202){aiStatus('上一筆 AI 解讀仍在處理中；重新進入本區時會自動查詢，不必重複送出。');return}
    if(data?.state==='failed'){lastFailedNumerologyOperation=old.operationId;$('numAiReportBox').hidden=false;aiStatus('上一筆 AI 未能完成，額度應已由後端返還；可回報異常。')}
   }catch(_){}finally{numAiAutoRecoverBusy=false}
@@ -5510,6 +5569,76 @@ html.numerology-mobile-page #numMobileHistoryFold[hidden]{display:none!important
 html.numerology-mobile-page #numMobileHistoryFold{margin:12px 0!important;border:1px solid #4e3d63!important;border-radius:11px!important;padding:0 10px!important;background:#191629!important}
 html.numerology-mobile-page #numMobileHistoryFold>summary{padding:11px 3px!important;font-size:.87rem!important;font-weight:800!important;color:#e7cfef!important;cursor:pointer}
 </style>
+
+<style id="numMobileV7TemporaryDataStyle">
+html.numerology-mobile-page #numMobileTestPanel{border:1px solid #59456c;border-radius:12px;background:#1a1728;margin:12px 0 10px;overflow:hidden}
+html.numerology-mobile-page #numMobileTestPanel summary{cursor:pointer;padding:12px 13px;font-size:.88rem;font-weight:800;color:#e8c89a;list-style-position:inside}
+html.numerology-mobile-page #numMobileTestPanel .num-v7-body{border-top:1px solid #493858;padding:11px 12px 13px;display:grid;gap:10px}
+html.numerology-mobile-page #numMobileTestPanel .num-v7-note{font-size:.76rem;line-height:1.65;color:#bfb2cf;margin:0}
+html.numerology-mobile-page #numMobileTestPanel .num-v7-calc{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.75;font-size:.8rem;color:#eedde8;background:#201c33;border:1px solid #443754;border-radius:10px;padding:11px;margin:0}
+html.numerology-mobile-page #numMobileTestPanel label:not(.num-v7-check){display:grid;gap:4px;color:#e0c5d9;font-size:.79rem;font-weight:700}
+html.numerology-mobile-page #numMobileTestPanel textarea,html.numerology-mobile-page #numMobileTestPanel input[type=date]{width:100%;background:#11101d;border:1px solid #584566;border-radius:9px;padding:10px;color:#f6eefa;font-size:16px;box-sizing:border-box}
+html.numerology-mobile-page #numMobileTestPanel .num-v7-check{display:flex;align-items:flex-start;gap:8px;font-size:.76rem;line-height:1.5;color:#c9b8d6}
+html.numerology-mobile-page #numMobileTestPanel .num-v7-check input{margin:4px 0 0}
+html.numerology-mobile-page #numTestExport{background:#af88d0;border:0;border-radius:10px;padding:12px;font-size:.86rem;font-weight:800;color:#120b1b;cursor:pointer;min-height:44px}
+html.numerology-mobile-page #numMobileTestPanel .num-v7-warning{font-size:.75rem;color:#efbbaf;min-height:1.2em;margin:0}
+</style>
+<script id="numMobileV7TemporaryData">
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ function localToday(){const pts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const get=k=>pts.find(p=>p.type===k)?.value||'';return get('year')+'-'+get('month')+'-'+get('day')}
+ function update(){
+  const pre=$('numTestReadout');if(!pre)return;
+  const data=window.numMobileV7Snapshot?.();
+  if(!data){pre.textContent='完成生日計算後顯示完整診斷資料。';return}
+  pre.textContent=[`生命數：${data.life}｜生日數：${data.birthNumber}/${data.birthReduced}｜態度數：${data.attitude}`,
+    `計算：${data.lifeTrail}`,`九宮格完整線：${data.fullLines.join('、')||'無'}`,`缺數：${data.missing.join('、')||'無'}`,
+    ...data.stages.map(t=>`第${t.phase}階段 ${t.age}｜高峰${t.peak} 挑戰${t.challenge}${t.phase===data.stageIndex+1?'（目前）':''}`),
+    `指定日期 ${data.target}：流年 ${data.year}｜流月 ${data.month}｜流日 ${data.day}（測試公式）`].join('\n');
+  $('numTestError').textContent=data.partnerError||'';
+ }
+ function init(){
+  if($('numMobileTestPanel'))return;
+  const anchor=$('numAiGeneralHub')||$('numAiGeneralDock');if(!anchor)return;
+  const panel=document.createElement('details');panel.id='numMobileTestPanel';
+  panel.innerHTML=`<summary>測試開放｜完整命盤與問事資料</summary><div class="num-v7-body">
+   <p class="num-v7-note">暫時提供 AI 資料核對。平常預設收合；展開／下載本身不扣點。</p>
+   <pre id="numTestReadout" class="num-v7-calc">請先計算生日。</pre>
+   <label>想分析的日期（流月／流日）<input type="date" id="numTestTargetDate" min="1900-01-01" max="2100-12-31"></label>
+   <p class="num-v7-note">流日目前為測試推算（流月＋日期化簡），並非網站已定案的正式規則。</p>
+   <label>實際情境（選填，讓 AI 不用猜測）<textarea id="numTestSituation" rows="3" maxlength="240" placeholder="例：目前是行政工作，近半年沒有升遷機會，想知道是否該轉職。"></textarea></label>
+   <label>第二人生日（選填，用於雙人比較）<input type="date" id="numTestPartnerBirth" min="1900-01-01" max="2100-12-31"></label>
+   <label class="num-v7-check"><input type="checkbox" id="numTestPartnerConsent"><span>我同意將第二人生日用於這次 AI 比較；未勾選不傳給 AI，也不輸出第二人命盤。</span></label>
+   <p class="num-v7-note">只有你按下「開始 AI 解讀」才傳送這些補充資料；測試 TXT 會包含已填寫且同意使用的資料。</p>
+   <button id="numTestExport" type="button">下載完整命盤診斷 TXT</button><p id="numTestError" class="num-v7-warning" role="status"></p>
+  </div>`;
+  anchor.before(panel);$('numTestTargetDate').value=localToday();
+  for(const id of ['numTestTargetDate','numTestSituation','numTestPartnerBirth','numTestPartnerConsent'])$(id).addEventListener('input',update);
+  $('numTestExport').addEventListener('click',()=>{
+   const data=window.numMobileV7Snapshot?.();if(!data){$('numTestError').textContent='請先計算生日。';return}
+   if(data.partnerError){$('numTestError').textContent=data.partnerError;return}
+   const text=window.numMobileV7ExportText?.()||'';
+   const url=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/plain;charset=utf-8'}));
+   const a=document.createElement('a');a.href=url;a.download='numerology-diagnostic-'+data.birth+'.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  });
+  let lastDate='';
+  window.addEventListener('num:unlock-profile',event=>{
+   const next=String(event.detail?.date||'');
+   if(lastDate&&next&&lastDate!==next){
+    $('numTestSituation').value='';$('numTestPartnerBirth').value='';$('numTestPartnerConsent').checked=false;
+    $('numTestError').textContent='';panel.open=false;
+   }
+   if(next)lastDate=next;
+   queueMicrotask(update);
+  });
+  const result=$('result');if(result)new MutationObserver(update).observe(result,{attributes:true,attributeFilter:['hidden']});
+  const core=$('numMobileCoreStrip');if(core)new MutationObserver(update).observe(core,{childList:true,subtree:true,characterData:true});
+  panel.addEventListener('toggle',()=>{if(panel.open)update()});update();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
 
 </body>
 </html>
