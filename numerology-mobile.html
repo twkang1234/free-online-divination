@@ -2679,7 +2679,7 @@ html.numerology-mobile-page #num-map-stage #numProfileFold{padding:6px 9px!impor
 <body>
 
 <div class="num-mobile-nav" id="numMobileNav"><div class="num-mobile-nav-inner"><a href="/" class="num-mobile-brand">一念知機</a><nav class="num-mobile-scroller" aria-label="命理工具導覽"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經</a><a href="/cezi.html">測字</a><a href="/wuxing.html">五行</a><a href="/numerology-mobile.html">生命靈數</a></nav><a class="num-mobile-member" href="/member.html?return=%2Fnumerology-mobile.html" id="numMobileMember">免費登入</a></div></div>
-<section class="num-mobile-hero" aria-label="生命靈數手機版"><span class="num-mobile-kicker">一念知機 · NUMEROLOGY <span id="numMobileRelease" class="num-mobile-build-stamp">V9.6</span> <span id="numMobileApiRelease" class="num-mobile-api-stamp" aria-live="polite">API 待確認</span></span><h1>專業<em>生命靈數</em></h1><p>免費生日九宮格・數字性格・AI 深度批盤</p></section>
+<section class="num-mobile-hero" aria-label="生命靈數手機版"><span class="num-mobile-kicker">一念知機 · NUMEROLOGY <span id="numMobileRelease" class="num-mobile-build-stamp">V9.7</span> <span id="numMobileApiRelease" class="num-mobile-api-stamp" aria-live="polite">API 待確認</span></span><h1>專業<em>生命靈數</em></h1><p>免費生日九宮格・數字性格・AI 深度批盤</p></section>
 
 <header class="page-topbar">
  <div class="topbar-left">
@@ -4625,7 +4625,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
     const backend=data?.apiVersion?`｜後端 ${data.apiVersion}`:'';
     aiStatus(numAiResponseError(data.error)+detail+backend+(data.traceId?`｜追蹤碼 ${data.traceId}`:''));
     if(r.status===503&&data.operationId){lastFailedNumerologyOperation=data.operationId;$('numAiReportBox').hidden=false;
-     if($('numAiFailureCode'))$('numAiFailureCode').textContent=`手機 V9.6｜${data?.apiVersion?'後端 '+data.apiVersion:'後端版本未確認'}｜${data.reasonCode||data.error||'原因未知'}｜${data.traceId||''}`;}
+     if($('numAiFailureCode'))$('numAiFailureCode').textContent=`手機 V9.7｜${data?.apiVersion?'後端 '+data.apiVersion:'後端版本未確認'}｜${data.reasonCode||data.error||'原因未知'}｜${data.traceId||''}`;}
    }
   }catch(e){pending=true;result=await numAiGetResult(id);if(!result)aiStatus('連線中斷，已保留操作編號 '+id+'。重新進入 AI 區時會自動查詢同一筆請求，請勿重複送出。')}
   finally{aiRequestBusy=false;numAiPendingOperation=null;numAiSetBusy(false);$('numAiSection').classList.remove('num-v96-running-followup');renderAiInterface();void refreshNumAiQuota();
@@ -6095,5 +6095,165 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
+<!-- V9.7: visual hierarchy for mobile question choices only; no API or AI behavior changes. -->
+<style id="numMobileV97QuestionPalette">
+/* The question section has its own identity: muted rose/teal/gold, not four identical text panels. */
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker{
+ border-color:#78577c!important;
+ background:linear-gradient(145deg,#211827 0%,#19182a 60%,#161d2b 100%)!important;
+ box-shadow:0 9px 24px rgba(0,0,0,.13), inset 0 1px rgba(239,195,227,.045)!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker>summary{
+ color:#ffe4ef!important;
+ background:linear-gradient(95deg,rgba(109,56,94,.45),rgba(50,35,70,.28) 64%,rgba(42,69,80,.17))!important;
+ padding:13px 14px!important;
+ border-bottom:1px solid transparent!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker[open]>summary{
+ border-bottom-color:#6d4d70!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker>summary:before{
+ color:#f0bedc!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker .num-v96-picker-action{
+ color:#e4c7e5!important;
+ font-size:.72rem!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionInputs{
+ padding:9px 11px 14px!important;
+ background:linear-gradient(180deg,rgba(130,72,121,.055),transparent 38%)!important;
+ border-top:0!important;
+}
+/* Category chips: slim variations, with a visually unmistakable selected category. */
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-custom-cats{
+ gap:8px!important;padding:3px 1px 13px!important;margin:0!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-custom-cats button{
+ min-height:40px!important;padding:7px 13px!important;
+ border:1px solid #66536f!important;
+ background:linear-gradient(150deg,#2a2339,#211c31)!important;
+ color:#eadcf2!important;font-weight:700!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.035)!important;
+ transition:background-color .18s,border-color .18s,transform .18s!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-custom-cats button:nth-child(4n+2):not([aria-pressed="true"]){
+ border-color:#527080!important;background:linear-gradient(145deg,#22333e,#20283a)!important;color:#b9e1ea!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-custom-cats button:nth-child(4n+3):not([aria-pressed="true"]){
+ border-color:#77634e!important;background:linear-gradient(145deg,#332a2d,#29232d)!important;color:#f4d9b4!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-custom-cats button:nth-child(4n+4):not([aria-pressed="true"]){
+ border-color:#655684!important;background:linear-gradient(145deg,#28243d,#232037)!important;color:#dbcbff!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-custom-cats button[aria-pressed="true"]{
+ border-color:#efbad6!important;background:linear-gradient(125deg,#8d4d77,#653e66)!important;
+ color:#fff8fc!important;box-shadow:0 0 0 1px rgba(255,207,229,.15),0 3px 10px rgba(170,74,143,.16)!important;
+}
+/* The title is a cue; the refresh control is a separate cyan action. */
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-sample-heading{
+ padding:7px 2px 11px!important;margin:0!important;
+ color:#ecd5f1!important;font-weight:780!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-sample-heading>span:before{
+ content:'✦';color:#e7c283;margin-right:7px;font-size:.84rem;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom #numMobileMore{
+ min-height:37px!important;padding:7px 11px!important;
+ background:linear-gradient(135deg,#213b47,#233244)!important;
+ color:#c5f4f1!important;border:1px solid #659fa4!important;
+ font-weight:800!important;box-shadow:inset 0 1px rgba(165,247,244,.09)!important;
+}
+/* Four sample questions: numbered entrance, distinct soft tint, highlighted selection. */
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples{
+ counter-reset:numChoice!important;gap:9px!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button{
+ --num-q-accent:#e7bb8a;
+ counter-increment:numChoice!important;
+ position:relative!important;display:block!important;
+ min-height:66px!important;
+ padding:12px 27px 12px 53px!important;
+ border:1px solid #72536b!important;
+ border-left:3px solid var(--num-q-accent)!important;
+ border-radius:12px!important;
+ background:linear-gradient(110deg,rgba(136,87,87,.13),#201b2e 48%,#1c1b2b)!important;
+ color:#f6eaf5!important;
+ font-size:.91rem!important;font-weight:700!important;
+ line-height:1.52!important;letter-spacing:.005em!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.025)!important;
+ transition:border-color .16s,transform .16s,background .16s,box-shadow .16s!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button:nth-child(2){
+ --num-q-accent:#88c9d3;border-color:#436d79!important;
+ background:linear-gradient(110deg,rgba(49,120,139,.16),#1a2635 56%,#1b1c2e)!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button:nth-child(3){
+ --num-q-accent:#b9a9ee;border-color:#625786!important;
+ background:linear-gradient(110deg,rgba(108,88,173,.18),#22203a 56%,#1b1b2b)!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button:nth-child(4){
+ --num-q-accent:#dda3c5;border-color:#815674!important;
+ background:linear-gradient(110deg,rgba(164,78,136,.15),#291e36 56%,#1d192b)!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button::before{
+ content:'0' counter(numChoice);
+ position:absolute;top:13px;left:11px;
+ width:29px;height:28px;display:flex;align-items:center;justify-content:center;
+ border:1px solid var(--num-q-accent);border-radius:8px;
+ background:rgba(0,0,0,.15);color:var(--num-q-accent);
+ font:900 .74rem/1 system-ui,sans-serif;letter-spacing:0;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button[aria-pressed="true"]{
+ border-color:#efd399!important;border-left:3px solid #f0d391!important;
+ background:linear-gradient(115deg,#50324b,#392b49 62%,#2a273c)!important;
+ color:#fff7ec!important;
+ box-shadow:0 0 0 1px rgba(243,213,164,.16),0 5px 17px rgba(0,0,0,.16),inset 0 0 22px rgba(234,182,208,.055)!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button[aria-pressed="true"]::before{
+ content:'✓';background:#eacb93;color:#251b29;border-color:#f7dea9;font-size:.92rem;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button[aria-pressed="true"]::after{
+ content:'';position:absolute;top:12px;right:12px;width:6px;height:6px;border-radius:50%;background:#ecd39b;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button:active{transform:scale(.995)!important}
+/* The editable question is a distinct, calm blue/teal input, not a fifth identical card. */
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionInputs #numAiCustomPane{
+ margin-top:14px!important;padding:14px 10px 8px!important;
+ border:1px solid #405a69!important;border-radius:12px!important;
+ background:linear-gradient(145deg,#192c35,#1b2133 65%,#1e1b2f)!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionInputs .num-ai-custom-label{
+ color:#b6e7e4!important;font-weight:850!important;font-size:.88rem!important;
+ margin:0 0 9px!important;display:block!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionInputs .num-ai-custom-label::before{
+ content:'✎';color:#e3c48d;margin-right:8px;font-size:1rem;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionInputs #numAiQuestion{
+ background:#121e2a!important;color:#fbf5ff!important;
+ border:1px solid #537e86!important;border-radius:9px!important;
+ line-height:1.6!important;min-height:106px!important;
+ box-shadow:inset 0 1px 7px rgba(0,0,0,.12)!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionInputs #numAiQuestion:focus{
+ border-color:#a3e1d8!important;outline:1px solid #a3e1d8!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-example-note{
+ color:#9b98b4!important;font-size:.7rem!important;
+}
+@media(max-width:350px){
+ html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button{
+  padding:10px 20px 10px 48px!important;font-size:.84rem!important;min-height:60px!important;
+ }
+ html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button::before{
+  left:9px;width:27px;height:27px;
+ }
+ html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-sample-heading{font-size:.71rem!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-examples button,
+ html.numerology-mobile-page #num-map-stage #numAiSection #numMobileCustom .num-mobile-custom-cats button{transition:none!important}
+}
+</style>
 </body>
 </html>
