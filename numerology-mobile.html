@@ -2679,7 +2679,7 @@ html.numerology-mobile-page #num-map-stage #numProfileFold{padding:6px 9px!impor
 <body>
 
 <div class="num-mobile-nav" id="numMobileNav"><div class="num-mobile-nav-inner"><a href="/" class="num-mobile-brand">一念知機</a><nav class="num-mobile-scroller" aria-label="命理工具導覽"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經</a><a href="/cezi.html">測字</a><a href="/wuxing.html">五行</a><a href="/numerology-mobile.html">生命靈數</a></nav><a class="num-mobile-member" href="/member.html?return=%2Fnumerology-mobile.html" id="numMobileMember">免費登入</a></div></div>
-<section class="num-mobile-hero" aria-label="生命靈數手機版"><span class="num-mobile-kicker">一念知機 · NUMEROLOGY <span id="numMobileRelease" class="num-mobile-build-stamp">V9.8</span> <span id="numMobileApiRelease" class="num-mobile-api-stamp" aria-live="polite">API 待確認</span></span><h1>專業<em>生命靈數</em></h1><p>免費生日九宮格・數字性格・AI 深度批盤</p></section>
+<section class="num-mobile-hero" aria-label="生命靈數手機版"><span class="num-mobile-kicker">一念知機 · NUMEROLOGY <span id="numMobileRelease" class="num-mobile-build-stamp">V9.9</span> <span id="numMobileApiRelease" class="num-mobile-api-stamp" aria-live="polite">API 待確認</span></span><h1>專業<em>生命靈數</em></h1><p>免費生日九宮格・數字性格・AI 深度批盤</p></section>
 
 <header class="page-topbar">
  <div class="topbar-left">
@@ -4625,7 +4625,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
     const backend=data?.apiVersion?`｜後端 ${data.apiVersion}`:'';
     aiStatus(numAiResponseError(data.error)+detail+backend+(data.traceId?`｜追蹤碼 ${data.traceId}`:''));
     if(r.status===503&&data.operationId){lastFailedNumerologyOperation=data.operationId;$('numAiReportBox').hidden=false;
-     if($('numAiFailureCode'))$('numAiFailureCode').textContent=`手機 V9.8｜${data?.apiVersion?'後端 '+data.apiVersion:'後端版本未確認'}｜${data.reasonCode||data.error||'原因未知'}｜${data.traceId||''}`;}
+     if($('numAiFailureCode'))$('numAiFailureCode').textContent=`手機 V9.9｜${data?.apiVersion?'後端 '+data.apiVersion:'後端版本未確認'}｜${data.reasonCode||data.error||'原因未知'}｜${data.traceId||''}`;}
    }
   }catch(e){pending=true;result=await numAiGetResult(id);if(!result)aiStatus('連線中斷，已保留操作編號 '+id+'。重新進入 AI 區時會自動查詢同一筆請求，請勿重複送出。')}
   finally{aiRequestBusy=false;numAiPendingOperation=null;numAiSetBusy(false);$('numAiSection').classList.remove('num-v96-running-followup');renderAiInterface();void refreshNumAiQuota();
@@ -5408,7 +5408,8 @@ function chooseSample(q){
  const t=$('numAiQuestion');if(t){t.value=q;t.dispatchEvent(new Event('input',{bubbles:true}));t.dispatchEvent(new Event('change',{bubbles:true}));}
  renderSamples();
  $('numMobileQuestionNote').textContent='已帶入題目，可直接修改。';
- if(t&&!t.closest('[hidden]'))t.focus({preventScroll:true});
+ // Open the editor only after selection; do not automatically raise the mobile keyboard.
+ window.dispatchEvent(new CustomEvent('num-mobile:sample-picked',{detail:{question:q}}));
 }
 function makeSampleUI(){
  const rail=document.querySelector('#numAiSection .num-ai-question-rail'),custom=$('numAiCustomPane');if(!rail||!custom||$('numMobileCustom'))return;
@@ -5416,8 +5417,8 @@ function makeSampleUI(){
  block.innerHTML='<div class="num-mobile-custom-head"><strong>自訂 AI 提問</strong><small>21 種分類 · 每批 4 題</small></div><div class="num-mobile-custom-cats" id="numMobileCategories" role="group" aria-label="左右滑動選擇自訂提問類別"></div><div class="num-mobile-sample-heading"><span>參考題目 · 點選可帶入修改</span><button type="button" class="num-mobile-more" id="numMobileMore">換一批 ↻</button></div><div class="num-mobile-examples" id="numMobileExamples"></div><p class="num-mobile-example-note" id="numMobileQuestionNote">點選題目可帶入修改，不會扣點。</p>';
  custom.before(block);
  const cats=$('numMobileCategories');
- for(const name of Object.keys(promptBank)){const b=document.createElement('button');b.type='button';b.dataset.mobileCategory=name;b.textContent=name;b.setAttribute('aria-pressed',String(name===selectedCategory));b.addEventListener('click',()=>{selectedCategory=name;offset=0;selectedText='';renderSamples()});cats.append(b)}
- $('numMobileMore').addEventListener('click',()=>{offset=(offset+2)%promptBank[selectedCategory].length;renderSamples()});
+ for(const name of Object.keys(promptBank)){const b=document.createElement('button');b.type='button';b.dataset.mobileCategory=name;b.textContent=name;b.setAttribute('aria-pressed',String(name===selectedCategory));b.addEventListener('click',()=>{if(selectedCategory!==name){selectedCategory=name;offset=0;selectedText='';renderSamples();window.dispatchEvent(new Event('num-mobile:source-changed'));}});cats.append(b)}
+ $('numMobileMore').addEventListener('click',()=>{offset=(offset+2)%promptBank[selectedCategory].length;selectedText='';renderSamples();window.dispatchEvent(new Event('num-mobile:source-changed'));});
  renderSamples();
  // The original native custom-input area remains the only field that the backend reads.
  const input=$('numAiQuestion');input?.addEventListener('input',()=>{if(input.value.trim()!==selectedText){selectedText='';renderSamples()}});
@@ -6404,5 +6405,111 @@ html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid .nu
  html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid .num-ai-answer-head{padding:10px 9px!important}
 }
 </style>
+
+<!-- V9.9 | Progressive disclosure of the mobile question editor.
+     Four suggestions remain visible; typing is revealed ONLY by choosing one or requesting a blank question.
+     The existing textarea, AI submission handler and entitlement flow are not replaced. -->
+<style id="numMobileV99QuestionDisclosure">
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker:not(.num-v99-editing) #numAiCustomPane{
+ display:none!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker.num-v99-editing #numAiCustomPane:not([hidden]){
+ display:block!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker #numMobileV99OwnEntry{
+ display:flex!important;justify-content:center;margin:10px 0 0!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker.num-v99-editing #numMobileV99OwnEntry{
+ display:none!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileV99WriteOwn{
+ min-height:38px!important;max-width:100%!important;width:100%!important;
+ display:flex!important;justify-content:center;align-items:center;gap:7px;
+ padding:8px 12px!important;border:1px dashed #588893!important;border-radius:10px!important;
+ background:rgba(36,91,99,.13)!important;color:#b3e8e3!important;
+ font-size:.85rem!important;font-weight:800!important;line-height:1.35!important;cursor:pointer;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileV99WriteOwn:focus-visible,
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileV99Cancel:focus-visible{
+ outline:2px solid #a9dfdf!important;outline-offset:2px!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker #numAiCustomPane{
+ margin-top:10px!important;padding:12px 10px 10px!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker #numAiCustomPane .num-ai-custom-label{
+ display:flex!important;justify-content:space-between!important;align-items:center!important;
+ flex-wrap:wrap;gap:6px;color:#b5e7e4!important;margin:0 0 9px!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileV99Cancel{
+ min-height:30px;float:right;margin:-3px 0 7px 8px;padding:4px 9px;
+ background:transparent;border:1px solid #557481;color:#c5d9dd;
+ font-size:.73rem;font-weight:750;border-radius:8px;cursor:pointer;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionPicker #numAiQuestion{
+ min-height:93px!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numMobileQuestionNote{display:none!important}
+</style>
+<script id="numMobileV99QuestionDisclosureBehavior">
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ function init(){
+  const fold=$('numMobileQuestionPicker'),custom=$('numMobileCustom'),pane=$('numAiCustomPane'),textarea=$('numAiQuestion');
+  if(!fold||!custom||!pane||!textarea||$('numMobileV99OwnEntry'))return;
+  const entry=document.createElement('div');entry.id='numMobileV99OwnEntry';
+  const own=document.createElement('button');own.id='numMobileV99WriteOwn';own.type='button';own.textContent='＋ 直接輸入自己的問題';
+  entry.append(own);custom.after(entry);
+  const cancel=document.createElement('button');cancel.id='numMobileV99Cancel';cancel.type='button';cancel.textContent='取消選題';pane.insertBefore(cancel,textarea);
+  const label=$('numAiCustomLabel');
+  const updateLabel=mode=>{if(label)label.textContent=mode==='sample'?'已選擇問題（可自由修改）':'自己輸入問題（4～400 字）';};
+  const reset=()=>{
+   fold.classList.remove('num-v99-editing');
+   textarea.value='';textarea.dispatchEvent(new Event('input',{bubbles:true}));
+   updateLabel('manual');
+  };
+  const open=mode=>{
+   $('numAiModeCustom')?.click();
+   fold.open=true;
+   fold.classList.add('num-v99-editing');
+   updateLabel(mode);
+  };
+  // Sample button already populates the original native textarea; simply unveil it.
+  window.addEventListener('num-mobile:sample-picked',()=>open('sample'));
+  // Switching a category or cycling reference questions must not silently submit the old question.
+  window.addEventListener('num-mobile:source-changed',reset);
+  own.addEventListener('click',()=>{
+   textarea.value='';textarea.dispatchEvent(new Event('input',{bubbles:true}));
+   open('manual');textarea.focus({preventScroll:true});
+  });
+  cancel.addEventListener('click',reset);
+  // A newly calculated birth or a delivered article starts the next question with a clean editor.
+  const resultDate=$('resultDate');
+  if(resultDate)new MutationObserver(reset).observe(resultDate,{characterData:true,childList:true,subtree:true});
+  const count=$('numAiHistoryCount');
+  let needsFreshQuestion=false;
+  if(count){let previous=Number.parseInt(count.textContent||'0',10)||0;
+   new MutationObserver(()=>{
+    const now=Number.parseInt(count.textContent||'0',10)||0;
+    // Never clear the native textarea inside the successful-delivery rendering pass.
+    // The original article renderer can still need that question to keep the article visible.
+    if(now!==previous){needsFreshQuestion=now>previous;previous=now;}
+   }).observe(count,{characterData:true,childList:true,subtree:true});
+  }
+  // Only a genuine user reopening the picker should clear the previous delivered question.
+  // A delayed native <details> toggle event from initialization must not erase a fresh selection.
+  const summary=fold.querySelector(':scope > summary');
+  summary?.addEventListener('click',()=>{
+   if(!fold.open&&needsFreshQuestion){reset();needsFreshQuestion=false;}
+  });
+  // Native custom tab may be activated on recalculation, but this editor intentionally stays hidden until chosen.
+  fold.classList.remove('num-v99-editing');
+  textarea.placeholder='請在這裡輸入最想了解的問題…';
+  updateLabel('manual');
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
 </body>
 </html>
