@@ -2867,11 +2867,11 @@ html.numerology-mobile-page #num-map-stage #numProfileFold{padding:6px 9px!impor
        <div class="num-ai-current-question"><span>本次問事</span><strong id="numAiConversationQuestion">你的專屬生命靈數命盤</strong></div>
        <div id="numAiAnswerPanel" class="num-ai-answer-panel" hidden>
         <div class="num-ai-answer-head"><div class="num-ai-article-headings"><strong>你的專屬生命靈數 AI 批盤</strong><small id="numAiTrace"></small></div><button type="button" id="numAiArticleToggle" class="num-ai-fold-action" aria-expanded="true" aria-controls="numAiAnswer">收起本文 ↑</button></div>
-        <div id="numAiCollapsedCard" class="num-ai-collapsed-card" hidden><strong id="numAiCollapsedTitle">此篇已收起 · 仍保留在左側問答紀錄</strong><p>文章與追問沒有刪除；重新展開閱讀、切換其他題目都不會重複扣點。</p></div>
+        <div id="numAiCollapsedCard" class="num-ai-collapsed-card" hidden><strong id="numAiCollapsedTitle">此篇已收起 · 仍保留在本次問答紀錄</strong><p>文章與追問沒有刪除；重新展開閱讀、切換其他題目都不會重複扣點。</p></div>
         <div id="numAiAnswer" class="num-ai-answer"></div>
         <div class="num-ai-answer-actions"><button type="button" id="numAiAnswerCopy">複製解讀</button><button type="button" id="numAiAnswerTxt">下載解讀 TXT</button></div>
         <div class="num-ai-followup"><label for="numAiFollowup">想對這份批盤再深入追問？（每次另扣 AI 1 次）</label><textarea id="numAiFollowup" rows="3" maxlength="1600" placeholder="例如：請把事業盲點和 2027 年的新階段講得更深入，並舉兩個具體情境。"></textarea><button type="button" id="numAiFollowupRun">✦ 送出延伸追問</button></div>
-        <div class="num-ai-article-end"><span>本篇已完整顯示 · 可在左側紀錄找回</span><button type="button" id="numAiArticleBottomFold" class="num-ai-fold-action">收起本文 ↑</button></div>
+        <div class="num-ai-article-end"><span>本篇已完整顯示 · 可在下方紀錄找回</span><button type="button" id="numAiArticleBottomFold" class="num-ai-fold-action">收起本文 ↑</button></div>
        </div>
       </div>
       <div id="numAiReportBox" class="num-ai-report" hidden><label for="numAiReportComment">本次 AI 沒有交付完整結果，可回報異常（失敗額度已由後端自動返還）</label><textarea id="numAiReportComment" maxlength="400" rows="2" placeholder="可補充未收到內容、網頁錯誤等情況。"></textarea><button type="button" id="numAiReport">回報 AI 異常</button></div>
@@ -3896,7 +3896,7 @@ function renderMonths(c){
   $('numAiRun').disabled=aiRequestBusy||(scope!=='general'&&aiMode==='fixed');
   $('numAiRun').textContent=scope!=='general'&&aiMode==='fixed'?'請先點選上方專屬題目':'✦ 開始站內 AI 解讀 -1 次';
  }
- function numAiQuestionChanged(){if(!$('numAiAnswerPanel').hidden){$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');aiStatus(numAiHistory.length?'已切換題目。先前完成的解讀保留在左側「本次問答紀錄」。':'')}}
+ function numAiQuestionChanged(){if(!$('numAiAnswerPanel').hidden){$('numAiAnswerPanel').hidden=true;$('numAiReadingGrid').hidden=true;$('numAiSection').classList.remove('num-ai-reading-view');aiStatus(numAiHistory.length?'已切換題目。先前完成的解讀保留在「本次問答紀錄」。':'')}}
  function aiStatus(msg){$('numAiStatus').textContent=msg}
  const NUM_AI_DOCKS={general:'numAiGeneralDock',stage:'numAiStageDock',timing:'numAiTimingDock'};
  function openNumAiIn(scope,mode='fixed',guidedQuestion='',topic='full',guidedLabel='',presetId=''){
@@ -4467,8 +4467,8 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   const context={id,label,question:isFollowup||aiMode!=='fixed'?actualQuestion:`完整解讀：${label}`,scope:requestScope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth};
   try{localStorage.setItem(NUM_AI_LAST_KEY,JSON.stringify({operationId:id,date:current.date,questionLabel:label,question:context.question,scope:context.scope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth}))}catch(_){}
   $('numAiReportBox').hidden=true;aiRequestBusy=true;numAiPendingOperation=id;
-  numAiSetBusy(true,isFollowup?'正在根據原篇解讀延伸分析；原文章仍保留在左側問答紀錄。':'正在整理專屬命盤，完成後自動新增一篇紀錄。');
-  aiStatus('AI 正在處理，請勿重複送出；可以在左側查看以前已完成的解讀。');
+  numAiSetBusy(true,isFollowup?'正在根據原篇解讀延伸分析；原文章仍保留在本次問答紀錄。':'正在整理專屬命盤，完成後自動新增一篇紀錄。');
+  aiStatus('AI 正在處理，請勿重複送出；可以在本次問答紀錄查看以前的解讀。');
   const payload={operationId:id,date:current.date,mode:isFollowup?'custom':aiMode,topic:aiTopic,presetId:aiMode==='guided'&&!isFollowup?numAiGuidedId:'',question:actualQuestion,area:requestScope,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,previousOperationId:parentId};
   let result=null,pending=false,cancelled=false;
   try{
@@ -4938,7 +4938,9 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   if(d.date!==activeDate)return;
   lastDetail=d;renderDelivered(d);
   if(d.ok){status=d.after||status;updateThumbnail()}
-  open();
+  // On the dedicated mobile experience, the actual AI article is the destination.
+  // Keep entitlement state synced but do not interrupt it with a fixed-report reward modal.
+  if(!document.documentElement.classList.contains('numerology-mobile-page'))open();
  });
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>ensureThumbnail(),{once:true});else ensureThumbnail();
 })();</script>
@@ -5164,6 +5166,124 @@ html.numerology-mobile-page #num-map-stage .num-mobile-sections .num-v4-navigati
   if(result){new MutationObserver(()=>{if(!result.hidden)queueMicrotask(activateCustom)}).observe(result,{attributes:true,attributeFilter:['hidden']});if(!result.hidden)queueMicrotask(activateCustom)}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
+<style id="numMobileV4ReaderFixStyle">
+/* V4: After a successful computation, retain the quota but collapse the date form. */
+html.numerology-mobile-page body.num-v4-ready.num-v4-calculated:not(.num-mobile-editing) #calculator .num-birthday-quota-row #calcForm,
+html.numerology-mobile-page body.num-v4-calculated:not(.num-mobile-editing) #calculator #calcForm {display:none!important}
+html.numerology-mobile-page body.num-mobile-editing #calculator .num-birthday-quota-row #calcForm {display:flex!important;flex-direction:column!important}
+html.numerology-mobile-page body.num-v4-calculated #calculator .num-birthday-quota-row{gap:0!important}
+html.numerology-mobile-page #calculator .num-v4-birthsummary {display:none!important}
+/* One compact result heading; leave a single way to edit birthday. */
+html.numerology-mobile-page #result .result-header{display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center!important;flex-wrap:nowrap!important;gap:8px!important;margin:3px 0 5px!important}
+html.numerology-mobile-page #result .result-header>div:first-child{min-width:0!important;flex:1!important}
+html.numerology-mobile-page #result .result-header h2{font-size:1.08rem!important;line-height:1.25!important}
+html.numerology-mobile-page #result #resultDate{font-size:.67rem!important;line-height:1.35!important}
+html.numerology-mobile-page #result .result-actions{display:flex!important;flex:0 0 auto!important;gap:0!important}
+html.numerology-mobile-page #result #copyBtn,
+html.numerology-mobile-page #result #downloadBtn{display:none!important}
+html.numerology-mobile-page #result #recalcBtn{display:inline-flex!important;align-items:center;justify-content:center;font-size:.74rem!important;min-height:36px!important;white-space:nowrap!important;border-color:#655273!important;color:#f0d4ed!important}
+/* Remove non-AI narrative surfaces from the core mobile reading flow; keep underlying calculation and entitlement logic intact. */
+html.numerology-mobile-page #result #numProfileExplanation,
+html.numerology-mobile-page #result .num-method-quiet,
+html.numerology-mobile-page #result .num-ai-entry,
+html.numerology-mobile-page #num-map-stage #numV9StoryFold,
+html.numerology-mobile-page #num-map-stage #numMobileExtra,
+html.numerology-mobile-page #num-map-stage #numMobileSections {display:none!important}
+/* The existing answer container was a TWO-COLUMN desktop grid (question + article).
+   Force one natural-width article and keep original native report, controls and tracking metadata. */
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid:not([hidden]) {
+  display:block!important;grid-template-columns:none!important;grid-template-rows:none!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  margin:10px 0 0!important;gap:0!important;padding:0!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid[hidden]{display:none!important}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-current-question{
+  display:block!important;position:static!important;width:100%!important;max-width:100%!important;
+  min-height:0!important;height:auto!important;margin:0 0 8px!important;padding:10px 11px!important;
+  border:1px solid #534366!important;border-radius:10px!important;background:#211b32!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-current-question span{
+  display:block!important;font-size:.69rem!important;margin-bottom:4px!important;color:#bdb3d4!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-current-question strong{
+  display:block!important;font-size:.90rem!important;line-height:1.55!important;color:#f5eafa!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid #numAiAnswerPanel:not([hidden]){
+  display:block!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+  min-width:0!important;margin:0!important;padding:12px 11px 14px!important;
+  border:1px solid #56476a!important;border-radius:12px!important;background:#1b182c!important;
+  height:auto!important;overflow:visible!important;box-shadow:none!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid #numAiAnswerPanel[hidden]{display:none!important}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-answer-head{
+  position:static!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  gap:8px!important;padding:0 0 10px!important;margin:0 0 11px!important;
+  background:transparent!important;border-radius:0!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-article-headings{width:100%!important;min-width:0!important;display:grid!important;gap:3px!important}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-article-headings strong{
+  display:block!important;font-size:1.02rem!important;line-height:1.45!important;overflow-wrap:anywhere!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid #numAiTrace{
+  display:block!important;font-size:.67rem!important;line-height:1.45!important;overflow-wrap:anywhere!important;word-break:break-word!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-fold-action{
+  align-self:flex-end!important;min-height:34px!important;padding:6px 11px!important;font-size:.74rem!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid #numAiAnswer{
+  display:block!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+  min-width:0!important;height:auto!important;max-height:none!important;margin:0!important;padding:0!important;
+  overflow:visible!important;overflow-wrap:anywhere!important;word-break:normal!important;
+  font-size:1rem!important;line-height:1.85!important;letter-spacing:normal!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid #numAiAnswer :is(p,li,blockquote){
+  font-size:.96rem!important;line-height:1.87!important;max-width:100%!important;overflow-wrap:anywhere!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid #numAiAnswer :is(h3,h4){
+  font-size:1.08rem!important;line-height:1.5!important;max-width:100%!important;margin:18px 0 9px!important;
+  overflow-wrap:anywhere!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-answer-actions{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;margin:12px 0!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-answer-actions button{
+  width:100%!important;min-width:0!important;font-size:.8rem!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-followup{
+  margin:12px 0 0!important;padding:11px!important;border-radius:9px!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiReadingGrid .num-ai-followup textarea{box-sizing:border-box!important;width:100%!important;min-width:0!important}
+html.numerology-mobile-page #num-map-stage #numAiSection .num-ai-table-scroll{max-width:100%!important;overflow-x:auto!important}
+html.numerology-mobile-page #num-map-stage #numAiSection #numAiHistoryBox{margin:11px 0!important}
+@media(max-width:350px){html.numerology-mobile-page #result #resultDate{font-size:.62rem!important}html.numerology-mobile-page #result #recalcBtn{font-size:.69rem!important;padding:6px 7px!important}}
+</style>
+<script id="numMobileV4ReaderFixBehavior">
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+function boot(){
+ const result=$('result'),form=$('calcForm'),edit=$('recalcBtn'),grid=$('numAiReadingGrid'),history=$('numAiHistoryBox');
+ if(!result||!form||!edit||!grid)return;
+ // A single visible edit action; do not reset or resubmit an existing paid/free computation.
+ const sync=()=>{if(!result.hidden){document.body.classList.remove('num-mobile-editing');document.body.classList.remove('num-v4-editing')}else document.body.classList.remove('num-mobile-editing')};
+ new MutationObserver(sync).observe(result,{attributes:true,attributeFilter:['hidden']});
+ const date=$('resultDate');if(date)new MutationObserver(()=>{if(!result.hidden)sync()}).observe(date,{childList:true,characterData:true,subtree:true});
+ edit.addEventListener('click',()=>{
+   document.body.classList.add('num-mobile-editing');document.body.classList.add('num-v4-editing');
+   requestAnimationFrame(()=>{form.scrollIntoView({behavior:'smooth',block:'start'});$('numYear')?.focus({preventScroll:true})});
+ },{capture:true});
+ form.addEventListener('submit',()=>{ /* native calculator remains the only submit path */ });
+ // Each completed AI answer must appear BEFORE its optional prior-history list.
+ const live=grid.parentElement;
+ if(live&&history&&history.parentElement!==live)grid.after(history);
+ else if(history&&history.previousElementSibling!==grid)grid.after(history);
+ sync();
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
 </script>
 
