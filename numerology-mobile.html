@@ -5,9 +5,9 @@
 <meta name="dh-numerology-build" content="v43-free-overview-four-ai-guide">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta name="numerology-mobile-build" content="20261107-v1-mobile-independent">
+<meta name="numerology-mobile-build" content="20261107-v5-mobile-custom-reader">
 <title>專業生命靈數計算器｜免費線上算命、九宮格與人生運勢｜一念知機</title>
-<meta name="description" content="一念知機專業生命靈數手機版，免費線上輸入國曆或農曆生日，查看生命靈數、生日九宮格、缺數與連線、固定性格分析；可選八大類型與更多專題，從四道參考題目自訂問題，依會員額度使用 AI 解讀，累積符合資格的四次解鎖站內內容。">
+<meta name="description" content="一念知機專業生命靈數手機版，免費線上輸入國曆或農曆生日，查看生命靈數、生日九宮格、缺數與連線；手機版以10類自訂問題為主，每次顯示4道可修改的參考題目，依會員額度取得生命靈數 AI 深度解讀。">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
 <meta name="author" content="一念知機">
 <link rel="canonical" href="https://divinationhub.tw/numerology.html">
@@ -5284,6 +5284,88 @@ function boot(){
  sync();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
+</script>
+
+
+<!-- V5 Mobile: the AI answer is an independent, native-height reading section.
+     Keep all original AI listeners, trace IDs, export buttons, history and debit calls. -->
+<style id="numMobileV5ArticleLayout">
+html.numerology-mobile-page #num-map-stage .num-mobile-ai-hub{
+  display:block!important;position:static!important;z-index:auto!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  height:auto!important;max-height:none!important;margin:8px 0 0!important;
+  padding:0!important;overflow:visible!important;contain:none!important;
+}
+html.numerology-mobile-page #num-map-stage .num-mobile-ai-hub #numAiSection,
+html.numerology-mobile-page #num-map-stage .num-mobile-ai-hub #numAiGeneralDock,
+html.numerology-mobile-page #num-map-stage .num-mobile-ai-hub .num-ai-workbench,
+html.numerology-mobile-page #num-map-stage .num-mobile-ai-hub .num-ai-question-rail{
+  position:static!important;width:100%!important;max-width:100%!important;
+  min-width:0!important;height:auto!important;max-height:none!important;
+  overflow:visible!important;contain:none!important;
+}
+/* The reader is a direct child of #numAiSection, not a right-hand desktop column
+   and not inside the question rail or the submit/loader box. */
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid:not([hidden]){
+  display:block!important;width:100%!important;max-width:100%!important;
+  height:auto!important;max-height:none!important;min-width:0!important;
+  overflow:visible!important;position:static!important;
+  margin:12px 0 0!important;padding:0!important;
+  grid-template-columns:none!important;grid-template-rows:none!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid[hidden]{display:none!important}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswerPanel:not([hidden]){
+  display:block!important;width:100%!important;min-width:0!important;
+  height:auto!important;max-height:none!important;overflow:visible!important;
+  box-sizing:border-box!important;contain:none!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer{
+  height:auto!important;max-height:none!important;min-height:0!important;
+  overflow:visible!important;overscroll-behavior:auto!important;
+  padding:0!important;margin:0!important;contain:none!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswer :is(h3,h4,p,li,blockquote){
+  max-width:100%!important;overflow-wrap:anywhere!important;word-break:normal!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid .num-ai-table-scroll{
+  display:block!important;box-sizing:border-box!important;width:100%!important;
+  max-width:100%!important;overflow-x:auto!important;overflow-y:visible!important;
+  -webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid .num-ai-markdown-table{
+  min-width:440px!important;table-layout:auto!important;
+}
+html.numerology-mobile-page #num-map-stage #numAiSection > #numAiHistoryBox{
+  position:static!important;height:auto!important;max-height:none!important;
+  overflow:visible!important;margin:12px 0 4px!important;
+}
+@media(max-width:359px){
+  html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid #numAiAnswerPanel{padding:11px 9px!important}
+  html.numerology-mobile-page #num-map-stage #numAiSection > #numAiReadingGrid .num-ai-markdown-table{min-width:420px!important}
+}
+</style>
+<script id="numMobileV5ArticleBehavior">
+(()=>{
+  'use strict';
+  const $=id=>document.getElementById(id);
+  function init(){
+    const map=$('num-map-stage'),hub=$('numAiGeneralHub'),section=$('numAiSection');
+    const grid=$('numAiReadingGrid'),history=$('numAiHistoryBox');
+    if(!map||!hub||!section||!grid||$('numMobileV5Ready'))return;
+    const consoleArea=map.querySelector('.num-v4-panel[data-v4-panel="grid"] .num-console')||map.querySelector('.num-console');
+    if(!consoleArea)return;
+    // Place the complete AI workflow immediately after the grid/line view,
+    // outside the legacy sticky, sometimes scroll-constrained inspector.
+    consoleArea.after(hub);
+    hub.classList.add('num-mobile-ai-hub');
+    // Detach the readable article from the legacy hidden desktop right column.
+    // Existing handlers reference these exact same nodes by ID and remain intact.
+    section.append(grid);
+    if(history)section.append(history);
+    const marker=document.createElement('span');marker.id='numMobileV5Ready';marker.hidden=true;section.append(marker);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
 

@@ -1,9 +1,33 @@
 <!doctype html><html lang="zh-Hant"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- 手機自動分流：只識別手機裝置；?view=desktop 可強制保留電腦版。 -->
+<script id="cezi-mobile-auto-route">
+(function () {
+  'use strict';
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var view = (params.get('view') || '').toLowerCase();
+    // 會員自行要求電腦版，或管理員測試，皆不可自動跳走。
+    if (view === 'desktop' || params.get('admin') === '1') return;
+    var ua = navigator.userAgent || '';
+    var isPhone = (navigator.userAgentData && navigator.userAgentData.mobile === true) ||
+      /iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile|BlackBerry|BB10|Opera Mini|Mobile Safari/i.test(ua);
+    // 不依視窗寬度跳轉，避免桌機縮窗、平板與搜尋引擎誤判。
+    if (view !== 'mobile' && !isPhone) return;
+    var target = new URL('/cezi-mobile.html', window.location.origin);
+    // 保留有效廣告追蹤參數，不傳遞 view、admin 或不相關的個資參數。
+    ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'].forEach(function (k) {
+      if (params.has(k)) target.searchParams.set(k, params.get(k));
+    });
+    window.location.replace(target.href);
+  } catch (_) { /* 失敗時仍可使用電腦版 */ }
+}());
+</script>
 <title>專業測字算命｜免費線上測字、一字問事與 AI 深度解讀｜一念知機</title>
 <meta name="description" content="一念知機專業測字算命，提供免費線上測字基本體驗。選擇感情、工作、財運等問事情境，輸入一個中文字，從字義、字形與拆字取象閱讀固定分析；可依使用權限及額度選擇站內 AI 深度解讀與追問。">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="https://divinationhub.tw/cezi.html">
+<link rel="alternate" media="only screen and (max-width: 640px)" href="https://divinationhub.tw/cezi-mobile.html">
 <meta name="author" content="一念知機">
 <meta name="theme-color" content="#09090e">
 <meta property="og:type" content="website"><meta property="og:locale" content="zh_TW">
@@ -1297,11 +1321,20 @@ document.querySelectorAll('[data-start-cezi]').forEach(a=>a.addEventListener('cl
    layoutMenu.querySelectorAll('[data-cezi-layout]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.ceziLayout===mode)));layoutMenu.hidden=true;layoutButton.setAttribute('aria-expanded','false');
  }
  layoutButton.addEventListener('click',()=>{layoutMenu.hidden=!layoutMenu.hidden;layoutButton.setAttribute('aria-expanded',String(!layoutMenu.hidden))});
- layoutMenu.querySelectorAll('[data-cezi-layout]').forEach(b=>b.addEventListener('click',()=>setLayout(b.dataset.ceziLayout)));
+ layoutMenu.querySelectorAll('[data-cezi-layout]').forEach(b=>b.addEventListener('click',()=>{
+   if(b.dataset.ceziLayout==='mobile'){
+     const to=new URL('/cezi-mobile.html',location.origin);
+     const qs=new URLSearchParams(location.search);
+     ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid','fbclid'].forEach(k=>{if(qs.has(k))to.searchParams.set(k,qs.get(k))});
+     location.assign(to.href);
+     return;
+   }
+   setLayout(b.dataset.ceziLayout);
+ }));
  document.addEventListener('click',e=>{if(!layoutRoot.contains(e.target)){layoutMenu.hidden=true;layoutButton.setAttribute('aria-expanded','false')}if(!el('ceziMemberControl').contains(e.target))closeMember()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'){layoutMenu.hidden=true;closeMember()}});
  window.dhCeziManualMemberRefresh=checkSession;
- initTheme();let initLayout='auto';try{initLayout=localStorage.getItem(LAYOUT_KEY)||'auto'}catch(_){};setLayout(initLayout);
+ initTheme();let initLayout='auto';try{initLayout=localStorage.getItem(LAYOUT_KEY)||'auto'}catch(_){};try{if(new URLSearchParams(location.search).get('view')==='desktop')initLayout='desktop'}catch(_){};setLayout(initLayout);
  void checkSession();window.addEventListener('cezi:quota-changed',()=>void checkSession());window.addEventListener('pageshow',()=>void checkSession());window.addEventListener('focus',()=>void checkSession());document.addEventListener('visibilitychange',()=>{if(!document.hidden)void checkSession()});window.addEventListener('storage',e=>{if(e.key===AUTH_KEY||e.key==='divinationhub-auth-event')void checkSession();if(e.key===THEME_KEY)initTheme()});
 })();
 </script><script id="hub-unified-tool-nav-init-v1">
