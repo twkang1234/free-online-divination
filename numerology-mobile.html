@@ -4142,7 +4142,7 @@ function renderMonths(c){
  function numAiArchiveText(records){
   const title=['一念知機｜生命靈數 AI 問答暫存紀錄',`出生日期：${current?.date||''}`,`核心生命數：${current?.life??''}｜生日數：${current?.birth??''}｜態度數：${current?.attitude??''}`,'提醒：本紀錄由使用者在本次分頁產生並下載，並非永久雲端存檔。',''];
   if(typeof window.numMobileV7ExportText==='function')title.push('【目前命盤診斷資料】',window.numMobileV7ExportText(),'');
-  records.forEach((r,i)=>{title.push('='.repeat(38),`${i+1}. ${r.parentId?'延伸追問':'完整解讀'}｜${r.label}`,`時間：${r.createdAt||''}`,`分類：${r.scope||''}`,`問題：${r.question||''}`,r.parentId?`承接解讀：${r.parentId}`:'',`追蹤碼：${r.traceId||''}`,r.diagnostic?`本篇 AI 收到的補充資料：\n${r.diagnostic}`:'','',r.answer||'','')});
+  records.forEach((r,i)=>{title.push('='.repeat(38),`${i+1}. ${r.parentId?'延伸追問':'完整解讀'}｜${r.label}`,`時間：${r.createdAt||''}`,`分類：${r.questionCategory||r.scope||''}`,`問題：${r.question||''}`,r.parentId?`承接解讀：${r.parentId}`:'',`追蹤碼：${r.traceId||''}`,r.diagnostic?`本篇 AI 收到的補充資料：\n${r.diagnostic}`:'','',r.answer||'','')});
   return title.join('\n');
  }
  function numAiSetArticleFold(fold,scroll=false){
@@ -4180,7 +4180,7 @@ function renderMonths(c){
   if(!previous)numMarkValuableUse('aiResult');
   const r={id,date:current.date,answer,label:meta.label||previous?.label||'生命靈數深度批盤',
    question:meta.question||previous?.question||'',parentId:meta.parentId||previous?.parentId||null,
-   scope:meta.scope||previous?.scope||numAiActiveDock,stageIndex:meta.stageIndex??previous?.stageIndex??null,targetYear:meta.targetYear??previous?.targetYear??null,targetMonth:meta.targetMonth??previous?.targetMonth??null,createdAt:previous?.createdAt||new Date().toLocaleString('zh-TW',{hour12:false}),
+   scope:meta.scope||previous?.scope||numAiActiveDock,questionCategory:meta.questionCategory||previous?.questionCategory||'',stageIndex:meta.stageIndex??previous?.stageIndex??null,targetYear:meta.targetYear??previous?.targetYear??null,targetMonth:meta.targetMonth??previous?.targetMonth??null,createdAt:previous?.createdAt||new Date().toLocaleString('zh-TW',{hour12:false}),
    traceId:out.traceId||previous?.traceId||'',channel:out.channel||previous?.channel||'',diagnostic:meta.diagnostic||previous?.diagnostic||''};
   if(previous)numAiHistory[numAiHistory.indexOf(previous)]=r;else numAiHistory.push(r);
   // Deliveries expand the matching category automatically; replies expand their thread.
@@ -4534,14 +4534,10 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   const actualQuestion=question; // Preserve user's question as the visible title and history entry.
   const mobileDiagnostics=window.numMobileV7Snapshot?.();
   if(mobileDiagnostics?.partnerError){aiStatus('第二人生日無效，請先修正測試資料中的生日。');return}
-  // Request the mobile reading style from the existing Worker without changing its API schema.
-  // The Worker/model ultimately controls generation, so this is a length instruction, not a hard server-side cap.
-  const mobileAnswerGuide='【手機閱讀格式】請用繁體中文、命理師口吻回答本題；全文以1500～1800個中文字為目標，絕不超過1800個中文字（包含小標與表格）；先說結論，再以本命、九宮格和相關流年作依據，點明盲點並給可執行建議；最多5個短標題、每段2～4句、不要表格、公式、重複套話或長篇虛構情節；結尾完整。';
+  // V9: Mobile content requirements live in the shared Worker; never append a conflicting prompt to the client's question.
   const diagnosticText=typeof window.numMobileV7ContextText==='function'?window.numMobileV7ContextText():'';
-  // Keep the original question intact. Limit auxiliary context so Worker question-length validation is not broken.
-  const room=Math.max(0,1500-actualQuestion.length-mobileAnswerGuide.length-8);
-  const includedDiagnostic=diagnosticText.slice(0,room);
-  const modelQuestion=(actualQuestion+'\n\n'+(includedDiagnostic?includedDiagnostic+'\n\n':'')+mobileAnswerGuide);
+  const includedDiagnostic=diagnosticText.slice(0,1100);
+  const modelQuestion=actualQuestion;
   if((isFollowup||aiMode==='custom')&&(question.length<4||question.length>400)){aiStatus('請輸入 4～400 字的問題。');return}
   if(aiMode==='guided'&&!isFollowup&&(question.length<4||question.length>1600)){aiStatus('所選題目內容異常，請重新選擇。');return}
   if(actualQuestion.length>1600){aiStatus('題目超過 1600 字，請將問題簡短一些。');return}
@@ -4556,12 +4552,13 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   const requestStage=isFollowup&&Number.isInteger(previousRecord?.stageIndex)?previousRecord.stageIndex:numAiSelectedStage;
   const requestYear=isFollowup&&Number.isInteger(previousRecord?.targetYear)?previousRecord.targetYear:numAiTimingYear;
   const requestMonth=isFollowup&&Number.isInteger(previousRecord?.targetMonth)?previousRecord.targetMonth:numAiTimingMonth;
-  const context={id,label,question:isFollowup||aiMode!=='fixed'?actualQuestion:`完整解讀：${label}`,scope:requestScope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,diagnostic:includedDiagnostic};
-  try{localStorage.setItem(NUM_AI_LAST_KEY,JSON.stringify({operationId:id,date:current.date,questionLabel:label,question:context.question,scope:context.scope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,diagnostic:includedDiagnostic}))}catch(_){}
+  const requestCategory=isFollowup?(previousRecord?.questionCategory||window.numMobileSelectedCategory?.()||'事業'):(window.numMobileSelectedCategory?.()||'事業');
+  const context={id,label,question:isFollowup||aiMode!=='fixed'?actualQuestion:`完整解讀：${label}`,scope:requestScope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,diagnostic:includedDiagnostic,questionCategory:requestCategory};
+  try{localStorage.setItem(NUM_AI_LAST_KEY,JSON.stringify({operationId:id,date:current.date,questionLabel:label,question:context.question,scope:context.scope,parentId,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,diagnostic:includedDiagnostic,questionCategory:requestCategory}))}catch(_){}
   $('numAiReportBox').hidden=true;aiRequestBusy=true;numAiPendingOperation=id;
   numAiSetBusy(true,isFollowup?'正在根據原篇解讀延伸分析；原文章仍保留在本次問答紀錄。':'正在整理專屬命盤，完成後自動新增一篇紀錄。');
   aiStatus('AI 正在處理，請勿重複送出；可以在本次問答紀錄查看以前的解讀。');
-  const payload={operationId:id,date:current.date,mode:isFollowup?'custom':aiMode,topic:aiTopic,presetId:aiMode==='guided'&&!isFollowup?numAiGuidedId:'',question:modelQuestion,area:requestScope,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,previousOperationId:parentId};
+  const payload={operationId:id,date:current.date,mode:isFollowup?'custom':aiMode,topic:aiTopic,presetId:aiMode==='guided'&&!isFollowup?numAiGuidedId:'',question:modelQuestion,area:requestScope,stageIndex:requestStage,targetYear:requestYear,targetMonth:requestMonth,previousOperationId:parentId,clientVariant:'mobile',mobileQuestion:actualQuestion,questionCategory:requestCategory,mobileUserContext:includedDiagnostic};
   let result=null,pending=false,cancelled=false;
   try{
    let {r,data}=await numAiFetch('/ai/interpret','POST',payload);
@@ -4592,7 +4589,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   try{
    const {r,data}=await numAiFetch('/ai/result?operationId='+encodeURIComponent(old.operationId));
    if(current?.date!==date||$('numAiSection').hidden)return;
-   if(r.ok&&data?.ok){numAiShowResult(data,{label:old.questionLabel||'生命靈數 AI 解讀',question:old.question||'',scope:old.scope||'general',parentId:old.parentId||null,stageIndex:old.stageIndex,targetYear:old.targetYear,targetMonth:old.targetMonth,diagnostic:old.diagnostic||''});return}
+   if(r.ok&&data?.ok){numAiShowResult(data,{label:old.questionLabel||'生命靈數 AI 解讀',question:old.question||'',scope:old.scope||'general',parentId:old.parentId||null,stageIndex:old.stageIndex,targetYear:old.targetYear,targetMonth:old.targetMonth,diagnostic:old.diagnostic||'',questionCategory:old.questionCategory||''});return}
    if(r.status===202){aiStatus('上一筆 AI 解讀仍在處理中；重新進入本區時會自動查詢，不必重複送出。');return}
    if(data?.state==='failed'){lastFailedNumerologyOperation=old.operationId;$('numAiReportBox').hidden=false;aiStatus('上一筆 AI 未能完成，額度應已由後端返還；可回報異常。')}
   }catch(_){}finally{numAiAutoRecoverBusy=false}
@@ -5338,6 +5335,8 @@ const promptBank={
  ]
 };
 let selectedCategory='事業',offset=0,selectedText='';
+// Read-only bridge for categorizing the mobile AI prompt; does not submit, charge, or alter the selected question.
+window.numMobileSelectedCategory=()=>selectedCategory;
 function renderSamples(){
  const cats=$('numMobileCategories'),box=$('numMobileExamples');if(!cats||!box)return;
  for(const button of cats.querySelectorAll('[data-mobile-category]'))button.setAttribute('aria-pressed',String(button.dataset.mobileCategory===selectedCategory));
