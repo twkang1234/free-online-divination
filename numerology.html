@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" data-theme="dark">
 <head>
+  <!-- Mobile visitors use the standalone numerology page; ?view=desktop explicitly stays here. -->
+  <script id="numerology-mobile-device-route">(function(){
+    try {
+      var p = new URLSearchParams(location.search);
+      if (p.get('view') === 'desktop' || p.get('admin') === '1') return;
+      var ua = navigator.userAgent || '';
+      var phone = (navigator.userAgentData && navigator.userAgentData.mobile === true) ||
+        /iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile|BlackBerry|BB10|Opera Mini|Mobile Safari/i.test(ua);
+      if (!phone && p.get('view') !== 'mobile') return;
+      var to = new URL('./numerology-mobile.html', location.href);
+      p.delete('view'); p.delete('admin');
+      to.search = p.toString();
+      to.hash = location.hash;
+      location.replace(to.href);
+    } catch (_) { /* Leave the desktop page usable if device detection is unavailable. */ }
+  })();</script>
 <meta charset="UTF-8">
 <meta name="dh-numerology-build" content="v43-free-overview-four-ai-guide">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,6 +25,7 @@
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
 <meta name="author" content="一念知機">
 <link rel="canonical" href="https://divinationhub.tw/numerology.html">
+<link rel="alternate" media="only screen and (max-width: 640px)" href="https://divinationhub.tw/numerology-mobile.html">
 <meta property="og:type" content="website"><meta property="og:locale" content="zh_TW"><meta property="og:site_name" content="一念知機">
 <meta property="og:title" content="專業生命靈數計算器｜免費線上算命、九宮格與人生運勢｜一念知機">
 <meta property="og:description" content="免費計算生命靈數，查看九宮格連線與空缺數、1～9號個性、人生四階段與流年流月；支援國農曆生日換算及AI個人化解讀。">
@@ -4285,8 +4302,21 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  function menuToggle(menu,btn){const was=$(menu).hidden;hideMenus();$(menu).hidden=!was;$(btn).setAttribute('aria-expanded',String(was))}
  $('layoutBtn').addEventListener('click',()=>menuToggle('layoutMenu','layoutBtn'));$('memberMenuBtn').addEventListener('click',()=>menuToggle('memberMenu','memberMenuBtn'));
  function setLayout(mode){if(!['auto','mobile','desktop'].includes(mode))mode='auto';document.documentElement.dataset.layout=mode;$('layoutLabel').textContent={auto:'自動',mobile:'手機版',desktop:'電腦版'}[mode];try{localStorage.setItem(LAYOUT,mode)}catch(_){}hideMenus()}
- document.querySelectorAll('[data-layout-choice]').forEach(btn=>btn.addEventListener('click',()=>setLayout(btn.dataset.layoutChoice)));
- try{setLayout(localStorage.getItem(LAYOUT)||'auto')}catch(_){setLayout('auto')}
+ document.querySelectorAll('[data-layout-choice]').forEach(btn=>btn.addEventListener('click',()=>{
+    const choice=btn.dataset.layoutChoice;
+    const ua=navigator.userAgent||'';
+    const phone=(navigator.userAgentData&&navigator.userAgentData.mobile===true)||/iPhone|iPod|Android.*Mobile|Windows Phone|IEMobile|BlackBerry|BB10|Opera Mini|Mobile Safari/i.test(ua);
+    if(choice==='mobile'||(choice==='auto'&&phone)){
+      window.location.assign(new URL('./numerology-mobile.html',window.location.href).href);
+      return;
+    }
+    setLayout(choice);
+  }));
+  try{
+    const explicitDesktop=new URLSearchParams(location.search).get('view')==='desktop';
+    const saved=localStorage.getItem(LAYOUT)||'auto';
+    setLayout(explicitDesktop?'desktop':(saved==='mobile'?'auto':saved));
+  }catch(_){setLayout('auto')}
  document.addEventListener('click',e=>{if(!e.target.closest('#layoutWrap')&&!e.target.closest('#memberWrap'))hideMenus()});document.addEventListener('keydown',e=>{if(e.key==='Escape')hideMenus()});
  // Hero artwork is a visual demonstration; it never changes the calculated life-path result.
  (()=>{
