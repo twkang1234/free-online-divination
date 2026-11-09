@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07120f"><meta name="color-scheme" content="dark">
-<meta name="wuxing-mobile-version" content="V16">
+<meta name="wuxing-mobile-version" content="V17">
 <title>專業五行屬性查詢｜免費線上五行計算器、查金木水火土的旺衰補缺｜一念知機</title>
 <meta name="description" content="一念知機五行手機版：免費線上五行屬性查詢，輸入國曆或農曆生日與時辰，查看金木水火土相對分布、五行雷達圖、優缺點及補缺方向；可展開三段免費五行綜合重點，並選用 21 類 252 道 AI 題目進一步提問。">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
@@ -245,17 +245,22 @@
 #aiConversation .ai-report-list>.ai-report-card[aria-current="true"]{border-color:#8b7c58;box-shadow:0 0 0 1px rgba(231,197,132,.12)}
 #aiConversation.ai-has-open-report .ai-history-actions{margin-top:20px;padding-top:16px;border-top:1px solid #355741}
 @media(max-width:355px){#aiConversation .ai-report-others-title{font-size:.85rem}#aiConversation .ai-report-fold>summary{font-size:.78rem}}
+/* V17｜已完成問題不再可選，避免重複扣 AI 額度；原文章仍可閱讀。 */
+#aiCard .suggestion.asked{opacity:1!important;background:#10241e!important;color:#90ad9e!important;border-color:#365548!important;cursor:not-allowed!important;box-shadow:none!important;}
+#aiCard .suggestion.asked .asked-tag{display:block;color:#c2ab7c;font-size:.7rem;font-weight:800;margin-top:4px;}
+#aiCard .ai-used-warning{border:1px solid #8b784e;background:#29271c;color:#f1d99e;border-radius:10px;padding:9px 11px;font-size:.79rem;margin:10px 0;line-height:1.65;}
+#aiCard .ai-used-warning button{border:0;background:none;color:#bcebd3;text-decoration:underline;text-underline-offset:3px;font-size:.79rem;font-weight:850;margin-left:6px;padding:2px 0;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js" defer></script>
 </head>
 <body>
 <header class="sitebar"><div class="wrap sitebar-in"><a class="brand" href="/" aria-label="返回一念知機首頁">← 一念知機</a><nav class="header-tool-scroll" aria-label="其他免費命理工具，可左右滑動"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經64卦</a><a href="/cezi.html">測字</a><a href="/wuxing.html" aria-current="page">五行</a><a href="/numerology.html">生命靈數</a></nav><a class="small-btn" href="/member.html?return=%2Fwuxing-mobile.html" id="memberLink">會員登入</a></div></header>
 <main class="wrap">
-<section class="hero" aria-label="五行屬性查詢手機版"><div class="eyebrow">一念知機 · WUXING <span class="version" id="displayVersion">V16</span></div><div class="hero-orn">✧</div><h1>專業五行屬性查詢</h1><p class="hero-sub">金・木・水・火・土　免費線上五行計算</p><p class="hero-description">輸入生日，快速看懂你的五行強弱、性格特質與調和方向，再依需要探索深入解讀。</p></section>
+<section class="hero" aria-label="五行屬性查詢手機版"><div class="eyebrow">一念知機 · WUXING <span class="version" id="displayVersion">V17</span></div><div class="hero-orn">✧</div><h1>專業五行屬性查詢</h1><p class="hero-sub">金・木・水・火・土　免費線上五行計算</p><p class="hero-description">輸入生日，快速看懂你的五行強弱、性格特質與調和方向，再依需要探索深入解讀。</p></section>
 <section class="quota-card" aria-labelledby="quotaTitle"><div class="quota-head"><div><strong id="quotaTitle">我的使用額度</strong><small>免費額度與會員共用次數</small></div><button class="secondary-btn mini" type="button" id="refreshQuota">↻ 更新剩餘次數</button></div><div class="quota-grid"><div class="quota-item"><strong>五行免費查詢</strong><div class="num pending" id="freeTool">讀取中…</div><p class="quota-cycle" id="freeToolCycle">依後台週期補充</p></div><div class="quota-item"><strong>五行免費 AI</strong><div class="num pending" id="freeAi">讀取中…</div><p class="quota-cycle" id="freeAiCycle">依後台週期補充</p></div><div class="quota-item"><strong>會員共用工具</strong><div class="num pending" id="sharedTool">登入後查看</div></div><div class="quota-item"><strong>會員共用 AI</strong><div class="num pending" id="sharedAi">登入後查看</div></div></div><div class="quota-message" id="quotaMessage">實際使用與扣點以後端確認為準；成功後才扣次。</div></section>
 <section class="card" id="birthCard" aria-labelledby="birthTitle"><div class="section-heading"><h2 id="birthTitle">你的出生日期</h2></div><p class="muted">國曆或農曆均可。時辰不確定時可選「不知道」，系統會以三柱計算。</p><div class="switch" role="group" aria-label="選擇出生日期曆法"><button type="button" id="solarBtn" aria-pressed="true">國曆生日</button><button type="button" id="lunarBtn" aria-pressed="false">農曆生日</button></div><div class="fields-3"><div class="field"><label for="year">出生年</label><div class="select-wrap"><select class="input" id="year"></select></div></div><div class="field"><label for="month">月</label><div class="select-wrap"><select class="input" id="month"></select></div></div><div class="field"><label for="day">日</label><div class="select-wrap"><select class="input" id="day"></select></div></div></div><div class="checks"><label id="leapLabel" hidden><input type="checkbox" id="leap"> 農曆閏月</label></div><div class="field-row"><div class="field"><label for="slot">出生時辰</label><div class="select-wrap"><select class="input" id="slot"><option value="unknown">不知道時辰</option><option value="0">子時 23–01</option><option value="1">丑時 01–03</option><option value="2">寅時 03–05</option><option value="3">卯時 05–07</option><option value="4">辰時 07–09</option><option value="5">巳時 09–11</option><option value="6">午時 11–13</option><option value="7">未時 13–15</option><option value="8">申時 15–17</option><option value="9">酉時 17–19</option><option value="10">戌時 19–21</option><option value="11">亥時 21–23</option></select></div></div><div class="field"><label for="gender">性別（選填）</label><div class="select-wrap"><select class="input" id="gender"><option value="unspecified">不指定</option><option value="male">男</option><option value="female">女</option></select></div></div></div><details class="advanced"><summary>進階設定：精確時間與換日方式</summary><div class="checks"><label><input type="checkbox" id="exactToggle"> 我知道精確出生時間</label></div><div class="field" id="exactTimeRow" hidden><label for="exactTime">出生時間</label><input id="exactTime" class="input" type="time" value="12:00"></div><div class="field"><label for="sect">23:00 換日規則</label><div class="select-wrap"><select class="input" id="sect"><option value="2">23:00 起仍算當日（預設）</option><option value="1">23:00 起算次日</option></select></div></div></details><p class="tip" id="calendarHint" hidden></p><p id="birthError" class="status error" role="alert" hidden></p><div id="birthQuotaHelp" class="quota-buy-hint" hidden><span>會員工具額度不足，可參考加購方案。</span><a href="/pricing.html">查看工具額度方案 →</a></div><button class="main-btn full" type="button" id="calculate">✦ 開始五行屬性查詢</button><div class="birth-actions"><button class="secondary-btn" type="button" id="saveBirth">儲存出生資料</button><button class="secondary-btn" type="button" id="loadBirth">載入出生資料</button></div></section>
 <section class="results" id="results" hidden aria-live="polite"><section class="card overview-card"><div class="overview-titleline"><h2>你的五行命盤</h2><div class="overview-dates" aria-label="出生日期"><span id="birthDate"></span><span id="birthLunar"></span></div></div><div class="core-main"><div class="core-identity"><small>日主五行</small><div class="big" id="dayMaster">—</div></div><div class="core-attributes"><span id="masterYinYang"></span><small id="birthHour"></small></div><div class="element-disc" id="masterElement">木</div></div><div class="radar-area"><h3>五行分布</h3><div id="radar"></div><div class="radar-tags" id="radarTags"></div></div><div class="compact-folds" role="group" aria-label="免費五行解讀切換"><button class="fold-tab" type="button" id="insightToggle" aria-expanded="false" aria-controls="insight" hidden><span>✦ 五行調和提醒</span><span class="fold-tab-icon" aria-hidden="true">＋</span></button><button class="fold-tab" type="button" id="topicsToggle" aria-expanded="false" aria-controls="topicsFold"><span>五行綜合解讀</span><span class="fold-tab-icon" aria-hidden="true">＋</span></button></div><div class="fold-panels"><section class="fold-panel insight" id="insight" aria-label="五行調和提醒" hidden><p id="insightSummary"></p><div id="insightCards"></div><p id="insightBottom"></p></section><section class="fold-panel" id="topicsFold" aria-label="五行綜合解讀" hidden><div id="freeHighlights" class="free-highlights" aria-live="polite"></div></section></div></section>
-<section class="card" id="aiCard"><div class="section-heading"><h2>選擇你想問的事</h2></div><div class="chips" id="aiCategories" role="group" aria-label="左右滑動切換五行 AI 題目分類"></div><div class="question-prompt-top"><span>參考題目 · 點選即可選題</span><button type="button" id="refreshQuestions" class="question-refresh">換一批 ↻</button></div><div class="suggestions" id="aiSuggestions"></div><details class="custom-fold" id="customBox"><summary>自己輸入問題 <span aria-hidden="true">▾</span></summary><div class="custom-fold-body"><label class="question-label" for="freeQuestion">自由輸入想問的事情（5～400 字）</label><textarea id="freeQuestion" class="question" maxlength="400" rows="3" placeholder="例如：最近工作上想轉換跑道，我適合怎樣的工作環境？"></textarea><button type="button" id="useCustomQuestion" class="secondary-btn full">使用這個自訂問題</button></div></details><div class="selected-question" id="selectedQuestionBox" hidden><label class="question-label" for="customQuestion">你選擇的問題（可直接修改）</label><textarea id="customQuestion" class="question" maxlength="400" rows="2" spellcheck="false" placeholder="選擇上面的參考題目或輸入自訂問題"></textarea><div class="question-count-row"><small>可修改問題，補充你的實際情況</small><small id="questionCount">0 / 400</small></div></div><p class="ai-status" id="aiStatus" role="status">正在確認 AI 額度…</p><div id="aiQuotaHelp" class="quota-buy-hint ai-buy" hidden><span>會員 AI 額度不足，可參考加購方案。</span><a href="/pricing.html">查看 AI 額度方案 →</a></div><button id="aiBtn" type="button" class="main-btn full" disabled>✦ 開始五行 AI 深度解讀</button></section>
+<section class="card" id="aiCard"><div class="section-heading"><h2>選擇你想問的事</h2></div><div class="chips" id="aiCategories" role="group" aria-label="左右滑動切換五行 AI 題目分類"></div><div class="question-prompt-top"><span>參考題目 · 點選即可選題</span><button type="button" id="refreshQuestions" class="question-refresh">換一批 ↻</button></div><div class="suggestions" id="aiSuggestions"></div><details class="custom-fold" id="customBox"><summary>自己輸入問題 <span aria-hidden="true">▾</span></summary><div class="custom-fold-body"><label class="question-label" for="freeQuestion">自由輸入想問的事情（5～400 字）</label><textarea id="freeQuestion" class="question" maxlength="400" rows="3" placeholder="例如：最近工作上想轉換跑道，我適合怎樣的工作環境？"></textarea><button type="button" id="useCustomQuestion" class="secondary-btn full">使用這個自訂問題</button></div></details><div class="selected-question" id="selectedQuestionBox" hidden><label class="question-label" for="customQuestion">你選擇的問題（可直接修改）</label><textarea id="customQuestion" class="question" maxlength="400" rows="2" spellcheck="false" placeholder="選擇上面的參考題目或輸入自訂問題"></textarea><div class="question-count-row"><small>可修改問題，補充你的實際情況</small><small id="questionCount">0 / 400</small></div></div><div class="ai-used-warning" id="aiUsedWarning" hidden role="status">這道問題已解讀過，不需要再次扣額度。<button id="aiOpenUsed" type="button">閱讀已完成文章</button></div><p class="ai-status" id="aiStatus" role="status">正在確認 AI 額度…</p><div id="aiQuotaHelp" class="quota-buy-hint ai-buy" hidden><span>會員 AI 額度不足，可參考加購方案。</span><a href="/pricing.html">查看 AI 額度方案 →</a></div><button id="aiBtn" type="button" class="main-btn full" disabled>✦ 開始五行 AI 深度解讀</button></section>
 <section class="card ai-history-card" id="aiConversation" aria-labelledby="readerTitle" hidden>
   <div class="ai-history-heading"><h2 id="readerTitle">AI 解讀文章</h2><small id="aiReportCount">完整閱讀 · 可複製保存</small></div>
   <div id="aiReportList" class="ai-report-list"></div>
@@ -389,6 +394,9 @@ let castRetry=null;
 const WX_CAST_TIMEOUT_MS=30000;
 let aiQuota=null,aiReady=false,aiBusy=false,aiPendingFollow=false,aiSession='',aiTurn=0,aiCategory='c01',aiHistory=[],aiReports=[],aiExpandedId='';
 let aiQuestionPage=0,aiSelectedSource='';
+// 僅比對本次命盤已完成的主問題；大小寫／全形及空白差異不視為新題目。
+function normalizeAiQuestion(q){return String(q||'').normalize('NFKC').replace(/\s+/g,'').replace(/[?？。．.!！]+$/g,'');}
+function findExistingAiReport(q){const key=normalizeAiQuestion(q);return key?aiReports.find(r=>normalizeAiQuestion(r.question)===key)||null:null;}
 let quotaSerial=0,memberSerial=0,toolQuotaSerial=0,aiQuotaSerial=0;
 const WX_ELEMS=['木','火','土','金','水'];
 const WX_COLORS={木:'#82dab1',火:'#eb9e83',土:'#e7c17c',金:'#c7d5e5',水:'#91c9e8'};
@@ -487,8 +495,9 @@ function setAiButtonView(button,loading,label){
  button.replaceChildren(spinner,text);
 }
 function updateAiButton(){const r=remainingAI(),q=String($('customQuestion')?.value||'').trim(),valid=[...q].length>=5&&[...q].length<=400;const can=!!chart&&!aiBusy&&aiReady&&!!r?.total;
- const main=$('aiBtn');main.disabled=!can||!valid;
- setAiButtonView(main,aiBusy&&!aiPendingFollow,aiBusy&&!aiPendingFollow?'AI 正在深度解讀…':r?.total===0?'AI 額度已用完':!valid?'選好問題，開始五行 AI 解讀':'✦ 開始五行 AI 深度解讀');
+ const used=findExistingAiReport(q);$('aiUsedWarning').hidden=!used||!chart;
+ const main=$('aiBtn');main.disabled=!can||!valid||!!used;
+ setAiButtonView(main,aiBusy&&!aiPendingFollow,aiBusy&&!aiPendingFollow?'AI 正在深度解讀…':used?'這道問題已解讀過':r?.total===0?'AI 額度已用完':!valid?'選好問題，開始五行 AI 解讀':'✦ 開始五行 AI 深度解讀');
  const followup=$('sendFollowup'),selected=activeAiReport();followup.disabled=!can||!selected?.sessionId||selected.turn>=8;
  setAiButtonView(followup,aiBusy&&aiPendingFollow,aiBusy&&aiPendingFollow?'AI 正在回答追問…':selected?.turn>=8?'已達 8 輪上限':'送出追問（成功扣 AI 1 次）');
 }
@@ -596,7 +605,7 @@ async function cast(birth){
   castRetry=null;
   chart=data.chart;birthRequest=birth;aiHistory=[];aiReports=[];aiExpandedId='';aiSession='';aiTurn=0;
   $('aiReportList').replaceChildren();$('aiConversation').hidden=true;$('followupArea').hidden=true;$('results').hidden=false;
-  renderCore(chart);renderFreeHighlights(data.reports);setFreeFold(null);updateAiButton();
+  renderCore(chart);renderFreeHighlights(data.reports);setFreeFold(null);renderQuestionRows();updateAiButton();
   if(data.quota?.free){quotaText('freeTool',`${data.quota.free.remaining} / ${data.quota.free.limit} 次`);$('freeToolCycle').textContent=`每 ${data.quota.free.days} 天補充，不累積`;}
   void refreshAllQuota();notice('查詢完成，可展開三段免費重點');
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
@@ -644,7 +653,8 @@ function renderQuestionRows(){
  const group=currentAIGroup(),list=group.topics,offset=((aiQuestionPage*2)%list.length+list.length)%list.length;
  $('aiSuggestions').innerHTML=Array.from({length:Math.min(4,list.length)},(_,i)=>{
   const idx=(offset+i)%list.length,t=list[idx];
-  return `<button type="button" class="suggestion ${aiSelectedSource===`${group.id}:${idx}`?'selected':''}" data-question="${idx}" aria-pressed="${aiSelectedSource===`${group.id}:${idx}`}">${esc(t)}</button>`;
+  const used=!!findExistingAiReport(t);
+  return `<button type="button" class="suggestion ${used?'asked':''} ${!used&&aiSelectedSource===`${group.id}:${idx}`?'selected':''}" data-question="${idx}" aria-pressed="${!used&&aiSelectedSource===`${group.id}:${idx}`}" ${used?'disabled aria-disabled="true" title="這道問題已解讀過，請從下方文章列表閱讀"':''}>${esc(t)}${used?'<span class="asked-tag">✓ 已解讀</span>':''}</button>`;
  }).join('');
 }
 function renderQuestions(){
@@ -718,7 +728,6 @@ function renderAiReports(){
   head.append(title,toggle);card.append(head);
   if(!open)return card;
   const body=document.createElement('div');body.className='ai-report-body';body.id='aiReportBody-'+item.id;
-  const q=document.createElement('p');q.className='ai-report-question';q.textContent=item.question;body.append(q);
   body.append(aiReadingBlock(item.reading,item.trace));
   for(const f of item.followups){const fq=document.createElement('p');fq.className='ai-report-follow-question';fq.textContent='追問：'+f.question;body.append(fq,aiReadingBlock(f.reading,f.trace));}
   // 追問區與文章操作都預設收合，只有需要時才展開。
@@ -762,10 +771,15 @@ function renderAiReports(){
 const AI_ERRORS={AI_CENTER_NOT_CONFIGURED:'AI 通道暫未完成設定。',D1_NOT_CONFIGURED:'會員資料庫尚未設定。',LOGIN_REQUIRED:'請先登入會員使用 AI。',MEMBER_LOGIN_REQUIRED:'請重新登入會員後使用 AI。',LOGIN_EXPIRED:'會員登入已失效。',FREE_AI_EMPTY:'免費 AI 額度已用完，請登入會員。',SHARED_AI_EMPTY:'會員 AI 額度已用完。',FOLLOWUP_LIMIT:'本題已達 8 輪上限。',FOLLOWUP_EXPIRED:'這段追問已過期，請重新提問。',AI_OPERATION_DUPLICATE:'上一筆已送出，避免重複扣次。',FOLLOWUP_BUSY:'上一筆追問仍在處理。',INVALID_BIRTH:'出生資料已失效，請重新查詢。',AI_UNAVAILABLE:'AI 暫時無法完成解讀；依後端規則本次不扣次。'};
 async function sendAI(follow=false){if(aiBusy||!chart||!birthRequest)return;
  const target=follow?activeAiReport():null;
+ const q=(follow?$('followupQuestion'):$('customQuestion')).value.trim();
+ if([...q].length<5||[...q].length>400){notice('請輸入 5～400 字的問題。');return;}
+ if(follow&&(!target?.sessionId||target.turn>=8)){notice('無法延續目前這段問答，請重新提問。');return;}
+ if(!follow&&findExistingAiReport(q)){notice('這道問題已完成解讀，請閱讀下方原文章，不需再次扣 AI 額度。');updateAiButton();return;}
+ if(follow&&[target.question,...target.followups.map(x=>x.question)].some(old=>normalizeAiQuestion(old)===normalizeAiQuestion(q))){notice('本篇已問過相同問題，請先閱讀既有解讀，避免重複扣額度。');return;}
  await refreshAIQuota();const r=remainingAI();if(!aiReady||!r)return;
  if(r.total<=0){showAiQuotaHelp(aiQuota.role==='member');notice(aiQuota.role==='member'?'會員 AI 額度不足，可參考加購方案。':'免費 AI 額度已用完，請登入會員。');return;}
- const q=(follow?$('followupQuestion'):$('customQuestion')).value.trim();if([...q].length<5||[...q].length>400){notice('請輸入 5～400 字的問題。');return;}
- if(follow&&(!target?.sessionId||target.turn>=8)){notice('無法延續目前這段問答，請重新提問。');return;}
+ // 在真正送往 Worker 前再確認一次，避免額度更新期間狀態變更造成重複解讀。
+ if(!follow&&findExistingAiReport(q)){notice('此題已解讀，請從文章列表閱讀。');updateAiButton();return;}
  const operationId=uuid(),payload={operationId,question:q,category:follow?target.workerCategory:currentAIGroup().workerCategory,birth:birthRequest,...(follow?{sessionId:target.sessionId}:{})};
  aiPendingFollow=follow;aiBusy=true;updateAiButton();$('aiStatus').textContent='AI 正在深度解讀…完成後會顯示文章';
  try{let confirmed=false,res,j;
@@ -788,7 +802,7 @@ async function sendAI(follow=false){if(aiBusy||!chart||!birthRequest)return;
    aiReports.push(item);aiExpandedId=item.id;
   }
   const selected=activeAiReport();aiSession=selected?.sessionId||'';aiTurn=selected?.turn||0;
-  renderAiReports();
+  renderAiReports();renderQuestionRows();
   if(j.quota)aiQuota=j.quota;notice('五行 AI 解讀完成，已收錄文章與更新額度');
   await refreshAllQuota();document.getElementById('aiReport-'+aiExpandedId)?.scrollIntoView({behavior:'smooth',block:'start'});
  }catch(e){$('aiStatus').textContent=e.message||'AI 暫時無法完成';notice(e.message||'AI 暫時無法完成，請稍後再試');await refreshAllQuota();if(e?.code==='SHARED_AI_EMPTY')showAiQuotaHelp(true);}
@@ -816,6 +830,7 @@ function initialize(){const today=new Date(),y=today.getFullYear();fillOptions($
  $('useCustomQuestion').addEventListener('click',()=>{const q=$('freeQuestion').value.trim();if([...q].length<5||[...q].length>400){notice('請輸入 5～400 字的問題');$('freeQuestion').focus();return;}setAIQuestion(q);$('customBox').open=false;});
  $('customQuestion').addEventListener('input',()=>{const v=$('customQuestion').value;aiSelectedSource='';$('questionCount').textContent=[...v].length+' / 400';renderQuestionRows();updateAiButton();});
  $('aiBtn').addEventListener('click',()=>void sendAI(false));$('sendFollowup').addEventListener('click',()=>void sendAI(true));
+ $('aiOpenUsed').addEventListener('click',()=>{const report=findExistingAiReport($('customQuestion').value);if(!report)return;if(aiExpandedId!==report.id){aiExpandedId='';setAiReportExpanded(report.id,true);}else document.getElementById('aiReport-'+report.id)?.scrollIntoView({behavior:'smooth',block:'start'});});
 
  $('newQuestion').addEventListener('click',()=>{aiSession='';aiTurn=0;aiExpandedId='';renderAiReports();setAIQuestion('');$('freeQuestion').value='';$('customBox').open=false;$('aiCard').scrollIntoView({behavior:'smooth',block:'start'});updateAiButton();});
  $('downloadAi').addEventListener('click',downloadAiReports);
