@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07120f"><meta name="color-scheme" content="dark">
-<meta name="wuxing-mobile-version" content="V9">
+<meta name="wuxing-mobile-version" content="V10">
 <title>專業五行屬性查詢｜免費線上五行計算器、查金木水火土的旺衰補缺｜一念知機</title>
 <meta name="description" content="一念知機五行手機版：免費線上五行屬性查詢，輸入國曆或農曆生日與時辰，查看金木水火土相對分布、五行雷達圖、優缺點及補缺方向；可展開三段免費五行綜合重點，並選用 21 類 252 道 AI 題目進一步提問。">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
@@ -94,13 +94,37 @@
 #aiCard .ai-status{margin-top:13px}
 #aiCard #aiBtn{margin-top:5px}
 @media(max-width:360px){#aiCard .suggestion{padding:9px 10px;min-height:46px;font-size:.82rem}}
+
+/* V10: 明顯的按鈕內 AI 載入圖示，沿用測字的 button spinner 與生命靈數的高對比圓環。 */
+#aiCard #aiBtn.ai-is-running,
+#aiCard #sendFollowup.ai-is-running{
+  display:inline-flex;align-items:center;justify-content:center;gap:11px;
+  min-height:56px;padding:11px 13px;opacity:1!important;
+  background:linear-gradient(115deg,#176d56,#247e64);
+  color:#fff!important;-webkit-text-fill-color:#fff;
+  border:2px solid #9cebc7;
+  box-shadow:0 0 0 2px rgba(101,218,170,.16),0 5px 18px rgba(0,0,0,.18);
+  font-size:clamp(.85rem,3.6vw,.98rem);font-weight:900;
+  letter-spacing:.015em;line-height:1.35;cursor:progress;
+}
+#aiCard .wx-ai-spinner{
+  width:25px;height:25px;flex:0 0 25px;display:inline-block;
+  border-radius:50%;border:3px solid rgba(255,255,255,.25);
+  border-top-color:#fff;border-right-color:#ffdd96;
+  animation:wxAiSpin .75s linear infinite;
+}
+#aiCard .wx-ai-loading-text{display:inline-block;color:#fff;font-weight:900}
+@keyframes wxAiSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+  #aiCard .wx-ai-spinner{animation:none;border-color:#9cebc7;border-top-color:#fff;border-right-color:#ffdd96}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js" defer></script>
 </head>
 <body>
 <header class="sitebar"><div class="wrap sitebar-in"><a class="brand" href="/" aria-label="返回一念知機首頁">← 一念知機</a><nav class="header-tool-scroll" aria-label="其他免費命理工具，可左右滑動"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經64卦</a><a href="/cezi.html">測字</a><a href="/wuxing.html" aria-current="page">五行</a><a href="/numerology.html">生命靈數</a></nav><a class="small-btn" href="/member.html?return=%2Fwuxing-mobile.html" id="memberLink">會員登入</a></div></header>
 <main class="wrap">
-<section class="hero" aria-label="五行屬性查詢手機版"><div class="eyebrow">一念知機 · WUXING <span class="version" id="displayVersion">V9</span></div><div class="hero-orn">✧</div><h1>專業五行屬性查詢</h1><p class="hero-sub">金・木・水・火・土　免費線上五行計算</p><p class="hero-description">輸入生日，快速看懂你的五行強弱、性格特質與調和方向，再依需要探索深入解讀。</p></section>
+<section class="hero" aria-label="五行屬性查詢手機版"><div class="eyebrow">一念知機 · WUXING <span class="version" id="displayVersion">V10</span></div><div class="hero-orn">✧</div><h1>專業五行屬性查詢</h1><p class="hero-sub">金・木・水・火・土　免費線上五行計算</p><p class="hero-description">輸入生日，快速看懂你的五行強弱、性格特質與調和方向，再依需要探索深入解讀。</p></section>
 <section class="quota-card" aria-labelledby="quotaTitle"><div class="quota-head"><div><strong id="quotaTitle">我的使用額度</strong><small>免費額度與會員共用次數</small></div><button class="secondary-btn mini" type="button" id="refreshQuota">↻ 更新剩餘次數</button></div><div class="quota-grid"><div class="quota-item"><strong>五行免費查詢</strong><div class="num pending" id="freeTool">讀取中…</div><p class="quota-cycle" id="freeToolCycle">依後台週期補充</p></div><div class="quota-item"><strong>五行免費 AI</strong><div class="num pending" id="freeAi">讀取中…</div><p class="quota-cycle" id="freeAiCycle">依後台週期補充</p></div><div class="quota-item"><strong>會員共用工具</strong><div class="num pending" id="sharedTool">登入後查看</div></div><div class="quota-item"><strong>會員共用 AI</strong><div class="num pending" id="sharedAi">登入後查看</div></div></div><div class="quota-message" id="quotaMessage">實際使用與扣點以後端確認為準；成功後才扣次。</div></section>
 <section class="card" id="birthCard" aria-labelledby="birthTitle"><div class="section-heading"><h2 id="birthTitle">你的出生日期</h2></div><p class="muted">國曆或農曆均可。時辰不確定時可選「不知道」，系統會以三柱計算。</p><div class="switch" role="group" aria-label="選擇出生日期曆法"><button type="button" id="solarBtn" aria-pressed="true">國曆生日</button><button type="button" id="lunarBtn" aria-pressed="false">農曆生日</button></div><div class="fields-3"><div class="field"><label for="year">出生年</label><div class="select-wrap"><select class="input" id="year"></select></div></div><div class="field"><label for="month">月</label><div class="select-wrap"><select class="input" id="month"></select></div></div><div class="field"><label for="day">日</label><div class="select-wrap"><select class="input" id="day"></select></div></div></div><div class="checks"><label id="leapLabel" hidden><input type="checkbox" id="leap"> 農曆閏月</label></div><div class="field-row"><div class="field"><label for="slot">出生時辰</label><div class="select-wrap"><select class="input" id="slot"><option value="unknown">不知道時辰</option><option value="0">子時 23–01</option><option value="1">丑時 01–03</option><option value="2">寅時 03–05</option><option value="3">卯時 05–07</option><option value="4">辰時 07–09</option><option value="5">巳時 09–11</option><option value="6">午時 11–13</option><option value="7">未時 13–15</option><option value="8">申時 15–17</option><option value="9">酉時 17–19</option><option value="10">戌時 19–21</option><option value="11">亥時 21–23</option></select></div></div><div class="field"><label for="gender">性別（選填）</label><div class="select-wrap"><select class="input" id="gender"><option value="unspecified">不指定</option><option value="male">男</option><option value="female">女</option></select></div></div></div><details class="advanced"><summary>進階設定：精確時間與換日方式</summary><div class="checks"><label><input type="checkbox" id="exactToggle"> 我知道精確出生時間</label></div><div class="field" id="exactTimeRow" hidden><label for="exactTime">出生時間</label><input id="exactTime" class="input" type="time" value="12:00"></div><div class="field"><label for="sect">23:00 換日規則</label><div class="select-wrap"><select class="input" id="sect"><option value="2">23:00 起仍算當日（預設）</option><option value="1">23:00 起算次日</option></select></div></div></details><p class="tip" id="calendarHint" hidden></p><p id="birthError" class="status error" role="alert" hidden></p><button class="main-btn full" type="button" id="calculate">✦ 開始五行屬性查詢</button><div class="birth-actions"><button class="secondary-btn" type="button" id="saveBirth">儲存出生資料</button><button class="secondary-btn" type="button" id="loadBirth">載入出生資料</button></div></section>
 <section class="results" id="results" hidden aria-live="polite"><section class="card overview-card"><div class="overview-titleline"><h2>你的五行命盤</h2><div class="overview-dates" aria-label="出生日期"><span id="birthDate"></span><span id="birthLunar"></span></div></div><div class="core-main"><div class="core-identity"><small>日主五行</small><div class="big" id="dayMaster">—</div></div><div class="core-attributes"><span id="masterYinYang"></span><small id="birthHour"></small></div><div class="element-disc" id="masterElement">木</div></div><div class="radar-area"><h3>五行分布</h3><div id="radar"></div><div class="radar-tags" id="radarTags"></div></div><div class="compact-folds" role="group" aria-label="免費五行解讀切換"><button class="fold-tab" type="button" id="insightToggle" aria-expanded="false" aria-controls="insight" hidden><span>✦ 五行調和提醒</span><span class="fold-tab-icon" aria-hidden="true">＋</span></button><button class="fold-tab" type="button" id="topicsToggle" aria-expanded="false" aria-controls="topicsFold"><span>五行綜合解讀</span><span class="fold-tab-icon" aria-hidden="true">＋</span></button></div><div class="fold-panels"><section class="fold-panel insight" id="insight" aria-label="五行調和提醒" hidden><p id="insightSummary"></p><div id="insightCards"></div><p id="insightBottom"></p></section><section class="fold-panel" id="topicsFold" aria-label="五行綜合解讀" hidden><div id="freeHighlights" class="free-highlights" aria-live="polite"></div></section></div></section>
@@ -316,9 +340,21 @@ async function refreshAllQuota(){const btn=$('refreshQuota');btn.disabled=true;b
 }
 function remainingAI(){if(!aiQuota?.free)return null;const free=Math.max(0,Number(aiQuota.free.remaining)||0),shared=aiQuota.role==='member'?Math.max(0,Number(aiQuota.sharedAiRemaining)||0):0;return {free,shared,total:free+shared};}
 function aiStatusText(){const r=remainingAI();if(!aiReady||!r)return 'AI 服務狀態待確認，暫不送出。';return `本期免費 AI：${r.free} 次 · 會員共用 AI：${aiQuota.role==='member'?r.shared+' 次':'登入後查看'}${r.total===0?' ｜額度已用完':''}`;}
+function setAiButtonView(button,loading,label){
+ button.classList.toggle('ai-is-running',loading);
+ button.setAttribute('aria-busy',String(loading));
+ if(!loading){if(button.textContent!==label)button.textContent=label;return;}
+ // 使用真正的 CSS 旋轉環，不用難以看清楚的「◌」文字；spinner 只出現在原按鈕內。
+ if(button.querySelector('.wx-ai-spinner'))return;
+ const spinner=document.createElement('span');spinner.className='wx-ai-spinner';spinner.setAttribute('aria-hidden','true');
+ const text=document.createElement('span');text.className='wx-ai-loading-text';text.textContent=label;
+ button.replaceChildren(spinner,text);
+}
 function updateAiButton(){const r=remainingAI(),q=String($('customQuestion')?.value||'').trim(),valid=[...q].length>=5&&[...q].length<=400;const can=!!chart&&!aiBusy&&aiReady&&!!r?.total;
- $('aiBtn').disabled=!can||!valid;$('aiBtn').textContent=aiBusy&&!aiPendingFollow?'◌ AI 正在深度解讀…':r?.total===0?'AI 額度已用完':!valid?'選好問題，開始五行 AI 解讀':'✦ 開始五行 AI 深度解讀';
- $('sendFollowup').disabled=!can||!aiSession||aiTurn>=8;$('sendFollowup').textContent=aiBusy&&aiPendingFollow?'◌ AI 正在回答追問…':aiTurn>=8?'已達 8 輪上限':'送出追問（成功扣 AI 1 次）';
+ const main=$('aiBtn');main.disabled=!can||!valid;
+ setAiButtonView(main,aiBusy&&!aiPendingFollow,aiBusy&&!aiPendingFollow?'AI 正在深度解讀…':r?.total===0?'AI 額度已用完':!valid?'選好問題，開始五行 AI 解讀':'✦ 開始五行 AI 深度解讀');
+ const followup=$('sendFollowup');followup.disabled=!can||!aiSession||aiTurn>=8;
+ setAiButtonView(followup,aiBusy&&aiPendingFollow,aiBusy&&aiPendingFollow?'AI 正在回答追問…':aiTurn>=8?'已達 8 輪上限':'送出追問（成功扣 AI 1 次）');
 }
 function radarP(cx,cy,r,i){const a=-Math.PI/2+i*2*Math.PI/5;return [cx+Math.cos(a)*r,cy+Math.sin(a)*r];}
 function radarPoly(cx,cy,r){return WX_ELEMS.map((_,i)=>radarP(cx,cy,r,i).map(v=>v.toFixed(1)).join(',')).join(' ');}
