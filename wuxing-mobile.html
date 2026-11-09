@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07120f"><meta name="color-scheme" content="dark">
-<meta name="wuxing-mobile-version" content="V19">
+<meta name="wuxing-mobile-version" content="V21">
 <title>專業五行屬性查詢｜免費線上五行計算器、查金木水火土的旺衰補缺｜一念知機</title>
 <meta name="description" content="一念知機五行手機版：免費線上五行屬性查詢，輸入國曆或農曆生日與時辰，查看金木水火土相對分布、五行雷達圖、優缺點及補缺方向；可展開三段免費五行綜合重點，並選用 21 類 252 道 AI 題目進一步提問。">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
@@ -245,6 +245,15 @@
 #aiConversation .ai-report-list>.ai-report-card[aria-current="true"]{border-color:#8b7c58;box-shadow:0 0 0 1px rgba(231,197,132,.12)}
 #aiConversation.ai-has-open-report .ai-history-actions{margin-top:20px;padding-top:16px;border-top:1px solid #355741}
 @media(max-width:355px){#aiConversation .ai-report-others-title{font-size:.85rem}#aiConversation .ai-report-fold>summary{font-size:.78rem}}
+
+/* V21｜直接操作＋底部雙按鈕：不佔用額外的折疊標題／提示區。 */
+#aiConversation .ai-history-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:13px 0 0}
+#aiConversation .ai-history-actions>button{width:100%;min-width:0;min-height:50px;height:auto;margin:0;padding:8px 6px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;line-height:1.4;font-size:clamp(.68rem,2.9vw,.81rem)}
+#aiConversation .ai-history-actions .ai-birth-save{display:flex;align-items:center;justify-content:center;min-height:50px;padding:8px 6px}
+#aiConversation .ai-history-actions .ai-birth-save strong{font-size:inherit;line-height:1.4}
+#aiConversation .ai-report-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 0}
+#aiConversation .ai-report-actions>button{min-width:0;min-height:42px;padding:8px 6px;font-size:.78rem;white-space:normal}
+
 /* V17｜已完成問題不再可選，避免重複扣 AI 額度；原文章仍可閱讀。 */
 #aiCard .suggestion.asked{opacity:1!important;background:#10241e!important;color:#90ad9e!important;border-color:#365548!important;cursor:not-allowed!important;box-shadow:none!important;}
 #aiCard .suggestion.asked .asked-tag{display:block;color:#c2ab7c;font-size:.7rem;font-weight:800;margin-top:4px;}
@@ -256,7 +265,7 @@
 <body>
 <header class="sitebar"><div class="wrap sitebar-in"><a class="brand" href="/" aria-label="返回一念知機首頁">← 一念知機</a><nav class="header-tool-scroll" aria-label="其他免費命理工具，可左右滑動"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經64卦</a><a href="/cezi.html">測字</a><a href="/wuxing.html" aria-current="page">五行</a><a href="/numerology.html">生命靈數</a></nav><a class="small-btn" href="/member.html?return=%2Fwuxing-mobile.html" id="memberLink">會員登入</a></div></header>
 <main class="wrap">
-<section class="hero" aria-label="五行屬性查詢手機版"><div class="eyebrow">一念知機 · WUXING <span class="version" id="displayVersion">V19</span></div><div class="hero-orn">✧</div><h1>專業五行屬性查詢</h1><p class="hero-sub">金・木・水・火・土　免費線上五行計算</p><p class="hero-description">輸入生日，快速看懂你的五行強弱、性格特質與調和方向，再依需要探索深入解讀。</p></section>
+<section class="hero" aria-label="五行屬性查詢手機版"><div class="eyebrow">一念知機 · WUXING <span class="version" id="displayVersion">V21</span></div><div class="hero-orn">✧</div><h1>專業五行屬性查詢</h1><p class="hero-sub">金・木・水・火・土　免費線上五行計算</p><p class="hero-description">輸入生日，快速看懂你的五行強弱、性格特質與調和方向，再依需要探索深入解讀。</p></section>
 <section class="quota-card" aria-labelledby="quotaTitle"><div class="quota-head"><div><strong id="quotaTitle">我的使用額度</strong><small>免費額度與會員共用次數</small></div><button class="secondary-btn mini" type="button" id="refreshQuota">↻ 更新剩餘次數</button></div><div class="quota-grid"><div class="quota-item"><strong>五行免費查詢</strong><div class="num pending" id="freeTool">讀取中…</div><p class="quota-cycle" id="freeToolCycle">依後台週期補充</p></div><div class="quota-item"><strong>五行免費 AI</strong><div class="num pending" id="freeAi">讀取中…</div><p class="quota-cycle" id="freeAiCycle">依後台週期補充</p></div><div class="quota-item"><strong>會員共用工具</strong><div class="num pending" id="sharedTool">登入後查看</div></div><div class="quota-item"><strong>會員共用 AI</strong><div class="num pending" id="sharedAi">登入後查看</div></div></div><div class="quota-message" id="quotaMessage">實際使用與扣點以後端確認為準；成功後才扣次。</div></section>
 <section class="card" id="birthCard" aria-labelledby="birthTitle"><div class="section-heading"><h2 id="birthTitle">你的出生日期</h2></div><p class="muted">國曆或農曆均可。時辰不確定時可選「不知道」，系統會以三柱計算。</p><div class="switch" role="group" aria-label="選擇出生日期曆法"><button type="button" id="solarBtn" aria-pressed="true">國曆生日</button><button type="button" id="lunarBtn" aria-pressed="false">農曆生日</button></div><div class="fields-3"><div class="field"><label for="year">出生年</label><div class="select-wrap"><select class="input" id="year"></select></div></div><div class="field"><label for="month">月</label><div class="select-wrap"><select class="input" id="month"></select></div></div><div class="field"><label for="day">日</label><div class="select-wrap"><select class="input" id="day"></select></div></div></div><div class="checks"><label id="leapLabel" hidden><input type="checkbox" id="leap"> 農曆閏月</label></div><div class="field-row"><div class="field"><label for="slot">出生時辰</label><div class="select-wrap"><select class="input" id="slot"><option value="unknown">不知道時辰</option><option value="0">子時 23–01</option><option value="1">丑時 01–03</option><option value="2">寅時 03–05</option><option value="3">卯時 05–07</option><option value="4">辰時 07–09</option><option value="5">巳時 09–11</option><option value="6">午時 11–13</option><option value="7">未時 13–15</option><option value="8">申時 15–17</option><option value="9">酉時 17–19</option><option value="10">戌時 19–21</option><option value="11">亥時 21–23</option></select></div></div><div class="field"><label for="gender">性別（選填）</label><div class="select-wrap"><select class="input" id="gender"><option value="unspecified">不指定</option><option value="male">男</option><option value="female">女</option></select></div></div></div><details class="advanced"><summary>進階設定：精確時間與換日方式</summary><div class="checks"><label><input type="checkbox" id="exactToggle"> 我知道精確出生時間</label></div><div class="field" id="exactTimeRow" hidden><label for="exactTime">出生時間</label><input id="exactTime" class="input" type="time" value="12:00"></div><div class="field"><label for="sect">23:00 換日規則</label><div class="select-wrap"><select class="input" id="sect"><option value="2">23:00 起仍算當日（預設）</option><option value="1">23:00 起算次日</option></select></div></div></details><p class="tip" id="calendarHint" hidden></p><p id="birthError" class="status error" role="alert" hidden></p><div id="birthQuotaHelp" class="quota-buy-hint" hidden><span>會員工具額度不足，可參考加購方案。</span><a href="/pricing.html">查看工具額度方案 →</a></div><button class="main-btn full" type="button" id="calculate">✦ 開始五行屬性查詢</button><div class="birth-actions"><button class="secondary-btn" type="button" id="saveBirth">儲存出生資料</button><button class="secondary-btn" type="button" id="loadBirth">載入出生資料</button></div></section>
 <section class="results" id="results" hidden aria-live="polite"><section class="card overview-card"><div class="overview-titleline"><h2>你的五行命盤</h2><div class="overview-dates" aria-label="出生日期"><span id="birthDate"></span><span id="birthLunar"></span></div></div><div class="core-main"><div class="core-identity"><small>日主五行</small><div class="big" id="dayMaster">—</div></div><div class="core-attributes"><span id="masterYinYang"></span><small id="birthHour"></small></div><div class="element-disc" id="masterElement">木</div></div><div class="radar-area"><h3>五行分布</h3><div id="radar"></div><div class="radar-tags" id="radarTags"></div></div><div class="compact-folds" role="group" aria-label="免費五行解讀切換"><button class="fold-tab" type="button" id="insightToggle" aria-expanded="false" aria-controls="insight" hidden><span>✦ 五行調和提醒</span><span class="fold-tab-icon" aria-hidden="true">＋</span></button><button class="fold-tab" type="button" id="topicsToggle" aria-expanded="false" aria-controls="topicsFold"><span>五行綜合解讀</span><span class="fold-tab-icon" aria-hidden="true">＋</span></button></div><div class="fold-panels"><section class="fold-panel insight" id="insight" aria-label="五行調和提醒" hidden><p id="insightSummary"></p><div id="insightCards"></div><p id="insightBottom"></p></section><section class="fold-panel" id="topicsFold" aria-label="五行綜合解讀" hidden><div id="freeHighlights" class="free-highlights" aria-live="polite"></div></section></div></section>
@@ -264,8 +273,7 @@
 <section class="card ai-history-card" id="aiConversation" aria-labelledby="readerTitle" hidden>
   <div class="ai-history-heading"><h2 id="readerTitle">AI 解讀文章</h2><small id="aiReportCount">完整閱讀 · 可複製保存</small></div>
   <div id="aiReportList" class="ai-report-list"></div>
-  <div class="ai-actions ai-history-actions"><button type="button" class="secondary-btn" id="newQuestion">＋ 問新問題</button><button type="button" class="secondary-btn" id="downloadAi">↓ 下載全部 AI 文章</button></div>
-  <button type="button" id="saveBirthBottom" class="ai-birth-save"><strong>▣ 儲存出生資料</strong><small>僅保存生日與排盤設定</small></button>
+  <div class="ai-actions ai-history-actions"><button type="button" class="secondary-btn" id="downloadAi">↓ 下載全部 AI 文章</button><button type="button" id="saveBirthBottom" class="ai-birth-save" title="僅保存生日與排盤設定" aria-label="儲存出生資料，僅保存生日與排盤設定"><strong>▣ 儲存出生資料</strong></button></div>
   <section class="followup-area" id="followupArea" hidden><label for="followupQuestion">輸入追問內容</label><textarea id="followupQuestion" class="question" maxlength="400" placeholder="例如：那我在現階段可以先做哪三個具體改變？"></textarea><button type="button" class="secondary-btn full" id="sendFollowup">送出追問（成功扣 AI 1 次）</button><p class="tip" id="followupNotice">同一話題最多 8 輪，追問另扣 AI 額度。</p></section>
 </section>
 </section>
@@ -607,7 +615,7 @@ async function cast(birth){
   $('aiReportList').replaceChildren();$('aiConversation').hidden=true;$('followupArea').hidden=true;$('results').hidden=false;
   renderCore(chart);renderFreeHighlights(data.reports);setFreeFold(null);renderQuestionRows();updateAiButton();
   if(data.quota?.free){quotaText('freeTool',`${data.quota.free.remaining} / ${data.quota.free.limit} 次`);$('freeToolCycle').textContent=`每 ${data.quota.free.days} 天補充，不累積`;}
-  void refreshAllQuota();notice('查詢完成，可展開三段免費重點');
+  void refreshAllQuota();
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
  }catch(e){
   if(e?.code==='CAST_TIMEOUT'){
@@ -736,13 +744,11 @@ function renderAiReports(){
    const summary=document.createElement('summary');summary.textContent='還有疑問？繼續追問';details.append(summary);
    const inner=document.createElement('div');inner.className='ai-report-fold-content';follow.hidden=false;inner.append(follow);details.append(inner);body.append(details);
   }
-  const tools=document.createElement('details');tools.className='ai-report-fold ai-report-tools-fold';
-  const toolTitle=document.createElement('summary');toolTitle.textContent='文章操作';tools.append(toolTitle);
-  const toolInner=document.createElement('div');toolInner.className='ai-report-fold-content';
+  // 簡單操作直接同列顯示，只有追問表單需要摺疊。
   const actions=document.createElement('div');actions.className='ai-report-actions';
   const copyBtn=document.createElement('button');copyBtn.className='secondary-btn';copyBtn.type='button';copyBtn.textContent='複製全文';copyBtn.addEventListener('click',()=>void copy(aiReportTxt(item)));
   const downBtn=document.createElement('button');downBtn.className='secondary-btn';downBtn.type='button';downBtn.textContent='下載本篇 TXT';downBtn.addEventListener('click',()=>download('wuxing-ai-'+aiReports.indexOf(item)+'.txt','\ufeff'+aiReportTxt(item)));
-  actions.append(copyBtn,downBtn);toolInner.append(actions);tools.append(toolInner);body.append(tools);
+  actions.append(copyBtn,downBtn);body.append(actions);
   const collapse=document.createElement('button');collapse.type='button';collapse.className='ai-report-collapse';collapse.textContent='↑ 收合本篇文章，返回文章列表';
   collapse.addEventListener('click',()=>{setAiReportExpanded(item.id);$('aiConversation').scrollIntoView({behavior:'smooth',block:'start'});});body.append(collapse);
   card.append(body);return card;
@@ -803,7 +809,7 @@ async function sendAI(follow=false){if(aiBusy||!chart||!birthRequest)return;
   }
   const selected=activeAiReport();aiSession=selected?.sessionId||'';aiTurn=selected?.turn||0;
   renderAiReports();renderQuestionRows();
-  if(j.quota)aiQuota=j.quota;notice('五行 AI 解讀完成，已收錄文章與更新額度');
+  if(j.quota)aiQuota=j.quota;
   await refreshAllQuota();document.getElementById('aiReport-'+aiExpandedId)?.scrollIntoView({behavior:'smooth',block:'start'});
  }catch(e){$('aiStatus').textContent=e.message||'AI 暫時無法完成';notice(e.message||'AI 暫時無法完成，請稍後再試');await refreshAllQuota();if(e?.code==='SHARED_AI_EMPTY')showAiQuotaHelp(true);}
  finally{aiBusy=false;aiPendingFollow=false;updateAiButton();if(aiReady)$('aiStatus').textContent=aiStatusText();}
@@ -832,7 +838,6 @@ function initialize(){const today=new Date(),y=today.getFullYear();fillOptions($
  $('aiBtn').addEventListener('click',()=>void sendAI(false));$('sendFollowup').addEventListener('click',()=>void sendAI(true));
  $('aiOpenUsed').addEventListener('click',()=>{const report=findExistingAiReport($('customQuestion').value);if(!report)return;if(aiExpandedId!==report.id){aiExpandedId='';setAiReportExpanded(report.id,true);}else document.getElementById('aiReport-'+report.id)?.scrollIntoView({behavior:'smooth',block:'start'});});
 
- $('newQuestion').addEventListener('click',()=>{aiSession='';aiTurn=0;aiExpandedId='';renderAiReports();setAIQuestion('');$('freeQuestion').value='';$('customBox').open=false;$('aiCard').scrollIntoView({behavior:'smooth',block:'start'});updateAiButton();});
  $('downloadAi').addEventListener('click',downloadAiReports);
 // V8：按鈕左右並排，文章展開時固定占用整列寬度；雙方互斥或全部關閉。
  $('insightToggle').addEventListener('click',()=>setFreeFold($('insightToggle').getAttribute('aria-expanded')==='true'?null:'insight'));
