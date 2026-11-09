@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07120f"><meta name="color-scheme" content="dark">
-<meta name="wuxing-mobile-version" content="V21">
+<meta name="wuxing-mobile-version" content="V23">
 <title>專業五行屬性查詢｜免費線上五行計算器、查金木水火土的旺衰補缺｜一念知機</title>
 <meta name="description" content="一念知機五行手機版：免費線上五行屬性查詢，輸入國曆或農曆生日與時辰，查看金木水火土相對分布、五行雷達圖、優缺點及補缺方向；可展開三段免費五行綜合重點，並選用 21 類 252 道 AI 題目進一步提問。">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
@@ -259,17 +259,75 @@
 #aiCard .suggestion.asked .asked-tag{display:block;color:#c2ab7c;font-size:.7rem;font-weight:800;margin-top:4px;}
 #aiCard .ai-used-warning{border:1px solid #8b784e;background:#29271c;color:#f1d99e;border-radius:10px;padding:9px 11px;font-size:.79rem;margin:10px 0;line-height:1.65;}
 #aiCard .ai-used-warning button{border:0;background:none;color:#bcebd3;text-decoration:underline;text-underline-offset:3px;font-size:.79rem;font-weight:850;margin-left:6px;padding:2px 0;}
+
+/* V22 · Only presentation refinements. Quota API & article data structures unchanged. */
+#aiCard #aiStatus:empty{display:none}
+#aiCard .ai-used-warning{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 0 10px;padding:8px 10px;line-height:1.45}
+#aiCard .ai-used-warning button{margin-left:0;white-space:nowrap}
+#aiConversation .ai-report-card{scroll-margin-top:78px}
+#aiConversation .ai-report-body{padding-bottom:12px}
+#aiConversation .ai-report-actions{margin-top:10px}
+#aiConversation .ai-report-collapse{margin-top:10px}
+#aiConversation .ai-report-others{margin-top:19px;padding-top:15px}
+#aiConversation .ai-report-others-title{margin-bottom:10px}
+/* Browser-native dialog rendered in the site's deep-green theme. */
+#wxAiConfirm{width:min(calc(100% - 32px),430px);max-height:min(85dvh,560px);padding:20px 18px 18px;border:1px solid #719a77;border-radius:17px;background:linear-gradient(150deg,#15332a,#0b211a);color:#ebf4e9;box-shadow:0 25px 70px #000a;overflow:auto}
+#wxAiConfirm::backdrop{background:rgba(0,9,7,.75);backdrop-filter:blur(4px)}
+#wxAiConfirm h2{font-size:1.1rem;color:#f5d39a;margin:0 0 10px;font-weight:900}
+#wxAiConfirm p{font-size:.88rem;line-height:1.7;color:#d7eadf;margin:0 0 8px}
+#wxAiConfirm .wx-ai-confirm-quota{font-size:.78rem;color:#a3d9be;margin-bottom:17px}
+#wxAiConfirm .wx-ai-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#wxAiConfirm .wx-ai-confirm-actions button{min-height:45px;padding:10px 8px;border-radius:11px;font-weight:850;font-size:.83rem;cursor:pointer}
+#wxAiConfirm .wx-ai-confirm-cancel{border:1px solid #567662;background:#153228;color:#deebdf}
+#wxAiConfirm .wx-ai-confirm-ok{border:1px solid #e4c58e;background:linear-gradient(100deg,#dfb875,#f4d4a4);color:#1d2b20}
+#wxAiConfirm button:focus-visible{outline:2px solid #95e5c7;outline-offset:2px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js" defer></script>
+
+<style id="wx-v23-radar-effects">
+/* 五行強弱提示：僅於成功產生新命盤時依序亮起一次，動畫後保留柔和外框。 */
+.radar-tags .wx-element-tag{position:relative;min-width:0;transform-origin:center;will-change:auto;}
+.radar-tags .wx-element-tag.wx-extreme-max{border-color:color-mix(in srgb,var(--wx-accent) 58%,#294e3b);background:color-mix(in srgb,var(--wx-accent) 9%,#132b23);}
+.radar-tags .wx-element-tag.wx-extreme-min{border-color:color-mix(in srgb,var(--wx-accent) 52%,#294e3b);background:color-mix(in srgb,var(--wx-accent) 7%,#132b23);}
+.radar-tags .wx-element-tag.wx-extreme-max small,
+.radar-tags .wx-element-tag.wx-extreme-min small{color:#e0d7aa;font-weight:750;}
+.radar-svg .wx-radar-label{transform-box:fill-box;transform-origin:center;}
+.radar-svg .wx-radar-dot{transform-box:fill-box;transform-origin:center;}
+.radar-svg .wx-radar-halo{opacity:0;transform-box:fill-box;transform-origin:center;pointer-events:none;}
+.radar-tags .wx-element-tag.wx-flash-max{z-index:2;animation:wxStrongTag .88s ease-in-out both;}
+.radar-tags .wx-element-tag.wx-flash-min{z-index:2;animation:wxSoftTag .88s ease-in-out both;}
+.radar-svg .wx-radar-label.wx-flash-max{animation:wxStrongLabel .88s ease-in-out both;}
+.radar-svg .wx-radar-label.wx-flash-min{animation:wxSoftLabel .88s ease-in-out both;}
+.radar-svg .wx-radar-dot:is(.wx-flash-max,.wx-flash-min){animation:wxEmphasisPoint .88s ease-in-out both;}
+.radar-svg .wx-radar-halo:is(.wx-flash-max,.wx-flash-min){animation:wxEmphasisHalo .88s ease-out both;}
+@keyframes wxStrongTag{
+  0%,100%{transform:scale(1);filter:brightness(1);box-shadow:none}
+  45%{transform:scale(1.065);filter:brightness(1.36);box-shadow:0 0 0 2px var(--wx-accent),0 0 21px color-mix(in srgb,var(--wx-accent) 44%,transparent)}
+}
+@keyframes wxSoftTag{
+  0%,100%{transform:scale(1);filter:brightness(1);box-shadow:none}
+  50%{transform:scale(1.04);filter:brightness(1.3);box-shadow:0 0 0 2px var(--wx-accent),0 0 13px color-mix(in srgb,var(--wx-accent) 34%,transparent)}
+}
+@keyframes wxStrongLabel{0%,100%{transform:scale(1);filter:brightness(1)}45%{transform:scale(1.3);filter:brightness(1.65) drop-shadow(0 0 5px var(--wx-accent))}}
+@keyframes wxSoftLabel{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.2);filter:brightness(1.55) drop-shadow(0 0 4px var(--wx-accent))}}
+@keyframes wxEmphasisPoint{0%,100%{transform:scale(1);filter:brightness(1)}45%{transform:scale(1.9);filter:brightness(1.55)}}
+@keyframes wxEmphasisHalo{0%{opacity:0;transform:scale(.55)}40%{opacity:.8;transform:scale(.95)}100%{opacity:0;transform:scale(1.7)}}
+@media(prefers-reduced-motion:reduce){
+ .radar-tags .wx-element-tag.wx-flash-max,.radar-tags .wx-element-tag.wx-flash-min,
+ .radar-svg .wx-radar-label:is(.wx-flash-max,.wx-flash-min),
+ .radar-svg .wx-radar-dot:is(.wx-flash-max,.wx-flash-min),
+ .radar-svg .wx-radar-halo:is(.wx-flash-max,.wx-flash-min){animation:none!important;}
+}
+</style>
 </head>
 <body>
 <header class="sitebar"><div class="wrap sitebar-in"><a class="brand" href="/" aria-label="返回一念知機首頁">← 一念知機</a><nav class="header-tool-scroll" aria-label="其他免費命理工具，可左右滑動"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經64卦</a><a href="/cezi.html">測字</a><a href="/wuxing.html" aria-current="page">五行</a><a href="/numerology.html">生命靈數</a></nav><a class="small-btn" href="/member.html?return=%2Fwuxing-mobile.html" id="memberLink">會員登入</a></div></header>
 <main class="wrap">
-<section class="hero" aria-label="五行屬性查詢手機版"><div class="eyebrow">一念知機 · WUXING <span class="version" id="displayVersion">V21</span></div><div class="hero-orn">✧</div><h1>專業五行屬性查詢</h1><p class="hero-sub">金・木・水・火・土　免費線上五行計算</p><p class="hero-description">輸入生日，快速看懂你的五行強弱、性格特質與調和方向，再依需要探索深入解讀。</p></section>
+<section class="hero" aria-label="五行屬性查詢手機版"><div class="eyebrow">一念知機 · WUXING <span class="version" id="displayVersion">V23</span></div><div class="hero-orn">✧</div><h1>專業五行屬性查詢</h1><p class="hero-sub">金・木・水・火・土　免費線上五行計算</p><p class="hero-description">輸入生日，快速看懂你的五行強弱、性格特質與調和方向，再依需要探索深入解讀。</p></section>
 <section class="quota-card" aria-labelledby="quotaTitle"><div class="quota-head"><div><strong id="quotaTitle">我的使用額度</strong><small>免費額度與會員共用次數</small></div><button class="secondary-btn mini" type="button" id="refreshQuota">↻ 更新剩餘次數</button></div><div class="quota-grid"><div class="quota-item"><strong>五行免費查詢</strong><div class="num pending" id="freeTool">讀取中…</div><p class="quota-cycle" id="freeToolCycle">依後台週期補充</p></div><div class="quota-item"><strong>五行免費 AI</strong><div class="num pending" id="freeAi">讀取中…</div><p class="quota-cycle" id="freeAiCycle">依後台週期補充</p></div><div class="quota-item"><strong>會員共用工具</strong><div class="num pending" id="sharedTool">登入後查看</div></div><div class="quota-item"><strong>會員共用 AI</strong><div class="num pending" id="sharedAi">登入後查看</div></div></div><div class="quota-message" id="quotaMessage">實際使用與扣點以後端確認為準；成功後才扣次。</div></section>
 <section class="card" id="birthCard" aria-labelledby="birthTitle"><div class="section-heading"><h2 id="birthTitle">你的出生日期</h2></div><p class="muted">國曆或農曆均可。時辰不確定時可選「不知道」，系統會以三柱計算。</p><div class="switch" role="group" aria-label="選擇出生日期曆法"><button type="button" id="solarBtn" aria-pressed="true">國曆生日</button><button type="button" id="lunarBtn" aria-pressed="false">農曆生日</button></div><div class="fields-3"><div class="field"><label for="year">出生年</label><div class="select-wrap"><select class="input" id="year"></select></div></div><div class="field"><label for="month">月</label><div class="select-wrap"><select class="input" id="month"></select></div></div><div class="field"><label for="day">日</label><div class="select-wrap"><select class="input" id="day"></select></div></div></div><div class="checks"><label id="leapLabel" hidden><input type="checkbox" id="leap"> 農曆閏月</label></div><div class="field-row"><div class="field"><label for="slot">出生時辰</label><div class="select-wrap"><select class="input" id="slot"><option value="unknown">不知道時辰</option><option value="0">子時 23–01</option><option value="1">丑時 01–03</option><option value="2">寅時 03–05</option><option value="3">卯時 05–07</option><option value="4">辰時 07–09</option><option value="5">巳時 09–11</option><option value="6">午時 11–13</option><option value="7">未時 13–15</option><option value="8">申時 15–17</option><option value="9">酉時 17–19</option><option value="10">戌時 19–21</option><option value="11">亥時 21–23</option></select></div></div><div class="field"><label for="gender">性別（選填）</label><div class="select-wrap"><select class="input" id="gender"><option value="unspecified">不指定</option><option value="male">男</option><option value="female">女</option></select></div></div></div><details class="advanced"><summary>進階設定：精確時間與換日方式</summary><div class="checks"><label><input type="checkbox" id="exactToggle"> 我知道精確出生時間</label></div><div class="field" id="exactTimeRow" hidden><label for="exactTime">出生時間</label><input id="exactTime" class="input" type="time" value="12:00"></div><div class="field"><label for="sect">23:00 換日規則</label><div class="select-wrap"><select class="input" id="sect"><option value="2">23:00 起仍算當日（預設）</option><option value="1">23:00 起算次日</option></select></div></div></details><p class="tip" id="calendarHint" hidden></p><p id="birthError" class="status error" role="alert" hidden></p><div id="birthQuotaHelp" class="quota-buy-hint" hidden><span>會員工具額度不足，可參考加購方案。</span><a href="/pricing.html">查看工具額度方案 →</a></div><button class="main-btn full" type="button" id="calculate">✦ 開始五行屬性查詢</button><div class="birth-actions"><button class="secondary-btn" type="button" id="saveBirth">儲存出生資料</button><button class="secondary-btn" type="button" id="loadBirth">載入出生資料</button></div></section>
 <section class="results" id="results" hidden aria-live="polite"><section class="card overview-card"><div class="overview-titleline"><h2>你的五行命盤</h2><div class="overview-dates" aria-label="出生日期"><span id="birthDate"></span><span id="birthLunar"></span></div></div><div class="core-main"><div class="core-identity"><small>日主五行</small><div class="big" id="dayMaster">—</div></div><div class="core-attributes"><span id="masterYinYang"></span><small id="birthHour"></small></div><div class="element-disc" id="masterElement">木</div></div><div class="radar-area"><h3>五行分布</h3><div id="radar"></div><div class="radar-tags" id="radarTags"></div></div><div class="compact-folds" role="group" aria-label="免費五行解讀切換"><button class="fold-tab" type="button" id="insightToggle" aria-expanded="false" aria-controls="insight" hidden><span>✦ 五行調和提醒</span><span class="fold-tab-icon" aria-hidden="true">＋</span></button><button class="fold-tab" type="button" id="topicsToggle" aria-expanded="false" aria-controls="topicsFold"><span>五行綜合解讀</span><span class="fold-tab-icon" aria-hidden="true">＋</span></button></div><div class="fold-panels"><section class="fold-panel insight" id="insight" aria-label="五行調和提醒" hidden><p id="insightSummary"></p><div id="insightCards"></div><p id="insightBottom"></p></section><section class="fold-panel" id="topicsFold" aria-label="五行綜合解讀" hidden><div id="freeHighlights" class="free-highlights" aria-live="polite"></div></section></div></section>
-<section class="card" id="aiCard"><div class="section-heading"><h2>選擇你想問的事</h2></div><div class="chips" id="aiCategories" role="group" aria-label="左右滑動切換五行 AI 題目分類"></div><div class="question-prompt-top"><span>參考題目 · 點選即可選題</span><button type="button" id="refreshQuestions" class="question-refresh">換一批 ↻</button></div><div class="suggestions" id="aiSuggestions"></div><details class="custom-fold" id="customBox"><summary>自己輸入問題 <span aria-hidden="true">▾</span></summary><div class="custom-fold-body"><label class="question-label" for="freeQuestion">自由輸入想問的事情（5～400 字）</label><textarea id="freeQuestion" class="question" maxlength="400" rows="3" placeholder="例如：最近工作上想轉換跑道，我適合怎樣的工作環境？"></textarea><button type="button" id="useCustomQuestion" class="secondary-btn full">使用這個自訂問題</button></div></details><div class="selected-question" id="selectedQuestionBox" hidden><label class="question-label" for="customQuestion">你選擇的問題（可直接修改）</label><textarea id="customQuestion" class="question" maxlength="400" rows="2" spellcheck="false" placeholder="選擇上面的參考題目或輸入自訂問題"></textarea><div class="question-count-row"><small>可修改問題，補充你的實際情況</small><small id="questionCount">0 / 400</small></div></div><div class="ai-used-warning" id="aiUsedWarning" hidden role="status">這道問題已解讀過，不需要再次扣額度。<button id="aiOpenUsed" type="button">閱讀已完成文章</button></div><p class="ai-status" id="aiStatus" role="status">正在確認 AI 額度…</p><div id="aiQuotaHelp" class="quota-buy-hint ai-buy" hidden><span>會員 AI 額度不足，可參考加購方案。</span><a href="/pricing.html">查看 AI 額度方案 →</a></div><button id="aiBtn" type="button" class="main-btn full" disabled>✦ 開始五行 AI 深度解讀</button></section>
+<section class="card" id="aiCard"><div class="section-heading"><h2>選擇你想問的事</h2></div><div class="chips" id="aiCategories" role="group" aria-label="左右滑動切換五行 AI 題目分類"></div><div class="question-prompt-top"><span>參考題目 · 點選即可選題</span><button type="button" id="refreshQuestions" class="question-refresh">換一批 ↻</button></div><div class="suggestions" id="aiSuggestions"></div><details class="custom-fold" id="customBox"><summary>自己輸入問題 <span aria-hidden="true">▾</span></summary><div class="custom-fold-body"><label class="question-label" for="freeQuestion">自由輸入想問的事情（5～400 字）</label><textarea id="freeQuestion" class="question" maxlength="400" rows="3" placeholder="例如：最近工作上想轉換跑道，我適合怎樣的工作環境？"></textarea><button type="button" id="useCustomQuestion" class="secondary-btn full">使用這個自訂問題</button></div></details><div class="selected-question" id="selectedQuestionBox" hidden><label class="question-label" for="customQuestion">你選擇的問題（可直接修改）</label><textarea id="customQuestion" class="question" maxlength="400" rows="2" spellcheck="false" placeholder="選擇上面的參考題目或輸入自訂問題"></textarea><div class="question-count-row"><small>可修改問題，補充你的實際情況</small><small id="questionCount">0 / 400</small></div></div><div class="ai-used-warning" id="aiUsedWarning" hidden role="status">✓ 此題已解讀<button id="aiOpenUsed" type="button">閱讀原文章</button></div><p class="ai-status" id="aiStatus" role="status">正在確認 AI 額度…</p><div id="aiQuotaHelp" class="quota-buy-hint ai-buy" hidden><span>會員 AI 額度不足，可參考加購方案。</span><a href="/pricing.html">查看 AI 額度方案 →</a></div><button id="aiBtn" type="button" class="main-btn full" disabled>✦ 開始五行 AI 深度解讀</button></section>
 <section class="card ai-history-card" id="aiConversation" aria-labelledby="readerTitle" hidden>
   <div class="ai-history-heading"><h2 id="readerTitle">AI 解讀文章</h2><small id="aiReportCount">完整閱讀 · 可複製保存</small></div>
   <div id="aiReportList" class="ai-report-list"></div>
@@ -381,6 +439,15 @@
 </section></div></details></div>
 </main>
 <footer class="footer"><div class="wrap"><strong>✨ 探索其他免費命理工具</strong><nav class="footer-tools" aria-label="探索其他免費命理工具"><a href="/qimen.html">奇門</a><a href="/tarot.html">塔羅</a><a href="/bazi.html">八字</a><a href="/ziwei.html">紫微</a><a href="/meihua.html">梅花</a><a href="/liuyao.html">六爻</a><a href="/yijing.html">易經</a><a href="/cezi.html">測字</a><a href="/wuxing.html">五行</a><a href="/numerology.html">生命靈數</a></nav><p class="legal">© 一念知機｜五行與 AI 解讀僅供自我探索參考，可能存在誤差。重大決策請審慎判斷，必要時諮詢專業人士。</p></div></footer>
+<dialog id="wxAiConfirm" aria-labelledby="wxAiConfirmTitle" aria-describedby="wxAiConfirmText">
+  <h2 id="wxAiConfirmTitle">確認 AI 深度解讀</h2>
+  <p id="wxAiConfirmText">本次解讀將使用 1 次會員 AI 額度。</p>
+  <p class="wx-ai-confirm-quota" id="wxAiConfirmQuota"></p>
+  <form method="dialog" class="wx-ai-confirm-actions">
+    <button type="submit" value="cancel" class="wx-ai-confirm-cancel">取消</button>
+    <button type="submit" value="confirm" class="wx-ai-confirm-ok">確認解讀</button>
+  </form>
+</dialog>
 <div class="toast" id="toast" hidden role="status"></div>
 <div class="modal" id="savedModal" hidden><div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="savedTitle"><div class="modal-head"><h2 id="savedTitle">已儲存的出生資料</h2><button type="button" class="secondary-btn mini" id="closeSaved">關閉 ✕</button></div><p class="tip">僅保存在目前瀏覽器，最多 3 組；載入後會重新向五行後端查詢，可能使用當期額度。</p><div id="savedList"></div></div></div>
 <script id="wuxingMobileApp">
@@ -504,27 +571,63 @@ function setAiButtonView(button,loading,label){
 }
 function updateAiButton(){const r=remainingAI(),q=String($('customQuestion')?.value||'').trim(),valid=[...q].length>=5&&[...q].length<=400;const can=!!chart&&!aiBusy&&aiReady&&!!r?.total;
  const used=findExistingAiReport(q);$('aiUsedWarning').hidden=!used||!chart;
- const main=$('aiBtn');main.disabled=!can||!valid||!!used;
+ const main=$('aiBtn');main.disabled=!can||!valid||!!used;main.hidden=!!(used&&chart);
  setAiButtonView(main,aiBusy&&!aiPendingFollow,aiBusy&&!aiPendingFollow?'AI 正在深度解讀…':used?'這道問題已解讀過':r?.total===0?'AI 額度已用完':!valid?'選好問題，開始五行 AI 解讀':'✦ 開始五行 AI 深度解讀');
  const followup=$('sendFollowup'),selected=activeAiReport();followup.disabled=!can||!selected?.sessionId||selected.turn>=8;
  setAiButtonView(followup,aiBusy&&aiPendingFollow,aiBusy&&aiPendingFollow?'AI 正在回答追問…':selected?.turn>=8?'已達 8 輪上限':'送出追問（成功扣 AI 1 次）');
 }
 function radarP(cx,cy,r,i){const a=-Math.PI/2+i*2*Math.PI/5;return [cx+Math.cos(a)*r,cy+Math.sin(a)*r];}
 function radarPoly(cx,cy,r){return WX_ELEMS.map((_,i)=>radarP(cx,cy,r,i).map(v=>v.toFixed(1)).join(',')).join(' ');}
-function renderRadar(c){const score=Object.fromEntries(WX_ELEMS.map(e=>[e,Math.max(0,Number(c.scores?.[e]||0))]));
+// 動畫只在一筆命盤成功呈現時啟動；重新查詢會取消舊計時器。
+let wxRadarTimers=[];
+let wxRadarSequence=0;
+function resetRadarEffects(){
+ ++wxRadarSequence;
+ wxRadarTimers.forEach(clearTimeout);
+ wxRadarTimers=[];
+}
+function spotlightRadarElement(element,phase,enabled){
+ const klass=phase==='max'?'wx-flash-max':'wx-flash-min';
+ const nodes=[...document.querySelectorAll('#radarTags [data-wx-element],#radar [data-wx-element]')]
+  .filter(node=>node.dataset.wxElement===element);
+ nodes.forEach(node=>node.classList.toggle(klass,enabled));
+}
+function animateRadarExtremes(high,low){
+ if(!high||!low||high===low)return;
+ if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+ const current=wxRadarSequence;
+ const at=(delay,callback)=>wxRadarTimers.push(setTimeout(()=>{
+  if(current===wxRadarSequence)callback();
+ },delay));
+ // 先展示最突出，再展示最少；不增加通知，也不因捲動畫面而重播。
+ at(180,()=>spotlightRadarElement(high,'max',true));
+ at(1050,()=>{spotlightRadarElement(high,'max',false);spotlightRadarElement(low,'min',true);});
+ at(1940,()=>spotlightRadarElement(low,'min',false));
+}
+function renderRadar(c){
+ resetRadarEffects();
+ const score=Object.fromEntries(WX_ELEMS.map(e=>[e,Math.max(0,Number(c.scores?.[e]||0))]));
  const max=Math.max(...Object.values(score),.00001),min=Math.min(...Object.values(score));
  const sorted=[...WX_ELEMS].sort((a,b)=>score[b]-score[a]);
  const same=(max-min)/max<.1;
  const status=Object.fromEntries(sorted.map((e,i)=>[e,same?'相近':['最突出','偏強','居中','較少','最少'][i]]));
+ // 分數相近、全零或最多／最少並列時不強行選出唯一強弱代表。
+ const uniqueMax=WX_ELEMS.filter(e=>Math.abs(score[e]-max)<.000001);
+ const uniqueMin=WX_ELEMS.filter(e=>Math.abs(score[e]-min)<.000001);
+ const strongest=!same&&uniqueMax.length===1?uniqueMax[0]:null;
+ const weakest=!same&&uniqueMin.length===1?uniqueMin[0]:null;
  const cx=220,cy=184,r=126,pts=WX_ELEMS.map((e,i)=>radarP(cx,cy,r*.93*score[e]/max,i));
  const rings=[.25,.5,.75,1].map(k=>`<polygon class="radar-ring" points="${radarPoly(cx,cy,r*k)}"/>`).join('');
  const axes=WX_ELEMS.map((_,i)=>{const p=radarP(cx,cy,r,i);return `<line class="radar-axis" x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}"/>`;}).join('');
- const labels=WX_ELEMS.map((e,i)=>{const p=radarP(cx,cy,r+25,i);return `<text x="${p[0]}" y="${p[1]+4}" text-anchor="middle" font-size="17" font-weight="850" fill="${WX_COLORS[e]}">${e}</text>`;}).join('');
- const dots=WX_ELEMS.map((e,i)=>`<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="4.7" stroke="#10251b" stroke-width="2.5" fill="${WX_COLORS[e]}"/>`).join('');
+ const labels=WX_ELEMS.map((e,i)=>{const p=radarP(cx,cy,r+25,i);return `<text class="wx-radar-label" data-wx-element="${e}" style="--wx-accent:${WX_COLORS[e]}" x="${p[0]}" y="${p[1]+4}" text-anchor="middle" font-size="17" font-weight="850" fill="${WX_COLORS[e]}">${e}</text>`;}).join('');
+ const halos=WX_ELEMS.map((e,i)=>`<circle class="wx-radar-halo" data-wx-element="${e}" cx="${pts[i][0]}" cy="${pts[i][1]}" r="12" stroke="${WX_COLORS[e]}" stroke-width="2" fill="none"/>`).join('');
+ const dots=WX_ELEMS.map((e,i)=>`<circle class="wx-radar-dot" data-wx-element="${e}" cx="${pts[i][0]}" cy="${pts[i][1]}" r="4.7" stroke="#10251b" stroke-width="2.5" fill="${WX_COLORS[e]}"/>`).join('');
  const title=WX_ELEMS.map(e=>`${e}${status[e]}`).join('、');
- $('radar').innerHTML=`<svg class="radar-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 360" role="img" aria-label="五行相對強弱：${esc(title)}"><title>${esc(title)}</title><defs><linearGradient id="wxMobileFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8ae1af"/><stop offset="1" stop-color="#dbc289"/></linearGradient></defs>${rings}${axes}<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="url(#wxMobileFill)" fill-opacity=".37" stroke="#89e6bb" stroke-width="2.8" stroke-linejoin="round"/>${dots}${labels}</svg>`;
- $('radarTags').innerHTML=WX_ELEMS.map(e=>`<div><b><i class="radar-dot" style="background:${WX_COLORS[e]}"></i>${e}</b><small>${status[e]}</small></div>`).join('');
+ $('radar').innerHTML=`<svg class="radar-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 360" role="img" aria-label="五行相對強弱：${esc(title)}"><title>${esc(title)}</title><defs><linearGradient id="wxMobileFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8ae1af"/><stop offset="1" stop-color="#dbc289"/></linearGradient></defs>${rings}${axes}<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="url(#wxMobileFill)" fill-opacity=".37" stroke="#89e6bb" stroke-width="2.8" stroke-linejoin="round"/>${halos}${dots}${labels}</svg>`;
+ $('radarTags').innerHTML=WX_ELEMS.map(e=>`<div class="wx-element-tag ${e===strongest?'wx-extreme-max':e===weakest?'wx-extreme-min':''}" data-wx-element="${e}" style="--wx-accent:${WX_COLORS[e]}"><b><i class="radar-dot" style="background:${WX_COLORS[e]}"></i>${e}</b><small>${status[e]}</small></div>`).join('');
+ animateRadarExtremes(strongest,weakest);
 }
+
 // 同一時間只打開一個全寬區塊；重按已展開的按鈕會全部收合。
 function setFreeFold(active=null){
  for(const [key,btnId] of [['insight','insightToggle'],['topicsFold','topicsToggle']]){
@@ -774,6 +877,22 @@ function renderAiReports(){
  if(!follow.parentElement){follow.hidden=true;$('aiConversation').append(follow);}
  updateAiButton();
 }
+// V22: native dialog in the same dark theme, without touching backend confirmation headers.
+function confirmSharedAiUse(sharedRemaining){
+ const dialog=$('wxAiConfirm');
+ if(typeof dialog.showModal!=='function')return Promise.resolve(window.confirm(`免費 AI 額度已用完，確定扣除會員 AI 1 次進行解讀嗎？`));
+ $('wxAiConfirmText').textContent='免費 AI 額度已用完，本次解讀將扣除會員 AI 額度 1 次。';
+ $('wxAiConfirmQuota').textContent=`目前會員 AI 剩餘 ${sharedRemaining} 次`;
+ dialog.returnValue='cancel';
+ const previous=document.activeElement;
+ return new Promise(resolve=>{
+  dialog.addEventListener('close',()=>{
+   if(previous&&previous.isConnected&&typeof previous.focus==='function')previous.focus({preventScroll:true});
+   resolve(dialog.returnValue==='confirm');
+  },{once:true});
+  dialog.showModal();
+ });
+}
 const AI_ERRORS={AI_CENTER_NOT_CONFIGURED:'AI 通道暫未完成設定。',D1_NOT_CONFIGURED:'會員資料庫尚未設定。',LOGIN_REQUIRED:'請先登入會員使用 AI。',MEMBER_LOGIN_REQUIRED:'請重新登入會員後使用 AI。',LOGIN_EXPIRED:'會員登入已失效。',FREE_AI_EMPTY:'免費 AI 額度已用完，請登入會員。',SHARED_AI_EMPTY:'會員 AI 額度已用完。',FOLLOWUP_LIMIT:'本題已達 8 輪上限。',FOLLOWUP_EXPIRED:'這段追問已過期，請重新提問。',AI_OPERATION_DUPLICATE:'上一筆已送出，避免重複扣次。',FOLLOWUP_BUSY:'上一筆追問仍在處理。',INVALID_BIRTH:'出生資料已失效，請重新查詢。',AI_UNAVAILABLE:'AI 暫時無法完成解讀；依後端規則本次不扣次。'};
 async function sendAI(follow=false){if(aiBusy||!chart||!birthRequest)return;
  const target=follow?activeAiReport():null;
@@ -787,13 +906,13 @@ async function sendAI(follow=false){if(aiBusy||!chart||!birthRequest)return;
  // 在真正送往 Worker 前再確認一次，避免額度更新期間狀態變更造成重複解讀。
  if(!follow&&findExistingAiReport(q)){notice('此題已解讀，請從文章列表閱讀。');updateAiButton();return;}
  const operationId=uuid(),payload={operationId,question:q,category:follow?target.workerCategory:currentAIGroup().workerCategory,birth:birthRequest,...(follow?{sessionId:target.sessionId}:{})};
- aiPendingFollow=follow;aiBusy=true;updateAiButton();$('aiStatus').textContent='AI 正在深度解讀…完成後會顯示文章';
+ aiPendingFollow=follow;aiBusy=true;updateAiButton();$('aiStatus').textContent='';
  try{let confirmed=false,res,j;
   for(let i=0;i<2;i++){
    res=await fetch(WX_AI_API+'/interpret',{method:'POST',cache:'no-store',headers:{...authHeaders(),...(confirmed?{'X-DH-Shared-Confirm':'1'}:{})},body:JSON.stringify(payload)});
    j=await res.json().catch(()=>({}));
    if(j.error==='SHARED_AI_CONFIRM_REQUIRED'&&!confirmed){const left=remainingAI();if(!left?.shared){await refreshAIQuota();showAiQuotaHelp(true);notice('會員 AI 額度不足，可參考加購方案。');return;}
-    if(!confirm(`本期免費 AI 額度已用完。會員 AI 尚有 ${left.shared} 次，確定扣除會員 AI 1 次進行解讀嗎？`)){notice('已取消，沒有扣除 AI 額度。');return;}confirmed=true;continue;}
+    if(!await confirmSharedAiUse(left.shared)){return;}confirmed=true;continue;}
    break;
   }
   if(!res.ok||!j.ok||typeof j.reading!=='string'||j.reading.trim().length<40){const e=new Error(AI_ERRORS[j.error]||j.message||'AI 暫時無法完成完整解讀');e.code=j.error;throw e;}
@@ -809,8 +928,10 @@ async function sendAI(follow=false){if(aiBusy||!chart||!birthRequest)return;
   }
   const selected=activeAiReport();aiSession=selected?.sessionId||'';aiTurn=selected?.turn||0;
   renderAiReports();renderQuestionRows();
+  const latestReportId=aiExpandedId;
+  requestAnimationFrame(()=>document.getElementById('aiReport-'+latestReportId)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));
   if(j.quota)aiQuota=j.quota;
-  await refreshAllQuota();document.getElementById('aiReport-'+aiExpandedId)?.scrollIntoView({behavior:'smooth',block:'start'});
+  await refreshAllQuota();
  }catch(e){$('aiStatus').textContent=e.message||'AI 暫時無法完成';notice(e.message||'AI 暫時無法完成，請稍後再試');await refreshAllQuota();if(e?.code==='SHARED_AI_EMPTY')showAiQuotaHelp(true);}
  finally{aiBusy=false;aiPendingFollow=false;updateAiButton();if(aiReady)$('aiStatus').textContent=aiStatusText();}
 }
