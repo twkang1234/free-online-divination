@@ -247,12 +247,14 @@
 </style>
 <!-- Unified member requirements: shared device lock + backend-managed welcome gift display. -->
 <style id="dh-mobile-member-policy-style">
-.dh-member-policy{margin-top:12px;padding:11px 13px;border:1px solid rgba(165,184,199,.27);border-radius:11px;background:rgba(10,19,25,.42);font-size:.78rem;line-height:1.65;color:inherit}
+.dh-member-policy{margin-top:12px;padding:12px 13px;border:1px solid rgba(165,184,199,.27);border-radius:11px;background:rgba(10,19,25,.42);font-size:.78rem;line-height:1.65;color:inherit}
+.dh-member-policy[hidden],.dh-member-policy [hidden]{display:none!important}
 .dh-member-policy strong{color:var(--gold,#e6c682)}
-.dh-member-policy .dh-member-note{font-size:.72rem;opacity:.78;margin-top:3px}
-.dh-member-policy .dh-member-lock{margin-top:8px;padding-top:7px;border-top:1px solid rgba(165,184,199,.18)}
-.dh-member-policy .dh-member-lock[hidden]{display:none!important}
-.dh-member-policy a{color:var(--mint,var(--gold,#e6c682));text-decoration:underline;text-underline-offset:2px;font-weight:700}
+.dh-member-policy .dh-member-note{font-size:.72rem;opacity:.85;margin-top:4px}
+.dh-member-policy .dh-member-lock{font-size:.76rem;line-height:1.65}
+.dh-member-policy .dh-member-cta{display:flex;align-items:center;justify-content:center;min-height:43px;width:100%;margin-top:11px;padding:9px 12px;border:1px solid var(--gold,#c5a772);border-radius:10px;background:linear-gradient(105deg,rgba(219,179,110,.22),rgba(196,141,72,.10));color:var(--gold,#f1d39c);text-decoration:none;font-size:.83rem;font-weight:850;text-align:center;line-height:1.5}
+.dh-member-policy .dh-member-cta:hover{background:rgba(219,179,110,.26)}
+.dh-member-policy .dh-member-cta:focus-visible{outline:2px solid var(--mint,var(--gold,#e6c682));outline-offset:3px}
 </style>
 <script id="dh-mobile-member-policy">
 (function(){'use strict';
@@ -262,44 +264,81 @@
  const API='https://admin-api.ezgocpu.workers.dev/quota/welcome-gifts';
  const MEMBER_API='https://member-api.ezgocpu.workers.dev/auth/session';
  const tokenRx=/^dhs_[A-Za-z0-9_-]{43}$/;
- let verifiedToken='',verification=null;
+ let verifiedToken='',verification=null,verificationToken='',displaySeq=0;
  function read(k){try{return localStorage.getItem(k)||''}catch(_){return ''}}
- function markVerified(t){const current=read(SESSION);if(t&&t===current&&tokenRx.test(t))verifiedToken=t;try{localStorage.setItem(EVER,'1')}catch(_){}refreshBanner(true);}
  function hadMember(){return read(EVER)==='1'||LEGACY.some(k=>['1','true'].includes(read(k)))||tokenRx.test(read(SESSION));}
  function isVerifiedSession(){return !!verifiedToken&&verifiedToken===read(SESSION);}
  function loginUrl(){return '/member.html?return='+encodeURIComponent(location.pathname+location.search+location.hash);}
  function login(){location.assign(loginUrl());}
- // This is a UX guard, not a security boundary. Every API Worker must enforce login/guest rules too.
+ function markVerified(t){
+  if(!t||t!==read(SESSION)||!tokenRx.test(t)){refreshBanner(false);return;}
+  verifiedToken=t;
+  try{localStorage.setItem(EVER,'1')}catch(_){}
+  refreshBanner(true);
+ }
+ // These checks only improve the web UI; every API Worker must separately enforce member-only AI and guest restrictions.
  function allowGuest(authenticated){if(tokenRx.test(read(SESSION))&&(authenticated||isVerifiedSession()))return true;if(!hadMember())return true;login();return false;}
  function allowAi(authenticated){if(tokenRx.test(read(SESSION))&&(authenticated||isVerifiedSession()))return true;login();return false;}
  async function ensureVerified(){
   const t=read(SESSION);if(!tokenRx.test(t))return false;
   if(verifiedToken===t)return true;
-  if(verification)return verification;
-  verification=(async()=>{
-   try{const res=await fetch(MEMBER_API,{headers:{Authorization:'Bearer '+t,Accept:'application/json'},cache:'no-store'});
-    const j=await res.json();if(!res.ok||!j?.success||!j.authenticated||!j.member?.sub||t!==read(SESSION))return false;
+  if(verification&&verificationToken===t)return verification;
+  const request=(async()=>{
+   try{
+    const res=await fetch(MEMBER_API,{headers:{Authorization:'Bearer '+t,Accept:'application/json'},cache:'no-store'});
+    const j=await res.json();
+    if(!res.ok||!j?.success||!j.authenticated||!j.member?.sub||t!==read(SESSION))return false;
     markVerified(t);return true;
    }catch(_){return false;}
   })();
-  try{return await verification}finally{verification=null}
+  verification=request;verificationToken=t;
+  try{return await request}finally{if(verification===request){verification=null;verificationToken='';}}
  }
  async function allowAiVerified(){if(await ensureVerified())return true;login();return false;}
+ function showGuestOrRelogin(){
+  const box=document.getElementById('dhMobileWelcomeGift');if(!box)return;
+  const wasMember=hadMember();
+  const heading=document.getElementById('dhGiftHeading');if(heading)heading.hidden=wasMember;
+  const note=document.getElementById('dhGiftNote');if(note)note.hidden=wasMember;
+  const lock=document.getElementById('dhMemberLockHint');if(lock)lock.hidden=!wasMember;
+  const cta=document.getElementById('dhMemberLoginCta');
+  if(cta){cta.href=loginUrl();cta.textContent=wasMember?'重新登入會員，繼續使用':'免費登入會員・領取首次贈送';}
+  box.hidden=false;
+ }
+ async function refreshGiftVisibility(){
+  const box=document.getElementById('dhMobileWelcomeGift');if(!box)return;
+  const seq=++displaySeq;
+  // Keep the entire gift panel hidden until the existing 30-day session is checked.
+  box.hidden=true;
+  const t=read(SESSION);
+  if(tokenRx.test(t)){
+   const authenticated=await ensureVerified();
+   if(seq!==displaySeq||t!==read(SESSION))return;
+   if(authenticated){box.hidden=true;return;}
+  }
+  if(seq!==displaySeq)return;
+  showGuestOrRelogin();
+ }
  function refreshBanner(authenticated=false){
-  const node=document.getElementById('dhMemberLockHint');if(node)node.hidden=!!authenticated||isVerifiedSession()||!hadMember();
+  const box=document.getElementById('dhMobileWelcomeGift');if(!box)return;
+  if(authenticated||isVerifiedSession()){++displaySeq;box.hidden=true;return;}
+  void refreshGiftVisibility();
  }
  function attachGiftCard(){
   const quota=document.getElementById('baziQuotaPanel')||document.getElementById('quotaCard')||document.getElementById('numQuotaPanel');
   if(!quota||document.getElementById('dhMobileWelcomeGift'))return;
-  const box=document.createElement('div');box.className='dh-member-policy';box.id='dhMobileWelcomeGift';
-  const heading=document.createElement('div');heading.innerHTML='<strong>🎁 新會員首次登入贈送</strong>：共用工具額度 <strong id="dhGiftTool">依後台設定</strong> ＋ 共用 AI 解讀額度 <strong id="dhGiftAi">依後台設定</strong>';
-  const note=document.createElement('div');note.className='dh-member-note';note.textContent='首次符合資格時只贈送一次，六個工具共用；不是每天補送。AI 解讀及追問均須登入會員。';
-  const lock=document.createElement('div');lock.className='dh-member-lock';lock.id='dhMemberLockHint';
-  const msg=document.createElement('span');msg.textContent='此瀏覽器曾登入會員。請重新登入才能繼續使用免費工具與 AI，無法再使用訪客額度。';
-  const link=document.createElement('a');link.href=loginUrl();link.textContent=' 重新登入會員';
-  lock.append(msg,link);box.append(heading,note,lock);
+  const box=document.createElement('div');box.className='dh-member-policy';box.id='dhMobileWelcomeGift';box.hidden=true;
+  const heading=document.createElement('div');heading.id='dhGiftHeading';
+  heading.innerHTML='<strong>🎁 新會員首次登入贈送</strong>：共用工具額度 <strong id="dhGiftTool">依後台設定</strong> ＋ 共用 AI 解讀額度 <strong id="dhGiftAi">依後台設定</strong>';
+  const note=document.createElement('div');note.className='dh-member-note';note.id='dhGiftNote';
+  note.textContent='首次符合資格時只贈送一次，六個工具共用；不是每天補送。AI 解讀及追問均須登入會員。';
+  const lock=document.createElement('div');lock.className='dh-member-lock';lock.id='dhMemberLockHint';lock.hidden=true;
+  lock.textContent='此瀏覽器曾登入會員。請重新登入才能繼續使用免費工具與 AI，無法再使用訪客額度。';
+  const cta=document.createElement('a');cta.id='dhMemberLoginCta';cta.className='dh-member-cta';cta.href=loginUrl();
+  cta.textContent='免費登入會員・領取首次贈送';
+  box.append(heading,note,lock,cta);
   (quota.querySelector('.dh-quota-grid')||quota).insertAdjacentElement('afterend',box);
-  refreshBanner();
+  void refreshGiftVisibility();
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),7500);
   fetch(API,{method:'GET',cache:'no-store',signal:controller.signal,headers:{Accept:'application/json'}})
    .then(r=>{if(!r.ok)throw Error('QUOTA_HTTP');return r.json()})
@@ -308,11 +347,14 @@
      document.getElementById('dhGiftTool').textContent=tool+' 次';
      document.getElementById('dhGiftAi').textContent=ai+' 次';
     }
-   }).catch(()=>{/* 不以猜測數字顯示設定；不影響工具 */}).finally(()=>clearTimeout(timer));
+   }).catch(()=>{/* Never guess the welcome gift values when admin settings cannot be read. */}).finally(()=>clearTimeout(timer));
  }
  window.DHMobileMemberGate={markVerified,hadMember,isVerifiedSession,allowGuest,allowAi,allowAiVerified,ensureVerified,login,refreshBanner};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attachGiftCard,{once:true});else attachGiftCard();
- window.addEventListener('storage',e=>{if(e.key===SESSION&&e.newValue!==verifiedToken)verifiedToken='';if([SESSION,EVER,...LEGACY].includes(e.key))refreshBanner(false)});
+ window.addEventListener('storage',e=>{
+  if(e.key===SESSION&&e.newValue!==verifiedToken)verifiedToken='';
+  if([SESSION,EVER,...LEGACY].includes(e.key))refreshBanner(false);
+ });
  window.addEventListener('pageshow',()=>refreshBanner(isVerifiedSession()));
 })();
 </script>
