@@ -2747,6 +2747,37 @@ html.numerology-mobile-page #numMobileCoreStrip #numMobileCoreGateHint{margin:9p
   .dh-quota .dh-quota-purchase{font-size:.61rem!important;padding:3px 6px!important;min-height:23px!important;right:6px!important;bottom:5px!important;}
 }
 </style>
+
+<script id="dh-mobile-ai-activity-v1">
+(()=>{
+  'use strict';
+  const endpoint='https://admin-api.ezgocpu.workers.dev/ai-activity/complete';
+  const sessionKey='divinationhub-auth-session-v1';
+  const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
+  const active=new Set();
+  window.dhTrackAiSuccess=function(tool,traceId,category,followup=false){
+    const trace=String(traceId||'');
+    if(!tracePattern.test(trace)||active.has(trace))return;
+    let memberToken='';try{memberToken=localStorage.getItem(sessionKey)||''}catch(_){}
+    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(memberToken))return;
+    active.add(trace);
+    const payload=JSON.stringify({tool,traceId:trace,category:String(category||'unknown').slice(0,70),kind:followup?'followup':'initial'});
+    // Non-blocking and retryable: analytics must never block, alter or refund an AI reading.
+    (async()=>{
+      for(const delay of [0,800,2500,6500]){
+        if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
+        try{
+          const r=await fetch(endpoint,{method:'POST',headers:{Authorization:'Bearer '+memberToken,'Content-Type':'application/json'},body:payload,cache:'no-store',keepalive:true});
+          if(r.status===202)continue;
+          if(r.ok)return;
+          return;
+        }catch(_){/* Statistics errors are intentionally isolated from the AI reading. */}
+      }
+    })().finally(()=>active.delete(trace));
+  };
+})();
+</script>
+
 </head>
 <body>
 
@@ -4267,6 +4298,7 @@ function renderMonths(c){
    scope:meta.scope||previous?.scope||numAiActiveDock,questionCategory:meta.questionCategory||previous?.questionCategory||'',stageIndex:meta.stageIndex??previous?.stageIndex??null,targetYear:meta.targetYear??previous?.targetYear??null,targetMonth:meta.targetMonth??previous?.targetMonth??null,createdAt:previous?.createdAt||new Date().toLocaleString('zh-TW',{hour12:false}),
    traceId:out.traceId||previous?.traceId||'',channel:out.channel||previous?.channel||'',diagnostic:meta.diagnostic||previous?.diagnostic||''};
   if(previous)numAiHistory[numAiHistory.indexOf(previous)]=r;else numAiHistory.push(r);
+   void window.dhTrackAiSuccess?.('numerology',r.traceId,r.questionCategory||r.scope||'unknown',!!r.parentId);
   window.numMobileCoreGate?.grant(current.date); // A complete, successful AI article was saved.
   // Deliveries expand the matching category automatically; replies expand their thread.
   numAiOpenGroups.add(r.scope||'general');

@@ -180,6 +180,37 @@
  .dh-quota .dh-quota-purchase{font-size:.61rem!important;padding:3px 6px!important;right:5px!important;bottom:5px!important;}
 }
 </style>
+
+<script id="dh-mobile-ai-activity-v1">
+(()=>{
+  'use strict';
+  const endpoint='https://admin-api.ezgocpu.workers.dev/ai-activity/complete';
+  const sessionKey='divinationhub-auth-session-v1';
+  const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
+  const active=new Set();
+  window.dhTrackAiSuccess=function(tool,traceId,category,followup=false){
+    const trace=String(traceId||'');
+    if(!tracePattern.test(trace)||active.has(trace))return;
+    let memberToken='';try{memberToken=localStorage.getItem(sessionKey)||''}catch(_){}
+    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(memberToken))return;
+    active.add(trace);
+    const payload=JSON.stringify({tool,traceId:trace,category:String(category||'unknown').slice(0,70),kind:followup?'followup':'initial'});
+    // Non-blocking and retryable: analytics must never block, alter or refund an AI reading.
+    (async()=>{
+      for(const delay of [0,800,2500,6500]){
+        if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
+        try{
+          const r=await fetch(endpoint,{method:'POST',headers:{Authorization:'Bearer '+memberToken,'Content-Type':'application/json'},body:payload,cache:'no-store',keepalive:true});
+          if(r.status===202)continue;
+          if(r.ok)return;
+          return;
+        }catch(_){/* Statistics errors are intentionally isolated from the AI reading. */}
+      }
+    })().finally(()=>active.delete(trace));
+  };
+})();
+</script>
+
 </head>
 <body>
 <header class="sitebar"><div class="sitebar-inner"><a class="brand" href="/" aria-label="返回一念知機首頁">一念知機</a><nav class="header-tool-nav" aria-label="其他命理工具"><div class="header-tool-scroll" tabindex="0" aria-label="命理工具，可左右滑動"><a href="/qimen.html" draggable="false">奇門</a><a href="/tarot-mobile.html" draggable="false">塔羅</a><a href="/bazi.html" draggable="false">八字</a><a href="/ziwei.html" draggable="false">紫微</a><a href="/meihua.html" draggable="false">梅花</a><a href="/liuyao.html" draggable="false">六爻</a><a href="/yijing.html" draggable="false">易經64卦</a><a href="/cezi.html" draggable="false">測字</a><a href="/wuxing.html" draggable="false">五行</a><a href="/numerology.html" draggable="false">生命靈數</a></div></nav><div class="header-right"><a class="member-link" id="memberBtn" href="/member.html">免費登入</a></div></div></header>
@@ -549,7 +580,7 @@ async function runAI(which){if(busy)return;if(guestNeedsLogin()){needLogin();ret
      response=await req('/ai/center/interpret',body,{'X-DH-Shared-AI-Confirm':'1'});
    }
    const answer=String(response.answer||'').trim();if(answer.length<20)throw Error('AI 回傳內容不足，請保留畫面與追蹤碼聯絡管理員。');
-   state[key]={answer,channel:response.channel||'',traceId:response.traceId||'',at:Date.now()};state.stage=six?'completeB':'completeA';state[six?'reportExpandedB':'reportExpandedA']=true;save();render();if(member)void autoSaveRecord();
+   state[key]={answer,channel:response.channel||'',traceId:response.traceId||'',at:Date.now()};void window.dhTrackAiSuccess?.('tarot',response.traceId,state.topicId||'custom');state.stage=six?'completeB':'completeA';state[six?'reportExpandedB':'reportExpandedA']=true;save();render();if(member)void autoSaveRecord();
    setStatus(status,'');scrollToEl(six?'reportB':'reportA');void refreshQuota();
  }catch(e){setStatus(status,'AI 解讀未完成：'+codeLabel(e)+'。如果剛剛已扣點，請先更新額度並回報，不要直接重複送出。',true);notice(codeLabel(e),true);}
  finally{busy=false;loading.hidden=true;btn.disabled=false;}

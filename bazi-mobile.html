@@ -245,6 +245,37 @@
   .dh-quota .dh-quota-purchase{font-size:.61rem!important;padding:3px 6px!important;min-height:23px!important;right:6px!important;bottom:5px!important;}
 }
 </style>
+
+<script id="dh-mobile-ai-activity-v1">
+(()=>{
+  'use strict';
+  const endpoint='https://admin-api.ezgocpu.workers.dev/ai-activity/complete';
+  const sessionKey='divinationhub-auth-session-v1';
+  const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
+  const active=new Set();
+  window.dhTrackAiSuccess=function(tool,traceId,category,followup=false){
+    const trace=String(traceId||'');
+    if(!tracePattern.test(trace)||active.has(trace))return;
+    let memberToken='';try{memberToken=localStorage.getItem(sessionKey)||''}catch(_){}
+    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(memberToken))return;
+    active.add(trace);
+    const payload=JSON.stringify({tool,traceId:trace,category:String(category||'unknown').slice(0,70),kind:followup?'followup':'initial'});
+    // Non-blocking and retryable: analytics must never block, alter or refund an AI reading.
+    (async()=>{
+      for(const delay of [0,800,2500,6500]){
+        if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
+        try{
+          const r=await fetch(endpoint,{method:'POST',headers:{Authorization:'Bearer '+memberToken,'Content-Type':'application/json'},body:payload,cache:'no-store',keepalive:true});
+          if(r.status===202)continue;
+          if(r.ok)return;
+          return;
+        }catch(_){/* Statistics errors are intentionally isolated from the AI reading. */}
+      }
+    })().finally(()=>active.delete(trace));
+  };
+})();
+</script>
+
 </head>
 <body>
 <header class="sitebar"><div class="wrap sitebar-in"><a href="/" class="brand" aria-label="返回一念知機首頁">一念知機</a><nav class="header-tool-nav" aria-label="其他命理工具"><div class="header-tool-scroll" tabindex="0" aria-label="其他命理工具，可左右滑動"><a href="/qimen.html" draggable="false">奇門</a><a href="/tarot.html" draggable="false">塔羅</a><a href="/bazi.html" draggable="false">八字</a><a href="/ziwei.html" draggable="false">紫微</a><a href="/meihua.html" draggable="false">梅花</a><a href="/liuyao.html" draggable="false">六爻</a><a href="/yijing.html" draggable="false">易經64卦</a><a href="/cezi.html" draggable="false">測字</a><a href="/wuxing.html" draggable="false">五行</a><a href="/numerology.html" draggable="false">生命靈數</a></div></nav><div class="header-actions"><button class="small-btn" id="accountBtn" type="button">會員登入</button></div></div></header>
@@ -1155,7 +1186,7 @@ async function runFixed(topic,btn){if(!state.chart||state.aiBusy||state.castBusy
  try{
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic,aiOpId:newId()},permit.shared);
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未回傳完整可讀文章');
-  if(state.chart?.key===key){state.reports[topic]={reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',createdAt:Date.now()};storeReports();state.expanded=topic;renderReports();setStatus('aiStatus','AI 解讀完成，可在下方完整閱讀或下載。','ok');scrollTo($('readerCard'));}
+  if(state.chart?.key===key){state.reports[topic]={reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',createdAt:Date.now()};storeReports();void window.dhTrackAiSuccess?.('bazi',j.traceId,({personality:'character',career_deep:'career',social:'social',wealth_life:'wealth',love_deep:'love',overall_deep:'life',luck_turning:'life',fortune_risk:'marriage'})[topic]||'other');state.expanded=topic;renderReports();setStatus('aiStatus','AI 解讀完成，可在下方完整閱讀或下載。','ok');scrollTo($('readerCard'));}
  }catch(e){setStatus('aiStatus',displayError(e),'error');renderTraceError(e,topic)}
  finally{setAiBusy(false,btn);await refreshAiQuota()}
 }
@@ -1170,7 +1201,7 @@ async function runCustom(){if(!state.member){openMember();return}if(!state.chart
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未返回完整回答');
   if(state.chart?.key===key){const history=Array.isArray(state.reports.custom_questions)?state.reports.custom_questions.slice(-11):[];
    history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',followupId:j.followupId||'',promptVersion:CUSTOM_VERSION,createdAt:Date.now()});
-   state.reports.custom_questions=history;storeReports();state.expanded='custom_question_'+(history.length-1);renderReports();setStatus('aiStatus','自訂 AI 解讀完成，可查看下方文章。','ok');scrollTo($('readerCard'));
+   state.reports.custom_questions=history;storeReports();void window.dhTrackAiSuccess?.('bazi',j.traceId,state.questionCategory||'custom');state.expanded='custom_question_'+(history.length-1);renderReports();setStatus('aiStatus','自訂 AI 解讀完成，可查看下方文章。','ok');scrollTo($('readerCard'));
   }
  }catch(e){setStatus('aiStatus',displayError(e),'error');renderTraceError(e,'custom_question')}
  finally{setAiBusy(false,btn);await refreshAiQuota()}
