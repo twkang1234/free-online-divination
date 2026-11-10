@@ -2747,6 +2747,77 @@ html.numerology-mobile-page #numMobileCoreStrip #numMobileCoreGateHint{margin:9p
   .dh-quota .dh-quota-purchase{font-size:.61rem!important;padding:3px 6px!important;min-height:23px!important;right:6px!important;bottom:5px!important;}
 }
 </style>
+<!-- Unified member requirements: shared device lock + backend-managed welcome gift display. -->
+<style id="dh-mobile-member-policy-style">
+.dh-member-policy{margin-top:12px;padding:11px 13px;border:1px solid rgba(165,184,199,.27);border-radius:11px;background:rgba(10,19,25,.42);font-size:.78rem;line-height:1.65;color:inherit}
+.dh-member-policy strong{color:var(--gold,#e6c682)}
+.dh-member-policy .dh-member-note{font-size:.72rem;opacity:.78;margin-top:3px}
+.dh-member-policy .dh-member-lock{margin-top:8px;padding-top:7px;border-top:1px solid rgba(165,184,199,.18)}
+.dh-member-policy .dh-member-lock[hidden]{display:none!important}
+.dh-member-policy a{color:var(--mint,var(--gold,#e6c682));text-decoration:underline;text-underline-offset:2px;font-weight:700}
+</style>
+<script id="dh-mobile-member-policy">
+(function(){'use strict';
+ const SESSION='divinationhub-auth-session-v1';
+ const EVER='divinationhub-member-ever-verified-v1';
+ const LEGACY=['divinationhub-bazi-was-member-v1','divinationhub-wuxing-was-member-v1','divinationhub-tarot-ever-google-member-v1'];
+ const API='https://admin-api.ezgocpu.workers.dev/quota/welcome-gifts';
+ const MEMBER_API='https://member-api.ezgocpu.workers.dev/auth/session';
+ const tokenRx=/^dhs_[A-Za-z0-9_-]{43}$/;
+ let verifiedToken='',verification=null;
+ function read(k){try{return localStorage.getItem(k)||''}catch(_){return ''}}
+ function markVerified(t){const current=read(SESSION);if(t&&t===current&&tokenRx.test(t))verifiedToken=t;try{localStorage.setItem(EVER,'1')}catch(_){}refreshBanner(true);}
+ function hadMember(){return read(EVER)==='1'||LEGACY.some(k=>['1','true'].includes(read(k)))||tokenRx.test(read(SESSION));}
+ function isVerifiedSession(){return !!verifiedToken&&verifiedToken===read(SESSION);}
+ function loginUrl(){return '/member.html?return='+encodeURIComponent(location.pathname+location.search+location.hash);}
+ function login(){location.assign(loginUrl());}
+ // This is a UX guard, not a security boundary. Every API Worker must enforce login/guest rules too.
+ function allowGuest(authenticated){if(tokenRx.test(read(SESSION))&&(authenticated||isVerifiedSession()))return true;if(!hadMember())return true;login();return false;}
+ function allowAi(authenticated){if(tokenRx.test(read(SESSION))&&(authenticated||isVerifiedSession()))return true;login();return false;}
+ async function ensureVerified(){
+  const t=read(SESSION);if(!tokenRx.test(t))return false;
+  if(verifiedToken===t)return true;
+  if(verification)return verification;
+  verification=(async()=>{
+   try{const res=await fetch(MEMBER_API,{headers:{Authorization:'Bearer '+t,Accept:'application/json'},cache:'no-store'});
+    const j=await res.json();if(!res.ok||!j?.success||!j.authenticated||!j.member?.sub||t!==read(SESSION))return false;
+    markVerified(t);return true;
+   }catch(_){return false;}
+  })();
+  try{return await verification}finally{verification=null}
+ }
+ async function allowAiVerified(){if(await ensureVerified())return true;login();return false;}
+ function refreshBanner(authenticated=false){
+  const node=document.getElementById('dhMemberLockHint');if(node)node.hidden=!!authenticated||isVerifiedSession()||!hadMember();
+ }
+ function attachGiftCard(){
+  const quota=document.getElementById('baziQuotaPanel')||document.getElementById('quotaCard')||document.getElementById('numQuotaPanel');
+  if(!quota||document.getElementById('dhMobileWelcomeGift'))return;
+  const box=document.createElement('div');box.className='dh-member-policy';box.id='dhMobileWelcomeGift';
+  const heading=document.createElement('div');heading.innerHTML='<strong>🎁 新會員首次登入贈送</strong>：共用工具額度 <strong id="dhGiftTool">依後台設定</strong> ＋ 共用 AI 解讀額度 <strong id="dhGiftAi">依後台設定</strong>';
+  const note=document.createElement('div');note.className='dh-member-note';note.textContent='首次符合資格時只贈送一次，六個工具共用；不是每天補送。AI 解讀及追問均須登入會員。';
+  const lock=document.createElement('div');lock.className='dh-member-lock';lock.id='dhMemberLockHint';
+  const msg=document.createElement('span');msg.textContent='此瀏覽器曾登入會員。請重新登入才能繼續使用免費工具與 AI，無法再使用訪客額度。';
+  const link=document.createElement('a');link.href=loginUrl();link.textContent=' 重新登入會員';
+  lock.append(msg,link);box.append(heading,note,lock);
+  (quota.querySelector('.dh-quota-grid')||quota).insertAdjacentElement('afterend',box);
+  refreshBanner();
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),7500);
+  fetch(API,{method:'GET',cache:'no-store',signal:controller.signal,headers:{Accept:'application/json'}})
+   .then(r=>{if(!r.ok)throw Error('QUOTA_HTTP');return r.json()})
+   .then(d=>{if(!d?.success)return;const tool=d.gifts?.tool,ai=d.gifts?.ai;
+    if(Number.isInteger(tool)&&tool>=0&&tool<=1000&&Number.isInteger(ai)&&ai>=0&&ai<=1000){
+     document.getElementById('dhGiftTool').textContent=tool+' 次';
+     document.getElementById('dhGiftAi').textContent=ai+' 次';
+    }
+   }).catch(()=>{/* 不以猜測數字顯示設定；不影響工具 */}).finally(()=>clearTimeout(timer));
+ }
+ window.DHMobileMemberGate={markVerified,hadMember,isVerifiedSession,allowGuest,allowAi,allowAiVerified,ensureVerified,login,refreshBanner};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attachGiftCard,{once:true});else attachGiftCard();
+ window.addEventListener('storage',e=>{if(e.key===SESSION&&e.newValue!==verifiedToken)verifiedToken='';if([SESSION,EVER,...LEGACY].includes(e.key))refreshBanner(false)});
+ window.addEventListener('pageshow',()=>refreshBanner(isVerifiedSession()));
+})();
+</script>
 </head>
 <body>
 
@@ -4374,6 +4445,7 @@ function renderMonths(c){
   function numUpdateCalcCta(remaining,sharedRemaining,isMember){
    const btn=document.querySelector('#calcForm .calc-submit');if(!btn)return;
    const free=Number(remaining),shared=Number(sharedRemaining);
+   if(!isMember&&window.DHMobileMemberGate.hadMember()){btn.textContent='請重新登入會員';return}
    if(remaining===null||remaining===undefined||!Number.isFinite(free)){btn.textContent='開始計算 ✦';return}
    if(free>0){btn.textContent='開始免費計算 ✦';return}
    if(!isMember){btn.textContent='今日免費額度已用完';return}
@@ -4398,7 +4470,7 @@ function renderMonths(c){
     if(!Number.isFinite(Number(t.remaining))||!Number.isFinite(Number(t.limit))||!Number.isFinite(Number(a.remaining))||!Number.isFinite(Number(a.limit))||(requestToken&&(!Number.isFinite(Number(data.sharedAiRemaining))||data.sharedAiRemaining===null||!Number.isFinite(Number(data.sharedToolRemaining))||data.sharedToolRemaining===null)))throw Error('QUOTA_INCOMPLETE');
     numUpdateCalcCta(t.remaining,data.sharedToolRemaining,!!requestToken);
     $('numCalcBuyCredits').hidden=!(!!requestToken&&Number(t.remaining)===0&&Number(data.sharedToolRemaining)===0);
-    freeTool.textContent=`${t.remaining} / ${t.limit} 次`;
+    freeTool.textContent=!requestToken&&window.DHMobileMemberGate.hadMember()?'請重新登入':`${t.remaining} / ${t.limit} 次`;
     toolNote.textContent=Number(t.days)>0?`每 ${t.days} 天補充，不累積`:'依後端週期補充，不累積';
     free.textContent=requestToken?`${a.remaining} / ${a.limit} 次`:'登入後查看';
     note.textContent=Number(a.days)>0?`每 ${a.days} 天補充，不累積`:'依後端週期補充，不累積';
@@ -4435,6 +4507,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  }
  function numAiResponseError(code){return ({LOGIN_REQUIRED:'請先登入會員才能使用站內 AI。',AI_NOT_CONFIGURED:'AI 後端尚未完成部署或密鑰設定。',AI_EXHAUSTED:'免費 AI 與會員共用 AI 額度皆已用完，請至會員中心查看加購方案。',ORIGIN_DENIED:'網頁來源未被 AI 後端允許。',QUESTION_LENGTH:'請輸入 4～1600 字的自訂問題。',ALREADY_PROCESSING:'上一筆解讀仍在處理中。',AI_UNAVAILABLE:'AI 通道目前未能完整交付解讀，本次不應扣除 AI 額度。',WORKER_UNAVAILABLE:'AI Worker 暫時無法使用，請稍後再試。',INVALID_BIRTH_DATE:'出生日期無效，請重新計算命盤。',INVALID_PRESET:'AI 專題不存在，請重新選擇。',INVALID_STAGE:'人生階段選擇有誤，請重新選擇階段。',INVALID_TARGET_YEAR:'解讀年份不能早於出生年份，也不能超出可選範圍。',INVALID_TARGET_MONTH:'出生前的月份無法作個人流月解讀，請選擇出生當月以後。',INVALID_CONTEXT:'所選時間或階段有誤，請重新選擇。'})[code]||'站內 AI 暫時無法完成本次請求（'+code+'）。'}
  async function numAiFetch(path,method='GET',body=null){
+  if(!await window.DHMobileMemberGate.allowAiVerified())throw Error('LOGIN_REQUIRED');
   const token=numAiToken();if(!token)throw Error('LOGIN_REQUIRED');
   const affectsBalance=(method==='POST'&&(/^(\/ai\/(interpret|unlock))$/.test(path)))||(method==='GET'&&path.startsWith('/ai/result?'));
   if(affectsBalance)numQuotaInvalidate();
@@ -4751,7 +4824,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  }
  let numCalcBusy=false;
  $('calcForm').addEventListener('submit',async e=>{
-  e.preventDefault();if(numCalcBusy||aiRequestBusy)return;
+  e.preventDefault();if(numCalcBusy||aiRequestBusy)return;const verified=await window.DHMobileMemberGate.ensureVerified();if(!window.DHMobileMemberGate.allowGuest(verified))return;
   let originalBtn=$('calcForm').querySelector('button[type="submit"]');numCalcBusy=true;
   if(originalBtn)originalBtn.disabled=true;
   try{
@@ -4834,8 +4907,8 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  })();
  // Exactly like the Yijing main page: never identify a member by decoding a local token.
  // A verified /auth/session response is the only basis for showing the logged-in controls.
- async function verifyMember(){if(location.protocol==='file:')return;let token='';try{token=localStorage.getItem(SESSION)||''}catch(_){}if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;try{const response=await fetch(MEMBER_API+'/auth/session',{method:'GET',headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'});const body=await response.json();if(!response.ok||!body?.success||!body?.authenticated||!body?.member?.sub)return;let liveToken='';try{liveToken=localStorage.getItem(SESSION)||''}catch(_){}if(liveToken!==token)return;$('memberLink').textContent='會員中心';$('memberLink').classList.add('logged');$('memberLink').href='member.html';$('memberMenuBtn').hidden=false}catch(err){console.warn('會員狀態暫時無法驗證；不影響免費生命靈數計算。')}}
- void verifyMember();
+ async function verifyMember(){if(location.protocol==='file:')return;let token='';try{token=localStorage.getItem(SESSION)||''}catch(_){}if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(token))return;try{const response=await fetch(MEMBER_API+'/auth/session',{method:'GET',headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'});const body=await response.json();if(!response.ok||!body?.success||!body?.authenticated||!body?.member?.sub)return;let liveToken='';try{liveToken=localStorage.getItem(SESSION)||''}catch(_){}if(liveToken!==token)return;window.DHMobileMemberGate.markVerified(token);$('memberLink').textContent='會員中心';$('memberLink').classList.add('logged');$('memberLink').href='member.html';$('memberMenuBtn').hidden=false}catch(err){console.warn('會員狀態暫時無法驗證；不影響免費生命靈數計算。')}}
+ void verifyMember();window.addEventListener('focus',()=>{if(!document.hidden)void verifyMember()});window.addEventListener('storage',e=>{if(e.key===SESSION)void verifyMember()});
 
  function renderGridEvidence(){
   const box=$('numGridEvidence');if(!current||!box)return;box.replaceChildren();const c=current;

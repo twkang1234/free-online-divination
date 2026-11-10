@@ -245,6 +245,77 @@
   .dh-quota .dh-quota-purchase{font-size:.61rem!important;padding:3px 6px!important;min-height:23px!important;right:6px!important;bottom:5px!important;}
 }
 </style>
+<!-- Unified member requirements: shared device lock + backend-managed welcome gift display. -->
+<style id="dh-mobile-member-policy-style">
+.dh-member-policy{margin-top:12px;padding:11px 13px;border:1px solid rgba(165,184,199,.27);border-radius:11px;background:rgba(10,19,25,.42);font-size:.78rem;line-height:1.65;color:inherit}
+.dh-member-policy strong{color:var(--gold,#e6c682)}
+.dh-member-policy .dh-member-note{font-size:.72rem;opacity:.78;margin-top:3px}
+.dh-member-policy .dh-member-lock{margin-top:8px;padding-top:7px;border-top:1px solid rgba(165,184,199,.18)}
+.dh-member-policy .dh-member-lock[hidden]{display:none!important}
+.dh-member-policy a{color:var(--mint,var(--gold,#e6c682));text-decoration:underline;text-underline-offset:2px;font-weight:700}
+</style>
+<script id="dh-mobile-member-policy">
+(function(){'use strict';
+ const SESSION='divinationhub-auth-session-v1';
+ const EVER='divinationhub-member-ever-verified-v1';
+ const LEGACY=['divinationhub-bazi-was-member-v1','divinationhub-wuxing-was-member-v1','divinationhub-tarot-ever-google-member-v1'];
+ const API='https://admin-api.ezgocpu.workers.dev/quota/welcome-gifts';
+ const MEMBER_API='https://member-api.ezgocpu.workers.dev/auth/session';
+ const tokenRx=/^dhs_[A-Za-z0-9_-]{43}$/;
+ let verifiedToken='',verification=null;
+ function read(k){try{return localStorage.getItem(k)||''}catch(_){return ''}}
+ function markVerified(t){const current=read(SESSION);if(t&&t===current&&tokenRx.test(t))verifiedToken=t;try{localStorage.setItem(EVER,'1')}catch(_){}refreshBanner(true);}
+ function hadMember(){return read(EVER)==='1'||LEGACY.some(k=>['1','true'].includes(read(k)))||tokenRx.test(read(SESSION));}
+ function isVerifiedSession(){return !!verifiedToken&&verifiedToken===read(SESSION);}
+ function loginUrl(){return '/member.html?return='+encodeURIComponent(location.pathname+location.search+location.hash);}
+ function login(){location.assign(loginUrl());}
+ // This is a UX guard, not a security boundary. Every API Worker must enforce login/guest rules too.
+ function allowGuest(authenticated){if(tokenRx.test(read(SESSION))&&(authenticated||isVerifiedSession()))return true;if(!hadMember())return true;login();return false;}
+ function allowAi(authenticated){if(tokenRx.test(read(SESSION))&&(authenticated||isVerifiedSession()))return true;login();return false;}
+ async function ensureVerified(){
+  const t=read(SESSION);if(!tokenRx.test(t))return false;
+  if(verifiedToken===t)return true;
+  if(verification)return verification;
+  verification=(async()=>{
+   try{const res=await fetch(MEMBER_API,{headers:{Authorization:'Bearer '+t,Accept:'application/json'},cache:'no-store'});
+    const j=await res.json();if(!res.ok||!j?.success||!j.authenticated||!j.member?.sub||t!==read(SESSION))return false;
+    markVerified(t);return true;
+   }catch(_){return false;}
+  })();
+  try{return await verification}finally{verification=null}
+ }
+ async function allowAiVerified(){if(await ensureVerified())return true;login();return false;}
+ function refreshBanner(authenticated=false){
+  const node=document.getElementById('dhMemberLockHint');if(node)node.hidden=!!authenticated||isVerifiedSession()||!hadMember();
+ }
+ function attachGiftCard(){
+  const quota=document.getElementById('baziQuotaPanel')||document.getElementById('quotaCard')||document.getElementById('numQuotaPanel');
+  if(!quota||document.getElementById('dhMobileWelcomeGift'))return;
+  const box=document.createElement('div');box.className='dh-member-policy';box.id='dhMobileWelcomeGift';
+  const heading=document.createElement('div');heading.innerHTML='<strong>🎁 新會員首次登入贈送</strong>：共用工具額度 <strong id="dhGiftTool">依後台設定</strong> ＋ 共用 AI 解讀額度 <strong id="dhGiftAi">依後台設定</strong>';
+  const note=document.createElement('div');note.className='dh-member-note';note.textContent='首次符合資格時只贈送一次，六個工具共用；不是每天補送。AI 解讀及追問均須登入會員。';
+  const lock=document.createElement('div');lock.className='dh-member-lock';lock.id='dhMemberLockHint';
+  const msg=document.createElement('span');msg.textContent='此瀏覽器曾登入會員。請重新登入才能繼續使用免費工具與 AI，無法再使用訪客額度。';
+  const link=document.createElement('a');link.href=loginUrl();link.textContent=' 重新登入會員';
+  lock.append(msg,link);box.append(heading,note,lock);
+  (quota.querySelector('.dh-quota-grid')||quota).insertAdjacentElement('afterend',box);
+  refreshBanner();
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),7500);
+  fetch(API,{method:'GET',cache:'no-store',signal:controller.signal,headers:{Accept:'application/json'}})
+   .then(r=>{if(!r.ok)throw Error('QUOTA_HTTP');return r.json()})
+   .then(d=>{if(!d?.success)return;const tool=d.gifts?.tool,ai=d.gifts?.ai;
+    if(Number.isInteger(tool)&&tool>=0&&tool<=1000&&Number.isInteger(ai)&&ai>=0&&ai<=1000){
+     document.getElementById('dhGiftTool').textContent=tool+' 次';
+     document.getElementById('dhGiftAi').textContent=ai+' 次';
+    }
+   }).catch(()=>{/* 不以猜測數字顯示設定；不影響工具 */}).finally(()=>clearTimeout(timer));
+ }
+ window.DHMobileMemberGate={markVerified,hadMember,isVerifiedSession,allowGuest,allowAi,allowAiVerified,ensureVerified,login,refreshBanner};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attachGiftCard,{once:true});else attachGiftCard();
+ window.addEventListener('storage',e=>{if(e.key===SESSION&&e.newValue!==verifiedToken)verifiedToken='';if([SESSION,EVER,...LEGACY].includes(e.key))refreshBanner(false)});
+ window.addEventListener('pageshow',()=>refreshBanner(isVerifiedSession()));
+})();
+</script>
 </head>
 <body>
 <header class="sitebar"><div class="wrap sitebar-in"><a href="/" class="brand" aria-label="返回一念知機首頁">一念知機</a><nav class="header-tool-nav" aria-label="其他命理工具"><div class="header-tool-scroll" tabindex="0" aria-label="其他命理工具，可左右滑動"><a href="/qimen.html" draggable="false">奇門</a><a href="/tarot.html" draggable="false">塔羅</a><a href="/bazi.html" draggable="false">八字</a><a href="/ziwei.html" draggable="false">紫微</a><a href="/meihua.html" draggable="false">梅花</a><a href="/liuyao.html" draggable="false">六爻</a><a href="/yijing.html" draggable="false">易經64卦</a><a href="/cezi.html" draggable="false">測字</a><a href="/wuxing.html" draggable="false">五行</a><a href="/numerology.html" draggable="false">生命靈數</a></div></nav><div class="header-actions"><button class="small-btn" id="accountBtn" type="button">會員登入</button></div></div></header>
@@ -743,8 +814,8 @@ function newId(){
 }
 function currentSession(){try{return localStorage.getItem(SESSION)||''}catch(_){return ''}}
 function visitorId(){let id='';try{id=localStorage.getItem(VISITOR)||'';if(!/^[0-9a-f-]{36}$/i.test(id)){id=newId();localStorage.setItem(VISITOR,id)}}catch(_){id=window.__baziMobileVisitor||(window.__baziMobileVisitor=newId())}return id;}
-function knownMember(){try{return localStorage.getItem(KNOWN_MEMBER)==='1'}catch(_){return false}}
-function markMember(){try{localStorage.setItem(KNOWN_MEMBER,'1')}catch(_){}}
+function knownMember(){return !!window.DHMobileMemberGate?.hadMember()}
+function markMember(){try{localStorage.setItem(KNOWN_MEMBER,'1')}catch(_){}window.DHMobileMemberGate?.markVerified(currentSession());}
 function signedToken(){return state.member?.sub?state.session:''}
 function headers(json=false){return {...(json?{'Content-Type':'application/json'}:{}),'X-Bazi-Visitor-Id':visitorId(),...(signedToken()?{Authorization:'Bearer '+signedToken()}:{})};}
 function openMember(){const from=location.pathname+location.search+location.hash;location.href='/member.html?return='+encodeURIComponent(from);}
@@ -789,7 +860,7 @@ function renderBaziQuotaBoard(){
  const number=v=>v!==null&&v!==undefined&&Number.isFinite(Number(v))?Math.max(0,Number(v)):null;
  const freeTool=number(c?.remaining),toolLimit=number(c?.limit),sharedTool=number(c?.wallet?.tool??c?.sharedToolRemaining);
  const freeAi=number(a?.periodicAi?.remaining),aiLimit=number(a?.periodicAi?.limit),sharedAi=number(a?.sharedAiRemaining);
- $('baziQuotaFreeTool').textContent=c?.knownMember&&!c?.authenticated?'登入後查看':c&&freeTool!==null&&toolLimit!==null?`${freeTool} / ${toolLimit} 次`:state.castQuotaVerified?'暫時無法查詢':'額度尚未確認';
+ $('baziQuotaFreeTool').textContent=(knownMember()&&!member)||c?.knownMember&&!c?.authenticated?'登入後查看':c&&freeTool!==null&&toolLimit!==null?`${freeTool} / ${toolLimit} 次`:state.castQuotaVerified?'暫時無法查詢':'額度尚未確認';
  $('baziQuotaSharedTool').textContent=!member?'登入後查看':c&&sharedTool!==null?`${sharedTool} 次`:'額度尚未確認';
  $('baziQuotaFreeAi').textContent=!member?'登入後查看':a&&freeAi!==null&&aiLimit!==null?`${freeAi} / ${aiLimit} 次`:'額度尚未確認';
  $('baziQuotaSharedAi').textContent=!member?'登入後查看':a&&sharedAi!==null?`${sharedAi} 次`:'額度尚未確認';
@@ -825,7 +896,8 @@ function updateCastHint(){
   }else{
    total='免費 '+remain+' 次（依後端額度）';
   }
-  if(remain>0){label='免費排出我的八字';hint='免費排盤剩餘 '+remain+' 次，不扣會員共用額度。';}
+  if(!state.member&&knownMember()){label='請重新登入會員後排盤';hint='此瀏覽器曾登入會員，不能再使用訪客免費額度。';}
+  else if(remain>0){label='免費排出我的八字';hint='免費排盤剩餘 '+remain+' 次，不扣會員共用額度。';}
   else if(j.authenticated&&shared>0){label='會員排八字｜扣 1 次';hint='本次將使用 1 次會員共用工具額度，會員額度剩 '+shared+' 次';}
   else if(j.knownMember||knownMember()){label='登入會員後排盤';hint='登入後可以確認會員共用工具額度。';}
   else if(!j.authenticated){label='免費額度用完 · 登入會員';hint='登入會員後可查看會員共用工具額度。';}
@@ -848,7 +920,7 @@ async function refreshAiQuota(){
   renderTopicButtons();renderBaziQuotaBoard();return j;
  }catch(_){if(seq!==state.aiQuotaSeq)return null;state.aiQuota=null;state.quotaVerified=false;$('quotaInline').textContent='額度查詢失敗';$('customQuotaInline').textContent='會員 AI 解讀額度查詢失敗';renderTopicButtons();renderBaziQuotaBoard();return null;}
 }
-function aiAvailable(){return state.quotaVerified&&Number(state.aiQuota?.aiRemaining||0)>0;}
+function aiAvailable(){return !!state.member&&state.quotaVerified&&Number(state.aiQuota?.aiRemaining||0)>0;}
 function updateAiGate(){
  const box=$('aiGate'),message=$('aiGateMessage'),action=$('aiGateAction');
  if(!state.chart||state.aiBusy||aiAvailable()){box.hidden=true;return}
@@ -1086,7 +1158,7 @@ async function restorePreferences(){if(!state.member)return;try{
  const j=await memberRequest('/bazi-preferences');
  if(!state.chart&&!state.birthTouched)setBirthInput(j.default_profile||j.last_input);
  }catch(_){}}
-async function castBirth(){if(state.castBusy||state.aiBusy||state.authPending)return;
+async function castBirth(){if(state.castBusy||state.aiBusy||state.authPending)return;if(!window.DHMobileMemberGate.allowGuest(!!state.member))return;
  let b;try{b=collectBirth()}catch(e){setStatus('castStatus',e.message,'error');return}
  if(state.chart&&state.chart.key!==chartKey(b)&&reportsExist()&&!confirm('目前命盤已有 AI 解讀。切換命盤後可能無法恢復，建議先下載或複製。\n確定繼續嗎？'))return;
  if(typeof Solar==='undefined'||typeof Lunar==='undefined'){setStatus('castStatus','曆法元件未載入，請檢查網路後重整頁面。','error');return}
@@ -1122,6 +1194,7 @@ async function castBirth(){if(state.castBusy||state.aiBusy||state.authPending)re
 }
 function displayError(e){const map={SHARED_AI_CONFIRM_REQUIRED:'需要確認會員共用 AI 額度。',AI_OPERATION_DUPLICATE:'上一筆解讀可能已完成，請勿連點，檢查現有文章或額度。',FOLLOWUP_UNAVAILABLE:'此題已追問或追問已失效。',FOLLOWUP_CHART_MISMATCH:'追問必須使用原命盤。'};return map[e.code]||e.message||'請稍後再試'}
 async function permissionForAi(){
+ if(!window.DHMobileMemberGate.allowAi(!!state.member))return null;
  const q=await refreshAiQuota();if(!q){setStatus('aiStatus','AI 額度暫時無法確認，請稍後再試。','error');return null}
  const free=Math.max(0,Number(q.periodicAi?.remaining)||0),shared=Math.max(0,Number(q.sharedAiRemaining)||0);
  if(free>0)return {shared:false};

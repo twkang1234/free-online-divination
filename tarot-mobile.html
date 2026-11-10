@@ -180,6 +180,77 @@
  .dh-quota .dh-quota-purchase{font-size:.61rem!important;padding:3px 6px!important;right:5px!important;bottom:5px!important;}
 }
 </style>
+<!-- Unified member requirements: shared device lock + backend-managed welcome gift display. -->
+<style id="dh-mobile-member-policy-style">
+.dh-member-policy{margin-top:12px;padding:11px 13px;border:1px solid rgba(165,184,199,.27);border-radius:11px;background:rgba(10,19,25,.42);font-size:.78rem;line-height:1.65;color:inherit}
+.dh-member-policy strong{color:var(--gold,#e6c682)}
+.dh-member-policy .dh-member-note{font-size:.72rem;opacity:.78;margin-top:3px}
+.dh-member-policy .dh-member-lock{margin-top:8px;padding-top:7px;border-top:1px solid rgba(165,184,199,.18)}
+.dh-member-policy .dh-member-lock[hidden]{display:none!important}
+.dh-member-policy a{color:var(--mint,var(--gold,#e6c682));text-decoration:underline;text-underline-offset:2px;font-weight:700}
+</style>
+<script id="dh-mobile-member-policy">
+(function(){'use strict';
+ const SESSION='divinationhub-auth-session-v1';
+ const EVER='divinationhub-member-ever-verified-v1';
+ const LEGACY=['divinationhub-bazi-was-member-v1','divinationhub-wuxing-was-member-v1','divinationhub-tarot-ever-google-member-v1'];
+ const API='https://admin-api.ezgocpu.workers.dev/quota/welcome-gifts';
+ const MEMBER_API='https://member-api.ezgocpu.workers.dev/auth/session';
+ const tokenRx=/^dhs_[A-Za-z0-9_-]{43}$/;
+ let verifiedToken='',verification=null;
+ function read(k){try{return localStorage.getItem(k)||''}catch(_){return ''}}
+ function markVerified(t){const current=read(SESSION);if(t&&t===current&&tokenRx.test(t))verifiedToken=t;try{localStorage.setItem(EVER,'1')}catch(_){}refreshBanner(true);}
+ function hadMember(){return read(EVER)==='1'||LEGACY.some(k=>['1','true'].includes(read(k)))||tokenRx.test(read(SESSION));}
+ function isVerifiedSession(){return !!verifiedToken&&verifiedToken===read(SESSION);}
+ function loginUrl(){return '/member.html?return='+encodeURIComponent(location.pathname+location.search+location.hash);}
+ function login(){location.assign(loginUrl());}
+ // This is a UX guard, not a security boundary. Every API Worker must enforce login/guest rules too.
+ function allowGuest(authenticated){if(tokenRx.test(read(SESSION))&&(authenticated||isVerifiedSession()))return true;if(!hadMember())return true;login();return false;}
+ function allowAi(authenticated){if(tokenRx.test(read(SESSION))&&(authenticated||isVerifiedSession()))return true;login();return false;}
+ async function ensureVerified(){
+  const t=read(SESSION);if(!tokenRx.test(t))return false;
+  if(verifiedToken===t)return true;
+  if(verification)return verification;
+  verification=(async()=>{
+   try{const res=await fetch(MEMBER_API,{headers:{Authorization:'Bearer '+t,Accept:'application/json'},cache:'no-store'});
+    const j=await res.json();if(!res.ok||!j?.success||!j.authenticated||!j.member?.sub||t!==read(SESSION))return false;
+    markVerified(t);return true;
+   }catch(_){return false;}
+  })();
+  try{return await verification}finally{verification=null}
+ }
+ async function allowAiVerified(){if(await ensureVerified())return true;login();return false;}
+ function refreshBanner(authenticated=false){
+  const node=document.getElementById('dhMemberLockHint');if(node)node.hidden=!!authenticated||isVerifiedSession()||!hadMember();
+ }
+ function attachGiftCard(){
+  const quota=document.getElementById('baziQuotaPanel')||document.getElementById('quotaCard')||document.getElementById('numQuotaPanel');
+  if(!quota||document.getElementById('dhMobileWelcomeGift'))return;
+  const box=document.createElement('div');box.className='dh-member-policy';box.id='dhMobileWelcomeGift';
+  const heading=document.createElement('div');heading.innerHTML='<strong>🎁 新會員首次登入贈送</strong>：共用工具額度 <strong id="dhGiftTool">依後台設定</strong> ＋ 共用 AI 解讀額度 <strong id="dhGiftAi">依後台設定</strong>';
+  const note=document.createElement('div');note.className='dh-member-note';note.textContent='首次符合資格時只贈送一次，六個工具共用；不是每天補送。AI 解讀及追問均須登入會員。';
+  const lock=document.createElement('div');lock.className='dh-member-lock';lock.id='dhMemberLockHint';
+  const msg=document.createElement('span');msg.textContent='此瀏覽器曾登入會員。請重新登入才能繼續使用免費工具與 AI，無法再使用訪客額度。';
+  const link=document.createElement('a');link.href=loginUrl();link.textContent=' 重新登入會員';
+  lock.append(msg,link);box.append(heading,note,lock);
+  (quota.querySelector('.dh-quota-grid')||quota).insertAdjacentElement('afterend',box);
+  refreshBanner();
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),7500);
+  fetch(API,{method:'GET',cache:'no-store',signal:controller.signal,headers:{Accept:'application/json'}})
+   .then(r=>{if(!r.ok)throw Error('QUOTA_HTTP');return r.json()})
+   .then(d=>{if(!d?.success)return;const tool=d.gifts?.tool,ai=d.gifts?.ai;
+    if(Number.isInteger(tool)&&tool>=0&&tool<=1000&&Number.isInteger(ai)&&ai>=0&&ai<=1000){
+     document.getElementById('dhGiftTool').textContent=tool+' 次';
+     document.getElementById('dhGiftAi').textContent=ai+' 次';
+    }
+   }).catch(()=>{/* 不以猜測數字顯示設定；不影響工具 */}).finally(()=>clearTimeout(timer));
+ }
+ window.DHMobileMemberGate={markVerified,hadMember,isVerifiedSession,allowGuest,allowAi,allowAiVerified,ensureVerified,login,refreshBanner};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attachGiftCard,{once:true});else attachGiftCard();
+ window.addEventListener('storage',e=>{if(e.key===SESSION&&e.newValue!==verifiedToken)verifiedToken='';if([SESSION,EVER,...LEGACY].includes(e.key))refreshBanner(false)});
+ window.addEventListener('pageshow',()=>refreshBanner(isVerifiedSession()));
+})();
+</script>
 </head>
 <body>
 <header class="sitebar"><div class="sitebar-inner"><a class="brand" href="/" aria-label="返回一念知機首頁">一念知機</a><nav class="header-tool-nav" aria-label="其他命理工具"><div class="header-tool-scroll" tabindex="0" aria-label="命理工具，可左右滑動"><a href="/qimen.html" draggable="false">奇門</a><a href="/tarot-mobile.html" draggable="false">塔羅</a><a href="/bazi.html" draggable="false">八字</a><a href="/ziwei.html" draggable="false">紫微</a><a href="/meihua.html" draggable="false">梅花</a><a href="/liuyao.html" draggable="false">六爻</a><a href="/yijing.html" draggable="false">易經64卦</a><a href="/cezi.html" draggable="false">測字</a><a href="/wuxing.html" draggable="false">五行</a><a href="/numerology.html" draggable="false">生命靈數</a></div></nav><div class="header-right"><a class="member-link" id="memberBtn" href="/member.html">免費登入</a></div></div></header>
@@ -332,7 +403,7 @@ function ownerKey(){const t=localRead(SESSION_KEY);return t?'member:'+t.slice(-2
 function visitorId(){const v=localRead(VISITOR_KEY);if(/^[a-f0-9-]{36}$/i.test(v))return v;const id=UUID();localWrite(VISITOR_KEY,id);return id;}
 function token(){return member?.sub?localRead(SESSION_KEY):''}
 function isBound(){return localRead(DEVICE_BOUND)==='true'||localRead(DEVICE_BOUND)==='1'}
-function guestNeedsLogin(){return !member&&isBound()}
+function guestNeedsLogin(){return !member&&window.DHMobileMemberGate.hadMember()}
 function persist(){state.owner=ownerKey();sessionWrite(DRAFT_KEY,JSON.stringify(state));}
 function restore(){try{const x=JSON.parse(sessionRead(DRAFT_KEY)||'null');if(x?.version===1&&x.owner===ownerKey()&&x.stage&&Date.now()-Number(x.savedAt||0)<7*86400000){state={...defaultState(),...x};return true}}catch(_){}return false;}
 function save(){state.savedAt=Date.now();persist();}
@@ -351,7 +422,7 @@ async function restoreMember(){if(sessionPending)return;sessionPending=true;cons
     const t=await fetch(API+'/session-check',{headers:h,cache:'no-store'}).then(r=>r.json());
     if(!t?.success||!t.authenticated||t.member?.sub!==m.member.sub)throw Error('TAROT_SESSION_FAILED');
     if(localRead(SESSION_KEY)!==original)return;
-    member={sub:m.member.sub,name:m.member.name||m.member.email||'會員'};localWrite(DEVICE_BOUND,'true');verified=true;
+    member={sub:m.member.sub,name:m.member.name||m.member.email||'會員'};localWrite(DEVICE_BOUND,'true');window.DHMobileMemberGate.markVerified(original);verified=true;
   }catch(e){member=null;verified=false;setStatus('quotaStatus','會員登入尚未驗證，請稍後更新或重新登入。',true)}
   finally{sessionPending=false;updateMemberButton();if(!quotaInFlight&&Date.now()-quotaLastFinished>30000)void refreshQuota();if(state.reportA){updateArchiveMessage();if(member)void autoSaveRecord();}}
 }
@@ -382,7 +453,7 @@ async function refreshQuotaInner(){
   const tool=readQuotaWithDeadline('/wallet/tarot/status').then(d=>{
     if(seq!==quotaSeq||owner!==ownerKey())return;
     quota.tool=d;
-    $('freeDraw').textContent=`${d.daily?.remaining??'—'} / ${d.daily?.limit??'—'} 次`;
+    $('freeDraw').textContent=!member&&window.DHMobileMemberGate.hadMember()?'請重新登入':`${d.daily?.remaining??'—'} / ${d.daily?.limit??'—'} 次`;
     $('sharedDraw').textContent=d.wallet?`${d.wallet.tool} 次`:'登入後查看';
     const days=Number(d.daily?.days);if(Number.isInteger(days)&&days>0)$('tarotFreeToolCycle').textContent=`每 ${days} 天補充，不累積`;
   }).catch(e=>{
@@ -394,7 +465,7 @@ async function refreshQuotaInner(){
   const ai=readQuotaWithDeadline('/ai/center/quota').then(d=>{
     if(seq!==quotaSeq||owner!==ownerKey())return;
     quota.ai=d.quota;
-    $('freeAI').textContent=`${d.quota?.daily?.remaining??'—'} / ${d.quota?.daily?.limit??'—'} 次`;
+    $('freeAI').textContent=member?`${d.quota?.daily?.remaining??'—'} / ${d.quota?.daily?.limit??'—'} 次`:'登入後查看';
     $('sharedAI').textContent=d.quota?.role==='member'?`${d.quota?.wallet?.ai??0} 次`:'登入後查看';
     const days=Number(d.quota?.daily?.days);if(Number.isInteger(days)&&days>0)$('tarotFreeAiCycle').textContent=`每 ${days} 天補充，不累積`;
   }).catch(e=>{
@@ -455,7 +526,7 @@ async function customCharge(kind){if(state.customPaid)return true;if(!member)thr
  }
  if(!r.ok||!data.ok)throw Object.assign(new Error(data.error||'CUSTOM_CHARGE_FAILED'),{data});state.customPaid=true;save();void refreshQuota();return true;
 }
-async function initiate(){if(busy||state.stage!=='select')return;const raw=typed.normalize('NFKC').trim().replace(/\s+/g,' ');const fixed=!!(selected&&raw===selected.text.normalize('NFKC').trim().replace(/\s+/g,' '));
+async function initiate(){if(busy||state.stage!=='select')return;if(!window.DHMobileMemberGate.allowGuest(!!member))return;const raw=typed.normalize('NFKC').trim().replace(/\s+/g,' ');const fixed=!!(selected&&raw===selected.text.normalize('NFKC').trim().replace(/\s+/g,' '));
  if(!raw){setStatus('selectionStatus','請先選擇一個問題。',true);return;}
  if(!fixed){const err=customError(raw);if(err){setStatus('selectionStatus',err,true);$('customDetails').open=true;return;}}
  if(guestNeedsLogin()){needLogin();return;}
@@ -529,7 +600,7 @@ function render(){const selecting=state.stage==='select',drawing=state.stage==='
 function payloadForAI(stage){const six=stage===6;if(state.cardsA.length!==3||six&&state.cardsB.length!==3)throw Error('牌面尚未完成，無法開始 AI 解讀。');const q=state.question;
  return {stage,format:'A',style:'direct',topicName:topic(state.topicId).name,scenarioName:q.scenarioName||'自行提問',question:q.text,...(q.custom?{customQuestion:true}:{}),firstSpread:state.spreadA,cards:state.cardsA.map(c=>({name:c.name,reversed:!!c.reversed,position:c.position})),...(six?{secondSpread:state.spreadB,secondCards:state.cardsB.map(c=>({name:c.name,reversed:!!c.reversed,position:c.position})),followChoice:'same',followText:''}:{})};
 }
-async function runAI(which){if(busy)return;if(guestNeedsLogin()){needLogin();return}const six=which==='b',key=six?'reportB':'reportA';if(state[key])return;
+async function runAI(which){if(busy)return;if(!window.DHMobileMemberGate.allowAi(!!member))return;const six=which==='b',key=six?'reportB':'reportA';if(state[key])return;
  const btn=$(six?'runAiB':'runAiA'),loading=$(six?'loadingB':'loadingA'),status=six?'aiStatusB':'aiStatusA';
  busy=true;btn.disabled=true;loading.hidden=false;setStatus(status,'正在核對 AI 額度，避免未經確認使用會員共用次數。');
  try{
@@ -554,7 +625,7 @@ async function runAI(which){if(busy)return;if(guestNeedsLogin()){needLogin();ret
  }catch(e){setStatus(status,'AI 解讀未完成：'+codeLabel(e)+'。如果剛剛已扣點，請先更新額度並回報，不要直接重複送出。',true);notice(codeLabel(e),true);}
  finally{busy=false;loading.hidden=true;btn.disabled=false;}
 }
-async function beginSecond(){if(busy||!state.reportA||state.cardsB.length===3)return;
+async function beginSecond(){if(busy||!state.reportA||state.cardsB.length===3)return;if(!window.DHMobileMemberGate.allowGuest(!!member))return;
  if(guestNeedsLogin()){needLogin();return;}
  busy=true;$('beginSecond').disabled=true;
  try{await drawCharge('b');state.ended=false;state.reportExpandedA=false;save();beginDraw('b')}
