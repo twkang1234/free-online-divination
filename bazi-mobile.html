@@ -245,37 +245,6 @@
   .dh-quota .dh-quota-purchase{font-size:.61rem!important;padding:3px 6px!important;min-height:23px!important;right:6px!important;bottom:5px!important;}
 }
 </style>
-
-<script id="dh-mobile-ai-activity-v1">
-(()=>{
-  'use strict';
-  const endpoint='https://admin-api.ezgocpu.workers.dev/ai-activity/complete';
-  const sessionKey='divinationhub-auth-session-v1';
-  const tracePattern=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
-  const active=new Set();
-  window.dhTrackAiSuccess=function(tool,traceId,category,followup=false){
-    const trace=String(traceId||'');
-    if(!tracePattern.test(trace)||active.has(trace))return;
-    let memberToken='';try{memberToken=localStorage.getItem(sessionKey)||''}catch(_){}
-    if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(memberToken))return;
-    active.add(trace);
-    const payload=JSON.stringify({tool,traceId:trace,category:String(category||'unknown').slice(0,70),kind:followup?'followup':'initial'});
-    // Non-blocking and retryable: analytics must never block, alter or refund an AI reading.
-    (async()=>{
-      for(const delay of [0,800,2500,6500]){
-        if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
-        try{
-          const r=await fetch(endpoint,{method:'POST',headers:{Authorization:'Bearer '+memberToken,'Content-Type':'application/json'},body:payload,cache:'no-store',keepalive:true});
-          if(r.status===202)continue;
-          if(r.ok)return;
-          return;
-        }catch(_){/* Statistics errors are intentionally isolated from the AI reading. */}
-      }
-    })().finally(()=>active.delete(trace));
-  };
-})();
-</script>
-
 </head>
 <body>
 <header class="sitebar"><div class="wrap sitebar-in"><a href="/" class="brand" aria-label="返回一念知機首頁">一念知機</a><nav class="header-tool-nav" aria-label="其他命理工具"><div class="header-tool-scroll" tabindex="0" aria-label="其他命理工具，可左右滑動"><a href="/qimen.html" draggable="false">奇門</a><a href="/tarot.html" draggable="false">塔羅</a><a href="/bazi.html" draggable="false">八字</a><a href="/ziwei.html" draggable="false">紫微</a><a href="/meihua.html" draggable="false">梅花</a><a href="/liuyao.html" draggable="false">六爻</a><a href="/yijing.html" draggable="false">易經64卦</a><a href="/cezi.html" draggable="false">測字</a><a href="/wuxing.html" draggable="false">五行</a><a href="/numerology.html" draggable="false">生命靈數</a></div></nav><div class="header-actions"><button class="small-btn" id="accountBtn" type="button">會員登入</button></div></div></header>
@@ -1186,7 +1155,7 @@ async function runFixed(topic,btn){if(!state.chart||state.aiBusy||state.castBusy
  try{
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic,aiOpId:newId()},permit.shared);
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未回傳完整可讀文章');
-  if(state.chart?.key===key){state.reports[topic]={reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',createdAt:Date.now()};storeReports();void window.dhTrackAiSuccess?.('bazi',j.traceId,({personality:'character',career_deep:'career',social:'social',wealth_life:'wealth',love_deep:'love',overall_deep:'life',luck_turning:'life',fortune_risk:'marriage'})[topic]||'other');state.expanded=topic;renderReports();setStatus('aiStatus','AI 解讀完成，可在下方完整閱讀或下載。','ok');scrollTo($('readerCard'));}
+  if(state.chart?.key===key){state.reports[topic]={reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',createdAt:Date.now()};window.dhTrackMobileAiSuccess?.('bazi',j.traceId,topic);storeReports();state.expanded=topic;renderReports();setStatus('aiStatus','AI 解讀完成，可在下方完整閱讀或下載。','ok');scrollTo($('readerCard'));}
  }catch(e){setStatus('aiStatus',displayError(e),'error');renderTraceError(e,topic)}
  finally{setAiBusy(false,btn);await refreshAiQuota()}
 }
@@ -1200,8 +1169,8 @@ async function runCustom(){if(!state.member){openMember();return}if(!state.chart
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_question',question,questionMeta:meta,aiOpId:newId()},permit.shared);
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未返回完整回答');
   if(state.chart?.key===key){const history=Array.isArray(state.reports.custom_questions)?state.reports.custom_questions.slice(-11):[];
-   history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',followupId:j.followupId||'',promptVersion:CUSTOM_VERSION,createdAt:Date.now()});
-   state.reports.custom_questions=history;storeReports();void window.dhTrackAiSuccess?.('bazi',j.traceId,state.questionCategory||'custom');state.expanded='custom_question_'+(history.length-1);renderReports();setStatus('aiStatus','自訂 AI 解讀完成，可查看下方文章。','ok');scrollTo($('readerCard'));
+   history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',followupId:j.followupId||'',promptVersion:CUSTOM_VERSION,createdAt:Date.now()});window.dhTrackMobileAiSuccess?.('bazi',j.traceId,meta.category);
+   state.reports.custom_questions=history;storeReports();state.expanded='custom_question_'+(history.length-1);renderReports();setStatus('aiStatus','自訂 AI 解讀完成，可查看下方文章。','ok');scrollTo($('readerCard'));
   }
  }catch(e){setStatus('aiStatus',displayError(e),'error');renderTraceError(e,'custom_question')}
  finally{setAiBusy(false,btn);await refreshAiQuota()}
@@ -1215,7 +1184,7 @@ async function runFollowup(index,input,button){if(!state.member||state.aiBusy||!
  try{
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_followup',question,followupId:r.followupId,aiOpId:newId()},permit.shared);
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('追問未返回完整答案');
-  if(state.chart?.key===key&&state.reports?.custom_questions?.[index]?.followupId===r.followupId){state.reports.custom_questions[index]={...r,followupQuestion:question,followupReading:j.reading,followupChannel:j.channel||'',followupTraceId:j.traceId||'',followupId:''};storeReports();state.expanded='custom_question_'+index;renderReports();setStatus('aiStatus','追問完成。','ok');scrollTo($('readerCard'))}
+  if(state.chart?.key===key&&state.reports?.custom_questions?.[index]?.followupId===r.followupId){state.reports.custom_questions[index]={...r,followupQuestion:question,followupReading:j.reading,followupChannel:j.channel||'',followupTraceId:j.traceId||'',followupId:''};window.dhTrackMobileAiSuccess?.('bazi',j.traceId,'followup','followup');storeReports();state.expanded='custom_question_'+index;renderReports();setStatus('aiStatus','追問完成。','ok');scrollTo($('readerCard'))}
  }catch(e){setStatus('aiStatus',displayError(e),'error');renderTraceError(e,'custom_followup')}
  finally{setAiBusy(false,button);await refreshAiQuota()}
 }
@@ -1503,6 +1472,42 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     panel.open=false;
     panel.querySelector('summary')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
   });
+})();
+</script>
+
+<script id="dh-member-usage-mobile-source-v2">
+/* 原會員排行榜手機來源補充：僅 AI 成功後回傳追蹤碼與粗分類，不干預 AI 解讀／額度。 */
+(function(){'use strict';
+ const ENDPOINT='https://admin-api.ezgocpu.workers.dev/member-usage/ai-success-source';
+ const TOKEN_KEY='divinationhub-auth-session-v1';
+ const KEY='dh-member-usage-source-pending-v2';
+ const TRACE=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
+ let flushing=false;
+ function token(){try{const t=localStorage.getItem(TOKEN_KEY)||'';return /^dhs_[A-Za-z0-9_-]{43}$/.test(t)?t:''}catch(_){return ''}}
+ function pending(){try{const d=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(d)?d.filter(x=>x&&Date.now()-Number(x.addedAt||0)<6*86400000).slice(-35):[]}catch(_){return []}}
+ function save(rows){try{localStorage.setItem(KEY,JSON.stringify(rows.slice(-35)))}catch(_){}}
+ async function flush(){
+  if(flushing||!token())return;flushing=true;
+  try{let a=pending();for(const event of a.slice(0,8)){
+   let done=false;
+   try{
+    const r=await fetch(ENDPOINT,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},body:JSON.stringify({tool:event.tool,traceId:event.traceId,category:event.category,kind:event.kind,clientSurface:'mobile'})});
+    const j=await r.json().catch(()=>({}));
+    done=!!(r.ok&&j.success)||(r.status!==202&&[400,409].includes(r.status));
+    if(r.status===401)break;
+   }catch(_){}
+   if(done){a=a.filter(x=>x.traceId!==event.traceId);save(a)}
+  }}finally{flushing=false}
+ }
+ window.dhTrackMobileAiSuccess=function(tool,traceId,category,kind='initial'){
+  const id=String(traceId||'');if(!token()||!TRACE.test(id))return;
+  let a=pending();if(a.some(x=>x.traceId===id))return;
+  a.push({tool:String(tool),traceId:id,category:String(category||'unknown').slice(0,60),kind:kind==='followup'?'followup':'initial',addedAt:Date.now()});save(a);
+  void flush();setTimeout(()=>void flush(),1800);setTimeout(()=>void flush(),9000);
+ };
+ window.addEventListener('pageshow',()=>{setTimeout(()=>void flush(),2000)});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)void flush()});
+ setTimeout(()=>void flush(),3500);
 })();
 </script>
 </body></html>

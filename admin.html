@@ -485,38 +485,6 @@ td.muted{color:var(--muted)}
 .aiq-member-history{margin-top:14px;border:1px solid #334c5f;padding:12px;border-radius:10px;background:#0b1823}.aiq-member-history>summary{cursor:pointer;font-weight:800;color:#b2dce8;font-size:.85rem}
 .aiq-member-history .aiq-line{padding:10px;border-bottom:1px solid #223442;line-height:1.6}.aiq-line:last-child{border-bottom:none}.aiq-line small{display:block;color:#a4b3c3}.aiq-line .question{white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:600px){.aiq-inner{padding:12px}.aiq-toolbar>*{max-width:100%}}
-
-/* AI activity independent admin panel */
-.dh-member-ai-activity>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px 18px;cursor:pointer;font-weight:800}
-.dh-member-ai-activity>summary::-webkit-details-marker{display:none}
-.dh-member-ai-activity>summary::after{content:'▾';color:var(--gold)}
-.dh-member-ai-activity[open]>summary{border-bottom:1px solid var(--line)}
-.dh-member-ai-activity[open]>summary::after{content:'▴'}
-.dh-ma-inner{padding:17px 18px 20px;display:grid;gap:13px}
-.dh-ma-note{margin:0;color:#a9b8cb;font-size:.77rem;line-height:1.76}
-.dh-ma-periods{display:flex;gap:7px;flex-wrap:wrap}
-.dh-ma-periods button{border:1px solid #344258;border-radius:9px;padding:9px 13px;background:#101825;color:#b7c7d9;cursor:pointer;font-size:.79rem}
-.dh-ma-periods button[aria-pressed=true]{border-color:#a99560;background:#322817;color:#ffe4aa;font-weight:800}
-.dh-ma-filters{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
-.dh-ma-filters label{display:grid;gap:5px;color:#b8c7d5;font-size:.76rem}
-.dh-ma-filters input,.dh-ma-filters select{background:#0b121c;border:1px solid #3d5063;border-radius:8px;padding:9px 11px;color:#f1e9df;min-height:38px;font:inherit;max-width:100%}
-.dh-ma-filters label:has([type=search]){flex:1 1 190px}
-.dh-ma-filters [type=search]{width:100%}
-.dh-ma-filters .dh-ma-check{display:flex;align-items:center;gap:8px;white-space:nowrap;min-height:38px}
-.dh-ma-filters .dh-ma-check input{min-height:0;accent-color:#d9b65d;width:16px;height:16px}
-.dh-ma-status{color:#c3d5e4;font-size:.79rem;line-height:1.6}
-.dh-ma-status.error{color:#ffb1b5}
-.dh-ma-table-wrap{overflow-x:auto;border:1px solid #303c4b;border-radius:11px}
-.dh-ma-table-wrap table{width:100%;min-width:690px}
-.dh-ma-table-wrap th,.dh-ma-table-wrap td{padding:11px 12px;font-size:.79rem}
-.dh-ma-table-wrap th{background:#0b131d}
-.dh-ma-table-wrap td small{display:block;color:#93a8ba;font-size:.69rem;margin-top:3px}
-.dh-ma-table-wrap .dh-ma-date{color:#ead49c;white-space:nowrap;font-variant-numeric:tabular-nums}
-.dh-ma-table-wrap .dh-ma-category{color:#d7e8ee;font-weight:730}
-.dh-ma-table-wrap .dh-ma-followup{color:#d5a4ec;font-size:.68rem}
-.dh-ma-more{text-align:center}
-@media(max-width:650px){.dh-ma-inner{padding:13px}.dh-ma-filters>*{max-width:100%}}
-
 </style>
 </head>
 <body>
@@ -726,9 +694,9 @@ td.muted{color:var(--muted)}
       </div>
     </details>
     <details class="section member-usage-box" id="memberUsagePanel">
-      <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設展開｜依成功使用排行）</small></span></summary>
+      <summary><span>會員實際使用排行榜 <small style="font-weight:500;color:#93a4b8">（預設展開｜AI 成功優先，含手機版）</small></span></summary>
       <div class="member-usage-body">
-        <p class="member-usage-note">僅統計已登入會員成功完成的排盤、抽牌、起卦或第二階段深度測字；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>八字、塔羅、易經、測字、五行皆支援會員成功使用事件；新增功能偏好僅完整模式記錄，不回填歷史。</strong> 使用地區顯示會員最近一次成功使用時的 Cloudflare 連線國家／地區；舊資料不回推，VPN 可能影響判定。</p>
+        <p class="member-usage-note">僅統計已登入會員成功完成的排盤、抽牌、起卦或第二階段深度測字；自動登入、單純開頁不計入。此為可獨立關閉的次要功能，不影響原有的全站工具統計或 AI 服務。<strong>會員 AI 成功紀錄會從已有工具統計與可驗證的逐次事件合併顯示；新手機版來源只在部署後新增的成功事件標記，歷史不回填。</strong> 使用地區顯示會員最近一次成功使用時的 Cloudflare 連線國家／地區；舊資料不回推，VPN 可能影響判定。</p>
         <div class="member-usage-settings">
           <div class="member-usage-settings-head"><strong style="font-size:.86rem">統計模式</strong><span class="member-usage-status" id="memberUsageModeTime">尚未讀取設定</span></div>
           <div class="member-usage-fields">
@@ -773,33 +741,6 @@ td.muted{color:var(--muted)}
         <div class="member-usage-status" id="dhFeatureSummary">展開後查詢功能資料。</div>
         <div class="table-wrap" id="dhFeatureRows"></div>
         <div class="member-usage-status" id="dhFeatureError"></div>
-      </div>
-    </details>
-
-
-    <!-- 新增：會員每日 AI 使用分類紀錄；與原排行榜、熱門題目分析完全獨立。 -->
-    <details class="section dh-member-ai-activity" id="dhMemberAiActivity" style="margin-bottom:24px">
-      <summary><span>會員每日 AI 使用紀錄 <small style="font-weight:500;color:#96a7b9">｜會員帳號・工具・題目大類・成功時間</small></span></summary>
-      <div class="dh-ma-inner">
-        <p class="dh-ma-note">僅顯示已登入會員且有伺服器成功事件的 AI 解讀。已接入的手機版與電腦版資料合併；不儲存或顯示完整提問、出生資料或 AI 文章。舊紀錄能辨識的逐次事件會列出，只有總計次數而沒有時間的舊資料不會假造明細。</p>
-        <div class="dh-ma-periods" id="dhMaPeriods" role="group" aria-label="查詢期間">
-          <button type="button" data-period="today" aria-pressed="true">今天</button>
-          <button type="button" data-period="3days" aria-pressed="false">近三天</button>
-          <button type="button" data-period="week" aria-pressed="false">本週</button>
-          <button type="button" data-period="month" aria-pressed="false">本月</button>
-          <button type="button" data-period="all" aria-pressed="false">歷史至今</button>
-        </div>
-        <div class="dh-ma-filters">
-          <label>指定日期 <input id="dhMaDate" type="date" aria-label="查詢指定日期（留白使用期間）"></label>
-          <label>工具 <select id="dhMaTool"><option value="all">全部工具</option><option value="bazi">八字</option><option value="tarot">塔羅</option><option value="yijing">易經</option><option value="cezi">測字</option><option value="wuxing">五行</option><option value="numerology">生命靈數</option></select></label>
-          <label>會員帳號 <input type="search" id="dhMaSearch" maxlength="150" placeholder="輸入 Email 或暱稱"></label>
-          <label class="dh-ma-check"><input type="checkbox" id="dhMaExcludeTests" checked> 排除既有測試信箱</label>
-          <button type="button" class="btn secondary" id="dhMaReload">重新查詢</button>
-        </div>
-        <div id="dhMaStatus" class="dh-ma-status" role="status" aria-live="polite">展開後讀取會員 AI 紀錄。</div>
-        <div class="dh-ma-table-wrap" id="dhMaResults"></div>
-        <div class="dh-ma-more"><button type="button" class="btn secondary" id="dhMaMore" hidden>載入更多</button></div>
-        <p class="dh-ma-note">時間採台灣時間；來源資料若缺少成功追蹤碼，無法辨識為已驗證的單次 AI 紀錄。此統計不影響 AI 扣點、會員資料與原有熱門分析。</p>
       </div>
     </details>
 
@@ -1682,18 +1623,38 @@ async function loadMemberUsageLeaderboard(preserveStatus=false){
   try{
     const r=await usageAdminRequest('/admin/member-usage/leaderboard?period='+encodeURIComponent(memberUsagePeriod)+'&limit='+encodeURIComponent(limit));
     if(seq!==memberUsageRequestSeq||!$('memberUsagePanel').open)return;
-    if(!r.rows?.length){$('memberUsageResults').textContent='這段期間尚無可顯示的會員成功使用紀錄。請確認已啟用「精簡」或「完整」模式，再以一般登入會員成功使用工具。';return}
-    $('memberUsageResults').innerHTML=`<table aria-label="會員起盤排行榜"><thead><tr><th>排名</th><th>會員</th><th>使用地區</th><th class="mobile-hide">最近使用</th><th>起盤</th><th class="mobile-hide">章節瀏覽</th><th class="mobile-hide">AI 成功</th><th>詳細</th></tr></thead><tbody>${r.rows.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(m.name||'—')}<small style="display:block;color:#91a2b5;overflow-wrap:anywhere">${esc(m.email||'')}</small></td><td class="member-usage-country${usageCountryLabel(m.countryCode)?'':' unknown'}" title="最近成功使用時的連線地區（非國籍）">${esc(usageCountryLabel(m.countryCode)||'尚未記錄')}</td><td class="mobile-hide muted">${fmt(m.lastUsedAt)}</td><td><strong>${Number(m.castCount||0)}</strong></td><td class="mobile-hide">${Number(m.viewCount||0)}</td><td class="mobile-hide">${Number(m.aiCount||0)}</td><td><button class="btn secondary" type="button" data-usage-member="${esc(m.googleSub)}">查看</button></td></tr>`).join('')}</tbody></table>`;
+    if(!r.rows?.length){$('memberUsageResults').textContent='這段期間尚無成功使用紀錄。此列表會自動顯示有成功 AI 解讀或起盤的會員，不需輸入信箱。';return}
+    $('memberUsageResults').innerHTML=`<table aria-label="會員實際使用排行榜（包含 AI 成功紀錄）"><thead><tr><th>排名</th><th>會員</th><th>使用地區</th><th class="mobile-hide">最近使用</th><th>起盤</th><th class="mobile-hide">章節瀏覽</th><th class="mobile-hide">AI 成功</th><th>詳細</th></tr></thead><tbody>${r.rows.map((m,i)=>`<tr><td>${i+1}</td><td>${esc(m.name||'—')}<small style="display:block;color:#91a2b5;overflow-wrap:anywhere">${esc(m.email||'')}</small></td><td class="member-usage-country${usageCountryLabel(m.countryCode)?'':' unknown'}" title="最近成功使用時的連線地區（非國籍）">${esc(usageCountryLabel(m.countryCode)||'尚未記錄')}</td><td class="mobile-hide muted">${fmt(m.lastUsedAt)}</td><td><strong>${Number(m.castCount||0)}</strong></td><td class="mobile-hide">${Number(m.viewCount||0)}</td><td class="mobile-hide">${Number(m.aiCount||0)}</td><td><button class="btn secondary" type="button" data-usage-member="${esc(m.googleSub)}">查看</button></td></tr>`).join('')}</tbody></table>`;
     for(const btn of $('memberUsageResults').querySelectorAll('[data-usage-member]'))btn.addEventListener('click',()=>loadMemberUsageDetails(btn.dataset.usageMember));
   }catch(e){if(seq===memberUsageRequestSeq){$('memberUsageResults').textContent='讀取排行榜失敗';usageStatus(e.message,true)}}
 }
-const usageToolNames={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字',qimen:'奇門',ziwei:'紫微',liuyao:'六爻',meihua:'梅花易數',wuxing:'五行'};
+const usageToolNames={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字',qimen:'奇門',ziwei:'紫微',liuyao:'六爻',meihua:'梅花易數',wuxing:'五行',numerology:'生命靈數'};
 // 空分類為既有舊紀錄或精簡模式，無法回推真實興趣，不能誤標「基本排盤」。
 function usageCategoryLabel(item){
   if(item.category)return item.category;
   if(item.tool==='bazi')return '未分類（舊資料／精簡模式）';
   return '未細分';
 }
+
+const dhUsageAiCategories={career:'工作事業',startup:'創業',wealth:'財運',love:'感情姻緣',
+  health:'健康',social:'人際關係',family:'家庭',education:'學業',character:'性格特質',
+  life:'人生運勢',followup:'AI 追問',unknown:'未分類'};
+function dhUsageAiCategoryName(v){return dhUsageAiCategories[v]||'未分類'}
+function dhUsageAiTime(value){
+ const d=new Date(value);return Number.isNaN(d.getTime())?'時間未提供':
+  new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(d);
+}
+function dhUsageAiEventsHtml(r){
+ const events=Array.isArray(r.aiEvents)?r.aiEvents:[];
+ if(!events.length)return '<div class="member-usage-warn">目前沒有可辨識「單次成功時間／來源」的 AI 紀錄；若上方 AI 成功有次數，代表只有既有累計資料，無法倒推出使用頁面及題目。</div>';
+ return `<div class="member-usage-warn">以下是能查到逐次成功紀錄的部分。舊版只有彙總次數的資料不會假造時間或手機來源；逐筆與累計次數可能涵蓋相同事件，請勿相加。${r.aiEventsTruncated?' 此期間最多顯示最新 120 筆。':''}</div>
+ <div class="member-usage-results"><table aria-label="會員 AI 成功逐次紀錄"><thead><tr><th>成功時間（台灣）</th><th>工具</th><th>題目大類</th><th>來源頁面</th></tr></thead><tbody>${events.map(x=>`<tr>
+ <td>${esc(dhUsageAiTime(x.createdAt))}</td><td>${esc(usageToolNames[x.tool]||x.tool)}</td>
+ <td>${esc(x.kind==='followup'?'AI 追問':dhUsageAiCategoryName(x.category))}</td>
+ <td>${esc(x.clientSurface==='mobile'?'手機版':x.clientSurface==='desktop'?'電腦版':'未標記')}</td>
+ </tr>`).join('')}</tbody></table></div>`;
+}
+
 async function loadMemberUsageDetails(sub){
   if(!sub)return;
   const seq=memberUsageRequestSeq;
@@ -1704,6 +1665,7 @@ async function loadMemberUsageDetails(sub){
     el.innerHTML=`<div class="detail-title"><h3>${esc(r.member?.name||'會員')}｜${esc(r.member?.email||'')}</h3><button type="button" class="btn secondary" id="memberUsageCloseDetail">收合明細</button></div>
       <div class="member-usage-note">${r.activeDays==null?'歷史至今僅顯示累計次數（日統計採 90 天循環保留），不提供無法確定的活躍天數。':'此期間成功起盤的活躍使用天數：'+Number(r.activeDays)+' 天'}</div>
       <table><thead><tr><th>工具</th><th>操作分類</th><th>起盤</th><th>章節瀏覽</th><th>AI 成功</th></tr></thead><tbody>${r.details?.length?r.details.map(x=>`<tr><td>${esc(usageToolNames[x.tool]||x.tool)}</td><td>${esc(usageCategoryLabel(x))}</td><td>${Number(x.castCount||0)}</td><td>${Number(x.viewCount||0)}</td><td>${Number(x.aiCount||0)}</td></tr>`).join(''):'<tr><td colspan="5">目前沒有使用紀錄</td></tr>'}</tbody></table>
+      <details class="aiq-member-history" id="dhMemberAiSuccessHistory" open><summary>AI 解讀成功時間・工具・題目大類・手機／電腦來源</summary><div id="dhMemberAiSuccessRows">${dhUsageAiEventsHtml(r)}</div></details>
       <details class="aiq-member-history" id="dhMemberFeatureHistory"><summary>各功能點擊／閱讀／完成／解鎖明細</summary><div id="dhMemberFeatureRows">展開後查詢。</div></details><details class="aiq-member-history" id="aiqMemberHistory"><summary>AI 解讀題目明細（點擊展開）</summary><div id="aiqMemberHistoryRows" class="aiq-muted">展開後才查詢成功提問紀錄。</div></details>`;
     const fpanel=$('dhMemberFeatureHistory');
     fpanel?.addEventListener('toggle',async()=>{
@@ -2598,65 +2560,6 @@ el('dhPromoForm').addEventListener('submit',async e=>{e.preventDefault();if(busy
   }catch(err){status('儲存失敗：'+err.message,true)}finally{busy=false;el('dhPromoSave').disabled=false}
 });
 window.addEventListener('dh-admin-ready',()=>{if(el('dhPromoPanel').open)load().catch(e=>status(e.message,true))});
-})();
-</script>
-
-
-<script>
-// Read-only admin screen for verified member AI usage; no changes to the existing quota or ranking logic.
-(()=>{
-'use strict';
-const box=document.getElementById('dhMemberAiActivity');
-if(!box)return;
-const el=id=>document.getElementById(id);
-const names={bazi:'八字',tarot:'塔羅',yijing:'易經',cezi:'測字',wuxing:'五行',numerology:'生命靈數'};
-const categories={career:'工作事業',startup:'創業',wealth:'財運',love:'感情',marriage:'婚姻',health:'健康',family:'家庭',social:'人際關係',character:'性格特質',education:'學業',life:'人生運勢',custom:'自訂／未分類',followup:'延伸追問',unknown:'未分類',other:'其他'};
-const state={period:'today',offset:0,loading:false,lastQuery:'',seq:0};
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const twTime=value=>{const d=new Date(value);return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(d):'—'};
-const status=(s,bad=false)=>{el('dhMaStatus').textContent=s;el('dhMaStatus').classList.toggle('error',bad)};
-const query=()=>{const q=new URLSearchParams({period:state.period,tool:el('dhMaTool').value,search:el('dhMaSearch').value.trim(),includeTests:el('dhMaExcludeTests').checked?'0':'1',limit:'50'});if(el('dhMaDate').value)q.set('date',el('dhMaDate').value);return q.toString()};
-async function load(append=false){
- if(state.loading)return;
- if(!token()){status('請先以管理員登入。',true);return}
- const seq=++state.seq;
- const q=query();if(!append){state.offset=0;state.lastQuery=q;el('dhMaResults').replaceChildren()}
- else if(q!==state.lastQuery){state.offset=0;state.lastQuery=q;append=false;el('dhMaResults').replaceChildren()}
- state.loading=true;el('dhMaReload').disabled=true;el('dhMaMore').disabled=true;
- status('正在查詢已驗證的會員 AI 使用紀錄…');
- try{
-  const u=API_BASE+'/admin/ai-activity/records?'+q+'&offset='+state.offset;
-  const r=await fetch(u,{headers:{Authorization:'Bearer '+token(),Accept:'application/json'},cache:'no-store'});
-  const data=await r.json().catch(()=>null);
-  if(!r.ok||!data?.success)throw Error(data?.error||'查詢失敗，請確認已部署新版管理 Worker。');
-  if(seq!==state.seq||!box.open)return;
-  const host=el('dhMaResults');
-  if(!append){host.innerHTML='<table><thead><tr><th>成功時間（台灣）</th><th>會員</th><th>工具</th><th>題目大類</th></tr></thead><tbody></tbody></table>'}
-  const tbody=host.querySelector('tbody');
-  for(const x of data.rows||[]){
-   const tr=document.createElement('tr');
-   const kind=x.kind==='followup'?'<small class="dh-ma-followup">AI 追問</small>':'';
-   tr.innerHTML='<td class="dh-ma-date">'+esc(twTime(x.createdAt))+'</td>'+
-    '<td>'+esc(x.name||'會員')+'<small>'+esc(x.email||'')+'</small></td>'+
-    '<td>'+esc(names[x.tool]||x.tool)+'</td>'+
-    '<td class="dh-ma-category">'+esc(categories[x.category]||'未分類')+kind+'</td>';
-   tbody.append(tr);
-  }
-  if(!(data.rows||[]).length&&!append){host.textContent='這段期間目前沒有可核實的逐筆 AI 成功紀錄。'}
-  state.offset+=(data.rows||[]).length;
-  el('dhMaMore').hidden=!data.hasMore;
-  status('成功 AI 紀錄 '+Number(data.total||0)+' 次｜會員 '+Number(data.members||0)+' 人｜已顯示 '+state.offset+' 筆'+(el('dhMaDate').value?'｜指定日期':'')+(data.hasMore?'｜可載入更多':''));
- }catch(e){status('查詢失敗：'+e.message,true);if(!append)el('dhMaResults').textContent='無法讀取紀錄。'}
- finally{state.loading=false;el('dhMaReload').disabled=false;el('dhMaMore').disabled=false}
-}
-box.addEventListener('toggle',()=>{if(box.open)void load()});
-el('dhMaPeriods').addEventListener('click',e=>{const b=e.target.closest('button[data-period]');if(!b)return;state.period=b.dataset.period;el('dhMaDate').value='';el('dhMaPeriods').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));void load()});
-el('dhMaDate').addEventListener('change',()=>{void load()});
-el('dhMaTool').addEventListener('change',()=>{void load()});
-el('dhMaExcludeTests').addEventListener('change',()=>{void load()});
-el('dhMaSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();void load()}});
-el('dhMaReload').addEventListener('click',()=>{void load()});
-el('dhMaMore').addEventListener('click',()=>{void load(true)});
 })();
 </script>
 
