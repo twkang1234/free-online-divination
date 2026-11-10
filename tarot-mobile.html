@@ -157,7 +157,7 @@
 .dh-quota .is-free .dh-quota-number{color:var(--dh-free)!important;}
 .dh-quota .is-shared .dh-quota-number{color:var(--dh-member)!important;}
 .dh-quota .dh-quota-cycle{display:block!important;font-size:.65rem!important;line-height:1.44!important;color:var(--dh-sub)!important;font-weight:550!important;margin:1px 0 0!important;white-space:normal!important;overflow-wrap:anywhere!important;}
-.dh-quota .dh-quota-status{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
+.dh-quota .dh-quota-status{display:none!important;}.dh-quota .dh-quota-status.error:not(:empty){display:block!important;margin:9px 0 0!important;font-size:.72rem!important;line-height:1.5!important;color:var(--red,#f2a5b6)!important;overflow-wrap:anywhere!important;}
 @media(max-width:350px){.dh-quota{padding:12px!important;}.dh-quota .dh-quota-cell{padding:9px 8px!important;min-height:83px!important;}.dh-quota .dh-quota-label{font-size:.68rem!important;}.dh-quota .dh-quota-number{font-size:.96rem!important;}.dh-quota .dh-quota-cycle{font-size:.61rem!important;}}
 </style>
 </head>
@@ -299,7 +299,7 @@ const UUID=()=>{if(typeof crypto.randomUUID==='function')return crypto.randomUUI
 const candidates=TAROT_DATA.topics.filter(x=>x.id!=='free');
 const TOPICS=TAROT_DATA.topics;
 const SPREADS={past:{name:'過去・現在・未來',positions:['過去','現在','未來']},advice:{name:'現況・阻礙・建議',positions:['現況','阻礙','建議']},relation:{name:'你・對方・關係',positions:['你','對方','關係']}};
-let member=null,verified=false,sessionPending=false,quotaSeq=0,notifications=null,busy=false,drawDeck=[];
+let member=null,verified=false,sessionPending=false,quotaSeq=0,quotaAbort=null,notifications=null,busy=false,drawDeck=[];
 let quota={tool:null,ai:null};
 let archiveInFlight=false,archiveRetryAt=0;
 const defaultState=()=>({version:1,owner:ownerKey(),stage:'select',topicId:'love',question:null,questionType:'',querySnapshot:'',spreadA:'past',spreadB:'advice',cardsA:[],cardsB:[],chargedA:false,chargedB:false,customPaid:false,opA:UUID(),opB:UUID(),customOp:UUID(),requestA:UUID(),requestB:UUID(),reportA:null,reportB:null,recordId:UUID(),sampleStart:0,drawIndex:0,ended:false,reportExpandedA:true,reportExpandedB:true,archivedStage:0,archiveError:''});
@@ -337,24 +337,49 @@ async function restoreMember(){if(sessionPending)return;sessionPending=true;cons
 }
 function updateMemberButton(){const b=$('memberBtn');b.href=member?'/member.html':memberUrl();b.textContent=member?'會員中心':'免費登入';}
 function headers(extra={}){return {'X-Tarot-Visitor-Id':visitorId(),...(token()?{Authorization:'Bearer '+token()}:{}),...extra}}
-async function req(path,body=null,extra={}){
- const res=await fetch(API+path,{method:body?'POST':'GET',cache:'no-store',headers:{...headers(),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined});
+async function req(path,body=null,extra={},signal=null){
+ const res=await fetch(API+path,{method:body?'POST':'GET',cache:'no-store',headers:{...headers(),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined,signal:signal||undefined});
  const data=await res.json().catch(()=>null);if(!res.ok||!data?.ok){const err=new Error(data?.error||('HTTP_'+res.status));err.data=data;throw err;}return data;
 }
-async function refreshQuota(){const seq=++quotaSeq;const owner=ownerKey();$('refreshQuota').disabled=true;setStatus('quotaStatus','正在核對最新額度…');
- const [a,b]=await Promise.allSettled([req('/wallet/tarot/status'),req('/ai/center/quota')]);
- if(seq!==quotaSeq||owner!==ownerKey()){if(seq===quotaSeq)$('refreshQuota').disabled=false;return false;}
- if(a.status==='fulfilled')quota.tool=a.value;
- if(b.status==='fulfilled')quota.ai=b.value?.quota;
- $('tarotFreeToolCycle').textContent=a.status==='fulfilled'?(`每 ${Math.max(1,Number(a.value.daily?.days)||1)} 天補充，不累積`):'補充週期暫時無法查詢';
- $('tarotFreeAiCycle').textContent=b.status==='fulfilled'?(`每 ${Math.max(1,Number(b.value.quota?.daily?.days)||1)} 天補充，不累積`):'補充週期暫時無法查詢';
- $('freeDraw').textContent=a.status==='fulfilled'?`${a.value.daily?.remaining??'—'} / ${a.value.daily?.limit??'—'} 次`:'查詢失敗';
- $('sharedDraw').textContent=a.status==='fulfilled'?(a.value.wallet?`${a.value.wallet.tool} 次`:'登入後查看'):'查詢失敗';
- $('freeAI').textContent=b.status==='fulfilled'?`${b.value.quota?.daily?.remaining??'—'} / ${b.value.quota?.daily?.limit??'—'} 次`:'查詢失敗';
- $('sharedAI').textContent=b.status==='fulfilled'?(b.value.quota?.role==='member'?`${b.value.quota?.wallet?.ai??0} 次`:'登入後查看'):'查詢失敗';
- $('refreshQuota').disabled=false;
- const ok=a.status==='fulfilled'&&b.status==='fulfilled';setStatus('quotaStatus',ok?'':'部分額度暫時無法查詢；開始操作前仍會再次向後端確認。',!ok);
- return ok;
+async function refreshQuota(){
+ const seq=++quotaSeq,owner=ownerKey();
+ if(quotaAbort)quotaAbort.abort();
+ const controller=new AbortController();quotaAbort=controller;
+ const button=$('refreshQuota');button.disabled=true;button.textContent='查詢中…';
+ setStatus('quotaStatus','');
+ const timer=setTimeout(()=>controller.abort(),9000);
+ // 兩種額度各自查詢，部分失敗也要保留另一項已成功取得的結果。
+ try{
+  const [a,b]=await Promise.allSettled([
+   req('/wallet/tarot/status',null,{},controller.signal),
+   req('/ai/center/quota',null,{},controller.signal)
+  ]);
+  if(seq!==quotaSeq||owner!==ownerKey())return false;
+  const tool=a.status==='fulfilled'?a.value:null;
+  const ai=b.status==='fulfilled'?b.value?.quota:null;
+  quota.tool=tool;quota.ai=ai;
+  const toolOk=!!tool&&!!tool.daily;
+  const aiOk=!!ai&&!!ai.daily;
+  const number=v=>v===null||v===undefined||v===''||!Number.isFinite(Number(v))?'—':Math.max(0,Number(v));
+  const period=d=>{
+   const days=Number(d?.days);
+   // 這兩個後端欄位命名為 daily；沒有額外指定週期時仍是每日補充。
+   const n=Number.isInteger(days)&&days>0?days:(d&&d.limit!==undefined?1:null);
+   return n?`每 ${n} 天補充，不累積`:'補充週期暫時無法查詢';
+  };
+  $('freeDraw').textContent=toolOk?`${number(tool.daily.remaining)} / ${number(tool.daily.limit)} 次`:'暫時無法查詢';
+  $('tarotFreeToolCycle').textContent=toolOk?period(tool.daily):'';
+  $('sharedDraw').textContent=toolOk?(tool.wallet?`${number(tool.wallet.tool)} 次`:'登入後查看'):(!member?'登入後查看':'暫時無法查詢');
+  $('freeAI').textContent=aiOk?`${number(ai.daily.remaining)} / ${number(ai.daily.limit)} 次`:'暫時無法查詢';
+  $('tarotFreeAiCycle').textContent=aiOk?period(ai.daily):'';
+  $('sharedAI').textContent=aiOk?(ai.role==='member'?`${number(ai.wallet?.ai)} 次`:'登入後查看'):(!member?'登入後查看':'暫時無法查詢');
+  const success=toolOk&&aiOk;
+  setStatus('quotaStatus',success?'':(controller.signal.aborted?'額度查詢逾時，請點選「更新額度」重試。':'部分額度暫時無法查詢，請點選「更新額度」重試。'),!success);
+  return success;
+ }finally{
+  clearTimeout(timer);
+  if(seq===quotaSeq){quotaAbort=null;button.disabled=false;button.textContent='更新額度 ↻';}
+ }
 }
 function topic(id){return TOPICS.find(t=>t.id===id)||TOPICS[0]}
 function questionPool(tid){const t=topic(tid),out=[];for(const s of t.scenarios||[]){for(const q of TAROT_DATA.questions[tid+':'+s[0]]||[]){if(out.some(o=>o.text===q.text))continue;out.push({...q,topicId:tid,scenarioId:s[0],scenarioName:s[1]});}}return out;}
@@ -622,13 +647,13 @@ function initListeners(){
  document.addEventListener('click',e=>{const fold=e.target.closest('[data-fold]'),cp=e.target.closest('[data-copy]'),dl=e.target.closest('[data-download]');if(fold){const which=fold.dataset.fold;const el=$('reportDetails'+(which==='a'?'A':'B'));if(el)setReportExpanded(which,el.hidden,fold.classList.contains('report-fold-bottom'));}else if(cp)void copyReport(cp.dataset.copy);else if(dl)downloadReport(dl.dataset.download)});
  
  window.addEventListener('beforeunload',e=>{if(busy||state.reportA||state.reportB){e.preventDefault();e.returnValue='';}});
- window.addEventListener('focus',()=>{if(!document.hidden){void restoreMember();void refreshQuota();if(member&&state.reportA)void autoSaveRecord();}});
+ window.addEventListener('focus',()=>{if(!document.hidden){if(localRead(SESSION_KEY))void refreshQuota();void restoreMember();if(member&&state.reportA)void autoSaveRecord();}});
  window.addEventListener('online',()=>{archiveRetryAt=0;if(member&&state.reportA)void autoSaveRecord();});
  window.addEventListener('storage',e=>{if(e.key===SESSION_KEY||e.key==='divinationhub-auth-event'){if(state.owner!==ownerKey()){state=defaultState();selected=null;typed='';currentCat='love';sampleStart=0;drawDeck=[];save();render();}member=null;void restoreMember();}});
 }
 function init(){restore();if(state.stage==='drawA'&&state.cardsA.length===3){state.stage='aiA';save()}if(state.stage==='drawB'&&state.cardsB.length===3){state.stage='aiB';save()}if(state.stage==='completeA'&&state.chargedB&&state.cardsB.length<3){state.stage='drawB';save()}currentCat=state.topicId||'love';if(state.stage==='select'&&state.question){typed=state.querySnapshot||state.question.text;selected=state.questionType==='fixed'?state.question:null}
  if(state.stage==='drawA'||state.stage==='drawB')drawDeck=shuffledDeck().filter(i=>!(state.stage==='drawB'?state.cardsB:state.cardsA).some(c=>c.index===i));
- initListeners();updateMemberButton();render();setupTopicSwipeCue();setupQuestionRefreshCue();void restoreMember();void refreshQuota();}
+ initListeners();updateMemberButton();render();setupTopicSwipeCue();setupQuestionRefreshCue();if(localRead(SESSION_KEY))void refreshQuota();void restoreMember();}
 init();
 })();
 </script>
