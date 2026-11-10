@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>document.documentElement.dataset.memberAuth='pending';</script>
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#0a0b12">
 <title>會員中心｜一念知機</title>
@@ -337,6 +338,44 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 #issueSection .signal-meta:empty{display:none}
 #issueSection .signal-card.is-normal .signal-footnote{color:var(--muted)}
 @media(max-width:720px){.desktop-chat-fold>summary{padding:13px}.desktop-chat-fold #chatPanel{padding:13px}}
+
+/* Guest-first member landing. Hide ALL member dashboard data until auth is confirmed. */
+html[data-member-auth="pending"] .shell,
+html[data-member-auth="pending"] .topbar .member-tool-nav,
+html[data-member-auth="pending"] .topbar .top-actions{visibility:hidden}
+html[data-member-auth="guest"] #pageHome > :not(#memberWelcomeLogin){display:none!important}
+html[data-member-auth="guest"] .shell > .view:not(#pageHome),
+html[data-member-auth="guest"] .shell > .footer{display:none!important}
+html[data-member-auth="guest"] .topbar .member-tool-nav > :not(#returnToSource){display:none!important}
+html[data-member-auth="guest"] .topbar .top-actions{display:none!important}
+html[data-member-auth="guest"] .topbar .member-tool-nav{flex:0 1 auto;justify-content:flex-end;margin-left:auto}
+html[data-member-auth="guest"] .topbar .top-inner{flex-wrap:nowrap;min-height:60px}
+html[data-member-auth="guest"] .shell{max-width:720px;padding-top:clamp(28px,7vh,75px);min-height:calc(100dvh - 110px)}
+html[data-member-auth="guest"] #memberWelcomeLogin{margin:0 auto;max-width:640px;padding:clamp(23px,4vw,42px);border-radius:24px;gap:16px;text-align:center}
+.member-guest-symbol{display:grid;place-items:center;width:54px;height:54px;border-radius:17px;background:rgba(188,166,255,.13);border:1px solid rgba(188,166,255,.3);color:var(--primary);font-size:1.55rem}
+.member-guest-kicker{color:var(--primary);letter-spacing:.18em;font-size:.66rem;font-weight:800}
+#memberWelcomeLogin .member-guest-lead{font-size:clamp(.88rem,1.6vw,1rem);line-height:1.8;color:var(--sub);margin:0;max-width:430px}
+.member-guest-gifts{width:100%;padding:18px 17px;border:1px solid color-mix(in srgb,var(--gold) 33%,var(--line));border-radius:15px;background:color-mix(in srgb,var(--gold) 5%,var(--base))}
+.member-guest-gifts[hidden]{display:none!important}
+.member-guest-gifts-title{font-weight:850;color:var(--gold);margin:0 0 13px;font-size:.9rem}
+.member-guest-gifts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.member-guest-gift{padding:11px 7px;border-radius:11px;border:1px solid var(--line);background:var(--base);min-width:0}
+.member-guest-gift strong{display:block;font-size:clamp(1.08rem,2.5vw,1.45rem);line-height:1.4;color:var(--ink)}
+.member-guest-gift small{display:block;font-size:.72rem;line-height:1.6;color:var(--sub)}
+.member-guest-footnote{color:var(--muted);font-size:.73rem;line-height:1.75;margin:12px 0 0}
+.member-guest-google-label{font-size:.81rem;font-weight:800;color:var(--ink)}
+#memberWelcomeLogin .google-mount{min-height:45px;width:100%;margin:0 auto;max-width:350px}
+.member-guest-reassure{font-size:.72rem;color:var(--sub);line-height:1.8;margin:0}
+.member-guest-back{font-size:.78rem;color:var(--sub);text-align:center;text-decoration:none}
+.member-guest-back:hover{color:var(--primary)}
+@media(max-width:580px){
+ html[data-member-auth="guest"] .shell{padding:24px 0 45px}
+ html[data-member-auth="guest"] .topbar .top-inner{flex-direction:row;align-items:center}
+ html[data-member-auth="guest"] .topbar .brand{font-size:.9rem}
+ html[data-member-auth="guest"] .topbar .member-tool-nav{order:0;flex:0 1 auto;width:auto;border:0;margin:0 0 0 auto}
+ html[data-member-auth="guest"] #memberWelcomeLogin{padding:27px 17px 25px}
+ .member-guest-gifts{padding:14px 12px}
+}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -354,11 +393,26 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 <section id="pageHome" class="view">
   <div class="hero"><div class="hero-shell"><div><div class="kicker">DIVINATION HUB · MEMBER CENTER</div><h1 class="page-heading">我的會員中心</h1><p class="lead">查看共用額度、管理已儲存命盤與占卜紀錄，並快速前往生命靈數等十種命理工具。</p></div><div class="hero-decor" aria-hidden="true">✧</div></div></div>
   <!-- 未登入首頁的大型 Google 入口：與右上角選單共用同一個登入回呼。 -->
-  <section id="memberWelcomeLogin" class="member-welcome-login" aria-labelledby="memberWelcomeLoginTitle" hidden>
-    <h2 id="memberWelcomeLoginTitle">免費登入 Google 會員</h2>
-    <div class="google-mount" id="welcomeGoogleLoginMount"></div>
-    <p id="welcomeLoginMessage" class="welcome-login-status" role="status" aria-live="polite" hidden></p>
-  </section>
+
+<section id="memberWelcomeLogin" class="member-welcome-login" aria-labelledby="memberWelcomeLoginTitle" hidden>
+  <div class="member-guest-symbol" aria-hidden="true">✧</div>
+  <div class="member-guest-kicker">DIVINATION HUB · FREE MEMBER</div>
+  <h2 id="memberWelcomeLoginTitle">免費登入，開啟 AI 深度解讀</h2>
+  <p id="memberGuestLead" class="member-guest-lead">使用 Google 帳號即可登入，不需另外設定密碼。登入後就能回到原本的占卜工具繼續使用。</p>
+  <div id="memberGuestGifts" class="member-guest-gifts">
+    <div class="member-guest-gifts-title">🎁 新會員首次登入贈送</div>
+    <div class="member-guest-gifts-grid">
+      <div class="member-guest-gift"><strong id="memberGiftTool">依後台設定</strong><small>共用工具額度</small></div>
+      <div class="member-guest-gift"><strong id="memberGiftAi">依後台設定</strong><small>共用 AI 解讀額度</small></div>
+    </div>
+    <p class="member-guest-footnote">新會員僅首次符合資格時贈送一次，六個工具共用，不會每天重複贈送。</p>
+  </div>
+  <div class="member-guest-google-label">使用 Google 免費登入</div>
+  <div class="google-mount" id="welcomeGoogleLoginMount"></div>
+  <p id="welcomeLoginMessage" class="welcome-login-status" role="status" aria-live="polite" hidden></p>
+  <p class="member-guest-reassure">登入狀態有效期間可持續使用，最長 30 天。<span id="memberGuestReturnText">登入後即可查看會員額度及紀錄。</span></p>
+  <a id="memberGuestBack" class="member-guest-back" href="index.html">← 返回免費線上占卜首頁</a>
+</section>
   <!-- 站長公告：只顯示後端已正式發布的公開訊息 -->
   <aside id="memberAnnouncement" class="member-announcement" aria-labelledby="memberAnnouncementTitle" hidden>
     <div class="member-announcement-heading"><span class="member-announcement-icon" aria-hidden="true">✦</span><span class="member-announcement-tag">站長公告</span><time id="memberAnnouncementDate" class="member-announcement-date"></time></div>
@@ -369,7 +423,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   </aside>
 
   <section class="section" id="memberSharedWallet" style="margin-top:27px;padding-top:28px" aria-label="會員共用額度">
-    <div class="section-top"><div><div class="eyebrow">MY SHARED CREDITS</div><h2>我的共用額度</h2><p class="section-lead">會員共用額度適用於已接入的命理工具；首次贈送各 10 次，用完不每日補充。每日免費使用次數請至各工具查看。</p></div><button class="btn small ghost" id="memberWalletRefresh" type="button">重新整理餘額</button></div>
+    <div class="section-top"><div><div class="eyebrow">MY SHARED CREDITS</div><h2>我的共用額度</h2><p class="section-lead">會員共用額度適用於已接入的命理工具；首次贈送數量依管理後台設定，用完不每日補充。每日免費使用次數請至各工具查看。</p></div><button class="btn small ghost" id="memberWalletRefresh" type="button">重新整理餘額</button></div>
     <div class="tool-grid" id="memberWalletCards" aria-live="polite">
       <div class="simple-panel"><b>共用工具額度</b><h3 id="memberWalletTool">— 次</h3><small>深度測字／起盤／抽牌／起卦共用，用完不補</small></div>
       <div class="simple-panel"><b>共用 AI 解讀額度</b><h3 id="memberWalletAI">— 次</h3><small>各工具共用，成功解讀才扣除</small></div>
@@ -755,6 +809,44 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
   }
 
   let memberSessionCheckDone=false;
+
+// 未登入時只呈現登入入口，不顯示會員私人功能與內文。
+const MEMBER_EVER_KEY='divinationhub-member-ever-verified-v1';
+const MEMBER_GIFT_URL='https://admin-api.ezgocpu.workers.dev/quota/welcome-gifts';
+let guestGiftsRequested=false;
+function markMemberEver(){try{localStorage.setItem(MEMBER_EVER_KEY,'1')}catch(_){}}
+function hasMemberEver(){try{return localStorage.getItem(MEMBER_EVER_KEY)==='1'||['divinationhub-bazi-was-member-v1','divinationhub-wuxing-was-member-v1','divinationhub-tarot-ever-google-member-v1'].some(k=>['1','true'].includes(localStorage.getItem(k)))}catch(_){return false}}
+function setupGuestIntro(){
+  const back=$('memberGuestBack'),safe=safeMemberReturn(new URLSearchParams(location.search).get('return'));
+  if(safe){back.href=safe;back.textContent='← 返回原本的占卜工具';$('memberGuestReturnText').textContent='登入成功後會自動返回原本的占卜工具。';}
+  if(hasMemberEver()){
+    $('memberWelcomeLoginTitle').textContent='歡迎回來，請重新登入';
+    $('memberGuestLead').textContent='此瀏覽器曾登入會員。請使用 Google 帳號重新登入，繼續使用原有額度與 AI 解讀。';
+    $('memberGuestGifts').hidden=true;
+    return;
+  }
+  $('memberWelcomeLoginTitle').textContent='免費登入，開啟 AI 深度解讀';
+  $('memberGuestLead').textContent='使用 Google 帳號即可登入，不需另外設定密碼。登入後就能回到原本的占卜工具繼續使用。';
+  $('memberGuestGifts').hidden=false;
+  if(guestGiftsRequested)return;
+  guestGiftsRequested=true;
+  // 僅讀取公開贈送設定，不用管理員權限也不猜測設定數值。
+  fetch(MEMBER_GIFT_URL,{cache:'no-store',headers:{Accept:'application/json'}})
+    .then(r=>{if(!r.ok)throw Error('gift_http');return r.json()})
+    .then(j=>{
+      if(j?.success!==true)return;
+      for(const [key,id] of [['tool','memberGiftTool'],['ai','memberGiftAi']]){
+        const n=j.gifts?.[key];if(Number.isInteger(n)&&n>=0&&n<=1000)$(id).textContent=n+' 次';
+      }
+    }).catch(()=>{});
+}
+function syncGuestLanding(){
+  const isMember=!!profile(),ready=memberSessionCheckDone;
+  document.documentElement.dataset.memberAuth=ready?(isMember?'member':'guest'):'pending';
+  $('memberWelcomeLogin').hidden=!ready||isMember;
+  if(ready&&!isMember)setupGuestIntro();
+}
+
   let googleReady=false,currentView='home',sessionKey='',baziRecords=[],lightData=null,chatData=null,selectedChatId=null;
   let memberChatReadSeq=0,memberChatPolling=false,memberChatVisualKey='';
   const healthPreviewMode=location.protocol==='file:'; // 只在本機 HTML 外觀預覽，絕不送回報
@@ -1053,7 +1145,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
 
   function pageFromHash(){return ['bazi','tarot','yijing','cezi'].includes(location.hash.slice(1))?location.hash.slice(1):'home'}
   function navigate(page){const p=recordPageTools.includes(page)?page:'home';if(p==='home'){if(location.hash){history.pushState(null,'',location.pathname+location.search);showPage()}else showPage()}else{if(location.hash==='#'+p)showPage();else location.hash=p}}
-  function showPage(){const page=pageFromHash();currentView=page;for(const p of ['home',...recordPageTools])$('page'+(p==='home'?'Home':p[0].toUpperCase()+p.slice(1))).hidden=p!==page;window.scrollTo({top:0,behavior:'instant'});document.title=(page==='home'?'會員中心':page==='bazi'?'我的八字命盤':page==='tarot'?'我的塔羅紀錄':page==='yijing'?'我的易經紀錄':'我的測字')+'｜一念知機';
+  function showPage(){const page=profile()?pageFromHash():'home';currentView=page;for(const p of ['home',...recordPageTools])$('page'+(p==='home'?'Home':p[0].toUpperCase()+p.slice(1))).hidden=p!==page;window.scrollTo({top:0,behavior:'instant'});document.title=(page==='home'?'會員中心':page==='bazi'?'我的八字命盤':page==='tarot'?'我的塔羅紀錄':page==='yijing'?'我的易經紀錄':'我的測字')+'｜一念知機';
     if(page==='bazi')loadBazi();
     if(page==='yijing'||page==='cezi')void loadCompactArchive(page);
     if(page==='tarot')void loadTarotArchive();
@@ -1070,15 +1162,18 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
     $('welcomeLoginMessage').hidden=!message;
   }
   function updateAuthUI(){const p=profile(),isOn=!!p;const name=p?(p.name||p.email||'會員'):'';
+    if(isOn)markMemberEver();
+    syncGuestLanding();
     $('accountChip').hidden=!isOn;$('accountChip').textContent=name;
     // Session 還在驗證時先不要顯示登入卡；驗證失效或無 Session 時才顯示。
     $('memberWelcomeLogin').hidden=isOn||!memberSessionCheckDone;
     // 同一顆頂部按鈕：已登入＝登出，未登入＝免費登入。
     $('logout').textContent=isOn?'登出':'免費登入';setHeaderLoginMenu(false);
-    if(isOn){setMemberLoginError('');if(sessionKey!==p.sub){sessionKey=p.sub||p.email||'logged';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;}if(currentView==='home')loadIssues();}
+    if(isOn){if(currentView==='home'&&pageFromHash()!=='home')showPage();setMemberLoginError('');if(sessionKey!==p.sub){sessionKey=p.sub||p.email||'logged';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;}if(currentView==='home')loadIssues();}
     else{sessionKey='';baziRecords=[];lightData=null;chatData=null;selectedChatId=null;renderLights();renderChat();if(memberSessionCheckDone)renderGoogleLogin();}
     if(isOn&&(currentView==='yijing'||currentView==='cezi'))void loadCompactArchive(currentView);
     if(currentView==='home')void loadHomeRecordPreview(homeRecordTool);
+    if(!isOn&&memberSessionCheckDone&&currentView!=='home')showPage();
     rvAuthSync();
   }
   let googleHeaderReady=false,googleCenterReady=false,googleRetryScheduled=false;
@@ -1539,6 +1634,7 @@ a{color:var(--primary);text-underline-offset:4px}button,input,textarea{font:inhe
       return;
     }
     const token=savedSession();
+    if(/^dhs_[A-Za-z0-9_-]{43}$/.test(token))markMemberEver();
     if(!token){verifiedSessionMember=null;memberSessionCheckDone=true;updateAuthUI();void refreshSharedWallet();return}
     try{
       const r=await fetch(API_MEMBER+'/auth/session',{cache:'no-store',headers:{Accept:'application/json',Authorization:'Bearer '+token}});
