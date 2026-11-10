@@ -4760,6 +4760,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
  async function numAiRunRequest(isFollowup=false){
   if(aiRequestBusy)return;
   if(!current){aiStatus('請先計算生日。');return}
+  if(!await window.DHMobileMemberGate.allowAiVerified())return;
   if(!isFollowup&&numAiActiveDock!=='general'&&aiMode==='fixed'){aiStatus('請先選擇專屬題目。');return}
   const question=isFollowup?$('numAiFollowup').value.trim():(aiMode==='guided'?numAiGuidedQuestion:aiMode==='custom'?$('numAiQuestion').value.trim():'');
   const actualQuestion=question; // Preserve user's question as the visible title and history entry.
@@ -4772,7 +4773,7 @@ function numAiToken(){let t='';try{t=localStorage.getItem(SESSION)||''}catch(_){
   if((isFollowup||aiMode==='custom')&&(question.length<4||question.length>400)){aiStatus('請輸入 4～400 字的問題。');return}
   if(aiMode==='guided'&&!isFollowup&&(question.length<4||question.length>1600)){aiStatus('所選題目內容異常，請重新選擇。');return}
   if(actualQuestion.length>1600){aiStatus('題目超過 1600 字，請將問題簡短一些。');return}
-  if(!numAiToken()){aiStatus('請先登入會員，才能使用站內 AI 解讀。');return}
+  if(!numAiToken()){window.DHMobileMemberGate.login();return}
   const parentId=isFollowup?numAiActiveId:null;
   if(isFollowup&&(!parentId||!numAiHistory.some(r=>r.id===parentId))){aiStatus('請先在左側選擇一篇已完成的解讀，再進行追問。');return}
   // No confirmation when the periodic free allowance can cover this request.

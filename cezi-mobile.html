@@ -330,9 +330,9 @@ function renderQuota(){
  const tool=remaining(f?.tool?.remaining),ai=remaining(f?.ai?.remaining),st=remaining(w?.tool),sa=remaining(w?.ai);
  const noTool=tool!==null&&tool<=0&&(!state.member||(st!==null&&st<=0));
  const noAi=ai!==null&&ai<=0&&(!state.member||(sa!==null&&sa<=0));
- $('aiBtn').disabled=state.busy||noTool||noAi;
- $('followBtn').disabled=state.busy||noAi;
- if(state.readingId&&!state.initial&&!state.busy&&(noTool||noAi)){
+ $('aiBtn').disabled=state.busy||(!!state.member&&(noTool||noAi));
+ $('followBtn').disabled=state.busy||(!!state.member&&noAi);
+ if(state.readingId&&!state.initial&&!state.busy&&state.member&&(noTool||noAi)){
   setStatus('aiStatus',noTool&&noAi?'免費深度測字與免費 AI 額度已用完，可使用會員共用額度或等待補充。':noTool?'免費深度測字額度不足，可使用會員共用工具額度或等待補充。':'免費 AI 解讀額度不足，可使用會員共用 AI 額度或等待補充。',true);
  }
 }

@@ -748,10 +748,10 @@ function setAiButtonView(button,loading,label){
  const text=document.createElement('span');text.className='wx-ai-loading-text';text.textContent=label;
  button.replaceChildren(spinner,text);
 }
-function updateAiButton(){const r=remainingAI(),q=String($('customQuestion')?.value||'').trim(),valid=[...q].length>=5&&[...q].length<=400;const can=!!member&&!!chart&&!aiBusy&&aiReady&&!!r?.total;
+function updateAiButton(){const r=remainingAI(),q=String($('customQuestion')?.value||'').trim(),valid=[...q].length>=5&&[...q].length<=400;const can=!!chart&&!aiBusy&&(!member||(aiReady&&!!r?.total));
  const used=findExistingAiReport(q);$('aiUsedWarning').hidden=!used||!chart;
  const main=$('aiBtn');main.disabled=!can||!valid||!!used;main.hidden=!!(used&&chart);
- setAiButtonView(main,aiBusy&&!aiPendingFollow,aiBusy&&!aiPendingFollow?'AI 正在深度解讀…':used?'這道問題已解讀過':r?.total===0?'AI 額度已用完':!valid?'選好問題，開始五行 AI 解讀':'✦ 開始五行 AI 深度解讀');
+ setAiButtonView(main,aiBusy&&!aiPendingFollow,aiBusy&&!aiPendingFollow?'AI 正在深度解讀…':used?'這道問題已解讀過':!valid?'選好問題，開始五行 AI 解讀':!member?'✦ 開始五行 AI 深度解讀｜先登入':r?.total===0?'AI 額度已用完':'✦ 開始五行 AI 深度解讀');
  const followup=$('sendFollowup'),selected=activeAiReport();followup.disabled=!can||!selected?.sessionId||selected.turn>=8;
  setAiButtonView(followup,aiBusy&&aiPendingFollow,aiBusy&&aiPendingFollow?'AI 正在回答追問…':selected?.turn>=8?'已達 8 輪上限':'送出追問（成功扣 AI 1 次）');
 }
