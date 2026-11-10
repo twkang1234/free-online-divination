@@ -164,7 +164,7 @@
 <body>
 <header class="sitebar"><div class="sitebar-inner"><a class="brand" href="/" aria-label="返回一念知機首頁">一念知機</a><nav class="header-tool-nav" aria-label="其他命理工具"><div class="header-tool-scroll" tabindex="0" aria-label="命理工具，可左右滑動"><a href="/qimen.html" draggable="false">奇門</a><a href="/tarot-mobile.html" draggable="false">塔羅</a><a href="/bazi.html" draggable="false">八字</a><a href="/ziwei.html" draggable="false">紫微</a><a href="/meihua.html" draggable="false">梅花</a><a href="/liuyao.html" draggable="false">六爻</a><a href="/yijing.html" draggable="false">易經64卦</a><a href="/cezi.html" draggable="false">測字</a><a href="/wuxing.html" draggable="false">五行</a><a href="/numerology.html" draggable="false">生命靈數</a></div></nav><div class="header-right"><a class="member-link" id="memberBtn" href="/member.html">免費登入</a></div></div></header>
 <main class="wrap">
-<section class="hero" id="hero"><div class="eyebrow brand-eyebrow"><span>DIVINATION HUB · TAROT</span><span class="build-chip" aria-label="目前頁面版本 v1">v1</span></div><div class="spark">✧</div><h1>免費塔羅<span>占卜</span><small class="hero-seo-sub">線上專業抽牌工具・AI深度解讀</small></h1><p>選擇問題後免費線上抽三張牌，查看牌面與正逆位；AI 解讀依免費及會員額度使用，需要更深入時可再抽三張進行六張整合。</p></section>
+<section class="hero" id="hero"><div class="eyebrow brand-eyebrow"><span>DIVINATION HUB · TAROT</span><span class="build-chip" aria-label="目前頁面版本 v1.2">v1.2</span></div><div class="spark">✧</div><h1>免費塔羅<span>占卜</span><small class="hero-seo-sub">線上專業抽牌工具・AI深度解讀</small></h1><p>選擇問題後免費線上抽三張牌，查看牌面與正逆位；AI 解讀依免費及會員額度使用，需要更深入時可再抽三張進行六張整合。</p></section>
 <section id="quotaCard" class="dh-quota" aria-labelledby="quotaTitle"><div class="dh-quota-head"><h2 class="dh-quota-title" id="quotaTitle">我的使用額度</h2><button class="dh-quota-btn" id="refreshQuota" type="button">更新額度 ↻</button></div><div class="dh-quota-grid" aria-label="目前剩餘額度"><div class="dh-quota-cell is-free"><small class="dh-quota-label">免費抽牌</small><strong class="dh-quota-number" id="freeDraw">查詢中…</strong><small class="dh-quota-cycle" id="tarotFreeToolCycle">額度週期查詢中…</small></div><div class="dh-quota-cell is-shared"><small class="dh-quota-label">會員共用工具額度</small><strong class="dh-quota-number" id="sharedDraw">查詢中…</strong></div><div class="dh-quota-cell is-free"><small class="dh-quota-label">免費 AI 解讀</small><strong class="dh-quota-number" id="freeAI">查詢中…</strong><small class="dh-quota-cycle" id="tarotFreeAiCycle">額度週期查詢中…</small></div><div class="dh-quota-cell is-shared"><small class="dh-quota-label">會員共用 AI 額度</small><strong class="dh-quota-number" id="sharedAI">查詢中…</strong></div></div><p id="quotaStatus" class="dh-quota-status" role="status" aria-live="polite"></p></section>
 <div class="tarot-question-anchor" id="worldSecond" aria-hidden="true"></div>
 <section class="card" id="questionPanel" aria-labelledby="questionTitle"><div class="section-head"><h2 id="questionTitle">選擇塔羅問題</h2><small>STEP 01 / 03</small></div><p class="caption">選擇主題或參考題目，也可以自行提問。</p><div class="pills" id="topics" role="group" aria-label="選擇問題主題"></div><div class="samples-head"><strong>參考題目 · 點選可帶入修改</strong><button type="button" class="text-btn" id="moreQuestions">換一批 ↻</button></div><div id="samples" class="sample-list"></div><details class="custom" id="customDetails"><summary>自己輸入問題 <span aria-hidden="true">⌄</span></summary><div class="custom-body"><textarea class="input" id="customQuestion" maxlength="120" placeholder="例如：我最近適合換工作嗎？"></textarea><p class="fine">需至少 5 個字元；修改參考題目也會改以自訂題規則計價。</p></div></details><div class="selection-info" id="paymentHint">請先選擇一個問題，不會立即扣點。</div><button type="button" class="primary" id="beginReading" disabled>確認問題，開始抽牌</button><p class="status" id="selectionStatus" role="status" aria-live="polite"></p><button type="button" class="ghost" id="resetSelection" hidden>取消這次，重新選題</button></section>
@@ -299,7 +299,7 @@ const UUID=()=>{if(typeof crypto.randomUUID==='function')return crypto.randomUUI
 const candidates=TAROT_DATA.topics.filter(x=>x.id!=='free');
 const TOPICS=TAROT_DATA.topics;
 const SPREADS={past:{name:'過去・現在・未來',positions:['過去','現在','未來']},advice:{name:'現況・阻礙・建議',positions:['現況','阻礙','建議']},relation:{name:'你・對方・關係',positions:['你','對方','關係']}};
-let member=null,verified=false,sessionPending=false,quotaSeq=0,quotaAbort=null,notifications=null,busy=false,drawDeck=[];
+let member=null,verified=false,sessionPending=false,quotaSeq=0,quotaControllers=new Set(),notifications=null,busy=false,drawDeck=[];
 let quota={tool:null,ai:null};
 let archiveInFlight=false,archiveRetryAt=0;
 const defaultState=()=>({version:1,owner:ownerKey(),stage:'select',topicId:'love',question:null,questionType:'',querySnapshot:'',spreadA:'past',spreadB:'advice',cardsA:[],cardsB:[],chargedA:false,chargedB:false,customPaid:false,opA:UUID(),opB:UUID(),customOp:UUID(),requestA:UUID(),requestB:UUID(),reportA:null,reportB:null,recordId:UUID(),sampleStart:0,drawIndex:0,ended:false,reportExpandedA:true,reportExpandedB:true,archivedStage:0,archiveError:''});
@@ -341,44 +341,125 @@ async function req(path,body=null,extra={},signal=null){
  const res=await fetch(API+path,{method:body?'POST':'GET',cache:'no-store',headers:{...headers(),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined,signal:signal||undefined});
  const data=await res.json().catch(()=>null);if(!res.ok||!data?.ok){const err=new Error(data?.error||('HTTP_'+res.status));err.data=data;throw err;}return data;
 }
+// 額度查詢 v1.2：抽牌 Worker 可能較慢；不能用 AI 的短逾時一起中止它。
+// 兩個額度分開更新，並以會員中心錢包作為「共用工具」的安全備援資料來源。
+function quotaIsCurrent(seq,owner){return seq===quotaSeq&&owner===ownerKey()}
+function cancelQuotaRequests(){for(const controller of quotaControllers)controller.abort();quotaControllers.clear()}
+async function quotaFetch(url,opts={},timeoutMs=24000){
+ const controller=new AbortController();quotaControllers.add(controller);
+ const timer=setTimeout(()=>controller.abort(),timeoutMs);
+ try{
+  if(opts.memberWallet){
+   const response=await fetch(MEMBER_API+'/wallet/status',{headers:{Authorization:'Bearer '+opts.token,Accept:'application/json'},cache:'no-store',signal:controller.signal});
+   const data=await response.json().catch(()=>null);
+   if(!response.ok||data?.success!==true)throw new Error(data?.error||'WALLET_HTTP_'+response.status);
+   return data;
+  }
+  return await req(url,null,{},controller.signal);
+ }finally{clearTimeout(timer);quotaControllers.delete(controller)}
+}
+async function tarotToolQuotaWithRetry(seq,owner){
+ let lastError=null;
+ for(let attempt=0;attempt<2;attempt++){
+  if(!quotaIsCurrent(seq,owner))throw new Error('QUOTA_REQUEST_SUPERSEDED');
+  try{return await quotaFetch('/wallet/tarot/status',{},attempt===0?22000:26000)}
+  catch(error){
+   lastError=error;
+   if(!quotaIsCurrent(seq,owner))throw error;
+   // 權限錯誤不能靠重試解決；其它網路或暫時性錯誤才重試一次。
+   const code=String(error?.message||'');
+   if(/^(HTTP_40[013]|LOGIN_REQUIRED|SESSION_INVALID|UNAUTHORIZED|FORBIDDEN)/.test(code))break;
+   if(attempt===0)await new Promise(resolve=>setTimeout(resolve,650));
+  }
+ }
+ throw lastError||new Error('TOOL_STATUS_UNAVAILABLE');
+}
 async function refreshQuota(){
  const seq=++quotaSeq,owner=ownerKey();
- if(quotaAbort)quotaAbort.abort();
- const controller=new AbortController();quotaAbort=controller;
+ cancelQuotaRequests();
  const button=$('refreshQuota');button.disabled=true;button.textContent='查詢中…';
  setStatus('quotaStatus','');
- const timer=setTimeout(()=>controller.abort(),9000);
- // 兩種額度各自查詢，部分失敗也要保留另一項已成功取得的結果。
+ for(const id of ['freeDraw','sharedDraw','freeAI','sharedAI'])$(id).textContent='查詢中…';
+ $('tarotFreeToolCycle').textContent='';$('tarotFreeAiCycle').textContent='';
+ const number=value=>value===null||value===undefined||value===''||!Number.isFinite(Number(value))?null:Math.max(0,Number(value));
+ const quotaPair=d=>{
+  const left=number(d?.remaining),limit=number(d?.limit);
+  return left===null||limit===null?null:`${left} / ${limit} 次`;
+ };
+ const cycle=d=>{
+  const days=number(d?.days);
+  return Number.isInteger(days)&&days>0?`每 ${days} 天補充，不累積`:'補充週期暫時無法查詢';
+ };
+ const errorCode=e=>{
+  const code=String(e?.message||'NETWORK_ERROR');
+  if(e?.name==='AbortError')return 'TIMEOUT';
+  return /^[A-Z][A-Z_0-9-]{0,42}$/.test(code)?code:'NETWORK_ERROR';
+ };
+ let toolOk=false,aiOk=false,walletOk=false,toolError=null,aiError=null;
+ const current=()=>quotaIsCurrent(seq,owner);
+ const toolJob=(async()=>{
+  try{
+   const data=await tarotToolQuotaWithRetry(seq,owner);
+   if(!current())return;
+   const display=quotaPair(data.daily);
+   if(!display)throw new Error('INVALID_TOOL_QUOTA_RESPONSE');
+   quota.tool=data;toolOk=true;
+   $('freeDraw').textContent=display;
+   $('tarotFreeToolCycle').textContent=cycle(data.daily);
+   if(member){
+    const shared=number(data.wallet?.tool);
+    if(shared!==null)$('sharedDraw').textContent=`${shared} 次`;
+   }else $('sharedDraw').textContent='登入後查看';
+  }catch(error){
+   if(!current())return;
+   quota.tool=null;toolError=error;
+   $('freeDraw').textContent='暫時無法查詢';
+   $('tarotFreeToolCycle').textContent='';
+   console.warn('[Tarot quota] 抽牌額度查詢失敗：',errorCode(error));
+  }
+ })();
+ const aiJob=(async()=>{
+  try{
+   const data=await quotaFetch('/ai/center/quota',{},16000);
+   if(!current())return;
+   const q=data.quota,display=quotaPair(q?.daily);
+   if(!display)throw new Error('INVALID_AI_QUOTA_RESPONSE');
+   quota.ai=q;aiOk=true;
+   $('freeAI').textContent=display;
+   $('tarotFreeAiCycle').textContent=cycle(q.daily);
+   $('sharedAI').textContent=member?(q?.role==='member'&&number(q.wallet?.ai)!==null?`${number(q.wallet.ai)} 次`:'暫時無法查詢'):'登入後查看';
+  }catch(error){
+   if(!current())return;
+   quota.ai=null;aiError=error;
+   $('freeAI').textContent='暫時無法查詢';
+   $('tarotFreeAiCycle').textContent='';
+   $('sharedAI').textContent=member?'暫時無法查詢':'登入後查看';
+   console.warn('[Tarot quota] AI 額度查詢失敗：',errorCode(error));
+  }
+ })();
+ // 共用工具是會員中心跨工具共用的錢包：即使塔羅抽牌 Worker 暫時失敗，仍可獨立顯示確實查到的次數。
+ const walletJob=(async()=>{
+  if(!member||!token()){if(current())$('sharedDraw').textContent='登入後查看';return}
+  try{
+   const data=await quotaFetch('',{memberWallet:true,token:token()},16000);
+   if(!current())return;
+   const available=number(data?.wallet?.tool);
+   if(available!==null){walletOk=true;if(!toolOk)$('sharedDraw').textContent=`${available} 次`;}
+  }catch(error){if(current())console.warn('[Tarot quota] 會員共用工具備援查詢失敗：',errorCode(error))}
+ })();
  try{
-  const [a,b]=await Promise.allSettled([
-   req('/wallet/tarot/status',null,{},controller.signal),
-   req('/ai/center/quota',null,{},controller.signal)
-  ]);
-  if(seq!==quotaSeq||owner!==ownerKey())return false;
-  const tool=a.status==='fulfilled'?a.value:null;
-  const ai=b.status==='fulfilled'?b.value?.quota:null;
-  quota.tool=tool;quota.ai=ai;
-  const toolOk=!!tool&&!!tool.daily;
-  const aiOk=!!ai&&!!ai.daily;
-  const number=v=>v===null||v===undefined||v===''||!Number.isFinite(Number(v))?'—':Math.max(0,Number(v));
-  const period=d=>{
-   const days=Number(d?.days);
-   // 這兩個後端欄位命名為 daily；沒有額外指定週期時仍是每日補充。
-   const n=Number.isInteger(days)&&days>0?days:(d&&d.limit!==undefined?1:null);
-   return n?`每 ${n} 天補充，不累積`:'補充週期暫時無法查詢';
-  };
-  $('freeDraw').textContent=toolOk?`${number(tool.daily.remaining)} / ${number(tool.daily.limit)} 次`:'暫時無法查詢';
-  $('tarotFreeToolCycle').textContent=toolOk?period(tool.daily):'';
-  $('sharedDraw').textContent=toolOk?(tool.wallet?`${number(tool.wallet.tool)} 次`:'登入後查看'):(!member?'登入後查看':'暫時無法查詢');
-  $('freeAI').textContent=aiOk?`${number(ai.daily.remaining)} / ${number(ai.daily.limit)} 次`:'暫時無法查詢';
-  $('tarotFreeAiCycle').textContent=aiOk?period(ai.daily):'';
-  $('sharedAI').textContent=aiOk?(ai.role==='member'?`${number(ai.wallet?.ai)} 次`:'登入後查看'):(!member?'登入後查看':'暫時無法查詢');
-  const success=toolOk&&aiOk;
-  setStatus('quotaStatus',success?'':(controller.signal.aborted?'額度查詢逾時，請點選「更新額度」重試。':'部分額度暫時無法查詢，請點選「更新額度」重試。'),!success);
-  return success;
+  await Promise.allSettled([toolJob,aiJob,walletJob]);
+  if(!current())return false;
+  if(!toolOk && !walletOk)$('sharedDraw').textContent=member?'暫時無法查詢':'登入後查看';
+  const errors=[];
+  if(!toolOk)errors.push(`抽牌額度暫時無法查詢（${errorCode(toolError)}）`);
+  if(!aiOk)errors.push(`AI 額度暫時無法查詢（${errorCode(aiError)}）`);
+  setStatus('quotaStatus',errors.length?errors.join('；')+'。請按「更新額度」重試。':'',!!errors.length);
+  return toolOk&&aiOk;
  }finally{
-  clearTimeout(timer);
-  if(seq===quotaSeq){quotaAbort=null;button.disabled=false;button.textContent='更新額度 ↻';}
+  if(current()){
+   button.disabled=false;button.textContent='更新額度 ↻';
+  }
  }
 }
 function topic(id){return TOPICS.find(t=>t.id===id)||TOPICS[0]}
@@ -647,13 +728,13 @@ function initListeners(){
  document.addEventListener('click',e=>{const fold=e.target.closest('[data-fold]'),cp=e.target.closest('[data-copy]'),dl=e.target.closest('[data-download]');if(fold){const which=fold.dataset.fold;const el=$('reportDetails'+(which==='a'?'A':'B'));if(el)setReportExpanded(which,el.hidden,fold.classList.contains('report-fold-bottom'));}else if(cp)void copyReport(cp.dataset.copy);else if(dl)downloadReport(dl.dataset.download)});
  
  window.addEventListener('beforeunload',e=>{if(busy||state.reportA||state.reportB){e.preventDefault();e.returnValue='';}});
- window.addEventListener('focus',()=>{if(!document.hidden){if(localRead(SESSION_KEY))void refreshQuota();void restoreMember();if(member&&state.reportA)void autoSaveRecord();}});
+ window.addEventListener('focus',()=>{if(!document.hidden){void restoreMember();if(member&&state.reportA)void autoSaveRecord();}});
  window.addEventListener('online',()=>{archiveRetryAt=0;if(member&&state.reportA)void autoSaveRecord();});
  window.addEventListener('storage',e=>{if(e.key===SESSION_KEY||e.key==='divinationhub-auth-event'){if(state.owner!==ownerKey()){state=defaultState();selected=null;typed='';currentCat='love';sampleStart=0;drawDeck=[];save();render();}member=null;void restoreMember();}});
 }
 function init(){restore();if(state.stage==='drawA'&&state.cardsA.length===3){state.stage='aiA';save()}if(state.stage==='drawB'&&state.cardsB.length===3){state.stage='aiB';save()}if(state.stage==='completeA'&&state.chargedB&&state.cardsB.length<3){state.stage='drawB';save()}currentCat=state.topicId||'love';if(state.stage==='select'&&state.question){typed=state.querySnapshot||state.question.text;selected=state.questionType==='fixed'?state.question:null}
  if(state.stage==='drawA'||state.stage==='drawB')drawDeck=shuffledDeck().filter(i=>!(state.stage==='drawB'?state.cardsB:state.cardsA).some(c=>c.index===i));
- initListeners();updateMemberButton();render();setupTopicSwipeCue();setupQuestionRefreshCue();if(localRead(SESSION_KEY))void refreshQuota();void restoreMember();}
+ initListeners();updateMemberButton();render();setupTopicSwipeCue();setupQuestionRefreshCue();void restoreMember();}
 init();
 })();
 </script>
