@@ -353,7 +353,7 @@ async function restoreMember(){if(sessionPending)return;sessionPending=true;cons
     if(localRead(SESSION_KEY)!==original)return;
     member={sub:m.member.sub,name:m.member.name||m.member.email||'會員'};localWrite(DEVICE_BOUND,'true');verified=true;
   }catch(e){member=null;verified=false;setStatus('quotaStatus','會員登入尚未驗證，請稍後更新或重新登入。',true)}
-  finally{sessionPending=false;updateMemberButton();void refreshQuota();if(state.reportA){updateArchiveMessage();if(member)void autoSaveRecord();}}
+  finally{sessionPending=false;updateMemberButton();if(!quotaInFlight&&Date.now()-quotaLastFinished>30000)void refreshQuota();if(state.reportA){updateArchiveMessage();if(member)void autoSaveRecord();}}
 }
 function updateMemberButton(){const b=$('memberBtn');b.href=member?'/member.html':memberUrl();b.textContent=member?'會員中心':'免費登入';}
 function headers(extra={}){return {'X-Tarot-Visitor-Id':visitorId(),...(token()?{Authorization:'Bearer '+token()}:{}),...extra}}
@@ -363,16 +363,18 @@ async function req(path,body=null,extra={}){
 }
 // 僅 GET 額度查詢使用；抽牌扣點 / AI 產文仍沿用原本 req()，避免改動交易流程。
 async function readQuotaWithDeadline(path){
-  const c=new AbortController(),timer=setTimeout(()=>c.abort(),15000);
+  const c=new AbortController(),timer=setTimeout(()=>c.abort(),7500);
   try{
-    const r=await fetch(API+path,{method:'GET',cache:'no-store',headers:headers(),signal:c.signal});
+    const saved=localRead(SESSION_KEY);const h={...headers(),...(saved?{Authorization:'Bearer '+saved}:{})};
+    const r=await fetch(API+path,{method:'GET',cache:'no-store',headers:h,signal:c.signal});
     const d=await r.json().catch(()=>null);
     if(!r.ok||!d?.ok){const e=new Error(d?.error||('HTTP_'+r.status));e.status=r.status;throw e;}
     return d;
   }catch(e){if(c.signal.aborted)throw Error('TIMEOUT');throw e;}
   finally{clearTimeout(timer);}
 }
-async function refreshQuota(){
+let quotaInFlight=null,quotaInFlightOwner='',quotaLastFinished=0;
+async function refreshQuotaInner(){
   const seq=++quotaSeq,owner=ownerKey(),button=$('refreshQuota');
   button.disabled=true;button.textContent='查詢中…';
   setStatus('quotaStatus','');
@@ -404,12 +406,18 @@ async function refreshQuota(){
   try{await Promise.all([tool,ai]);}
   finally{
     if(seq===quotaSeq&&owner===ownerKey()){
-      button.disabled=false;button.textContent='更新額度 ↻';
+      quotaLastFinished=Date.now();button.disabled=false;button.textContent='更新額度 ↻';
       setStatus('quotaStatus',errors.length?'額度查詢失敗（'+errors.join('；')+'）。請更新額度重試。':'',errors.length>0);
     }
   }
   return errors.length===0;
-}function topic(id){return TOPICS.find(t=>t.id===id)||TOPICS[0]}
+}
+function refreshQuota(){
+ const owner=ownerKey();if(quotaInFlight&&quotaInFlightOwner===owner)return quotaInFlight;
+ quotaInFlightOwner=owner;const p=refreshQuotaInner();quotaInFlight=p;
+ void p.finally(()=>{if(quotaInFlight===p)quotaInFlight=null;});return p;
+}
+function topic(id){return TOPICS.find(t=>t.id===id)||TOPICS[0]}
 function questionPool(tid){const t=topic(tid),out=[];for(const s of t.scenarios||[]){for(const q of TAROT_DATA.questions[tid+':'+s[0]]||[]){if(out.some(o=>o.text===q.text))continue;out.push({...q,topicId:tid,scenarioId:s[0],scenarioName:s[1]});}}return out;}
 let selected=null,typed='',currentCat='love',sampleStart=0;
 function displayCategory(){const t=topic(currentCat);$('topics').innerHTML=TOPICS.map(x=>`<button type="button" class="pill ${currentCat===x.id?'active':''}" data-topic="${esc(x.id)}" aria-pressed="${currentCat===x.id}">${esc(x.name)}</button>`).join('');
@@ -675,7 +683,7 @@ function initListeners(){
  document.addEventListener('click',e=>{const fold=e.target.closest('[data-fold]'),cp=e.target.closest('[data-copy]'),dl=e.target.closest('[data-download]');if(fold){const which=fold.dataset.fold;const el=$('reportDetails'+(which==='a'?'A':'B'));if(el)setReportExpanded(which,el.hidden,fold.classList.contains('report-fold-bottom'));}else if(cp)void copyReport(cp.dataset.copy);else if(dl)downloadReport(dl.dataset.download)});
  
  window.addEventListener('beforeunload',e=>{if(busy||state.reportA||state.reportB){e.preventDefault();e.returnValue='';}});
- window.addEventListener('focus',()=>{if(!document.hidden){void restoreMember();void refreshQuota();if(member&&state.reportA)void autoSaveRecord();}});
+ window.addEventListener('focus',()=>{if(!document.hidden){if(Date.now()-quotaLastFinished>30000)void refreshQuota();if(!member&&!sessionPending)void restoreMember();if(member&&state.reportA)void autoSaveRecord();}});
  window.addEventListener('online',()=>{archiveRetryAt=0;if(member&&state.reportA)void autoSaveRecord();});
  window.addEventListener('storage',e=>{if(e.key===SESSION_KEY||e.key==='divinationhub-auth-event'){if(state.owner!==ownerKey()){state=defaultState();selected=null;typed='';currentCat='love';sampleStart=0;drawDeck=[];save();render();}member=null;void restoreMember();}});
 }

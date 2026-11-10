@@ -201,8 +201,8 @@ function renderQuota(){
  $('dailyAi').textContent=quotaValue(f?.ai);
  $('ceziDeepCycle').textContent=periodText(f?.tool);
  $('ceziAiCycle').textContent=periodText(f?.ai);
- $('sharedTool').textContent=!state.member?'登入後查看':w&&remaining(w.tool)!==null?`${remaining(w.tool)} 次`:(failed?'暫時無法查詢':'查詢中…');
- $('sharedAi').textContent=!state.member?'登入後查看':w&&remaining(w.ai)!==null?`${remaining(w.ai)} 次`:(failed?'暫時無法查詢':'查詢中…');
+ $('sharedTool').textContent=w&&remaining(w.tool)!==null?`${remaining(w.tool)} 次`:!state.member?'登入後查看':(failed?'暫時無法查詢':'查詢中…');
+ $('sharedAi').textContent=w&&remaining(w.ai)!==null?`${remaining(w.ai)} 次`:!state.member?'登入後查看':(failed?'暫時無法查詢':'查詢中…');
  const tool=remaining(f?.tool?.remaining),ai=remaining(f?.ai?.remaining),st=remaining(w?.tool),sa=remaining(w?.ai);
  const noTool=tool!==null&&tool<=0&&(!state.member||(st!==null&&st<=0));
  const noAi=ai!==null&&ai<=0&&(!state.member||(sa!==null&&sa<=0));
@@ -219,9 +219,11 @@ async function refreshQuota(){
  const controller=new AbortController();quotaRefreshAbort=controller;
  const b=$('refreshQuota');b.disabled=true;b.textContent='查詢中…';
  setStatus('quotaStatus','');
- const timer=setTimeout(()=>controller.abort(),9000);
+ const timer=setTimeout(()=>controller.abort(),7000);
  try{
-  const d=await request('/status',null,{signal:controller.signal});
+  // GET 額度：帶目前持有的登入 Token，由 Worker 自行驗證，不等待會員驗證完成。
+  const t=token();const h={'X-Cezi-Visitor-Id':visitor(),...(t?{Authorization:'Bearer '+t}:{})};
+  const d=await getJSON(API+'/status',{method:'GET',headers:h,signal:controller.signal});
   if(seq!==quotaRefreshSeq)return null;
   state.quota=d;renderQuota();setStatus('quotaStatus','');return d;
  }catch(e){
@@ -234,7 +236,35 @@ async function refreshQuota(){
   if(seq===quotaRefreshSeq){quotaRefreshAbort=null;b.disabled=false;b.textContent='更新額度 ↻';}
  }
 }
-async function checkSession(){const t=token();state.member=null;state.token=t;state.authChecked=false;$('accountLink').textContent=t?'驗證中…':'會員登入';if(t){const c=new AbortController(),timer=setTimeout(()=>c.abort(),11000);try{const d=await memberRequest('/auth/session',c.signal);if(d.authenticated&&d.member?.sub)state.member=d.member;else if(d.authenticated===false){try{localStorage.removeItem(AUTH_KEY)}catch(_){}}}catch(_){/* 驗證逾時或失敗時保留 Token，免費額度仍繼續查詢。 */}finally{clearTimeout(timer)}}state.authChecked=true;$('accountLink').textContent=state.member?'會員中心':'會員登入';$('accountLink').href='/member.html';await refreshQuota()}
+let ceziAuthSeq=0,ceziLastPageSync=0;
+async function checkSession(){
+ const seq=++ceziAuthSeq,t=token(),changed=t!==state.token;
+ state.token=t;state.authChecked=false;
+ $('accountLink').textContent=t?'驗證中…':'會員登入';
+ if(!t){state.member=null;state.authChecked=true;$('accountLink').textContent='會員登入';renderQuota();if(changed)void refreshQuota();return;}
+ const c=new AbortController(),timer=setTimeout(()=>c.abort(),7000);
+ try{
+  const d=await memberRequest('/auth/session',c.signal);
+  if(seq!==ceziAuthSeq||t!==token())return;
+  if(d.authenticated&&d.member?.sub){state.member=d.member;}
+  else if(d.authenticated===false){state.member=null;try{localStorage.removeItem(AUTH_KEY)}catch(_){}}
+ }catch(_){
+  // 網路故障不等於會員已登出；不能清除已有有效登入狀態。
+  if(seq!==ceziAuthSeq||t!==token())return;
+ }finally{clearTimeout(timer);}
+ if(seq!==ceziAuthSeq)return;
+ state.authChecked=true;
+ $('accountLink').textContent=state.member?'會員中心':'會員登入';
+ $('accountLink').href='/member.html';renderQuota();
+ // 只有身分真的改變，才要求重新查額度，不讓會話驗證反覆打斷查詢。
+ if(t!==token() || (changed&&quotaRefreshSeq===0))void refreshQuota();
+}
+function ceziPageSync(force=false){
+ if(document.hidden)return;
+ const now=Date.now();if(!force&&now-ceziLastPageSync<30000)return;
+ ceziLastPageSync=now;
+ void checkSession();void refreshQuota();
+}
 function showResults(){$('questionCard').hidden=true;$('resultCard').hidden=false;$('restartBtn').hidden=false;$('restartBtn').classList.toggle('button-restart-complete',!!state.initial);$('resultChar').textContent=state.hanzi;$('resultQuestion').textContent=state.selection.question;$('aiPhase').hidden=!!state.initial;state.busy=false;renderQuota();if(!state.initial){$('readerCard').hidden=true;setStatus('aiStatus','')} }
 async function start(){if(state.busy||state.readingId)return;if(!state.selection){setStatus('startStatus','請先選擇問題',true);return}const qlen=Array.from(state.selection.question||'').length;if(qlen<6||qlen>160){setStatus('startStatus','問題請輸入 6～160 字。',true);return}const char=$('hanzi').value.trim().normalize('NFC');if(!isHanzi(char)){setStatus('startStatus','請輸入一個中文字',true);return}state.busy=true;renderSelection();const q=state.selection.question,route=mappedRoute(),fp=JSON.stringify([route.topic,route.scenario,q,char]);if(!state.operation||state.operationFp!==fp){state.operation=uuid();state.operationFp=fp}const operation=state.operation;try{const d=await request('/start',{...route,question:q,hanzi:char,operationId:operation});if(!d?.readingId||!d?.analysis)throw Error('測字結果尚未完整');state.hanzi=char;state.readingId=d.readingId;state.foundation=d.analysis;state.quota=d;state.operation='';state.operationFp='';state.initial=null;state.turns=[];state.aiOperation='';showResults();save();scrollToId('resultCard');void refreshQuota()}catch(e){setStatus('startStatus','測字未完成：'+friendly(e),true)}finally{state.busy=false;renderSelection(false)}}
 function styleReportHeading(el,source){
@@ -265,7 +295,7 @@ async function copy(){try{await navigator.clipboard.writeText(textExport());setS
 function download(){const d=new Date(),pad=x=>String(x).padStart(2,'0'),filename=`cezi-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.txt`,url=URL.createObjectURL(new Blob(['\ufeff'+textExport()],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 async function report(){const msg=$('feedbackMessage').value.trim(),trace=state.lastErrorTrace||'';if(Array.from(msg).length<10||Array.from(msg).length>400){setStatus('feedbackStatus','請填寫 10～400 字問題說明。',true);return}if(!/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/.test(trace)){setStatus('feedbackStatus','目前沒有可回報的 AI 追蹤碼。',true);return}const b=$('submitFeedback');b.disabled=true;setStatus('feedbackStatus','送出中…');try{await request('/feedback',{readingId:state.readingId,traceId:trace,category:'ai_failure',comment:msg});setStatus('feedbackStatus','已送出回報。');$('submitFeedback').disabled=true}catch(e){setStatus('feedbackStatus','回報未完成：'+friendly(e),true)}finally{if($('feedbackStatus').textContent!=='已送出回報。')b.disabled=false}}
 async function restart(){if(state.busy)return;if(state.readingId&&!await confirmAction(state.initial?'目前的 AI 解讀只有本頁暫存。建議先下載 TXT 或複製完整文章。\n\n確定清除並重新測字嗎？':'確定清除本次測字結果，重新選題嗎？','重新測字'))return;try{sessionStorage.removeItem(SAVE_KEY)}catch(_){}state.readingId='';state.operation='';state.operationFp='';state.aiOperation='';state.followOperation='';state.followQuestion='';state.hanzi='';state.foundation=null;state.initial=null;state.turns=[];state.selection=null;state.offset=0;state.reportCollapsed=false;closeFeedbackDialog(false);state.lastErrorTrace='';$('hanzi').value='';$('questionCard').hidden=false;$('resultCard').hidden=true;$('readerCard').hidden=true;$('restartBtn').hidden=true;$('restartBtn').classList.remove('button-restart-complete');$('customQuestion').value='';$('customBox').open=false;renderTopics();renderQuestions();renderSelection();scrollToId('questionCard')}
-async function init(){renderTopics();renderQuestions();renderSelection();$('refreshQuestions').onclick=()=>{if(state.readingId||state.busy)return;const n=getTopic().questions.length;state.offset=(state.offset+2)%n;renderQuestions()};$('useCustom').onclick=chooseCustom;$('selectedText').addEventListener('input',editSelectedQuestion);$('customQuestion').addEventListener('input',()=>{if(state.selection?.type==='custom'&&state.selection.question!==$('customQuestion').value.trim()){state.selection=null;renderSelection()}});$('hanzi').addEventListener('input',normalizeHanzi);$('startBtn').onclick=start;$('refreshQuota').onclick=()=>void checkSession();$('aiBtn').onclick=ai;$('followBtn').onclick=follow;$('copyReport').onclick=copy;$('downloadReport').onclick=download;$('foldTop').onclick=$('foldBottom').onclick=()=>{state.reportCollapsed=!state.reportCollapsed;updateFold();save();if(state.reportCollapsed)scrollToId('readerCard')};$('restartBtn').onclick=restart;$('submitFeedback').onclick=report;$('closeFeedback').onclick=()=>closeFeedbackDialog();$('feedbackBackdrop').addEventListener('click',e=>{if(e.target===$('feedbackBackdrop'))closeFeedbackDialog()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('feedbackBackdrop').hidden)closeFeedbackDialog()});$('seoClose').onclick=()=>{$('seoDetails').open=false;scrollToId('ceziSeo')};window.addEventListener('beforeunload',e=>{if(state.busy){e.preventDefault();e.returnValue=''}});window.addEventListener('storage',e=>{if(e.key===AUTH_KEY||e.key==='divinationhub-auth-event')void checkSession()});window.addEventListener('pageshow',e=>{if(e.persisted&&!document.hidden)void checkSession()});document.addEventListener('visibilitychange',()=>{if(!document.hidden)void checkSession()});const topicsController=new AbortController(),topicsTimer=setTimeout(()=>topicsController.abort(),11000);void request('/topics',null,{signal:topicsController.signal}).then(d=>{state.serverBank=d?.topics||null}).catch(()=>{}).finally(()=>clearTimeout(topicsTimer));await checkSession();if(restore())scrollToId('resultCard');}
+async function init(){renderTopics();renderQuestions();renderSelection();$('refreshQuestions').onclick=()=>{if(state.readingId||state.busy)return;const n=getTopic().questions.length;state.offset=(state.offset+2)%n;renderQuestions()};$('useCustom').onclick=chooseCustom;$('selectedText').addEventListener('input',editSelectedQuestion);$('customQuestion').addEventListener('input',()=>{if(state.selection?.type==='custom'&&state.selection.question!==$('customQuestion').value.trim()){state.selection=null;renderSelection()}});$('hanzi').addEventListener('input',normalizeHanzi);$('startBtn').onclick=start;$('refreshQuota').onclick=()=>void refreshQuota();$('aiBtn').onclick=ai;$('followBtn').onclick=follow;$('copyReport').onclick=copy;$('downloadReport').onclick=download;$('foldTop').onclick=$('foldBottom').onclick=()=>{state.reportCollapsed=!state.reportCollapsed;updateFold();save();if(state.reportCollapsed)scrollToId('readerCard')};$('restartBtn').onclick=restart;$('submitFeedback').onclick=report;$('closeFeedback').onclick=()=>closeFeedbackDialog();$('feedbackBackdrop').addEventListener('click',e=>{if(e.target===$('feedbackBackdrop'))closeFeedbackDialog()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('feedbackBackdrop').hidden)closeFeedbackDialog()});$('seoClose').onclick=()=>{$('seoDetails').open=false;scrollToId('ceziSeo')};window.addEventListener('beforeunload',e=>{if(state.busy){e.preventDefault();e.returnValue=''}});window.addEventListener('storage',e=>{if(e.key===AUTH_KEY||e.key==='divinationhub-auth-event')ceziPageSync(true)});window.addEventListener('pageshow',e=>{if(e.persisted)ceziPageSync()});document.addEventListener('visibilitychange',()=>{if(!document.hidden)ceziPageSync()});const topicsController=new AbortController(),topicsTimer=setTimeout(()=>topicsController.abort(),11000);void request('/topics',null,{signal:topicsController.signal}).then(d=>{state.serverBank=d?.topics||null}).catch(()=>{}).finally(()=>clearTimeout(topicsTimer));void refreshQuota();await checkSession();if(restore())scrollToId('resultCard');}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else void init();
 })();
 

@@ -563,17 +563,31 @@ function markMember(){try{localStorage.setItem(WX_EVER_MEMBER_KEY,'1');}catch(_)
 function knownMember(){try{return localStorage.getItem(WX_EVER_MEMBER_KEY)==='1'||localStorage.getItem('divinationhub-bazi-was-member-v1')==='1';}catch(_){return false;}}
 function quotaText(id,text){const n=$(id);if(!n)return;n.textContent=text;n.classList.toggle('pending',!/\d/.test(text));}
 // 僅額度/會員資訊 GET 使用；POST 起盤及 AI 請求不受影響。
-async function quotaGet(url,options={},deadline=15000){const c=new AbortController(),timer=setTimeout(()=>c.abort(),deadline);try{const r=await fetch(url,{...options,signal:c.signal});const body=await r.text();return {ok:r.ok,status:r.status,json:async()=>{try{return JSON.parse(body)}catch(_){return {}}}}}finally{clearTimeout(timer)}}
-async function memberJSON(path,token){const r=await quotaGet(WX_MEMBER_API+path,{headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'},15000),j=await r.json().catch(()=>({}));if(!r.ok||j?.success!==true)throw Error(j?.error||'UNAVAILABLE');return j;}
-async function refreshMember(){const serial=++memberSerial,token=getToken();let m=null;
- if(token)try{const r=await quotaGet(WX_MEMBER_API+'/auth/session',{headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'},15000),j=await r.json().catch(()=>({}));if(r.ok&&j.success&&j.authenticated&&j.member?.sub)m=j.member;}catch(_){}
- if(serial!==memberSerial)return;
- member=m;if(m)markMember();
- $('memberLink').textContent=m?'會員中心':'會員登入';$('memberLink').href=m?'/member.html':'/member.html?return=%2Fwuxing-mobile.html';
- await refreshAllQuota();
+async function quotaGet(url,options={},deadline=7500){const c=new AbortController(),timer=setTimeout(()=>c.abort(),deadline);try{const r=await fetch(url,{...options,signal:c.signal});const body=await r.text();return {ok:r.ok,status:r.status,json:async()=>{try{return JSON.parse(body)}catch(_){return {}}}}}finally{clearTimeout(timer)}}
+async function memberJSON(path,token){const r=await quotaGet(WX_MEMBER_API+path,{headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'},7500),j=await r.json().catch(()=>({}));if(!r.ok||j?.success!==true)throw Error(j?.error||'UNAVAILABLE');return j;}
+let wxMemberLastCheck=0,wxMemberInFlight=null;
+async function refreshMember(force=false){
+ const now=Date.now();if(!force&&now-wxMemberLastCheck<30000)return wxMemberInFlight;
+ if(wxMemberInFlight)return wxMemberInFlight;
+ wxMemberLastCheck=now;
+ const p=(async()=>{
+  const serial=++memberSerial,token=getToken();let m=null,verified=false;
+  if(token)try{
+   const r=await quotaGet(WX_MEMBER_API+'/auth/session',{headers:{Authorization:'Bearer '+token,Accept:'application/json'},cache:'no-store'},7500),j=await r.json().catch(()=>({}));
+   if(r.ok&&j.success&&j.authenticated&&j.member?.sub){m=j.member;verified=true;}
+   else if(r.ok&&j.authenticated===false)verified=true;
+  }catch(_){}
+  if(serial!==memberSerial||token!==getToken())return;
+  // 驗證請求逾時不應清除上一個有效會員身分。
+  if(verified||!token)member=m;
+  if(member)markMember();
+  $('memberLink').textContent=member?'會員中心':'會員登入';$('memberLink').href=member?'/member.html':'/member.html?return=%2Fwuxing-mobile.html';
+  if(member)void refreshWalletQuota();
+ })();wxMemberInFlight=p;
+ try{await p;}finally{if(wxMemberInFlight===p)wxMemberInFlight=null;}
 }
 async function refreshToolQuota(){const serial=++toolQuotaSerial;
- try{const r=await quotaGet(WX_API+'/quota',{headers:authHeaders(false),cache:'no-store'},15000),j=await r.json().catch(()=>({}));if(serial!==toolQuotaSerial)return;
+ try{const r=await quotaGet(WX_API+'/quota',{headers:authHeaders(false),cache:'no-store'},7500),j=await r.json().catch(()=>({}));if(serial!==toolQuotaSerial)return;
   if(!r.ok||!j.ok||!j.quota?.free)throw Error('無法查詢');const q=j.quota.free;
   quotaText('freeTool',`${q.remaining} / ${q.limit} 次`);
   $('freeToolCycle').textContent=j.quota.knownMember?'曾登入會員，請重新登入':q.limit>0?`每 ${q.days} 天補充，不累積`:'目前未提供免費次數';
@@ -581,7 +595,7 @@ async function refreshToolQuota(){const serial=++toolQuotaSerial;
  }catch(_){if(serial===toolQuotaSerial){quotaText('freeTool',knownMember()&&!member?'請重新登入':'暫時無法查詢');$('freeToolCycle').textContent='以五行後端最新狀態為準';}}
 }
 async function refreshAIQuota(){const serial=++aiQuotaSerial;
- try{const r=await quotaGet(WX_AI_API+'/status',{headers:authHeaders(false),cache:'no-store'},15000),j=await r.json().catch(()=>({}));if(serial!==aiQuotaSerial)return;
+ try{const r=await quotaGet(WX_AI_API+'/status',{headers:authHeaders(false),cache:'no-store'},7500),j=await r.json().catch(()=>({}));if(serial!==aiQuotaSerial)return;
   if(!r.ok||!j.ok||!j.quota?.free)throw Error(j?.message||'AI 額度無法查詢');
   aiQuota=j.quota;aiReady=true;const q=j.quota.free;quotaText('freeAi',`${q.remaining} / ${q.limit} 次`);
   $('freeAiCycle').textContent=q.limit>0?`每 ${q.days} 天補充，不累積`:'目前未提供免費 AI 次數';
@@ -596,9 +610,18 @@ async function refreshWalletQuota(){const serial=++quotaSerial,token=getToken();
  if(serial!==quotaSerial||!member||token!==getToken())return;
  if(wallet.status==='fulfilled'){
   const w=wallet.value.wallet||{};quotaText('sharedTool',Number.isFinite(w.tool)?w.tool+' 次':'暫時無法查詢');quotaText('sharedAi',Number.isFinite(w.ai)?w.ai+' 次':'暫時無法查詢');
- }else{if(!/\d/.test($('sharedTool').textContent))quotaText('sharedTool','暫時無法查詢');if(!/\d/.test($('sharedAi').textContent))quotaText('sharedAi','暫時無法查詢');} } async function refreshAllQuota(){const btn=$('refreshQuota');btn.disabled=true;btn.textContent='查詢中…';
- try{await Promise.allSettled([refreshToolQuota(),refreshAIQuota()]);await refreshWalletQuota();}
- finally{btn.disabled=false;btn.textContent='更新額度 ↻';}
+ }else{if(!/\d/.test($('sharedTool').textContent))quotaText('sharedTool','暫時無法查詢');if(!/\d/.test($('sharedAi').textContent))quotaText('sharedAi','暫時無法查詢');} } let wxQuotaInFlight=null;
+function refreshAllQuota(){
+ if(wxQuotaInFlight)return wxQuotaInFlight;
+ const btn=$('refreshQuota');btn.disabled=true;btn.textContent='查詢中…';
+ const p=(async()=>{
+  try{
+   // 兩個免費額度來源獨立，已取得的數值立即顯示，不等待會員錢包。
+   await Promise.allSettled([refreshToolQuota(),refreshAIQuota()]);
+  }finally{btn.disabled=false;btn.textContent='更新額度 ↻';}
+  if(member)void refreshWalletQuota();
+ })();wxQuotaInFlight=p;
+ void p.finally(()=>{if(wxQuotaInFlight===p)wxQuotaInFlight=null;});return p;
 }
 function remainingAI(){if(!aiQuota?.free)return null;const free=Math.max(0,Number(aiQuota.free.remaining)||0),shared=aiQuota.role==='member'?Math.max(0,Number(aiQuota.sharedAiRemaining)||0):0;return {free,shared,total:free+shared};}
 function aiStatusText(){const r=remainingAI();if(!aiReady||!r)return 'AI 服務狀態待確認，暫不送出。';return `本期免費 AI：${r.free} 次 · 會員共用 AI：${aiQuota.role==='member'?r.shared+' 次':'登入後查看'}${r.total===0?' ｜額度已用完':''}`;}
@@ -1007,10 +1030,10 @@ function initialize(){const today=new Date(),y=today.getFullYear();fillOptions($
  $('insightToggle').addEventListener('click',()=>setFreeFold($('insightToggle').getAttribute('aria-expanded')==='true'?null:'insight'));
  $('topicsToggle').addEventListener('click',()=>setFreeFold($('topicsToggle').getAttribute('aria-expanded')==='true'?null:'topicsFold'));
  $('refreshQuota').addEventListener('click',()=>void refreshAllQuota());
- window.addEventListener('load',updateDateHint);window.addEventListener('pageshow',()=>void refreshMember());window.addEventListener('focus',()=>void refreshMember());
+ window.addEventListener('load',updateDateHint);window.addEventListener('pageshow',e=>{if(e.persisted)void refreshMember()});window.addEventListener('focus',()=>void refreshMember());
  window.addEventListener('storage',e=>{if([WX_SESSION_KEY,'divinationhub-auth-event'].includes(e.key))void refreshMember();});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')$('savedModal').hidden=true;});
- void refreshMember();
+ void refreshAllQuota();void refreshMember();
 }
 initialize();
 
