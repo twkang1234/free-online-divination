@@ -160,36 +160,32 @@
 .dh-quota .dh-quota-status{display:none!important;}.dh-quota .dh-quota-status.error:not(:empty){display:block!important;margin:9px 0 0!important;font-size:.72rem!important;line-height:1.5!important;color:var(--red,#f2a5b6)!important;overflow-wrap:anywhere!important;}
 @media(max-width:350px){.dh-quota{padding:12px!important;}.dh-quota .dh-quota-cell{padding:9px 8px!important;min-height:83px!important;}.dh-quota .dh-quota-label{font-size:.68rem!important;}.dh-quota .dh-quota-number{font-size:.96rem!important;}.dh-quota .dh-quota-cycle{font-size:.61rem!important;}}
 </style>
-
-<style id="dh-quota-v2-pricing-link">
-/* v2：僅新增方案連結。使用各工具本身的會員配色，不介入額度查詢或扣點。 */
-.dh-quota .dh-quota-cell.is-shared:nth-child(4){position:relative!important;min-height:88px!important;}
-.dh-quota .dh-quota-purchase{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;
-  gap:4px!important;align-self:flex-end!important;flex:0 0 auto!important;
-  width:auto!important;max-width:100%!important;min-height:23px!important;
-  position:absolute!important;right:8px!important;bottom:5px!important;top:auto!important;
-  margin:0!important;padding:3px 7px!important;
-  border:1px solid var(--dh-member)!important;border-radius:8px!important;
-  background:transparent!important;color:var(--dh-member)!important;
-  text-decoration:none!important;white-space:nowrap!important;
-  font-size:.66rem!important;font-weight:800!important;line-height:1.2!important;
-  letter-spacing:0!important;box-shadow:none!important;box-sizing:border-box!important;
-  -webkit-tap-highlight-color:transparent;
+<style id="dh-quota-v21-purchase-only">
+/* v2.1: pricing link only. Keep working quota/session/draw scripts untouched. */
+.dh-quota .dh-quota-cell.is-shared:last-child{position:relative!important;}
+.dh-quota .dh-quota-purchase{position:absolute!important;right:7px!important;bottom:6px!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ width:auto!important;height:auto!important;min-height:22px!important;max-width:calc(100% - 14px)!important;
+ padding:3px 7px!important;margin:0!important;box-sizing:border-box!important;
+ border:1px solid var(--dh-member)!important;border-radius:7px!important;
+ background:var(--dh-cell)!important;color:var(--dh-member)!important;
+ font-size:.65rem!important;font-weight:800!important;line-height:1.25!important;
+ letter-spacing:0!important;text-decoration:none!important;white-space:nowrap!important;box-shadow:none!important;
+ z-index:1;-webkit-tap-highlight-color:transparent;
 }
 .dh-quota .dh-quota-purchase:hover{background:var(--dh-panel)!important;}
 .dh-quota .dh-quota-purchase:focus-visible{outline:2px solid var(--dh-member)!important;outline-offset:2px!important;}
 @media(max-width:350px){
-  .dh-quota .dh-quota-cell.is-shared:nth-child(4){min-height:83px!important;}
-  .dh-quota .dh-quota-purchase{font-size:.61rem!important;padding:3px 6px!important;min-height:23px!important;right:6px!important;bottom:5px!important;}
+ .dh-quota .dh-quota-cell.is-shared:last-child{min-height:97px!important;}
+ .dh-quota .dh-quota-purchase{font-size:.61rem!important;padding:3px 6px!important;right:5px!important;bottom:5px!important;}
 }
 </style>
 </head>
 <body>
 <header class="sitebar"><div class="sitebar-inner"><a class="brand" href="/" aria-label="返回一念知機首頁">一念知機</a><nav class="header-tool-nav" aria-label="其他命理工具"><div class="header-tool-scroll" tabindex="0" aria-label="命理工具，可左右滑動"><a href="/qimen.html" draggable="false">奇門</a><a href="/tarot-mobile.html" draggable="false">塔羅</a><a href="/bazi.html" draggable="false">八字</a><a href="/ziwei.html" draggable="false">紫微</a><a href="/meihua.html" draggable="false">梅花</a><a href="/liuyao.html" draggable="false">六爻</a><a href="/yijing.html" draggable="false">易經64卦</a><a href="/cezi.html" draggable="false">測字</a><a href="/wuxing.html" draggable="false">五行</a><a href="/numerology.html" draggable="false">生命靈數</a></div></nav><div class="header-right"><a class="member-link" id="memberBtn" href="/member.html">免費登入</a></div></div></header>
 <main class="wrap">
-<section class="hero" id="hero"><div class="eyebrow brand-eyebrow"><span>DIVINATION HUB · TAROT</span><span class="build-chip" aria-label="目前頁面版本 v2">v2</span></div><div class="spark">✧</div><h1>免費塔羅<span>占卜</span><small class="hero-seo-sub">線上專業抽牌工具・AI深度解讀</small></h1><p>選擇問題後免費線上抽三張牌，查看牌面與正逆位；AI 解讀依免費及會員額度使用，需要更深入時可再抽三張進行六張整合。</p></section>
-<section id="quotaCard" class="dh-quota" aria-labelledby="quotaTitle"><div class="dh-quota-head"><h2 class="dh-quota-title" id="quotaTitle">我的使用額度</h2><button class="dh-quota-btn" id="refreshQuota" type="button">更新額度 ↻</button></div><div class="dh-quota-grid" aria-label="目前剩餘額度"><div class="dh-quota-cell is-free"><small class="dh-quota-label">免費抽牌</small><strong class="dh-quota-number" id="freeDraw">查詢中…</strong><small class="dh-quota-cycle" id="tarotFreeToolCycle">每 1 天補充，不累積</small></div><div class="dh-quota-cell is-shared"><small class="dh-quota-label">會員共用工具額度</small><strong class="dh-quota-number" id="sharedDraw">查詢中…</strong></div><div class="dh-quota-cell is-free"><small class="dh-quota-label">免費 AI 解讀</small><strong class="dh-quota-number" id="freeAI">查詢中…</strong><small class="dh-quota-cycle" id="tarotFreeAiCycle">每 1 天補充，不累積</small></div><div class="dh-quota-cell is-shared"><small class="dh-quota-label">會員共用 AI 額度</small><strong class="dh-quota-number" id="sharedAI">查詢中…</strong><a class="dh-quota-purchase" href="https://divinationhub.tw/pricing.html" aria-label="查看工具與 AI 額度加購方案">加購方案 <span aria-hidden="true">↗</span></a></div></div><p id="quotaStatus" class="dh-quota-status" role="status" aria-live="polite"></p></section>
+<section class="hero" id="hero"><div class="eyebrow brand-eyebrow"><span>DIVINATION HUB · TAROT</span><span class="build-chip" aria-label="目前頁面版本 v2.1">v2.1</span></div><div class="spark">✧</div><h1>免費塔羅<span>占卜</span><small class="hero-seo-sub">線上專業抽牌工具・AI深度解讀</small></h1><p>選擇問題後免費線上抽三張牌，查看牌面與正逆位；AI 解讀依免費及會員額度使用，需要更深入時可再抽三張進行六張整合。</p></section>
+<section id="quotaCard" class="dh-quota" aria-labelledby="quotaTitle"><div class="dh-quota-head"><h2 class="dh-quota-title" id="quotaTitle">我的使用額度</h2><button class="dh-quota-btn" id="refreshQuota" type="button">更新額度 ↻</button></div><div class="dh-quota-grid" aria-label="目前剩餘額度"><div class="dh-quota-cell is-free"><small class="dh-quota-label">免費抽牌</small><strong class="dh-quota-number" id="freeDraw">查詢中…</strong><small class="dh-quota-cycle" id="tarotFreeToolCycle">每 1 天補充，不累積</small></div><div class="dh-quota-cell is-shared"><small class="dh-quota-label">會員共用工具額度</small><strong class="dh-quota-number" id="sharedDraw">查詢中…</strong></div><div class="dh-quota-cell is-free"><small class="dh-quota-label">免費 AI 解讀</small><strong class="dh-quota-number" id="freeAI">查詢中…</strong><small class="dh-quota-cycle" id="tarotFreeAiCycle">每 1 天補充，不累積</small></div><div class="dh-quota-cell is-shared"><small class="dh-quota-label">會員共用 AI 額度</small><strong class="dh-quota-number" id="sharedAI">查詢中…</strong><a class="dh-quota-purchase" href="https://divinationhub.tw/pricing.html" aria-label="查看額度加購方案">加購方案 ↗</a></div></div><p id="quotaStatus" class="dh-quota-status" role="status" aria-live="polite"></p></section>
 <div class="tarot-question-anchor" id="worldSecond" aria-hidden="true"></div>
 <section class="card" id="questionPanel" aria-labelledby="questionTitle"><div class="section-head"><h2 id="questionTitle">選擇塔羅問題</h2><small>STEP 01 / 03</small></div><p class="caption">選擇主題或參考題目，也可以自行提問。</p><div class="pills" id="topics" role="group" aria-label="選擇問題主題"></div><div class="samples-head"><strong>參考題目 · 點選可帶入修改</strong><button type="button" class="text-btn" id="moreQuestions">換一批 ↻</button></div><div id="samples" class="sample-list"></div><details class="custom" id="customDetails"><summary>自己輸入問題 <span aria-hidden="true">⌄</span></summary><div class="custom-body"><textarea class="input" id="customQuestion" maxlength="120" placeholder="例如：我最近適合換工作嗎？"></textarea><p class="fine">需至少 5 個字元；修改參考題目也會改以自訂題規則計價。</p></div></details><div class="selection-info" id="paymentHint">請先選擇一個問題，不會立即扣點。</div><button type="button" class="primary" id="beginReading" disabled>確認問題，開始抽牌</button><p class="status" id="selectionStatus" role="status" aria-live="polite"></p><button type="button" class="ghost" id="resetSelection" hidden>取消這次，重新選題</button></section>
 <section class="card" id="drawPanel" hidden aria-labelledby="drawTitle"><div class="step-indicator" aria-hidden="true"><span class="active"></span><span id="drawProgressB"></span><span id="drawProgressAI"></span></div><div class="section-head"><h2 id="drawTitle">第一輪｜抽三張牌</h2><small id="drawPhaseLabel">STEP 02 / 03</small></div><div class="chosen-q"><small>本次占卜問題</small><strong id="drawQuestion"></strong></div><p class="caption" id="spreadDesc">系統已為你準備三張牌，依序點擊抽出。</p><div class="card-row" id="drawSlots"></div><div class="draw-board"><button type="button" class="draw-back" id="drawNext" aria-label="抽下一張牌"></button></div><p class="draw-hint" id="drawHint">點擊上方牌背，抽出第 1 張</p><p class="status" id="drawStatus" role="status" aria-live="polite"></p></section>
