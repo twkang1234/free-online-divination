@@ -184,7 +184,7 @@
 <body>
 <header class="sitebar"><div class="sitebar-inner"><a class="brand" href="/" aria-label="返回一念知機首頁">一念知機</a><nav class="header-tool-nav" aria-label="其他命理工具"><div class="header-tool-scroll" tabindex="0" aria-label="命理工具，可左右滑動"><a href="/qimen.html" draggable="false">奇門</a><a href="/tarot-mobile.html" draggable="false">塔羅</a><a href="/bazi.html" draggable="false">八字</a><a href="/ziwei.html" draggable="false">紫微</a><a href="/meihua.html" draggable="false">梅花</a><a href="/liuyao.html" draggable="false">六爻</a><a href="/yijing.html" draggable="false">易經64卦</a><a href="/cezi.html" draggable="false">測字</a><a href="/wuxing.html" draggable="false">五行</a><a href="/numerology.html" draggable="false">生命靈數</a></div></nav><div class="header-right"><a class="member-link" id="memberBtn" href="/member.html">免費登入</a></div></div></header>
 <main class="wrap">
-<section class="hero" id="hero"><div class="eyebrow brand-eyebrow"><span>DIVINATION HUB · TAROT</span><span class="build-chip" aria-label="目前頁面版本 v2.1">v2.1</span></div><div class="spark">✧</div><h1>免費塔羅<span>占卜</span><small class="hero-seo-sub">線上專業抽牌工具・AI深度解讀</small></h1><p>選擇問題後免費線上抽三張牌，查看牌面與正逆位；AI 解讀依免費及會員額度使用，需要更深入時可再抽三張進行六張整合。</p></section>
+<section class="hero" id="hero"><div class="eyebrow brand-eyebrow"><span>DIVINATION HUB · TAROT</span><span class="build-chip" aria-label="目前頁面版本 v2.2">v2.2</span></div><div class="spark">✧</div><h1>免費塔羅<span>占卜</span><small class="hero-seo-sub">線上專業抽牌工具・AI深度解讀</small></h1><p>選擇問題後免費線上抽三張牌，查看牌面與正逆位；AI 解讀依免費及會員額度使用，需要更深入時可再抽三張進行六張整合。</p></section>
 <section id="quotaCard" class="dh-quota" aria-labelledby="quotaTitle"><div class="dh-quota-head"><h2 class="dh-quota-title" id="quotaTitle">我的使用額度</h2><button class="dh-quota-btn" id="refreshQuota" type="button">更新額度 ↻</button></div><div class="dh-quota-grid" aria-label="目前剩餘額度"><div class="dh-quota-cell is-free"><small class="dh-quota-label">免費抽牌</small><strong class="dh-quota-number" id="freeDraw">查詢中…</strong><small class="dh-quota-cycle" id="tarotFreeToolCycle">每 1 天補充，不累積</small></div><div class="dh-quota-cell is-shared"><small class="dh-quota-label">會員共用工具額度</small><strong class="dh-quota-number" id="sharedDraw">查詢中…</strong></div><div class="dh-quota-cell is-free"><small class="dh-quota-label">免費 AI 解讀</small><strong class="dh-quota-number" id="freeAI">查詢中…</strong><small class="dh-quota-cycle" id="tarotFreeAiCycle">每 1 天補充，不累積</small></div><div class="dh-quota-cell is-shared"><small class="dh-quota-label">會員共用 AI 額度</small><strong class="dh-quota-number" id="sharedAI">查詢中…</strong><a class="dh-quota-purchase" href="https://divinationhub.tw/pricing.html" aria-label="查看額度加購方案">加購方案 ↗</a></div></div><p id="quotaStatus" class="dh-quota-status" role="status" aria-live="polite"></p></section>
 <div class="tarot-question-anchor" id="worldSecond" aria-hidden="true"></div>
 <section class="card" id="questionPanel" aria-labelledby="questionTitle"><div class="section-head"><h2 id="questionTitle">選擇塔羅問題</h2><small>STEP 01 / 03</small></div><p class="caption">選擇主題或參考題目，也可以自行提問。</p><div class="pills" id="topics" role="group" aria-label="選擇問題主題"></div><div class="samples-head"><strong>參考題目 · 點選可帶入修改</strong><button type="button" class="text-btn" id="moreQuestions">換一批 ↻</button></div><div id="samples" class="sample-list"></div><details class="custom" id="customDetails"><summary>自己輸入問題 <span aria-hidden="true">⌄</span></summary><div class="custom-body"><textarea class="input" id="customQuestion" maxlength="120" placeholder="例如：我最近適合換工作嗎？"></textarea><p class="fine">需至少 5 個字元；修改參考題目也會改以自訂題規則計價。</p></div></details><div class="selection-info" id="paymentHint">請先選擇一個問題，不會立即扣點。</div><button type="button" class="primary" id="beginReading" disabled>確認問題，開始抽牌</button><p class="status" id="selectionStatus" role="status" aria-live="polite"></p><button type="button" class="ghost" id="resetSelection" hidden>取消這次，重新選題</button></section>
@@ -361,20 +361,55 @@ async function req(path,body=null,extra={}){
  const res=await fetch(API+path,{method:body?'POST':'GET',cache:'no-store',headers:{...headers(),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined});
  const data=await res.json().catch(()=>null);if(!res.ok||!data?.ok){const err=new Error(data?.error||('HTTP_'+res.status));err.data=data;throw err;}return data;
 }
-async function refreshQuota(){const seq=++quotaSeq;const owner=ownerKey();$('refreshQuota').disabled=true;setStatus('quotaStatus','正在核對最新額度…');
- const [a,b]=await Promise.allSettled([req('/wallet/tarot/status'),req('/ai/center/quota')]);
- if(seq!==quotaSeq||owner!==ownerKey())return false;
- if(a.status==='fulfilled')quota.tool=a.value;
- if(b.status==='fulfilled')quota.ai=b.value?.quota;
- $('freeDraw').textContent=a.status==='fulfilled'?`${a.value.daily?.remaining??'—'} / ${a.value.daily?.limit??'—'} 次`:'查詢失敗';
- $('sharedDraw').textContent=a.status==='fulfilled'?(a.value.wallet?`${a.value.wallet.tool} 次`:'登入後查看'):'查詢失敗';
- $('freeAI').textContent=b.status==='fulfilled'?`${b.value.quota?.daily?.remaining??'—'} / ${b.value.quota?.daily?.limit??'—'} 次`:'查詢失敗';
- $('sharedAI').textContent=b.status==='fulfilled'?(b.value.quota?.role==='member'?`${b.value.quota?.wallet?.ai??0} 次`:'登入後查看'):'查詢失敗';
- $('refreshQuota').disabled=false;
- const ok=a.status==='fulfilled'&&b.status==='fulfilled';setStatus('quotaStatus',ok?'':'部分額度暫時無法查詢；開始操作前仍會再次向後端確認。',!ok);
- return ok;
+// 僅 GET 額度查詢使用；抽牌扣點 / AI 產文仍沿用原本 req()，避免改動交易流程。
+async function readQuotaWithDeadline(path){
+  const c=new AbortController(),timer=setTimeout(()=>c.abort(),15000);
+  try{
+    const r=await fetch(API+path,{method:'GET',cache:'no-store',headers:headers(),signal:c.signal});
+    const d=await r.json().catch(()=>null);
+    if(!r.ok||!d?.ok){const e=new Error(d?.error||('HTTP_'+r.status));e.status=r.status;throw e;}
+    return d;
+  }catch(e){if(c.signal.aborted)throw Error('TIMEOUT');throw e;}
+  finally{clearTimeout(timer);}
 }
-function topic(id){return TOPICS.find(t=>t.id===id)||TOPICS[0]}
+async function refreshQuota(){
+  const seq=++quotaSeq,owner=ownerKey(),button=$('refreshQuota');
+  button.disabled=true;button.textContent='查詢中…';
+  setStatus('quotaStatus','');
+  const errors=[];
+  const tool=readQuotaWithDeadline('/wallet/tarot/status').then(d=>{
+    if(seq!==quotaSeq||owner!==ownerKey())return;
+    quota.tool=d;
+    $('freeDraw').textContent=`${d.daily?.remaining??'—'} / ${d.daily?.limit??'—'} 次`;
+    $('sharedDraw').textContent=d.wallet?`${d.wallet.tool} 次`:'登入後查看';
+    const days=Number(d.daily?.days);if(Number.isInteger(days)&&days>0)$('tarotFreeToolCycle').textContent=`每 ${days} 天補充，不累積`;
+  }).catch(e=>{
+    if(seq!==quotaSeq||owner!==ownerKey())return;
+    const diag=e?.status?'HTTP_'+e.status:String(e?.message||'NETWORK_OR_CORS_ERROR').slice(0,50);
+    errors.push('抽牌：'+diag);
+    $('freeDraw').textContent='暫時無法查詢';$('sharedDraw').textContent='暫時無法查詢';
+  });
+  const ai=readQuotaWithDeadline('/ai/center/quota').then(d=>{
+    if(seq!==quotaSeq||owner!==ownerKey())return;
+    quota.ai=d.quota;
+    $('freeAI').textContent=`${d.quota?.daily?.remaining??'—'} / ${d.quota?.daily?.limit??'—'} 次`;
+    $('sharedAI').textContent=d.quota?.role==='member'?`${d.quota?.wallet?.ai??0} 次`:'登入後查看';
+    const days=Number(d.quota?.daily?.days);if(Number.isInteger(days)&&days>0)$('tarotFreeAiCycle').textContent=`每 ${days} 天補充，不累積`;
+  }).catch(e=>{
+    if(seq!==quotaSeq||owner!==ownerKey())return;
+    const diag=e?.status?'HTTP_'+e.status:String(e?.message||'NETWORK_OR_CORS_ERROR').slice(0,50);
+    errors.push('AI：'+diag);
+    $('freeAI').textContent='暫時無法查詢';$('sharedAI').textContent='暫時無法查詢';
+  });
+  try{await Promise.all([tool,ai]);}
+  finally{
+    if(seq===quotaSeq&&owner===ownerKey()){
+      button.disabled=false;button.textContent='更新額度 ↻';
+      setStatus('quotaStatus',errors.length?'額度查詢失敗（'+errors.join('；')+'）。請更新額度重試。':'',errors.length>0);
+    }
+  }
+  return errors.length===0;
+}function topic(id){return TOPICS.find(t=>t.id===id)||TOPICS[0]}
 function questionPool(tid){const t=topic(tid),out=[];for(const s of t.scenarios||[]){for(const q of TAROT_DATA.questions[tid+':'+s[0]]||[]){if(out.some(o=>o.text===q.text))continue;out.push({...q,topicId:tid,scenarioId:s[0],scenarioName:s[1]});}}return out;}
 let selected=null,typed='',currentCat='love',sampleStart=0;
 function displayCategory(){const t=topic(currentCat);$('topics').innerHTML=TOPICS.map(x=>`<button type="button" class="pill ${currentCat===x.id?'active':''}" data-topic="${esc(x.id)}" aria-pressed="${currentCat===x.id}">${esc(x.name)}</button>`).join('');
