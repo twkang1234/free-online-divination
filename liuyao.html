@@ -164,13 +164,27 @@ body.overlay-open{overflow:hidden}.page-footer{width:min(1120px,calc(100% - 40px
 .ly-ai-operation button:disabled,.ly-ai-follow button:disabled{opacity:.55;cursor:not-allowed}
 .ly-ai-progress{margin:12px 0 4px;color:#d5c2a8;line-height:1.7;font-size:.78rem}
 .ly-ai-progress.is-error{color:#f1aaa0}
-.ly-ai-answer{margin:15px 0;padding:20px 22px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:1rem;line-height:2;letter-spacing:.01em;color:#f4eee3;border:1px solid rgba(213,170,107,.17);border-radius:14px;background:rgba(8,13,11,.40);max-height:none}
+/* AI 回答支援 Markdown 標題、清單、粗體。排版僅作用於 AI 文章，不影響納甲排盤。 */
+.ly-ai-answer{margin:15px 0;padding:clamp(15px,3.5vw,25px);white-space:normal;overflow-wrap:anywhere;font-size:.96rem;line-height:1.88;letter-spacing:.012em;color:#e8e4dc;border:1px solid rgba(213,170,107,.17);border-radius:14px;background:rgba(8,13,11,.40);max-height:none}
+.ly-ai-answer>:first-child{margin-top:0!important}.ly-ai-answer>:last-child{margin-bottom:0!important}
+.ly-ai-answer h1,.ly-ai-answer h2,.ly-ai-answer h3,.ly-ai-answer h4,.ly-ai-answer h5,.ly-ai-answer h6{color:#f2cc92;font-weight:780;letter-spacing:.02em;line-height:1.48;margin:1.5em 0 .55em;overflow-wrap:anywhere}
+.ly-ai-answer h1{font-size:1.35rem}.ly-ai-answer h2{font-size:1.2rem;border-bottom:1px solid rgba(218,177,115,.19);padding-bottom:9px}.ly-ai-answer h3{font-size:1.1rem}.ly-ai-answer h4,.ly-ai-answer h5,.ly-ai-answer h6{font-size:1rem}
+.ly-ai-answer p{font-size:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0 0 1.1em}
+.ly-ai-answer strong{color:#fff4e5;font-weight:780}.ly-ai-answer em{font-style:italic;color:#ead7b8}
+.ly-ai-answer ul,.ly-ai-answer ol{margin:.5em 0 1.15em;padding-left:1.55em}.ly-ai-answer li{padding-left:.2em;margin:.35em 0;line-height:1.8}.ly-ai-answer li::marker{color:#d9a86b}
+.ly-ai-answer li>ul,.ly-ai-answer li>ol{margin:.25em 0 .55em}
+.ly-ai-answer blockquote{margin:.8em 0 1.1em;padding:.7em 1em;border-left:3px solid #b58b58;background:rgba(223,177,99,.05);border-radius:0 8px 8px 0;color:#d8c9b1}
+.ly-ai-answer hr{border:0;border-top:1px solid rgba(213,170,107,.2);margin:1.5em 0}
+.ly-ai-answer code{white-space:pre-wrap;overflow-wrap:anywhere;padding:.08em .3em;border-radius:4px;background:rgba(255,255,255,.07);font-size:.88em}
+.ly-ai-answer pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:.8em 0 1.1em;padding:12px;border:1px solid rgba(213,170,107,.16);border-radius:8px;background:#08090a}.ly-ai-answer pre code{background:none;padding:0}
+.ly-ai-table-scroll{max-width:100%;overflow-x:auto;margin:.6em 0 1.15em}.ly-ai-answer table{width:100%;border-collapse:collapse;font-size:.9em;line-height:1.6;min-width:340px}.ly-ai-answer th,.ly-ai-answer td{padding:8px 10px;text-align:left;vertical-align:top;border:1px solid rgba(213,170,107,.15)}.ly-ai-answer th{background:rgba(213,170,107,.11);color:#f3d6ae}
+@media(max-width:600px){.ly-ai-answer{padding:14px;font-size:.92rem;line-height:1.82}.ly-ai-answer h2{font-size:1.12rem}.ly-ai-answer h3{font-size:1.04rem}.ly-ai-answer ul,.ly-ai-answer ol{padding-left:1.35em}}
 .ly-ai-follow{margin:18px 0 0;padding:16px 0 0;border-top:1px solid rgba(211,172,114,.18)}
 .ly-ai-follow h4{margin:0 0 8px;font-size:1rem;color:#f2d4a5}
 .ly-ai-follow textarea{display:block;width:100%;max-width:100%;min-height:96px;margin:8px 0 12px;padding:11px;border:1px solid rgba(211,172,114,.3);border-radius:10px;background:rgba(4,9,7,.65);color:#f6f0e6;font:inherit;font-size:.85rem;resize:vertical}
 .ly-ai-quota-refresh{margin-left:auto;font-size:.72rem;min-height:34px;padding:6px 10px;white-space:nowrap}
 [hidden]{display:none!important}
-@media(max-width:600px){.ly-ai-operation button{width:100%}.ly-ai-answer{padding:15px;font-size:.93rem}}
+@media(max-width:600px){.ly-ai-operation button{width:100%}}
 </style>
 <style id="dhSharedMemberStyle">
 /* 一念知機：共用會員入口。只新增會員 UI，不影響各工具的免費排盤及頁面樣式。 */
@@ -445,7 +459,12 @@ html{scroll-padding-top:86px}
 .ly-ai-note p{font-size:.74rem;line-height:1.75}
 .ly-ai-operation{margin-top:10px}
 .ly-ai-operation .ly-ai-primary{min-height:44px}
-.ly-ai-answer{font-size:.93rem;line-height:1.8}
+/* 避免摘要提示 .ly-ai-note p 將完整 AI 文章縮成 12px 字體。 */
+.ly-ai-note .ly-ai-answer{font-size:.96rem;line-height:1.88}
+.ly-ai-note .ly-ai-answer p{font-size:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0 0 1.05em}
+.ly-ai-note .ly-ai-answer strong{font-size:inherit;color:#fff4e5}
+@media(max-width:600px){.ly-ai-note .ly-ai-answer{font-size:.93rem;line-height:1.85}}
+
 .ly-visible-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:12px 0 0}
 .ly-visible-actions button{border-radius:9px;border:1px solid rgba(255,171,98,.35);padding:10px 13px;background:rgba(255,171,98,.09);color:#efc4a6;font-weight:730;font-size:.74rem}
 .ly-visible-actions span{font-size:.72rem;color:#e0c9a8}
@@ -2014,8 +2033,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 <script id="ly-staging-ai-ui">
-/* 六爻前端 AI 交易橋接：會內嵌到唯一的 liuyao.html。
- * 預設關閉；正式上線前須完成 Cloudflare D1 / AI Center / Session 聯測。
+/* 六爻前端 AI 交易橋接：內嵌到唯一的 liuyao.html。
+ * 預設關閉；僅在後端健康檢查與題庫版本皆符合時啟用。
  * 會員身分、金額、排盤及提示詞由 Worker 重新判斷；本檔只負責 UI。
  */
 (()=>{'use strict';
@@ -2077,7 +2096,74 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  function setPending(s){try{sessionStorage.setItem(LAST_KEY,JSON.stringify(s))}catch(_){}}
  function readPending(){try{const s=JSON.parse(sessionStorage.getItem(LAST_KEY)||'null');if(!s||typeof s!=='object')return null;const ok=x=>!x||/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);return [s.castOp,s.castId,s.initialOp,s.followupOp].every(ok)&&(s.castId||s.castOp)?s:null}catch(_){return null}}
  function updatePending(view){if(!view)return;setPending({castId:view.castId,castOp:view.castOp,initialOp:view.initialOp,followupOp:view.followupOp});updateRecoveryButton()}
- function safeAnswer(target,answer){target.textContent=String(answer||'').trim();target.hidden=false}
+ /* 安全的 AI Markdown 閱讀排版：只建立 DOM/text nodes，絕不將模型文字插入 innerHTML。
+ * 保留原始回答供複製；恢復上次 AI 結果也共用此函式。 */
+function safeAnswer(target,answer){
+ const raw=String(answer||'').replace(/\r\n?/g,'\n').trim();
+ target.replaceChildren();
+ const lines=raw.split('\n');let i=0;
+ function appendInline(host,s){
+  // 安全格式化粗體、斜體、行內程式碼；未識別的語法一律當純文字。
+  const token=/(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\*[^*\n]+\*|_[^_\n]+_)/g;
+  let pos=0,m;
+  while((m=token.exec(s))!==null){
+   if(m.index>pos)host.appendChild(document.createTextNode(s.slice(pos,m.index)));
+   const v=m[0],tag=v.startsWith('**')||v.startsWith('__')?'strong':v[0]==='`'?'code':'em';
+   const count=tag==='strong'?2:1;
+   const el=document.createElement(tag);el.textContent=v.slice(count,-count);host.appendChild(el);
+   pos=token.lastIndex;
+  }
+  if(pos<s.length)host.appendChild(document.createTextNode(s.slice(pos)));
+ }
+ function heading(s){return /^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/.exec(s)}
+ function ordered(s){return /^\s{0,3}(\d{1,3})[.)、]\s+(.+)$/.exec(s)}
+ function bullet(s){return /^\s{0,3}[-*+]\s+(.+)$/.exec(s)}
+ function quote(s){return /^\s{0,3}>\s?(.*)$/.exec(s)}
+ function rule(s){return /^\s{0,3}(?:-{3,}|\*{3,}|_{3,})\s*$/.test(s)}
+ function fence(s){return /^\s{0,3}```/.test(s)}
+ function tableCols(s){return s.trim().replace(/^\||\|$/g,'').split('|').map(x=>x.trim())}
+ function isTableDelim(s){return /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(s)}
+ function isSpecial(s){return heading(s)||ordered(s)||bullet(s)||quote(s)||rule(s)||fence(s)}
+ function paragraph(text){const p=document.createElement('p');const parts=text.split('\n');parts.forEach((s,n)=>{if(n)p.appendChild(document.createElement('br'));appendInline(p,s)});target.appendChild(p)}
+ while(i<lines.length){
+  const s=lines[i];if(!s.trim()){i++;continue}
+  if(fence(s)){
+   const code=[];i++;while(i<lines.length&&!fence(lines[i]))code.push(lines[i++]);if(i<lines.length)i++;
+   const pre=document.createElement('pre'),c=document.createElement('code');c.textContent=code.join('\n');pre.appendChild(c);target.appendChild(pre);continue;
+  }
+  const h=heading(s);if(h){const el=document.createElement('h'+h[1].length);appendInline(el,h[2]);target.appendChild(el);i++;continue}
+  if(rule(s)){target.appendChild(document.createElement('hr'));i++;continue}
+  if(i+1<lines.length&&s.includes('|')&&isTableDelim(lines[i+1])){
+   const headers=tableCols(s),cells=[];i+=2;
+   while(i<lines.length&&lines[i].trim()&&lines[i].includes('|')&&!isSpecial(lines[i]))cells.push(tableCols(lines[i++]));
+   const wrap=document.createElement('div');wrap.className='ly-ai-table-scroll';
+   const tbl=document.createElement('table'),thead=document.createElement('thead'),tr=document.createElement('tr');
+   headers.forEach(v=>{const th=document.createElement('th');appendInline(th,v);tr.appendChild(th)});thead.appendChild(tr);tbl.appendChild(thead);
+   const body=document.createElement('tbody');cells.forEach(row=>{const r=document.createElement('tr');headers.forEach((_,k)=>{const td=document.createElement('td');appendInline(td,row[k]||'');r.appendChild(td)});body.appendChild(r)});tbl.appendChild(body);wrap.appendChild(tbl);target.appendChild(wrap);continue;
+  }
+  if(ordered(s)||bullet(s)){
+   const isOl=!!ordered(s),list=document.createElement(isOl?'ol':'ul');
+   if(isOl)list.start=Number(ordered(s)[1]);
+   while(i<lines.length){const m=isOl?ordered(lines[i]):bullet(lines[i]);if(!m)break;
+    const li=document.createElement('li');appendInline(li,m[isOl?2:1]);list.appendChild(li);i++;
+    // 縮排的續行屬於同一項，不另起一段。
+    while(i<lines.length&&/^\s{4,}\S/.test(lines[i])&&!ordered(lines[i])&&!bullet(lines[i])){
+     li.appendChild(document.createElement('br'));appendInline(li,lines[i].trim());i++;
+    }
+   }
+   target.appendChild(list);continue;
+  }
+  if(quote(s)){
+   const el=document.createElement('blockquote');const q=[];
+   while(i<lines.length&&quote(lines[i]))q.push(quote(lines[i++])[1]);
+   const p=document.createElement('p');q.forEach((v,j)=>{if(j)p.appendChild(document.createElement('br'));appendInline(p,v)});el.appendChild(p);target.appendChild(el);continue;
+  }
+  const p=[s];i++;
+  while(i<lines.length&&lines[i].trim()&&!isSpecial(lines[i])&&!(i+1<lines.length&&lines[i].includes('|')&&isTableDelim(lines[i+1])))p.push(lines[i++]);
+  paragraph(p.join('\n'));
+ }
+ target.hidden=false;
+}
  function revealAnswer(view,answer,mode='initial'){
   if(readingView!==view)return;
   const node=$(mode==='initial'?'lyAiAnswer':'lyAiFollowupAnswer');if(node)safeAnswer(node,answer);
@@ -2197,7 +2283,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const outcome=await request('/ai/status',{tool:'liuyao',castId:cast.castId,operationId:op});
     if(outcome.state==='used'){
      panel.appendChild(make('h4',null,mode==='initial'?'AI 初次解卦':'AI 追問'));
-     panel.appendChild(make('article','ly-ai-answer',outcome.answer||''));
+     const recovered=make('article','ly-ai-answer');safeAnswer(recovered,outcome.answer||'');panel.appendChild(recovered);
     }
     states.push(mode+':'+outcome.state);
    }
