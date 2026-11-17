@@ -172,12 +172,6 @@ body.overlay-open{overflow:hidden}.page-footer{width:min(1120px,calc(100% - 40px
 [hidden]{display:none!important}
 @media(max-width:600px){.ly-ai-operation button{width:100%}.ly-ai-answer{padding:15px;font-size:.93rem}}
 </style>
-<style id="ly-nocharge-test-styles">
-.ly-quota-panel.ly-nocharge-mode .ly-quota-grid{display:none!important}
-.ly-quota-panel.ly-nocharge-mode{padding:14px 16px}
-.ly-quota-panel.ly-nocharge-mode .ly-quota-top{gap:9px;flex-wrap:wrap}
-.ly-quota-panel.ly-nocharge-mode #lyQuotaStatus{color:#eec783;font-weight:700}
-</style>
 <style id="dhSharedMemberStyle">
 /* 一念知機：共用會員入口。只新增會員 UI，不影響各工具的免費排盤及頁面樣式。 */
 .dh-member-entry{--dh-member-accent:#a9e8bc;position:relative;display:inline-flex;align-items:stretch;flex:none;min-height:36px;z-index:90}
@@ -2025,8 +2019,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  * 會員身分、金額、排盤及提示詞由 Worker 重新判斷；本檔只負責 UI。
  */
 (()=>{'use strict';
- let ENABLED=false,BILLING_MODE='normal'; // 以 Worker /health 為準；網址與本機設定無法改變計費模式
- const noCharge=()=>BILLING_MODE==='free-test';
+ let ENABLED=false; // 自動偵測後端健康狀態，絕不由網址參數或 localStorage 強行開啟
  const API='https://liuyao-api.ezgocpu.workers.dev';
  const SESSION_KEY='divinationhub-auth-session-v1';
  const TOKEN=/^dhs_[A-Za-z0-9_-]{43}$/;
@@ -2052,7 +2045,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  function friendly(code){const dict={
   LOGIN_REQUIRED:'請先重新登入會員中心。',INVALID_PAYLOAD:'提交資料格式有誤。',CAST_NOT_FOUND:'伺服器找不到此筆起卦紀錄。',CAST_TOOL_REFUNDED:'這次起卦已完成退款，請重新起卦。',
   LY_TOOL_EXHAUSTED:'會員共用工具額度不足，尚未建立新的起卦。',LY_AI_EXHAUSTED:'AI 共用額度不足，已嘗試安全返還本次工具扣點。',AI_QUOTA_EMPTY:'AI 額度不足，請檢查額度表。',
-  LIUYAO_SCHEMA_MIGRATION_REQUIRED:'六爻資料庫尚未完成安全升級，目前不會扣點。',LIUYAO_NOT_ENABLED:'六爻 AI 尚未開放。',LIUYAO_QUOTA_NOT_REGISTERED:'管理員尚未完成六爻額度設定。',LY_TEST_RATE_LIMIT:'本帳號已達每日 AI 測試安全上限，暫停呼叫模型以控制成本。',
+  LIUYAO_SCHEMA_MIGRATION_REQUIRED:'六爻資料庫尚未完成安全升級，目前不會扣點。',LIUYAO_NOT_ENABLED:'六爻 AI 尚未開放。',LIUYAO_QUOTA_NOT_REGISTERED:'管理員尚未完成六爻額度設定。',
   AI_REQUEST_IN_PROGRESS:'此筆 AI 已在處理中，請用原操作查詢狀態。',AI_REQUEST_REFUNDED:'此筆 AI 已返還額度，請重新起卦。',
   AI_INCOMPLETE_ANSWER:'AI 沒有提供合格的完整回答，系統會核對退款。',
   OPERATION_ID_CONFLICT:'操作編號與原紀錄不一致，已停止扣點。',QUESTION_BANK_VERSION_MISMATCH:'網站題庫版本與後端不同，已停止扣點，請重新整理網頁。',CAST_TIME_OUT_OF_RANGE:'起卦時間已過久，請重新起卦。'
@@ -2069,13 +2062,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }finally{clearTimeout(timer)}
  }
  async function refreshQuota(){
-  if(!ENABLED){$('lyQuotaStatus').textContent='六爻 AI 尚在驗收，暫不可送出';return null}
+  if(!ENABLED){$('lyQuotaStatus').textContent='六爻 AI 尚未連線，暫不可執行扣點';return null}
   try{
    const data=await request('/quota/status');
-   if(noCharge()){
-    $('lyQuotaStatus').textContent='測試期間：起卦、AI 解卦、追問都不扣會員點數';
-    return data;
-   }
    $('lyDailyQuota').textContent=quotaRemaining(data.dailyTool)+' / '+data.dailyTool.limit;
    $('lyToolQuota').textContent=String(data.wallet.tool);
    $('lyAiQuota').textContent=String(quotaRemaining(data.dailyAI)+data.wallet.ai);
@@ -2109,8 +2098,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(r.state==='used'){
    revealAnswer(view,r.answer,mode);renderReceipt(view,'已向伺服器核對完成，本次 AI 結果已找回'+traceLabel(r));await refreshQuota();
   }else if(r.state==='refunded'){
-   renderReceipt(view,noCharge()?'本次 AI 沒有完成，沒有扣除會員點數；可重新起卦測試。':(mode==='followup'?'本次追問未完成，預留 AI 額度已返還；已完成的初次解卦保留。':'初次 AI 未完成，伺服器已返還本次 AI 與起卦工具額度；如要重新占問，請重新起卦。'));await refreshQuota();
-  }else renderReceipt(view,'目前仍在處理中，請稍後查詢本次 AI 狀態，不要重複送出。');
+   renderReceipt(view,mode==='followup'?'本次追問未完成，預留 AI 額度已返還；已完成的初次解卦保留。':'初次 AI 未完成，伺服器已返還本次 AI 與起卦工具額度；如要重新占問，請重新起卦。');await refreshQuota();
+  }else renderReceipt(view,'目前仍在處理中，請稍後再按「查詢本次 AI 狀態」，不要重新起卦扣點。');
   return r.state;
  }
  async function interpret(view,mode='initial',followupQuestion=''){
@@ -2120,8 +2109,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    revealAnswer(view,res.answer,mode);renderReceipt(view,(mode==='initial'?'AI 專業解卦已完成':'AI 追問已完成')+traceLabel(res));await refreshQuota();
   }catch(e){
    // A timeout is never interpreted as a completed debit or an automatic refund.
-   renderReceipt(view,'AI 回應尚未送達畫面，正在查詢原操作；不會自動再次呼叫模型。');
-   try{await verifyStatus(view,mode)}catch(_){renderReceipt(view,'無法確認本次 AI 狀態。請稍後按「查詢本次 AI 狀態」，避免重複呼叫模型。')}
+   renderReceipt(view,'AI 回應未成功送達畫面，正在核對原操作；不會自動重送或再次扣點。');
+   try{await verifyStatus(view,mode)}catch(_){renderReceipt(view,'無法確認本次 AI 狀態。請稍後使用「查詢本次 AI 狀態」，不要重新發送請求。')}
   }
  }
  async function begin(view){
@@ -2131,30 +2120,30 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   setWorking(true);
   try{
    if(!view.castId){
-    const q=await refreshQuota();if(!q)throw Error('無法核對六爻服務狀態，暫時不會呼叫模型。');
+    const q=await refreshQuota();if(!q)throw Error('無法查詢額度，尚未送出任何扣點請求。');
     const fixed=window.LiuyaoQuestions.isFixed({topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question});
     const cost=fixed?1:2;
-    if(!noCharge()&&!(fixed&&quotaRemaining(q.dailyTool)>0)&&q.wallet.tool<cost)throw Error('工具額度不足，沒有發出起卦記帳請求。');
-    if(!noCharge()&&quotaRemaining(q.dailyAI)<1&&q.wallet.ai<1)throw Error('AI 額度不足，沒有發出起卦記帳請求。');
+    if(!(fixed&&quotaRemaining(q.dailyTool)>0)&&q.wallet.tool<cost)throw Error('工具額度不足，沒有發出起卦記帳請求。');
+    if(quotaRemaining(q.dailyAI)<1&&q.wallet.ai<1)throw Error('AI 額度不足，沒有發出起卦記帳請求。');
     const source=fixed&&quotaRemaining(q.dailyTool)>0?'本期免費工具額度':`共用工具額度 ${cost} 次`;
     const aiSource=quotaRemaining(q.dailyAI)>0?'本期免費 AI 額度':'共用 AI 額度 1 次';
-    if(!noCharge()&&!window.confirm(`本次專業六爻解卦將使用：\n工具：${source}\nAI：${aiSource}\n\n失敗時由後端依交易狀態返還。確定開始嗎？`))return;
+    if(!window.confirm(`本次專業六爻解卦將使用：\n工具：${source}\nAI：${aiSource}\n\n失敗時由後端依交易狀態返還。確定開始嗎？`))return;
     if(!view.castOp)view.castOp=uuid();updatePending(view);
     const payload={tool:'liuyao',operationId:view.castOp,questionBankVersion:window.LiuyaoQuestions.version,topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question,values:view.data.values.slice(),method:'three-coins',localDateTime:view.data.calendar.localDateTime};
-    renderReceipt(view,noCharge()?'正在核對六爻排盤（本次不扣點）…':'正在將原始六爻值交給伺服器重新排盤，並核對工具額度…');
+    renderReceipt(view,'正在將原始六爻值交給伺服器重新排盤，並核對工具額度…');
     let committed;
     try{committed=await request('/cast',payload)}
     catch(e){
      // A lost response does not authorize another cast. Query the receipt first.
      try{committed=await request('/cast/status',{tool:'liuyao',castId:view.castOp})}
-     catch(_){renderReceipt(view,'起卦操作狀態無法確認，請使用「查詢本次 AI 狀態」，不要重複送出。');return}
+     catch(_){renderReceipt(view,'起卦記帳狀態無法確認，請使用「查詢本次 AI 狀態」。不要再次送出。');return}
     }
     if(!committed?.castId||committed.reading?.values?.join(',')!==view.data.values.join(',')||committed.reading?.question!==view.data.question){
-     renderReceipt(view,'伺服器排盤與畫面不一致，已停止呼叫 AI。請重新整理檢查，避免重複操作。');return;
+     renderReceipt(view,'伺服器排盤與畫面不一致，已停止呼叫 AI。請勿重新操作，以免重複記帳。');return;
     }
     view.castId=committed.castId;updatePending(view);
    }
-   renderReceipt(view,noCharge()?'排盤驗證完成，正在產生免費測試 AI 解卦…':'排盤記帳完成，正在執行 AI 專業六爻解卦…');
+   renderReceipt(view,'排盤記帳完成，正在執行 AI 專業六爻解卦…');
    await interpret(view,'initial');
   }catch(e){status(String(e.message||'解卦未完成'),true)}finally{setWorking(false)}
  }
@@ -2165,9 +2154,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(text.length<5){status('追問請先輸入至少五個字的具體問題。',true);return}
   setWorking(true);
   try{
-   const q=await refreshQuota();if(!q)throw Error('無法確認服務狀態，追問沒有送出。');
-   if(!noCharge()&&quotaRemaining(q.dailyAI)<1&&q.wallet.ai<1)throw Error('AI 額度不足，追問沒有送出。');
-   if(!noCharge()&&!window.confirm('本次 AI 追問需再使用 1 次 AI 解讀額度，確定送出嗎？'))return;
+   const q=await refreshQuota();if(!q)throw Error('無法確認追問 AI 額度，沒有送出請求。');
+   if(quotaRemaining(q.dailyAI)<1&&q.wallet.ai<1)throw Error('AI 額度不足，追問沒有送出。');
+   if(!window.confirm('本次 AI 追問需再使用 1 次 AI 解讀額度，確定送出嗎？'))return;
    renderReceipt(view,'正在處理 AI 追問…');
    await interpret(view,'followup',text);
   }catch(e){status(String(e.message||'追問未完成'),true)}finally{setWorking(false)}
@@ -2176,9 +2165,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   const note=document.querySelector('#result .ly-ai-note');if(!note)return;
   const view={data,ctx,castOp:null,castId:null,initialOp:null,followupOp:null,answer:'',followupAnswer:'',followupUsed:false};
   readingView=view;
-  const p=note.querySelector('p');if(p)p.textContent=ENABLED?(noCharge()?'目前為六爻 AI 測試期：固定題、自訂題、初次解卦及一次追問均不扣會員點數。AI 仍需登入，卦盤由後端驗證。':'完整解讀與追問均透過站內 AI。送出前會顯示所需額度，由後端重新排盤並記帳；未完成的回答不視為成功。'):'站內 AI 解卦尚未完成正式後端驗收，目前僅展示專業排盤，不會扣除任何 AI 或工具額度。';
+  const p=note.querySelector('p');if(p)p.textContent=ENABLED?'完整解讀與追問均透過站內 AI。送出前會顯示所需額度，由後端重新排盤並記帳；未完成的回答不視為成功。':'站內 AI 尚未連線，目前可以先免費起卦及查看排盤。';
   const toolbar=make('div','ly-ai-operation');
-  const start=make('button','ly-ai-primary',ENABLED?(noCharge()?'開始 AI 免費測試解卦':'確認額度並開始 AI 解卦'):'AI 解卦尚未開放');start.id='lyAiStart';start.type='button';start.disabled=!ENABLED;start.onclick=()=>begin(view);
+  const start=make('button','ly-ai-primary',ENABLED?'確認額度並開始 AI 解卦':'AI 解卦尚未開放');start.id='lyAiStart';start.type='button';start.disabled=!ENABLED;start.onclick=()=>begin(view);
   const check=make('button','ly-ai-subtle','查詢本次 AI 狀態');check.id='lyAiCheckStatus';check.type='button';check.hidden=true;check.onclick=async()=>{if(busy)return;setWorking(true);try{await verifyStatus(view,view.followupOp?'followup':'initial')}catch(e){status('狀態暫時無法核對：'+String(e.message||'連線異常'),true)}finally{setWorking(false)}};
   const copy=make('button','ly-ai-subtle','複製 AI 解卦');copy.id='lyAiCopy';copy.type='button';copy.hidden=true;copy.onclick=async()=>{try{await navigator.clipboard.writeText(view.answer);status('AI 解卦已複製')}catch(_){status('瀏覽器不允許複製，可直接選取文章文字。',true)}};
   const statusText=make('p','ly-ai-progress','');statusText.id='lyAiStatus';statusText.setAttribute('role','status');statusText.setAttribute('aria-live','polite');
@@ -2186,7 +2175,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   const follow=make('section','ly-ai-follow');follow.id='lyAiFollowup';follow.hidden=true;
   const fh=make('h4',null,'AI 追問（本卦限一次）');
   const field=make('textarea');field.id='lyAiFollowupText';field.maxLength=500;field.rows=3;field.placeholder='針對剛才的解卦，補充一件具體想問的事情…';
-  const send=make('button','ly-ai-subtle',noCharge()?'送出 AI 追問（測試不扣點）':'送出 AI 追問（另扣 1 次）');send.id='lyAiFollowupSend';send.type='button';send.onclick=()=>followup(view);
+  const send=make('button','ly-ai-subtle','送出 AI 追問（另扣 1 次）');send.id='lyAiFollowupSend';send.type='button';send.onclick=()=>followup(view);
   const followAnswer=make('article','ly-ai-answer','');followAnswer.id='lyAiFollowupAnswer';followAnswer.hidden=true;
   follow.append(fh,field,send,followAnswer);toolbar.append(start,check,copy);note.append(toolbar,statusText,answer,follow);
   if(ENABLED&&oldCast(data))status('舊紀錄只能瀏覽排盤；如需 AI 解卦，請用三枚銅錢重新起卦。');
@@ -2197,7 +2186,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   if(!panel||!label)return;
   panel.hidden=false;panel.textContent='';
   if(!rec){label.textContent='本次瀏覽器沒有可恢復的 AI 操作紀錄。';return}
-  label.textContent='正在以原操作編號向伺服器核對，不會再次呼叫模型…';
+  label.textContent='正在以原操作編號向伺服器核對，不會重新解卦或扣點…';
   try{
    const cast=await request('/cast/status',{tool:'liuyao',castId:rec.castId||rec.castOp});
    const h=make('h4',null,'上一次六爻問事');panel.appendChild(h);
@@ -2212,10 +2201,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }
     states.push(mode+':'+outcome.state);
    }
-   label.textContent=states.length?('已核對：'+states.join('，')+'。只查詢既有結果。'):'已確認起卦紀錄，但沒有 AI 發送紀錄；請勿重複操作。';
-   if(!noCharge()&&cast.toolRefunded)label.textContent+=' 初次 AI 失敗的工具額度已返還。';
+   label.textContent=states.length?('已核對：'+states.join('，')+'。這次查詢不產生扣點。'):'已確認起卦記帳，但沒有 AI 發送紀錄；請勿直接再次扣工具額度。';
+   if(cast.toolRefunded)label.textContent+=' 初次 AI 失敗的工具額度已返還。';
    await refreshQuota();
-  }catch(e){label.textContent='目前無法核對上次操作：'+String(e.message||'連線異常')+'。請勿重複呼叫 AI；稍後可再次查詢。'}
+  }catch(e){label.textContent='目前無法核對上次操作：'+String(e.message||'連線異常')+'。請勿重新扣點；稍後可再次查詢。'}
  }
  function updateRecoveryButton(){const btn=$('lyAiRecoverLast');if(btn)btn.hidden=!ENABLED||!readPending()}
  async function activateIfBackendReady(){
@@ -2231,21 +2220,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
    finally{clearTimeout(timer)}
    const info=await r.json().catch(()=>({}));
    ENABLED=r.ok&&info.mode==='enabled'&&info.questionBankVersion===window.LiuyaoQuestions.version;
-   BILLING_MODE=ENABLED&&info.billingMode==='free-test'?'free-test':'normal';
-   const panel=document.querySelector('.ly-quota-panel');
-   if(panel)panel.classList.toggle('ly-nocharge-mode',ENABLED&&noCharge());
-   if(ENABLED&&noCharge()){$('lyQuotaTitle').textContent='六爻 AI 測試期間';$('lyQuotaStatus').textContent='解卦與追問暫不扣點｜需登入會員';}
-   if(!ENABLED){if(statusText)statusText.textContent='六爻 AI 尚未啟用或前後端版本不同，暫不提供 AI';return}
+   if(!ENABLED){if(statusText)statusText.textContent='六爻 AI 服務尚未就緒或版本不同，暫不可使用';return}
    if(readingView){
-    const start=$('lyAiStart');if(start){start.textContent=noCharge()?'開始 AI 免費測試解卦':'確認額度並開始 AI 解卦';start.disabled=busy||!!readingView.initialOp}
-    const send=$('lyAiFollowupSend');if(send)send.textContent=noCharge()?'送出 AI 追問（測試不扣點）':'送出 AI 追問（另扣 1 次）';
-    const note=document.querySelector('#result .ly-ai-note p');if(note)note.textContent=noCharge()?'測試期間：初次解卦及一次追問不扣會員點數；需登入，AI 生成仍消耗網站模型資源。':'完整解讀與追問均透過站內 AI。送出前會顯示所需額度，由後端重新排盤並記帳；未完成的回答不視為成功。';
+    const start=$('lyAiStart');if(start){start.textContent='確認額度並開始 AI 解卦';start.disabled=busy||!!readingView.initialOp}
+    const note=document.querySelector('#result .ly-ai-note p');if(note)note.textContent='完整解讀與追問均透過站內 AI。送出前會顯示所需額度，由後端重新排盤並記帳；未完成的回答不視為成功。';
    }
    updateRecoveryButton();
-   if(noCharge()){const refresh=$('lyQuotaRefresh');if(refresh)refresh.hidden=true;}
    if(TOKEN.test(session()))await refreshQuota();
-   else if(statusText)statusText.textContent=noCharge()?'不扣點測試已開放，請登入會員使用':'站內 AI 已開放，請先登入會員查看額度';
-  }catch(_){if(statusText)statusText.textContent='無法確認六爻 AI 服務狀態；目前不可送出'}
+   else if(statusText)statusText.textContent='站內 AI 已開放，請先登入會員查看額度';
+  }catch(_){if(statusText)statusText.textContent='無法確認六爻 AI 服務狀態；已安全停用扣點'}
  }
  function setup(){
   const top=$('lyQuotaTitle')?.parentElement;if(!top)return;
