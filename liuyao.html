@@ -2205,6 +2205,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   return (channel?'｜通道 '+channel:'')+(trace?'｜追蹤碼：'+trace:'');
  }
  function oldCast(r){const ts=Date.parse(r?.calendar?.localDateTime+'+08:00');return !Number.isFinite(ts)||(Date.now()-ts>30*60000)||(ts-Date.now()>5*60000)}
+ function diagnosticText(d){if(!d||typeof d!=='object')return '';const reason=String(d.reason||'');const labels={LIUYAO_FACT_ELEMENT_DIRECTION:'五行生剋方向',LIUYAO_FACT_HIDDEN_POSITION:'伏神所處爻位',LIUYAO_READING_TOO_SHORT:'文章字數不足',LIUYAO_READING_REPEATED_TEXT:'文章內容重複',LIUYAO_READING_NOT_PROSE:'文章格式不完整'};return '｜未通過項目：'+(labels[reason]||reason||'卦理覆核')+(d.evidence?'｜疑似文字：「'+String(d.evidence).slice(0,80)+'」':'')+(d.attempts?'｜生成嘗試 '+d.attempts+' 次':'')}
  function quotaRemaining(d){return Math.max(0,(Number(d?.limit)||0)-(Number(d?.used)||0))}
  function friendly(code){const dict={
   AI_CENTER_ROUTE_MISSING:'AI 總控中心尚未設定六爻專用入口，請管理員更新 AI Center Worker。',
@@ -2231,7 +2232,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   try{
    const res=await fetch(API+path,{method:body?'POST':'GET',cache:'no-store',signal:ctrl.signal,headers:{Accept:'application/json',Authorization:'Bearer '+tok,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
    const data=await res.json().catch(()=>({}));
-   if(!res.ok||!data?.ok){const trace=data?.traceId&&/^[a-zA-Z0-9-]{8,80}$/.test(data.traceId)?'｜追蹤碼：'+data.traceId:'';const err=new Error(friendly(data?.error||'API_UNAVAILABLE')+trace);err.code=data?.error;err.status=res.status;throw err;}
+   if(!res.ok||!data?.ok){const trace=data?.traceId&&/^[a-zA-Z0-9-]{8,80}$/.test(data.traceId)?'｜追蹤碼：'+data.traceId:'';const err=new Error(friendly(data?.error||'API_UNAVAILABLE')+trace);err.code=data?.error;err.status=res.status;err.diagnostic=data?.diagnostic||null;throw err;}
    return data;
   }finally{clearTimeout(timer)}
  }
@@ -2516,10 +2517,10 @@ function safeAnswer(target,answer){
    const cause=friendly(r.failureCode||'AI_CENTER_UNAVAILABLE');
    const trace=r.traceId?'｜追蹤碼：'+r.traceId:'';
    if(mode==='initial'){
-    view.retryNeeded=true;view.lastFailure={code:r.failureCode||'AI_CENTER_UNAVAILABLE',traceId:r.traceId||'',operationId:op,castId:view.castId,at:new Date().toISOString()};
+    view.retryNeeded=true;view.lastFailure={code:r.failureCode||'AI_CENTER_UNAVAILABLE',diagnostic:r.diagnostic||null,traceId:r.traceId||'',operationId:op,castId:view.castId,at:new Date().toISOString()};
     const button=$('lyAiRetry');if(button){button.hidden=false;button.disabled=busy;}
     const diagnostic=$('lyAiFailureTxt');if(diagnostic)diagnostic.hidden=false;
-    renderReceipt(view,'AI 解卦失敗：'+cause+'｜本次交易已確認退款，可保留原卦重試。'+trace);
+    renderReceipt(view,'AI 解卦失敗：'+cause+diagnosticText(r.diagnostic)+'｜本次交易已確認退款，可保留原卦重試。'+trace);
    }else{
     view.followupOp=null;view.followupQuestion='';updatePending(view);
     renderReceipt(view,'本次追問失敗：'+cause+'｜AI 額度已退款，可重新送出追問。'+trace);
@@ -2605,7 +2606,7 @@ function safeAnswer(target,answer){
       '起卦時間：'+String(view.data?.calendar?.localDateTime||''),
       '六次爻值（初→上）：'+(view.data?.values||[]).join('、'),
       '本卦：'+String(view.data?.original?.name||''),
-      '錯誤代碼：'+info.code,'錯誤說明：'+friendly(info.code),
+      '錯誤代碼：'+info.code,'錯誤說明：'+friendly(info.code),'檢測細節：'+diagnosticText(info.diagnostic),
       'AI 追蹤碼：'+info.traceId,'失敗時間：'+info.at,
       '本次起卦交易：'+info.castId,'AI 操作編號：'+info.operationId,
       '狀態：退款已由後端確認；原卦保留，可於本頁重新嘗試。',
