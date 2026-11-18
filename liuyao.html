@@ -224,6 +224,32 @@ body.overlay-open{overflow:hidden}.page-footer{width:min(1120px,calc(100% - 40px
 .ly-optional-fields button:disabled,.ly-optional-fields input:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:480px){.ly-optional-fields{padding:0 10px 10px}.ly-optional-choice{flex:1 1 auto;padding:7px 10px}}
 
+
+/* 起卦後的六行免費預覽：真實陰陽爻象保留，受保護欄位只留分散鎖頭。
+   絕不把完整六親、納甲、世應與變卦資料放進免費 DOM。 */
+.ly-preview-pair{display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr);gap:9px;align-items:center}
+.ly-preview-pair .ly-preview-arrow{font-size:1.17rem;text-align:center;color:#f0aa73;font-weight:850}
+.ly-preview-pair .ly-result-mast-cell{min-width:0}
+.ly-preview-pair .ly-result-mast-cell h3{margin:5px 0 4px}
+.ly-preview-pair .ly-result-mast-cell.is-private{opacity:.84}
+.ly-preview-locked-name{display:inline-flex;align-items:center;gap:7px;color:#efc38f!important}
+.ly-preview-locked-name .ly-padlock{width:25px;height:25px;stroke:#ffd093}
+.ly-preview-meta{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 11px}
+.ly-preview-meta>span{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,170,105,.17);border-radius:999px;padding:6px 9px;color:#d4b69e;font-size:.70rem;line-height:1.3;background:rgba(255,159,90,.025)}
+.ly-padlock{display:inline-block;width:13px;height:13px;flex:none;vertical-align:-2px;fill:none;stroke:#f0b870;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ly-brief-preview .ly-brief-caption{margin-bottom:8px}
+.ly-brief-preview .ly-brief-caption small{font-size:.63rem}
+.ly-brief-preview .ly-brief-line{min-height:39px}
+.ly-brief-preview .ly-brief-line .ly-yao-line{flex:0 0 72px;width:72px}
+.ly-preview-text{display:flex;align-items:center;flex:1;gap:8px;min-width:0;font-size:.73rem;line-height:1.4}
+.ly-preview-yin{color:#e6cbb7;font-weight:700;white-space:nowrap}
+.ly-preview-secret{display:inline-flex;align-items:center;gap:4px;min-width:0;color:#a78e7c;font-size:.66rem;white-space:nowrap}
+.ly-preview-secret .ly-padlock{width:12px;height:12px;stroke:#cba676}
+.ly-brief-preview .ly-brief-tags{flex:0 0 auto;align-items:center}
+.ly-brief-preview .ly-brief-tags .ly-padlock{width:12px;height:12px;stroke:#d6ae77}
+.ly-preview-flag-locked{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid rgba(248,206,140,.18);border-radius:5px;background:rgba(242,184,107,.035)}
+@media(max-width:420px){.ly-preview-pair{gap:5px;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr)}.ly-preview-pair .ly-preview-arrow{font-size:.95rem}.ly-brief-preview{padding:9px 10px}.ly-brief-preview .ly-brief-line{gap:5px}.ly-brief-preview .ly-brief-line .ly-yao-line{flex-basis:60px;width:60px}.ly-preview-text{gap:5px;font-size:.70rem}.ly-preview-secret{font-size:.62rem}}
+
 /* 免費預覽不載入變卦、納甲與詳細排盤。 */
 .ly-preview-mast{display:block;text-align:left}.ly-preview-mast>div{max-width:100%}
 .ly-pro-data.is-locked>summary{opacity:.8;cursor:not-allowed}
@@ -1850,10 +1876,32 @@ function paintQuestions(){
 function renderSteps(values){const names=['初爻','二爻','三爻','四爻','五爻','上爻'];$('lyCoinStack').innerHTML=values.map((x,i)=>`<span class="ly-cast-step"><b>${names[i]}</b><span class="ly-step-reading"><strong>${x}</strong><small>${({6:'老陰・動',7:'少陽',8:'少陰',9:'老陽・動'})[x]}</small></span></span>`).join('')}
 function lineMark(value){return `<div class="ly-yao-line ${value===6||value===8?'yin':'yang'} ${value===6||value===9?'moving':''}"><i></i><i></i></div>`}
 function renderLocked(data){
+ // 公開介面只有卦象與擲幣結果；完整納甲、六親、世應和變卦留在 Worker。
+ // 局部鎖頭用不同位置提示有更多專業欄位，不呈現虛構的六親或干支。
+ const lock='<svg class="ly-padlock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+ const lineTitles=['初爻','二爻','三爻','四爻','五爻','上爻'];
+ const lineNames={6:'老陰',7:'少陽',8:'少陰',9:'老陽'};
+ // 固定取樣樣式隨卦而改變；不能把鎖的行數當作真實世應或動爻位置。
+ const shift=(Number(data.original?.number)||1)%6;
+ const rows=data.values.slice().reverse().map((v,j)=>{
+  const p=5-j,slot=(p+shift)%6;
+  const tag=slot===0||slot===3?'六親':slot===1||slot===4?'納甲':'六神';
+  const masked=(slot===1||slot===4);
+  const detail=masked?`${lock}<span>${tag}</span>`:`<span>${lineNames[v]}</span><span class="ly-preview-secret">${lock}${tag}</span>`;
+  const last=slot===2||slot===5?`<span class="ly-preview-flag-locked" aria-label="部分專業標記尚未解鎖">${lock}</span>`:
+     (v===6||v===9?'<b>動</b>':'');
+  return `<div class="ly-brief-line ${v===6||v===9?'is-moving':''}"><span class="ly-brief-position">${lineTitles[p]}</span>${lineMark(v)}<span class="ly-preview-text">${masked?`<span class="ly-preview-secret">${detail}</span>`:detail}</span><span class="ly-brief-tags">${last}</span></div>`;
+ }).join('');
  $('emptyState').style.display='none';$('result').style.display='block';
  $('result').innerHTML=`
  <p class="ly-brief-question">本次問題：${esc(data.question||'未填問題')}</p>
- <div class="ly-result-mast ly-preview-mast"><div><small>本卦</small><h3>${esc(data.original.name)}</h3><p>第 ${data.original.number} 卦</p></div></div>
+ <div class="ly-result-mast ly-preview-pair">
+  <div class="ly-result-mast-cell"><small>本卦</small><h3>${esc(data.original.name)}</h3><p>第 ${data.original.number} 卦</p></div>
+  <span class="ly-preview-arrow">→</span>
+  <div class="ly-result-mast-cell is-private"><small>變卦</small><h3 class="ly-preview-locked-name" aria-label="變卦尚未解鎖">${lock}</h3><p>　</p></div>
+ </div>
+ <div class="ly-preview-meta"><span>卦宮 ${lock}</span><span>世應 ${lock}</span></div>
+ <section class="ly-brief-lines ly-brief-preview" aria-label="六爻卦象預覽"><div class="ly-brief-caption"><strong>六爻簡表</strong><small>上爻在上・初爻在下</small></div>${rows}</section>
  <details id="lyAdvancedChart" class="ly-pro-data is-locked" data-locked="true">
  <summary aria-disabled="true" tabindex="-1">查看完整專業排盤・變卦・六親六神・日月伏神</summary>
  <div class="ly-pro-inner" id="lyProInner"></div></details>
