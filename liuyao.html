@@ -666,7 +666,22 @@ html{scroll-padding-top:86px}
 /* 完成六次起卦就顯示鎖定入口；只有初次 AI 解卦成功才能展開完整納甲表。 */
 #lyAdvancedChart.is-locked>summary{color:#988579;cursor:not-allowed;opacity:.78;user-select:none}
 #lyAdvancedChart.is-locked>summary::after{content:'🔒';font-size:.9rem;color:#d3a46a}
-#lyAdvancedChart:not(.is-locked)>summary::after{content:'🔓';font-size:.9rem}
+/* 初次 AI 解卦成功：以醒目的金色邊框與可點擊提示呈現，不使用開鎖圖示。 */
+#lyAdvancedChart:not(.is-locked){
+ border:2px solid rgba(255,194,103,.82);
+ background:linear-gradient(115deg,rgba(115,62,23,.30),rgba(51,29,13,.19));
+ box-shadow:0 0 0 2px rgba(255,184,93,.07),0 5px 25px rgba(226,141,57,.16);
+}
+#lyAdvancedChart:not(.is-locked)>summary{
+ padding:15px 17px;color:#ffe5ae;font-size:.91rem;font-weight:850;
+ text-shadow:0 1px 8px rgba(255,188,104,.16);
+}
+#lyAdvancedChart:not(.is-locked)>summary::after{content:'＋';font-size:1.22rem;font-weight:800;color:#ffd38b}
+#lyAdvancedChart:not(.is-locked)[open]>summary::after{content:'－'}
+#lyAdvancedChart:not(.is-locked)>summary:hover,
+#lyAdvancedChart:not(.is-locked)>summary:focus-visible{background:rgba(255,197,120,.095);outline-offset:2px}
+html[data-theme="light"] #lyAdvancedChart:not(.is-locked){background:linear-gradient(115deg,#fff5e5,#fffaf4);border-color:#a96d2d}
+html[data-theme="light"] #lyAdvancedChart:not(.is-locked)>summary{color:#70400c;text-shadow:none}
 #lyAdvancedChart.is-locked>.ly-pro-inner{display:none}
 .ly-pro-inner{padding:0 11px 13px}
 .ly-result-meta{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0 12px}
@@ -2411,7 +2426,10 @@ function safeAnswer(target,answer){
   const chart=$('lyAdvancedChart');if(!chart)return;
   chart.dataset.locked='false';chart.classList.remove('is-locked');chart.open=false;
   const summary=chart.querySelector('summary');
-  if(summary){summary.removeAttribute('aria-disabled');summary.removeAttribute('tabindex')}
+  if(summary){
+   summary.removeAttribute('aria-disabled');summary.removeAttribute('tabindex');
+   summary.textContent='完整專業排盤已解鎖｜點擊查看六親六神・日月伏神';
+  }
  }
  function revealAnswer(view,answer,mode='initial',receipt=null){
   if(readingView!==view)return;
