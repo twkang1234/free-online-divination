@@ -211,6 +211,22 @@ body.overlay-open{overflow:hidden}.page-footer{width:min(1120px,calc(100% - 40px
 .ly-ai-quota-refresh{margin-left:auto;font-size:.72rem;min-height:34px;padding:6px 10px;white-space:nowrap}
 [hidden]{display:none!important}
 @media(max-width:600px){.ly-ai-operation button{width:100%}}
+
+/* 選題逐層展開；不預先顯示沒有選擇過的情境與問題。 */
+.ly-guide-next[hidden],.ly-optional-disclosure[hidden],#lyResultStage[hidden]{display:none!important}
+.ly-guide-next{animation:lyProgressIn .18s ease both}
+@keyframes lyProgressIn{from{opacity:.3;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.ly-guide-next>.ly-step-label{margin-top:15px}
+.ly-optional-fields{padding:0 13px 10px;display:grid;gap:13px}
+.ly-optional-group>span{display:block;margin-bottom:7px;color:#dfc5b1;font-size:.75rem;font-weight:700}
+.ly-optional-choices{display:flex;gap:7px;flex-wrap:wrap}
+.ly-optional-choice{min-height:38px;padding:7px 12px;border:1px solid rgba(255,255,255,.15);border-radius:9px;background:rgba(255,255,255,.025);color:#d8c5b5;font-size:.74rem;line-height:1.4;text-align:center;cursor:pointer}
+.ly-optional-choice[aria-pressed="true"]{border-color:#dd9c68;background:rgba(221,156,104,.13);color:#ffe5cc;font-weight:780}
+.ly-optional-fields label.ly-field{margin:0}
+.ly-optional-fields input.ly-optional-notes{width:100%;min-height:42px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:#130e0d;color:#f8e6da;padding:10px 11px;font:inherit;font-size:.78rem}
+.ly-optional-note{margin:0 13px 13px!important;color:#a78d7c!important;font-size:.7rem!important;line-height:1.6!important}
+.ly-optional-fields button:disabled,.ly-optional-fields input:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:480px){.ly-optional-fields{padding:0 10px 10px}.ly-optional-choice{flex:1 1 auto;padding:7px 10px}}
 </style>
 <style id="dhSharedMemberStyle">
 /* 一念知機：共用會員入口。只新增會員 UI，不影響各工具的免費排盤及頁面樣式。 */
@@ -782,9 +798,16 @@ html{scroll-padding-top:86px}
   <div class="ly-phase"><span>01</span><strong>選擇問題</strong></div>
   <p class="ly-hint ly-question-count" id="lyQuestionCount">選主題、情境，再選一道問題。</p>
   <div class="ly-step-label">主題</div><div class="ly-topic-grid" id="lyTopics" role="group" aria-label="占問主題"></div>
-  <div class="ly-step-label">情境</div><div class="ly-select-grid" id="lyScenes" role="group" aria-label="占問情境"></div>
-  <div class="ly-step-label">問題（請選擇一題）</div><div class="ly-question-grid" id="lyQuestions" role="group" aria-label="固定問題"></div>
-  <details class="ly-choice-disclosure" id="lyCustomDisclosure"><summary>沒有合適的題目？自行輸入問題</summary><label class="ly-field ly-custom" for="lyCustomQuestion"><span>一次問一件具體事情</span><input id="lyCustomQuestion" maxlength="160" placeholder="例如：這份工作合約下個月能否順利簽成？" type="text"/></label></details>
+  <div class="ly-guide-next" id="lySceneStage" hidden><div class="ly-step-label">情境</div><div class="ly-select-grid" id="lyScenes" role="group" aria-label="占問情境"></div></div>
+  <div class="ly-guide-next" id="lyQuestionStage" hidden><div class="ly-step-label">問題（請選擇一題）</div><div class="ly-question-grid" id="lyQuestions" role="group" aria-label="固定問題"></div>
+    <details class="ly-choice-disclosure" id="lyCustomDisclosure"><summary>沒有合適的題目？自行輸入問題</summary><label class="ly-field ly-custom" for="lyCustomQuestion"><span>一次問一件具體事情</span><input id="lyCustomQuestion" maxlength="160" placeholder="例如：這份工作合約下個月能否順利簽成？" type="text"/></label></details>
+  </div>
+  <details class="ly-choice-disclosure ly-optional-disclosure" id="lyOptionalDisclosure" hidden>
+    <summary>請選填，讓解讀更準確</summary>
+    <div class="ly-optional-fields" id="lyOptionalFields"></div>
+    <p class="ly-optional-note">所有項目皆可略過，僅作為 AI 理解問題的背景，不會改變卦象。</p>
+  </details>
+  <div id="lyCastStage" class="ly-guide-next" hidden>
   <div class="ly-phase"><span>02</span><strong>三枚銅錢・擲六次</strong></div>
   <details class="ly-choice-disclosure ly-cast-disclosure"><summary>起卦時間與三錢規則（自動記錄）</summary>
     <p class="ly-cast-standard"><b>三枚銅錢連擲六次，由下往上排爻</b><span>正面 3、反面 2；6 老陰、7 少陽、8 少陰、9 老陽。老陰與老陽為動爻。</span></p>
@@ -798,9 +821,11 @@ html{scroll-padding-top:86px}
     <div class="ly-cast-stack" id="lyCoinStack" aria-live="polite"></div>
   </div>
   <p class="ly-error" role="alert" id="lyError" hidden></p>
-
+  </div>
+  <div id="lyResultStage" hidden>
   <div class="ly-phase" id="lyResultHeading"><span>03</span><strong>本卦與變卦</strong></div>
   <div class="result-shell" id="resultShell"><div class="empty" id="emptyState"><div><div class="empty-orbit"></div><h3>尚未起卦</h3><p>完成六次擲幣後，這裡會顯示本卦、變卦及六爻簡表。</p></div></div><div id="result" style="display:none" aria-live="polite"></div></div>
+  </div>
   <div class="ly-end-reset-wrap"><button type="button" id="lyResetAtEnd" hidden>↻ 重新起卦</button></div>
 </div>
   </section>
@@ -1888,6 +1913,7 @@ if(typeof module!=='undefined'&&module.exports)module.exports=Object.freeze({...
     ]
   }
 ];
+ const OPTIONAL_INFO=[{"groups":[{"key":"relation","label":"目前關係","options":["單身／尚未交往","曖昧或認識中","交往中","已分手","已婚／伴侶關係","其他"]},{"key":"progress","label":"近期互動","options":["持續聯絡","偶爾聯絡","暫時沒有聯絡","正在協商","其他"]},{"key":"gender","label":"問卦者性別","options":["男","女","不指定"]}],"example":"例如：已分手兩週，最近仍偶爾聯絡"},{"groups":[{"key":"situation","label":"目前工作狀況","options":["在職","待業／求職中","試用期","準備轉職","其他"]},{"key":"progress","label":"事情進度","options":["尚未申請","已投遞履歷","已面試","等待通知","已有口頭回覆","其他"]}],"example":"例如：上週面試完成，目前等待正式通知"},{"groups":[{"key":"matter","label":"金錢事件類型","options":["薪資／收入","借貸／還款","買賣交易","合約款項","其他"]},{"key":"progress","label":"目前進度","options":["尚未開始","已提出申請／請求","正在協商","等待付款／結果","其他"]}],"example":"例如：款項約定本週支付，但尚未入帳"},{"groups":[{"key":"matter","label":"考試／申請類型","options":["入學考試","證照／檢定","面試甄選","升學申請","其他"]},{"key":"progress","label":"目前進度","options":["準備中","已報名","已考完／面試完","等待公布","其他"]}],"example":"例如：已考完試，預計下個月公布"},{"groups":[{"key":"matter","label":"家庭／房屋事項","options":["親屬關係","買屋／賣屋","租賃／搬遷","修繕／產權","其他"]},{"key":"progress","label":"目前進度","options":["尚在考慮","已開始處理","已協商","等待文件／結果","其他"]}],"example":"例如：已看屋，正評估是否簽約"},{"groups":[{"key":"matter","label":"健康照護相關","options":["看診／預約","照護安排","檢查／報告時程","復健／生活安排","其他"]},{"key":"progress","label":"目前進度","options":["尚未安排","已預約","正在進行","等待回覆／報告","其他"]}],"example":"例如：已預約看診，正在等待安排"},{"groups":[{"key":"matter","label":"法律／文件事項","options":["契約簽署","行政申請","調解／協商","訴訟程序","其他"]},{"key":"progress","label":"目前進度","options":["準備資料","已提出申請","審核／處理中","等待正式通知","其他"]}],"example":"例如：已送出申請，等待正式通知"},{"groups":[{"key":"matter","label":"決策類型","options":["是否接受提案","兩個方案比較","開始／停止一件事","人際合作","其他"]},{"key":"progress","label":"目前狀態","options":["蒐集資訊中","已開始接洽","正在考慮","需要近期決定","其他"]}],"example":"例如：有兩個方案，尚未做最後決定"},{"groups":[{"key":"matter","label":"創業／經營事項","options":["開店／成立公司","合作與團隊","產品／服務推出","營收／資金安排","其他"]},{"key":"progress","label":"目前進度","options":["規劃中","已開始執行","正在談合作","營運中","其他"]}],"example":"例如：產品即將推出，合作條件未談妥"},{"groups":[{"key":"matter","label":"投資／買賣類型","options":["股票／基金","不動產","商品買賣","合夥投資","其他"]},{"key":"progress","label":"目前狀態","options":["尚未進場","已持有／已成交","考慮出場","等待交割／回款","其他"]}],"example":"例如：已持有一段時間，考慮是否調整"},{"groups":[{"key":"matter","label":"出行事項","options":["旅遊行程","工作出差","搬遷／移居","出入境文件","其他"]},{"key":"progress","label":"目前安排","options":["規劃中","已訂票／預約","等待核准","臨近出發","其他"]}],"example":"例如：已訂票，正在等待其他文件"},{"groups":[{"key":"matter","label":"尋找／聯絡事項","options":["遺失物品","等待回覆","包裹／文件","寵物協尋","其他"]},{"key":"progress","label":"目前進度","options":["剛發生","已詢問／通報","持續尋找／聯絡","等待回覆","其他"]}],"example":"例如：昨天發現東西不見，已向店家詢問"}];
  function get(topic,scene){
   if(!Number.isInteger(topic)||!Number.isInteger(scene)||topic<0||topic>=groups.length)return null;
   const group=groups[topic],found=group.scenes[scene];if(!found)return null;
@@ -1899,7 +1925,7 @@ if(typeof module!=='undefined'&&module.exports)module.exports=Object.freeze({...
  }
  const totalScenes=groups.reduce((n,g)=>n+g.scenes.length,0);
  const totalQuestions=groups.reduce((n,g)=>n+g.scenes.reduce((m,s)=>m+s[1].length,0),0);
- return Object.freeze({version:'2026-11-03-v2',groups,get,isFixed,stats:Object.freeze({topics:groups.length,scenes:totalScenes,questions:totalQuestions})});
+ return Object.freeze({version:'2026-11-03-v2',groups,get,isFixed,optionalInfo:OPTIONAL_INFO,stats:Object.freeze({topics:groups.length,scenes:totalScenes,questions:totalQuestions})});
 });
 
 </script>
@@ -1940,16 +1966,17 @@ const C=window.LiuyaoCore;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const groups=window.LiuyaoQuestions.groups;
-let topic=1, scene=0, fixedQuestion='', activeValues=[], latest=null, latestContext=null, castingContext=null;
+let topic=null, scene=null, fixedQuestion='', activeValues=[], latest=null, latestContext=null, castingContext=null;
+const OPTIONAL_WINDOW=['未來一個月','未來三個月','未來半年'];
 function node(tag,cls,txt){const el=document.createElement(tag);if(cls)el.className=cls;if(txt)el.textContent=txt;return el}
 function error(msg){const n=$('lyError');n.textContent=msg;n.hidden=!msg; if(msg)n.scrollIntoView({behavior:'smooth',block:'nearest'})}
 function question(){return $('lyCustomQuestion').value.trim()||fixedQuestion||''}
-function checkedQuestion(){const q=question();if(!q){$('lyTopics').scrollIntoView({behavior:'smooth',block:'center'});throw Error('請先選擇一個固定問題，或輸入一件明確想問的事情，再開始起卦。')}return q}
-function snapshot(){return {topic,scene,question:question(),time:$('lyWhen').value}}
+function checkedQuestion(){if(!Number.isInteger(topic)){ $('lyTopics').scrollIntoView({behavior:'smooth',block:'center'});throw Error('請先選擇一個主題。')}if(!Number.isInteger(scene)){ $('lySceneStage').scrollIntoView({behavior:'smooth',block:'center'});throw Error('請再選擇一個情境。')}const q=question();if(!q){$('lyQuestionStage').scrollIntoView({behavior:'smooth',block:'center'});throw Error('請選擇一道固定問題，或自行輸入具體問題。')}return q}
+function snapshot(){return {topic,scene,question:question(),time:$('lyWhen').value,optionalContext:readOptionalContext()}}
 function lockInputs(locked){
  $('lyWhen').disabled=locked;
  $('lyCustomQuestion').disabled=locked;
- document.querySelectorAll('#lyTopics button,#lyScenes button,#lyQuestions button').forEach(b=>b.disabled=locked);
+ document.querySelectorAll('#lyTopics button,#lyScenes button,#lyQuestions button,#lyOptionalFields button,#lyOptionalFields input').forEach(b=>b.disabled=locked);
 }
 function captureCast(){
  if(!castingContext){
@@ -1965,14 +1992,60 @@ function updateCastLayout(active,completed=false){
  document.body.classList.toggle('ly-cast-active',!!active);
  const bottom=$('lyResetAtEnd');if(bottom)bottom.hidden=!active;const throwActions=$('lyThrowActions');if(throwActions)throwActions.hidden=!!completed;
 }
-function makeResult(data,ctx=snapshot()){latest=data;latestContext=ctx;render(latest);updateCastLayout(true,true);error('');window.LiuyaoStagingAI?.onReading(data,ctx)}
+function makeResult(data,ctx=snapshot()){latest=data;latestContext=ctx;$('lyResultStage').hidden=false;render(latest);updateCastLayout(true,true);error('');window.LiuyaoStagingAI?.onReading(data,ctx)}
 function htmlSafeSignal(line){const a=[];if(line.moving)a.push('動爻');if(line.dayVoid)a.push('旬空');if(line.monthBreak)a.push('月破');if(line.dayClash)a.push('日沖');if(line.monthCombine)a.push('月合');if(line.dayCombine)a.push('日合');return a}
 function signalHTML(data){const lines=data.lineObjects.filter(x=>x.moving||x.dayVoid||x.monthBreak);
  if(!lines.length)return '<p class="ly-hint">未出現動爻、旬空或月破的標記；這只代表本次排盤資料的狀態，不等於吉凶判斷。</p>';
  return '<div class="ly-signal-list">'+lines.map(l=>`<div class="ly-signal-item">第 ${l.position} 爻・${esc(l.relative)} ${esc(l.ganzhi)}：${htmlSafeSignal(l).map(esc).join('、')}。${l.changed?'變爻 '+esc(l.changed.ganzhi)+'（'+esc(l.changed.returnElement.join('、')||'無直接五行生剋')+'）':'靜爻'}</div>`).join('')+'</div>';}
-function paintTopics(){const e=$('lyTopics');e.textContent='';const stats=window.LiuyaoQuestions.stats;const counter=$('lyQuestionCount');if(counter)counter.textContent=`${stats.topics} 大主題・${stats.scenes} 種問事情境・${stats.questions} 道固定題目；以具體事件為主。`;groups.forEach((g,i)=>{let b=node('button','ly-choice'+(topic===i?' selected':''));b.type='button';b.innerHTML=`<b>${esc(g.emoji)}　${esc(g.name)}</b>`;b.onclick=()=>{if(castingContext)return;topic=i;scene=0;fixedQuestion='';paintTopics();paintScenes();};e.appendChild(b)})}
-function paintScenes(){const e=$('lyScenes');e.textContent='';groups[topic].scenes.forEach((s,i)=>{let b=node('button','ly-small-choice'+(scene===i?' selected':''),s[0]);b.type='button';b.onclick=()=>{if(castingContext)return;scene=i;fixedQuestion='';paintScenes()};e.appendChild(b)});paintQuestions()}
-function paintQuestions(){const e=$('lyQuestions');e.textContent='';groups[topic].scenes[scene][1].forEach((s,i)=>{const b=node('button','ly-question'+(fixedQuestion===s?' selected':''),`${i+1}. ${s}`);b.type='button';b.onclick=()=>{if(castingContext)return;fixedQuestion=s;$('lyCustomQuestion').value='';paintQuestions()};e.appendChild(b)})}
+function optionalInfo(){return Number.isInteger(topic)?window.LiuyaoQuestions.optionalInfo[topic]:null}
+function readOptionalContext(){
+ const out={};if(!optionalInfo())return out;
+ $('lyOptionalFields').querySelectorAll('[data-optional-key]').forEach(control=>{
+  const key=control.dataset.optionalKey;
+  if(control.tagName==='BUTTON'&&control.getAttribute('aria-pressed')==='true')out[key]=control.dataset.optionalValue;
+  if(control.tagName==='INPUT'&&control.value.trim())out[key]=control.value.trim().slice(0,120);
+ });return out;
+}
+function updateCastReady(){const ready=!!(castingContext||(Number.isInteger(topic)&&Number.isInteger(scene)&&question()));$('lyCastStage').hidden=!ready;}
+function renderOptionalInfo(){
+ const details=$('lyOptionalDisclosure'),wrap=$('lyOptionalFields');wrap.replaceChildren();details.hidden=!optionalInfo();
+ if(!optionalInfo()){details.open=false;return}
+ const opts=optionalInfo().groups.map(g=>g);
+ opts.push({key:'timeWindow',label:'希望觀察的時間（選填）',options:OPTIONAL_WINDOW});
+ opts.forEach(g=>{
+  const section=node('section','ly-optional-group'),label=node('span',null,g.label),buttons=node('div','ly-optional-choices');
+  section.append(label,buttons);
+  g.options.forEach(value=>{
+   const b=node('button','ly-optional-choice',value);b.type='button';b.dataset.optionalKey=g.key;b.dataset.optionalValue=value;b.setAttribute('aria-pressed','false');
+   b.onclick=()=>{if(castingContext)return;const next=b.getAttribute('aria-pressed')!=='true';buttons.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed',String(next))};buttons.append(b);
+  });wrap.append(section);
+ });
+ const field=node('label','ly-field'),title=node('span',null,'其他背景（選填，120 字內）'),input=node('input','ly-optional-notes');
+ input.type='text';input.maxLength=120;input.dataset.optionalKey='notes';input.placeholder=optionalInfo().example||'簡短描述本次事件的實際進度';field.append(title,input);wrap.append(field);
+}
+function paintTopics(){
+ const e=$('lyTopics');e.textContent='';groups.forEach((g,i)=>{
+  const b=node('button','ly-choice'+(topic===i?' selected':''));b.type='button';b.innerHTML=`<b>${esc(g.emoji)}　${esc(g.name)}</b>`;
+  b.setAttribute('aria-pressed',String(topic===i));
+  b.onclick=()=>{if(castingContext)return;if(topic===i)return;topic=i;scene=null;fixedQuestion='';$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;paintTopics();paintScenes();renderOptionalInfo()};e.append(b)
+ });
+}
+function paintScenes(){
+ const stage=$('lySceneStage'),e=$('lyScenes');stage.hidden=!Number.isInteger(topic);e.replaceChildren();
+ if(!Number.isInteger(topic)){$('lyQuestionStage').hidden=true;$('lyQuestions').replaceChildren();updateCastReady();return}
+ groups[topic].scenes.forEach((s,i)=>{
+  const b=node('button','ly-small-choice'+(scene===i?' selected':''),s[0]);b.type='button';b.setAttribute('aria-pressed',String(scene===i));
+  b.onclick=()=>{if(castingContext)return;if(scene===i)return;scene=i;fixedQuestion='';$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;paintScenes()};e.append(b)
+ });paintQuestions();
+}
+function paintQuestions(){
+ const stage=$('lyQuestionStage'),e=$('lyQuestions');stage.hidden=!Number.isInteger(topic)||!Number.isInteger(scene);e.replaceChildren();
+ if(stage.hidden){updateCastReady();return;}
+ groups[topic].scenes[scene][1].forEach((s,i)=>{
+  const b=node('button','ly-question'+(fixedQuestion===s?' selected':''),`${i+1}. ${s}`);b.type='button';b.setAttribute('aria-pressed',String(fixedQuestion===s));
+  b.onclick=()=>{if(castingContext)return;fixedQuestion=s;$('lyCustomQuestion').value='';paintQuestions()};e.append(b)
+ });updateCastReady();
+}
 function renderSteps(values){const names=['初爻','二爻','三爻','四爻','五爻','上爻'];$('lyCoinStack').innerHTML=values.map((x,i)=>`<span class="ly-cast-step"><b>${names[i]}</b><span class="ly-step-reading"><strong>${x}</strong><small>${({6:'老陰・動',7:'少陽',8:'少陰',9:'老陽・動'})[x]}</small></span></span>`).join('')}
 function lineMark(value){return `<div class="ly-yao-line ${value===6||value===8?'yin':'yang'} ${value===6||value===9?'moving':''}"><i></i><i></i></div>`}
 function render(data){
@@ -2005,8 +2078,8 @@ function render(data){
 }
 function serializeText(d){return [`專業納甲六爻排盤`,`問題：${d.question||'未填'}`,`起卦：${d.calendar.iso}`,`干支：${d.calendar.year}年 ${d.calendar.month}月 ${d.calendar.day}日`,`本卦：${d.original.name}（${d.original.number}）／變卦：${d.changed.name}（${d.changed.number}）`,`卦宮：${d.palace.palace} ${d.palace.element} ${d.palace.stage}，世${d.palace.shi}應${d.palace.ying}`,`旬空：${d.calendar.voidBranches.join('')}`,`動爻：${d.movingLines.join('、')||'無'}`,...d.lineObjects.slice().reverse().map(x=>`${x.position}爻 ${x.god} ${x.relative} ${x.ganzhi}${x.shiYing?' '+x.shiYing:''} ${x.label} ${x.monthState}${x.dayVoid?' 旬空':''}${x.monthBreak?' 月破':''}${x.changed?' → '+x.changed.ganzhi+' '+x.changed.relative:''}`),`伏神：${d.hidden.map(x=>x.relative+x.najia+'第'+x.position+'爻').join('、')||'無'}`].join('\n')}
 function init(){
- $('lyWhen').value=C.localNowTaipei();paintTopics();paintScenes();lockInputs(false);
- $('lyCustomQuestion').addEventListener('input',()=>{if($('lyCustomQuestion').value.trim()&&fixedQuestion){fixedQuestion='';paintQuestions()}});
+ $('lyWhen').value=C.localNowTaipei();paintTopics();paintScenes();renderOptionalInfo();lockInputs(false);
+ $('lyCustomQuestion').addEventListener('input',()=>{if($('lyCustomQuestion').value.trim()&&fixedQuestion){fixedQuestion='';paintQuestions()}updateCastReady()});
  $('lyThrow').onclick=()=>{try{
   if(activeValues.length>=6)return;
   const cast=captureCast();
@@ -2024,7 +2097,7 @@ function init(){
   $('lyThrow').disabled=!!completed;
   if(completed)makeResult(completed,cast);
  }catch(e){if(activeValues.length===0){castingContext=null;lockInputs(false)}error(e.message)}};
- const resetCast=()=>{activeValues=[];castingContext=null;lockInputs(false);$('lyWhen').value=C.localNowTaipei();$('lyThrow').disabled=false;$('lyThrow').textContent='擲出初爻';$('lyThrowTitle').textContent='準備擲初爻（第 1 次）';$('lyThrowCount').textContent='0 / 6';$('lyCoins').innerHTML='<span>銅</span><span>銅</span><span>銅</span>';renderSteps([]);updateCastLayout(false);latest=null;latestContext=null;window.LiuyaoStagingAI?.clear();$('result').innerHTML='';$('result').style.display='none';$('emptyState').style.display='';error('')};
+ const resetCast=()=>{activeValues=[];castingContext=null;topic=null;scene=null;fixedQuestion='';$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;lockInputs(false);paintTopics();paintScenes();renderOptionalInfo();$('lyWhen').value=C.localNowTaipei();$('lyResultStage').hidden=true;updateCastReady();$('lyThrow').disabled=false;$('lyThrow').textContent='擲出初爻';$('lyThrowTitle').textContent='準備擲初爻（第 1 次）';$('lyThrowCount').textContent='0 / 6';$('lyCoins').innerHTML='<span>銅</span><span>銅</span><span>銅</span>';renderSteps([]);updateCastLayout(false);latest=null;latestContext=null;window.LiuyaoStagingAI?.clear();$('result').innerHTML='';$('result').style.display='none';$('emptyState').style.display='';error('')};
  $('lyResetAtEnd').onclick=()=>{
   if(!confirm('重新起卦將清除目前畫面的卦象與 AI 解讀。請先複製重要內容，確定重新起卦嗎？'))return;
   resetCast();
@@ -2201,7 +2274,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  function oldCast(r){const ts=Date.parse(r?.calendar?.localDateTime+'+08:00');return !Number.isFinite(ts)||(Date.now()-ts>30*60000)||(ts-Date.now()>5*60000)}
  function quotaRemaining(d){return Math.max(0,(Number(d?.limit)||0)-(Number(d?.used)||0))}
  function friendly(code){const dict={
-  LOGIN_REQUIRED:'請先重新登入會員中心。',INVALID_PAYLOAD:'提交資料格式有誤。',CAST_NOT_FOUND:'伺服器找不到此筆起卦紀錄。',CAST_TOOL_REFUNDED:'這次起卦已完成退款，請重新起卦。',
+  LOGIN_REQUIRED:'請先重新登入會員中心。',INVALID_PAYLOAD:'提交資料格式有誤。',INVALID_OPTIONAL_CONTEXT:'選填背景資料不符合格式，請重新選填後再起卦。',CAST_NOT_FOUND:'伺服器找不到此筆起卦紀錄。',CAST_TOOL_REFUNDED:'這次起卦已完成退款，請重新起卦。',
   LY_TOOL_EXHAUSTED:'會員共用工具額度不足，尚未建立新的起卦。',LY_AI_EXHAUSTED:'AI 共用額度不足，已嘗試安全返還本次工具扣點。',AI_QUOTA_EMPTY:'AI 額度不足，請檢查額度表。',
   LIUYAO_SCHEMA_MIGRATION_REQUIRED:'六爻資料庫尚未完成安全升級，目前不會扣點。',LIUYAO_NOT_ENABLED:'六爻 AI 尚未開放。',LIUYAO_QUOTA_NOT_REGISTERED:'管理員尚未完成六爻額度設定。',
   AI_REQUEST_IN_PROGRESS:'此筆 AI 已在處理中，請用原操作查詢狀態。',AI_REQUEST_REFUNDED:'此筆 AI 已返還額度，請重新起卦。',
@@ -2384,7 +2457,7 @@ function safeAnswer(target,answer){
     if(!window.confirm(`本次解卦將使用：\n工具：${source}\nAI：${aiSource}\n\n確定開始嗎？`))return;
     setLoading(view,true,'initial');
     if(!view.castOp)view.castOp=uuid();updatePending(view);
-    const payload={tool:'liuyao',operationId:view.castOp,questionBankVersion:window.LiuyaoQuestions.version,topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question,values:view.data.values.slice(),method:'three-coins',localDateTime:view.data.calendar.localDateTime};
+    const payload={tool:'liuyao',operationId:view.castOp,questionBankVersion:window.LiuyaoQuestions.version,topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question,values:view.data.values.slice(),method:'three-coins',localDateTime:view.data.calendar.localDateTime,optionalContext:view.ctx.optionalContext||{}};
     renderReceipt(view,'正在將原始六爻值交給伺服器重新排盤，並核對工具額度…');
     let committed;
     try{committed=await request('/cast',payload)}
