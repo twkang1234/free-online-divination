@@ -182,8 +182,9 @@ body.overlay-open{overflow:hidden}.page-footer{width:min(1120px,calc(100% - 40px
 .ly-ai-footer{margin-top:16px;border-top:1px solid rgba(231,185,119,.18);padding-top:13px}
 .ly-ai-export{display:flex;gap:9px;flex-wrap:wrap}
 .ly-ai-export button{cursor:pointer;padding:9px 13px;border:1px solid rgba(211,172,114,.36);border-radius:9px;background:rgba(211,172,114,.085);color:#efcda4;font:inherit;font-size:.77rem;font-weight:750;min-height:40px}
+.ly-ai-batch{border-top:1px dashed rgba(211,172,114,.20);margin-top:12px;padding-top:11px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.ly-ai-batch button{min-height:36px;padding:8px 12px;border-radius:8px;border:1px solid rgba(116,216,223,.28);background:rgba(116,216,223,.05);color:#b8e4e8;font-size:.75rem;cursor:pointer}.ly-ai-batch button:disabled{opacity:.35;cursor:not-allowed}.ly-ai-batch small{color:#96847a;font-size:.68rem;line-height:1.5}
 .ly-ai-meta{margin:12px 0 0!important;font:400 .67rem/1.7 ui-monospace,SFMono-Regular,Consolas,monospace!important;color:#8d8077!important;overflow-wrap:anywhere}
-@media(max-width:480px){.ly-ai-wait{padding:16px 12px;gap:13px}.ly-ai-wait .ly-ai-spinner{width:45px;height:45px;border-width:4px}.ly-ai-export{display:grid;grid-template-columns:1fr 1fr}.ly-ai-export button{padding:9px 7px}.ly-ai-export #lyAiDownloadAudit{grid-column:1/-1}}
+@media(max-width:480px){.ly-ai-wait{padding:16px 12px;gap:13px}.ly-ai-wait .ly-ai-spinner{width:45px;height:45px;border-width:4px}.ly-ai-export{display:grid;grid-template-columns:1fr 1fr}.ly-ai-export button{padding:9px 7px}.ly-ai-export #lyAiDownloadAudit{grid-column:1/-1}.ly-ai-batch{display:grid;grid-template-columns:1fr 1fr}.ly-ai-batch button{padding:8px 5px}.ly-ai-batch small{grid-column:1/-1}}
 @media(prefers-reduced-motion:reduce){.ly-ai-wait .ly-ai-spinner{animation:none;border-color:#f6c284}}
 
 /* AI 回答支援 Markdown 標題、清單、粗體。排版僅作用於 AI 文章，不影響納甲排盤。 */
@@ -1949,13 +1950,28 @@ function formatChangedRelation(line){
  const o=`原爻${line.relative}${line.ganzhi}${line.element}`,c=`變爻${line.changed.relative}${line.changed.ganzhi}${line.changed.element}`;
  return line.element===line.changed.element?`${o}與${c}同氣（化比和）`:B[line.element]===line.changed.element?`${o}生${c}（化洩）`:B[line.changed.element]===line.element?`${c}生${o}（回頭生）`:K[line.element]===line.changed.element?`${o}剋${c}（化剋，不是回頭剋）`:`${c}剋${o}（回頭剋）`;
 }
+function changedStateText(l,cal){
+ if(!l.changed)return '';
+ const c=l.changed,b=c.branch||String(c.ganzhi||'').slice(-1);
+ const branches='子丑寅卯辰巳午未申酉戌亥';
+ const pairs=['子丑','寅亥','卯戌','辰酉','巳申','午未'];
+ const cross=(a,x)=>branches.includes(a)&&branches.includes(x)&&(branches.indexOf(a)+6)%12===branches.indexOf(x);
+ const join=(a,x)=>pairs.some(z=>z.includes(a)&&z.includes(x)&&a!==x);
+ const info=[
+  (c.monthBreak??(b===cal.monthBreak))?'月破':'',
+  (c.dayVoid??(cal.voidBranches||[]).includes(b))?'旬空':'',
+  (c.dayClash??cross(b,cal.dayBranch))?'日沖':'',
+  (c.monthCombine??join(b,cal.monthBranch))?'月合':'',
+  (c.dayCombine??join(b,cal.dayBranch))?'日合':''];
+ return info.filter(Boolean).join('・')||'無空破沖合標記';
+}
 function render(data){
  const c=data.calendar,o=data.original,ch=data.changed, ctx=latestContext||snapshot();
  $('emptyState').style.display='none';$('result').style.display='block';
  const rows=data.lineObjects.slice().reverse().map(l=>{
    const flag=l.shiYing?`<b class="ly-flag">${l.shiYing}</b>`:'<span class="ly-muted">—</span>';
    const note=[l.monthBreak?'月破':'',l.dayVoid?'旬空':'',l.dayClash?'日沖':'',l.monthCombine?'月合':'',l.dayCombine?'日合':''].filter(Boolean).join('・')||'—';
-   return `<tr class="${l.moving?'ly-moving-row':''}"><td>${l.position===6?'上爻':l.position===1?'初爻':l.position+'爻'}</td><td>${esc(l.god)}</td><td>${esc(l.relative)}</td><td>${esc(l.ganzhi)}<small>${l.element}</small></td><td>${lineMark(l.value)}<small>${l.label}</small></td><td>${flag}</td><td>${esc(l.monthState)}<small>五行氣勢參考・${esc(note)}</small></td><td>${l.changed?`${esc(l.changed.relative)} ${esc(l.changed.ganzhi)}<small>${esc(formatChangedRelation(l))}</small>`:'<span class="ly-muted">—</span>'}</td></tr>`
+   return `<tr class="${l.moving?'ly-moving-row':''}"><td>${l.position===6?'上爻':l.position===1?'初爻':l.position+'爻'}</td><td>${esc(l.god)}</td><td>${esc(l.relative)}</td><td>${esc(l.ganzhi)}<small>${l.element}</small></td><td>${lineMark(l.value)}<small>${l.label}</small></td><td>${flag}</td><td>${esc(l.monthState)}<small>五行氣勢參考・${esc(note)}</small></td><td>${l.changed?`${esc(l.changed.relative)} ${esc(l.changed.ganzhi)}<small>${esc(formatChangedRelation(l))}</small><small>變爻：${esc(changedStateText(l,c))}</small>`:'<span class="ly-muted">—</span>'}</td></tr>`
  }).join('');
  const hidden=data.hidden.length?data.hidden.map(h=>`<span class="ly-hidden-tag">${h.relative}　${h.najia}${h.element} 伏於第 ${h.position} 爻（飛神 ${h.flying}）</span>`).join(''):'本卦六親俱全，無缺親伏神';
  const quickRows=data.lineObjects.slice().reverse().map(l=>`<div class="ly-brief-line ${l.moving?'is-moving':''}"><span class="ly-brief-position">${l.position===6?'上爻':l.position===1?'初爻':l.position+'爻'}</span>${lineMark(l.value)}<span class="ly-brief-text">${esc(l.relative)}・${esc(l.ganzhi)}</span><span class="ly-brief-tags">${l.shiYing?`<b>${esc(l.shiYing)}</b>`:''}${l.moving?'<b>動</b>':''}</span></div>`).join('');
@@ -1969,7 +1985,7 @@ function render(data){
  <div class="ly-result-meta"><span><b>本卦卦宮</b>${data.palace.palace}宮・${data.palace.element}・${data.palace.stage}</span><span><b>世應位置</b>世 ${data.palace.shi} 爻／應 ${data.palace.ying} 爻</span><span><b>干支曆</b>${c.year}年 ${c.month}月 ${c.day}日</span><span><b>月建・日辰</b>${c.monthBranch}月・${c.dayBranch}日</span><span><b>旬空・月破</b>${c.voidBranches.join('') || '—'}空・${c.monthBreak}破</span><span><b>動爻</b>${data.movingLines.length?data.movingLines.join('、')+' 爻':'靜卦（無動爻）'}</span></div>
  <div class="ly-panels"><section class="ly-panel ly-chart"><h3>完整六爻納甲表 <small>可左右滑動查看所有欄位</small></h3><p class="ly-table-scroll-hint">↔ 左右滑動表格；爻位欄固定。</p><div class="ly-table-scroll"><table class="ly-table"><thead><tr><th>爻位</th><th>六神</th><th>六親</th><th>納甲</th><th>爻象</th><th>世應</th><th>月令</th><th>變爻（動爻）</th></tr></thead><tbody>${rows}</tbody></table></div></section>
  <section class="ly-panel ly-analysis"><h3>排盤詳細資料</h3><div class="ly-analysis-block"><b>起卦時間</b><p>${esc(c.localDateTime.replace('T',' '))}（台灣時間）</p><small>${c.currentJie}節氣起，下一節：${c.nextJie}</small></div><div class="ly-analysis-block"><b>所問事情</b><p>${esc(data.question||'本次未填寫問題')}</p><small>${esc(groups[ctx.topic]?.name||'未分類')}・${esc(groups[ctx.topic]?.scenes[ctx.scene]?.[0]||'未分類')}</small></div><div class="ly-analysis-block"><b>動爻、旬空與月破標記</b>${signalHTML(data)}</div><div class="ly-analysis-block"><b>伏神／飛神</b><p>${hidden}</p></div></section></div>
- <details class="ly-details"><summary>展開六爻逐條生剋與日月關係</summary><div class="ly-detail-grid">${data.lineObjects.slice().reverse().map(l=>`<div><b>第 ${l.position} 爻 ${esc(l.relative)} ${esc(l.ganzhi)} ${l.shiYing}</b><p>月令五行氣勢參考 ${l.monthState}・月建：${esc(formatPillarRelation(l,'month',c))}・日辰：${esc(formatPillarRelation(l,'day',c))}${l.dayVoid?'・旬空':''}${l.monthBreak?'・月破':''}${l.dayClash?'・日沖':''}${l.changed?'・動變：'+esc(formatChangedRelation(l)):''}</p></div>`).join('')}</div></details>
+ <details class="ly-details"><summary>展開六爻逐條生剋與日月關係</summary><div class="ly-detail-grid">${data.lineObjects.slice().reverse().map(l=>`<div><b>第 ${l.position} 爻 ${esc(l.relative)} ${esc(l.ganzhi)} ${l.shiYing}</b><p>月令五行氣勢參考 ${l.monthState}・月建：${esc(formatPillarRelation(l,'month',c))}・日辰：${esc(formatPillarRelation(l,'day',c))}${l.dayVoid?'・旬空':''}${l.monthBreak?'・月破':''}${l.dayClash?'・日沖':''}${l.changed?'・動變：'+esc(formatChangedRelation(l))+'・變爻狀態：'+esc(changedStateText(l,c)):''}</p></div>`).join('')}</div></details>
  <div class="ly-download-actions"><button type="button" id="lyCopy">複製完整排盤文字</button><button type="button" id="lySave">下載排盤 JSON</button><span id="lyProCopyStatus" role="status"></span></div>
  </div></details>
  <div class="ly-ai-note"><b class="ly-ai-section-tag">AI 專業六爻解卦</b></div>`;
@@ -2011,7 +2027,7 @@ function init(){
  };
 
 }
-window.LiuyaoProtectedUI=Object.freeze({renderUnlocked,formatPillarRelation,formatChangedRelation});
+window.LiuyaoProtectedUI=Object.freeze({renderUnlocked,formatPillarRelation,formatChangedRelation,changedStateText});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
@@ -2163,7 +2179,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  const $=id=>document.getElementById(id);
  const formatPillarRelation=(...args)=>window.LiuyaoProtectedUI.formatPillarRelation(...args);
  const formatChangedRelation=(...args)=>window.LiuyaoProtectedUI.formatChangedRelation(...args);
+ const changedStateText=(...args)=>window.LiuyaoProtectedUI.changedStateText(...args);
  let readingView=null,busy=false;
+ const auditBatch=new Map(); // 僅本頁記憶體，重新整理即清空；不寫 localStorage／伺服器。
+ const MAX_AUDITS=12;
+ function auditFilename(view){
+  const d=view.protectedReading||view.data||{},stamp=String(d.calendar?.localDateTime||'').replace(/[^0-9]/g,'').slice(0,12);
+  const id=String(view.castId||'').replace(/[^a-f0-9]/gi,'').slice(0,8);
+  return 'liuyao-audit-'+(stamp||'undated')+'-'+(id||'local')+'.txt';
+ }
  function session(){try{return localStorage.getItem(SESSION_KEY)||''}catch(_){return ''}}
  function status(text,isError=false){const el=$('lyAiStatus');if(el){el.textContent=text;el.classList.toggle('is-error',isError)}}
  function setLoading(view,on,kind='initial'){if(readingView!==view)return;const panel=$('lyAiWait');const note=document.querySelector('#result .ly-ai-note');if(panel){panel.hidden=!on;const t=$('lyAiWaitTitle');if(t)t.textContent=kind==='followup'?'AI 正在回覆追問…':'AI 正在解讀六爻卦象…'}if(note)note.setAttribute('aria-busy',String(!!on));if(on)status('')}
@@ -2307,8 +2331,10 @@ function safeAnswer(target,answer){
   const str=v=>String(v??'');
   const ctxInfo=context.optionalContext&&typeof context.optionalContext==='object'?JSON.stringify(context.optionalContext,null,2):'{}';
   const a=[
-   '一念知機｜六爻完整檢討資料（暫時性匯出）',
+   '一念知機｜六爻完整檢討資料 v2.4（暫時性匯出）',
    '匯出時間：'+new Date().toISOString(),
+   '匯出格式：audit-v2.4｜排盤核心版本：'+str(d.version||'未知')+'｜AI 提示詞：2.4-cross-signal',
+   '題庫版本：'+str(window.LiuyaoQuestions?.version||''),
    '資料說明：原始排盤來自授權後端；AI 文章為模型輸出。命理推論與計算事實須分開審核。',
    '',
    '===== 01｜占問基本資料 =====',
@@ -2338,17 +2364,21 @@ function safeAnswer(target,answer){
      '月破：'+(l.monthBreak?'是':'否')+'；旬空：'+(l.dayVoid?'是':'否')+'；日沖：'+(l.dayClash?'是':'否')+'；月合：'+(l.monthCombine?'是':'否')+'；日合：'+(l.dayCombine?'是':'否'));
    if(l.changed)a.push('變爻：'+str(l.changed.relative)+' '+str(l.changed.ganzhi)+'（'+str(l.changed.element)+'）',
      '動變五行：'+formatChangedRelation(l),
-     '動變六沖：'+(l.changed.returnClash?'是':'否')+'；動變六合：'+(l.changed.returnCombine?'是':'否'));
+     '動變六沖：'+(l.changed.returnClash?'是':'否')+'；動變六合：'+(l.changed.returnCombine?'是':'否'),
+     '變爻月令狀態：'+str(l.changed.monthState||'舊版資料未提供')+'；'+changedStateText(l,c),
+     '變爻月建：'+str(l.changed.monthRelationDetail?.text||'由原始地支計算')+'；變爻日辰：'+str(l.changed.dayRelationDetail?.text||'由原始地支計算')); 
   }
   a.push('','===== 03｜伏神、缺親與額外卦象 =====',
     '缺親：'+(d.missingRelatives?.join('、')||'無'),
     '伏神：'+(d.hidden?.map(h=>`${h.relative}${h.najia}${h.element}，伏第${h.position}爻，飛神${h.flying}`).join('；')||'無'),
-    '本卦上下卦：'+str(d.original?.upper)+'／'+str(d.original?.lower),
+    '伏神位置核對：'+(d.hidden||[]).map(h=>h.relative+'伏於第'+h.position+'爻'+(h.position===d.palace?.shi?'（世爻）':h.position===d.palace?.ying?'（應爻）':'（非世應）')).join('；'),
+   '月合兼日沖：'+((d.lineObjects||[]).filter(l=>l.monthCombine&&l.dayClash).map(l=>'第'+l.position+'爻'+l.relative+l.ganzhi).join('、')||'無'),
+   '本卦上下卦：'+str(d.original?.upper)+'／'+str(d.original?.lower),
     '變卦上下卦：'+str(d.changed?.upper)+'／'+str(d.changed?.lower),
     '', '===== 04｜原始計算 JSON（保留所有欄位） =====',JSON.stringify(d,null,2),
     '', '===== 05｜AI 初次解卦全文 =====',str(view.answer||'（無）'));
-  if(view.followupQuestion||view.followupAnswer)a.push('', '===== 06｜AI 追問 =====',
-    '追問內容：'+str(view.followupQuestion),'追問回覆：'+str(view.followupAnswer||'（尚未完成）'));
+  a.push('', '===== 06｜AI 追問 =====',
+    '追問內容：'+str(view.followupQuestion||'（尚無追問）'),'追問回覆：'+str(view.followupAnswer||'（尚無回覆）'));
   a.push('', '===== 07｜追蹤資料 =====',
     '初解：'+traceLabel(view.initialReceipt||{}),
     '追問：'+traceLabel(view.followupReceipt||{}),
@@ -2362,6 +2392,31 @@ function safeAnswer(target,answer){
   const blob=new Blob(['\uFEFF'+text],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob);
   const link=document.createElement('a');link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),5000);
+ }
+ async function ensureAudit(view){
+  if(readingView!==view||!view?.answer)throw Error('請先完成本次 AI 解卦。');
+  if(!view.protectedReading){
+   if(view.detailLoading){for(let i=0;i<16&&view.detailLoading;i++)await new Promise(done=>setTimeout(done,200));}
+   if(!view.protectedReading)await loadProtectedChart(view);
+  }
+  if(!view.protectedReading)throw Error('尚未取得伺服器授權的完整排盤，請使用「查看完整專業排盤」後重試。');
+  return completeAuditText(view);
+ }
+ function batchName(){return 'liuyao-audit-batch-'+new Date(Date.now()+28800000).toISOString().slice(0,16).replace(/[-:T]/g,'')+'.txt';}
+ function downloadAuditBatch(){
+  if(!auditBatch.size)throw Error('尚未加入任何檢討資料。');
+  const sections=['一念知機｜六爻批次檢討資料 v2.4',
+   '卦例總數：'+auditBatch.size,'資料僅在目前頁面暫存，重整即清空。',
+   '每個 CASE 是獨立起卦與 AI 回答；不可跨卦混用用神與日月。',''];
+  let index=0;
+  for(const entry of auditBatch.values()){
+   index++;
+   sections.push('######## BEGIN CASE '+index+' / '+auditBatch.size+' ########',
+    'CASE ID：'+entry.key,'收集時刻：'+entry.collectedAt,
+    '######## CASE DATA ########',entry.text,
+    '######## END CASE '+index+' ########','');
+  }
+  downloadPlainTxt(sections.join('\n'),batchName());
  }
  function aiReportText(view){
   const parts=['六爻 AI 專業解卦','問題：'+view.data.question,'',view.answer||''];
@@ -2514,26 +2569,33 @@ function safeAnswer(target,answer){
   const fullAudit=make('button',null,'下載完整檢討資料 TXT');fullAudit.id='lyAiDownloadAudit';fullAudit.type='button';
   fullAudit.title='包含起卦計算、完整後端排盤 JSON、AI 解卦與追問，一次下載，供後續檢討';
   fullAudit.onclick=async()=>{
-   if(!view.answer){status('AI 解讀尚未完成，暫無法匯出完整資料。',true);return;}
-   if(fullAudit.disabled)return;
-   fullAudit.disabled=true;const oldText=fullAudit.textContent;fullAudit.textContent='取得完整排盤中…';
-   try{
-    if(!view.protectedReading){
-     if(view.detailLoading){
-      // 避免和自動解鎖重複請求；稍候檢查是否已取得授權資料。
-      for(let i=0;i<20&&view.detailLoading;i++)await new Promise(resolve=>setTimeout(resolve,150));
-     }
-     if(!view.protectedReading)await loadProtectedChart(view);
-    }
-    if(!view.protectedReading)throw Error('完整排盤尚未載入成功，請稍後重試；不會下載缺資料的檔案。');
-    const dt=(view.protectedReading.calendar?.localDateTime||'').replace(/[^0-9]/g,'').slice(0,12)||new Date().toISOString().replace(/[^0-9]/g,'').slice(0,12);
-    downloadPlainTxt(completeAuditText(view),'liuyao-audit-'+dt+'.txt');
-    status('完整檢討資料 TXT 已準備完成。');
-   }catch(e){status('匯出失敗：'+String(e?.message||'完整排盤無法取得'),true)}
-   finally{fullAudit.disabled=false;fullAudit.textContent=oldText;}
+   if(fullAudit.disabled)return;fullAudit.disabled=true;const prior=fullAudit.textContent;fullAudit.textContent='準備完整檢討資料…';
+   try{const text=await ensureAudit(view);downloadPlainTxt(text,auditFilename(view));status('完整檢討 TXT 已下載；可直接上傳給 ChatGPT。');}
+   catch(e){status('匯出失敗：'+String(e?.message||'完整排盤無法取得'),true)}
+   finally{fullAudit.disabled=false;fullAudit.textContent=prior}
   };
-  exports.append(copy,download,fullAudit);const meta=make('p','ly-ai-meta','');meta.id='lyAiMeta';meta.hidden=true;
-  footer.append(exports,meta);
+  exports.append(copy,download,fullAudit);
+  const batch=make('div','ly-ai-batch');batch.id='lyAiBatch';
+  const addBatch=make('button',null,'＋ 加入批次檢討');addBatch.type='button';addBatch.id='lyAiAuditAddBatch';
+  const downloadBatch=make('button',null,'下載批次 TXT（0）');downloadBatch.type='button';downloadBatch.id='lyAiAuditDownloadBatch';downloadBatch.disabled=true;
+  const clearBatch=make('button',null,'清空批次');clearBatch.type='button';clearBatch.id='lyAiAuditClearBatch';clearBatch.disabled=true;
+  const batchHelp=make('small',null,'完成多個卦例後，逐卦按「加入批次」，最後只需下載並上傳一份 TXT（最多12卦）；此頁重新整理後收集清單會清空。');
+  const refreshBatch=()=>{downloadBatch.textContent='下載批次 TXT（'+auditBatch.size+'）';downloadBatch.disabled=!auditBatch.size;clearBatch.disabled=!auditBatch.size;};
+  addBatch.onclick=async()=>{
+   if(addBatch.disabled)return;addBatch.disabled=true;const prior=addBatch.textContent;addBatch.textContent='取得完整計算中…';
+   try{
+    const text=await ensureAudit(view),key=view.castId||String(view.data?.calendar?.localDateTime)+'|'+view.data?.values?.join('');
+    if(!auditBatch.has(key)&&auditBatch.size>=MAX_AUDITS)throw Error('目前最多收集12筆，請先下載批次 TXT 再清空。');
+    auditBatch.set(key,{key,text,collectedAt:new Date().toISOString()});refreshBatch();
+    status('已收集 '+auditBatch.size+' 卦；可以繼續起卦，最後按「下載批次 TXT」。');
+   }catch(e){status('收集失敗：'+String(e?.message||'無法取得完整資料'),true)}
+   finally{addBatch.disabled=false;addBatch.textContent=prior;}
+  };
+  downloadBatch.onclick=()=>{try{downloadAuditBatch();status('批次檢討 TXT 已下載，可一次上傳多卦資料。')}catch(e){status(String(e.message||'下載失敗'),true)}};
+  clearBatch.onclick=()=>{if(!confirm('確定清空本頁暫存的 '+auditBatch.size+' 個檢討資料？建議先下載批次 TXT。'))return;auditBatch.clear();refreshBatch();status('批次清單已清空。')};
+  batch.append(addBatch,downloadBatch,clearBatch,batchHelp);refreshBatch();
+  const meta=make('p','ly-ai-meta','');meta.id='lyAiMeta';meta.hidden=true;
+  footer.append(exports,batch,meta);
   // 將恢復入口獨立放在起卦記錄下方，不出現在額度表或文章主要操作區。
   note.append(toolbar,wait,statusText,answer,follow,footer);
   if(ENABLED&&oldCast(data))status('舊紀錄無法再送出 AI，請重新起卦。');
