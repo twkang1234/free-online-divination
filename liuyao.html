@@ -763,7 +763,7 @@ html[data-theme="light"] #lyAdvancedChart:not(.is-locked)>summary{color:#70400c;
   <section class="liuyao-hero" id="top">
     <div class="hero-copy">
       <div class="hero-kicker">LIUYAO · THREE COINS · SIX LINES</div>
-      <h1>六爻占卜・專業納甲排盤 <span id="lySiteVersion" class="ly-version-badge" aria-label="六爻工具版本 v2.8">v2.8</span></h1>
+      <h1>六爻占卜・專業納甲排盤 <span id="lySiteVersion" class="ly-version-badge" aria-label="六爻工具版本 v2.8.1">v2.8.1</span></h1>
       <div class="hero-tagline">三錢起卦・京房八宮・世應六親・納甲六神</div>
       <p class="hero-desc">以納甲六爻為核心，從三枚硬幣六次起卦，完整排出本卦、變卦、京房八宮、世應、六親、六神、月建日辰、旬空與伏神。先問一件具體的事，再循爻位理解動靜與生剋。</p>
       <div class="hero-actions">
@@ -2460,9 +2460,9 @@ function safeAnswer(target,answer){
   const str=v=>String(v??'');
   const ctxInfo=context.optionalContext&&typeof context.optionalContext==='object'?JSON.stringify(context.optionalContext,null,2):'{}';
   const a=[
-   '一念知機｜六爻完整檢討資料 v2.8（暫時性匯出）',
+   '一念知機｜六爻完整檢討資料 v2.8.1（暫時性匯出）',
    '匯出時間：'+new Date().toISOString(),
-   '匯出格式：audit-v2.8｜排盤核心版本：'+str(d.version||'未知')+'｜AI 提示詞：2.7-soft-audit｜卦理檢查：僅記錄、不攔截',
+   '匯出格式：audit-v2.8.1｜排盤核心版本：'+str(d.version||'未知')+'｜AI 提示詞：2.7-soft-audit｜卦理檢查：僅記錄、不攔截',
    '題庫版本：'+str(window.LiuyaoQuestions?.version||''),
    '資料說明：原始排盤來自授權後端；AI 文章為模型輸出。命理推論與計算事實須分開審核。',
    '',
@@ -2534,7 +2534,7 @@ function safeAnswer(target,answer){
  function batchName(){return 'liuyao-audit-batch-'+new Date(Date.now()+28800000).toISOString().slice(0,16).replace(/[-:T]/g,'')+'.txt';}
  function downloadAuditBatch(){
   if(!auditBatch.size)throw Error('尚未加入任何檢討資料。');
-  const sections=['一念知機｜六爻批次檢討資料 v2.8',
+  const sections=['一念知機｜六爻批次檢討資料 v2.8.1',
    '卦例總數：'+auditBatch.size,'資料僅在目前頁面暫存，重整即清空。',
    '每個 CASE 是獨立起卦與 AI 回答；不可跨卦混用用神與日月。',''];
   let index=0;
@@ -2800,10 +2800,10 @@ function safeAnswer(target,answer){
    const info=await r.json().catch(()=>({}));
    const backendVersion=String(info.buildVersion||'未提供');
    const marker=$('lySiteVersion');
-   if(marker){const mismatch=backendVersion!=='2.8';marker.textContent=mismatch?'v2.8 ⚠':'v2.8';marker.classList.toggle('ly-version-mismatch',mismatch);marker.title=mismatch?'六爻網頁 v2.8，但後端是 '+backendVersion+'；請更新 liuyao-api.js':'六爻網頁與後端均為 v2.8';}
-   ENABLED=r.ok&&info.mode==='enabled'&&info.questionBankVersion===window.LiuyaoQuestions.version&&backendVersion==='2.7';
+   if(marker){const mismatch=backendVersion!=='2.8.1';marker.textContent=mismatch?'v2.8.1 ⚠':'v2.8.1';marker.classList.toggle('ly-version-mismatch',mismatch);marker.title=mismatch?'六爻網頁 v2.8.1，但後端是 '+backendVersion+'；請更新 liuyao-api.js':'六爻網頁與後端均為 v2.8.1';}
+   ENABLED=r.ok&&info.mode==='enabled'&&info.questionBankVersion===window.LiuyaoQuestions.version&&backendVersion==='2.8.1';
    if(!ENABLED){
-    const reason=backendVersion!=='2.8'?'六爻前後端版本尚未同步：網頁 v2.8／Worker '+backendVersion+'；請先更新六爻 API，再使用 AI。':
+    const reason=backendVersion!=='2.8.1'?'六爻前後端版本尚未同步：網頁 v2.8.1／Worker '+backendVersion+'；請先更新六爻 API，再使用 AI。':
       info?.centerStatus==='route-missing'?'AI 總控中心尚未部署六爻專用通道；已停止扣點。':
       info?.centerStatus==='auth-failed'?'六爻與 AI 總控中心專用金鑰不一致；已停止扣點。':
       '六爻 AI 服務尚未就緒或版本不同，暫不可使用';
