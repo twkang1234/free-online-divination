@@ -2207,10 +2207,20 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  function oldCast(r){const ts=Date.parse(r?.calendar?.localDateTime+'+08:00');return !Number.isFinite(ts)||(Date.now()-ts>30*60000)||(ts-Date.now()>5*60000)}
  function quotaRemaining(d){return Math.max(0,(Number(d?.limit)||0)-(Number(d?.used)||0))}
  function friendly(code){const dict={
-  LOGIN_REQUIRED:'請先重新登入會員中心。',INVALID_PAYLOAD:'提交資料格式有誤。',INVALID_OPTIONAL_CONTEXT:'選填背景資料不符合格式，請重新選填後再起卦。',CAST_NOT_FOUND:'伺服器找不到此筆起卦紀錄。',CAST_TOOL_REFUNDED:'這次起卦已完成退款，請重新起卦。',
+  AI_CENTER_ROUTE_MISSING:'AI 總控中心尚未設定六爻專用入口，請管理員更新 AI Center Worker。',
+  AI_CENTER_AUTH_FAILED:'六爻與 AI 總控中心的專用金鑰驗證失敗，請管理員核對兩端 Secret。',
+  AI_NO_AVAILABLE_PROVIDER:'目前沒有符合條件的可用 AI 通道，請檢查通道啟用與冷卻狀態。',
+  AI_ALL_PROVIDERS_FAILED:'已嘗試可用 AI 通道，但本次仍未產生合格解卦。可在確認退款後重試。',
+  AI_CENTER_RECORD_FAILED:'AI 總控中心未能可靠記錄呼叫結果，為安全起見已停止本次解卦。',
+  AI_CENTER_UNAVAILABLE:'AI 總控中心無法完成服務，請管理員使用追蹤碼查核。',
+  AI_READING_QUALITY_FAILED:'AI 回答字數、格式或完整性未通過檢查。',
+  AI_READING_FACT_FAILED:'AI 回答與原始卦盤有矛盾，系統已拒絕不正確解卦。',
+  AI_RETRY_NOT_REFUNDED:'前一次退款尚未確認，請先查詢 AI 狀態。',
+  AI_ALREADY_COMPLETED:'這一卦已有正式解卦結果，不需重新扣點。',
+  LOGIN_REQUIRED:'請先重新登入會員中心。',INVALID_PAYLOAD:'提交資料格式有誤。',INVALID_OPTIONAL_CONTEXT:'選填背景資料不符合格式，請重新選填後再起卦。',CAST_NOT_FOUND:'伺服器找不到此筆起卦紀錄。',CAST_TOOL_REFUNDED:'這次起卦已完成退款，請使用同卦重試功能。',
   LY_TOOL_EXHAUSTED:'會員共用工具額度不足，尚未建立新的起卦。',LY_AI_EXHAUSTED:'AI 共用額度不足，已嘗試安全返還本次工具扣點。',AI_QUOTA_EMPTY:'AI 額度不足，請檢查額度表。',
   LIUYAO_SCHEMA_MIGRATION_REQUIRED:'六爻資料庫尚未完成安全升級，目前不會扣點。',LIUYAO_NOT_ENABLED:'六爻 AI 尚未開放。',LIUYAO_QUOTA_NOT_REGISTERED:'管理員尚未完成六爻額度設定。',
-  AI_REQUEST_IN_PROGRESS:'此筆 AI 已在處理中，請用原操作查詢狀態。',AI_REQUEST_REFUNDED:'此筆 AI 已返還額度，請重新起卦。',
+  AI_REQUEST_IN_PROGRESS:'此筆 AI 已在處理中，請用原操作查詢狀態。',AI_REQUEST_REFUNDED:'此筆 AI 已返還額度，可以保留原卦重試。',
   AI_INCOMPLETE_ANSWER:'AI 沒有提供合格的完整回答，系統會核對退款。',
   OPERATION_ID_CONFLICT:'操作編號與原紀錄不一致，已停止扣點。',QUESTION_BANK_VERSION_MISMATCH:'網站題庫版本與後端不同，已停止扣點，請重新整理網頁。',CAST_TIME_OUT_OF_RANGE:'起卦時間已過久，請重新起卦。'
  };return dict[code]||('服務暫時無法完成（'+String(code||'UNKNOWN')+'）')}
@@ -2243,7 +2253,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   quotaRefreshBtn.disabled=true;
   try{await refreshQuota();}finally{quotaRefreshBtn.disabled=false;}
  });
- function setWorking(on){busy=on;const b=$('lyAiStart');if(b)b.disabled=on||!ENABLED||!!readingView?.initialOp;const f=$('lyAiFollowupSend');if(f)f.disabled=on||!ENABLED||!!readingView?.followupOp||!!readingView?.followupUsed;}
+ function setWorking(on){busy=on;const b=$('lyAiStart');if(b)b.disabled=on||!ENABLED||!!readingView?.initialOp;const r=$('lyAiRetry');if(r)r.disabled=on||!ENABLED||!readingView?.retryNeeded;const f=$('lyAiFollowupSend');if(f)f.disabled=on||!ENABLED||!!readingView?.followupOp||!!readingView?.followupUsed;}
  const LAST_KEY='liuyao-last-ai-operation-v1';
  function setPending(s){try{sessionStorage.setItem(LAST_KEY,JSON.stringify(s))}catch(_){}}
  function readPending(){try{const s=JSON.parse(sessionStorage.getItem(LAST_KEY)||'null');if(!s||typeof s!=='object')return null;const ok=x=>!x||/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);return [s.castOp,s.castId,s.initialOp,s.followupOp].every(ok)&&(s.castId||s.castOp)?s:null}catch(_){return null}}
@@ -2452,7 +2462,7 @@ function safeAnswer(target,answer){
   const node=$(mode==='initial'?'lyAiAnswer':'lyAiFollowupAnswer');if(node)safeAnswer(node,answer);
   if(mode==='initial'){view.answer=answer;view.initialReceipt=receipt||view.initialReceipt;const block=$('lyAiFollowup');if(block)block.hidden=false;const start=$('lyAiStart');if(start)start.hidden=true;}
   else {view.followupUsed=true;view.followupAnswer=answer;view.followupReceipt=receipt||view.followupReceipt;const send=$('lyAiFollowupSend');if(send)send.disabled=true;}
-  const check=$('lyAiCheckStatus');if(check)check.hidden=true;
+  const check=$('lyAiCheckStatus');if(check)check.hidden=true;const retry=$('lyAiRetry');if(retry)retry.hidden=true;const diagnostic=$('lyAiFailureTxt');if(diagnostic)diagnostic.hidden=true;view.retryNeeded=false;
   status('');updateAiFooter(view);
   if(mode==='initial')void loadProtectedChart(view);
  }
@@ -2460,6 +2470,35 @@ function safeAnswer(target,answer){
   if(readingView!==view)return;
   // 正常生成過程只保留醒目的進度圈；狀態查詢僅在異常或不確定時顯示。
   status(busy&&!needsRecovery&&/正在|記帳完成|核對工具額度/.test(message||'')?'':(message||''));const check=$('lyAiCheckStatus');if(check)check.hidden=!needsRecovery;
+ }
+ async function retrySameCast(view){
+  if(!ENABLED||busy||readingView!==view||!view.retryNeeded||!view.castId||view.answer)return;
+  if(!requireLogin())return;
+  setWorking(true);
+  try{
+   // Server must verify previous first-AI refund, never trust a browser flag.
+   const q=await refreshQuota();if(!q)throw Error('目前無法核對額度，尚未發出重試。');
+   const cost=view.ctx?.intent==='custom'?2:(window.LiuyaoQuestions.isFixed({topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question})?1:2);
+   if(quotaRemaining(q.dailyTool)<1&&q.wallet.tool<cost)throw Error('工具額度不足，無法重新保留本次解卦額度。');
+   if(quotaRemaining(q.dailyAI)<1&&q.wallet.ai<1)throw Error('AI 額度不足，無法重試。');
+   if(!window.confirm('原卦六次爻值、日期與問題將全部保留，不重新擲卦。\n上次額度已退款，這次重試會重新保留工具與 AI 額度；若仍失敗會再次按交易規則退款。\n\n確定重試？'))return;
+   setLoading(view,true,'initial');
+   if(!view.retryCastOp)view.retryCastOp=uuid();
+   const old=view.castId;
+   let saved;
+   try{saved=await request('/cast/retry',{tool:'liuyao',sourceCastId:old,operationId:view.retryCastOp})}
+   catch(e){
+    try{saved=await request('/cast/status',{tool:'liuyao',castId:view.retryCastOp})}
+    catch(_){renderReceipt(view,'重試的記帳結果尚無法確認，請不要再重複扣點；可稍後查詢。',true);return}
+   }
+   if(!saved?.castId||saved?.preview?.values?.join(',')!==view.data.values.join(',')||saved?.preview?.question!==view.data.question)throw Error('重試排盤與原卦不一致，已停止 AI 扣點。');
+   view.castId=saved.castId;view.castOp=saved.castId;view.initialOp=null;view.retryCastOp=null;view.retryNeeded=false;
+   const button=$('lyAiRetry');if(button)button.hidden=true;
+   updatePending(view);
+   renderReceipt(view,'同一卦已安全重新記帳，正在執行 AI 解卦…');
+   await interpret(view,'initial');
+  }catch(e){status(String(e.message||'同卦重試失敗'),true)}
+  finally{setLoading(view,false);setWorking(false)}
  }
  async function verifyStatus(view,mode='initial'){
   if(!view.castId){
@@ -2474,7 +2513,18 @@ function safeAnswer(target,answer){
   if(r.state==='used'){
    revealAnswer(view,r.answer,mode,r);renderReceipt(view,'');await refreshQuota();
   }else if(r.state==='refunded'){
-   renderReceipt(view,mode==='followup'?'本次追問未完成，AI 額度已返還。':'解卦未完成，額度已依交易狀態返還。');await refreshQuota();
+   const cause=friendly(r.failureCode||'AI_CENTER_UNAVAILABLE');
+   const trace=r.traceId?'｜追蹤碼：'+r.traceId:'';
+   if(mode==='initial'){
+    view.retryNeeded=true;view.lastFailure={code:r.failureCode||'AI_CENTER_UNAVAILABLE',traceId:r.traceId||'',operationId:op,castId:view.castId,at:new Date().toISOString()};
+    const button=$('lyAiRetry');if(button){button.hidden=false;button.disabled=busy;}
+    const diagnostic=$('lyAiFailureTxt');if(diagnostic)diagnostic.hidden=false;
+    renderReceipt(view,'AI 解卦失敗：'+cause+'｜本次交易已確認退款，可保留原卦重試。'+trace);
+   }else{
+    view.followupOp=null;view.followupQuestion='';updatePending(view);
+    renderReceipt(view,'本次追問失敗：'+cause+'｜AI 額度已退款，可重新送出追問。'+trace);
+   }
+   await refreshQuota();
   }else renderReceipt(view,'AI 仍在處理中。若等待過久，可查詢本次狀態。',true);
   return r.state;
  }
@@ -2484,8 +2534,8 @@ function safeAnswer(target,answer){
    const res=await request('/ai/interpret',{tool:'liuyao',castId:view.castId,operationId:view[id],mode,...(mode==='followup'?{followupQuestion}:{})},140000);
    revealAnswer(view,res.answer,mode,res);renderReceipt(view,'');await refreshQuota();
   }catch(e){
-   // A timeout is never interpreted as a completed debit or an automatic refund.
-   renderReceipt(view,'AI 回應中斷，正在查詢原操作結果…',true);
+   // Never assume a debit or refund until the original operation has been reconciled.
+   renderReceipt(view,'AI 解卦未完成：'+String(e.message||'連線問題')+'｜正在查詢退款與完成狀態…',true);
    try{await verifyStatus(view,mode)}catch(_){renderReceipt(view,'目前無法確認 AI 結果，請使用「查詢本次 AI 狀態」，不要重新扣點。',true)}
   }
  }
@@ -2540,13 +2590,29 @@ function safeAnswer(target,answer){
  }
  function onReading(data,ctx){
   const note=document.querySelector('#result .ly-ai-note');if(!note)return;
-  const view={data,ctx,protectedReading:null,detailLoaded:false,detailLoading:false,castOp:null,castId:null,initialOp:null,followupOp:null,answer:'',followupAnswer:'',followupQuestion:'',followupUsed:false,initialReceipt:null,followupReceipt:null};
+  const view={data,ctx,protectedReading:null,detailLoaded:false,detailLoading:false,castOp:null,castId:null,initialOp:null,followupOp:null,retryCastOp:null,retryNeeded:false,answer:'',followupAnswer:'',followupQuestion:'',followupUsed:false,initialReceipt:null,followupReceipt:null};
   readingView=view;
   const question=make('h3','ly-ai-question-title',data.question||'本次未填寫問題');question.id='lyAiQuestionTitle';note.appendChild(question);
   const toolbar=make('div','ly-ai-operation');
   const start=make('button','ly-ai-primary',ENABLED?'開始 AI 解卦':'AI 解卦尚未開放');start.id='lyAiStart';start.type='button';start.disabled=!ENABLED;start.onclick=()=>begin(view);
   const check=make('button','ly-ai-subtle','查詢本次 AI 狀態');check.id='lyAiCheckStatus';check.type='button';check.hidden=true;check.onclick=async()=>{if(busy)return;setWorking(true);try{await verifyStatus(view,view.followupOp?'followup':'initial')}catch(e){status('狀態無法核對：'+String(e.message||'連線異常'),true)}finally{setWorking(false)}};
-  toolbar.append(start,check);
+  const retry=make('button','ly-ai-primary','↻ 保留本卦重新嘗試 AI 解卦');retry.id='lyAiRetry';retry.type='button';retry.hidden=true;retry.onclick=()=>retrySameCast(view);
+  const failureTxt=make('button','ly-ai-subtle','下載本次失敗診斷 TXT');failureTxt.id='lyAiFailureTxt';failureTxt.type='button';failureTxt.hidden=true;
+  failureTxt.onclick=()=>{
+   const info=view.lastFailure;if(!info){status('沒有可匯出的失敗紀錄。',true);return}
+   const rows=['一念知機｜六爻 AI 失敗診斷（不含付費鎖定資料）',
+      '匯出時間：'+new Date().toISOString(),'起卦問題：'+String(view.data?.question||''),
+      '起卦時間：'+String(view.data?.calendar?.localDateTime||''),
+      '六次爻值（初→上）：'+(view.data?.values||[]).join('、'),
+      '本卦：'+String(view.data?.original?.name||''),
+      '錯誤代碼：'+info.code,'錯誤說明：'+friendly(info.code),
+      'AI 追蹤碼：'+info.traceId,'失敗時間：'+info.at,
+      '本次起卦交易：'+info.castId,'AI 操作編號：'+info.operationId,
+      '狀態：退款已由後端確認；原卦保留，可於本頁重新嘗試。',
+      '重要：完整專業排盤尚未解鎖，這是未完成解卦的診斷資料，不是完整檢討 TXT。'];
+   downloadPlainTxt(rows.join('\n'),'liuyao-ai-failure-'+new Date().toISOString().slice(0,10)+'.txt');
+  };
+  toolbar.append(start,retry,failureTxt,check);
   const wait=make('div','ly-ai-wait');wait.id='lyAiWait';wait.hidden=true;wait.setAttribute('role','status');wait.setAttribute('aria-live','polite');
   const spinner=make('span','ly-ai-spinner');spinner.setAttribute('aria-hidden','true');
   const waitCopy=make('div'),waitTitle=make('strong',null,'AI 正在解讀六爻卦象…');waitTitle.id='lyAiWaitTitle';
@@ -2614,7 +2680,12 @@ function safeAnswer(target,answer){
    finally{clearTimeout(timer)}
    const info=await r.json().catch(()=>({}));
    ENABLED=r.ok&&info.mode==='enabled'&&info.questionBankVersion===window.LiuyaoQuestions.version;
-   if(!ENABLED){if(statusText)statusText.textContent='六爻 AI 服務尚未就緒或版本不同，暫不可使用';return}
+   if(!ENABLED){
+    const reason=info?.centerStatus==='route-missing'?'AI 總控中心尚未部署六爻專用通道；已停止扣點。':
+      info?.centerStatus==='auth-failed'?'六爻與 AI 總控中心專用金鑰不一致；已停止扣點。':
+      '六爻 AI 服務尚未就緒或版本不同，暫不可使用';
+    if(statusText)statusText.textContent=reason;return;
+   }
    if(readingView){
     const start=$('lyAiStart');if(start){start.textContent='開始 AI 解卦';start.disabled=busy||!!readingView.initialOp}
    }
