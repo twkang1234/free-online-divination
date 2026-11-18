@@ -600,6 +600,10 @@ body.ly-cast-active .liuyao-seo{display:none!important}
 .ly-signal-list{display:grid;gap:7px}
 .ly-signal-item{font-size:.70rem;color:#d1b9a7;line-height:1.7;padding:8px 10px;border-left:2px solid rgba(247,170,104,.4);background:rgba(255,171,115,.035)}
 html[data-theme="light"] .ly-signal-item{color:#5c4635}
+/* Compact, deployment-visible version marker — updated alongside every release. */
+#lySiteVersion.ly-version-badge{display:inline-flex;vertical-align:middle;align-items:center;justify-content:center;white-space:nowrap;font-family:system-ui,-apple-system,sans-serif;font-weight:800;letter-spacing:0;font-size:clamp(.62rem,1.1vw,.78rem);line-height:1;padding:6px 9px;margin-left:9px;border:1px solid rgba(251,174,115,.5);border-radius:999px;background:rgba(230,146,87,.085);color:#edb083;box-shadow:none}
+#lySiteVersion.ly-version-mismatch{border-color:#e9a257;color:#ffd4b0;background:rgba(184,89,51,.18)}
+@media(max-width:600px){#lySiteVersion.ly-version-badge{font-size:.62rem;margin-left:5px;padding:5px 7px}}
 </style>
 <style id="liuyao-mobile-first-compact">
 /* Mobile-first compact redesign (2026-11-17): site article reading column used as width reference. */
@@ -754,7 +758,7 @@ html[data-theme="light"] #lyAdvancedChart:not(.is-locked)>summary{color:#70400c;
   <section class="liuyao-hero" id="top">
     <div class="hero-copy">
       <div class="hero-kicker">LIUYAO · THREE COINS · SIX LINES</div>
-      <h1>六爻占卜・專業納甲排盤</h1>
+      <h1>六爻占卜・專業納甲排盤 <span id="lySiteVersion" class="ly-version-badge" aria-label="六爻工具版本 v2.6">v2.6</span></h1>
       <div class="hero-tagline">三錢起卦・京房八宮・世應六親・納甲六神</div>
       <p class="hero-desc">以納甲六爻為核心，從三枚硬幣六次起卦，完整排出本卦、變卦、京房八宮、世應、六親、六神、月建日辰、旬空與伏神。先問一件具體的事，再循爻位理解動靜與生剋。</p>
       <div class="hero-actions">
@@ -2205,7 +2209,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   return (channel?'｜通道 '+channel:'')+(trace?'｜追蹤碼：'+trace:'');
  }
  function oldCast(r){const ts=Date.parse(r?.calendar?.localDateTime+'+08:00');return !Number.isFinite(ts)||(Date.now()-ts>30*60000)||(ts-Date.now()>5*60000)}
- function diagnosticText(d){if(!d||typeof d!=='object')return '';const reason=String(d.reason||'');const labels={LIUYAO_FACT_ELEMENT_DIRECTION:'五行生剋方向',LIUYAO_FACT_BRANCH_ELEMENT:'地支五行對應',LIUYAO_FACT_BRANCH_ALIAS:'地支被誤認為其他地支',LIUYAO_FACT_UNSUPPORTED_DEADLINE:'沒有依據的具體辦理期限',LIUYAO_FACT_LINE_IDENTITY:'六爻納甲／六親對位',LIUYAO_FACT_MOVING_STATUS:'動爻與靜爻狀態',LIUYAO_FACT_LINE_STATUS:'旬空、月破或沖合狀態',LIUYAO_FACT_SHI_YING_RELATION:'世應地支六合／六沖',LIUYAO_FACT_HIDDEN_POSITION:'伏神所處爻位',LIUYAO_READING_TOO_SHORT:'文章字數不足',LIUYAO_READING_REPEATED_TEXT:'文章內容重複',LIUYAO_READING_NOT_PROSE:'文章格式不完整'};return '｜未通過項目：'+(labels[reason]||reason||'卦理覆核')+(d.evidence?'｜疑似文字：「'+String(d.evidence).slice(0,80)+'」':'')+(d.attempts?'｜生成嘗試 '+d.attempts+' 次':'')}
+ function diagnosticText(d){if(!d||typeof d!=='object')return '';const reason=String(d.reason||'');const labels={LIUYAO_FACT_ELEMENT_DIRECTION:'五行生剋方向',LIUYAO_FACT_BRANCH_DIRECTION:'地支間五行生剋方向',LIUYAO_FACT_HIDDEN_EXISTENCE:'伏神是否存在',LIUYAO_FACT_SHI_YING_IDENTITY:'世應地支對位',LIUYAO_FACT_BRANCH_ELEMENT:'地支五行對應',LIUYAO_FACT_BRANCH_ALIAS:'地支被誤認為其他地支',LIUYAO_FACT_UNSUPPORTED_DEADLINE:'沒有依據的具體辦理期限',LIUYAO_FACT_LINE_IDENTITY:'六爻納甲／六親對位',LIUYAO_FACT_MOVING_STATUS:'動爻與靜爻狀態',LIUYAO_FACT_LINE_STATUS:'旬空、月破或沖合狀態',LIUYAO_FACT_SHI_YING_RELATION:'世應地支六合／六沖',LIUYAO_FACT_HIDDEN_POSITION:'伏神所處爻位',LIUYAO_READING_TOO_SHORT:'文章字數不足',LIUYAO_READING_REPEATED_TEXT:'文章內容重複',LIUYAO_READING_NOT_PROSE:'文章格式不完整'};return '｜未通過項目：'+(labels[reason]||reason||'卦理覆核')+(d.evidence?'｜疑似文字：「'+String(d.evidence).slice(0,80)+'」':'')+(d.attempts?'｜生成嘗試 '+d.attempts+' 次':'')}
  function quotaRemaining(d){return Math.max(0,(Number(d?.limit)||0)-(Number(d?.used)||0))}
  function friendly(code){const dict={
   AI_CENTER_ROUTE_MISSING:'AI 總控中心尚未設定六爻專用入口，請管理員更新 AI Center Worker。',
@@ -2342,9 +2346,9 @@ function safeAnswer(target,answer){
   const str=v=>String(v??'');
   const ctxInfo=context.optionalContext&&typeof context.optionalContext==='object'?JSON.stringify(context.optionalContext,null,2):'{}';
   const a=[
-   '一念知機｜六爻完整檢討資料 v2.5（暫時性匯出）',
+   '一念知機｜六爻完整檢討資料 v2.6（暫時性匯出）',
    '匯出時間：'+new Date().toISOString(),
-   '匯出格式：audit-v2.5｜排盤核心版本：'+str(d.version||'未知')+'｜AI 提示詞：2.5-fact-gate｜事實檢查：2.5',
+   '匯出格式：audit-v2.6｜排盤核心版本：'+str(d.version||'未知')+'｜AI 提示詞：2.6-fact-gate｜事實檢查：2.6',
    '題庫版本：'+str(window.LiuyaoQuestions?.version||''),
    '資料說明：原始排盤來自授權後端；AI 文章為模型輸出。命理推論與計算事實須分開審核。',
    '',
@@ -2416,7 +2420,7 @@ function safeAnswer(target,answer){
  function batchName(){return 'liuyao-audit-batch-'+new Date(Date.now()+28800000).toISOString().slice(0,16).replace(/[-:T]/g,'')+'.txt';}
  function downloadAuditBatch(){
   if(!auditBatch.size)throw Error('尚未加入任何檢討資料。');
-  const sections=['一念知機｜六爻批次檢討資料 v2.5',
+  const sections=['一念知機｜六爻批次檢討資料 v2.6',
    '卦例總數：'+auditBatch.size,'資料僅在目前頁面暫存，重整即清空。',
    '每個 CASE 是獨立起卦與 AI 回答；不可跨卦混用用神與日月。',''];
   let index=0;
@@ -2680,9 +2684,13 @@ function safeAnswer(target,answer){
    try{r=await fetch(API+'/health',{method:'GET',cache:'no-store',signal:controller.signal})}
    finally{clearTimeout(timer)}
    const info=await r.json().catch(()=>({}));
-   ENABLED=r.ok&&info.mode==='enabled'&&info.questionBankVersion===window.LiuyaoQuestions.version;
+   const backendVersion=String(info.buildVersion||'未提供');
+   const marker=$('lySiteVersion');
+   if(marker){const mismatch=backendVersion!=='2.6';marker.textContent=mismatch?'v2.6 ⚠':'v2.6';marker.classList.toggle('ly-version-mismatch',mismatch);marker.title=mismatch?'六爻網頁 v2.6，但後端是 '+backendVersion+'；請更新 liuyao-api.js':'六爻網頁與後端均為 v2.6';}
+   ENABLED=r.ok&&info.mode==='enabled'&&info.questionBankVersion===window.LiuyaoQuestions.version&&backendVersion==='2.6';
    if(!ENABLED){
-    const reason=info?.centerStatus==='route-missing'?'AI 總控中心尚未部署六爻專用通道；已停止扣點。':
+    const reason=backendVersion!=='2.6'?'六爻前後端版本尚未同步：網頁 v2.6／Worker '+backendVersion+'；請先更新六爻 API，再使用 AI。':
+      info?.centerStatus==='route-missing'?'AI 總控中心尚未部署六爻專用通道；已停止扣點。':
       info?.centerStatus==='auth-failed'?'六爻與 AI 總控中心專用金鑰不一致；已停止扣點。':
       '六爻 AI 服務尚未就緒或版本不同，暫不可使用';
     if(statusText)statusText.textContent=reason;return;
