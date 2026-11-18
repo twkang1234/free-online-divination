@@ -666,6 +666,7 @@ html{scroll-padding-top:86px}
 @media(max-width:600px){.ly-ai-note .ly-ai-answer{font-size:.93rem;line-height:1.85}}
 
 .ly-pro-data{margin-top:13px}
+#lyAdvancedChart[hidden]{display:none!important}
 .ly-pro-inner{padding:0 11px 13px}
 .ly-result-meta{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0 12px}
 .ly-result-meta span{padding:9px;font-size:.7rem}
@@ -2063,15 +2064,15 @@ function render(data){
  <div class="ly-result-mast"><div><small>本卦</small><h3>${esc(o.name)}</h3><p>第 ${o.number} 卦・${o.upperMeta.symbol} ${esc(o.upper)}上／${o.lowerMeta.symbol} ${esc(o.lower)}下</p></div><span class="ly-change-arrow">→</span><div><small>變卦</small><h3>${esc(ch.name)}</h3><p>第 ${ch.number} 卦・${ch.upperMeta.symbol} ${esc(ch.upper)}上／${ch.lowerMeta.symbol} ${esc(ch.lower)}下</p></div></div>
  <div class="ly-main-summary"><span>卦宮：${esc(data.palace.palace)}宮・${esc(data.palace.stage)}</span><span>世 ${data.palace.shi}／應 ${data.palace.ying}</span><span>動爻：${data.movingLines.length?data.movingLines.join('、'):'無'}</span></div>
  <section class="ly-brief-lines" aria-label="六爻簡明卦象"><div class="ly-brief-caption"><strong>六爻簡表</strong><small>上爻在上・初爻在下</small></div>${quickRows}</section>
- <div class="ly-ai-note"><b class="ly-ai-section-tag">AI 專業六爻解卦</b></div>
- <details class="ly-pro-data"><summary>查看完整專業排盤・六親六神・日月伏神</summary>
+ <details id="lyAdvancedChart" class="ly-pro-data" hidden><summary>查看完整專業排盤・六親六神・日月伏神</summary>
  <div class="ly-pro-inner">
  <div class="ly-result-meta"><span><b>本卦卦宮</b>${data.palace.palace}宮・${data.palace.element}・${data.palace.stage}</span><span><b>世應位置</b>世 ${data.palace.shi} 爻／應 ${data.palace.ying} 爻</span><span><b>干支曆</b>${c.year}年 ${c.month}月 ${c.day}日</span><span><b>月建・日辰</b>${c.monthBranch}月・${c.dayBranch}日</span><span><b>旬空・月破</b>${c.voidBranches.join('') || '—'}空・${c.monthBreak}破</span><span><b>動爻</b>${data.movingLines.length?data.movingLines.join('、')+' 爻':'靜卦（無動爻）'}</span></div>
  <div class="ly-panels"><section class="ly-panel ly-chart"><h3>完整六爻納甲表 <small>可左右滑動查看所有欄位</small></h3><p class="ly-table-scroll-hint">↔ 左右滑動表格；爻位欄固定。</p><div class="ly-table-scroll"><table class="ly-table"><thead><tr><th>爻位</th><th>六神</th><th>六親</th><th>納甲</th><th>爻象</th><th>世應</th><th>月令</th><th>變爻（動爻）</th></tr></thead><tbody>${rows}</tbody></table></div></section>
  <section class="ly-panel ly-analysis"><h3>排盤詳細資料</h3><div class="ly-analysis-block"><b>起卦時間</b><p>${esc(c.localDateTime.replace('T',' '))}（台灣時間）</p><small>${c.currentJie}節氣起，下一節：${c.nextJie}</small></div><div class="ly-analysis-block"><b>所問事情</b><p>${esc(data.question||'本次未填寫問題')}</p><small>${esc(groups[ctx.topic]?.name||'未分類')}・${esc(groups[ctx.topic]?.scenes[ctx.scene]?.[0]||'未分類')}</small></div><div class="ly-analysis-block"><b>動爻、旬空與月破標記</b>${signalHTML(data)}</div><div class="ly-analysis-block"><b>伏神／飛神</b><p>${hidden}</p></div></section></div>
  <details class="ly-details"><summary>展開六爻逐條生剋與日月關係</summary><div class="ly-detail-grid">${data.lineObjects.slice().reverse().map(l=>`<div><b>第 ${l.position} 爻 ${esc(l.relative)} ${esc(l.ganzhi)} ${l.shiYing}</b><p>月令五行氣勢參考 ${l.monthState}・月建：${esc(l.monthRelations.join('、')||'無直接五行關係')}・日辰：${esc(l.dayRelations.join('、')||'無直接五行關係')}${l.dayVoid?'・旬空':''}${l.monthBreak?'・月破':''}${l.dayClash?'・日沖':''}${l.changed?'・動變：'+esc(l.changed.returnElement.join('、')):''}</p></div>`).join('')}</div></details>
  <div class="ly-download-actions"><button type="button" id="lyCopy">複製完整排盤文字</button><button type="button" id="lySave">下載排盤 JSON</button><span id="lyProCopyStatus" role="status"></span></div>
- </div></details>`;
+ </div></details>
+ <div class="ly-ai-note"><b class="ly-ai-section-tag">AI 專業六爻解卦</b></div>`;
  $('lyCopy').onclick=async()=>{const s=serializeText(data);try{await navigator.clipboard.writeText(s);$('lyProCopyStatus').textContent='已複製'}catch(e){$('lyProCopyStatus').textContent='瀏覽器未允許複製；可改下載 JSON'}};
  $('lySave').onclick=()=>{const obj=JSON.stringify(data,null,2),url=URL.createObjectURL(new Blob([obj],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='liuyao-reading-'+c.localDateTime.replace(/\W/g,'')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000)};
  $('lyResultHeading').scrollIntoView({behavior:'smooth',block:'start'});
@@ -2399,8 +2400,13 @@ function safeAnswer(target,answer){
   if(refs.length)parts.push('',refs.join('　'));
   return parts.join('\n');
  }
+ function showAdvancedChart(view){
+  if(readingView!==view)return;
+  const chart=$('lyAdvancedChart');if(chart){chart.hidden=false;chart.open=false;}
+ }
  function revealAnswer(view,answer,mode='initial',receipt=null){
   if(readingView!==view)return;
+  if(mode==='initial')showAdvancedChart(view);
   const node=$(mode==='initial'?'lyAiAnswer':'lyAiFollowupAnswer');if(node)safeAnswer(node,answer);
   if(mode==='initial'){view.answer=answer;view.initialReceipt=receipt||view.initialReceipt;const block=$('lyAiFollowup');if(block)block.hidden=false;const start=$('lyAiStart');if(start)start.hidden=true;}
   else {view.followupUsed=true;view.followupAnswer=answer;view.followupReceipt=receipt||view.followupReceipt;const send=$('lyAiFollowupSend');if(send)send.disabled=true;}
@@ -2455,6 +2461,7 @@ function safeAnswer(target,answer){
     const source=fixed&&quotaRemaining(q.dailyTool)>0?'本期免費工具額度':`共用工具額度 ${cost} 次`;
     const aiSource=quotaRemaining(q.dailyAI)>0?'本期免費 AI 額度':'共用 AI 額度 1 次';
     if(!window.confirm(`本次解卦將使用：\n工具：${source}\nAI：${aiSource}\n\n確定開始嗎？`))return;
+    showAdvancedChart(view);
     setLoading(view,true,'initial');
     if(!view.castOp)view.castOp=uuid();updatePending(view);
     const payload={tool:'liuyao',operationId:view.castOp,questionBankVersion:window.LiuyaoQuestions.version,topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question,values:view.data.values.slice(),method:'three-coins',localDateTime:view.data.calendar.localDateTime,optionalContext:view.ctx.optionalContext||{}};
