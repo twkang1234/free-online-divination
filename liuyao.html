@@ -183,10 +183,6 @@ body.overlay-open{overflow:hidden}.page-footer{width:min(1120px,calc(100% - 40px
 .ly-ai-export{display:flex;gap:9px;flex-wrap:wrap}
 .ly-ai-export button{cursor:pointer;padding:9px 13px;border:1px solid rgba(211,172,114,.36);border-radius:9px;background:rgba(211,172,114,.085);color:#efcda4;font:inherit;font-size:.77rem;font-weight:750;min-height:40px}
 .ly-ai-meta{margin:12px 0 0!important;font:400 .67rem/1.7 ui-monospace,SFMono-Regular,Consolas,monospace!important;color:#8d8077!important;overflow-wrap:anywhere}
-.ly-ai-recovery{margin-top:12px;border-top:1px solid rgba(211,172,114,.14);padding-top:10px}
-.ly-ai-recovery summary{cursor:pointer;color:#b19b86;font-size:.73rem}
-.ly-ai-recovery button{margin-top:10px;cursor:pointer;padding:8px 11px;background:rgba(221,177,113,.07);color:#e6c5a0;border:1px solid rgba(211,172,114,.28);border-radius:8px;font:inherit;font-size:.73rem}
-.ly-ai-note[aria-busy="true"] .ly-ai-recovery{display:none}
 @media(max-width:480px){.ly-ai-wait{padding:16px 12px;gap:13px}.ly-ai-wait .ly-ai-spinner{width:45px;height:45px;border-width:4px}.ly-ai-export{display:grid;grid-template-columns:1fr 1fr}.ly-ai-export button{padding:9px 7px}}
 @media(prefers-reduced-motion:reduce){.ly-ai-wait .ly-ai-spinner{animation:none;border-color:#f6c284}}
 
@@ -667,6 +663,11 @@ html{scroll-padding-top:86px}
 
 .ly-pro-data{margin-top:13px}
 #lyAdvancedChart[hidden]{display:none!important}
+/* 完成六次起卦就顯示鎖定入口；只有初次 AI 解卦成功才能展開完整納甲表。 */
+#lyAdvancedChart.is-locked>summary{color:#988579;cursor:not-allowed;opacity:.78;user-select:none}
+#lyAdvancedChart.is-locked>summary::after{content:'🔒';font-size:.9rem;color:#d3a46a}
+#lyAdvancedChart:not(.is-locked)>summary::after{content:'🔓';font-size:.9rem}
+#lyAdvancedChart.is-locked>.ly-pro-inner{display:none}
 .ly-pro-inner{padding:0 11px 13px}
 .ly-result-meta{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0 12px}
 .ly-result-meta span{padding:9px;font-size:.7rem}
@@ -2064,7 +2065,7 @@ function render(data){
  <div class="ly-result-mast"><div><small>本卦</small><h3>${esc(o.name)}</h3><p>第 ${o.number} 卦・${o.upperMeta.symbol} ${esc(o.upper)}上／${o.lowerMeta.symbol} ${esc(o.lower)}下</p></div><span class="ly-change-arrow">→</span><div><small>變卦</small><h3>${esc(ch.name)}</h3><p>第 ${ch.number} 卦・${ch.upperMeta.symbol} ${esc(ch.upper)}上／${ch.lowerMeta.symbol} ${esc(ch.lower)}下</p></div></div>
  <div class="ly-main-summary"><span>卦宮：${esc(data.palace.palace)}宮・${esc(data.palace.stage)}</span><span>世 ${data.palace.shi}／應 ${data.palace.ying}</span><span>動爻：${data.movingLines.length?data.movingLines.join('、'):'無'}</span></div>
  <section class="ly-brief-lines" aria-label="六爻簡明卦象"><div class="ly-brief-caption"><strong>六爻簡表</strong><small>上爻在上・初爻在下</small></div>${quickRows}</section>
- <details id="lyAdvancedChart" class="ly-pro-data" hidden><summary>查看完整專業排盤・六親六神・日月伏神</summary>
+ <details id="lyAdvancedChart" class="ly-pro-data is-locked" data-locked="true"><summary aria-disabled="true" tabindex="-1">查看完整專業排盤・六親六神・日月伏神</summary>
  <div class="ly-pro-inner">
  <div class="ly-result-meta"><span><b>本卦卦宮</b>${data.palace.palace}宮・${data.palace.element}・${data.palace.stage}</span><span><b>世應位置</b>世 ${data.palace.shi} 爻／應 ${data.palace.ying} 爻</span><span><b>干支曆</b>${c.year}年 ${c.month}月 ${c.day}日</span><span><b>月建・日辰</b>${c.monthBranch}月・${c.dayBranch}日</span><span><b>旬空・月破</b>${c.voidBranches.join('') || '—'}空・${c.monthBreak}破</span><span><b>動爻</b>${data.movingLines.length?data.movingLines.join('、')+' 爻':'靜卦（無動爻）'}</span></div>
  <div class="ly-panels"><section class="ly-panel ly-chart"><h3>完整六爻納甲表 <small>可左右滑動查看所有欄位</small></h3><p class="ly-table-scroll-hint">↔ 左右滑動表格；爻位欄固定。</p><div class="ly-table-scroll"><table class="ly-table"><thead><tr><th>爻位</th><th>六神</th><th>六親</th><th>納甲</th><th>爻象</th><th>世應</th><th>月令</th><th>變爻（動爻）</th></tr></thead><tbody>${rows}</tbody></table></div></section>
@@ -2075,6 +2076,12 @@ function render(data){
  <div class="ly-ai-note"><b class="ly-ai-section-tag">AI 專業六爻解卦</b></div>`;
  $('lyCopy').onclick=async()=>{const s=serializeText(data);try{await navigator.clipboard.writeText(s);$('lyProCopyStatus').textContent='已複製'}catch(e){$('lyProCopyStatus').textContent='瀏覽器未允許複製；可改下載 JSON'}};
  $('lySave').onclick=()=>{const obj=JSON.stringify(data,null,2),url=URL.createObjectURL(new Blob([obj],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='liuyao-reading-'+c.localDateTime.replace(/\W/g,'')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000)};
+ // details 沒有原生 disabled：同時阻止滑鼠、鍵盤及程式誤開啟。
+ const advanced=$('lyAdvancedChart');
+ const summary=advanced.querySelector('summary');
+ summary.addEventListener('click',e=>{if(advanced.dataset.locked==='true')e.preventDefault()});
+ summary.addEventListener('keydown',e=>{if(advanced.dataset.locked==='true'&&(e.key==='Enter'||e.key===' '))e.preventDefault()});
+ advanced.addEventListener('toggle',()=>{if(advanced.dataset.locked==='true'&&advanced.open)advanced.open=false});
  $('lyResultHeading').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function serializeText(d){return [`專業納甲六爻排盤`,`問題：${d.question||'未填'}`,`起卦：${d.calendar.iso}`,`干支：${d.calendar.year}年 ${d.calendar.month}月 ${d.calendar.day}日`,`本卦：${d.original.name}（${d.original.number}）／變卦：${d.changed.name}（${d.changed.number}）`,`卦宮：${d.palace.palace} ${d.palace.element} ${d.palace.stage}，世${d.palace.shi}應${d.palace.ying}`,`旬空：${d.calendar.voidBranches.join('')}`,`動爻：${d.movingLines.join('、')||'無'}`,...d.lineObjects.slice().reverse().map(x=>`${x.position}爻 ${x.god} ${x.relative} ${x.ganzhi}${x.shiYing?' '+x.shiYing:''} ${x.label} ${x.monthState}${x.dayVoid?' 旬空':''}${x.monthBreak?' 月破':''}${x.changed?' → '+x.changed.ganzhi+' '+x.changed.relative:''}`),`伏神：${d.hidden.map(x=>x.relative+x.najia+'第'+x.position+'爻').join('、')||'無'}`].join('\n')}
@@ -2315,7 +2322,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  const LAST_KEY='liuyao-last-ai-operation-v1';
  function setPending(s){try{sessionStorage.setItem(LAST_KEY,JSON.stringify(s))}catch(_){}}
  function readPending(){try{const s=JSON.parse(sessionStorage.getItem(LAST_KEY)||'null');if(!s||typeof s!=='object')return null;const ok=x=>!x||/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x);return [s.castOp,s.castId,s.initialOp,s.followupOp].every(ok)&&(s.castId||s.castOp)?s:null}catch(_){return null}}
- function updatePending(view){if(!view)return;setPending({castId:view.castId,castOp:view.castOp,initialOp:view.initialOp,followupOp:view.followupOp});updateRecoveryButton()}
+ function updatePending(view){if(!view)return;setPending({castId:view.castId,castOp:view.castOp,initialOp:view.initialOp,followupOp:view.followupOp})}
  /* 安全的 AI Markdown 閱讀排版：只建立 DOM/text nodes，絕不將模型文字插入 innerHTML。
  * 保留原始回答供複製；恢復上次 AI 結果也共用此函式。 */
 function safeAnswer(target,answer){
@@ -2391,7 +2398,6 @@ function safeAnswer(target,answer){
   if(view.initialReceipt&&traceLabel(view.initialReceipt))items.push('解卦'+traceLabel(view.initialReceipt));
   if(view.followupReceipt&&traceLabel(view.followupReceipt))items.push('追問'+traceLabel(view.followupReceipt));
   meta.textContent=items.join('　｜　');meta.hidden=!items.length;
-  updateRecoveryButton();
  }
  function aiReportText(view){
   const parts=['六爻 AI 專業解卦','問題：'+view.data.question,'',view.answer||''];
@@ -2400,13 +2406,16 @@ function safeAnswer(target,answer){
   if(refs.length)parts.push('',refs.join('　'));
   return parts.join('\n');
  }
- function showAdvancedChart(view){
+ function unlockAdvancedChart(view){
   if(readingView!==view)return;
-  const chart=$('lyAdvancedChart');if(chart){chart.hidden=false;chart.open=false;}
+  const chart=$('lyAdvancedChart');if(!chart)return;
+  chart.dataset.locked='false';chart.classList.remove('is-locked');chart.open=false;
+  const summary=chart.querySelector('summary');
+  if(summary){summary.removeAttribute('aria-disabled');summary.removeAttribute('tabindex')}
  }
  function revealAnswer(view,answer,mode='initial',receipt=null){
   if(readingView!==view)return;
-  if(mode==='initial')showAdvancedChart(view);
+  if(mode==='initial')unlockAdvancedChart(view);
   const node=$(mode==='initial'?'lyAiAnswer':'lyAiFollowupAnswer');if(node)safeAnswer(node,answer);
   if(mode==='initial'){view.answer=answer;view.initialReceipt=receipt||view.initialReceipt;const block=$('lyAiFollowup');if(block)block.hidden=false;const start=$('lyAiStart');if(start)start.hidden=true;}
   else {view.followupUsed=true;view.followupAnswer=answer;view.followupReceipt=receipt||view.followupReceipt;const send=$('lyAiFollowupSend');if(send)send.disabled=true;}
@@ -2461,7 +2470,6 @@ function safeAnswer(target,answer){
     const source=fixed&&quotaRemaining(q.dailyTool)>0?'本期免費工具額度':`共用工具額度 ${cost} 次`;
     const aiSource=quotaRemaining(q.dailyAI)>0?'本期免費 AI 額度':'共用 AI 額度 1 次';
     if(!window.confirm(`本次解卦將使用：\n工具：${source}\nAI：${aiSource}\n\n確定開始嗎？`))return;
-    showAdvancedChart(view);
     setLoading(view,true,'initial');
     if(!view.castOp)view.castOp=uuid();updatePending(view);
     const payload={tool:'liuyao',operationId:view.castOp,questionBankVersion:window.LiuyaoQuestions.version,topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question,values:view.data.values.slice(),method:'three-coins',localDateTime:view.data.calendar.localDateTime,optionalContext:view.ctx.optionalContext||{}};
@@ -2528,41 +2536,9 @@ function safeAnswer(target,answer){
   footer.append(exports,meta);
   // 將恢復入口獨立放在起卦記錄下方，不出現在額度表或文章主要操作區。
   note.append(toolbar,wait,statusText,answer,follow,footer);
-  updateRecoveryButton();
   if(ENABLED&&oldCast(data))status('舊紀錄無法再送出 AI，請重新起卦。');
  }
  function clear(){readingView=null}
- async function recoverLast(){
-  const rec=readPending(),panel=$('lyAiRecoveredResult'),label=$('lyAiRecoveredStatus');
-  if(!panel||!label)return;
-  panel.hidden=false;panel.textContent='';
-  if(!rec){label.textContent='本次瀏覽器沒有可恢復的 AI 操作紀錄。';return}
-  label.textContent='正在以原操作編號向伺服器核對，不會重新解卦或扣點…';
-  try{
-   const cast=await request('/cast/status',{tool:'liuyao',castId:rec.castId||rec.castOp});
-   const h=make('h4',null,'上一次六爻問事');panel.appendChild(h);
-   const q=make('p',null,cast.reading?.question||'已確認起卦記帳');panel.appendChild(q);
-   let states=[];
-   for(const [mode,op] of [['initial',rec.initialOp],['followup',rec.followupOp]]){
-    if(!op)continue;
-    const outcome=await request('/ai/status',{tool:'liuyao',castId:cast.castId,operationId:op});
-    if(outcome.state==='used'){
-     panel.appendChild(make('h4',null,mode==='initial'?'AI 初次解卦':'AI 追問'));
-     const recovered=make('article','ly-ai-answer');safeAnswer(recovered,outcome.answer||'');panel.appendChild(recovered);
-     const tools=make('div','ly-ai-export');
-     const cp=make('button',null,'複製解卦文章');cp.onclick=async()=>{try{await navigator.clipboard.writeText(outcome.answer||'');cp.textContent='已複製'}catch(_){label.textContent='複製未獲瀏覽器允許，請直接選取文章。'}};
-     const dl=make('button',null,'下載 TXT');dl.onclick=()=>{const blob=new Blob(['\uFEFF問題：'+(cast.reading?.question||'')+'\n\n'+(outcome.answer||'')],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='liuyao-ai-recovered.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),5000)};
-     tools.append(cp,dl);panel.appendChild(tools);
-     if(traceLabel(outcome)){const ref=make('p','ly-ai-meta','通道及紀錄'+traceLabel(outcome));panel.appendChild(ref)}
-    }
-    states.push(mode+':'+outcome.state);
-   }
-   label.textContent=states.length?('已核對：'+states.join('，')+'。這次查詢不產生扣點。'):'已確認起卦記帳，但沒有 AI 發送紀錄；請勿直接再次扣工具額度。';
-   if(cast.toolRefunded)label.textContent+=' 初次 AI 失敗的工具額度已返還。';
-   await refreshQuota();
-  }catch(e){label.textContent='目前無法核對上次操作：'+String(e.message||'連線異常')+'。請勿重新扣點；稍後可再次查詢。'}
- }
- function updateRecoveryButton(){const details=$('lyAiRecovery');if(details){details.hidden=!ENABLED||!readPending()||!!readingView?.answer;if(details.hidden)details.open=false}}
  async function activateIfBackendReady(){
   const statusText=$('lyQuotaStatus');
   if(!/^https:\/\/(?:www\.)?divinationhub\.tw$/.test(location.origin)){
@@ -2580,24 +2556,12 @@ function safeAnswer(target,answer){
    if(readingView){
     const start=$('lyAiStart');if(start){start.textContent='開始 AI 解卦';start.disabled=busy||!!readingView.initialOp}
    }
-   updateRecoveryButton();
    if(TOKEN.test(session()))await refreshQuota();
    else if(statusText)statusText.textContent='站內 AI 已開放，請先登入會員查看額度';
   }catch(_){if(statusText)statusText.textContent='無法確認六爻 AI 服務狀態；已安全停用扣點'}
  }
- function setup(){
-  const resetWrap=document.querySelector('.ly-end-reset-wrap');
-  if(resetWrap&&!$('lyAiRecovery')){
-   const recovery=make('details','ly-ai-recovery');recovery.id='lyAiRecovery';recovery.hidden=true;
-   const label=make('summary',null,'連線中斷？找回上次 AI 解卦');
-   const button=make('button',null,'查詢原操作結果');button.id='lyAiRecoverLast';button.type='button';button.onclick=()=>recoverLast();
-   const text=make('p','ly-ai-progress','');text.id='lyAiRecoveredStatus';text.setAttribute('role','status');
-   const content=make('div');content.id='lyAiRecoveredResult';content.hidden=true;
-   recovery.append(label,button,text,content);resetWrap.insertAdjacentElement('beforebegin',recovery);
-  }
-  void activateIfBackendReady();
- }
- window.LiuyaoStagingAI=Object.freeze({onReading,clear,refreshQuota,recoverLast,updateRecoveryButton});
+ function setup(){void activateIfBackendReady()}
+ window.LiuyaoStagingAI=Object.freeze({onReading,clear,refreshQuota});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
 })();
 </script>
