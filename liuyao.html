@@ -541,19 +541,22 @@ body.ly-cast-active .liuyao-seo{display:none!important}
 #lyResetAtEnd:focus-visible{outline:3px solid #f6c98a;outline-offset:3px}
 
 </style>
-<style id="ly-archive-style">
-.ly-local-archive{margin:20px 0 12px;padding:15px;border:1px solid rgba(255,174,107,.19);border-radius:15px;background:rgba(255,159,95,.025)}
-.ly-local-archive-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
-.ly-local-archive-head strong{display:block;font-size:.88rem;color:#f0d3be}
-.ly-local-archive-head small{display:block;margin-top:4px;font-size:.70rem;color:#ad9282;line-height:1.65}
-.ly-local-archive-head button,.ly-archive-list button{border-radius:9px;border:1px solid rgba(255,174,107,.25);background:rgba(255,162,97,.08);padding:7px 12px;color:#f0cbaa;font-size:.73rem;cursor:pointer}
-.ly-archive-list{display:grid;gap:8px;margin-top:13px}.ly-archive-list[hidden]{display:none!important}
-.ly-archive-item{padding:11px 12px;border-radius:11px;border:1px solid rgba(255,255,255,.09);display:flex;justify-content:space-between;align-items:center;gap:12px}
-.ly-archive-item>div{min-width:0}.ly-archive-item b{font-size:.76rem;color:#edd8c5;display:block;overflow-wrap:anywhere}.ly-archive-item small{font-size:.67rem;color:#a28e80}
-.ly-archive-item nav{display:flex;gap:7px;flex-shrink:0}.ly-archive-item nav button:nth-child(2){color:#efb1a4;border-color:rgba(240,126,108,.22)}
-.ly-archive-empty{font-size:.75rem;color:#aa9285}.ly-signal-list{display:grid;gap:7px}.ly-signal-item{font-size:.70rem;color:#d1b9a7;line-height:1.7;padding:8px 10px;border-left:2px solid rgba(247,170,104,.4);background:rgba(255,171,115,.035)}
-html[data-theme="light"] .ly-local-archive{background:#fffaf5;border-color:#e7cfb6}html[data-theme="light"] .ly-local-archive-head strong,html[data-theme="light"] .ly-archive-item b{color:#553b2c}html[data-theme="light"] .ly-signal-item{color:#5c4635}
-@media(max-width:650px){.ly-local-archive-head{align-items:flex-start;flex-direction:column}.ly-archive-item{align-items:flex-start;flex-direction:column}.ly-archive-item nav{width:100%}.ly-archive-item nav button{flex:1}}
+<style id="ly-six-cast-grid">
+/* Six chronological bottom-up tosses: always three equal tiles per row. */
+#lyCoinStack.ly-cast-stack{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:13px 0 0}
+#lyCoinStack .ly-cast-step{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;min-width:0;min-height:57px;padding:8px 4px;border-radius:10px;border:1px solid rgba(255,176,113,.22);background:rgba(255,159,90,.04);text-align:center;line-height:1.25}
+#lyCoinStack .ly-cast-step b{font-size:.73rem;color:#e9c8ab;font-weight:750}
+#lyCoinStack .ly-step-reading{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:5px;color:#f6dec9;border:0;background:transparent;padding:0;border-radius:0}
+#lyCoinStack .ly-step-reading strong{font-size:.88rem;color:#ffcb91}
+#lyCoinStack .ly-step-reading small{font-size:.69rem;color:#dcbca6;overflow-wrap:anywhere}
+#lyThrowActions[hidden]{display:none!important}
+#lyProCopyStatus{font-size:.7rem;color:#e0c9a8}
+@media(max-width:360px){#lyCoinStack.ly-cast-stack{gap:5px}#lyCoinStack .ly-cast-step{min-height:56px;padding:7px 3px}#lyCoinStack .ly-step-reading{gap:3px}#lyCoinStack .ly-step-reading small{font-size:.64rem}}
+</style>
+<style id="ly-signal-style">
+.ly-signal-list{display:grid;gap:7px}
+.ly-signal-item{font-size:.70rem;color:#d1b9a7;line-height:1.7;padding:8px 10px;border-left:2px solid rgba(247,170,104,.4);background:rgba(255,171,115,.035)}
+html[data-theme="light"] .ly-signal-item{color:#5c4635}
 </style>
 <style id="liuyao-mobile-first-compact">
 /* Mobile-first compact redesign (2026-11-17): site article reading column used as width reference. */
@@ -609,11 +612,6 @@ html{scroll-padding-top:86px}
 .ly-actions>.ghost{font-size:.72rem;white-space:nowrap;padding-inline:9px}
 .ly-cast-stack{gap:5px;margin-top:11px}
 .ly-cast-stack span{padding:5px 8px;font-size:.68rem}
-.ly-local-archive{margin:19px 0 0;padding:11px 12px;border-radius:11px}
-.ly-local-archive-head{flex-direction:row;align-items:center;gap:7px}
-.ly-local-archive-head strong{font-size:.8rem}
-.ly-local-archive-head small{display:none}
-.ly-local-archive-head button{white-space:nowrap;padding:7px 8px;font-size:.71rem}
 .result-shell{min-height:0;padding:0;border:0;border-radius:0;background:transparent}
 .empty{min-height:124px;padding:18px;text-align:center;border:1px dashed rgba(255,138,76,.2);border-radius:11px}
 .empty h3{font-size:.86rem}
@@ -651,9 +649,6 @@ html{scroll-padding-top:86px}
 .ly-ai-note .ly-ai-answer strong{font-size:inherit;color:#fff4e5}
 @media(max-width:600px){.ly-ai-note .ly-ai-answer{font-size:.93rem;line-height:1.85}}
 
-.ly-visible-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:12px 0 0}
-.ly-visible-actions button{border-radius:9px;border:1px solid rgba(255,171,98,.35);padding:10px 13px;background:rgba(255,171,98,.09);color:#efc4a6;font-weight:730;font-size:.74rem}
-.ly-visible-actions span{font-size:.72rem;color:#e0c9a8}
 .ly-pro-data{margin-top:13px}
 .ly-pro-inner{padding:0 11px 13px}
 .ly-result-meta{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0 12px}
@@ -799,18 +794,13 @@ html{scroll-padding-top:86px}
     <div class="ly-cast-header"><strong id="lyThrowTitle">準備擲初爻（第 1 次）</strong><span id="lyThrowCount">0 / 6</span></div>
     <div class="ly-coin-row" id="lyCoins"><span>銅</span><span>銅</span><span>銅</span></div>
     
-    <div class="ly-actions"><button class="primary ly-primary" type="button" id="lyThrow">擲出初爻</button><button class="ghost" type="button" id="lyResetCoins">重新起卦</button></div>
+    <div class="ly-actions" id="lyThrowActions"><button class="primary ly-primary" type="button" id="lyThrow">擲出初爻</button></div>
     <div class="ly-cast-stack" id="lyCoinStack" aria-live="polite"></div>
-    <p class="ly-hint" id="lyCastLocked" hidden>本次的問題、情境與起卦時間已鎖定；若要修改，請按「重新起卦」。</p>
   </div>
   <p class="ly-error" role="alert" id="lyError" hidden></p>
 
   <div class="ly-phase" id="lyResultHeading"><span>03</span><strong>本卦與變卦</strong></div>
   <div class="result-shell" id="resultShell"><div class="empty" id="emptyState"><div><div class="empty-orbit"></div><h3>尚未起卦</h3><p>完成六次擲幣後，這裡會顯示本卦、變卦及六爻簡表。</p></div></div><div id="result" style="display:none" aria-live="polite"></div></div>
-  <section class="ly-local-archive" aria-labelledby="lyArchiveTitle">
-    <div class="ly-local-archive-head"><div><strong id="lyArchiveTitle">本機暫存紀錄</strong><small>最多 3 筆｜需手動儲存，僅保存在此瀏覽器；不是會員雲端保存。</small></div><button type="button" id="lyArchiveToggle" aria-expanded="false" aria-controls="lyArchiveList">載入已存紀錄</button></div>
-    <div id="lyArchiveList" class="ly-archive-list" hidden></div>
-  </section>
   <div class="ly-end-reset-wrap"><button type="button" id="lyResetAtEnd" hidden>↻ 重新起卦</button></div>
 </div>
   </section>
@@ -1913,48 +1903,6 @@ if(typeof module!=='undefined'&&module.exports)module.exports=Object.freeze({...
 });
 
 </script>
-<script id="inline-liuyao-storage" data-internal-source="liuyao-storage.js">
-/* 一念知機｜六爻本機存檔（非會員雲端紀錄） */
-(function(root,factory){
- 'use strict';
- const api=factory(root);
- if(typeof module==='object'&&module.exports)module.exports=api;
- if(root)root.LiuyaoLocalStore=api;
-})(typeof window!=='undefined'?window:null,function(root){
- 'use strict';
- const KEY='divinationhub-liuyao-local-readings-v1';
- const LIMIT=3;
- // Reuse the authoritative topic/scenario list instead of hardcoded 0..7 and 0..2 bounds.
- const QUESTIONS=root?.LiuyaoQuestions || (typeof module==='object'&&module.exports?require('./liuyao-questions.js'):null);
- const validContext=(topic,scene)=>!!QUESTIONS?.get?.(topic,scene);
- const validTime=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s);
- const normalize=(item)=>{
-  if(!item||!Array.isArray(item.values)||item.values.length!==6||!item.values.every(v=>[6,7,8,9].includes(v)))return null;
-  if(!validTime(item.time)||typeof item.question!=='string'||!item.question.trim()||item.method!=='three-coins')return null;
-  const topic=Number(item.topic),scene=Number(item.scene);
-  if(!Number.isInteger(topic)||!Number.isInteger(scene)||!validContext(topic,scene))return null;
-  return {id:String(item.id||'').slice(0,80),createdAt:String(item.createdAt||'').slice(0,32),time:item.time,
-   question:item.question.trim().slice(0,160),method:String(item.method||'').slice(0,50),values:item.values.slice(),topic,scene};
- };
- const load=(storage)=>{
-  try{
-   const content=JSON.parse(storage.getItem(KEY)||'[]');
-   return Array.isArray(content)?content.map(normalize).filter(Boolean).slice(0,LIMIT):[];
-  }catch(_){return []}
- };
- const save=(storage,data)=>{
-  const item=normalize(data);if(!item)throw Error('存檔資料不完整');
-  item.id=item.id||('ly-'+Date.now()+'-'+Math.random().toString(36).slice(2,9));
-  item.createdAt=item.createdAt||new Date().toISOString();
-  const items=[item,...load(storage).filter(x=>x.id!==item.id)].slice(0,LIMIT);
-  storage.setItem(KEY,JSON.stringify(items));
-  return {item,items};
- };
- const remove=(storage,id)=>{const items=load(storage).filter(x=>x.id!==id);storage.setItem(KEY,JSON.stringify(items));return items};
- return Object.freeze({key:KEY,limit:LIMIT,load,save,remove,normalize});
-});
-
-</script>
 <script id="inline-liuyao-ai-contract" data-internal-source="liuyao-ai-contract.js">
 /* 一念知機｜專業納甲六爻 AI 邊界資料格式（正式 Worker 須重新計算，不信任前端結果） */
 (function(root,factory){
@@ -1993,7 +1941,6 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const groups=window.LiuyaoQuestions.groups;
 let topic=1, scene=0, fixedQuestion='', activeValues=[], latest=null, latestContext=null, castingContext=null;
-const S=window.LiuyaoLocalStore;
 function node(tag,cls,txt){const el=document.createElement(tag);if(cls)el.className=cls;if(txt)el.textContent=txt;return el}
 function error(msg){const n=$('lyError');n.textContent=msg;n.hidden=!msg; if(msg)n.scrollIntoView({behavior:'smooth',block:'nearest'})}
 function question(){return $('lyCustomQuestion').value.trim()||fixedQuestion||''}
@@ -2003,7 +1950,6 @@ function lockInputs(locked){
  $('lyWhen').disabled=locked;
  $('lyCustomQuestion').disabled=locked;
  document.querySelectorAll('#lyTopics button,#lyScenes button,#lyQuestions button').forEach(b=>b.disabled=locked);
- $('lyCastLocked').hidden=!locked;
 }
 function captureCast(){
  if(!castingContext){
@@ -2017,38 +1963,17 @@ function captureCast(){
 }
 function updateCastLayout(active,completed=false){
  document.body.classList.toggle('ly-cast-active',!!active);
- const bottom=$('lyResetAtEnd');if(bottom)bottom.hidden=!completed;
+ const bottom=$('lyResetAtEnd');if(bottom)bottom.hidden=!active;const throwActions=$('lyThrowActions');if(throwActions)throwActions.hidden=!!completed;
 }
 function makeResult(data,ctx=snapshot()){latest=data;latestContext=ctx;render(latest);updateCastLayout(true,true);error('');window.LiuyaoStagingAI?.onReading(data,ctx)}
 function htmlSafeSignal(line){const a=[];if(line.moving)a.push('動爻');if(line.dayVoid)a.push('旬空');if(line.monthBreak)a.push('月破');if(line.dayClash)a.push('日沖');if(line.monthCombine)a.push('月合');if(line.dayCombine)a.push('日合');return a}
 function signalHTML(data){const lines=data.lineObjects.filter(x=>x.moving||x.dayVoid||x.monthBreak);
  if(!lines.length)return '<p class="ly-hint">未出現動爻、旬空或月破的標記；這只代表本次排盤資料的狀態，不等於吉凶判斷。</p>';
  return '<div class="ly-signal-list">'+lines.map(l=>`<div class="ly-signal-item">第 ${l.position} 爻・${esc(l.relative)} ${esc(l.ganzhi)}：${htmlSafeSignal(l).map(esc).join('、')}。${l.changed?'變爻 '+esc(l.changed.ganzhi)+'（'+esc(l.changed.returnElement.join('、')||'無直接五行生剋')+'）':'靜爻'}</div>`).join('')+'</div>';}
-function paintArchive(){
- const host=$('lyArchiveList');if(!host||host.hidden)return;
- const items=S.load(localStorage);host.textContent='';
- if(!items.length){const p=node('p','ly-archive-empty','尚未儲存紀錄。起卦完成後點選「儲存本機」即可保存。');host.appendChild(p);return}
- for(const x of items){
-  const art=node('article','ly-archive-item');const info=node('div');const name=node('b',null,x.question);const meta=node('small',null,x.time.replace('T',' ')+'｜'+x.values.join('、'));info.append(name,meta);
-  const nav=node('nav');const load=node('button',null,'載入');load.type='button';load.onclick=()=>{try{
-   if(activeValues.length&& !confirm('載入舊紀錄將中止目前尚未完成的擲卦，確定繼續嗎？'))return;
-   activeValues=[];castingContext=null;lockInputs(false);$('lyThrow').disabled=false;$('lyThrowCount').textContent='0 / 6';$('lyThrowTitle').textContent='準備擲初爻（第 1 次）';$('lyThrow').textContent='擲出初爻';$('lyCoins').innerHTML='<span>銅</span><span>銅</span><span>銅</span>';renderSteps([]);topic=x.topic;scene=x.scene;fixedQuestion=groups[topic].scenes[scene][1].includes(x.question)?x.question:'';
-   $('lyCustomQuestion').value=fixedQuestion?'':x.question;if(!fixedQuestion)$('lyCustomDisclosure').open=true;$('lyWhen').value=x.time;paintTopics();paintScenes();makeResult(C.fromValues(x.values,x.time,x.question,x.method),{topic:x.topic,scene:x.scene});
-  }catch(e){error('存檔無法載入：'+e.message)}};
-  const del=node('button',null,'刪除');del.type='button';del.onclick=()=>{if(!confirm('確定刪除這筆本機紀錄？'))return;S.remove(localStorage,x.id);paintArchive()};
-  nav.append(load,del);art.append(info,nav);host.append(art);
- }
-}
-function saveCurrent(){
- if(!latest||!latestContext)throw Error('尚無可儲存的六爻排盤');
- const st=S.save(localStorage,{id:'',time:latest.calendar.localDateTime,values:latest.values,question:latest.question,method:latest.method,topic:latestContext.topic,scene:latestContext.scene});
- if(st.items.length===S.limit) $('lyCopyHint').textContent='已儲存本機（最多 3 筆，超過會取代最舊的一筆）';else $('lyCopyHint').textContent='已儲存至本機';
- paintArchive();
-}
 function paintTopics(){const e=$('lyTopics');e.textContent='';const stats=window.LiuyaoQuestions.stats;const counter=$('lyQuestionCount');if(counter)counter.textContent=`${stats.topics} 大主題・${stats.scenes} 種問事情境・${stats.questions} 道固定題目；以具體事件為主。`;groups.forEach((g,i)=>{let b=node('button','ly-choice'+(topic===i?' selected':''));b.type='button';b.innerHTML=`<b>${esc(g.emoji)}　${esc(g.name)}</b>`;b.onclick=()=>{if(castingContext)return;topic=i;scene=0;fixedQuestion='';paintTopics();paintScenes();};e.appendChild(b)})}
 function paintScenes(){const e=$('lyScenes');e.textContent='';groups[topic].scenes.forEach((s,i)=>{let b=node('button','ly-small-choice'+(scene===i?' selected':''),s[0]);b.type='button';b.onclick=()=>{if(castingContext)return;scene=i;fixedQuestion='';paintScenes()};e.appendChild(b)});paintQuestions()}
 function paintQuestions(){const e=$('lyQuestions');e.textContent='';groups[topic].scenes[scene][1].forEach((s,i)=>{const b=node('button','ly-question'+(fixedQuestion===s?' selected':''),`${i+1}. ${s}`);b.type='button';b.onclick=()=>{if(castingContext)return;fixedQuestion=s;$('lyCustomQuestion').value='';paintQuestions()};e.appendChild(b)})}
-function renderSteps(values){const names=['初爻','二爻','三爻','四爻','五爻','上爻'];$('lyCoinStack').innerHTML=values.map((x,i)=>`<span><b>${names[i]}</b>　${x}　${({6:'老陰・動',7:'少陽',8:'少陰',9:'老陽・動'})[x]}</span>`).join('')}
+function renderSteps(values){const names=['初爻','二爻','三爻','四爻','五爻','上爻'];$('lyCoinStack').innerHTML=values.map((x,i)=>`<span class="ly-cast-step"><b>${names[i]}</b><span class="ly-step-reading"><strong>${x}</strong><small>${({6:'老陰・動',7:'少陽',8:'少陰',9:'老陽・動'})[x]}</small></span></span>`).join('')}
 function lineMark(value){return `<div class="ly-yao-line ${value===6||value===8?'yin':'yang'} ${value===6||value===9?'moving':''}"><i></i><i></i></div>`}
 function render(data){
  const c=data.calendar,o=data.original,ch=data.changed, ctx=latestContext||snapshot();
@@ -2066,17 +1991,15 @@ function render(data){
  <div class="ly-main-summary"><span>卦宮：${esc(data.palace.palace)}宮・${esc(data.palace.stage)}</span><span>世 ${data.palace.shi}／應 ${data.palace.ying}</span><span>動爻：${data.movingLines.length?data.movingLines.join('、'):'無'}</span></div>
  <section class="ly-brief-lines" aria-label="六爻簡明卦象"><div class="ly-brief-caption"><strong>六爻簡表</strong><small>上爻在上・初爻在下</small></div>${quickRows}</section>
  <div class="ly-ai-note"><b class="ly-ai-section-tag">AI 專業六爻解卦</b></div>
- <div class="ly-visible-actions"><button type="button" id="lySaveLocal">儲存這一卦（本機）</button><span id="lyCopyHint" role="status"></span></div>
  <details class="ly-pro-data"><summary>查看完整專業排盤・六親六神・日月伏神</summary>
  <div class="ly-pro-inner">
  <div class="ly-result-meta"><span><b>本卦卦宮</b>${data.palace.palace}宮・${data.palace.element}・${data.palace.stage}</span><span><b>世應位置</b>世 ${data.palace.shi} 爻／應 ${data.palace.ying} 爻</span><span><b>干支曆</b>${c.year}年 ${c.month}月 ${c.day}日</span><span><b>月建・日辰</b>${c.monthBranch}月・${c.dayBranch}日</span><span><b>旬空・月破</b>${c.voidBranches.join('') || '—'}空・${c.monthBreak}破</span><span><b>動爻</b>${data.movingLines.length?data.movingLines.join('、')+' 爻':'靜卦（無動爻）'}</span></div>
  <div class="ly-panels"><section class="ly-panel ly-chart"><h3>完整六爻納甲表 <small>可左右滑動查看所有欄位</small></h3><p class="ly-table-scroll-hint">↔ 左右滑動表格；爻位欄固定。</p><div class="ly-table-scroll"><table class="ly-table"><thead><tr><th>爻位</th><th>六神</th><th>六親</th><th>納甲</th><th>爻象</th><th>世應</th><th>月令</th><th>變爻（動爻）</th></tr></thead><tbody>${rows}</tbody></table></div></section>
  <section class="ly-panel ly-analysis"><h3>排盤詳細資料</h3><div class="ly-analysis-block"><b>起卦時間</b><p>${esc(c.localDateTime.replace('T',' '))}（台灣時間）</p><small>${c.currentJie}節氣起，下一節：${c.nextJie}</small></div><div class="ly-analysis-block"><b>所問事情</b><p>${esc(data.question||'本次未填寫問題')}</p><small>${esc(groups[ctx.topic]?.name||'未分類')}・${esc(groups[ctx.topic]?.scenes[ctx.scene]?.[0]||'未分類')}</small></div><div class="ly-analysis-block"><b>動爻、旬空與月破標記</b>${signalHTML(data)}</div><div class="ly-analysis-block"><b>伏神／飛神</b><p>${hidden}</p></div></section></div>
  <details class="ly-details"><summary>展開六爻逐條生剋與日月關係</summary><div class="ly-detail-grid">${data.lineObjects.slice().reverse().map(l=>`<div><b>第 ${l.position} 爻 ${esc(l.relative)} ${esc(l.ganzhi)} ${l.shiYing}</b><p>月令五行氣勢參考 ${l.monthState}・月建：${esc(l.monthRelations.join('、')||'無直接五行關係')}・日辰：${esc(l.dayRelations.join('、')||'無直接五行關係')}${l.dayVoid?'・旬空':''}${l.monthBreak?'・月破':''}${l.dayClash?'・日沖':''}${l.changed?'・動變：'+esc(l.changed.returnElement.join('、')):''}</p></div>`).join('')}</div></details>
- <div class="ly-download-actions"><button type="button" id="lyCopy">複製完整排盤文字</button><button type="button" id="lySave">下載排盤 JSON</button></div>
+ <div class="ly-download-actions"><button type="button" id="lyCopy">複製完整排盤文字</button><button type="button" id="lySave">下載排盤 JSON</button><span id="lyProCopyStatus" role="status"></span></div>
  </div></details>`;
- $('lyCopy').onclick=async()=>{const s=serializeText(data);try{await navigator.clipboard.writeText(s);$('lyCopyHint').textContent='已複製'}catch(e){$('lyCopyHint').textContent='瀏覽器未允許複製；可改下載 JSON'}};
- $('lySaveLocal').onclick=()=>{try{saveCurrent()}catch(e){$('lyCopyHint').textContent='儲存失敗：'+e.message}};
+ $('lyCopy').onclick=async()=>{const s=serializeText(data);try{await navigator.clipboard.writeText(s);$('lyProCopyStatus').textContent='已複製'}catch(e){$('lyProCopyStatus').textContent='瀏覽器未允許複製；可改下載 JSON'}};
  $('lySave').onclick=()=>{const obj=JSON.stringify(data,null,2),url=URL.createObjectURL(new Blob([obj],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='liuyao-reading-'+c.localDateTime.replace(/\W/g,'')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000)};
  $('lyResultHeading').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -2084,7 +2007,6 @@ function serializeText(d){return [`專業納甲六爻排盤`,`問題：${d.quest
 function init(){
  $('lyWhen').value=C.localNowTaipei();paintTopics();paintScenes();lockInputs(false);
  $('lyCustomQuestion').addEventListener('input',()=>{if($('lyCustomQuestion').value.trim()&&fixedQuestion){fixedQuestion='';paintQuestions()}});
- $('lyArchiveToggle').onclick=()=>{const host=$('lyArchiveList');host.hidden=!host.hidden;$('lyArchiveToggle').setAttribute('aria-expanded',String(!host.hidden));paintArchive()};
  $('lyThrow').onclick=()=>{try{
   if(activeValues.length>=6)return;
   const cast=captureCast();
@@ -2102,10 +2024,10 @@ function init(){
   $('lyThrow').disabled=!!completed;
   if(completed)makeResult(completed,cast);
  }catch(e){if(activeValues.length===0){castingContext=null;lockInputs(false)}error(e.message)}};
- $('lyResetCoins').onclick=()=>{activeValues=[];castingContext=null;lockInputs(false);$('lyWhen').value=C.localNowTaipei();$('lyThrow').disabled=false;$('lyThrow').textContent='擲出初爻';$('lyThrowTitle').textContent='準備擲初爻（第 1 次）';$('lyThrowCount').textContent='0 / 6';$('lyCoins').innerHTML='<span>銅</span><span>銅</span><span>銅</span>';renderSteps([]);updateCastLayout(false);latest=null;latestContext=null;window.LiuyaoStagingAI?.clear();$('result').innerHTML='';$('result').style.display='none';$('emptyState').style.display='';error('')};
+ const resetCast=()=>{activeValues=[];castingContext=null;lockInputs(false);$('lyWhen').value=C.localNowTaipei();$('lyThrow').disabled=false;$('lyThrow').textContent='擲出初爻';$('lyThrowTitle').textContent='準備擲初爻（第 1 次）';$('lyThrowCount').textContent='0 / 6';$('lyCoins').innerHTML='<span>銅</span><span>銅</span><span>銅</span>';renderSteps([]);updateCastLayout(false);latest=null;latestContext=null;window.LiuyaoStagingAI?.clear();$('result').innerHTML='';$('result').style.display='none';$('emptyState').style.display='';error('')};
  $('lyResetAtEnd').onclick=()=>{
   if(!confirm('重新起卦將清除目前畫面的卦象與 AI 解讀。請先複製重要內容，確定重新起卦嗎？'))return;
-  $('lyResetCoins').click();
+  resetCast();
   $('lyTopics').scrollIntoView({behavior:'auto',block:'start'});
  };
 
@@ -2584,14 +2506,14 @@ function safeAnswer(target,answer){
   }catch(_){if(statusText)statusText.textContent='無法確認六爻 AI 服務狀態；已安全停用扣點'}
  }
  function setup(){
-  const archive=document.querySelector('.ly-local-archive');
-  if(archive&&!$('lyAiRecovery')){
+  const resetWrap=document.querySelector('.ly-end-reset-wrap');
+  if(resetWrap&&!$('lyAiRecovery')){
    const recovery=make('details','ly-ai-recovery');recovery.id='lyAiRecovery';recovery.hidden=true;
    const label=make('summary',null,'連線中斷？找回上次 AI 解卦');
    const button=make('button',null,'查詢原操作結果');button.id='lyAiRecoverLast';button.type='button';button.onclick=()=>recoverLast();
    const text=make('p','ly-ai-progress','');text.id='lyAiRecoveredStatus';text.setAttribute('role','status');
    const content=make('div');content.id='lyAiRecoveredResult';content.hidden=true;
-   recovery.append(label,button,text,content);archive.insertAdjacentElement('afterend',recovery);
+   recovery.append(label,button,text,content);resetWrap.insertAdjacentElement('beforebegin',recovery);
   }
   void activateIfBackendReady();
  }
