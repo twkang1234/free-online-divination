@@ -798,6 +798,50 @@ html[data-theme="light"] #lyAdvancedChart:not(.is-locked)>summary{color:#70400c;
 .ly-ai-operation #lyAiStart{white-space:nowrap;max-width:100%;padding-inline:7px;font-size:clamp(.65rem,3vw,.78rem);letter-spacing:-.015em}
 @media(max-width:360px){.ly-ai-compact-head .ly-ai-section-tag{font-size:.72rem}.ly-ai-compact-quota{font-size:.6rem}.ly-ai-operation #lyAiStart{letter-spacing:-.025em}}
 </style>
+
+<style id="ly-flow-refinement">
+/* 只調整流程與主次：不改動額度表、公開卦圖、鎖定示意及六爻專業欄位。 */
+#lySelectionWorkflow[hidden],#lyTopics[hidden],#lyScenes[hidden],#lyQuestions[hidden],#lyCustomDisclosure[hidden],
+#lyCastPanel[hidden],#lyCastRules[hidden],#lyCastHistoryToggle[hidden],.ly-selection-change[hidden]{display:none!important}
+.ly-selection-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.ly-selection-change,.ly-history-toggle{background:transparent;border:0;padding:3px 0;color:#e5c49e;font:inherit;font-size:.75rem;line-height:1.5;font-weight:740;cursor:pointer;text-align:right}
+.ly-selection-change:hover,.ly-history-toggle:hover{text-decoration:underline;text-underline-offset:4px;color:#ffdcae}
+.ly-selection-change:focus-visible,.ly-history-toggle:focus-visible{outline:2px solid #e7b476;outline-offset:3px;border-radius:3px}
+.ly-selection-head>.ly-selection-change{max-width:85%;overflow-wrap:anywhere}
+#lyQuestionStage .ly-question-actions:has(#lyQuestionNext[hidden]){margin-top:4px}
+#lyQuestionStage .ly-question-actions:has(#lyQuestionNext[hidden]) #lyQuestionSelected{font-size:.77rem;line-height:1.5;color:#f1d1aa}
+.ly-stage-complete>.ly-phase{display:flex;align-items:center;gap:9px;margin-bottom:5px;padding-block:13px 2px}
+.ly-stage-complete>.ly-phase strong{font-size:.91rem}
+.ly-stage-complete>.ly-phase .ly-history-toggle{margin-left:auto}
+.ly-stage-complete #lyCastPanel{margin:10px 0 8px}
+.ly-ai-note{border-left:3px solid #efb777!important;border-top:1px solid rgba(237,172,102,.30);border-right:1px solid rgba(237,172,102,.30);border-bottom:1px solid rgba(237,172,102,.30);background:linear-gradient(140deg,rgba(111,60,29,.16),rgba(30,21,17,.72))!important;border-radius:12px!important;padding:14px 15px!important}
+.ly-ai-operation{display:block!important;margin-top:10px}
+.ly-ai-operation #lyAiStart:not([hidden]),.ly-ai-operation #lyAiRetry:not([hidden]){width:100%;min-height:50px;max-width:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:11px 8px;background:linear-gradient(180deg,#ffd89b,#e49b67);border-color:#ffcc91;color:#291408;font-weight:900;line-height:1.45;font-size:clamp(.65rem,1.6vw,.94rem);letter-spacing:-.015em;box-shadow:0 7px 20px rgba(220,136,68,.12)}
+.ly-ai-operation #lyAiStart:hover:not(:disabled),.ly-ai-operation #lyAiRetry:hover:not(:disabled){filter:brightness(1.065)}
+.ly-ai-operation .ly-ai-primary.is-loading,.ly-ai-follow button.is-loading{opacity:1!important;cursor:progress!important}
+.ly-ai-operation .ly-ai-primary.is-loading::before,.ly-ai-follow button.is-loading::before{content:'';display:inline-block;flex:none;width:16px;height:16px;border:2px solid rgba(43,22,9,.2);border-top-color:#51311b;border-radius:50%;margin-right:8px;animation:lyAiSpin .9s linear infinite}
+.ly-ai-wait{display:none!important}
+/* 重新起卦不與尚未付費的 AI 主動作競爭。 */
+.ly-end-reset-wrap{margin:9px 0 5px}
+#lyResetAtEnd{width:auto;min-height:34px;padding:5px 11px;background:transparent;border:1px solid rgba(196,152,119,.15);box-shadow:none;color:#9f8c80;font-size:.72rem;font-weight:650}
+#lyResetAtEnd:hover{color:#e7b996;background:rgba(255,161,97,.06);border-color:rgba(232,171,116,.34)}
+body.ly-ai-complete #lyResetAtEnd{min-height:42px;padding:8px 18px;color:#f2c48e;border-color:rgba(226,167,101,.35);background:rgba(226,167,101,.08);font-size:.79rem;font-weight:780}
+/* 追問、檢討工具預設折疊；文章直接展開，複製及一般TXT保留在表面。 */
+.ly-ai-follow{margin-top:12px;padding:0;border-top:1px solid rgba(211,172,114,.18)}
+.ly-ai-follow>summary,.ly-ai-audit-tools>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:43px;padding:10px 2px;color:#eacba0;font-size:.8rem;font-weight:780}
+.ly-ai-follow>summary::-webkit-details-marker,.ly-ai-audit-tools>summary::-webkit-details-marker{display:none}
+.ly-ai-follow>summary::after,.ly-ai-audit-tools>summary::after{content:'⌄';font-size:1rem;color:#c8aa84}
+.ly-ai-follow[open]>summary::after,.ly-ai-audit-tools[open]>summary::after{content:'⌃'}
+.ly-follow-body{padding:6px 0 10px}
+.ly-ai-audit-tools{margin-top:10px;border-top:1px dashed rgba(211,172,114,.24)}
+.ly-ai-audit-tools>button{display:block;min-height:37px;border:1px solid rgba(211,172,114,.28);border-radius:8px;padding:8px 11px;margin:4px 0;background:rgba(211,172,114,.065);color:#efcda4;font:inherit;font-size:.75rem;cursor:pointer}
+.ly-ai-audit-tools .ly-ai-batch{margin-top:8px}
+@media(max-width:600px){
+ .ly-ai-operation #lyAiStart:not([hidden]),.ly-ai-operation #lyAiRetry:not([hidden]){font-size:clamp(.62rem,2.55vw,.75rem);padding-inline:6px}
+ .ly-ai-note{padding:11px 10px!important}
+}
+@media(prefers-reduced-motion:reduce){.ly-ai-operation .is-loading::before,.ly-ai-follow .is-loading::before{animation:none!important}}
+</style>
 </head>
 <body>
   <header class="page-topbar">
@@ -908,11 +952,12 @@ html[data-theme="light"] #lyAdvancedChart:not(.is-locked)>summary{color:#70400c;
     </div>
     <p class="ly-quota-status" id="lyQuotaStatus" aria-live="polite"></p>
   </section>
+  <div id="lySelectionWorkflow">
   <div class="ly-phase"><span>01</span><strong>選擇問題</strong></div>
   <p class="ly-hint ly-question-count" id="lyQuestionCount">12 個主題、60 種情境、360 道固定問題；請先選擇一件最想問的事。</p>
-  <div class="ly-step-label">主題</div><div class="ly-topic-grid" id="lyTopics" role="group" aria-label="占問主題"></div>
-  <div class="ly-guide-next" id="lySceneStage" hidden><div class="ly-step-label">情境</div><div class="ly-select-grid" id="lyScenes" role="group" aria-label="占問情境"></div></div>
-  <div class="ly-guide-next" id="lyQuestionStage" hidden><div class="ly-step-label">問題（每次顯示 4 題，請選擇一題）</div><div class="ly-question-grid" id="lyQuestions" role="group" aria-label="固定問題"></div><div class="ly-question-actions"><button id="lyQuestionNext" type="button">↻ 換一批（輪換 2 題）</button><span id="lyQuestionSelected" aria-live="polite"></span></div>
+  <div class="ly-step-label ly-selection-head"><span>主題</span><button type="button" id="lyTopicChange" class="ly-selection-change" hidden aria-controls="lyTopics" aria-expanded="false"></button></div><div class="ly-topic-grid" id="lyTopics" role="group" aria-label="占問主題"></div>
+  <div class="ly-guide-next" id="lySceneStage" hidden><div class="ly-step-label ly-selection-head"><span>情境</span><button type="button" id="lySceneChange" class="ly-selection-change" hidden aria-controls="lyScenes" aria-expanded="false"></button></div><div class="ly-select-grid" id="lyScenes" role="group" aria-label="占問情境"></div></div>
+  <div class="ly-guide-next" id="lyQuestionStage" hidden><div class="ly-step-label ly-selection-head"><span>問題（每批 4 題）</span><button type="button" id="lyQuestionChange" class="ly-selection-change" hidden aria-controls="lyQuestions" aria-expanded="false">更換題目</button></div><div class="ly-question-grid" id="lyQuestions" role="group" aria-label="固定問題"></div><div class="ly-question-actions"><button id="lyQuestionNext" type="button">↻ 換一批（輪換 2 題）</button><span id="lyQuestionSelected" aria-live="polite"></span></div>
     <details class="ly-choice-disclosure" id="lyCustomDisclosure"><summary>沒有合適的題目？自行輸入問題</summary><label class="ly-field ly-custom" for="lyCustomQuestion"><span>一次問一件具體事情</span><input id="lyCustomQuestion" maxlength="160" placeholder="例如：這份工作合約下個月能否順利簽成？" type="text"/></label></details>
   </div>
   <details class="ly-choice-disclosure ly-optional-disclosure" id="lyOptionalDisclosure" hidden>
@@ -920,13 +965,14 @@ html[data-theme="light"] #lyAdvancedChart:not(.is-locked)>summary{color:#70400c;
     <div class="ly-optional-fields" id="lyOptionalFields"></div>
     <p class="ly-optional-note">所有項目皆可略過，僅作為 AI 理解問題的背景，不會改變卦象。</p>
   </details>
+  </div><!-- /lySelectionWorkflow -->
   <div id="lyCastStage" class="ly-guide-next" hidden>
-  <div class="ly-phase"><span>02</span><strong>三枚銅錢・擲六次</strong></div>
-  <details class="ly-choice-disclosure ly-cast-disclosure"><summary>起卦時間與三錢規則（自動記錄）</summary>
+  <div class="ly-phase"><span>02</span><strong id="lyCastPhaseTitle">三枚銅錢・擲六次</strong><button id="lyCastHistoryToggle" class="ly-history-toggle" type="button" hidden aria-controls="lyCastPanel" aria-expanded="false">查看六次紀錄 ▾</button></div>
+  <details id="lyCastRules" class="ly-choice-disclosure ly-cast-disclosure"><summary>起卦時間與三錢規則（自動記錄）</summary>
     <p class="ly-cast-standard"><b>三枚銅錢連擲六次，由下往上排爻</b><span>正面 3、反面 2；6 老陰、7 少陽、8 少陰、9 老陽。老陰與老陽為動爻。</span></p>
     <div class="ly-input-row"><label class="ly-field" for="lyWhen"><span>起卦時間｜台灣 UTC+8，自動記錄</span><input id="lyWhen" type="datetime-local" readonly aria-readonly="true" min="1901-01-01T00:00" max="2099-12-31T23:59" /></label><div class="ly-time-note">依第一擲時間計算六神、日辰、旬空和月建；月建依節氣交接判定，日界 00:00。</div></div>
   </details>
-  <div class="ly-cast-panel" data-method-panel="coin3">
+  <div class="ly-cast-panel" id="lyCastPanel" data-method-panel="coin3">
     <div class="ly-cast-header"><strong id="lyThrowTitle">準備擲初爻（第 1 次）</strong><span id="lyThrowCount">0 / 6</span></div>
     <div class="ly-coin-row" id="lyCoins"><span>銅</span><span>銅</span><span>銅</span></div>
     
@@ -1960,8 +2006,14 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const groups=window.LiuyaoQuestions.groups;
 let topic=null, scene=null, fixedQuestion='', questionStart=0, activeValues=[], latest=null, latestContext=null, castingContext=null;
+let topicExpanded=true,sceneExpanded=true,questionsExpanded=true,castHistoryOpen=false;
 const OPTIONAL_WINDOW=['未來一個月','未來三個月','未來半年'];
 function node(tag,cls,txt){const el=document.createElement(tag);if(cls)el.className=cls;if(txt)el.textContent=txt;return el}
+function jumpTo(id){
+ const element=$(id);if(!element)return;
+ const root=document.documentElement,previous=root.style.scrollBehavior;
+ root.style.scrollBehavior='auto';element.scrollIntoView({behavior:'auto',block:'start'});root.style.scrollBehavior=previous;
+}
 function error(msg){const n=$('lyError');n.textContent=msg;n.hidden=!msg; if(msg)n.scrollIntoView({behavior:'smooth',block:'nearest'})}
 function question(){return $('lyCustomQuestion').value.trim()||fixedQuestion||''}
 function checkedQuestion(){if(!Number.isInteger(topic)){ $('lyTopics').scrollIntoView({behavior:'smooth',block:'center'});throw Error('請先選擇一個主題。')}if(!Number.isInteger(scene)){ $('lySceneStage').scrollIntoView({behavior:'smooth',block:'center'});throw Error('請再選擇一個情境。')}const q=question();if(!q){$('lyQuestionStage').scrollIntoView({behavior:'smooth',block:'center'});throw Error('請選擇一道固定問題，或自行輸入具體問題。')}return q}
@@ -1983,9 +2035,18 @@ function captureCast(){
 }
 function updateCastLayout(active,completed=false){
  document.body.classList.toggle('ly-cast-active',!!active);
- const bottom=$('lyResetAtEnd');if(bottom)bottom.hidden=!active;const throwActions=$('lyThrowActions');if(throwActions)throwActions.hidden=!!completed;
+ document.body.classList.toggle('ly-cast-complete',!!completed);
+ $('lySelectionWorkflow').hidden=!!active;
+ const bottom=$('lyResetAtEnd');if(bottom)bottom.hidden=!active;
+ const throwActions=$('lyThrowActions');if(throwActions)throwActions.hidden=!!completed;
+ const stage=$('lyCastStage'),panel=$('lyCastPanel'),history=$('lyCastHistoryToggle'),rules=$('lyCastRules');
+ if(stage)stage.classList.toggle('ly-stage-complete',!!completed);
+ if(history){history.hidden=!completed;history.setAttribute('aria-expanded',String(!!completed&&castHistoryOpen));history.textContent=castHistoryOpen?'收合六次紀錄 ▴':'查看六次紀錄 ▾'}
+ if(panel)panel.hidden=!!completed&&!castHistoryOpen;
+ if(rules)rules.hidden=!!completed;
+ const title=$('lyCastPhaseTitle');if(title)title.textContent=completed?'六次起卦完成':'三枚銅錢・擲六次';
 }
-function makeResult(data,ctx=snapshot()){latest=data;latestContext=ctx;$('lyResultStage').hidden=false;renderLocked(latest);updateCastLayout(true,true);error('');window.LiuyaoStagingAI?.onReading(data,ctx)}
+function makeResult(data,ctx=snapshot()){latest=data;latestContext=ctx;$('lyResultStage').hidden=false;updateCastLayout(true,true);renderLocked(latest);error('');window.LiuyaoStagingAI?.onReading(data,ctx)}
 function htmlSafeSignal(line){const a=[];if(line.moving)a.push('動爻');if(line.dayVoid)a.push('旬空');if(line.monthBreak)a.push('月破');if(line.dayClash)a.push('日沖');if(line.monthCombine)a.push('月合');if(line.dayCombine)a.push('日合');return a}
 function signalHTML(data){const lines=data.lineObjects.filter(x=>x.moving||x.dayVoid||x.monthBreak);
  if(!lines.length)return '<p class="ly-hint">未出現動爻、旬空或月破的標記；這只代表本次排盤資料的狀態，不等於吉凶判斷。</p>';
@@ -2000,6 +2061,24 @@ function readOptionalContext(){
  });return out;
 }
 function updateCastReady(){const ready=!!(castingContext||(Number.isInteger(topic)&&Number.isInteger(scene)&&question()));$('lyCastStage').hidden=!ready;}
+function syncSelectionUI(){
+ const hasTopic=Number.isInteger(topic),hasScene=hasTopic&&Number.isInteger(scene);
+ const hasQuestion=hasScene&&!!question(),hasFixed=hasScene&&!!fixedQuestion;
+ const t=$('lyTopics'),tc=$('lyTopicChange');
+ t.hidden=hasTopic&&!topicExpanded;tc.hidden=!hasTopic||topicExpanded;
+ tc.textContent=hasTopic?'✓ '+groups[topic].name+'　更換':'';
+ tc.setAttribute('aria-expanded',String(!t.hidden));
+ const sc=$('lyScenes'),scb=$('lySceneChange');
+ sc.hidden=hasScene&&!sceneExpanded;scb.hidden=!hasScene||sceneExpanded;
+ scb.textContent=hasScene?'✓ '+groups[topic].scenes[scene][0]+'　更換':'';
+ scb.setAttribute('aria-expanded',String(!sc.hidden));
+ const qs=$('lyQuestions'),qc=$('lyQuestionChange'),qa=$('lyQuestionNext');
+ qs.hidden=hasQuestion&&!questionsExpanded;qc.hidden=!hasQuestion||questionsExpanded;
+ qc.setAttribute('aria-expanded',String(!qs.hidden));
+ if(hasQuestion&&!questionsExpanded)qa.hidden=true;
+ const custom=$('lyCustomDisclosure');
+ custom.hidden=!!(hasFixed&&!questionsExpanded);
+}
 function renderOptionalInfo(){
  const details=$('lyOptionalDisclosure'),wrap=$('lyOptionalFields');wrap.replaceChildren();details.hidden=!optionalInfo();
  if(!optionalInfo()){details.open=false;return}
@@ -2020,15 +2099,16 @@ function paintTopics(){
  const e=$('lyTopics');e.textContent='';groups.forEach((g,i)=>{
   const b=node('button','ly-choice'+(topic===i?' selected':''));b.type='button';b.innerHTML=`<b>${esc(g.emoji)}　${esc(g.name)}</b>`;
   b.setAttribute('aria-pressed',String(topic===i));
-  b.onclick=()=>{if(castingContext)return;if(topic===i)return;topic=i;scene=null;fixedQuestion='';questionStart=0;$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;paintTopics();paintScenes();renderOptionalInfo()};e.append(b)
+  b.onclick=()=>{if(castingContext)return;if(topic===i)return;topic=i;scene=null;fixedQuestion='';questionStart=0;topicExpanded=false;sceneExpanded=true;questionsExpanded=true;$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;paintTopics();paintScenes();renderOptionalInfo()};e.append(b)
  });
+ syncSelectionUI();
 }
 function paintScenes(){
  const stage=$('lySceneStage'),e=$('lyScenes');stage.hidden=!Number.isInteger(topic);e.replaceChildren();
  if(!Number.isInteger(topic)){$('lyQuestionStage').hidden=true;$('lyQuestions').replaceChildren();updateCastReady();return}
  groups[topic].scenes.forEach((s,i)=>{
   const b=node('button','ly-small-choice'+(scene===i?' selected':''),s[0]);b.type='button';b.setAttribute('aria-pressed',String(scene===i));
-  b.onclick=()=>{if(castingContext)return;if(scene===i)return;scene=i;fixedQuestion='';questionStart=0;$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;paintScenes()};e.append(b)
+  b.onclick=()=>{if(castingContext)return;if(scene===i)return;scene=i;fixedQuestion='';questionStart=0;sceneExpanded=false;questionsExpanded=true;$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;paintScenes()};e.append(b)
  });paintQuestions();
 }
 function paintQuestions(){
@@ -2040,13 +2120,13 @@ function paintQuestions(){
  shown.forEach(i=>{
   const s=all[i],b=node('button','ly-question'+(fixedQuestion===s?' selected':''),`${i+1}. ${s}`);
   b.type='button';b.setAttribute('aria-pressed',String(fixedQuestion===s));
-  b.onclick=()=>{if(castingContext)return;fixedQuestion=s;$('lyCustomQuestion').value='';paintQuestions()};e.append(b);
+  b.onclick=()=>{if(castingContext)return;fixedQuestion=s;questionsExpanded=false;$('lyCustomQuestion').value='';paintQuestions()};e.append(b);
  });
  change.hidden=all.length<=visible;
  change.disabled=!!castingContext;
  change.onclick=()=>{if(castingContext)return;questionStart=(questionStart+2)%all.length;paintQuestions()};
- picked.textContent=fixedQuestion?('已選題目：'+fixedQuestion):('目前顯示 '+shown.length+' / '+all.length+' 題');
- updateCastReady();
+ picked.textContent=fixedQuestion?('已選：'+fixedQuestion):($('lyCustomQuestion').value.trim()?'已選自訂問題：'+$('lyCustomQuestion').value.trim():'目前顯示 '+shown.length+' / '+all.length+' 題');
+ updateCastReady();syncSelectionUI();
 }
 function renderSteps(values){const names=['初爻','二爻','三爻','四爻','五爻','上爻'];$('lyCoinStack').innerHTML=values.map((x,i)=>`<span class="ly-cast-step"><b>${names[i]}</b><span class="ly-step-reading"><strong>${x}</strong><small>${({6:'老陰・動',7:'少陽',8:'少陰',9:'老陽・動'})[x]}</small></span></span>`).join('')}
 function lineMark(value){return `<div class="ly-yao-line ${value===6||value===8?'yin':'yang'} ${value===6||value===9?'moving':''}"><i></i><i></i></div>`}
@@ -2082,7 +2162,7 @@ function renderLocked(data){
  <div class="ly-pro-inner" id="lyProInner"></div></details>
  <div class="ly-ai-note"><div class="ly-ai-compact-head"><b class="ly-ai-section-tag">AI 專業六爻解卦</b><span class="ly-ai-compact-quota" data-ly-ai-quota>額度待查詢</span></div></div>`;
  bindProtectedLock();
- $('lyResultHeading').scrollIntoView({behavior:'smooth',block:'start'});
+ jumpTo('lyResultHeading');
 }
 function bindProtectedLock(){
  const advanced=$('lyAdvancedChart');if(!advanced)return;
@@ -2175,14 +2255,18 @@ function render(data){
 function serializeText(d){return [`專業納甲六爻排盤`,`問題：${d.question||'未填'}`,`起卦：${d.calendar.iso}`,`干支：${d.calendar.year}年 ${d.calendar.month}月 ${d.calendar.day}日`,`本卦：${d.original.name}（${d.original.number}）／變卦：${d.changed.name}（${d.changed.number}）`,`卦宮：${d.palace.palace} ${d.palace.element} ${d.palace.stage}，世${d.palace.shi}應${d.palace.ying}`,`旬空：${d.calendar.voidBranches.join('')}`,`動爻：${d.movingLines.join('、')||'無'}`,...d.lineObjects.slice().reverse().map(x=>`${x.position}爻 ${x.god} ${x.relative} ${x.ganzhi}${x.shiYing?' '+x.shiYing:''} ${x.label} ${x.monthState}${x.dayVoid?' 旬空':''}${x.monthBreak?' 月破':''}${x.changed?' → '+x.changed.ganzhi+' '+x.changed.relative:''}`),`伏神：${d.hidden.map(x=>x.relative+x.najia+'第'+x.position+'爻').join('、')||'無'}`].join('\n')}
 function init(){
  $('lyWhen').value=C.localNowTaipei();paintTopics();paintScenes();renderOptionalInfo();lockInputs(false);
- $('lyCustomQuestion').addEventListener('input',()=>{if($('lyCustomQuestion').value.trim()&&fixedQuestion){fixedQuestion='';paintQuestions()}updateCastReady()});
+ $('lyTopicChange').onclick=()=>{if(castingContext)return;topicExpanded=true;syncSelectionUI()};
+ $('lySceneChange').onclick=()=>{if(castingContext)return;sceneExpanded=true;syncSelectionUI()};
+ $('lyQuestionChange').onclick=()=>{if(castingContext)return;questionsExpanded=true;syncSelectionUI()};
+ $('lyCastHistoryToggle').onclick=()=>{if(!latest)return;castHistoryOpen=!castHistoryOpen;updateCastLayout(true,true)};
+ $('lyCustomQuestion').addEventListener('input',()=>{if(castingContext)return;if($('lyCustomQuestion').value.trim()&&fixedQuestion){fixedQuestion='';paintQuestions()}updateCastReady();syncSelectionUI()});
  $('lyThrow').onclick=()=>{try{
   if(activeValues.length>=6)return;
   const cast=captureCast();
   const c=C.tossLine();
   const values=[...activeValues,c.value];
   const completed=values.length===6?C.preview(values,cast.time,cast.question):null;
-  if(activeValues.length===0){latest=null;latestContext=null;$('result').innerHTML='';$('result').style.display='none';$('emptyState').style.display='';}
+  if(activeValues.length===0){latest=null;latestContext=null;$('result').innerHTML='';$('result').style.display='none';$('emptyState').style.display='';castHistoryOpen=false;document.body.classList.remove('ly-ai-complete');}
   activeValues=values;
   $('lyCoins').innerHTML=c.coins.map(x=>`<span>${x===3?'正':'反'}</span>`).join('');
   renderSteps(activeValues);
@@ -2192,12 +2276,13 @@ function init(){
   $('lyThrow').textContent=completed?'已完成六次':`擲第 ${activeValues.length+1} 爻`;
   $('lyThrow').disabled=!!completed;
   if(completed)makeResult(completed,cast);
+  else if(activeValues.length===1)requestAnimationFrame(()=>jumpTo('lyCastStage'));
  }catch(e){if(activeValues.length===0){castingContext=null;lockInputs(false)}error(e.message)}};
- const resetCast=()=>{activeValues=[];castingContext=null;topic=null;scene=null;fixedQuestion='';questionStart=0;$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;lockInputs(false);paintTopics();paintScenes();renderOptionalInfo();$('lyWhen').value=C.localNowTaipei();$('lyResultStage').hidden=true;updateCastReady();$('lyThrow').disabled=false;$('lyThrow').textContent='擲出初爻';$('lyThrowTitle').textContent='準備擲初爻（第 1 次）';$('lyThrowCount').textContent='0 / 6';$('lyCoins').innerHTML='<span>銅</span><span>銅</span><span>銅</span>';renderSteps([]);updateCastLayout(false);latest=null;latestContext=null;window.LiuyaoStagingAI?.clear();$('result').innerHTML='';$('result').style.display='none';$('emptyState').style.display='';error('')};
+ const resetCast=()=>{activeValues=[];castingContext=null;topic=null;scene=null;fixedQuestion='';questionStart=0;topicExpanded=true;sceneExpanded=true;questionsExpanded=true;castHistoryOpen=false;document.body.classList.remove('ly-ai-complete');$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;lockInputs(false);paintTopics();paintScenes();renderOptionalInfo();$('lyWhen').value=C.localNowTaipei();$('lyResultStage').hidden=true;updateCastReady();$('lyThrow').disabled=false;$('lyThrow').textContent='擲出初爻';$('lyThrowTitle').textContent='準備擲初爻（第 1 次）';$('lyThrowCount').textContent='0 / 6';$('lyCoins').innerHTML='<span>銅</span><span>銅</span><span>銅</span>';renderSteps([]);updateCastLayout(false);latest=null;latestContext=null;window.LiuyaoStagingAI?.clear();$('result').innerHTML='';$('result').style.display='none';$('emptyState').style.display='';error('')};
  $('lyResetAtEnd').onclick=()=>{
   if(!confirm('重新起卦將清除目前畫面的卦象與 AI 解讀。請先複製重要內容，確定重新起卦嗎？'))return;
   resetCast();
-  $('lyTopics').scrollIntoView({behavior:'auto',block:'start'});
+  $('lySelectionWorkflow').scrollIntoView({behavior:'auto',block:'start'});
  };
 
 }
@@ -2369,7 +2454,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  }
  function updateChargeCopy(view=readingView){
   const start=$('lyAiStart');
-  if(start&&view&&!view.answer)start.textContent='開始 AI 解卦｜工具額度扣'+chargeCost(view)+'次｜AI解讀扣1次';
+  if(start&&view&&!view.answer&&!start.classList.contains('is-loading'))start.textContent='開始 AI 解卦｜工具額度扣'+chargeCost(view)+'次｜AI解讀扣1次';
   const head=document.querySelector('#result [data-ly-ai-quota]');
   if(!head||!view)return;
   if(!TOKEN.test(session())){head.textContent='登入查看額度';return}
@@ -2388,7 +2473,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  }
  function session(){try{return localStorage.getItem(SESSION_KEY)||''}catch(_){return ''}}
  function status(text,isError=false){const el=$('lyAiStatus');if(el){el.textContent=text;el.classList.toggle('is-error',isError)}}
- function setLoading(view,on,kind='initial'){if(readingView!==view)return;const panel=$('lyAiWait');const note=document.querySelector('#result .ly-ai-note');if(panel){panel.hidden=!on;const t=$('lyAiWaitTitle');if(t)t.textContent=kind==='followup'?'AI 正在回覆追問…':'AI 正在解讀六爻卦象…'}if(note)note.setAttribute('aria-busy',String(!!on));if(on)status('')}
+ function setLoading(view,on,kind='initial'){
+  if(readingView!==view)return;
+  const panel=$('lyAiWait'),note=document.querySelector('#result .ly-ai-note');
+  if(panel)panel.hidden=true;
+  if(note)note.setAttribute('aria-busy',String(!!on));
+  const start=$('lyAiStart'),retry=$('lyAiRetry'),follow=$('lyAiFollowupSend');
+  [start,retry,follow].forEach(b=>{if(b){b.classList.remove('is-loading');b.removeAttribute('aria-busy')}});
+  if(on){
+   const target=kind==='followup'?follow:retry&&!retry.hidden?retry:start;
+   if(target){target.classList.add('is-loading');target.setAttribute('aria-busy','true');target.textContent=kind==='followup'?'AI 正在回覆追問…':'AI 正在解讀六爻卦象…'}
+   status('');
+  }else{
+   if(retry)retry.textContent='↻ 保留本卦重新嘗試 AI 解卦';
+   if(follow)follow.textContent=view.followupUsed?'✓ 本卦 AI 追問已完成':'送出 AI 追問（另扣 1 次）';
+   updateChargeCopy(view);
+  }
+ }
  function make(tag,cls,txt){const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n}
  function uuid(){if(!crypto?.randomUUID)throw Error('此瀏覽器不支援安全操作編號，無法啟動站內 AI。');return crypto.randomUUID()}
  function requireLogin(){
@@ -2680,8 +2781,8 @@ function safeAnswer(target,answer){
   if(readingView!==view)return;
 
   const node=$(mode==='initial'?'lyAiAnswer':'lyAiFollowupAnswer');if(node)safeAnswer(node,answer);if(mode==='initial'){const reader=$('lyAiReader');if(reader)reader.hidden=false;const fold=$('lyAiFoldTop');if(fold)fold.textContent='↑ 收合文章';}
-  if(mode==='initial'){view.answer=answer;view.initialReceipt=receipt||view.initialReceipt;const block=$('lyAiFollowup');if(block)block.hidden=false;const start=$('lyAiStart');if(start)start.hidden=true;}
-  else {view.followupUsed=true;view.followupAnswer=answer;view.followupReceipt=receipt||view.followupReceipt;const send=$('lyAiFollowupSend');if(send)send.disabled=true;}
+  if(mode==='initial'){view.answer=answer;view.initialReceipt=receipt||view.initialReceipt;document.body.classList.add('ly-ai-complete');const block=$('lyAiFollowup');if(block)block.hidden=false;const start=$('lyAiStart');if(start)start.hidden=true;}
+  else {view.followupUsed=true;view.followupAnswer=answer;view.followupReceipt=receipt||view.followupReceipt;const send=$('lyAiFollowupSend');if(send)send.disabled=true;const follow=$('lyAiFollowup');if(follow)follow.open=true;}
   const check=$('lyAiCheckStatus');if(check)check.hidden=true;const retry=$('lyAiRetry');if(retry)retry.hidden=true;const diagnostic=$('lyAiFailureTxt');if(diagnostic)diagnostic.hidden=true;view.retryNeeded=false;
   status('');updateAiFooter(view);
   if(mode==='initial')void loadProtectedChart(view);
@@ -2740,6 +2841,7 @@ function safeAnswer(target,answer){
    if(mode==='initial'){
     view.retryNeeded=true;view.lastFailure={code:r.failureCode||'AI_CENTER_UNAVAILABLE',diagnostic:r.diagnostic||null,traceId:r.traceId||'',operationId:op,castId:view.castId,at:new Date().toISOString()};
     const button=$('lyAiRetry');if(button){button.hidden=false;button.disabled=busy;}
+    const start=$('lyAiStart');if(start)start.hidden=true; // 退款後改突出原卦重試，不顯示無效的初次解卦按鈕
     const diagnostic=$('lyAiFailureTxt');if(diagnostic)diagnostic.hidden=false;
     renderReceipt(view,'AI 解卦失敗：'+cause+diagnosticText(r.diagnostic)+'｜本次交易已確認退款，可保留原卦重試。'+trace);
    }else{
@@ -2852,12 +2954,12 @@ function safeAnswer(target,answer){
   const foldBottom=make('button','ly-ai-fold ly-ai-fold-bottom','↑ 收合文章，返回標題');foldBottom.type='button';
   const toggleReader=()=>{const open=!answer.hidden;answer.hidden=open;foldBottom.hidden=open;foldTop.textContent=open?'↓ 展開文章':'↑ 收合文章';foldTop.setAttribute('aria-expanded',String(!open));if(open){const title=$('lyAiQuestionTitle');if(title)title.scrollIntoView({block:'start',behavior:'smooth'});}};
   foldTop.onclick=toggleReader;foldBottom.onclick=toggleReader;readerHead.append(readerLabel,foldTop);reader.append(readerHead,answer,foldBottom);
-  const follow=make('section','ly-ai-follow');follow.id='lyAiFollowup';follow.hidden=true;
-  const fh=make('h4',null,'AI 追問（本卦限一次）');
+  const follow=make('details','ly-ai-follow');follow.id='lyAiFollowup';follow.hidden=true;
+  const fh=make('summary',null,'AI 追問｜另扣1次（本卦限一次）');
   const field=make('textarea');field.id='lyAiFollowupText';field.maxLength=500;field.rows=3;field.placeholder='輸入本卦要繼續追問的問題…';
   const send=make('button','ly-ai-subtle','送出 AI 追問（另扣 1 次）');send.id='lyAiFollowupSend';send.type='button';send.onclick=()=>followup(view);
   const followAnswer=make('article','ly-ai-answer','');followAnswer.id='lyAiFollowupAnswer';followAnswer.hidden=true;
-  follow.append(fh,field,send,followAnswer);
+  const followBody=make('div','ly-follow-body');followBody.append(field,send,followAnswer);follow.append(fh,followBody);
   const footer=make('div','ly-ai-footer');footer.id='lyAiFooter';footer.hidden=true;
   const exports=make('div','ly-ai-export');
   const copy=make('button',null,'複製解卦文章');copy.id='lyAiCopy';copy.type='button';copy.onclick=async()=>{try{await navigator.clipboard.writeText(aiReportText(view));copy.textContent='已複製';}catch(_){status('瀏覽器未允許複製，可長按文章選取文字。',true)}};
@@ -2873,7 +2975,7 @@ function safeAnswer(target,answer){
    catch(e){status('匯出失敗：'+String(e?.message||'完整排盤無法取得'),true)}
    finally{fullAudit.disabled=false;fullAudit.textContent=prior}
   };
-  exports.append(copy,download,fullAudit);
+  exports.append(copy,download);
   const batch=make('div','ly-ai-batch');batch.id='lyAiBatch';
   const addBatch=make('button',null,'＋ 加入批次檢討');addBatch.type='button';addBatch.id='lyAiAuditAddBatch';
   const downloadBatch=make('button',null,'下載批次 TXT（0）');downloadBatch.type='button';downloadBatch.id='lyAiAuditDownloadBatch';downloadBatch.disabled=true;
@@ -2894,9 +2996,10 @@ function safeAnswer(target,answer){
   clearBatch.onclick=()=>{if(!confirm('確定清空本頁暫存的 '+auditBatch.size+' 個檢討資料？建議先下載批次 TXT。'))return;auditBatch.clear();refreshBatch();status('批次清單已清空。')};
   batch.append(addBatch,downloadBatch,clearBatch,batchHelp);refreshBatch();
   const meta=make('p','ly-ai-meta','');meta.id='lyAiMeta';meta.hidden=true;
-  footer.append(exports,batch,meta);
-  // 將恢復入口獨立放在起卦記錄下方，不出現在額度表或文章主要操作區。
-  note.append(toolbar,wait,statusText,reader,follow,footer);
+  const auditTools=make('details','ly-ai-audit-tools');const auditSummary=make('summary',null,'完整檢討資料與批次 TXT');auditTools.append(auditSummary,fullAudit,batch);
+  footer.append(exports,follow,auditTools,meta);
+  // 完整文章→複製與一般 TXT→追問→專業檢討檔案；重新起卦仍在結果區下方。
+  note.append(toolbar,wait,statusText,reader,footer);
   updateChargeCopy(view);
   if(ENABLED&&oldCast(data))status('舊紀錄無法再送出 AI，請重新起卦。');
  }
