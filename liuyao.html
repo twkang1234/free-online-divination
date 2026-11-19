@@ -790,6 +790,14 @@ html[data-theme="light"] #lyAdvancedChart:not(.is-locked)>summary{color:#70400c;
 .ly-ai-note #lyAiFollowupAnswer li .ly-ai-list-label{color:#a8e6be;font-weight:760}
 /* === /v3.0 reader styles === */
 </style>
+<style id="ly-v31-charge-copy">
+/* v3.1: Charge details reuse the EXISTING AI heading row and button, no extra panel or line. */
+.ly-ai-compact-head{display:flex;align-items:baseline;justify-content:space-between;min-width:0;gap:5px;line-height:1.5}
+.ly-ai-compact-head .ly-ai-section-tag{flex:none;white-space:nowrap;font-size:.78rem;letter-spacing:.01em;color:#d8b587}
+.ly-ai-compact-quota{flex:1;min-width:0;text-align:right;white-space:nowrap;font-size:clamp(.6rem,1.8vw,.72rem);font-weight:650;letter-spacing:-.015em;color:#e5c89b;font-variant-numeric:tabular-nums}
+.ly-ai-operation #lyAiStart{white-space:nowrap;max-width:100%;padding-inline:7px;font-size:clamp(.65rem,3vw,.78rem);letter-spacing:-.015em}
+@media(max-width:360px){.ly-ai-compact-head .ly-ai-section-tag{font-size:.72rem}.ly-ai-compact-quota{font-size:.6rem}.ly-ai-operation #lyAiStart{letter-spacing:-.025em}}
+</style>
 </head>
 <body>
   <header class="page-topbar">
@@ -811,7 +819,7 @@ html[data-theme="light"] #lyAdvancedChart:not(.is-locked)>summary{color:#70400c;
   <section class="liuyao-hero" id="top">
     <div class="hero-copy">
       <div class="hero-kicker">LIUYAO · THREE COINS · SIX LINES</div>
-      <h1>六爻占卜・專業納甲排盤 <span id="lySiteVersion" class="ly-version-badge" aria-label="六爻工具版本 v3.0">v3.0</span></h1>
+      <h1>六爻占卜・專業納甲排盤 <span id="lySiteVersion" class="ly-version-badge" aria-label="六爻工具版本 v3.1">v3.1</span></h1>
       <div class="hero-tagline">三錢起卦・京房八宮・世應六親・納甲六神</div>
       <p class="hero-desc">以納甲六爻為核心，從三枚硬幣六次起卦，完整排出本卦、變卦、京房八宮、世應、六親、六神、月建日辰、旬空與伏神。先問一件具體的事，再循爻位理解動靜與生剋。</p>
       <div class="hero-actions">
@@ -2072,7 +2080,7 @@ function renderLocked(data){
  <details id="lyAdvancedChart" class="ly-pro-data is-locked" data-locked="true">
  <summary aria-disabled="true" tabindex="-1">查看完整專業排盤・變卦・六親六神・日月伏神</summary>
  <div class="ly-pro-inner" id="lyProInner"></div></details>
- <div class="ly-ai-note"><b class="ly-ai-section-tag">AI 專業六爻解卦</b></div>`;
+ <div class="ly-ai-note"><div class="ly-ai-compact-head"><b class="ly-ai-section-tag">AI 專業六爻解卦</b><span class="ly-ai-compact-quota" data-ly-ai-quota>額度待查詢</span></div></div>`;
  bindProtectedLock();
  $('lyResultHeading').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -2154,7 +2162,7 @@ function render(data){
  <details class="ly-details"><summary>展開六爻逐條生剋與日月關係</summary><div class="ly-detail-grid">${data.lineObjects.slice().reverse().map(l=>`<div><b>第 ${l.position} 爻 ${esc(l.relative)} ${esc(l.ganzhi)} ${l.shiYing}</b><p>月令五行氣勢參考 ${l.monthState}・月建：${esc(formatPillarRelation(l,'month',c))}・日辰：${esc(formatPillarRelation(l,'day',c))}${l.dayVoid?'・旬空':''}${l.monthBreak?'・月破':''}${l.dayClash?'・日沖':''}${l.changed?'・動變：'+esc(formatChangedRelation(l))+'・變爻狀態：'+esc(changedStateText(l,c)):''}</p></div>`).join('')}</div></details>
  <div class="ly-download-actions"><button type="button" id="lyCopy">複製完整排盤文字</button><button type="button" id="lySave">下載排盤 JSON</button><span id="lyProCopyStatus" role="status"></span></div>
  </div></details>
- <div class="ly-ai-note"><b class="ly-ai-section-tag">AI 專業六爻解卦</b></div>`;
+ <div class="ly-ai-note"><div class="ly-ai-compact-head"><b class="ly-ai-section-tag">AI 專業六爻解卦</b><span class="ly-ai-compact-quota" data-ly-ai-quota>額度待查詢</span></div></div>`;
  $('lyCopy').onclick=async()=>{const s=serializeText(data);try{await navigator.clipboard.writeText(s);$('lyProCopyStatus').textContent='已複製'}catch(e){$('lyProCopyStatus').textContent='瀏覽器未允許複製；可改下載 JSON'}};
  $('lySave').onclick=()=>{const obj=JSON.stringify(data,null,2),url=URL.createObjectURL(new Blob([obj],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='liuyao-reading-'+c.localDateTime.replace(/\W/g,'')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000)};
  // details 沒有原生 disabled：同時阻止滑鼠、鍵盤及程式誤開啟。
@@ -2346,7 +2354,31 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  const formatPillarRelation=(...args)=>window.LiuyaoProtectedUI.formatPillarRelation(...args);
  const formatChangedRelation=(...args)=>window.LiuyaoProtectedUI.formatChangedRelation(...args);
  const changedStateText=(...args)=>window.LiuyaoProtectedUI.changedStateText(...args);
- let readingView=null,busy=false;
+ let readingView=null,busy=false,latestQuota=null;
+ function chargeCost(view){
+  return window.LiuyaoQuestions.isFixed({topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question})?1:2;
+ }
+ function chargePreview(view,q){
+  const cost=chargeCost(view);
+  const freeTool=quotaRemaining(q.dailyTool),freeAI=quotaRemaining(q.dailyAI);
+  const usesFreeTool=cost===1&&freeTool>0,usesFreeAI=freeAI>0;
+  const toolLeft=usesFreeTool?freeTool:Number(q.wallet.tool);
+  const aiLeft=usesFreeAI?freeAI:Number(q.wallet.ai);
+  if(!Number.isFinite(toolLeft)||!Number.isFinite(aiLeft)||toolLeft<0||aiLeft<0)return null;
+  return {cost,toolLabel:usesFreeTool?'免費工具額度':'共用工具額度',aiLabel:usesFreeAI?'免費 AI 額度':'共用 AI 額度',toolLeft,aiLeft};
+ }
+ function updateChargeCopy(view=readingView){
+  const start=$('lyAiStart');
+  if(start&&view&&!view.answer)start.textContent='開始 AI 解卦｜工具額度扣'+chargeCost(view)+'次｜AI解讀扣1次';
+  const head=document.querySelector('#result [data-ly-ai-quota]');
+  if(!head||!view)return;
+  if(!TOKEN.test(session())){head.textContent='登入查看額度';return}
+  const info=latestQuota&&chargePreview(view,latestQuota);
+  if(!info){head.textContent=ENABLED?'額度待查詢':'額度尚未確認';return}
+  head.textContent=(info.toolLabel==='免費工具額度'?'免費工具':'共用工具')+info.toolLeft+'次｜'+(info.aiLabel==='免費 AI 額度'?'免費AI':'共用AI')+info.aiLeft+'次';
+  head.title='目前'+info.toolLabel+'剩餘 '+info.toolLeft+' 次；'+info.aiLabel+'剩餘 '+info.aiLeft+' 次';
+ }
+
  const auditBatch=new Map(); // 僅本頁記憶體，重新整理即清空；不寫 localStorage／伺服器。
  const MAX_AUDITS=12;
  function auditFilename(view){
@@ -2403,16 +2435,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }finally{clearTimeout(timer)}
  }
  async function refreshQuota(){
-  if(!ENABLED){$('lyQuotaStatus').textContent='六爻 AI 尚未連線，暫不可執行扣點';return null}
+  if(!ENABLED){latestQuota=null;updateChargeCopy();$('lyQuotaStatus').textContent='六爻 AI 尚未連線，暫不可執行扣點';return null}
   try{
    const data=await request('/quota/status');
+   latestQuota=data;
+   updateChargeCopy();
    $('lyDailyQuota').textContent=quotaRemaining(data.dailyTool)+' / '+data.dailyTool.limit+' 次';
    $('lyDailyAiQuota').textContent=quotaRemaining(data.dailyAI)+' / '+data.dailyAI.limit+' 次';
    $('lyToolQuota').textContent=String(data.wallet.tool)+' 次';
    $('lyAiQuota').textContent=String(data.wallet.ai)+' 次';
    $('lyQuotaStatus').textContent='';
    return data;
-  }catch(e){$('lyQuotaStatus').textContent='額度查詢失敗，不能進行扣點：'+String(e.message||'連線異常');return null}
+  }catch(e){latestQuota=null;updateChargeCopy();$('lyQuotaStatus').textContent='額度查詢失敗，不能進行扣點：'+String(e.message||'連線異常');return null}
  }
  const quotaRefreshBtn=$('lyQuotaRefresh');
  if(quotaRefreshBtn)quotaRefreshBtn.addEventListener('click',async()=>{
@@ -2667,7 +2701,9 @@ function safeAnswer(target,answer){
    const cost=view.ctx?.intent==='custom'?2:(window.LiuyaoQuestions.isFixed({topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question})?1:2);
    if(quotaRemaining(q.dailyTool)<1&&q.wallet.tool<cost)throw Error('工具額度不足，無法重新保留本次解卦額度。');
    if(quotaRemaining(q.dailyAI)<1&&q.wallet.ai<1)throw Error('AI 額度不足，無法重試。');
-   if(!window.confirm('原卦六次爻值、日期與問題將全部保留，不重新擲卦。\n上次額度已退款，這次重試會重新保留工具與 AI 額度；若仍失敗會再次按交易規則退款。\n\n確定重試？'))return;
+   const retryCharge=chargePreview(view,q);
+   if(!retryCharge||retryCharge.toolLeft<cost||retryCharge.aiLeft<1)throw Error('額度資料不完整，沒有發出重試請求。');
+   if(!window.confirm(`原卦六次爻值、日期與問題全部保留，不重新擲卦。\n本次重試重新使用：\n${retryCharge.toolLabel}：扣${cost}次（${retryCharge.toolLeft}→${retryCharge.toolLeft-cost}次）\n${retryCharge.aiLabel}：扣1次（${retryCharge.aiLeft}→${retryCharge.aiLeft-1}次）\n退款仍依原交易規則辦理。\n\n確定重試？`))return;
    setLoading(view,true,'initial');
    if(!view.retryCastOp)view.retryCastOp=uuid();
    const old=view.castId;
@@ -2737,9 +2773,11 @@ function safeAnswer(target,answer){
     const cost=fixed?1:2;
     if(!(fixed&&quotaRemaining(q.dailyTool)>0)&&q.wallet.tool<cost)throw Error('工具額度不足，沒有發出起卦記帳請求。');
     if(quotaRemaining(q.dailyAI)<1&&q.wallet.ai<1)throw Error('AI 額度不足，沒有發出起卦記帳請求。');
-    const source=fixed&&quotaRemaining(q.dailyTool)>0?'本期免費工具額度':`共用工具額度 ${cost} 次`;
-    const aiSource=quotaRemaining(q.dailyAI)>0?'本期免費 AI 額度':'共用 AI 額度 1 次';
-    if(!window.confirm(`本次解卦將使用：\n工具：${source}\nAI：${aiSource}\n\n確定開始嗎？`))return;
+    const charge=chargePreview(view,q);
+    if(!charge)throw Error('額度資料不完整，沒有發出扣點請求。');
+    const toolAfter=charge.toolLeft-charge.cost,aiAfter=charge.aiLeft-1;
+    if(toolAfter<0||aiAfter<0)throw Error('額度不足，沒有發出扣點請求。');
+    if(!window.confirm(`本次 AI 解卦將使用：\n${charge.toolLabel}：扣${charge.cost}次（${charge.toolLeft}→${toolAfter}次）\n${charge.aiLabel}：扣1次（${charge.aiLeft}→${aiAfter}次）\n\n確定開始嗎？`))return;
     setLoading(view,true,'initial');
     if(!view.castOp)view.castOp=uuid();updatePending(view);
     const payload={tool:'liuyao',operationId:view.castOp,questionBankVersion:window.LiuyaoQuestions.version,topic:view.ctx.topic,scene:view.ctx.scene,question:view.data.question,values:view.data.values.slice(),method:'three-coins',localDateTime:view.data.calendar.localDateTime,optionalContext:view.ctx.optionalContext||{}};
@@ -2769,7 +2807,9 @@ function safeAnswer(target,answer){
   try{
    const q=await refreshQuota();if(!q)throw Error('無法確認追問 AI 額度，沒有送出請求。');
    if(quotaRemaining(q.dailyAI)<1&&q.wallet.ai<1)throw Error('AI 額度不足，追問沒有送出。');
-   if(!window.confirm('本次 AI 追問需再使用 1 次 AI 解讀額度，確定送出嗎？'))return;
+   const followCharge=chargePreview(view,q);
+   if(!followCharge||followCharge.aiLeft<1)throw Error('額度資料不完整，追問尚未送出。');
+   if(!window.confirm(`本次 AI 追問將使用：\n${followCharge.aiLabel}：扣1次（${followCharge.aiLeft}→${followCharge.aiLeft-1}次）\n\n確定送出嗎？`))return;
    view.followupQuestion=text;setLoading(view,true,'followup');
    await interpret(view,'followup',text);
   }catch(e){status(String(e.message||'追問未完成'),true)}finally{setLoading(view,false);setWorking(false)}
@@ -2857,6 +2897,7 @@ function safeAnswer(target,answer){
   footer.append(exports,batch,meta);
   // 將恢復入口獨立放在起卦記錄下方，不出現在額度表或文章主要操作區。
   note.append(toolbar,wait,statusText,reader,follow,footer);
+  updateChargeCopy(view);
   if(ENABLED&&oldCast(data))status('舊紀錄無法再送出 AI，請重新起卦。');
  }
  function clear(){readingView=null}
@@ -2874,17 +2915,17 @@ function safeAnswer(target,answer){
    const info=await r.json().catch(()=>({}));
    const backendVersion=String(info.buildVersion||'未提供');
    const marker=$('lySiteVersion');
-   if(marker){const mismatch=backendVersion!=='3.0';marker.textContent=mismatch?'v3.0 ⚠':'v3.0';marker.classList.toggle('ly-version-mismatch',mismatch);marker.title=mismatch?'六爻網頁 v3.0，但後端是 '+backendVersion+'；請更新 liuyao-api.js':'六爻網頁與後端均為 v3.0';}
-   ENABLED=r.ok&&info.mode==='enabled'&&info.questionBankVersion===window.LiuyaoQuestions.version&&backendVersion==='3.0';
+   if(marker){const mismatch=backendVersion!=='3.1';marker.textContent=mismatch?'v3.1 ⚠':'v3.1';marker.classList.toggle('ly-version-mismatch',mismatch);marker.title=mismatch?'六爻網頁 v3.1，但後端是 '+backendVersion+'；請更新 liuyao-api.js':'六爻網頁與後端均為 v3.1';}
+   ENABLED=r.ok&&info.mode==='enabled'&&info.questionBankVersion===window.LiuyaoQuestions.version&&backendVersion==='3.1';
    if(!ENABLED){
-    const reason=backendVersion!=='3.0'?'六爻前後端版本尚未同步：網頁 v3.0／Worker '+backendVersion+'；請先更新六爻 API，再使用 AI。':
+    const reason=backendVersion!=='3.1'?'六爻前後端版本尚未同步：網頁 v3.1／Worker '+backendVersion+'；請先更新六爻 API，再使用 AI。':
       info?.centerStatus==='route-missing'?'AI 總控中心尚未部署六爻專用通道；已停止扣點。':
       info?.centerStatus==='auth-failed'?'六爻與 AI 總控中心專用金鑰不一致；已停止扣點。':
       '六爻 AI 服務尚未就緒或版本不同，暫不可使用';
     if(statusText)statusText.textContent=reason;return;
    }
    if(readingView){
-    const start=$('lyAiStart');if(start){start.textContent='開始 AI 解卦';start.disabled=busy||!!readingView.initialOp}
+    const start=$('lyAiStart');if(start){start.disabled=busy||!!readingView.initialOp}updateChargeCopy(readingView);
    }
    if(TOKEN.test(session()))await refreshQuota();
    else if(statusText)statusText.textContent='站內 AI 已開放，請先登入會員查看額度';
