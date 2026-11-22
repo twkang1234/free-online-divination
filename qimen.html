@@ -510,6 +510,20 @@
     #qimenTool .palace-right .gan-tian { color: #ff838a; font-weight: 800; }
     #qimenTool .palace-right .gan-di { color: #75e0aa; }
 
+    /* Hidden stem sits immediately LEFT of the original earth stem. */
+    #qimenTool .palace-right .gan-bottom {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 9px;
+      white-space: nowrap;
+    }
+    #qimenTool .palace-right .gan-hidden {
+      color: #ff5967;
+      font-weight: 800;
+    }
+
+
     #qimenTool .palace-keying {
       flex: 1;
       padding: 10px 13px 12px;
@@ -2066,11 +2080,18 @@ function renderGrid(palaces){
     else if(k.type==='matched')keyingHTML=`<div class="line"><span class="kh">${safe(k.label)}：</span>${k.name?`為${safe(k.name)}，`:''}${safe(k.text)}</div>`;
     else if(k.type==='unknown')keyingHTML=`<div class="line"><span class="kh">${safe(k.label)}：</span><span class="empty">（無資料）</span></div>`;
     else keyingHTML='<div class="empty">（無克應）</div>';
+    // Each of the eight outer palaces gets the second (hidden + earth) interpretation.
+    // The center palace intentionally has neither a hidden-stem glyph nor keying text.
+    if(g.luoshu!==5){
+      const hk=g.hiddenKeying||{type:'none'};
+      if(hk.type==='matched')keyingHTML+=`<div class="line line-hidden"><span class="kh">${safe(hk.label)}：</span>${safe(hk.text)}</div>`;
+      else if(hk.type==='unknown')keyingHTML+=`<div class="line line-hidden"><span class="kh">${safe(hk.label)}：</span><span class="empty">（無資料）</span></div>`;
+    }
     return `<div class="palace">
       ${g.hasMa?'<span class="ma-star">馬</span>':''}
       <div class="palace-header"><span><span class="name">${safe(g.name)}</span> <span class="luoshu">(${safe(g.luoshu)})</span></span><span class="dir">${safe(g.dir)}（${safe(g.wuxing)}）</span></div>
       <div class="palace-main"><div class="palace-left"><div class="shen">${safe(g.shen||'—')}${g.hasKong?'<span class="kong-mark">○</span>':''}</div><div class="xing">${safe(g.xing||'—')}</div><div class="men">${safe(g.men||'—')}</div></div>
-      <div class="palace-right"><div class="gan-tian">${safe(g.tian||'　')}</div><div class="gan-di">${safe(g.di||'　')}</div></div></div>
+      <div class="palace-right"><div class="gan-tian">${safe(g.tian||'　')}</div><div class="gan-bottom">${g.luoshu!==5&&g.hiddenStem?`<span class="gan-hidden" title="隱干" aria-label="隱干 ${safe(g.hiddenStem)}">${safe(g.hiddenStem)}</span>`:''}<span class="gan-di">${safe(g.di||'　')}</span></div></div></div>
       <div class="palace-keying">${keyingHTML}</div>
     </div>`;
   }).join('');
