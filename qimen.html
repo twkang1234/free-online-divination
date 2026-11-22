@@ -1689,7 +1689,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       <div class="grid" id="palaceGrid"></div>
       <div class="notice" id="noticeBar"></div>
 
-      <footer>qimen2.standalone · 拆補法 · 資料僅供參考</footer>
+      <footer>奇門遁甲排盤 · 拆補法 · 資料僅供參考</footer>
     </main>
   </section>
 
@@ -2017,345 +2017,86 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
   </section>
 
 
-  <script src="qimen2.standalone.min.js"></script>
   <script>
-const REGIONS = {
-  '台北': { 經度: 121.31, 度: 121, 分: 31, 時區: 8, 說明: '台北（UTC+8，元亨利貞網基準）' },
-  '無':   { 經度: 120,    度: 120, 分: 0,  時區: 8, 說明: '不校正' }
-};
-let currentRegion = '台北';
-
-function getEquationOfTime(date) {
-  const start = new Date(date.getFullYear(), 0, 0);
-  const dayOfYear = Math.floor((date - start) / 86400000);
-  const gamma = 2 * Math.PI * (dayOfYear - 1 + (date.getHours() - 12) / 24) / 365;
-  return 229.18 * (
-    0.000075 +
-    0.001868 * Math.cos(gamma) -
-    0.032077 * Math.sin(gamma) -
-    0.014615 * Math.cos(2 * gamma) -
-    0.040849 * Math.sin(2 * gamma)
-  );
-}
-
-// 對齊元亨利貞網（china95.net）真太陽時演算法（回傳總偏移分鐘數）
-function getRegionOffset(localDate, regionName) {
-  if (regionName === '無') return 0;
-  const r = REGIONS[regionName];
-  const 經度校正分 = (r.度 - 120) * 60 + (r.分 * 4) / 60;
-  const 均時差分 = getEquationOfTime(localDate);
-  return 經度校正分 + 均時差分;
-}
-
-const GONG_LAYOUT = [
-  { idx: 0, luoshu: 4, name: '巽宮', dir: '東南', wuxing: '木', zhi: ['辰','巳'] },
-  { idx: 1, luoshu: 9, name: '離宮', dir: '南',   wuxing: '火', zhi: ['午'] },
-  { idx: 2, luoshu: 2, name: '坤宮', dir: '西南', wuxing: '土', zhi: ['未','申'] },
-  { idx: 3, luoshu: 3, name: '震宮', dir: '東',   wuxing: '木', zhi: ['卯'] },
-  { idx: 4, luoshu: 5, name: '中宮', dir: '中',   wuxing: '土', zhi: [] },
-  { idx: 5, luoshu: 7, name: '兌宮', dir: '西',   wuxing: '金', zhi: ['酉'] },
-  { idx: 6, luoshu: 8, name: '艮宮', dir: '東北', wuxing: '土', zhi: ['丑','寅'] },
-  { idx: 7, luoshu: 1, name: '坎宮', dir: '北',   wuxing: '水', zhi: ['子'] },
-  { idx: 8, luoshu: 6, name: '乾宮', dir: '西北', wuxing: '金', zhi: ['戌','亥'] }
-];
-const LUOSHU_TO_IDX = {1:7, 2:2, 3:3, 4:0, 5:4, 6:8, 7:5, 8:6, 9:1};
-
-const ZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
-const XUN_KONG = {
-  '甲子': ['戌','亥'], '甲戌': ['申','酉'], '甲申': ['午','未'],
-  '甲午': ['辰','巳'], '甲辰': ['寅','卯'], '甲寅': ['子','丑']
-};
-
-function getXunShou(shiGan, shiZhi) {
-  const ganIdx = '甲乙丙丁戊己庚辛壬癸'.indexOf(shiGan);
-  const zhiIdx = ZHI.indexOf(shiZhi);
-  if (ganIdx < 0 || zhiIdx < 0) return null;
-  const xunZhiIdx = (zhiIdx - ganIdx + 12) % 12;
-  return '甲' + ZHI[xunZhiIdx];
-}
-function getMaZhi(shiZhi) {
-  const g1 = ['申','子','辰'], g2 = ['寅','午','戌'], g3 = ['巳','酉','丑'], g4 = ['亥','卯','未'];
-  if (g1.includes(shiZhi)) return '寅';
-  if (g2.includes(shiZhi)) return '申';
-  if (g3.includes(shiZhi)) return '亥';
-  if (g4.includes(shiZhi)) return '巳';
-  return null;
-}
-function gongHasZhi(gong, zhi) { return gong.zhi.includes(zhi); }
-
-// ============================================================
-// 81 格十干克應表
-// ============================================================
-const KEYING_TABLE = {
-  '戊戊': { 格: '伏吟', 吉凶: '凶', 斷語: '凡事閉塞，靜守為吉。' },
-  '戊乙': { 格: '青龍合靈', 吉凶: '吉', 斷語: '門吉事吉，門凶事凶。' },
-  '戊丙': { 格: '青龍返首', 吉凶: '吉', 斷語: '動作大利，若逢迫墓擊刑，吉事成凶。' },
-  '戊丁': { 格: '青龍耀明', 吉凶: '吉', 斷語: '上人見喜，作事遂意。' },
-  '戊己': { 格: '貴人入獄', 吉凶: '凶', 斷語: '公私不利，凡事不吉。' },
-  '戊庚': { 格: '值符飛宮', 吉凶: '吉', 斷語: '凡事吉，行人至。' },
-  '戊辛': { 格: '青龍折足', 吉凶: '凶', 斷語: '吉門生助，尚可謀為，若逢凶門，主招灾、失財、有足疾。' },
-  '戊壬': { 格: '青龍入天牢', 吉凶: '凶', 斷語: '凡陰陽皆不吉利。' },
-  '戊癸': { 格: '青龍華蓋', 吉凶: '吉', 斷語: '門吉則吉，門凶則凶。' },
-
-  '己戊': { 格: '犬遇青龍', 吉凶: '吉', 斷語: '門吉謀望遂意，上人見喜；門凶枉勞心機。' },
-  '己己': { 格: '地戶逢鬼', 吉凶: '凶', 斷語: '凡事不吉。' },
-  '己乙': { 格: '墓神不明', 吉凶: '凶', 斷語: '地戶逢星，宜遁跡。' },
-  '己丙': { 格: '火悖地戶', 吉凶: '凶', 斷語: '陽人冤冤相害，陰人必致淫污。' },
-  '己丁': { 格: '朱雀入墓', 吉凶: '凶', 斷語: '文狀詞訟，先曲後直。' },
-  '己庚': { 格: '刑格', 吉凶: '凶', 斷語: '官司被重刑。' },
-  '己辛': { 格: '遊魂入墓', 吉凶: '凶', 斷語: '大人鬼魅，小人家先為崇凶。' },
-  '己壬': { 格: '地網高張', 吉凶: '凶', 斷語: '凡事不吉。' },
-  '己癸': { 格: '地刑玄武', 吉凶: '凶', 斷語: '男女疾病垂危，有囚獄詞訟。' },
-
-  '庚戊': { 格: '太白天乙伏宮', 吉凶: '凶', 斷語: '百事不可謀為。' },
-  '庚己': { 格: '刑格', 吉凶: '凶', 斷語: '官司被重刑。' },
-  '庚庚': { 格: '太白同宮', 吉凶: '凶', 斷語: '官災橫禍，兄弟雷攻。' },
-  '庚乙': { 格: '太白逢星', 吉凶: '吉', 斷語: '退吉進凶。' },
-  '庚丙': { 格: '太白入熒', 吉凶: '凶', 斷語: '賊來，偷營劫寨，宜退不宜進。' },
-  '庚丁': { 格: '亭亭之格', 吉凶: '凶', 斷語: '因私暱起官司，門吉有救。' },
-  '庚辛': { 格: '白虎出力', 吉凶: '凶', 斷語: '刀刃相接，主客相殘。遜讓退步稍可，強攻血濺衣衫。' },
-  '庚壬': { 格: '上格', 吉凶: '凶', 斷語: '遠得失迷道路，男女音信難通。' },
-  '庚癸': { 格: '大格', 吉凶: '凶', 斷語: '行人不至，官司不止，謀事不成。' },
-
-  '辛戊': { 格: '困龍被傷', 吉凶: '凶', 斷語: '官司破財，屈抑越分，妄動禍殃。' },
-  '辛己': { 格: '入獄自刑', 吉凶: '凶', 斷語: '奴僕背主，訟訴難伸。' },
-  '辛庚': { 格: '白虎猖狂', 吉凶: '凶', 斷語: '人亡家敗，遠得多殃，尊長不喜，車船俱傷。' },
-  '辛辛': { 格: '伏吟天庭', 吉凶: '凶', 斷語: '公廢私就，訟獄自罹罪名。' },
-  '辛乙': { 格: '白虎猖狂', 吉凶: '凶', 斷語: '人亡家敗，遠得多殃，尊長不喜，車船俱傷。' },
-  '辛丙': { 格: '干合悖師', 吉凶: '凶', 斷語: '占雨無雨，求晴無晴，凡事不和。' },
-  '辛丁': { 格: '獄神得奇', 吉凶: '吉', 斷語: '經商獲倍利，囚人逢赦宥。' },
-  '辛壬': { 格: '凶蛇入獄', 吉凶: '凶', 斷語: '兩男爭女，訟獄不息。' },
-  '辛癸': { 格: '天牢華蓋', 吉凶: '凶', 斷語: '日月失明，疾病死亡。' },
-
-  '壬戊': { 格: '小蛇化龍', 吉凶: '吉', 斷語: '男人發達，女人產嬰。' },
-  '壬己': { 格: '地網高張', 吉凶: '凶', 斷語: '凡事不吉。' },
-  '壬庚': { 格: '太白擒蛇', 吉凶: '吉', 斷語: '刑獄公平，剖邪正。' },
-  '壬辛': { 格: '騰蛇相纏', 吉凶: '凶', 斷語: '縱得奇門，變不能安。若有謀望，被人欺瞞。' },
-  '壬壬': { 格: '蛇入地羅', 吉凶: '凶', 斷語: '外人纏繞，內事索索，雖有吉星，不免蹉跎。' },
-  '壬乙': { 格: '小蛇日奇', 吉凶: '吉', 斷語: '女子柔順，男人嗟嘆。占孕生子，祿馬光華。' },
-  '壬丙': { 格: '水蛇入火', 吉凶: '凶', 斷語: '官災刑禁，絡繹不絕。' },
-  '壬丁': { 格: '干合蛇刑', 吉凶: '吉', 斷語: '文書事吉，貴人相助。' },
-  '壬癸': { 格: '幼女奸淫', 吉凶: '凶', 斷語: '家有丑聲，門戶不正。' },
-
-  '癸戊': { 格: '天乙會合', 吉凶: '吉', 斷語: '婚姻財喜，吉事皆宜。' },
-  '癸己': { 格: '華蓋地戶', 吉凶: '凶', 斷語: '男女疾病垂危，有囚獄詞訟。' },
-  '癸庚': { 格: '大格', 吉凶: '凶', 斷語: '行人不至，官司不止，謀事不成。' },
-  '癸辛': { 格: '網蓋天牢', 吉凶: '凶', 斷語: '占雨無雨，求晴無晴，凡事不和。' },
-  '癸壬': { 格: '復見騰蛇', 吉凶: '凶', 斷語: '嫁娶重婚，後嫁無子，不保年華。' },
-  '癸乙': { 格: '華蓋逢星', 吉凶: '吉', 斷語: '貴人祿位，常人平安。' },
-  '癸丙': { 格: '華蓋悖師', 吉凶: '凶', 斷語: '門吉則吉，門凶則凶。' },
-  '癸丁': { 格: '騰蛇夭矯', 吉凶: '凶', 斷語: '文書官司，火焚莫逃。' },
-  '癸癸': { 格: '天網四張', 吉凶: '凶', 斷語: '行人失伴，病訟皆傷。' },
-
-  '乙戊': { 格: '陰害陽謀', 吉凶: '凶', 斷語: '門吉事吉，門凶事凶。' },
-  '乙己': { 格: '日奇入墓', 吉凶: '凶', 斷語: '門凶必凶。' },
-  '乙庚': { 格: '日奇被刑', 吉凶: '凶', 斷語: '爭訟財產，夫妻懷私。' },
-  '乙辛': { 格: '青龍逃走', 吉凶: '凶', 斷語: '人亡財散，奴僕拐騙。' },
-  '乙壬': { 格: '日奇入地', 吉凶: '凶', 斷語: '尊卑悖亂，官訟是非。' },
-  '乙癸': { 格: '華蓋逢星', 吉凶: '吉', 斷語: '貴人祿位，常人平安。' },
-  '乙乙': { 格: '日奇伏吟', 吉凶: '凶', 斷語: '不宜謀事，只可安分守身。' },
-  '乙丙': { 格: '奇儀順遂', 吉凶: '吉', 斷語: '吉事為遷官進職；凶事為夫妻離別。' },
-  '乙丁': { 格: '奇儀相佐', 吉凶: '吉', 斷語: '文書事吉，百事皆可為。' },
-
-  '丙戊': { 格: '飛鳥跌穴', 吉凶: '吉', 斷語: '謀為百事吉順洞徹。' },
-  '丙己': { 格: '火悖地戶', 吉凶: '凶', 斷語: '陽人冤冤相害，陰人必致淫污。' },
-  '丙庚': { 格: '熒入太白', 吉凶: '凶', 斷語: '門戶破敗，盜賊耗失。' },
-  '丙辛': { 格: '干合悖師', 吉凶: '凶', 斷語: '占雨無雨，求晴無晴，凡事不和。' },
-  '丙壬': { 格: '火入天羅', 吉凶: '凶', 斷語: '為客不利，是非頗多。' },
-  '丙癸': { 格: '華蓋悖師', 吉凶: '凶', 斷語: '門吉則吉，門凶則凶。' },
-  '丙乙': { 格: '奇儀順遂', 吉凶: '吉', 斷語: '吉事為遷官進職；凶事為夫妻離別。' },
-  '丙丙': { 格: '月奇伏吟', 吉凶: '吉', 斷語: '凡事吉。' },
-  '丙丁': { 格: '月奇朱雀', 吉凶: '吉', 斷語: '貴人文書吉利，常人平靜。得生門為天遁。' },
-
-  '丁戊': { 格: '青龍轉光', 吉凶: '吉', 斷語: '官人越級高升，常人樂中生悲。' },
-  '丁己': { 格: '朱雀入墓', 吉凶: '凶', 斷語: '文狀詞訟，先曲後直。' },
-  '丁庚': { 格: '亭亭之格', 吉凶: '凶', 斷語: '因私暱起官司，門吉有救。' },
-  '丁辛': { 格: '獄神得奇', 吉凶: '吉', 斷語: '經商獲倍利，囚人逢赦宥。' },
-  '丁壬': { 格: '干合蛇刑', 吉凶: '吉', 斷語: '文書事吉，貴人相助。' },
-  '丁癸': { 格: '朱雀投江', 吉凶: '凶', 斷語: '文書口舌，訟獄是非。' },
-  '丁乙': { 格: '奇儀相佐', 吉凶: '吉', 斷語: '文書事吉，百事皆可為。' },
-  '丁丙': { 格: '月奇朱雀', 吉凶: '吉', 斷語: '貴人文書吉利，常人平靜。得生門為天遁。' },
-  '丁丁': { 格: '星隨月轉', 吉凶: '吉', 斷語: '貴人越級高升；常人樂中生悲。' },
-};
-
-function getKeyingFromTable(tianGan, diGan) {
-  return KEYING_TABLE[tianGan + diGan] || null;
-}
-
-function pad(n) { return String(n).padStart(2, '0'); }
-function nowLocalStr() {
-  const d = new Date();
+// Public UI only. The calculation engine and rule tables remain on Cloudflare Worker.
+const QIMEN_API_URL = 'https://qimen-api.ezgocpu.workers.dev/chart';
+let currentRegion='台北';
+let paipanSeq=0;
+const pad=n=>String(n).padStart(2,'0');
+function nowLocalStr(){
+  const d=new Date();
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
-function toQimenDatetime(localStr, regionName) {
-  const d = new Date(localStr);
-  const offset = getRegionOffset(d, regionName);
-  const corrected = new Date(d.getTime() + offset * 60 * 1000);
-  return {
-    datetime: `${corrected.getFullYear()}${pad(corrected.getMonth()+1)}${pad(corrected.getDate())}${pad(corrected.getHours())}`,
-    minute: corrected.getMinutes(),
-    second: corrected.getSeconds(),
-    displayTime: corrected,
-    offset: offset
-  };
-}
-
-function paipan() {
-  const timeStr = document.getElementById('qTime').value;
-  if (!timeStr) { alert('請選擇時間'); return; }
-
-  const { datetime, minute, second, displayTime, offset } = toQimenDatetime(timeStr, currentRegion);
-  let chart, obj, patterns;
-  try {
-    chart = Qimen.generateChartByDatetime(datetime, { 定局法: '拆補', minute, second });
-    obj = Qimen.chartToObject(chart);
-    patterns = Qimen.detectPatterns(obj);
-  } catch (e) {
-    document.getElementById('panInfo').innerHTML = `<div style="color:#e07b7b">排盤錯誤：${e.message}</div>`;
-    document.getElementById('palaceGrid').innerHTML = '';
-    return;
+function safe(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function paipan(){
+  const timeStr=document.getElementById('qTime').value;
+  if(!timeStr){alert('請選擇時間');return;}
+  const seq=++paipanSeq;
+  const info=document.getElementById('panInfo');
+  const notice=document.getElementById('noticeBar');
+  notice.textContent='正在起局，計算九宮盤…';
+  try{
+    const response=await fetch(QIMEN_API_URL,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({datetime:timeStr,region:currentRegion})
+    });
+    const result=await response.json();
+    if(seq!==paipanSeq)return;
+    if(!response.ok||!result.ok)throw new Error(result.error||`HTTP ${response.status}`);
+    renderInfo(result);
+    renderGrid(result.palaces||[]);
+    notice.innerHTML=result.notice||'';
+  }catch(e){
+    if(seq!==paipanSeq)return;
+    info.innerHTML=`<div style="color:#e07b7b">排盤錯誤：${safe(e.message||'API 無法連線')}</div>`;
+    document.getElementById('palaceGrid').innerHTML='';
+    notice.textContent='無法連線至排盤服務，請稍後重試。';
   }
-
-  const shiZhu = obj.時柱 || '';
-  const shiGan = shiZhu[0] || '';
-  const shiZhi = shiZhu[1] || '';
-
-  const maZhi = getMaZhi(shiZhi);
-  const xunShou = getXunShou(shiGan, shiZhi);
-  const kongZhi = xunShou ? (XUN_KONG[xunShou] || []) : [];
-  renderInfo(obj, displayTime, currentRegion, maZhi, xunShou, kongZhi, offset);
-  renderGrid(obj, patterns, maZhi, kongZhi);
 }
-
-function renderInfo(obj, displayTime, regionName, maZhi, xunShou, kongZhi, offset) {
-  const dun = obj.陰陽 === '陽' ? '陽遁' : '陰遁';
-  const r = REGIONS[regionName];
-  const timeStr = `${displayTime.getFullYear()}-${pad(displayTime.getMonth()+1)}-${pad(displayTime.getDate())} ${pad(displayTime.getHours())}:${pad(displayTime.getMinutes())}:${pad(displayTime.getSeconds())}`;
-  document.getElementById('panInfo').innerHTML = `
-    <div>地區<span>${regionName}</span></div>
-    <div>經度<span>${r.經度}°</span></div>
-    <div>真太陽時<span>${timeStr}</span></div>
-    <div>節氣<span>${obj.節氣 || '—'}</span></div>
-    <div>三元<span>${obj.三元 || '—'}</span></div>
-    <div>局數<span>${dun} ${obj.局數 || '—'} 局</span></div>
-    <div>四柱<span>${obj.年柱} ${obj.月柱} ${obj.日柱} ${obj.時柱}</span></div>
-    <div>旬首<span>${xunShou || obj.旬首 || '—'}</span></div>
-    <div>旬空<span>${kongZhi.join('、') || '—'}</span></div>
-    <div>馬星<span>${maZhi || '—'}</span></div>
-    <div>值符<span>${obj.值符 || '—'}</span></div>
-    <div>值使<span>${obj.值使 || '—'}</span></div>
-    <div>值符落宮<span>${obj.值符落宮 || '—'}</span></div>
-  `;
-
-  const noticeEl = document.getElementById('noticeBar');
-  let baseNotice = '';
-  if (regionName === '無') {
-    baseNotice = '⚠ 目前為「不校正」模式，直接以北京時間排盤（拆補局）。';
-  } else {
-    const 經度校正 = (r.度 - 120) * 60 + (r.分 * 4) / 60;
-    const 均時差 = getEquationOfTime(displayTime);
-    baseNotice = `⚠ ${regionName}真太陽時校正（拆補局）：經度 ${r.經度} → 經度校正 ${經度校正.toFixed(2)} 分 + 均時差 ${均時差.toFixed(2)} 分 = 總校正 ${offset.toFixed(2)} 分。`;
-  }
-  noticeEl.innerHTML = baseNotice + `<br>🐎 馬星：${maZhi || '—'} ｜ ⭕ 旬空：${kongZhi.join('、') || '—'}`;
+function renderInfo(result){
+  const order=['地區','經度','真太陽時','節氣','三元','局數','四柱','旬首','旬空','馬星','值符','值使','值符落宮'];
+  document.getElementById('panInfo').innerHTML=order.map(key=>`<div>${safe(key)}<span>${safe(result.info?.[key]??'—')}</span></div>`).join('');
 }
-
-function renderGrid(obj, patterns, maZhi, kongZhi) {
-  const grid = document.getElementById('palaceGrid');
-  const di = obj.地盤 || [];
-  const tian = obj.天盤 || [];
-  const men = obj.天門 || [];
-  const xing = obj.九星 || [];
-  const shen = obj.八神 || [];
-
-  const GONG_CHAR = {
-    0: '巽', 1: '離', 2: '坤',
-    3: '震', 4: '中', 5: '兌',
-    6: '艮', 7: '坎', 8: '乾'
-  };
-
-  grid.innerHTML = GONG_LAYOUT.map(g => {
-    const gongChar = GONG_CHAR[g.idx];
-    const tg = tian[g.idx] || '';
-    const dg = di[g.idx] || '';
-
-    const hasMa = maZhi && gongHasZhi(g, maZhi);
-    const hasKong = kongZhi.some(kz => gongHasZhi(g, kz));
-
-    let keyingHTML = '';
-    if (gongChar !== '中') {
-      const lines = [];
-
-      if (tg && dg) {
-        const k = getKeyingFromTable(tg, dg);
-        if (k) {
-          const geText = k.格 ? `為${k.格}，` : '';
-          lines.push(`<div class="line"><span class="kh">${tg}加${dg}：</span>${geText}${k.斷語 || ''}</div>`);
-        } else {
-          lines.push(`<div class="line"><span class="kh">${tg}加${dg}：</span><span class="empty">（無資料）</span></div>`);
-        }
-      }
-
-      keyingHTML = lines.join('') || '<div class="empty">（無克應）</div>';
-    } else {
-      keyingHTML = `<div class="empty">（中宮寄坤，不列克應）</div>`;
-    }
-
-    const maHTML = hasMa ? `<span class="ma-star">馬</span>` : '';
-    const kongHTML = hasKong ? `<span class="kong-mark">○</span>` : '';
-    const starLabel = gongChar === '中' ? '—' : (xing[g.idx] === '天芮' ? '禽芮' : (xing[g.idx] || '—'));
-
-    return `
-      <div class="palace">
-        ${maHTML}
-        <div class="palace-header">
-          <span><span class="name">${g.name}</span> <span class="luoshu">(${g.luoshu})</span></span>
-          <span class="dir">${g.dir}（${g.wuxing}）</span>
-        </div>
-        <div class="palace-main">
-          <div class="palace-left">
-            <div class="shen">${shen[g.idx] || '—'}${kongHTML}</div>
-            <div class="xing">${starLabel}</div>
-            <div class="men">${men[g.idx] || '—'}</div>
-          </div>
-          <div class="palace-right">
-            <div class="gan-tian">${tg || '　'}</div>
-            <div class="gan-di">${dg || '　'}</div>
-          </div>
-        </div>
-        <div class="palace-keying">${keyingHTML}</div>
-      </div>
-    `;
+function renderGrid(palaces){
+  const grid=document.getElementById('palaceGrid');
+  grid.innerHTML=palaces.map(g=>{
+    const k=g.keying||{type:'none'};
+    let keyingHTML='';
+    if(k.type==='center')keyingHTML='<div class="empty">（中宮寄坤，不列克應）</div>';
+    else if(k.type==='matched')keyingHTML=`<div class="line"><span class="kh">${safe(k.label)}：</span>${k.name?`為${safe(k.name)}，`:''}${safe(k.text)}</div>`;
+    else if(k.type==='unknown')keyingHTML=`<div class="line"><span class="kh">${safe(k.label)}：</span><span class="empty">（無資料）</span></div>`;
+    else keyingHTML='<div class="empty">（無克應）</div>';
+    return `<div class="palace">
+      ${g.hasMa?'<span class="ma-star">馬</span>':''}
+      <div class="palace-header"><span><span class="name">${safe(g.name)}</span> <span class="luoshu">(${safe(g.luoshu)})</span></span><span class="dir">${safe(g.dir)}（${safe(g.wuxing)}）</span></div>
+      <div class="palace-main"><div class="palace-left"><div class="shen">${safe(g.shen||'—')}${g.hasKong?'<span class="kong-mark">○</span>':''}</div><div class="xing">${safe(g.xing||'—')}</div><div class="men">${safe(g.men||'—')}</div></div>
+      <div class="palace-right"><div class="gan-tian">${safe(g.tian||'　')}</div><div class="gan-di">${safe(g.di||'　')}</div></div></div>
+      <div class="palace-keying">${keyingHTML}</div>
+    </div>`;
   }).join('');
-
-  grid.querySelectorAll('.palace').forEach(card => {
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      card.style.setProperty('--qmx', `${((e.clientX - rect.left) / rect.width) * 100}%`);
-      card.style.setProperty('--qmy', `${((e.clientY - rect.top) / rect.height) * 100}%`);
+  grid.querySelectorAll('.palace').forEach(card=>{
+    card.addEventListener('mousemove',e=>{
+      const rect=card.getBoundingClientRect();
+      card.style.setProperty('--qmx',`${((e.clientX-rect.left)/rect.width)*100}%`);
+      card.style.setProperty('--qmy',`${((e.clientY-rect.top)/rect.height)*100}%`);
     });
   });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('qTime').value = nowLocalStr();
-  document.getElementById('btnPaipan').addEventListener('click', paipan);
-  document.getElementById('btnNow').addEventListener('click', () => {
-    document.getElementById('qTime').value = nowLocalStr();
-    paipan();
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('qTime').value=nowLocalStr();
+  document.getElementById('btnPaipan').addEventListener('click',paipan);
+  document.getElementById('btnNow').addEventListener('click',()=>{
+    document.getElementById('qTime').value=nowLocalStr();paipan();
   });
-
-  document.querySelectorAll('.region-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.region-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentRegion = btn.dataset.region;
-      paipan();
+  document.querySelectorAll('.region-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.region-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');currentRegion=btn.dataset.region;paipan();
     });
   });
-
   paipan();
 });
-  </script>
+</script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
