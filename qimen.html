@@ -1665,7 +1665,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       <div class="tool-heading">
         <div>
           <h3>奇門遁甲排盤</h3>
-          <div class="sub">符頭法 · 真太陽時（台北） · 十干克應 · 馬星 · 旬空</div>
+          <div class="sub">拆補法 · 真太陽時（台北） · 十干克應 · 馬星 · 旬空</div>
         </div>
         <div class="tool-mark">TIME → SOLAR CORRECTION → NINE PALACES</div>
       </div>
@@ -1673,7 +1673,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       <div class="toolbar">
         <div class="field">
           <label for="qTime">起局時間（北京時間）</label>
-          <input type="datetime-local" id="qTime">
+          <input type="datetime-local" id="qTime" step="1">
         </div>
         <button class="btn" id="btnPaipan" type="button">起 局</button>
         <button class="btn ghost" id="btnNow" type="button">用現在時間</button>
@@ -1689,7 +1689,7 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
       <div class="grid" id="palaceGrid"></div>
       <div class="notice" id="noticeBar"></div>
 
-      <footer>qimen2.standalone · 符頭法 · 資料僅供參考</footer>
+      <footer>qimen2.standalone · 拆補法 · 資料僅供參考</footer>
     </main>
   </section>
 
@@ -2020,23 +2020,31 @@ html[data-theme="light"] .dh-unified-tools>a.dh-nav-current{
   <script src="qimen2.standalone.min.js"></script>
   <script>
 const REGIONS = {
-  '台北': { 經度: 121.31, 時區: 8, 說明: '台北（UTC+8）' },
-  '無':   { 經度: 120,    時區: 8, 說明: '不校正' }
+  '台北': { 經度: 121.31, 度: 121, 分: 31, 時區: 8, 說明: '台北（UTC+8，元亨利貞網基準）' },
+  '無':   { 經度: 120,    度: 120, 分: 0,  時區: 8, 說明: '不校正' }
 };
 let currentRegion = '台北';
 
 function getEquationOfTime(date) {
   const start = new Date(date.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((date - start) / 86400000);
-  const B = 2 * Math.PI * (dayOfYear - 81) / 364;
-  return 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+  const gamma = 2 * Math.PI * (dayOfYear - 1 + (date.getHours() - 12) / 24) / 365;
+  return 229.18 * (
+    0.000075 +
+    0.001868 * Math.cos(gamma) -
+    0.032077 * Math.sin(gamma) -
+    0.014615 * Math.cos(2 * gamma) -
+    0.040849 * Math.sin(2 * gamma)
+  );
 }
+
+// 對齊元亨利貞網（china95.net）真太陽時演算法（回傳總偏移分鐘數）
 function getRegionOffset(localDate, regionName) {
   if (regionName === '無') return 0;
   const r = REGIONS[regionName];
-  const 經度校正 = (r.經度 - 120) * 4;
-  const 均時差 = getEquationOfTime(localDate);
-  return 經度校正 + 均時差;
+  const 經度校正分 = (r.度 - 120) * 60 + (r.分 * 4) / 60;
+  const 均時差分 = getEquationOfTime(localDate);
+  return 經度校正分 + 均時差分;
 }
 
 const GONG_LAYOUT = [
@@ -2136,7 +2144,7 @@ const KEYING_TABLE = {
   '癸壬': { 格: '復見騰蛇', 吉凶: '凶', 斷語: '嫁娶重婚，後嫁無子，不保年華。' },
   '癸乙': { 格: '華蓋逢星', 吉凶: '吉', 斷語: '貴人祿位，常人平安。' },
   '癸丙': { 格: '華蓋悖師', 吉凶: '凶', 斷語: '門吉則吉，門凶則凶。' },
-  '癸丁': { 格: '騰蛇夭矯', 吉凶: '凶', 斷語: '文書官司，火災。' },
+  '癸丁': { 格: '騰蛇夭矯', 吉凶: '凶', 斷語: '文書官司，火焚莫逃。' },
   '癸癸': { 格: '天網四張', 吉凶: '凶', 斷語: '行人失伴，病訟皆傷。' },
 
   '乙戊': { 格: '陰害陽謀', 吉凶: '凶', 斷語: '門吉事吉，門凶事凶。' },
@@ -2174,11 +2182,10 @@ function getKeyingFromTable(tianGan, diGan) {
   return KEYING_TABLE[tianGan + diGan] || null;
 }
 
-
 function pad(n) { return String(n).padStart(2, '0'); }
 function nowLocalStr() {
   const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 function toQimenDatetime(localStr, regionName) {
   const d = new Date(localStr);
@@ -2186,6 +2193,8 @@ function toQimenDatetime(localStr, regionName) {
   const corrected = new Date(d.getTime() + offset * 60 * 1000);
   return {
     datetime: `${corrected.getFullYear()}${pad(corrected.getMonth()+1)}${pad(corrected.getDate())}${pad(corrected.getHours())}`,
+    minute: corrected.getMinutes(),
+    second: corrected.getSeconds(),
     displayTime: corrected,
     offset: offset
   };
@@ -2195,10 +2204,10 @@ function paipan() {
   const timeStr = document.getElementById('qTime').value;
   if (!timeStr) { alert('請選擇時間'); return; }
 
-  const { datetime, displayTime, offset } = toQimenDatetime(timeStr, currentRegion);
+  const { datetime, minute, second, displayTime, offset } = toQimenDatetime(timeStr, currentRegion);
   let chart, obj, patterns;
   try {
-    chart = Qimen.generateChartByDatetime(datetime, { 定局法: '符頭' });
+    chart = Qimen.generateChartByDatetime(datetime, { 定局法: '拆補', minute, second });
     obj = Qimen.chartToObject(chart);
     patterns = Qimen.detectPatterns(obj);
   } catch (e) {
@@ -2241,11 +2250,11 @@ function renderInfo(obj, displayTime, regionName, maZhi, xunShou, kongZhi, offse
   const noticeEl = document.getElementById('noticeBar');
   let baseNotice = '';
   if (regionName === '無') {
-    baseNotice = '⚠ 目前為「不校正」模式，直接以北京時間排盤。';
+    baseNotice = '⚠ 目前為「不校正」模式，直接以北京時間排盤（拆補局）。';
   } else {
-    const 經度校正 = (r.經度 - 120) * 4;
+    const 經度校正 = (r.度 - 120) * 60 + (r.分 * 4) / 60;
     const 均時差 = getEquationOfTime(displayTime);
-    baseNotice = `⚠ ${regionName}真太陽時校正：經度 ${r.經度}° → 經度校正 ${經度校正.toFixed(2)} 分 + 均時差 ${均時差.toFixed(2)} 分 = 總校正 ${offset.toFixed(2)} 分。`;
+    baseNotice = `⚠ ${regionName}真太陽時校正（拆補局）：經度 ${r.經度} → 經度校正 ${經度校正.toFixed(2)} 分 + 均時差 ${均時差.toFixed(2)} 分 = 總校正 ${offset.toFixed(2)} 分。`;
   }
   noticeEl.innerHTML = baseNotice + `<br>🐎 馬星：${maZhi || '—'} ｜ ⭕ 旬空：${kongZhi.join('、') || '—'}`;
 }
@@ -2286,7 +2295,6 @@ function renderGrid(obj, patterns, maZhi, kongZhi) {
         }
       }
 
-
       keyingHTML = lines.join('') || '<div class="empty">（無克應）</div>';
     } else {
       keyingHTML = `<div class="empty">（中宮寄坤，不列克應）</div>`;
@@ -2294,6 +2302,7 @@ function renderGrid(obj, patterns, maZhi, kongZhi) {
 
     const maHTML = hasMa ? `<span class="ma-star">馬</span>` : '';
     const kongHTML = hasKong ? `<span class="kong-mark">○</span>` : '';
+    const starLabel = gongChar === '中' ? '—' : (xing[g.idx] === '天芮' ? '禽芮' : (xing[g.idx] || '—'));
 
     return `
       <div class="palace">
@@ -2305,7 +2314,7 @@ function renderGrid(obj, patterns, maZhi, kongZhi) {
         <div class="palace-main">
           <div class="palace-left">
             <div class="shen">${shen[g.idx] || '—'}${kongHTML}</div>
-            <div class="xing">${xing[g.idx] || '—'}</div>
+            <div class="xing">${starLabel}</div>
             <div class="men">${men[g.idx] || '—'}</div>
           </div>
           <div class="palace-right">
