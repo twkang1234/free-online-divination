@@ -1,0 +1,710 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>奇門遁甲擇吉時｜進階反向排盤｜一念知機</title><meta name="description" content="指定奇門盤同宮條件，搜尋未來7天、30天或90天，查看符合條件的完整盤局。"><link rel="canonical" href="https://divinationhub.tw/qimen-auspicious.html"><style>
+    :root {
+      --bg-void: #030408;
+      --fg-primary: #f5f8fc;
+      --fg-dim: #9aa5bc;
+      --fg-subtle: #4c5670;
+      --singularity-cyan: #00f3ff;
+      --portal-magenta: #e024c3;
+      --accretion-gold: #ffbe3b;
+      --hyper-white: #ffffff;
+      --glass-panel: rgba(10, 14, 26, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-glow: rgba(0, 243, 255, 0.25);
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      --font-mono: "SF Mono", "Fira Code", "Courier New", monospace;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg-void); scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle 900px at 12% -10%, rgba(0,243,255,.08), transparent 58%),
+        radial-gradient(circle 820px at 92% 5%, rgba(224,36,195,.06), transparent 55%),
+        #030408;
+      color: var(--fg-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      opacity: .34;
+      background-image:
+        radial-gradient(circle at 15% 22%, rgba(255,255,255,.65) 0 1px, transparent 1.6px),
+        radial-gradient(circle at 71% 16%, rgba(0,243,255,.7) 0 1px, transparent 1.7px),
+        radial-gradient(circle at 84% 67%, rgba(255,255,255,.55) 0 1px, transparent 1.6px),
+        radial-gradient(circle at 32% 78%, rgba(224,36,195,.65) 0 1px, transparent 1.7px);
+      background-size: 210px 210px, 270px 270px, 320px 320px, 250px 250px;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,.016) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.016) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(circle at center, #000 12%, transparent 82%);
+    }
+    .page-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      width: min(1460px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 18px 0 12px;
+      backdrop-filter: blur(14px);
+    }
+    .back-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 14px;
+      border: 1px solid rgba(0,243,255,.25);
+      border-radius: 999px;
+      background: rgba(4,12,21,.64);
+      color: #9feff4;
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: .08em;
+      transition: .25s ease;
+    }
+    .back-home:hover {
+      border-color: rgba(0,243,255,.58);
+      background: rgba(0,243,255,.09);
+      box-shadow: 0 0 28px rgba(0,243,255,.10);
+      transform: translateY(-1px);
+    }
+    .page-status {
+      color: #66758c;
+      font-family: var(--font-mono);
+      font-size: .65rem;
+      letter-spacing: .12em;
+    }
+
+    /* ==========================================================================
+       光門後：奇門遁甲排盤工具
+       視覺延續宇宙介面，但排盤區以閱讀穩定、資訊辨識為第一優先。
+       ========================================================================== */
+    #worldSecond {
+      max-width: 1540px;
+      padding: 104px 28px 76px;
+    }
+
+    .qimen-stage-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 28px;
+      align-items: end;
+      margin: 0 auto 28px;
+      max-width: 1460px;
+    }
+
+    .qimen-stage-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      color: var(--singularity-cyan);
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: .22em;
+    }
+
+    .qimen-stage-kicker::before {
+      content: "";
+      width: 34px;
+      height: 1px;
+      background: var(--singularity-cyan);
+      box-shadow: 0 0 14px rgba(0,243,255,.7);
+    }
+
+    .qimen-stage-title {
+      margin: 0 0 10px;
+      font-size: clamp(2.15rem, 4vw, 4rem);
+      line-height: 1.08;
+      letter-spacing: -.035em;
+      background: linear-gradient(135deg, #fff 18%, #d6e6f8 56%, var(--singularity-cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .qimen-stage-desc {
+      max-width: 760px;
+      color: #98a7bf;
+      font-size: .96rem;
+      line-height: 1.8;
+    }
+
+    .qimen-engine-chip {
+      justify-self: end;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 14px;
+      border: 1px solid rgba(0,243,255,.24);
+      border-radius: 999px;
+      background: rgba(4,12,21,.62);
+      backdrop-filter: blur(14px);
+      color: #a9bccd;
+      font-family: var(--font-mono);
+      font-size: .68rem;
+      letter-spacing: .12em;
+      white-space: nowrap;
+    }
+
+    .qimen-engine-chip i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--singularity-cyan);
+      box-shadow: 0 0 12px var(--singularity-cyan);
+    }
+
+    #qimenTool {
+      position: relative;
+      max-width: 1460px;
+      margin: 0 auto;
+      padding: 24px;
+      border: 1px solid rgba(140,181,220,.18);
+      border-radius: 30px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle 720px at 8% -8%, rgba(0,243,255,.09), transparent 52%),
+        radial-gradient(circle 640px at 92% 8%, rgba(224,36,195,.065), transparent 54%),
+        linear-gradient(145deg, rgba(8,13,24,.94), rgba(4,7,14,.93));
+      box-shadow:
+        0 38px 100px rgba(0,0,0,.50),
+        inset 0 1px 0 rgba(255,255,255,.035);
+      isolation: isolate;
+    }
+
+    #qimenTool::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: .22;
+      background-image:
+        linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: linear-gradient(to bottom, #000, rgba(0,0,0,.45) 45%, transparent 100%);
+    }
+
+    #qimenTool .tool-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 6px 4px 20px;
+    }
+
+    #qimenTool .tool-heading h2 {
+      margin: 0 0 5px;
+      color: #f3f7fb;
+      font-size: clamp(1.45rem, 2.1vw, 2rem);
+      letter-spacing: .06em;
+    }
+
+    #qimenTool .sub {
+      color: #8291a8;
+      font-size: .78rem;
+      letter-spacing: .08em;
+    }
+
+    #qimenTool .tool-mark {
+      font-family: var(--font-mono);
+      font-size: .67rem;
+      color: rgba(255,190,59,.84);
+      letter-spacing: .16em;
+      white-space: nowrap;
+    }
+
+    #qimenTool .toolbar {
+      display: grid;
+      grid-template-columns: minmax(250px, 1fr) auto auto;
+      gap: 12px;
+      align-items: end;
+      padding: 18px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 18px;
+      background: rgba(11,17,29,.76);
+      backdrop-filter: blur(18px);
+    }
+
+    #qimenTool .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: #7f8ba1;
+      font-family: var(--font-mono);
+      font-size: .67rem;
+      letter-spacing: .10em;
+    }
+
+    #qimenTool .field input {
+      width: 100%;
+      min-height: 44px;
+      padding: 9px 12px;
+      border: 1px solid rgba(133,162,198,.20);
+      border-radius: 10px;
+      outline: none;
+      background: #0d1421;
+      color: #eef4fb;
+      font: inherit;
+      font-size: .9rem;
+      color-scheme: dark;
+      transition: border-color .25s, box-shadow .25s, background .25s;
+    }
+
+    #qimenTool .field input:focus {
+      border-color: rgba(0,243,255,.55);
+      box-shadow: 0 0 0 3px rgba(0,243,255,.07);
+      background: #101a29;
+    }
+
+    #qimenTool .btn,
+    #qimenTool .region-btn {
+      min-height: 44px;
+      border-radius: 10px;
+      font: inherit;
+      cursor: none;
+      transition: transform .22s ease, border-color .25s, background .25s, box-shadow .25s, color .25s;
+    }
+
+    #qimenTool .btn {
+      padding: 9px 22px;
+      border: 1px solid rgba(255,190,59,.62);
+      background: linear-gradient(180deg, #f1cc71, #b78b36);
+      color: #151007;
+      font-weight: 800;
+      letter-spacing: .12em;
+      box-shadow: 0 8px 24px rgba(255,190,59,.10);
+    }
+
+    #qimenTool .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(255,190,59,.18);
+    }
+
+    #qimenTool .btn.ghost {
+      border-color: rgba(0,243,255,.32);
+      background: rgba(0,243,255,.045);
+      color: #87eaf0;
+      box-shadow: none;
+      font-weight: 600;
+    }
+
+    #qimenTool .btn.ghost:hover {
+      border-color: rgba(0,243,255,.60);
+      background: rgba(0,243,255,.085);
+      box-shadow: 0 10px 28px rgba(0,243,255,.08);
+    }
+
+    #qimenTool .region-bar {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 9px;
+      padding-top: 14px;
+      margin-top: 2px;
+      border-top: 1px solid rgba(255,255,255,.065);
+    }
+
+    #qimenTool .region-label {
+      margin-right: 6px;
+      color: #78869d;
+      font-size: .72rem;
+      letter-spacing: .08em;
+    }
+
+    #qimenTool .region-btn {
+      min-height: 36px;
+      padding: 7px 18px;
+      border: 1px solid rgba(133,162,198,.18);
+      background: #0c1320;
+      color: #8e9bb0;
+      font-size: .8rem;
+      letter-spacing: .08em;
+    }
+
+    #qimenTool .region-btn:hover {
+      color: #d8fafd;
+      border-color: rgba(0,243,255,.34);
+    }
+
+    #qimenTool .region-btn.active {
+      color: #061316;
+      border-color: rgba(0,243,255,.68);
+      background: linear-gradient(180deg, #8ff9ff, #45cbd2);
+      box-shadow: 0 0 22px rgba(0,243,255,.13);
+      font-weight: 800;
+    }
+
+    #qimenTool .info {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 1px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      background: rgba(255,255,255,.065);
+    }
+
+    #qimenTool .info > div {
+      min-height: 64px;
+      padding: 11px 12px;
+      background: rgba(9,14,24,.92);
+      color: #75839a;
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      line-height: 1.35;
+      letter-spacing: .04em;
+    }
+
+    #qimenTool .info span {
+      display: block;
+      margin: 5px 0 0;
+      color: #f0c96b;
+      font-family: var(--font-sans);
+      font-size: .84rem;
+      font-weight: 750;
+      letter-spacing: .02em;
+      overflow-wrap: anywhere;
+    }
+
+    #qimenTool .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    #qimenTool .palace {
+      --qmx: 50%;
+      --qmy: 28%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 258px;
+      overflow: hidden;
+      border: 1px solid rgba(117,144,178,.18);
+      border-radius: 16px;
+      background: rgba(12,18,30,.88);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.022);
+      transition: transform .28s cubic-bezier(.16,1,.3,1), border-color .28s, box-shadow .28s;
+    }
+
+    #qimenTool .palace::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 0;
+      background:
+        radial-gradient(circle 300px at var(--qmx) var(--qmy), rgba(0,243,255,.085), rgba(224,36,195,.025) 40%, transparent 70%);
+      transition: opacity .35s ease;
+    }
+
+    #qimenTool .palace:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0,243,255,.34);
+      box-shadow: 0 18px 44px rgba(0,0,0,.22);
+    }
+
+    #qimenTool .palace:hover::before { opacity: 1; }
+
+    #qimenTool .palace > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    #qimenTool .palace-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 42px;
+      padding: 8px 13px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.025);
+      color: #efb44f;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    #qimenTool .palace-header .name { letter-spacing: .08em; }
+    #qimenTool .palace-header .luoshu { margin-left: 2px; color: #f2c86c; }
+    #qimenTool .palace-header .dir {
+      margin-left: 8px;
+      color: #6f7c92;
+      font-family: var(--font-mono);
+      font-size: .62rem;
+      letter-spacing: .04em;
+    }
+
+    #qimenTool .palace-main {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 13px;
+      border-bottom: 1px solid rgba(255,255,255,.065);
+    }
+
+    #qimenTool .palace-left,
+    #qimenTool .palace-right {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: .91rem;
+      line-height: 1.35;
+      letter-spacing: .10em;
+    }
+
+    #qimenTool .palace-right {
+      align-items: flex-end;
+      min-width: 46px;
+    }
+
+    #qimenTool .palace-left .shen { color: #ff7f87; }
+    #qimenTool .palace-left .xing { color: #72c9f4; }
+    #qimenTool .palace-left .men { color: #e6bd6b; }
+    #qimenTool .palace-right .gan-tian { color: #ff838a; font-weight: 800; }
+    #qimenTool .palace-right .gan-di { color: #75e0aa; }
+
+    /* Hidden stem sits immediately LEFT of the original earth stem. */
+    #qimenTool .palace-right .gan-bottom {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 9px;
+      white-space: nowrap;
+    }
+    #qimenTool .palace-right .gan-hidden {
+      color: #ff5967;
+      font-weight: 800;
+    }
+
+
+    #qimenTool .palace-keying {
+      flex: 1;
+      padding: 10px 13px 12px;
+      color: #9fa9b8;
+      font-size: .73rem;
+      line-height: 1.68;
+    }
+
+    #qimenTool .palace-keying .line + .line { margin-top: 5px; }
+    #qimenTool .palace-keying .kh { color: #f0c96b; font-weight: 760; }
+    #qimenTool .palace-keying .empty { color: #57647a; }
+
+    #qimenTool .ma-star {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 4;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: linear-gradient(135deg, #f04cc4, #9c3cff);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: .63rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      box-shadow: 0 0 18px rgba(224,36,195,.22);
+    }
+
+    #qimenTool .kong-mark {
+      display: inline-block;
+      margin-left: 5px;
+      vertical-align: middle;
+      color: #39e2a0;
+      font-size: 1rem;
+      font-weight: 800;
+      text-shadow: 0 0 12px rgba(57,226,160,.45);
+    }
+
+    #qimenTool .notice {
+      padding: 12px 14px;
+      border: 1px solid rgba(255,190,59,.11);
+      border-left: 2px solid rgba(255,190,59,.62);
+      border-radius: 10px;
+      background: rgba(255,190,59,.035);
+      color: #7e899b;
+      font-size: .71rem;
+      line-height: 1.75;
+    }
+
+    #qimenTool footer {
+      padding: 18px 0 0;
+      color: #48556a;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: .64rem;
+      letter-spacing: .08em;
+    }
+
+    .qimen-return-wrap {
+      max-width: 1460px;
+      margin: 26px auto 0;
+      text-align: center;
+    }
+
+    @media (max-width: 1180px) {
+      #qimenTool .info { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 900px) {
+      #worldSecond { padding: 96px 16px 56px; }
+      .qimen-stage-header { grid-template-columns: 1fr; align-items: start; }
+      .qimen-engine-chip { justify-self: start; }
+      #qimenTool { padding: 14px; border-radius: 22px; }
+      #qimenTool .toolbar { grid-template-columns: 1fr 1fr; }
+      #qimenTool .field { grid-column: 1 / -1; }
+      #qimenTool .info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #qimenTool .grid { grid-template-columns: 1fr; }
+      #qimenTool .palace { min-height: auto; }
+      #qimenTool .tool-heading { align-items: flex-start; flex-direction: column; }
+      #qimenTool .tool-mark { white-space: normal; }
+    }
+
+    @media (max-width: 560px) {
+      #qimenTool .toolbar { grid-template-columns: 1fr; }
+      #qimenTool .field,
+      #qimenTool .region-bar { grid-column: auto; }
+      #qimenTool .btn { width: 100%; }
+      #qimenTool .info { grid-template-columns: 1fr 1fr; }
+      #qimenTool .info > div { min-height: 58px; }
+      .qimen-stage-title { font-size: 2rem; }
+    }
+
+
+    #worldSecond {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      transform: none !important;
+      max-width: none;
+      margin: 0;
+      padding-top: 30px;
+    }
+    .qimen-return-wrap .btn-return-portal {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 20px;
+      border: 1px solid rgba(0,243,255,.32);
+      border-radius: 999px;
+      background: rgba(0,243,255,.05);
+      color: var(--singularity-cyan);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: .76rem;
+      letter-spacing: .1em;
+      transition: .3s ease;
+    }
+    .qimen-return-wrap .btn-return-portal:hover {
+      background: var(--singularity-cyan);
+      color: #001014;
+      box-shadow: 0 0 30px rgba(0,243,255,.25);
+      transform: translateY(-2px);
+    }
+    @media (max-width: 700px) {
+      .page-status { display: none; }
+      .page-topbar { width: min(100% - 24px, 1460px); }
+    }
+
+    [hidden]{display:none!important} body{background:#070a11;color:#edf1f7;line-height:1.55} body::before,body::after{display:none} .reverse-wrap{width:min(1200px,calc(100% - 32px));margin:0 auto 40px} .reverse-nav{display:flex;justify-content:space-between;gap:12px;padding:18px 0;color:#c8ab71;font-size:.86rem;align-items:center}.reverse-nav a{color:#dfc38c;text-decoration:none}.reverse-hero{padding:22px 0 20px;border-top:1px solid #392c20}.reverse-kicker{color:#ce9b58;font-size:.72rem;letter-spacing:.15em}.reverse-hero h1{font-size:clamp(1.7rem,4vw,2.7rem);line-height:1.22;margin:7px 0;color:#f7d69b}.reverse-hero p{margin:0;color:#a9b5c9;font-size:.93rem}.reverse-panel{padding:22px;border:1px solid #313d50;border-radius:16px;background:#101722;margin:0 0 16px}.reverse-panel h2{margin:0 0 12px;font-size:1.15rem;color:#f1cb78}.reverse-panel h3{font-size:.98rem;margin:0 0 8px;color:#dde5f2}.reverse-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px}.reverse-fields label,.reverse-label{display:block;font-size:.82rem;color:#bec8d8;margin-bottom:5px}.reverse-fields select,.reverse-fields input{display:block;width:100%;min-width:0;min-height:44px;font:inherit;font-size:.9rem;border:1px solid #3b4961;border-radius:7px;color:#f0f4fc;background:#0b111b;padding:8px 10px;color-scheme:dark}.reverse-fields select:focus,.reverse-fields input:focus{outline:2px solid #d5ac63;outline-offset:1px}.reverse-rule{border:0;border-top:1px solid #293343;margin:16px 0}.reverse-checks,.reverse-choices{display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center}.reverse-checks label,.reverse-choices label{display:flex;gap:6px;align-items:center;font-size:.88rem;color:#e2e8f1;cursor:pointer}.reverse-checks input,.reverse-choices input{accent-color:#d5a64e}.reverse-note{color:#9caac0;font-size:.78rem;line-height:1.65;margin:8px 0 0}.reverse-buttons{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}.reverse-btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid #a98241;border-radius:8px;padding:10px 18px;font:inherit;font-size:.9rem;font-weight:700;color:#171005;background:#e3b763;cursor:pointer;text-decoration:none;min-height:44px}.reverse-btn.secondary{background:#141d2a;color:#e6c787;border-color:#455168}.reverse-btn:disabled{opacity:.5;cursor:not-allowed}.reverse-btn:focus-visible,.reverse-result:focus-visible{outline:2px solid #f4c76d;outline-offset:3px}.reverse-status{font-size:.9rem;color:#becadd;margin:8px 0;overflow-wrap:anywhere}.reverse-error{color:#ffa9a2}.reverse-progress{width:100%;height:9px;accent-color:#ddb56b}.reverse-result{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;text-align:left;padding:12px 0;border:0;border-bottom:1px solid #2d3747;background:transparent;color:#eef1f8;font:inherit;cursor:pointer}.reverse-result:hover{background:#192232}.reverse-result strong{display:block;color:#f0c96b;font-size:1rem}.reverse-result small{display:block;font-size:.8rem;color:#aab9cd;overflow-wrap:anywhere}.reverse-count{font-size:1.8rem;color:#f0c96b;font-weight:750;margin:0}.reverse-match{outline:2px solid #e0b76d!important;outline-offset:-2px}.reverse-detail-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}.reverse-detail-heading h2{margin:0}.reverse-footer{font-size:.78rem;color:#9ba8bd;text-align:center;padding:8px}.reverse-footer a{color:#e3b763}#qimenTool .palace{cursor:default}#qimenTool .btn{cursor:pointer}
+@media(max-width:750px){.reverse-wrap{width:calc(100% - 24px)}.reverse-panel{padding:14px}.reverse-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.reverse-fields select,.reverse-fields input{font-size:.85rem}.reverse-hero{padding:17px 0}.reverse-btn{padding:9px 12px}.reverse-result strong{font-size:.92rem}.reverse-result{gap:6px}.reverse-nav{padding:12px 0}.reverse-choices{gap:12px}.reverse-checks{gap:10px}}
+</style></head><body><div class="reverse-wrap">
+<header class="reverse-nav"><a href="qimen.html">← 返回免費奇門遁甲排盤</a><a href="index.html">一念知機</a></header>
+<section class="reverse-hero"><div class="reverse-kicker">ADVANCED QIMEN SEARCH</div><h1>奇門遁甲擇吉時</h1><p>進階反向排盤｜指定同宮符號，找出符合條件的時間及方位。</p></section>
+<main>
+<form id="searchForm" class="reverse-panel"><h2>設定搜尋條件</h2><div id="fields" class="reverse-fields"></div>
+<hr class="reverse-rule"><h3>附加與排除條件</h3><div class="reverse-checks"><label><input name="hasMa" type="checkbox">必須有馬星</label><label><input name="excludeKong" type="checkbox">排除旬空</label><label><input name="excludeMenPo" type="checkbox">排除門迫（門克宮）</label></div><p class="reverse-note">所有條件須在同一個外八宮成立；不限的項目不參與比對。第一版不判斷未確認的寄干、擊刑、入墓及特殊三遁。</p>
+<hr class="reverse-rule"><h3>真太陽時與搜尋範圍</h3><div class="reverse-choices" role="group" aria-label="真太陽時地區"><label><input type="radio" name="region" value="台北" checked>台北真太陽時</label><label><input type="radio" name="region" value="無">不校正</label></div><div class="reverse-choices" role="group" aria-label="搜尋範圍" style="margin-top:12px"><label><input type="radio" name="days" value="7" checked>未來7天</label><label><input type="radio" name="days" value="30">未來30天</label><label><input type="radio" name="days" value="90">未來90天</label></div><p class="reverse-note">以開始搜尋的時間（UTC+8）為起點，包含當前剩餘時段；結束時間不含在範圍內。依真太陽時及節氣交界切分盤局。</p>
+<div class="reverse-buttons"><button class="reverse-btn" id="searchBtn" type="submit">開始搜尋吉時</button><button class="reverse-btn secondary" id="resetBtn" type="reset">清除條件</button><button class="reverse-btn secondary" id="cancelBtn" type="button" hidden>停止搜尋</button></div><p id="formStatus" class="reverse-status" role="status" aria-live="polite">請至少指定一項條件。</p><progress class="reverse-progress" id="progress" max="100" value="0" hidden></progress></form>
+<section class="reverse-panel" id="detail" hidden aria-labelledby="detailTitle"><div class="reverse-detail-heading"><h2 id="detailTitle">完整奇門盤</h2><button class="reverse-btn secondary" id="backResults" type="button">返回搜尋結果</button></div><p id="detailStatus" class="reverse-status" role="status"></p><div id="qimenTool" hidden><div class="tool-heading"><div><h2>線上奇門遁甲盤</h2><div class="sub">拆補法 · 十干克應 · 馬星 · 旬空</div></div></div><div class="info" id="panInfo"></div><div class="grid" id="palaceGrid"></div><div class="notice" id="noticeBar"></div><footer>金色外框為符合搜尋條件的宮位</footer></div></section>
+<section id="results" class="reverse-panel" hidden aria-labelledby="resultTitle"><h2 id="resultTitle">搜尋結果</h2><p id="querySummary" class="reverse-status"></p><p id="count" class="reverse-count"></p><p class="reverse-note" id="resultNote"></p><div id="resultList"></div></section>
+</main><footer class="reverse-footer">© 一念知機｜奇門擇吉為傳統術數參考，符合搜尋條件不代表必然吉利。 <a href="qimen.html">返回排盤</a></footer></div>
+<script>
+function safe(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderInfo(result){
+  const order=['地區','經度','真太陽時','節氣','三元','局數','四柱','旬首','旬空','馬星','值符','值使','值符落宮'];
+  document.getElementById('panInfo').innerHTML=order.map(key=>`<div>${safe(key)}<span>${safe(result.info?.[key]??'—')}</span></div>`).join('');
+}
+function renderGrid(palaces){
+  const grid=document.getElementById('palaceGrid');
+  grid.innerHTML=palaces.map(g=>{
+    const k=g.keying||{type:'none'};
+    let keyingHTML='';
+    if(k.type==='center')keyingHTML='<div class="empty">（中宮寄坤，不列克應）</div>';
+    else if(k.type==='matched')keyingHTML=`<div class="line"><span class="kh">${safe(k.label)}：</span>${k.name?`為${safe(k.name)}，`:''}${safe(k.text)}</div>`;
+    else if(k.type==='unknown')keyingHTML=`<div class="line"><span class="kh">${safe(k.label)}：</span><span class="empty">（無資料）</span></div>`;
+    else keyingHTML='<div class="empty">（無克應）</div>';
+    // Each of the eight outer palaces gets the second (hidden + earth) interpretation.
+    // The center palace intentionally has neither a hidden-stem glyph nor keying text.
+    if(g.luoshu!==5){
+      const hk=g.hiddenKeying||{type:'none'};
+      if(hk.type==='matched')keyingHTML+=`<div class="line line-hidden"><span class="kh">${safe(hk.label)}：</span>${safe(hk.text)}</div>`;
+      else if(hk.type==='unknown')keyingHTML+=`<div class="line line-hidden"><span class="kh">${safe(hk.label)}：</span><span class="empty">（無資料）</span></div>`;
+    }
+    return `<div class="palace">
+      ${g.hasMa?'<span class="ma-star">馬</span>':''}
+      <div class="palace-header"><span><span class="name">${safe(g.name)}</span> <span class="luoshu">(${safe(g.luoshu)})</span></span><span class="dir">${safe(g.dir)}（${safe(g.wuxing)}）</span></div>
+      <div class="palace-main"><div class="palace-left"><div class="shen">${safe(g.shen||'—')}${g.hasKong?'<span class="kong-mark">○</span>':''}</div><div class="xing">${safe(g.xing||'—')}</div><div class="men">${safe(g.men||'—')}</div></div>
+      <div class="palace-right"><div class="gan-tian">${safe(g.tian||'　')}</div><div class="gan-bottom">${g.luoshu!==5&&g.hiddenStem?`<span class="gan-hidden" title="隱干" aria-label="隱干 ${safe(g.hiddenStem)}">${safe(g.hiddenStem)}</span>`:''}<span class="gan-di">${safe(g.di||'　')}</span></div></div></div>
+      <div class="palace-keying">${keyingHTML}</div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.palace').forEach(card=>{
+    card.addEventListener('mousemove',e=>{
+      const rect=card.getBoundingClientRect();
+      card.style.setProperty('--qmx',`${((e.clientX-rect.left)/rect.width)*100}%`);
+      card.style.setProperty('--qmy',`${((e.clientY-rect.top)/rect.height)*100}%`);
+    });
+  });
+}
+const BASE='https://qimen-api.ezgocpu.workers.dev';
+const KEYS=[["戊戊", "伏吟"], ["戊乙", "青龍合靈"], ["戊丙", "青龍返首"], ["戊丁", "青龍耀明"], ["戊己", "貴人入獄"], ["戊庚", "值符飛宮"], ["戊辛", "青龍折足"], ["戊壬", "青龍入天牢"], ["戊癸", "青龍華蓋"], ["己戊", "犬遇青龍"], ["己己", "地戶逢鬼"], ["己乙", "墓神不明"], ["己丙", "火悖地戶"], ["己丁", "朱雀入墓"], ["己庚", "刑格"], ["己辛", "遊魂入墓"], ["己壬", "地網高張"], ["己癸", "地刑玄武"], ["庚戊", "太白天乙伏宮"], ["庚己", "刑格"], ["庚庚", "太白同宮"], ["庚乙", "太白逢星"], ["庚丙", "太白入熒"], ["庚丁", "亭亭之格"], ["庚辛", "白虎出力"], ["庚壬", "上格"], ["庚癸", "大格"], ["辛戊", "困龍被傷"], ["辛己", "入獄自刑"], ["辛庚", "白虎猖狂"], ["辛辛", "伏吟天庭"], ["辛乙", "白虎猖狂"], ["辛丙", "干合悖師"], ["辛丁", "獄神得奇"], ["辛壬", "凶蛇入獄"], ["辛癸", "天牢華蓋"], ["壬戊", "小蛇化龍"], ["壬己", "地網高張"], ["壬庚", "太白擒蛇"], ["壬辛", "騰蛇相纏"], ["壬壬", "蛇入地羅"], ["壬乙", "小蛇日奇"], ["壬丙", "水蛇入火"], ["壬丁", "干合蛇刑"], ["壬癸", "幼女奸淫"], ["癸戊", "天乙會合"], ["癸己", "華蓋地戶"], ["癸庚", "大格"], ["癸辛", "網蓋天牢"], ["癸壬", "復見騰蛇"], ["癸乙", "華蓋逢星"], ["癸丙", "華蓋悖師"], ["癸丁", "騰蛇夭矯"], ["癸癸", "天網四張"], ["乙戊", "陰害陽謀"], ["乙己", "日奇入墓"], ["乙庚", "日奇被刑"], ["乙辛", "青龍逃走"], ["乙壬", "日奇入地"], ["乙癸", "華蓋逢星"], ["乙乙", "日奇伏吟"], ["乙丙", "奇儀順遂"], ["乙丁", "奇儀相佐"], ["丙戊", "飛鳥跌穴"], ["丙己", "火悖地戶"], ["丙庚", "熒入太白"], ["丙辛", "干合悖師"], ["丙壬", "火入天羅"], ["丙癸", "華蓋悖師"], ["丙乙", "奇儀順遂"], ["丙丙", "月奇伏吟"], ["丙丁", "月奇朱雀"], ["丁戊", "青龍轉光"], ["丁己", "朱雀入墓"], ["丁庚", "亭亭之格"], ["丁辛", "獄神得奇"], ["丁壬", "干合蛇刑"], ["丁癸", "朱雀投江"], ["丁乙", "奇儀相佐"], ["丁丙", "月奇朱雀"], ["丁丁", "星隨月轉"]], HIDDEN=[["戊戊", "伏吟"], ["戊乙", "青龍合靈"], ["戊丙", "青龍反首"], ["戊丁", "青龍耀明"], ["戊己", "貴人入獄"], ["戊庚", "值符飛宮"], ["戊辛", "青龍折足"], ["戊壬", "青龍入天牢"], ["戊癸", "青龍華蓋"], ["乙戊", "利陰害陽"], ["乙乙", "日奇伏吟"], ["乙丙", "奇儀順遂"], ["乙丁", "奇儀相佐"], ["乙己", "日奇入霧"], ["乙庚", "日奇被刑"], ["乙辛", "青龍逃走"], ["乙壬", "日奇入地"], ["乙癸", "華蓋逢星官"], ["丙戊", "飛鳥跌穴"], ["丙乙", "日月並行"], ["丙丙", "月奇悖師"], ["丙丁", "月奇朱雀"], ["丙己", "大悖入刑"], ["丙庚", "火入金鄉"], ["丙辛", "謀事就成"], ["丙壬", "火入天羅"], ["丙癸", "華蓋悖師"], ["丁戊", "青龍轉光"], ["丁乙", "人遁吉格"], ["丁丙", "星隨月轉"], ["丁丁", "奇入太陰"], ["丁己", "火入勾陳"], ["丁庚", "文書阻隔"], ["丁辛", "朱雀入獄"], ["丁壬", "五神互合"], ["丁癸", "朱雀投江"], ["己戊", "犬遇青龍"], ["己乙", "墓神不明"], ["己丙", "火悖地戶"], ["己丁", "朱雀入墓"], ["己己", "地戶逢鬼"], ["己庚", "刑格反名"], ["己辛", "游魂入墓"], ["己壬", "地網高張"], ["己癸", "地刑玄武"], ["庚戊", "太白天乙伏宮"], ["庚乙", "太白蓬星"], ["庚丙", "太白入熒"], ["庚丁", "亭亭之格"], ["庚己", "刑格"], ["庚庚", "太白同宮"], ["庚辛", "白虎干格"], ["庚壬", "上格"], ["庚癸", "大格"], ["辛戊", "困龍被傷"], ["辛乙", "白虎猖狂"], ["辛丙", "干合悖師"], ["辛丁", "獄神得奇"], ["辛己", "入獄自刑"], ["辛庚", "白虎出力"], ["辛辛", "伏吟天庭"], ["辛壬", "凶蛇入獄"], ["辛癸", "天牢華蓋"], ["壬戊", "小蛇化龍"], ["壬乙", "小蛇日奇"], ["壬丙", "水蛇入火"], ["壬丁", "干合蛇刑"], ["壬己", "干合蛇刑"], ["壬庚", "太白擒蛇"], ["壬辛", "騰蛇相纏"], ["壬壬", "蛇入地羅"], ["壬癸", "幼女奸淫"], ["癸戊", "天乙會合"], ["癸乙", "華蓋蓬星"], ["癸丙", "華蓋悖師"], ["癸丁", "騰蛇夭矯"], ["癸己", "華蓋地戶"], ["癸庚", "太白入網"], ["癸辛", "網蓋天牢"], ["癸壬", "復見騰蛇"], ["癸癸", "天網四張"]];
+const fields=[['dir','指定方位',['東','東南','南','西南','西','西北','北','東北']],['shen','八神',['值符','螣蛇','太陰','六合','白虎','玄武','九地','九天']],['xing','九星',['天蓬','禽芮','天沖','天輔','天心','天柱','天任','天英']],['men','八門',['開門','休門','生門','傷門','杜門','景門','死門','驚門']],['tian','天盤干',[...'乙丙丁戊己庚辛壬癸']],['di','地盤干',[...'乙丙丁戊己庚辛壬癸']],['hiddenStem','隱干',[...'乙丙丁戊己庚辛壬癸']],['keying','天地盤十干克應',KEYS],['hiddenKeying','隱干克應',HIDDEN]];
+const $=id=>document.getElementById(id),form=$('searchForm');
+const dirName=x=>['東','南','西','北'].includes(x)?'正'+x:x;
+for(const [key,label,opts] of fields){const div=document.createElement('div'),l=document.createElement('label'),s=document.createElement('select');l.htmlFor=key;l.textContent=label;s.name=key;s.id=key;s.add(new Option('不限',''));for(const o of opts){const [v,t]=Array.isArray(o)?o:[o,key==='dir'?dirName(o):o];s.add(new Option(Array.isArray(o)?`${v[0]}加${v[1]}｜${t}`:t,v));}div.append(l,s);$('fields').append(div);}
+for(const [key,label] of [['keyingText','天地盤斷語文字（選填）'],['hiddenKeyingText','隱干斷語文字（選填）']]){const d=document.createElement('div'),l=document.createElement('label'),i=document.createElement('input');l.htmlFor=key;l.textContent=label;i.id=i.name=key;i.maxLength=80;i.placeholder='例：青龍耀明';d.append(l,i);$('fields').append(d);}
+function conditions(){const f=new FormData(form),c={};for(const [k] of fields){if(f.get(k))c[k]=f.get(k);}for(const k of ['keyingText','hiddenKeyingText']){const v=f.get(k).trim();if(v)c[k]=v;}for(const k of ['hasMa','excludeKong','excludeMenPo'])if(f.has(k))c[k]=true;return c;}
+let searchController=null, detailController=null, activeSearch=0,activeDetail=0, resultRows=[],resultRegion='台北',lastResultButton=null;
+function msg(text,error=false){$('formStatus').textContent=text;$('formStatus').classList.toggle('reverse-error',error);}
+function lock(busy){for(const el of form.elements){if(el.id!=='cancelBtn')el.disabled=busy;}$('cancelBtn').hidden=!busy;$('progress').hidden=!busy;}
+function wallNow(){return new Date(Math.ceil(Date.now()/1000)*1000+8*3600000).toISOString().slice(0,19);}
+function summary(c){const map={hasMa:'必須有馬星',excludeKong:'排除旬空',excludeMenPo:'排除門迫',keyingText:'天地盤斷語',hiddenKeyingText:'隱干斷語'};return Object.entries(c).map(([k,v])=>{if(v===true)return map[k];if(k==='dir')return dirName(v);const el=$(k);return `${fields.find(f=>f[0]===k)?.[1]||map[k]}：${el?.selectedOptions?.[0]?.text||v}`;}).join(' ＋ ');}
+async function post(path,data,signal){const r=await fetch(BASE+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal});let result;try{result=await r.json();}catch(e){const err=new Error(r.status===404?'搜尋服務尚未部署':`API 回應異常（HTTP ${r.status}）`);err.status=r.status;throw err;}if(!r.ok||!result.ok){const err=new Error(result.error||`HTTP ${r.status}`);err.status=r.status;throw err;}return result;}
+function appendRows(rows){for(const r of rows){const last=resultRows.at(-1);if(last&&last.end===r.start&&last.signature===r.signature){last.end=r.end;}else resultRows.push(r);}}
+function formatDate(s){return s.replace('T',' ');}
+function matchText(p){return [dirName(p.dir)+'（'+p.name+'）',p.shen,p.xing,p.men,p.keying,p.hasMa?'馬星':'',p.hasKong?'旬空':'',p.menPo?'門迫':''].filter(Boolean).join('・');}
+function renderResults(q,start,days,region,complete){$('results').hidden=false;$('querySummary').textContent=`${q}｜未來${days}天｜${region==='無'?'不校正':'台北真太陽時'}｜起點 ${formatDate(start)}（UTC+8）`;$('count').textContent=`${complete?'符合':'已找到'} ${resultRows.length} 個時間區間`;$('resultNote').textContent=complete?(resultRows.length?'依時間排序；區間含開始、不含結束。點擊任一筆查看完整盤局。':'這段時間內沒有符合全部指定條件的盤局。可減少條件重新搜尋。'):'尚未完成全部時間範圍，不是最終結果。';const frag=document.createDocumentFragment();for(const [i,r] of resultRows.entries()){const b=document.createElement('button');b.type='button';b.className='reverse-result';const content=document.createElement('span'),t=document.createElement('strong'),sub=document.createElement('small'),m=document.createElement('small'),arrow=document.createElement('span');t.textContent=`${i+1}. ${formatDate(r.start)} ～ ${formatDate(r.end)}`;sub.textContent=`${r.hour}時・${r.ju}`;m.textContent=r.matches.map(matchText).join('；');arrow.textContent='查看盤局 ›';arrow.style.color='#f0c96b';arrow.style.fontSize='.8rem';content.append(t,sub,m);b.append(content,arrow);b.addEventListener('click',()=>{lastResultButton=b;openDetail(r,region);});frag.append(b);}$('resultList').replaceChildren(frag);}
+form.addEventListener('submit',async e=>{e.preventDefault();const c=conditions();if(!Object.keys(c).length){msg('請至少指定一項條件。',true);return;}const fd=new FormData(form),days=Number(fd.get('days')),region=fd.get('region'),start=wallNow(),q=summary(c);const id=++activeSearch;searchController?.abort();detailController?.abort();activeDetail++;$('detail').hidden=true;$('qimenTool').hidden=true;$('results').hidden=true;resultRows=[];resultRegion=region;const ctl=new AbortController();searchController=ctl;lock(true);$('progress').value=0;let offset=0,chunkHours=24;msg('正在搜尋，請保留此頁。');try{while(offset<days*24){let r;try{r=await post('/search',{start,days,region,offsetHours:offset,hours:chunkHours,conditions:c},ctl.signal);}catch(err){if(err.status>=500&&chunkHours>1){chunkHours=chunkHours>6?6:chunkHours>2?2:1;continue;}throw err;}if(id!==activeSearch)return;if(r.start!==start||r.from!==new Date(Date.parse(start+'Z')+offset*3600000).toISOString().slice(0,19)||r.totalHours!==days*24||!Array.isArray(r.rows)||r.nextOffsetHours!==Math.min(days*24,offset+chunkHours))throw Error('搜尋服務回傳的批次範圍不一致');appendRows(r.rows);offset=r.nextOffsetHours;$('progress').value=offset/(days*24)*100;msg(`已搜尋 ${(offset/24).toFixed(1)} / ${days} 天，暫找到 ${resultRows.length} 個時間區間。`);}renderResults(q,start,days,region,true);msg(`搜尋完成，共 ${resultRows.length} 個符合條件的時間區間。`);$('results').scrollIntoView({block:'start',behavior:'smooth'});}catch(err){if(id!==activeSearch)return;const cancelled=ctl.signal.aborted;msg(cancelled?'已停止搜尋，結果不完整。':`搜尋失敗：${err.message}。${offset?'已完成的批次可查看，但不是完整結果。':'請確認搜尋 API 已部署。'}`,!cancelled);if(offset)renderResults(q,start,days,region,false);}finally{if(id===activeSearch)lock(false);}});
+form.addEventListener('input',()=>{if(!$('searchBtn').disabled){msg(Object.keys(conditions()).length?'搜尋條件已設定，按下開始搜尋吉時。':'請至少指定一項條件。');}});
+$('cancelBtn').addEventListener('click',()=>searchController?.abort());
+form.addEventListener('reset',()=>{activeSearch++;searchController?.abort();activeDetail++;detailController?.abort();resultRows=[];$('results').hidden=true;$('detail').hidden=true;lock(false);msg('請至少指定一項條件。');});
+async function openDetail(row,region){const id=++activeDetail;detailController?.abort();const ctl=new AbortController();detailController=ctl;$('detail').hidden=false;$('qimenTool').hidden=true;$('detailStatus').textContent=`正在載入 ${formatDate(row.datetime)}（UTC+8）完整盤局…`;$('detail').scrollIntoView({block:'start',behavior:'smooth'});try{const r=await post('/chart',{region,datetime:row.datetime},ctl.signal);if(id!==activeDetail)return;renderInfo(r);renderGrid(r.palaces||[]);$('noticeBar').innerHTML=r.notice||'';const matched=new Set(row.matches.map(p=>p.luoshu));[...$('palaceGrid').children].forEach((el,i)=>{if(matched.has(r.palaces[i]?.luoshu))el.classList.add('reverse-match');});$('detailStatus').textContent=`${formatDate(row.start)} ～ ${formatDate(row.end)}（UTC+8）｜符合宮位：${row.matches.map(p=>dirName(p.dir)+'（'+p.name+'）').join('、')}`;$('qimenTool').hidden=false;}catch(err){if(id===activeDetail&&!ctl.signal.aborted)$('detailStatus').textContent='完整盤局載入失敗：'+err.message+'。請返回結果再試。';}}
+$('backResults').addEventListener('click',()=>{activeDetail++;detailController?.abort();$('detail').hidden=true;$('results').scrollIntoView({block:'start',behavior:'smooth'});lastResultButton?.focus({preventScroll:true});});
+
+</script></body></html>
