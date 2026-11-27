@@ -867,7 +867,7 @@ function initializeTopicCue(){
 }
 function renderTopics(){$('topicChips').innerHTML='';for(const t of YJ_TOPICS){const b=document.createElement('button');b.type='button';b.className='chip'+(t.id===state.topic?' selected':'');b.textContent=t.name;b.onclick=()=>{stopTopicCue();state.topic=t.id;state.page=0;if(state.selection?.type==='fixed')setSelection(null);renderTopics();renderQuestions()};$('topicChips').appendChild(b)}}
 function pool(){return YJ_QUESTIONS.filter(q=>q.topic===state.topic)}
-function renderQuestions(){const p=pool(),pages=Math.max(1,Math.ceil(p.length/2)),i=((state.page%pages)+pages)%pages;$('questionExamples').innerHTML='';for(const item of Array.from({length:Math.min(4,p.length)},(_,n)=>p[(i*2+n)%p.length])){const b=document.createElement('button');b.type='button';b.className='suggestion'+(state.selection?.type==='fixed'&&state.selection.question===item.question?' selected':'');b.textContent=item.question;b.onclick=()=>{setSelection({type:'fixed',...item});$('customBox').open=false;renderQuestions()};$('questionExamples').appendChild(b)}}
+function renderQuestions(){const p=pool(),pages=Math.max(1,Math.ceil(p.length/2)),i=((state.page%pages)+pages)%pages;$('questionExamples').innerHTML='';for(const item of Array.from({length:Math.min(4,p.length)},(_,n)=>p[(i*2+n)%p.length])){const b=document.createElement('button');b.type='button';b.className='suggestion'+(state.selection?.type==='fixed'&&state.selection.question===item.question?' selected':'');b.textContent=item.question;b.onclick=()=>{setSelection({type:'fixed',...item});yiMobileUsage(yiMobileOwner(),[],[[yiMobileFeature(),'click']]);$('customBox').open=false;renderQuestions()};$('questionExamples').appendChild(b)}}
 function setSelection(s){
   if(state.reading)return;
   state.selection=s;
@@ -907,7 +907,7 @@ async function start(){if(state.castBusy||state.reading)return;if(!window.DHMobi
 const lineNames=['初爻','二爻','三爻','四爻','五爻','上爻'];
 function renderLines(id,values){$(id).innerHTML='';for(let p=5;p>=0;p--){const v=values[p],row=document.createElement('div');row.className='line-row';const line=document.createElement('div');line.className='yao '+(v==null?'empty':v==='yang'?'yang':'yin');line.innerHTML='<i class="bar"></i><i class="bar"></i>';row.innerHTML=`<span class="line-name">${lineNames[p]}</span>`;row.append(line);const lbl=document.createElement('span');lbl.className='line-label';lbl.textContent=v==null?'·':v==='yang'?'陽爻':'陰爻';row.append(lbl);$(id).append(row)}}
 function renderCastProgress(){const n=state.values.length;$('castProgressLabel').textContent=n+' / 6 爻';$('progressBar').style.width=(n*100/6)+'%';$('tossBtn').textContent=n===6?'六爻已完成':`擲出第 ${n+1} 爻`;$('tossBtn').disabled=n>=6||state.castBusy;}
-async function toss(){if(state.castBusy||!state.selection||state.values.length>=6)return;if(!window.DHMobileMemberGate.allowGuest(!!state.member))return;state.castBusy=true;renderCastProgress();const step=state.values.length+1;setStatus('castStatus','正在由易經核心擲出第 '+step+' 爻…');try{const r=await post('/mobile/toss',{operationId:state.castOperation,step,question:state.selection.question,context:getContext()},{'X-DH-Yijing-Visitor-Id':visitor()});if(!r.ok||!Array.isArray(r.lines)||r.lines.length<step)throw Error('起爻資料不完整');state.values=r.lines;renderLines('lineStack',state.values);$('coinResult').textContent=`第 ${step} 爻：${r.line==='yang'?'陽爻':'陰爻'}`;if(r.completed){if(!r.reading?.base||!Array.isArray(r.reading.baseLines))throw Error('正式卦象資料不完整，請重新嘗試');state.reading=r.reading;state.revealed=null;renderResult();$('castCard').hidden=true;$('resultCard').hidden=false;saveSession();scroll('resultCard');}else saveSession();setStatus('castStatus','');}catch(e){setStatus('castStatus','起卦尚未完成：'+e.message+'。可按同一按鈕重試，不會改變已產生的爻。',true)}finally{state.castBusy=false;renderCastProgress();}}
+async function toss(){if(state.castBusy||!state.selection||state.values.length>=6)return;if(!window.DHMobileMemberGate.allowGuest(!!state.member))return;const usageOwner=yiMobileOwner();state.castBusy=true;renderCastProgress();const step=state.values.length+1;setStatus('castStatus','正在由易經核心擲出第 '+step+' 爻…');try{const r=await post('/mobile/toss',{operationId:state.castOperation,step,question:state.selection.question,context:getContext()},{'X-DH-Yijing-Visitor-Id':visitor()});if(!r.ok||!Array.isArray(r.lines)||r.lines.length<step)throw Error('起爻資料不完整');state.values=r.lines;renderLines('lineStack',state.values);$('coinResult').textContent=`第 ${step} 爻：${r.line==='yang'?'陽爻':'陰爻'}`;if(r.completed){if(!r.reading?.base||!Array.isArray(r.reading.baseLines))throw Error('正式卦象資料不完整，請重新嘗試');state.reading=r.reading;state.revealed=null;yiMobileUsage(usageOwner,[['cast',yiMobileCategory()]],[['cast','complete'],[yiMobileFeature(),'complete']],'cast:'+state.castOperation);renderResult();$('castCard').hidden=true;$('resultCard').hidden=false;saveSession();scroll('resultCard');}else saveSession();setStatus('castStatus','');}catch(e){setStatus('castStatus','起卦尚未完成：'+e.message+'。可按同一按鈕重試，不會改變已產生的爻。',true)}finally{state.castBusy=false;renderCastProgress();}}
 function getContext(){const s=state.selection,topic=s.type==='custom'?{id:'general',name:'自由提問',focus:'目前局勢、主要阻力、轉折、機會與下一步'}:(()=>{const t=YJ_TOPICS.find(x=>x.id===s.topic);return{id:t.engineId||t.id,name:t.name,focus:t.focus}})(),scenario=s.type==='custom'?{id:'free',name:'自由提問',desc:'直接輸入問題'}:{id:s.scenario,name:s.scenarioName,desc:s.scenarioDesc};return {topic,scenario,questionIntent:s.type==='custom'?'custom':'guided'};}
 
 function htmlHex(id,values){$(id).innerHTML='';if(!Array.isArray(values))return;const wrap=document.createElement('div');wrap.className='line-stack';$(id).append(wrap);renderLinesInto(wrap,values)}
@@ -935,7 +935,7 @@ function showWorking(v,follow=false){
   }
 }
 async function aiConfirm(follow=false){if(!state.member){window.DHMobileMemberGate.login();return false}if(!await refreshQuota())throw Error('無法確認最新 AI 額度，不會扣次');const free=getRemaining(state.quota.ai),shared=Number(state.quota?.wallet?.ai);if(free===null||!Number.isFinite(shared))throw Error('AI 額度尚未確認');if(free<=0&&shared<=0)throw Error('AI 解讀額度已用完');return confirmAction(`本次${follow?'AI 追問':'AI 深度解卦'}將扣除 ${free>0?'本期免費 AI 解讀額度':'會員共用 AI 解讀額度'} 1 次。\n目前免費 AI ${free} 次、共用 AI ${shared} 次。\n確定繼續嗎？`)}
-async function aiRequest(follow=false){if(!state.reading||state.aiBusy||state.followBusy)return;if(follow&&(!state.initial||state.followup))return;const id=follow?'followBtn':'aiBtn',status=follow?'followStatus':'aiStatus',question=$('followQuestion').value.trim();if(follow&&(question.length<5||question.length>500)){setStatus(status,'追問請輸入 5～500 字',true);return}if(follow)state.followBusy=true;else state.aiBusy=true;$(id).disabled=true;try{if(!await aiConfirm(follow))return;setStatus(status,'');showWorking(true,follow);const body={mobileCastOp:state.castOperation,mode:follow?'followup':'initial',...(follow?{followupQuestion:question,previousKind:'ai',previousAnswer:state.initial.answer.slice(0,7500)}:{})};const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),160000);let result;try{result=await fetchJSON(API+'/ai/interpret',{method:'POST',signal:abort.signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+token(),'X-DH-Yijing-Visitor-Id':visitor(),'X-DH-Yijing-AI-Id':uuid()},body:JSON.stringify(body)})}finally{clearTimeout(timer)}if(typeof result.answer!=='string'||result.answer.trim().length<20)throw Error('AI 回傳內容不完整，請查詢最新額度');const v={answer:result.answer.trim(),channel:result.channel||'',traceId:result.traceId||'',at:new Date().toISOString(),question:follow?question:state.reading.question};if(follow)state.followup=v;else state.initial=v;window.dhTrackMobileAiSuccess?.('yijing',result.traceId,follow?'followup':(state.selection?.topic||'unknown'),follow?'followup':'initial');if(result.revealed)state.revealed=result.revealed;saveSession();renderRevealed();renderAnswers();$('readerCard').hidden=false;setStatus(status,'');if(!follow){void archive();void trackUsage('ai_success')}await refreshQuota();scroll(follow?'followResult':'readerCard');}catch(e){setStatus(status,(e.name==='AbortError'?'AI 等待逾時':e.message)+'。如未完成，請更新額度核對；失敗扣點由後端返還。',true)}finally{showWorking(false);if(follow)state.followBusy=false;else state.aiBusy=false;$(id).disabled=follow?!!state.followup:!!state.initial;if(!follow&&state.initial)$('aiBtn').textContent='✓ AI 深度解卦已完成';if(follow&&state.followup)$('followBtn').textContent='✓ 已完成本次 AI 追問';void refreshQuota()}}
+async function aiRequest(follow=false){if(!state.reading||state.aiBusy||state.followBusy)return;if(follow&&(!state.initial||state.followup))return;const id=follow?'followBtn':'aiBtn',status=follow?'followStatus':'aiStatus',question=$('followQuestion').value.trim();if(follow&&(question.length<5||question.length>500)){setStatus(status,'追問請輸入 5～500 字',true);return}if(follow)state.followBusy=true;else state.aiBusy=true;$(id).disabled=true;try{if(!await aiConfirm(follow))return;setStatus(status,'');showWorking(true,follow);const usageOwner=yiMobileOwner(),usageCategory=yiMobileCategory();const body={mobileCastOp:state.castOperation,mode:follow?'followup':'initial',...(follow?{followupQuestion:question,previousKind:'ai',previousAnswer:state.initial.answer.slice(0,7500)}:{})};const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),160000);let result;try{result=await fetchJSON(API+'/ai/interpret',{method:'POST',signal:abort.signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+token(),'X-DH-Yijing-Visitor-Id':visitor(),'X-DH-Yijing-AI-Id':uuid()},body:JSON.stringify(body)})}finally{clearTimeout(timer)}if(typeof result.answer!=='string'||result.answer.trim().length<20)throw Error('AI 回傳內容不完整，請查詢最新額度');const v={answer:result.answer.trim(),channel:result.channel||'',traceId:result.traceId||'',at:new Date().toISOString(),question:follow?question:state.reading.question};if(follow)state.followup=v;else state.initial=v;yiMobileUsage(usageOwner,[['ai_success',usageCategory]],[[follow?'followup':'ai','complete']],'ai:'+(result.traceId||state.castOperation+':'+(follow?'followup':'initial')));if(state.member?.sub===usageOwner.sub&&token()===usageOwner.token)window.dhTrackMobileAiSuccess?.('yijing',result.traceId,follow?'followup':(state.selection?.topic||'unknown'),follow?'followup':'initial',usageOwner.token);if(result.revealed)state.revealed=result.revealed;saveSession();renderRevealed();renderAnswers();$('readerCard').hidden=false;setStatus(status,'');if(!follow){void archive()}await refreshQuota();scroll(follow?'followResult':'readerCard');}catch(e){setStatus(status,(e.name==='AbortError'?'AI 等待逾時':e.message)+'。如未完成，請更新額度核對；失敗扣點由後端返還。',true)}finally{showWorking(false);if(follow)state.followBusy=false;else state.aiBusy=false;$(id).disabled=follow?!!state.followup:!!state.initial;if(!follow&&state.initial)$('aiBtn').textContent='✓ AI 深度解卦已完成';if(follow&&state.followup)$('followBtn').textContent='✓ 已完成本次 AI 追問';void refreshQuota()}}
 // V16: 安全的文字轉換，不讓 AI 文字作為 HTML；只賦予語氣層級，不更寫內容。
 function reportHeadingRole(text){
   if(/(?:風險|警訊|警告|陷阱|阻礙|注意事項|不要做|可能的問題)/.test(text))return 'warning';
@@ -1066,7 +1066,32 @@ function renderAnswers(){if(!state.initial)return;renderMarkdown('initialAnswer'
 function fullText(){const r=state.reading,d=state.revealed||{};return ['一念知機｜易經 AI 深度解卦','占問問題：'+r.question,'本卦：第 '+(r.base?.number||'')+' 卦・'+(r.base?.name||''),'動爻：'+(d.movingNames||'尚未揭示'),'變卦：'+(d.movingLines?.length?(d.changed?.name||''):'無變卦／靜卦'),'','【AI 深度解卦】',state.initial?.answer||'',...(state.followup?['','【追問】',state.followup.question,'','【AI 追問解答】',state.followup.answer]:[])].join('\n')}
 async function copyReport(){const s=fullText();try{await navigator.clipboard.writeText(s);alert('完整 AI 文章已複製')}catch(_){const a=document.createElement('textarea');a.value=s;document.body.append(a);a.select();const ok=document.execCommand('copy');a.remove();alert(ok?'已複製文章':'複製失敗，請使用下載 TXT 保存')}}
 function downloadReport(){const b=new Blob(['\ufeff'+fullText()],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(b),a=document.createElement('a');a.href=url;a.download='yijing-ai-'+new Date().toISOString().slice(0,10)+'.txt';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
-async function trackUsage(event){if(!state.member?.sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(token()))return;try{const t=token(),r=await fetch(MEMBER+'/member-usage/mode',{cache:'no-store'}),d=await r.json();if(!r.ok||!d.success||!['simple','full'].includes(d.mode))return;const topic=state.selection?.topic||'',scenario=state.selection?.scenario||'';const category=topic==='love'?(scenario==='breakup'?'分手':scenario==='reconcile'?'復合':'感情'):({work:'工作',business:'事業',finance:'財運',people:'人際'})[topic]||'其他';await fetch(MEMBER+'/member-usage/record',{method:'POST',cache:'no-store',keepalive:true,headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({tool:'yijing',event,category,count:1})});if(d.mode==='full'){const feature=event==='ai_success'?'ai':({love:'love',work:'work',business:'business',finance:'finance',people:'people'})[topic]||'other';void fetch(MEMBER+'/member-feature/record',{method:'POST',cache:'no-store',keepalive:true,headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({tool:'yijing',feature,action:'complete',count:1})}).catch(()=>{})}}catch(_){}}
+// Mobile member usage: best effort, fixed categories only; never affects quota or results.
+const yiMobileSeen=new Set();
+function yiMobileOwner(){return {sub:state.member?.sub||'',token:token()};}
+function yiMobileUsage(owner,events=[],features=[],once=''){
+ const query=new URLSearchParams(location.search);
+ if(location.protocol==='file:'||query.has('admin')||query.has('admin-test')||query.has('wxdebug')||!owner?.sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(owner.token))return;
+ const same=()=>state.member?.sub===owner.sub&&token()===owner.token;
+ if(!same())return;
+ const eventId=/^(?:(?:cast|ai|deep|follow|views):)?(?:[a-f0-9-]{36}|AI-\d{8}-\d{4}-[A-F0-9]{6})(?::(?:initial|followup))?$/i.test(once)?once:uuid();
+ const eventAt=Date.now();
+ const key=once?'dh-usage-yijing-v1|'+owner.sub+'|'+once:'';
+ if(key&&(yiMobileSeen.has(key)||(()=>{try{return sessionStorage.getItem(key)==='1'}catch(_){return false}})()))return;
+ if(key)yiMobileSeen.add(key);
+ void(async()=>{try{
+  const r=await fetch(MEMBER+'/member-usage/mode',{cache:'no-store'}),j=await r.json();
+  if(!r.ok||!j.success||!['simple','full'].includes(j.mode)||!same())return;
+  if(key)try{sessionStorage.setItem(key,'1')}catch(_){}
+  const post=(path,body)=>fetch(MEMBER+path,{method:'POST',cache:'no-store',keepalive:true,headers:{'Content-Type':'application/json',Authorization:'Bearer '+owner.token},body:JSON.stringify({tool:'yijing',count:1,...body})}).catch(()=>null);
+  const jobs=events.filter(([event])=>event!=='view'||j.mode==='full').map(([event,category])=>post('/member-usage/record',{event,category,eventId,eventAt}));
+  if(j.mode==='full')for(const [feature,action] of features)jobs.push(post('/member-feature/record',{feature,action,eventId,eventAt}));
+  await Promise.allSettled(jobs);
+ }catch(_){/* analytics failure must not interrupt tool use */}})();
+}
+function yiMobileCategory(){const topic=state.selection?.topic||'',scenario=state.selection?.scenario||'';return topic==='love'?(scenario==='breakup'?'分手':scenario==='reconcile'?'復合':'感情'):({work:'工作',business:'事業',finance:'財運',people:'人際'})[topic]||'其他';}
+function yiMobileFeature(s=state.selection){const t=s?.topic;return t==='love'&&['breakup','reconcile'].includes(s?.scenario)?s.scenario: ['love','work','business','finance','people','choice','self','fortune'].includes(t)?t:'other';}
+
 async function archive(){if(!state.member||!state.initial||!state.castOperation||!state.reading)return;const r=state.reading,d=state.revealed||{},tokenStr=token();if(!/^dhs_[A-Za-z0-9_-]{43}$/.test(tokenStr))return;const payload={id:state.castOperation,question:r.question,title:`${r.base.number}・${r.base.name}卦`,summary:state.initial.answer.replace(/\s+/g,' ').slice(0,300),details:{topic:state.selection?.topic||'',scenario:state.selection?.scenarioName||'',method:'手機六次免費起卦',base:r.base.name,changed:d.changed?.name||'',moving:d.movingNames||'無',mode:'mobile-coin3'}};try{await fetch(MEMBER+'/member/archive/yijing',{method:'POST',cache:'no-store',keepalive:true,headers:{'Content-Type':'application/json',Authorization:'Bearer '+tokenStr},body:JSON.stringify(payload)})}catch(_){}}
 function toggleReport(){state.reportCollapsed=!state.reportCollapsed;$('reportDetails').hidden=state.reportCollapsed;$('foldTop').textContent=state.reportCollapsed?'↓ 展開文章':'↑ 收合文章';$('collapseReport').textContent=state.reportCollapsed?'↓ 展開文章':'↑ 收合文章，返回標題';saveSession();if(state.reportCollapsed)scroll('readerCard')}
 async function restartAfterAi(){if(!state.initial||state.aiBusy||state.followBusy)return;const ok=await confirmAction('重新起卦會清除本頁目前的 AI 解讀文章。確定要重新開始嗎？');if(!ok)return;try{sessionStorage.removeItem(REPORT_KEY)}catch(_){}location.reload()}
@@ -1091,34 +1116,32 @@ window.addEventListener('beforeunload',e=>{if(state.aiBusy||state.followBusy){e.
 (function(){'use strict';
  const ENDPOINT='https://admin-api.ezgocpu.workers.dev/member-usage/ai-success-source';
  const TOKEN_KEY='divinationhub-auth-session-v1';
- const KEY='dh-member-usage-source-pending-v2';
  const TRACE=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
- let flushing=false;
+ let flushing=false,queue=[],owner='';
  function token(){try{const t=localStorage.getItem(TOKEN_KEY)||'';return /^dhs_[A-Za-z0-9_-]{43}$/.test(t)?t:''}catch(_){return ''}}
- function pending(){try{const d=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(d)?d.filter(x=>x&&Date.now()-Number(x.addedAt||0)<6*86400000).slice(-35):[]}catch(_){return []}}
- function save(rows){try{localStorage.setItem(KEY,JSON.stringify(rows.slice(-35)))}catch(_){}}
+ function current(){const t=token();if(t!==owner){queue=[];owner=t}return t}
  async function flush(){
-  if(flushing||!token())return;flushing=true;
-  try{let a=pending();for(const event of a.slice(0,8)){
+  const session=current();if(flushing||!session)return;flushing=true;
+  try{for(const event of queue.slice(0,8)){
+   if(current()!==session)break;
    let done=false;
-   try{
-    const r=await fetch(ENDPOINT,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},body:JSON.stringify({tool:event.tool,traceId:event.traceId,category:event.category,kind:event.kind,clientSurface:'mobile'})});
-    const j=await r.json().catch(()=>({}));
-    done=!!(r.ok&&j.success)||(r.status!==202&&[400,409].includes(r.status));
-    if(r.status===401)break;
+   try{const r=await fetch(ENDPOINT,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session},body:JSON.stringify({tool:event.tool,traceId:event.traceId,category:event.category,kind:event.kind,clientSurface:'mobile'})});
+    const j=await r.json().catch(()=>({}));done=!!(r.ok&&j.success)||(r.status!==202&&[400,409].includes(r.status));if(r.status===401)break;
    }catch(_){}
-   if(done){a=a.filter(x=>x.traceId!==event.traceId);save(a)}
+   if(current()!==session)break;
+   if(done)queue=queue.filter(x=>x!==event);
   }}finally{flushing=false}
  }
- window.dhTrackMobileAiSuccess=function(tool,traceId,category,kind='initial'){
-  const id=String(traceId||'');if(!token()||!TRACE.test(id))return;
-  let a=pending();if(a.some(x=>x.traceId===id))return;
-  a.push({tool:String(tool),traceId:id,category:String(category||'unknown').slice(0,60),kind:kind==='followup'?'followup':'initial',addedAt:Date.now()});save(a);
+ window.dhTrackMobileAiSuccess=function(tool,traceId,category,kind='initial',expectedSession){
+  const id=String(traceId||''),session=current();if(!session||expectedSession!==session||!TRACE.test(id))return;
+  if(queue.some(x=>x.traceId===id))return;
+  queue.push({tool:String(tool),traceId:id,category:String(category||'unknown').slice(0,60),kind:kind==='followup'?'followup':'initial'});queue=queue.slice(-35);
   void flush();setTimeout(()=>void flush(),1800);setTimeout(()=>void flush(),9000);
  };
+ window.addEventListener('storage',()=>{current()});
  window.addEventListener('pageshow',()=>{setTimeout(()=>void flush(),2000)});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void flush()});
- setTimeout(()=>void flush(),3500);
+
 })();
 </script>
 </body></html>

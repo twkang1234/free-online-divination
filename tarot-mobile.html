@@ -405,6 +405,37 @@ async function restoreMember(){if(sessionPending)return;sessionPending=true;cons
 }
 function updateMemberButton(){const b=$('memberBtn');b.href=member?'/member.html':memberUrl();b.textContent=member?'會員中心':'免費登入';}
 function headers(extra={}){return {'X-Tarot-Visitor-Id':visitorId(),...(token()?{Authorization:'Bearer '+token()}:{}),...extra}}
+// Tarot mobile usage parity: authenticated successful actions only; geography comes from member-api.
+function tarotMobileUsageCategory(){
+ const t=state.topicId,sc=state.question?.scenarioId||'';
+ if(t==='love')return sc==='breakup'?'分手':sc==='marriage'?'婚姻':'感情';
+ if(t==='work')return sc==='business'?'事業':sc==='study'?'學業':'工作';
+ return ({money:'財運',social:'人際',fate:'人際',study:'學業'})[t]||'其他';
+}
+const tarotMobileFeatureKeys=new Set(['love','work','money','social','growth','study','choices','fortune','fate','other','breakup','marriage','business','reveal','followup','ai']);
+function tarotMobileTrack(event,category='',features=[],eventId=UUID()){
+ const sub=member?.sub,t=token(),eventAt=Date.now();
+ if(location.protocol==='file:'||!sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(t))return;
+ const stillOwner=()=>member?.sub===sub&&token()===t;
+ const post=(path,body)=>fetch(MEMBER_API+path,{method:'POST',cache:'no-store',keepalive:true,
+  headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({tool:'tarot',count:1,...body})}).catch(()=>null);
+ void (async()=>{
+  try{
+   const r=await fetch(MEMBER_API+'/member-usage/mode',{method:'GET',cache:'no-store'});
+   const j=await r.json();if(!r.ok||!j.success||!['simple','full'].includes(j.mode)||!stillOwner())return;
+   const jobs=[];
+   if(event)jobs.push(post('/member-usage/record',{event,category,eventId,eventAt}));
+   if(j.mode==='full')for(const [feature,action] of features){if(tarotMobileFeatureKeys.has(feature))jobs.push(post('/member-feature/record',{feature,action,eventId,eventAt}));}
+   await Promise.allSettled(jobs);
+  }catch(_){/* Analytics must never interrupt card drawing, AI delivery or billing. */}
+ })();
+}
+function tarotMobileCastFeatures(second){
+ const sc=state.question?.scenarioId||'',t=state.topicId;
+ const key=['breakup','marriage','business','study'].includes(sc)?sc:(tarotMobileFeatureKeys.has(t)?t:'other');
+ return [[key,'complete'],['reveal','complete'],...(second?[['followup','complete']]:[])];
+}
+
 async function req(path,body=null,extra={}){
  const res=await fetch(API+path,{method:body?'POST':'GET',cache:'no-store',headers:{...headers(),...(body?{'Content-Type':'application/json'}:{}),...extra},body:body?JSON.stringify(body):undefined});
  const data=await res.json().catch(()=>null);if(!res.ok||!data?.ok){const err=new Error(data?.error||('HTTP_'+res.status));err.data=data;throw err;}return data;
@@ -544,7 +575,7 @@ function drawNext(){if(busy)return;const b=phase()==='b',cards=b?state.cardsB:st
  if(!drawDeck.length)drawDeck=shuffledDeck().filter(idx=>!cards.some(c=>c.index===idx));
  const index=drawDeck.shift(),pos=SPREADS[b?state.spreadB:state.spreadA].positions[cards.length];if(!index)return;
  const card=cardFromIndex(index,pos);cards.push(card);save();renderDraw();
- if(cards.length===3){setTimeout(()=>{state.stage=b?'aiB':'aiA';save();render();setTimeout(()=>{const btn=$(b?'runAiB':'runAiA');if(btn&&!btn.hidden){btn.scrollIntoView({behavior:'smooth',block:'center'});btn.focus({preventScroll:true});}},110);},650)}
+ if(cards.length===3){tarotMobileTrack('cast',tarotMobileUsageCategory(),tarotMobileCastFeatures(b),state[b?'opB':'opA']);setTimeout(()=>{state.stage=b?'aiB':'aiA';save();render();setTimeout(()=>{const btn=$(b?'runAiB':'runAiA');if(btn&&!btn.hidden){btn.scrollIntoView({behavior:'smooth',block:'center'});btn.focus({preventScroll:true});}},110);},650)}
 }
 function renderResult(){
  const q=state.question;
@@ -577,7 +608,7 @@ function render(){const selecting=state.stage==='select',drawing=state.stage==='
 function payloadForAI(stage){const six=stage===6;if(state.cardsA.length!==3||six&&state.cardsB.length!==3)throw Error('牌面尚未完成，無法開始 AI 解讀。');const q=state.question;
  return {stage,format:'A',style:'direct',topicName:topic(state.topicId).name,scenarioName:q.scenarioName||'自行提問',question:q.text,...(q.custom?{customQuestion:true}:{}),firstSpread:state.spreadA,cards:state.cardsA.map(c=>({name:c.name,reversed:!!c.reversed,position:c.position})),...(six?{secondSpread:state.spreadB,secondCards:state.cardsB.map(c=>({name:c.name,reversed:!!c.reversed,position:c.position})),followChoice:'same',followText:''}:{})};
 }
-async function runAI(which){if(busy)return;if(!window.DHMobileMemberGate.allowAi(!!member))return;const six=which==='b',key=six?'reportB':'reportA';if(state[key])return;
+async function runAI(which){if(busy)return;if(!window.DHMobileMemberGate.allowAi(!!member))return;const six=which==='b',key=six?'reportB':'reportA',usageSession=token(),usageSub=member?.sub;if(state[key])return;
  const btn=$(six?'runAiB':'runAiA'),loading=$(six?'loadingB':'loadingA'),status=six?'aiStatusB':'aiStatusA';
  busy=true;btn.disabled=true;loading.hidden=false;setStatus(status,'正在核對 AI 額度，避免未經確認使用會員共用次數。');
  try{
@@ -588,7 +619,7 @@ async function runAI(which){if(busy)return;if(!window.DHMobileMemberGate.allowAi
      const left=Number(q.wallet?.ai||0);if(q.role!=='member'||left<1)throw Error('SHARED_AI_EMPTY');
      approved=confirm(`本期免費 AI 額度已用完。\n本次將扣會員共用 AI 解讀額度 1 次，目前剩餘 ${left} 次。\n確定繼續嗎？`);if(!approved){setStatus(status,'已取消本次解讀，沒有新增扣點。');return;}
    }
-   let body={...payloadForAI(six?6:3),requestId:state[six?'requestB':'requestA']};
+   let body={...payloadForAI(six?6:3),requestId:state[six?'requestB':'requestA'],clientSurface:'mobile'};
    let response;
    try{response=await req('/ai/center/interpret',body,approved?{'X-DH-Shared-AI-Confirm':'1'}:{})}
    catch(e){if(e.message!=='SHARED_AI_CONFIRM_REQUIRED'||approved)throw e;
@@ -597,7 +628,7 @@ async function runAI(which){if(busy)return;if(!window.DHMobileMemberGate.allowAi
      response=await req('/ai/center/interpret',body,{'X-DH-Shared-AI-Confirm':'1'});
    }
    const answer=String(response.answer||'').trim();if(answer.length<20)throw Error('AI 回傳內容不足，請保留畫面與追蹤碼聯絡管理員。');
-   state[key]={answer,channel:response.channel||'',traceId:response.traceId||'',at:Date.now()};window.dhTrackMobileAiSuccess?.('tarot',response.traceId,topic(state.topicId)?.name||'unknown');state.stage=six?'completeB':'completeA';state[six?'reportExpandedB':'reportExpandedA']=true;save();render();if(member)void autoSaveRecord();
+   state[key]={answer,channel:response.channel||'',traceId:response.traceId||'',at:Date.now()};if(!q.adminTest&&member?.sub===usageSub&&token()===usageSession){tarotMobileTrack('ai_success',tarotMobileUsageCategory(),[['ai','complete']],state[six?'requestB':'requestA']);window.dhTrackMobileAiSuccess?.('tarot',response.traceId,topic(state.topicId)?.name||'unknown',six?'followup':'initial',usageSession);}state.stage=six?'completeB':'completeA';state[six?'reportExpandedB':'reportExpandedA']=true;save();render();if(member)void autoSaveRecord();
    setStatus(status,'');scrollToEl(six?'reportB':'reportA');void refreshQuota();
  }catch(e){setStatus(status,'AI 解讀未完成：'+codeLabel(e)+'。如果剛剛已扣點，請先更新額度並回報，不要直接重複送出。',true);notice(codeLabel(e),true);}
  finally{busy=false;loading.hidden=true;btn.disabled=false;}
@@ -720,7 +751,7 @@ function setupQuestionRefreshCue(){
 }
 function initListeners(){
  $('refreshQuota').addEventListener('click',()=>{void refreshQuota()});
- $('topics').addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b||busy)return;currentCat=b.dataset.topic;selected=null;typed='';sampleStart=0;displayCategory();});
+ $('topics').addEventListener('click',e=>{const b=e.target.closest('[data-topic]');if(!b||busy)return;currentCat=b.dataset.topic;tarotMobileTrack(null,'',[[tarotMobileFeatureKeys.has(currentCat)?currentCat:'other','click']]);selected=null;typed='';sampleStart=0;displayCategory();});
  $('moreQuestions').addEventListener('click',()=>{const pool=questionPool(currentCat);if(pool.length)sampleStart=(sampleStart+2)%pool.length;displayCategory()});
  $('samples').addEventListener('click',e=>{const b=e.target.closest('[data-q-index]');if(!b)return;const pool=questionPool(currentCat);selected=pool[Number(b.dataset.qIndex)]||null;typed=selected?.text||'';$('customDetails').open=true;displayCategory()});
  $('customQuestion').addEventListener('input',e=>{typed=e.target.value;updateSelectedHint();$('samples').querySelectorAll('.sample').forEach(b=>{const q=questionPool(currentCat)[Number(b.dataset.qIndex)];b.classList.toggle('selected',q?.text===typed.trim())});});
@@ -759,34 +790,32 @@ init();
 (function(){'use strict';
  const ENDPOINT='https://admin-api.ezgocpu.workers.dev/member-usage/ai-success-source';
  const TOKEN_KEY='divinationhub-auth-session-v1';
- const KEY='dh-member-usage-source-pending-v2';
  const TRACE=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
- let flushing=false;
+ let flushing=false,queue=[],owner='';
  function token(){try{const t=localStorage.getItem(TOKEN_KEY)||'';return /^dhs_[A-Za-z0-9_-]{43}$/.test(t)?t:''}catch(_){return ''}}
- function pending(){try{const d=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(d)?d.filter(x=>x&&Date.now()-Number(x.addedAt||0)<6*86400000).slice(-35):[]}catch(_){return []}}
- function save(rows){try{localStorage.setItem(KEY,JSON.stringify(rows.slice(-35)))}catch(_){}}
+ function current(){const t=token();if(t!==owner){queue=[];owner=t}return t}
  async function flush(){
-  if(flushing||!token())return;flushing=true;
-  try{let a=pending();for(const event of a.slice(0,8)){
+  const session=current();if(flushing||!session)return;flushing=true;
+  try{for(const event of queue.slice(0,8)){
+   if(current()!==session)break;
    let done=false;
-   try{
-    const r=await fetch(ENDPOINT,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},body:JSON.stringify({tool:event.tool,traceId:event.traceId,category:event.category,kind:event.kind,clientSurface:'mobile'})});
-    const j=await r.json().catch(()=>({}));
-    done=!!(r.ok&&j.success)||(r.status!==202&&[400,409].includes(r.status));
-    if(r.status===401)break;
+   try{const r=await fetch(ENDPOINT,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session},body:JSON.stringify({tool:event.tool,traceId:event.traceId,category:event.category,kind:event.kind,clientSurface:'mobile'})});
+    const j=await r.json().catch(()=>({}));done=!!(r.ok&&j.success)||(r.status!==202&&[400,409].includes(r.status));if(r.status===401)break;
    }catch(_){}
-   if(done){a=a.filter(x=>x.traceId!==event.traceId);save(a)}
+   if(current()!==session)break;
+   if(done)queue=queue.filter(x=>x!==event);
   }}finally{flushing=false}
  }
- window.dhTrackMobileAiSuccess=function(tool,traceId,category,kind='initial'){
-  const id=String(traceId||'');if(!token()||!TRACE.test(id))return;
-  let a=pending();if(a.some(x=>x.traceId===id))return;
-  a.push({tool:String(tool),traceId:id,category:String(category||'unknown').slice(0,60),kind:kind==='followup'?'followup':'initial',addedAt:Date.now()});save(a);
+ window.dhTrackMobileAiSuccess=function(tool,traceId,category,kind='initial',expectedSession){
+  const id=String(traceId||''),session=current();if(!session||expectedSession!==session||!TRACE.test(id))return;
+  if(queue.some(x=>x.traceId===id))return;
+  queue.push({tool:String(tool),traceId:id,category:String(category||'unknown').slice(0,60),kind:kind==='followup'?'followup':'initial'});queue=queue.slice(-35);
   void flush();setTimeout(()=>void flush(),1800);setTimeout(()=>void flush(),9000);
  };
+ window.addEventListener('storage',()=>{current()});
  window.addEventListener('pageshow',()=>{setTimeout(()=>void flush(),2000)});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void flush()});
- setTimeout(()=>void flush(),3500);
+
 })();
 </script>
 </body>

@@ -1298,6 +1298,32 @@ let calendar='solar',member=null,chart=null,birthRequest=null,busyCast=false;
 // 查詢逾時時保留同一次 operation id，避免使用者重按後被計算為另一筆扣點操作。
 let castRetry=null;
 const WX_CAST_TIMEOUT_MS=30000;
+// Mobile member usage: best effort, fixed categories only; never affects quota or results.
+const wxMobileSeen=new Set();
+function wxMobileOwner(){return {sub:member?.sub||'',token:getToken()};}
+function wxMobileUsage(owner,events=[],features=[],once=''){
+ const query=new URLSearchParams(location.search);
+ if(location.protocol==='file:'||query.has('admin')||query.has('admin-test')||query.has('wxdebug')||!owner?.sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(owner.token))return;
+ const same=()=>member?.sub===owner.sub&&getToken()===owner.token;
+ if(!same())return;
+ const eventId=/^(?:(?:cast|ai|deep|follow|views):)?(?:[a-f0-9-]{36}|AI-\d{8}-\d{4}-[A-F0-9]{6})(?::(?:initial|followup))?$/i.test(once)?once:uuid();
+ const eventAt=Date.now();
+ const key=once?'dh-usage-wuxing-v1|'+owner.sub+'|'+once:'';
+ if(key&&(wxMobileSeen.has(key)||(()=>{try{return sessionStorage.getItem(key)==='1'}catch(_){return false}})()))return;
+ if(key)wxMobileSeen.add(key);
+ void(async()=>{try{
+  const r=await fetch(WX_MEMBER_API+'/member-usage/mode',{cache:'no-store'}),j=await r.json();
+  if(!r.ok||!j.success||!['simple','full'].includes(j.mode)||!same())return;
+  if(key)try{sessionStorage.setItem(key,'1')}catch(_){}
+  const post=(path,body)=>fetch(WX_MEMBER_API+path,{method:'POST',cache:'no-store',keepalive:true,headers:{'Content-Type':'application/json',Authorization:'Bearer '+owner.token},body:JSON.stringify({tool:'wuxing',count:1,...body})}).catch(()=>null);
+  const jobs=events.filter(([event])=>event!=='view'||j.mode==='full').map(([event,category])=>post('/member-usage/record',{event,category,eventId,eventAt}));
+  if(j.mode==='full')for(const [feature,action] of features)jobs.push(post('/member-feature/record',{feature,action,eventId,eventAt}));
+  await Promise.allSettled(jobs);
+ }catch(_){/* analytics failure must not interrupt tool use */}})();
+}
+function wxMobileAiCategory(c){return ({career:'五行AI｜工作',love:'五行AI｜感情',wealth:'五行AI｜財運',nature:'五行AI｜人際',balance:'五行AI｜合作',lifestyle:'五行AI｜生活',timing:'五行AI｜抉擇'})[c]||'其他';}
+let wxMobileChartOp='';
+
 let aiQuota=null,aiReady=false,aiBusy=false,aiPendingFollow=false,aiSession='',aiTurn=0,aiCategory='c01',aiHistory=[],aiReports=[],aiExpandedId='';
 let aiQuestionPage=0,aiSelectedSource='';
 // 僅比對本次命盤已完成的主問題；大小寫／全形及空白差異不視為新題目。
@@ -1543,7 +1569,7 @@ async function cast(birth){
  if(aiHistory.length&&!confirm('重新查詢或載入其他出生資料後，目前尚未下載的 AI 問答會從畫面清除。建議先下載 TXT。是否繼續？'))return;
  const body=JSON.stringify(birth);
  // 只有同樣出生資料才可沿用上一筆；已成功或已確定失敗的操作不會繼續保留。
- const operation=castRetry?.body===body?castRetry:{body,id:uuid(),confirmed:false};
+ const usageOwner=wxMobileOwner();const operation=castRetry?.body===body?castRetry:{body,id:uuid(),confirmed:false};
  castRetry=operation;
  busyCast=true;clearError();const btn=$('calculate');btn.disabled=true;btn.textContent='正在計算五行…';
  try{
@@ -1568,6 +1594,8 @@ async function cast(birth){
   }
   // 只有收到完整的成功資料才清除暫存操作碼。
   castRetry=null;
+  wxMobileChartOp=operation.id;
+  if(!data.replayed)wxMobileUsage(usageOwner,[['cast','']],[['lookup','complete']],'cast:'+operation.id);
   chart=data.chart;birthRequest=birth;aiHistory=[];aiReports=[];aiExpandedId='';aiSession='';aiTurn=0;
   $('aiReportList').replaceChildren();$('aiConversation').hidden=true;$('followupArea').hidden=true;$('results').hidden=false;
   renderCore(chart);renderFreeHighlights(data.reports);setFreeFold(null);renderQuestionRows();updateAiButton();
@@ -1595,7 +1623,7 @@ function saveBirth(){if(!member){notice('請先登入會員，才能儲存出生
  try{const birth=makeBirth(),old=readSaved(),same=old.find(r=>r.key===birth.datetime);
  const item={datetime:birth.datetime,dayMaster:birth.dayMaster,dm:(chart&&birthRequest?.datetime===birth.datetime?chart.dm:''),birth};
  if(same){same.data=item;same.updated=Date.now();}else old.unshift({key:birth.datetime,ids:[],updated:Date.now(),data:item});
- old.sort((a,b)=>(b.updated||0)-(a.updated||0));writeSaved(old);notice('已儲存出生資料（僅本機、最多 3 組）');
+ old.sort((a,b)=>(b.updated||0)-(a.updated||0));writeSaved(old);wxMobileUsage(wxMobileOwner(),[],[['save-record','complete']]);notice('已儲存出生資料（僅本機、最多 3 組）');
  }catch(e){notice('無法儲存：'+e.message);}
 }
 
@@ -1759,7 +1787,7 @@ async function sendAI(follow=false){if(aiBusy||!chart||!birthRequest)return;if(!
  if(r.total<=0){showAiQuotaHelp(aiQuota.role==='member');notice(aiQuota.role==='member'?'會員 AI 額度不足，可參考加購方案。':'免費 AI 額度已用完，請登入會員。');return;}
  // 在真正送往 Worker 前再確認一次，避免額度更新期間狀態變更造成重複解讀。
  if(!follow&&findExistingAiReport(q)){notice('此題已解讀，請從文章列表閱讀。');updateAiButton();return;}
- const operationId=uuid(),payload={operationId,question:q,category:follow?target.workerCategory:currentAIGroup().workerCategory,birth:birthRequest,...(follow?{sessionId:target.sessionId}:{})};
+ const usageOwner=wxMobileOwner(),usagePreset=!!aiSelectedSource;const operationId=uuid(),payload={operationId,clientSurface:'mobile',question:q,category:follow?target.workerCategory:currentAIGroup().workerCategory,birth:birthRequest,...(follow?{sessionId:target.sessionId}:{})};
  aiPendingFollow=follow;aiBusy=true;updateAiButton();$('aiStatus').textContent='';
  try{let confirmed=false,res,j;
   for(let i=0;i<2;i++){
@@ -1770,7 +1798,7 @@ async function sendAI(follow=false){if(aiBusy||!chart||!birthRequest)return;if(!
    break;
   }
   if(!res.ok||!j.ok||typeof j.reading!=='string'||j.reading.trim().length<40){const e=new Error(AI_ERRORS[j.error]||j.message||'AI 暫時無法完成完整解讀');e.code=j.error;throw e;}
-  aiHistory.push({role:'user',text:q});aiHistory.push({role:'ai',text:j.reading,trace:j.traceId||''});window.dhTrackMobileAiSuccess?.('wuxing',j.traceId,follow?'followup':payload.category,follow?'followup':'initial');
+  aiHistory.push({role:'user',text:q});aiHistory.push({role:'ai',text:j.reading,trace:j.traceId||''});wxMobileUsage(usageOwner,[['ai_success',wxMobileAiCategory(payload.category)]],[[follow?'ai-followup':usagePreset?'ai-'+payload.category:'ai-custom','complete']],'ai:'+operationId);
   if(follow){
    target.followups.push({question:q,reading:j.reading,trace:j.traceId||''});
    target.sessionId=j.sessionId||target.sessionId;target.turn=Number(j.turn)||target.turn+1;
@@ -1802,13 +1830,13 @@ function initialize(){const today=new Date(),y=today.getFullYear();fillOptions($
  $('savedList').addEventListener('click',e=>{const del=e.target.closest('[data-delete]'),load=e.target.closest('[data-load]');if(del){const rows=readSaved(),n=Number(del.dataset.delete);if(!rows[n]||!confirm('確定刪除這組本機出生紀錄嗎？'))return;rows.splice(n,1);writeSaved(rows);notice('已刪除');return;}
   if(load){const row=readSaved()[Number(load.dataset.load)];if(!row?.data?.birth)return;$('savedModal').hidden=true;
    // 使用已儲存的完整四柱及曆法資料向 Worker 再次查詢；不自行重算私有演算法。
-   restoreForm(row.data.birth);void cast(row.data.birth);
+   wxMobileUsage(wxMobileOwner(),[],[['load-record','click']]);restoreForm(row.data.birth);void cast(row.data.birth);
   }
  });
- $('aiCategories').addEventListener('click',e=>{const b=e.target.closest('[data-cat]');if(!b||b.dataset.cat===aiCategory)return;aiCategory=b.dataset.cat;aiQuestionPage=0;setAIQuestion('');renderQuestions();});
+ $('aiCategories').addEventListener('click',e=>{const b=e.target.closest('[data-cat]');if(!b||b.dataset.cat===aiCategory)return;aiCategory=b.dataset.cat;aiQuestionPage=0;setAIQuestion('');renderQuestions();wxMobileUsage(wxMobileOwner(),[],[['ai-'+currentAIGroup().workerCategory,'click']]);});
  $('refreshQuestions').addEventListener('click',()=>{aiQuestionPage=(aiQuestionPage+1)%6;renderQuestionRows();});
- $('aiSuggestions').addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;const idx=Number(b.dataset.question),group=currentAIGroup(),q=group.topics[idx];if(!q)return;setAIQuestion(q,`${group.id}:${idx}`);$('customBox').open=false;});
- $('useCustomQuestion').addEventListener('click',()=>{const q=$('freeQuestion').value.trim();if([...q].length<5||[...q].length>400){notice('請輸入 5～400 字的問題');$('freeQuestion').focus();return;}setAIQuestion(q);$('customBox').open=false;});
+ $('aiSuggestions').addEventListener('click',e=>{const b=e.target.closest('[data-question]');if(!b)return;const idx=Number(b.dataset.question),group=currentAIGroup(),q=group.topics[idx];if(!q)return;setAIQuestion(q,`${group.id}:${idx}`);$('customBox').open=false;wxMobileUsage(wxMobileOwner(),[],[['ai-'+group.workerCategory,'click']]);});
+ $('useCustomQuestion').addEventListener('click',()=>{const q=$('freeQuestion').value.trim();if([...q].length<5||[...q].length>400){notice('請輸入 5～400 字的問題');$('freeQuestion').focus();return;}setAIQuestion(q);$('customBox').open=false;wxMobileUsage(wxMobileOwner(),[],[['ai-custom','click']]);});
  $('customQuestion').addEventListener('input',()=>{const v=$('customQuestion').value;aiSelectedSource='';$('questionCount').textContent=[...v].length+' / 400';renderQuestionRows();updateAiButton();});
  $('aiBtn').addEventListener('click',()=>void sendAI(false));$('sendFollowup').addEventListener('click',()=>void sendAI(true));
  $('aiOpenUsed').addEventListener('click',()=>{const report=findExistingAiReport($('customQuestion').value);if(!report)return;if(aiExpandedId!==report.id){aiExpandedId='';setAiReportExpanded(report.id,true);}else document.getElementById('aiReport-'+report.id)?.scrollIntoView({behavior:'smooth',block:'start'});});
@@ -1816,7 +1844,7 @@ function initialize(){const today=new Date(),y=today.getFullYear();fillOptions($
  $('downloadAi').addEventListener('click',downloadAiReports);
 // V8：按鈕左右並排，文章展開時固定占用整列寬度；雙方互斥或全部關閉。
  $('insightToggle').addEventListener('click',()=>setFreeFold($('insightToggle').getAttribute('aria-expanded')==='true'?null:'insight'));
- $('topicsToggle').addEventListener('click',()=>setFreeFold($('topicsToggle').getAttribute('aria-expanded')==='true'?null:'topicsFold'));
+ $('topicsToggle').addEventListener('click',()=>{const opening=$('topicsToggle').getAttribute('aria-expanded')!=='true';setFreeFold(opening?'topicsFold':null);if(opening&&chart&&wxMobileChartOp)wxMobileUsage(wxMobileOwner(),[['view','五行｜屬性'],['view','五行｜性格'],['view','五行｜平衡']],[['identity','view'],['personality','view'],['balance','view']],'views:'+wxMobileChartOp);});
  $('refreshQuota').addEventListener('click',()=>void refreshAllQuota());
  window.addEventListener('load',updateDateHint);window.addEventListener('pageshow',e=>{if(e.persisted)void refreshMember()});window.addEventListener('focus',()=>void refreshMember());
  window.addEventListener('storage',e=>{if([WX_SESSION_KEY,'divinationhub-auth-event'].includes(e.key))void refreshMember();});
@@ -1832,34 +1860,32 @@ initialize();
 (function(){'use strict';
  const ENDPOINT='https://admin-api.ezgocpu.workers.dev/member-usage/ai-success-source';
  const TOKEN_KEY='divinationhub-auth-session-v1';
- const KEY='dh-member-usage-source-pending-v2';
  const TRACE=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
- let flushing=false;
+ let flushing=false,queue=[],owner='';
  function token(){try{const t=localStorage.getItem(TOKEN_KEY)||'';return /^dhs_[A-Za-z0-9_-]{43}$/.test(t)?t:''}catch(_){return ''}}
- function pending(){try{const d=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(d)?d.filter(x=>x&&Date.now()-Number(x.addedAt||0)<6*86400000).slice(-35):[]}catch(_){return []}}
- function save(rows){try{localStorage.setItem(KEY,JSON.stringify(rows.slice(-35)))}catch(_){}}
+ function current(){const t=token();if(t!==owner){queue=[];owner=t}return t}
  async function flush(){
-  if(flushing||!token())return;flushing=true;
-  try{let a=pending();for(const event of a.slice(0,8)){
+  const session=current();if(flushing||!session)return;flushing=true;
+  try{for(const event of queue.slice(0,8)){
+   if(current()!==session)break;
    let done=false;
-   try{
-    const r=await fetch(ENDPOINT,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},body:JSON.stringify({tool:event.tool,traceId:event.traceId,category:event.category,kind:event.kind,clientSurface:'mobile'})});
-    const j=await r.json().catch(()=>({}));
-    done=!!(r.ok&&j.success)||(r.status!==202&&[400,409].includes(r.status));
-    if(r.status===401)break;
+   try{const r=await fetch(ENDPOINT,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session},body:JSON.stringify({tool:event.tool,traceId:event.traceId,category:event.category,kind:event.kind,clientSurface:'mobile'})});
+    const j=await r.json().catch(()=>({}));done=!!(r.ok&&j.success)||(r.status!==202&&[400,409].includes(r.status));if(r.status===401)break;
    }catch(_){}
-   if(done){a=a.filter(x=>x.traceId!==event.traceId);save(a)}
+   if(current()!==session)break;
+   if(done)queue=queue.filter(x=>x!==event);
   }}finally{flushing=false}
  }
- window.dhTrackMobileAiSuccess=function(tool,traceId,category,kind='initial'){
-  const id=String(traceId||'');if(!token()||!TRACE.test(id))return;
-  let a=pending();if(a.some(x=>x.traceId===id))return;
-  a.push({tool:String(tool),traceId:id,category:String(category||'unknown').slice(0,60),kind:kind==='followup'?'followup':'initial',addedAt:Date.now()});save(a);
+ window.dhTrackMobileAiSuccess=function(tool,traceId,category,kind='initial',expectedSession){
+  const id=String(traceId||''),session=current();if(!session||expectedSession!==session||!TRACE.test(id))return;
+  if(queue.some(x=>x.traceId===id))return;
+  queue.push({tool:String(tool),traceId:id,category:String(category||'unknown').slice(0,60),kind:kind==='followup'?'followup':'initial'});queue=queue.slice(-35);
   void flush();setTimeout(()=>void flush(),1800);setTimeout(()=>void flush(),9000);
  };
+ window.addEventListener('storage',()=>{current()});
  window.addEventListener('pageshow',()=>{setTimeout(()=>void flush(),2000)});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void flush()});
- setTimeout(()=>void flush(),3500);
+
 })();
 </script>
 <script id="wx-stage9-anchor-navigation">

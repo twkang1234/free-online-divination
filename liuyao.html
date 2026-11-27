@@ -2075,6 +2075,7 @@ const C=window.LiuyaoPublicPreview;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const groups=window.LiuyaoQuestions.groups;
+let lyUsageCastSession='';
 let topic=null, scene=null, fixedQuestion='', questionStart=0, activeValues=[], latest=null, latestContext=null, castingContext=null;
 let topicExpanded=true,sceneExpanded=true,questionsExpanded=true,castHistoryOpen=false;
 const OPTIONAL_WINDOW=['未來一個月','未來三個月','未來半年'];
@@ -2098,6 +2099,7 @@ function captureCast(){
   const q=checkedQuestion(),time=C.localNowTaipei();
   $('lyWhen').value=time;
   C.calendar(time); // 不讓無效日期等到第六擲才報錯
+  try{lyUsageCastSession=localStorage.getItem('divinationhub-auth-session-v1')||''}catch(_){lyUsageCastSession=''}
   castingContext={...snapshot(),question:q,time};
   lockInputs(true);
  }
@@ -2169,7 +2171,7 @@ function paintTopics(){
  const e=$('lyTopics');e.textContent='';groups.forEach((g,i)=>{
   const b=node('button','ly-choice'+(topic===i?' selected':''));b.type='button';b.innerHTML=`<b>${esc(g.emoji)}　${esc(g.name)}</b>`;
   b.setAttribute('aria-pressed',String(topic===i));
-  b.onclick=()=>{if(castingContext)return;if(topic===i)return;topic=i;scene=null;fixedQuestion='';questionStart=0;topicExpanded=false;sceneExpanded=true;questionsExpanded=true;$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;paintTopics();paintScenes();renderOptionalInfo()};e.append(b)
+  b.onclick=()=>{if(castingContext)return;if(topic===i)return;topic=i;window.DHLiuyaoUsage?.report(i);scene=null;fixedQuestion='';questionStart=0;topicExpanded=false;sceneExpanded=true;questionsExpanded=true;$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;paintTopics();paintScenes();renderOptionalInfo()};e.append(b)
  });
  syncSelectionUI();
 }
@@ -2345,7 +2347,7 @@ function init(){
   $('lyThrowTitle').textContent=completed?'六爻完成':`準備擲第 ${activeValues.length+1} 爻`;
   $('lyThrow').textContent=completed?'已完成六次':`擲第 ${activeValues.length+1} 爻`;
   $('lyThrow').disabled=!!completed;
-  if(completed)makeResult(completed,cast);
+  if(completed){makeResult(completed,cast);window.DHLiuyaoUsage?.report(cast.topic,true,window.LiuyaoQuestions.isFixed({topic:cast.topic,scene:cast.scene,question:cast.question}),lyUsageCastSession);}
   else if(activeValues.length===1)requestAnimationFrame(()=>jumpTo('lyCastStage'));
  }catch(e){if(activeValues.length===0){castingContext=null;lockInputs(false)}error(e.message)}};
  const resetCast=()=>{activeValues=[];castingContext=null;topic=null;scene=null;fixedQuestion='';questionStart=0;topicExpanded=true;sceneExpanded=true;questionsExpanded=true;castHistoryOpen=false;document.body.classList.remove('ly-ai-complete');$('lyCustomQuestion').value='';$('lyCustomDisclosure').open=false;lockInputs(false);paintTopics();paintScenes();renderOptionalInfo();$('lyWhen').value=C.localNowTaipei();$('lyResultStage').hidden=true;updateCastReady();$('lyThrow').disabled=false;$('lyThrow').textContent='擲出初爻';$('lyThrowTitle').textContent='準備擲初爻（第 1 次）';$('lyThrowCount').textContent='0 / 6';$('lyCoins').innerHTML='<span>銅</span><span>銅</span><span>銅</span>';renderSteps([]);updateCastLayout(false);latest=null;latestContext=null;window.LiuyaoStagingAI?.clear();$('result').innerHTML='';$('result').style.display='none';$('emptyState').style.display='';error('')};
@@ -2830,7 +2832,7 @@ function safeAnswer(target,answer){
  async function interpret(view,mode='initial',followupQuestion=''){
   const id=mode==='initial'?'initialOp':'followupOp';if(!view[id])view[id]=uuid();updatePending(view);
   try{
-   const res=await request('/ai/interpret',{tool:'liuyao',castId:view.castId,operationId:view[id],mode,...(mode==='followup'?{followupQuestion}:{})},140000);
+   const res=await request('/ai/interpret',{tool:'liuyao',castId:view.castId,operationId:view[id],mode,clientSurface:'desktop',...(mode==='followup'?{followupQuestion}:{})},140000);
    revealAnswer(view,res.answer,mode,res);renderReceipt(view,'');await refreshQuota();
   }catch(e){
    // Never assume a debit or refund until the original operation has been reconciled.
@@ -2983,6 +2985,33 @@ function safeAnswer(target,answer){
  function setup(){void activateIfBackendReady()}
  window.LiuyaoStagingAI=Object.freeze({onReading,clear,refreshQuota,retryProtectedChart});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+})();
+</script>
+<script id="dh-liuyao-member-usage-v1">
+(()=>{'use strict';
+ const API='https://member-api.ezgocpu.workers.dev',KEY='divinationhub-auth-session-v1';
+ const labels=["感情關係","工作事業","金錢財運","考試學業","家庭房產","健康照護","官司糾紛","人生抉擇","創業副業","人際貴人","出行遷移","失物尋找"];
+ function report(topic,cast=false,guided=false,expectedSession){
+  try{
+   const tok=localStorage.getItem(KEY)||'',eventId=crypto.randomUUID(),eventAt=Date.now();
+   if(cast&&tok!==expectedSession)return;
+   if(location.protocol==='file:'||new URLSearchParams(location.search).has('admin')||!/^dhs_[A-Za-z0-9_-]{43}$/.test(tok)||!Number.isInteger(topic)||!labels[topic])return;
+   // Capture the session at the actual event, never replay after login, restore or retry.
+   void (async()=>{try{
+    const r=await fetch(API+'/member-usage/mode',{cache:'no-store'}),j=await r.json();
+    if(!r.ok||!j.success||!['simple','full'].includes(j.mode)||localStorage.getItem(KEY)!==tok)return;
+    const post=(path,body)=>fetch(API+path,{method:'POST',keepalive:true,cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify({tool:'liuyao',count:1,eventId,eventAt,...body})}).catch(()=>null);
+    const jobs=[];
+    if(cast)jobs.push(post('/member-usage/record',{event:'cast',category:'六爻｜'+labels[topic]}));
+    if(j.mode==='full'){
+     jobs.push(post('/member-feature/record',{feature:'topic-'+topic,action:cast?'complete':'click'}));
+     if(cast){jobs.push(post('/member-feature/record',{feature:'cast',action:'complete'}));jobs.push(post('/member-feature/record',{feature:guided?'guided':'custom',action:'complete'}));}
+    }
+    await Promise.allSettled(jobs);
+   }catch(_){}})();
+  }catch(_){}
+ }
+ window.DHLiuyaoUsage={report};
 })();
 </script>
 </body>

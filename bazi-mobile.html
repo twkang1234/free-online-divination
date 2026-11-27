@@ -827,6 +827,35 @@ function knownMember(){return !!window.DHMobileMemberGate?.hadMember()}
 function markMember(){try{localStorage.setItem(KNOWN_MEMBER,'1')}catch(_){}window.DHMobileMemberGate?.markVerified(currentSession());}
 function signedToken(){return state.member?.sub?state.session:''}
 function headers(json=false){return {...(json?{'Content-Type':'application/json'}:{}),'X-Bazi-Visitor-Id':visitorId(),...(signedToken()?{Authorization:'Bearer '+signedToken()}:{})};}
+// Member usage parity: only explicit successful actions; no questions, birth data or answers.
+const baziUsageSeen=new Set();
+function baziUsageOwner(){return {sub:state.member?.sub||'',token:signedToken()};}
+function baziMobileTrack(owner,events=[],features=[],once=''){
+ const t=owner?.token,sub=owner?.sub;
+ const query=new URLSearchParams(location.search);
+ if(location.protocol==='file:'||query.has('admin')||query.has('admin-test')||!sub||!/^dhs_[A-Za-z0-9_-]{43}$/.test(t||''))return;
+ const stillOwner=()=>state.member?.sub===sub&&signedToken()===t;
+ if(!stillOwner())return;
+ const eventId=/^(?:(?:cast|ai|deep|follow|views):)?(?:[a-f0-9-]{36}|AI-\d{8}-\d{4}-[A-F0-9]{6})(?::(?:initial|followup))?$/i.test(once)?once:newId();
+ const eventAt=Date.now();
+ const key=once?sub+'|'+once:'';
+ if(key&&baziUsageSeen.has(key))return;
+ if(key)baziUsageSeen.add(key);
+ void (async()=>{
+  try{
+   const r=await fetch(MEMBER+'/member-usage/mode',{cache:'no-store'});
+   const j=await r.json();if(!r.ok||!j.success||!['simple','full'].includes(j.mode)||!stillOwner())return;
+   const post=(path,body)=>fetch(MEMBER+path,{method:'POST',cache:'no-store',keepalive:true,headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify({tool:'bazi',count:1,...body})}).catch(()=>null);
+   const jobs=events.map(([event,category])=>post('/member-usage/record',{event,category,eventId,eventAt}));
+   if(j.mode==='full')for(const [feature,action] of features)jobs.push(post('/member-feature/record',{feature,action,eventId,eventAt}));
+   await Promise.allSettled(jobs);
+  }catch(_){/* Best effort: never interrupt results or quota settlement. */}
+ })();
+}
+function baziMobileCategory(topic){
+ return ({personality:'AI｜性格天賦',career_deep:'AI｜工作事業',social:'人際',wealth_life:'AI｜財運理財',love_deep:'AI｜感情婚姻',overall_deep:'AI｜整體命盤',luck_turning:'AI｜大運流年',fortune_risk:'AI｜感情婚姻',career:'事業',wealth:'財運',love:'感情',family:'其他',health:'健康',startup:'事業',decade:'AI｜大運流年',education:'學業',marriage:'婚姻',children:'其他',official:'工作',property:'財運',relocation:'搬家',lawsuit:'其他',character:'AI｜性格天賦',elements:'其他',pattern:'其他',benefactor:'人際',natal:'AI｜整體命盤',date_choice:'其他',luck_boost:'其他'})[topic]||'其他';
+}
+let baziUsageChartGeneration=0;
 function openMember(){const from=location.pathname+location.search+location.hash;location.href='/member.html?return='+encodeURIComponent(from);}
 function accountUi(){const a=$('accountBtn');a.textContent=state.member?'會員中心':state.authPending?'確認會員中…':'會員登入';a.disabled=state.authPending;}
 function roleKey(){return state.member?.sub?'member:'+state.member.sub:'visitor';}
@@ -1175,7 +1204,7 @@ async function castBirth(){if(state.castBusy||state.aiBusy||state.authPending)re
  const q=state.castQuota;
  if(q?.knownMember&&!state.member){setStatus('castStatus','你已是會員，請先登入再排盤。','error');return}
  if(q&&!Number(q.remaining||0)&&!state.member){setStatus('castStatus','本期免費排盤已用完，請先登入會員。','error');return}
- const castOpId=newId();state.castBusy=true;$('castBtn').disabled=true;$('castBtn').textContent='正在建立四柱…';setStatus('castStatus','正在向八字後端核對命盤…');renderTopicButtons();
+ const castOpId=newId(),usageOwner=baziUsageOwner();state.castBusy=true;$('castBtn').disabled=true;$('castBtn').textContent='正在建立四柱…';setStatus('castStatus','正在向八字後端核對命盤…');renderTopicButtons();
  try{
   const calendar=buildFrontendCalendarPayload(b);
   const payload={datetime:b.datetime,gender:b.gender,sect:b.sect,calendar,usageIntent:'user-cast',castOpId,castPermit:''};
@@ -1196,7 +1225,7 @@ async function castBirth(){if(state.castBusy||state.aiBusy||state.authPending)re
   state.birth=b;state.chart={...b,data:result.data,key};
   if(switching){state.reports=loadReports(key);state.expanded=null}
   rememberInput(b);void rememberPreferences(b);
-  showChart();setStatus('castStatus','已完成四柱排盤。','ok');
+  showChart();baziUsageChartGeneration++;baziMobileTrack(usageOwner,[['cast','基本排盤']],[['lookup','complete']],'cast:'+castOpId);setStatus('castStatus','已完成四柱排盤。','ok');
   $('birthCard').open=false;scrollTo($('chartCard'));
  }catch(e){setStatus('castStatus',e.message||'排盤暫時失敗','error');if(e.code==='MEMBER_LOGIN_REQUIRED')$('castHint').textContent='請先登入會員後再操作';}
  finally{state.castBusy=false;await refreshCastQuota();updateCastHint();renderTopicButtons();if(state.chart)void refreshAiQuota()}
@@ -1233,11 +1262,11 @@ function setAiBusy(isBusy,button,label='AI 正在解讀…'){
 async function runFixed(topic,btn){if(!state.chart||state.aiBusy||state.castBusy)return;if(!state.member){window.DHMobileMemberGate.login();return;}
  const previous=state.reports?.[topic];if(previous?.reading&&!confirm('這個主題已有 AI 解讀，重新產生會覆蓋舊文章。請先複製或下載。\n確定重新解讀？'))return;
  const permit=await permissionForAi();if(!permit)return;
- const chart={...state.chart},key=chart.key;setAiBusy(true,btn,'AI 正在解讀：'+(topicList.find(x=>x.id===topic)?.name||topic));setStatus('aiStatus','AI 解讀進行中，請勿重複操作。');
+ const chart={...state.chart},key=chart.key,usageOwner=baziUsageOwner();setAiBusy(true,btn,'AI 正在解讀：'+(topicList.find(x=>x.id===topic)?.name||topic));setStatus('aiStatus','AI 解讀進行中，請勿重複操作。');
  try{
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic,aiOpId:newId()},permit.shared);
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未回傳完整可讀文章');
-  if(state.chart?.key===key){state.reports[topic]={reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',createdAt:Date.now()};window.dhTrackMobileAiSuccess?.('bazi',j.traceId,topic);storeReports();state.expanded=topic;renderReports();setStatus('aiStatus','AI 解讀完成，可在下方完整閱讀或下載。','ok');scrollTo($('readerCard'));}
+  if(state.chart?.key===key){state.reports[topic]={reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',createdAt:Date.now()};baziMobileTrack(usageOwner,[['ai_success',baziMobileCategory(topic)]],[['ai','complete']],j.traceId?'ai:'+j.traceId:'');if(state.member?.sub===usageOwner.sub&&signedToken()===usageOwner.token)window.dhTrackMobileAiSuccess?.('bazi',j.traceId,topic,'initial',usageOwner.token);storeReports();state.expanded=topic;renderReports();setStatus('aiStatus','AI 解讀完成，可在下方完整閱讀或下載。','ok');scrollTo($('readerCard'));}
  }catch(e){setStatus('aiStatus',displayError(e),'error');renderTraceError(e,topic)}
  finally{setAiBusy(false,btn);await refreshAiQuota()}
 }
@@ -1245,13 +1274,13 @@ async function runCustom(){if(!state.member){window.DHMobileMemberGate.login();r
  const question=$('customQuestion').value.normalize('NFKC').trim().replace(/\s+/g,' ');
  if(question.length<5||question.length>400){setStatus('aiStatus','請輸入 5～400 字的問題。','error');return}
  const permit=await permissionForAi();if(!permit)return;
- const chart={...state.chart},key=chart.key,btn=$('askCustomBtn');setAiBusy(true,btn,'AI 正在分析專屬問題');setStatus('aiStatus','正在分析你的專屬問題，請勿離開頁面。');
+ const chart={...state.chart},key=chart.key,btn=$('askCustomBtn'),usageOwner=baziUsageOwner();setAiBusy(true,btn,'AI 正在分析專屬問題');setStatus('aiStatus','正在分析你的專屬問題，請勿離開頁面。');
  const meta={category:questionBackendCategories[state.questionCategory]||'life',presetLabel:state.questionPreset?.label||'',template:state.questionPreset?.text||''};
  try{
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_question',question,questionMeta:meta,aiOpId:newId()},permit.shared);
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('AI 未返回完整回答');
   if(state.chart?.key===key){const history=Array.isArray(state.reports.custom_questions)?state.reports.custom_questions.slice(-11):[];
-   history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',followupId:j.followupId||'',promptVersion:CUSTOM_VERSION,createdAt:Date.now()});window.dhTrackMobileAiSuccess?.('bazi',j.traceId,meta.category);
+   history.push({question,reading:j.reading,channel:j.channel||'',traceId:j.traceId||'',followupId:j.followupId||'',promptVersion:CUSTOM_VERSION,createdAt:Date.now()});baziMobileTrack(usageOwner,[['ai_success',baziMobileCategory(meta.category)]],[['ai','complete']],j.traceId?'ai:'+j.traceId:'');if(state.member?.sub===usageOwner.sub&&signedToken()===usageOwner.token)window.dhTrackMobileAiSuccess?.('bazi',j.traceId,meta.category,'initial',usageOwner.token);
    state.reports.custom_questions=history;storeReports();state.expanded='custom_question_'+(history.length-1);renderReports();setStatus('aiStatus','自訂 AI 解讀完成，可查看下方文章。','ok');scrollTo($('readerCard'));
   }
  }catch(e){setStatus('aiStatus',displayError(e),'error');renderTraceError(e,'custom_question')}
@@ -1262,11 +1291,11 @@ async function runFollowup(index,input,button){if(!state.member){window.DHMobile
  if(!r?.followupId||r.followupReading){setStatus('aiStatus','這篇解讀已無法追問。','error');return}
  if(question.length<5||question.length>400){setStatus('aiStatus','請輸入 5～400 字的追問內容。','error');return}
  const permit=await permissionForAi();if(!permit)return;
- const chart={...state.chart},key=chart.key;setAiBusy(true,button,'AI 正在回答追問');setStatus('aiStatus','AI 正在回答追問…');
+ const chart={...state.chart},key=chart.key,usageOwner=baziUsageOwner();setAiBusy(true,button,'AI 正在回答追問');setStatus('aiStatus','AI 正在回答追問…');
  try{
   const j=await aiPost({datetime:chart.datetime,gender:chart.gender,sect:chart.sect,calendar:buildFrontendCalendarPayload(chart),topic:'custom_followup',question,followupId:r.followupId,aiOpId:newId()},permit.shared);
   if(typeof j.reading!=='string'||j.reading.trim().length<20)throw Error('追問未返回完整答案');
-  if(state.chart?.key===key&&state.reports?.custom_questions?.[index]?.followupId===r.followupId){state.reports.custom_questions[index]={...r,followupQuestion:question,followupReading:j.reading,followupChannel:j.channel||'',followupTraceId:j.traceId||'',followupId:''};window.dhTrackMobileAiSuccess?.('bazi',j.traceId,'followup','followup');storeReports();state.expanded='custom_question_'+index;renderReports();setStatus('aiStatus','追問完成。','ok');scrollTo($('readerCard'))}
+  if(state.chart?.key===key&&state.reports?.custom_questions?.[index]?.followupId===r.followupId){state.reports.custom_questions[index]={...r,followupQuestion:question,followupReading:j.reading,followupChannel:j.channel||'',followupTraceId:j.traceId||'',followupId:''};baziMobileTrack(usageOwner,[['ai_success',baziMobileCategory('other')]],[['ai','complete']],j.traceId?'ai:'+j.traceId:'');if(state.member?.sub===usageOwner.sub&&signedToken()===usageOwner.token)window.dhTrackMobileAiSuccess?.('bazi',j.traceId,'followup','followup',usageOwner.token);storeReports();state.expanded='custom_question_'+index;renderReports();setStatus('aiStatus','追問完成。','ok');scrollTo($('readerCard'))}
  }catch(e){setStatus('aiStatus',displayError(e),'error');renderTraceError(e,'custom_followup')}
  finally{setAiBusy(false,button);await refreshAiQuota()}
 }
@@ -1533,7 +1562,7 @@ async function showSaved(){if(needMember())return;showModal('chartsModal');const
   }
  }catch(e){setStatus('savedStatus',e.message,'error')}
 }
-function wire(){ $('personalityDetails').open=false; $('dailyDetails').open=false; setupFields();setupQuestions();$('castBtn').addEventListener('click',castBirth);$('refreshBaziQuota').addEventListener('click',refreshBaziQuotaBoard);$('accountBtn').addEventListener('click',()=>state.member?location.assign('/member.html'):openMember());$('saveBtn').addEventListener('click',saveChart);$('myChartsBtn').addEventListener('click',showSaved);$('askCustomBtn').addEventListener('click',runCustom);document.querySelectorAll('[data-collapse]').forEach(b=>b.addEventListener('click',()=>{const panel=$(b.dataset.collapse);if(panel){panel.querySelector(':scope > summary')?.focus({preventScroll:true});panel.open=false;panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});}}));$('confirmSave').addEventListener('click',confirmSave);$('aiGateAction').addEventListener('click',()=>{const action=$('aiGateAction').dataset.action;if(action==='retry')void refreshAiQuota();else if(action==='member')location.assign('/member.html');else openMember();});
+function wire(){ $('personalityDetails').open=false; $('dailyDetails').open=false; setupFields();setupQuestions();for(const [id,feature,category] of [['personalityDetails','reading',''],['dailyDetails','daily','章節｜每日流日']]){$(id).querySelector('summary').addEventListener('click',()=>{if(!$(id).open&&state.chart)baziMobileTrack(baziUsageOwner(),category?[['view',category]]:[],[[feature,'view']],'view:'+baziUsageChartGeneration+':'+feature);});}$('castBtn').addEventListener('click',castBirth);$('refreshBaziQuota').addEventListener('click',refreshBaziQuotaBoard);$('accountBtn').addEventListener('click',()=>state.member?location.assign('/member.html'):openMember());$('saveBtn').addEventListener('click',saveChart);$('myChartsBtn').addEventListener('click',showSaved);$('askCustomBtn').addEventListener('click',runCustom);document.querySelectorAll('[data-collapse]').forEach(b=>b.addEventListener('click',()=>{const panel=$(b.dataset.collapse);if(panel){panel.querySelector(':scope > summary')?.focus({preventScroll:true});panel.open=false;panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});}}));$('confirmSave').addEventListener('click',confirmSave);$('aiGateAction').addEventListener('click',()=>{const action=$('aiGateAction').dataset.action;if(action==='retry')void refreshAiQuota();else if(action==='member')location.assign('/member.html');else openMember();});
  document.querySelectorAll('[data-close-modal]').forEach(b=>b.addEventListener('click',closeModal));document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
  window.addEventListener('storage',e=>{if(e.key===SESSION){void restoreSession()} });
  window.addEventListener('pageshow',e=>{if(!e.persisted)return;$('personalityDetails').open=false;$('dailyDetails').open=false;if(state.member||currentSession())void restoreSession();else {void refreshCastQuota();void refreshAiQuota()}});
@@ -1562,34 +1591,32 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 (function(){'use strict';
  const ENDPOINT='https://admin-api.ezgocpu.workers.dev/member-usage/ai-success-source';
  const TOKEN_KEY='divinationhub-auth-session-v1';
- const KEY='dh-member-usage-source-pending-v2';
  const TRACE=/^AI-\d{8}-\d{4}-[A-F0-9]{6}$/;
- let flushing=false;
+ let flushing=false,queue=[],owner='';
  function token(){try{const t=localStorage.getItem(TOKEN_KEY)||'';return /^dhs_[A-Za-z0-9_-]{43}$/.test(t)?t:''}catch(_){return ''}}
- function pending(){try{const d=JSON.parse(localStorage.getItem(KEY)||'[]');return Array.isArray(d)?d.filter(x=>x&&Date.now()-Number(x.addedAt||0)<6*86400000).slice(-35):[]}catch(_){return []}}
- function save(rows){try{localStorage.setItem(KEY,JSON.stringify(rows.slice(-35)))}catch(_){}}
+ function current(){const t=token();if(t!==owner){queue=[];owner=t}return t}
  async function flush(){
-  if(flushing||!token())return;flushing=true;
-  try{let a=pending();for(const event of a.slice(0,8)){
+  const session=current();if(flushing||!session)return;flushing=true;
+  try{for(const event of queue.slice(0,8)){
+   if(current()!==session)break;
    let done=false;
-   try{
-    const r=await fetch(ENDPOINT,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},body:JSON.stringify({tool:event.tool,traceId:event.traceId,category:event.category,kind:event.kind,clientSurface:'mobile'})});
-    const j=await r.json().catch(()=>({}));
-    done=!!(r.ok&&j.success)||(r.status!==202&&[400,409].includes(r.status));
-    if(r.status===401)break;
+   try{const r=await fetch(ENDPOINT,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session},body:JSON.stringify({tool:event.tool,traceId:event.traceId,category:event.category,kind:event.kind,clientSurface:'mobile'})});
+    const j=await r.json().catch(()=>({}));done=!!(r.ok&&j.success)||(r.status!==202&&[400,409].includes(r.status));if(r.status===401)break;
    }catch(_){}
-   if(done){a=a.filter(x=>x.traceId!==event.traceId);save(a)}
+   if(current()!==session)break;
+   if(done)queue=queue.filter(x=>x!==event);
   }}finally{flushing=false}
  }
- window.dhTrackMobileAiSuccess=function(tool,traceId,category,kind='initial'){
-  const id=String(traceId||'');if(!token()||!TRACE.test(id))return;
-  let a=pending();if(a.some(x=>x.traceId===id))return;
-  a.push({tool:String(tool),traceId:id,category:String(category||'unknown').slice(0,60),kind:kind==='followup'?'followup':'initial',addedAt:Date.now()});save(a);
+ window.dhTrackMobileAiSuccess=function(tool,traceId,category,kind='initial',expectedSession){
+  const id=String(traceId||''),session=current();if(!session||expectedSession!==session||!TRACE.test(id))return;
+  if(queue.some(x=>x.traceId===id))return;
+  queue.push({tool:String(tool),traceId:id,category:String(category||'unknown').slice(0,60),kind:kind==='followup'?'followup':'initial'});queue=queue.slice(-35);
   void flush();setTimeout(()=>void flush(),1800);setTimeout(()=>void flush(),9000);
  };
+ window.addEventListener('storage',()=>{current()});
  window.addEventListener('pageshow',()=>{setTimeout(()=>void flush(),2000)});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void flush()});
- setTimeout(()=>void flush(),3500);
+
 })();
 </script>
 </body></html>
